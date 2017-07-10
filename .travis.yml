@@ -1,7 +1,7 @@
 language: csharp
 solution: snowflake-connector-net.sln
 before_install: 
-  - openssl aes-256-cbc -K $encrypted_69a05fb7394f_key -iv $encrypted_69a05fb7394f_iv -in Connector.Test/parameters.json.enc -out Connector.Test/parameters.json -d
+  - openssl aes-256-cbc -K $encrypted_69a05fb7394f_key -iv $encrypted_69a05fb7394f_iv -in Snowflake.Data.Tests/parameters.json.enc -out Snowflake.Data.Tests/parameters.json -d
 install:
   - nuget restore snowflake-connector-net.sln
 script:
