@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
@@ -52,6 +49,18 @@ namespace Snowflake.Data.Core
                     this.Add(p, token[1]);
                 }
             }
+        }
+    }
+
+    public static class EnumExtensions
+    {
+        public static TAttribute GetAttribute<TAttribute>(this Enum value)
+            where TAttribute : Attribute
+        {
+            var type = value.GetType();
+            var memInfo = type.GetMember(value.ToString());
+            var attributes = memInfo[0].GetCustomAttributes(typeof(TAttribute), false);
+            return (attributes.Length > 0) ? (TAttribute)attributes[0] : null;
         }
     }
 }

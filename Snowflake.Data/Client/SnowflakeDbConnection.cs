@@ -10,13 +10,13 @@ using System.Data;
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
-    public class SnowflakeConnection : DbConnection
+    public class SnowflakeDbConnection : DbConnection
     {
         internal SFSession sfSession { get; set; } 
 
         private ConnectionState connectionState;
 
-        public SnowflakeConnection()
+        public SnowflakeDbConnection()
         {
             connectionState = ConnectionState.Closed;
         }
@@ -30,15 +30,24 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return connectionState == ConnectionState.Open ? sfSession.database : "";
             }
         }
 
+        /// <summary>
+        ///     If the connection to the database is closed, the DataSource returns whatever is contained 
+        ///     in the ConnectionString for the DataSource keyword. If the connection is open and the 
+        ///     ConnectionString data source keyword's value starts with "|datadirectory|", the property 
+        ///     returns whatever is contained in the ConnectionString for the DataSource keyword only. If 
+        ///     the connection to the database is open, the property returns what the native provider 
+        ///     returns for the DBPROP_INIT_DATASOURCE, and if that is empty, the native provider's 
+        ///     DBPROP_DATASOURCENAME is returned.
+        /// </summary>
         public override string DataSource
         {
             get
             {
-                throw new NotImplementedException();
+                return "";
             }
         }
 
@@ -46,7 +55,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return connectionState == ConnectionState.Open ? sfSession.serverVersion : "";
             }
         }
 
@@ -60,7 +69,13 @@ namespace Snowflake.Data.Client
 
         public override void ChangeDatabase(string databaseName)
         {
-            throw new NotImplementedException();
+            string alterDbCommand = String.Format("use database {0}", databaseName);
+
+            using (IDbCommand cmd = this.CreateCommand())
+            {
+                cmd.CommandText = alterDbCommand;
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public override void Close()

@@ -8,15 +8,85 @@ namespace Snowflake.Data.Core
 {
     abstract class SFBaseResultSet
     {
+        internal SFStatement sfStatement;
 
-        public abstract bool next();
+        internal SFResultSetMetaData sfResultSetMetaData;
 
-        public string getString(int columnIndex)
+        internal int columnCount;
+
+        internal abstract bool next();
+
+        internal DateTime getDateTime(int columnIndex)
         {
-            return (String)getObjectInternal(columnIndex);
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (DateTime)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(DateTime));
         }
 
-        protected abstract Object getObjectInternal(int columnIndex);
+        internal Decimal getDecimal(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (Decimal)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Decimal));
+        }
+        internal double getDouble(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (double)SFDataConverter.convertToCSharpVal(val, sfDataType ,typeof(double));
+        }
+        internal float getFloat(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (float)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(float));
+        }
+        internal Guid getGuid(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (Guid)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Guid));
+        }
+
+        internal string getString(int columnIndex)
+        {
+            return getObjectInternal(columnIndex);
+        }
+
+        internal Object getObject(int columnIndex)
+        {
+            return getObjectInternal(columnIndex);
+        }
+
+        internal short getInt16(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (Int16) SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Int16));
+        }
+
+        internal int getInt32(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (Int32) SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Int32));
+        }
+
+        internal long getInt64(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (Int64) SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Int64));
+        }
+
+        internal bool getBoolean(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (bool)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Boolean));
+        }
+
+        protected abstract string getObjectInternal(int columnIndex);
 
     }
 }

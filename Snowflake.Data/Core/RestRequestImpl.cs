@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Snowflake.Data.Core
 {
-    class RestRequestImpl : IRestRequest
+    public class RestRequestImpl : IRestRequest
     {
         private static readonly RestRequestImpl instance = new RestRequestImpl();
 
@@ -30,12 +30,12 @@ namespace Snowflake.Data.Core
         {
         }
         
-        static public RestRequestImpl Instance
+        static internal RestRequestImpl Instance
         {
             get { return instance; }
         }
 
-        public JObject post(RestRequest postRequest)
+        public JObject post(SFRestRequest postRequest)
         {
             var json = JsonConvert.SerializeObject(postRequest.jsonBody);
             HttpContent httpContent = new StringContent(json);
@@ -62,6 +62,20 @@ namespace Snowflake.Data.Core
             message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
 
             return sendRequest(message);
+        }
+
+        public JObject get(SFRestRequest getRequest)
+        {
+            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
+            message.Headers.Add(SF_AUTHORIZATION_HEADER, getRequest.authorizationToken);
+            message.Headers.Accept.Add(applicationSnowflake);
+
+            var responseContent = sendRequest(message).Content;
+
+            var jsonString = responseContent.ReadAsStringAsync();
+            jsonString.Wait();
+
+            return JObject.Parse(jsonString.Result);
         }
 
         private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage)

@@ -1,15 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json.Linq;
+using Common.Logging;
 
 namespace Snowflake.Data.Core
 {
     class SFSession
     {
+        private static readonly ILog logger = LogManager.GetLogger<SFSession>();
+
         private const string SF_SESSION_PATH = "/session";
 
         private const string SF_LOGIN_PATH = SF_SESSION_PATH + "/v1/login-request";
+
+        private const string SF_TOKEN_REQUEST_PATH = SF_SESSION_PATH + "/token-request";
 
         private const string SF_QUERY_SESSION_DELETE = "delete";
 
@@ -35,6 +39,12 @@ namespace Snowflake.Data.Core
 
         internal SFSessionProperties properties { get; }
 
+        internal string database { get; set; }
+
+        internal string schema { get; set; }
+
+        internal string serverVersion { get; set; }
+
         /// <summary>
         ///     Constructor 
         /// </summary>
@@ -46,6 +56,8 @@ namespace Snowflake.Data.Core
         }
         internal void open()
         {
+            logger.Debug("Open Session");
+
             // build uri
             UriBuilder uriBuilder = new UriBuilder();
             uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
@@ -72,10 +84,15 @@ namespace Snowflake.Data.Core
             };
 
             // build request
-            RestRequest loginRequest = new RestRequest();
+            SFRestRequest loginRequest = new SFRestRequest();
             loginRequest.jsonBody = new AuthnRequest() { data = data };
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
+
+            if (logger.IsTraceEnabled)
+            {
+                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+            }
 
             JObject response = restRequest.post(loginRequest);
             parseLoginResponse(response);
@@ -94,13 +111,44 @@ namespace Snowflake.Data.Core
             queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             uriBuilder.Query = queryString.ToString();
 
-            RestRequest closeSessionRequest = new RestRequest();
+            SFRestRequest closeSessionRequest = new SFRestRequest();
             closeSessionRequest.jsonBody = null;
             closeSessionRequest.uri = uriBuilder.Uri;
             closeSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken);
 
             JObject response = restRequest.post(closeSessionRequest);
-            DeleteSessionResponse deleteSessionResponse = response.ToObject<DeleteSessionResponse>();
+            NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
+            if (!deleteSessionResponse.success)
+            {
+                throw new SFException();
+            }
+        }
+
+        internal void renewSession()
+        {
+            UriBuilder uriBuilder = new UriBuilder();
+            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
+            uriBuilder.Host = properties[SFSessionProperty.HOST];
+            uriBuilder.Port = Int32.Parse(properties[SFSessionProperty.PORT]);
+            uriBuilder.Path = SF_TOKEN_REQUEST_PATH;
+
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            uriBuilder.Query = queryString.ToString();
+
+            RenewSessionRequest renewSessionRequest = new RenewSessionRequest()
+            {
+                oldSessionToken = this.sessionToken,
+                requestType = "RENEW"
+            };
+
+            SFRestRequest closeSessionRequest = new SFRestRequest();
+            closeSessionRequest.jsonBody = null;
+            closeSessionRequest.uri = uriBuilder.Uri;
+            closeSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
+
+            JObject response = restRequest.post(closeSessionRequest);
+            NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
             if (!deleteSessionResponse.success)
             {
                 throw new SFException();
@@ -115,6 +163,8 @@ namespace Snowflake.Data.Core
             {
                 sessionToken = authnResponse.data.token;
                 masterToken = authnResponse.data.masterToken;
+                database = authnResponse.data.authResponseSessionInfo.databaseName;
+                schema = authnResponse.data.authResponseSessionInfo.schemaName;
             }
             else
             {

@@ -8,12 +8,14 @@ namespace Snowflake.Data.Core
 {
     public class BindingDTO
     {
-        string type { get; set;  }
+        public BindingDTO(string type, string value)
+        {
+            this.type = type;
+            this.value = value;
+        }
 
-        Object value { get; set; }
-    }
+        public string type { get; set;  }
 
-    public class ParameterBindings : Dictionary<string, BindingDTO>
-    {
+        public string value { get; set; }
     }
 }

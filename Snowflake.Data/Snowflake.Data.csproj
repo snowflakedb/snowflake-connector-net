@@ -30,6 +30,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Common.Logging, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.3.3.1\lib\net40\Common.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Common.Logging.Core, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.Core.3.3.1\lib\net40\Common.Logging.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -45,19 +53,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\SnowflakeConnection.cs" />
+    <Compile Include="Client\SnowflakeDbConnection.cs" />
     <Compile Include="Client\SnowflakeDbCommand.cs" />
     <Compile Include="Client\SnowflakeDbDataReader.cs" />
+    <Compile Include="Client\SnowflakeDbException.cs" />
+    <Compile Include="Client\SnowflakeDbParameter.cs" />
+    <Compile Include="Client\SnowflakeDbParameterCollection.cs" />
     <Compile Include="Core\HttpUtil.cs" />
     <Compile Include="Core\IRestRequest.cs" />
     <Compile Include="Core\ParameterBinding.cs" />
     <Compile Include="Core\RestRequestImpl.cs" />
     <Compile Include="Core\RestResponse.cs" />
+    <Compile Include="Core\ResultSetUtil.cs" />
     <Compile Include="Core\SFBaseResultSet.cs" />
     <Compile Include="Core\SFChunkDownloader.cs" />
+    <Compile Include="Core\SFDataConverter.cs" />
     <Compile Include="Core\SFException.cs" />
     <Compile Include="Core\SFResultChunk.cs" />
     <Compile Include="Core\SFResultSet.cs" />
+    <Compile Include="Core\SFResultSetMetaData.cs" />
     <Compile Include="Core\SFSession.cs" />
     <Compile Include="Core\SFSessionProperty.cs" />
     <Compile Include="Core\SFStatement.cs" />

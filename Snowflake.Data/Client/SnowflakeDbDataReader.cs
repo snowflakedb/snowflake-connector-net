@@ -1,16 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data.Common;
 using System.Collections;
 using Snowflake.Data.Core;
+using System.Data;
+
+using Common.Logging;
 
 namespace Snowflake.Data.Client
 {
     class SnowflakeDbDataReader : DbDataReader
     {
+        static private readonly ILog logger = LogManager.GetLogger<SnowflakeDbDataReader>();
+
         private SnowflakeDbCommand dbCommand;
 
         private SFBaseResultSet resultSet;
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Client
 
         public override bool GetBoolean(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getBoolean(ordinal);
         }
 
         public override byte GetByte(int ordinal)
@@ -107,17 +108,17 @@ namespace Snowflake.Data.Client
 
         public override DateTime GetDateTime(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getDateTime(ordinal);
         }
 
         public override decimal GetDecimal(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getDecimal(ordinal);
         }
 
         public override double GetDouble(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getDouble(ordinal);
         }
 
         public override IEnumerator GetEnumerator()
@@ -132,27 +133,27 @@ namespace Snowflake.Data.Client
 
         public override float GetFloat(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getFloat(ordinal);
         }
 
         public override Guid GetGuid(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getGuid(ordinal);
         }
 
         public override short GetInt16(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getInt16(ordinal);
         }
 
         public override int GetInt32(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getInt32(ordinal);
         }
 
         public override long GetInt64(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getInt64(ordinal);
         }
 
         public override string GetName(int ordinal)
@@ -193,6 +194,11 @@ namespace Snowflake.Data.Client
         public override bool Read()
         {
             return resultSet.next();
+        }
+
+        public override DataTable GetSchemaTable()
+        {
+            return resultSet.sfResultSetMetaData.toDataTable();
         }
     }
 }

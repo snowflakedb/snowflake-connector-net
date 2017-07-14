@@ -1,25 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using System.Data.Common;
 using System.Data;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
-    class SnowflakeDbCommand : DbCommand
+    public class SnowflakeDbCommand : DbCommand
     {
-        private SnowflakeConnection connection;
+        private SnowflakeDbConnection connection;
 
         private SFStatement sfStatement;
 
-        public SnowflakeDbCommand(SnowflakeConnection connection)
+        private SnowflakeDbParameterCollection parameterCollection;
+
+        public SnowflakeDbCommand(SnowflakeDbConnection connection)
         {
             this.connection = connection;
             this.sfStatement = new SFStatement(connection.sfSession);
+            parameterCollection = new SnowflakeDbParameterCollection();
         }
 
         public override string CommandText
@@ -44,12 +44,15 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return CommandType.Text;
             }
 
             set
             {
-                throw new NotImplementedException();
+                if (CommandType != CommandType.Text)
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
@@ -70,12 +73,15 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return UpdateRowSource.FirstReturnedRecord;
             }
 
             set
             {
-                throw new NotImplementedException();
+                if (UpdatedRowSource != UpdateRowSource.FirstReturnedRecord)
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
@@ -83,7 +89,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return connection;
             }
 
             set
@@ -96,9 +102,9 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return this.parameterCollection;
             }
-        }
+        } 
 
         protected override DbTransaction DbTransaction
         {
@@ -120,12 +126,17 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            throw new NotImplementedException();
+            SFBaseResultSet resultSet = sfStatement.execute(CommandText, 
+                convertToBindList(parameterCollection.parameterList), false);
+            resultSet.next();
+            return ResultSetUtil.calculateUpdateCount(resultSet);
         }
 
         public override object ExecuteScalar()
         {
-            throw new NotImplementedException();
+            SFBaseResultSet resultSet = sfStatement.execute(CommandText, null, false);
+            resultSet.next();
+            return resultSet.getObject(1);
         }
 
         public override void Prepare()
@@ -135,13 +146,33 @@ namespace Snowflake.Data.Client
 
         protected override DbParameter CreateDbParameter()
         {
-            throw new NotImplementedException();
+            return new SnowflakeDbParameter();
         }
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             SFBaseResultSet resultSet = sfStatement.execute(CommandText, null, false);
             return new SnowflakeDbDataReader(this, resultSet);
+        }
+
+        private Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
+        {
+            if (parameters == null || parameters.Count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
+                foreach(SnowflakeDbParameter parameter in parameters)
+                {
+                    Tuple<string, string> typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+
+                    BindingDTO bindingDto = new BindingDTO(typeAndVal.Item1, typeAndVal.Item2);
+                    binding[parameter.ParameterName] = bindingDto;
+                }
+                return binding;
+            }
         }
     }
 }

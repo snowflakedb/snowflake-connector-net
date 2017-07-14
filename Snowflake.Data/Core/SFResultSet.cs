@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+﻿using Common.Logging;
 
 namespace Snowflake.Data.Core
 {
     class SFResultSet : SFBaseResultSet
     {
+        private static readonly ILog logger = LogManager.GetLogger<SFResultSet>();
+
         private QueryExecResponseData execFirstChunkData;
 
         private int currentChunkRowIdx;
@@ -23,12 +20,15 @@ namespace Snowflake.Data.Core
 
         private SFResultChunk currentChunk;
 
-        public SFResultSet(QueryExecResponseData responseData)
+        public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement)
         {
             execFirstChunkData = responseData;
+            columnCount = responseData.rowType.Count;
             currentChunkRowIdx = -1;
             currentChunkRowCount = responseData.rowSet.GetLength(0);
             currentChunkIndex = 0;
+
+            this.sfStatement = sfStatement;
 
             if (responseData.chunks != null)
             {
@@ -40,9 +40,13 @@ namespace Snowflake.Data.Core
             }
 
             currentChunk = new SFResultChunk(responseData.rowSet);
+
+            sfResultSetMetaData = new SFResultSetMetaData(responseData);
+
+            updateSessionStatus(responseData);
         }
 
-        public override bool next()
+        internal override bool next()
         {
             currentChunkRowIdx++;
             
@@ -52,7 +56,9 @@ namespace Snowflake.Data.Core
             }
             else if (++currentChunkIndex < totalChunkCount)
             {
-                execFirstChunkData.rowSet = null; 
+                execFirstChunkData.rowSet = null;
+                logger.DebugFormat("Get chunk #{0} to consume", currentChunkIndex);
+
                 SFResultChunk chunk = chunkDownloader.getNextChunkToConsume();
 
                 if (chunk == null)
@@ -71,9 +77,16 @@ namespace Snowflake.Data.Core
             }
         }
 
-        protected override object getObjectInternal(int columnIndex)
+        protected override string getObjectInternal(int columnIndex)
         {
             return currentChunk.extractCell(currentChunkRowIdx, columnIndex);
+        }
+
+        private void updateSessionStatus(QueryExecResponseData responseData)
+        {
+            SFSession session = this.sfStatement.sfSession;
+            session.database = responseData.finalDatabaseName;
+            session.schema = responseData.finalSchemaName;
         }
     }
 }

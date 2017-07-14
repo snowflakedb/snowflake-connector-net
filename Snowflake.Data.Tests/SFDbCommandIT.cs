@@ -1,9 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data;
 
 namespace Snowflake.Data.Tests
 {
@@ -16,7 +11,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void testSimpleLargeResultSet()
         {
-            using (IDbConnection conn = new SnowflakeConnection())
+            using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;
 
@@ -33,6 +28,26 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
+        }
+
+        [Test]
+        public void testLongRunningQuery()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                // only one result is returned
+                Assert.IsTrue(reader.Read());
+
+                conn.Close();
+            }
+
         }
     }
 }

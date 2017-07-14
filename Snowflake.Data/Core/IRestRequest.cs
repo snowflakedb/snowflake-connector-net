@@ -6,71 +6,98 @@ using System.Net.Http;
 
 namespace Snowflake.Data.Core
 {
-    interface IRestRequest
+    public interface IRestRequest
     {
-        JObject post(RestRequest postRequest);
+        JObject post(SFRestRequest postRequest);
+
+        JObject get(SFRestRequest getRequest);
 
         HttpResponseMessage get(S3DownloadRequest getRequest);
     }
 
     public class S3DownloadRequest
     {
-        public Uri uri{ get; set; }
+        internal Uri uri{ get; set; }
 
-        public string qrmk { get; set; }
+        internal string qrmk { get; set; }
     }
 
-    public class RestRequest
+    public class SFRestRequest
     {
-        public Uri uri { get; set; }
+        internal Uri uri { get; set; }
 
-        public Object jsonBody { get; set;  }
+        internal Object jsonBody { get; set;  }
 
-        public String authorizationToken { get; set; }
+        internal String authorizationToken { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", uri.ToString(), 
+                jsonBody.ToString());
+        }
     }
 
-    public class AuthnRequest
+    class AuthnRequest
     {
         [JsonProperty(PropertyName = "data")]
-        public AuthnRequestData data { get; set; }
+        internal AuthnRequestData data { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("AuthRequest {{data: {0} }}", data.ToString());
+        }
     }
 
-    public class AuthnRequestData
+    class AuthnRequestData
     {
         [JsonProperty(PropertyName = "CLIENT_APP_ID")]
-        public String clientAppId { get; set; }
+        internal String clientAppId { get; set; }
 
         [JsonProperty(PropertyName = "CLIENT_APP_VERSION")]
-        public String clientAppVersion { get; set; }
+        internal String clientAppVersion { get; set; }
 
         [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
-        public String accountName { get; set; }
+        internal String accountName { get; set; }
 
         [JsonProperty(PropertyName = "LOGIN_NAME")]
-        public String loginName { get; set; }
+        internal String loginName { get; set; }
 
         [JsonProperty(PropertyName = "PASSWORD")]
-        public String password { get; set; }
+        internal String password { get; set; }
+        public override string ToString()
+        {
+            return String.Format("AuthRequestData {{ClientAppVersion: {0} , AccountName: {1}, loginName: {2} }}", 
+                clientAppVersion, accountName, loginName);
+        }
     }
 
-    public class AuthnRequestClientEnv
+    class AuthnRequestClientEnv
     {
         [JsonProperty(PropertyName = "APPLICATION")]
-        public String application { get; set; }
+        internal String application { get; set; }
 
         [JsonProperty(PropertyName = "OS_VERSION")]
-        public String osVersion { get; set; }
+        internal String osVersion { get; set; }
     }
 
-    public class QueryRequest
+    class QueryRequest
     {
         [JsonProperty(PropertyName = "sqlText")]
-        public string sqlText { get; set; }
+        internal string sqlText { get; set; }
 
         [JsonProperty(PropertyName = "describeOnly")]
-        public bool describeOnly { get; set; }
+        internal bool describeOnly { get; set; }
 
         [JsonProperty(PropertyName = "bindings")]
-        public ParameterBindings parameterBindings { get; set; }
+        internal Dictionary<string, BindingDTO> parameterBindings { get; set; }
+    }
+
+    class RenewSessionRequest
+    {
+        [JsonProperty(PropertyName = "oldSessionToken")]
+        internal string oldSessionToken { get; set; }
+
+        [JsonProperty(PropertyName = "requestType")]
+        internal string requestType { get; set; }
     }
 }
