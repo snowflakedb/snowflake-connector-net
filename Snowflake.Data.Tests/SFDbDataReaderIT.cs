@@ -138,13 +138,14 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create or replace table testGetDateTime(cola date)";
+                cmd.CommandText = "create or replace table testGetDateTime(cola date, colb time)";
                 int count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
                 DateTime today = DateTime.Today;
+                DateTime now = DateTime.Now;
 
-                string insertCommand = "insert into testgetdatetime values (?)";
+                string insertCommand = "insert into testgetdatetime values (?, ?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -152,6 +153,12 @@ namespace Snowflake.Data.Tests
                 p1.Value = today;
                 p1.DbType = DbType.Date;
                 cmd.Parameters.Add(p1);
+
+                var p2 = cmd.CreateParameter();
+                p2.ParameterName = "2";
+                p2.Value = now;
+                p2.DbType = DbType.Time;
+                cmd.Parameters.Add(p2);
 
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(1, count);
@@ -163,13 +170,12 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
 
 
-                cmd.CommandText = "drop table if exists testgetdouble";
+                /*cmd.CommandText = "drop table if exists testgetdatetime";
                 count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
+                Assert.AreEqual(0, count);~*/
 
                 conn.Close();
             }
         }
-
     }
 }

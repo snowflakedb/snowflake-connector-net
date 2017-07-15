@@ -58,6 +58,10 @@ namespace Snowflake.Data.Core
             {
                 return new DateTime(1970, 1, 1, 0, 0, 0).AddDays(srcVal);
             }
+            else if (srcType == SFDataType.TIME)
+            {
+                return DateTime.Today;
+            }
             else
             {
                 return DateTime.Today;
@@ -111,6 +115,22 @@ namespace Snowflake.Data.Core
                         long millis = (long)((DateTime)srcVal).ToUniversalTime().Subtract(
                             new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
                         destVal = millis.ToString();
+                    }
+                    break;
+
+                case DbType.Time:
+                    destType = SFDataType.TIME.ToString();
+                    if (srcVal.GetType() != typeof(DateTime))
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                        DateTime srcDt = ((DateTime)srcVal);
+                        long nanoSinceMidNight = (long)((srcDt.Hour * 3600 + srcDt.Minute * 60 + srcDt.Second) * 1000 
+                            + srcDt.Millisecond) * 1000 * 1000;
+
+                        destVal = nanoSinceMidNight.ToString();
                     }
                     break;
 
