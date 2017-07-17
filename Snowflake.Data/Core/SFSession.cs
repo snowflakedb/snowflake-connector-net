@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
@@ -45,6 +46,8 @@ namespace Snowflake.Data.Core
 
         internal string serverVersion { get; set; }
 
+        internal Dictionary<string, string> parameterMap { get; set; }
+
         /// <summary>
         ///     Constructor 
         /// </summary>
@@ -53,6 +56,7 @@ namespace Snowflake.Data.Core
         {
             restRequest = RestRequestImpl.Instance;
             properties = new SFSessionProperties(connectionString);
+            parameterMap = new Dictionary<string, string>();
         }
         internal void open()
         {
@@ -165,11 +169,22 @@ namespace Snowflake.Data.Core
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
+
+                updateParameterMap(parameterMap, authnResponse.data.nameValueParameter);
             }
             else
             {
                 throw new SFException();
             } 
+        }
+
+        internal static void updateParameterMap(Dictionary<string, string> parameters, List<NameValueParameter> parameterList)
+        {
+            logger.Debug("Update parameter map");
+            foreach (NameValueParameter parameter in parameterList)
+            {
+                parameters[parameter.name] = parameter.value;
+            }
         }
     }
 }

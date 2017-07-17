@@ -87,6 +87,8 @@ namespace Snowflake.Data.Core
             SFSession session = this.sfStatement.sfSession;
             session.database = responseData.finalDatabaseName;
             session.schema = responseData.finalSchemaName;
+
+            SFSession.updateParameterMap(session.parameterMap, responseData.parameters);
         }
     }
 }

@@ -169,13 +169,58 @@ namespace Snowflake.Data.Tests
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
 
+                // For time, we getDateTime on the column and ignore date part
+                DateTime actualTime = reader.GetDateTime(1);
+                Assert.AreEqual(now.Ticks - now.Date.Ticks, actualTime.Ticks - actualTime.Date.Ticks);
 
-                /*cmd.CommandText = "drop table if exists testgetdatetime";
+                cmd.CommandText = "drop table if exists testgetdatetime";
                 count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);~*/
+                Assert.AreEqual(0, count);
 
                 conn.Close();
             }
+        }
+
+        [Test]
+        public void testGetTimestampNTZ()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetTimestampNTZ(cola timestamp_ntz)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                DateTime now = DateTime.Now;
+
+                string insertCommand = "insert into testgettimestampntz values (?)";
+                cmd.CommandText = insertCommand;
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.Value = now;
+                p1.DbType = DbType.DateTime;
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgettimestampntz";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(0, DateTime.Compare(now, reader.GetDateTime(0)));
+
+                cmd.CommandText = "drop table if exists testgettimestampntz";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+
         }
     }
 }

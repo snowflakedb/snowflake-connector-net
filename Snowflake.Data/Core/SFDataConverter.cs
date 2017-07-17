@@ -8,8 +8,8 @@ namespace Snowflake.Data.Core
 {
     public enum SFDataType
     {
-        FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMPLTZ, TIMESTAMPNTZ,
-        TIMESTAMPTZ, OBJECT, BINARY, TIME, BOOLEAN
+        FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
+        TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN
     }
 
     /*enum CSharpType
@@ -19,6 +19,8 @@ namespace Snowflake.Data.Core
 
     class SFDataConverter
     {
+        static private DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
         static internal Object convertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
             if (destType == typeof(Int16) 
@@ -43,24 +45,25 @@ namespace Snowflake.Data.Core
             }
             else if (destType == typeof(DateTime))
             {
-                long srcValLong = Int64.Parse(srcVal);
-                return convertToDateTime(srcValLong, srcType);
+                return convertToDateTime(srcVal, srcType);
             }
             else
             {
                 return "";
             }
-        } 
+        }
 
-        static private DateTime convertToDateTime(long srcVal, SFDataType srcType)
+        static private DateTime convertToDateTime(string srcVal, SFDataType srcType)
         {
             if (srcType == SFDataType.DATE)
             {
-                return new DateTime(1970, 1, 1, 0, 0, 0).AddDays(srcVal);
+                long srcValLong = Int64.Parse(srcVal);
+                return unixEpoch.AddDays(srcValLong);
             }
-            else if (srcType == SFDataType.TIME)
+            else if (srcType == SFDataType.TIME || srcType == SFDataType.TIMESTAMP_NTZ)
             {
-                return DateTime.Today;
+                Tuple<long, long> secAndNsec = extractTimestamp(srcVal);
+                return unixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
             }
             else
             {
@@ -68,6 +71,21 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private static Tuple<long, long> extractTimestamp(string srcVal)
+        {
+            int dotIndex = srcVal.IndexOf('.');
+            if (dotIndex == -1)
+            {
+                return Tuple.Create(Int64.Parse(srcVal), (long)0);
+            }
+            else
+            {
+                return Tuple.Create(Int64.Parse(srcVal.Substring(0, dotIndex)), 
+                    Int64.Parse(srcVal.Substring(dotIndex+1, srcVal.Length-dotIndex-1)));
+            }
+        }
+
+            
         static internal Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
         {
             string destType;
@@ -113,7 +131,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         long millis = (long)((DateTime)srcVal).ToUniversalTime().Subtract(
-                            new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+                            unixEpoch).TotalMilliseconds;
                         destVal = millis.ToString();
                     }
                     break;
@@ -127,10 +145,22 @@ namespace Snowflake.Data.Core
                     else
                     {
                         DateTime srcDt = ((DateTime)srcVal);
-                        long nanoSinceMidNight = (long)((srcDt.Hour * 3600 + srcDt.Minute * 60 + srcDt.Second) * 1000 
-                            + srcDt.Millisecond) * 1000 * 1000;
+                        long nanoSinceMidNight = (long)(srcDt.Ticks - srcDt.Date.Ticks) * 100L; 
 
                         destVal = nanoSinceMidNight.ToString();
+                    }
+                    break;
+
+                case DbType.DateTime:
+                    destType = SFDataType.TIMESTAMP_NTZ.ToString();
+                    if (srcVal.GetType() != typeof(DateTime))
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                        DateTime srcDt = ((DateTime)srcVal);
+                        destVal = ((long)(srcDt.Subtract(unixEpoch).Ticks * 100)).ToString();
                     }
                     break;
 
