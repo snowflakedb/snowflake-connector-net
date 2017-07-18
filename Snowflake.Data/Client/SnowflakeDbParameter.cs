@@ -15,6 +15,7 @@ namespace Snowflake.Data.Client
 
         public SnowflakeDbParameter()
         {
+            SFDataType = SFDataType.None;
         }
 
         public SnowflakeDbParameter(string ParameterName, SFDataType SFDataType)

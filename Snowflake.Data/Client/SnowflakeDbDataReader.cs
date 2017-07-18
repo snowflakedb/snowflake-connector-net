@@ -173,7 +173,7 @@ namespace Snowflake.Data.Client
 
         public override object GetValue(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getValue(ordinal);
         }
 
         public override int GetValues(object[] values)

@@ -15,6 +15,12 @@ namespace Snowflake.Data.Core
         internal int columnCount;
 
         internal abstract bool next();
+        internal byte[] getBytes(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (byte[])SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(byte[]));
+        }
 
         internal DateTime getDateTime(int columnIndex)
         {
@@ -50,7 +56,16 @@ namespace Snowflake.Data.Core
 
         internal string getString(int columnIndex)
         {
-            return getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+
+            switch(sfDataType)
+            {
+                case SFDataType.DATE:
+                    return SFDataConverter.toDateString(getDateTime(columnIndex), 
+                        sfResultSetMetaData.dateOutputFormat);
+                default:
+                    return getObjectInternal(columnIndex);
+            }
         }
 
         internal Object getObject(int columnIndex)
@@ -84,6 +99,29 @@ namespace Snowflake.Data.Core
             string val = getObjectInternal(columnIndex);
             SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
             return (bool)SFDataConverter.convertToCSharpVal(val, sfDataType, typeof(Boolean));
+        }
+
+        internal DateTimeOffset getDateTimeOffset(int columnIndex)
+        {
+            string val = getObjectInternal(columnIndex);
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            return (DateTimeOffset) SFDataConverter.convertToCSharpVal(
+                        val, sfDataType, typeof(DateTimeOffset));
+        }
+
+        internal object getValue(int columnIndex)
+        {
+            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
+            switch(sfDataType)
+            {
+                case SFDataType.TIMESTAMP_TZ:
+                case SFDataType.TIMESTAMP_LTZ:
+                    return getDateTimeOffset(columnIndex);
+                case SFDataType.BINARY:
+                    return getBytes(columnIndex);
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         protected abstract string getObjectInternal(int columnIndex);

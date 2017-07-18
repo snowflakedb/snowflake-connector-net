@@ -43,6 +43,9 @@ namespace Snowflake.Data.Core
                     case "DATE_OUTPUT_FORMAT":
                         dateOutputFormat = parameter.value;
                         break;
+                    case "TIME_OUTPUT_FORMAT":
+                        timeOutputFormat = parameter.value;
+                        break;
                 }
             }
         }

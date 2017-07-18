@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Data;
+using System.Text;
+using Common.Logging;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +10,7 @@ namespace Snowflake.Data.Core
 {
     public enum SFDataType
     {
-        FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
+        None, FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
         TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN
     }
 
@@ -19,10 +21,13 @@ namespace Snowflake.Data.Core
 
     class SFDataConverter
     {
+        static private ILog logger = LogManager.GetLogger<SFDataConverter>();
+
         static private DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         static internal Object convertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
+            logger.TraceFormat("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
             if (destType == typeof(Int16) 
                 || destType == typeof(Int32)
                 || destType == typeof(Int64)
@@ -47,9 +52,17 @@ namespace Snowflake.Data.Core
             {
                 return convertToDateTime(srcVal, srcType);
             }
+            else if (destType == typeof(DateTimeOffset))
+            {
+                return convertToDateTimeOffset(srcVal, srcType);
+            }
+            else if (destType == typeof(byte[]))
+            {
+                return hexToBytes(srcVal);
+            }
             else
             {
-                return "";
+                throw new SFException();
             }
         }
 
@@ -68,6 +81,36 @@ namespace Snowflake.Data.Core
             else
             {
                 return DateTime.Today;
+            }
+        }
+
+        static private DateTimeOffset convertToDateTimeOffset(string srcVal, SFDataType srcType)
+        {
+            switch (srcType)
+            {
+                case SFDataType.TIMESTAMP_TZ:
+                    int spaceIndex = srcVal.IndexOf(' ');
+                    if (spaceIndex == -1)
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                        Tuple<long, long> secAndNsecTZ = extractTimestamp(srcVal.Substring(0, spaceIndex));
+
+                        int offset = Int32.Parse(srcVal.Substring(spaceIndex + 1, srcVal.Length - spaceIndex - 1));
+                        TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
+                        return new DateTimeOffset(unixEpoch.Ticks +
+                            (secAndNsecTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecTZ.Item2) / 100, TimeSpan.Zero).ToOffset(offSetTimespan);
+                    }
+                case SFDataType.TIMESTAMP_LTZ:
+                    Tuple<long, long> secAndNsecLTZ = extractTimestamp(srcVal);
+                      
+                    return new DateTimeOffset(unixEpoch.Ticks +
+                        (secAndNsecLTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecLTZ.Item2) / 100, TimeSpan.Zero).ToLocalTime(); 
+
+                default:
+                    throw new SFException();
             }
         }
 
@@ -163,11 +206,82 @@ namespace Snowflake.Data.Core
                         destVal = ((long)(srcDt.Subtract(unixEpoch).Ticks * 100)).ToString();
                     }
                     break;
+                
+                // by default map DateTimeoffset to TIMESTAMP_TZ
+                case DbType.DateTimeOffset:
+                    destType = SFDataType.TIMESTAMP_TZ.ToString();
+                    if (srcVal.GetType() != typeof(DateTimeOffset))
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                        DateTimeOffset dtOffset = (DateTimeOffset)srcVal;
+                        destVal = String.Format("{0} {1}", (dtOffset.UtcTicks - unixEpoch.Ticks) * 100L, 
+                            dtOffset.Offset.TotalMinutes + 1440);
+                    }
+                    break;
+
+                case DbType.Binary:
+                    destType = SFDataType.BINARY.ToString();
+                    if (srcVal.GetType() != typeof(byte[]))
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                        destVal = bytesToHex((byte[])srcVal);
+                    }
+                    break;
 
                 default:
                     throw new SFException();
             }
             return Tuple.Create(destType, destVal);
+        }
+
+        static private string bytesToHex(byte[] bytes)
+        {
+            StringBuilder hexBuilder = new StringBuilder(bytes.Length * 2);
+            foreach(byte b in bytes)
+            {
+                hexBuilder.AppendFormat("{0:x2}", b);
+            }
+            return hexBuilder.ToString();
+        }
+
+        static private byte[] hexToBytes(string hex)
+        {
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
+        }
+
+        static internal string csharpValToSfVal(SFDataType sfDataType, object srcVal)
+        {
+            switch(sfDataType)
+            {
+                case SFDataType.TIMESTAMP_LTZ:
+                    if (srcVal.GetType() != typeof(DateTimeOffset))
+                    {
+                        throw new SFException();
+                    }
+                    else
+                    {
+                       return ((long)(((DateTimeOffset)srcVal).UtcTicks - unixEpoch.Ticks) * 100).ToString();
+                    }
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        static internal string toDateString(DateTime date, string formatter)
+        {
+            // change formatter from "YYYY-MM-DD" to "yyyy-MM-dd"
+            formatter = formatter.Replace("Y", "y").Replace("m", "M").Replace("D", "d");
+            return date.ToString(formatter);
         }
     }
 }

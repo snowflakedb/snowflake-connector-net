@@ -166,10 +166,22 @@ namespace Snowflake.Data.Client
                 Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
                 foreach(SnowflakeDbParameter parameter in parameters)
                 {
-                    Tuple<string, string> typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                    // if the user is using interface, SFDataType will be None and there will a conversion from DbType to SFDataType
+                    // if the user is using concrete class, they should specify SFDataType. 
+                    if (parameter.SFDataType == SFDataType.None)
+                    {
+                        Tuple<string, string> typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
 
-                    BindingDTO bindingDto = new BindingDTO(typeAndVal.Item1, typeAndVal.Item2);
-                    binding[parameter.ParameterName] = bindingDto;
+                        BindingDTO bindingDto = new BindingDTO(typeAndVal.Item1, typeAndVal.Item2);
+                        binding[parameter.ParameterName] = bindingDto;
+                    }
+                    else
+                    {
+                        // for now just support TIMESTAMP_LTZ
+                        string val = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
+                        BindingDTO bindingDto = new BindingDTO(parameter.SFDataType.ToString(), val);
+                        binding[parameter.ParameterName] = bindingDto;
+                    }
                 }
                 return binding;
             }

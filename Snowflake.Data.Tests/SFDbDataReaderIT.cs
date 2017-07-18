@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data;
+using System.Text;
 
 namespace Snowflake.Data.Tests
 {
@@ -168,6 +170,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
+                Assert.AreEqual(today.ToString("yyyy-MM-dd"), reader.GetString(0));
 
                 // For time, we getDateTime on the column and ignore date part
                 DateTime actualTime = reader.GetDateTime(1);
@@ -220,7 +223,174 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+        }
 
+        [Test]
+        public void testGetTimestampTZ()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetTimestampTZ(cola timestamp_tz)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                DateTimeOffset now = DateTimeOffset.Now;
+
+                string insertCommand = "insert into testgettimestamptz values (?)";
+                cmd.CommandText = insertCommand;
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.Value = now;
+                p1.DbType = DbType.DateTimeOffset;
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgettimestamptz";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+
+                Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
+
+                cmd.CommandText = "drop table if exists testgettimestamptz";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+
+        }
+
+        [Test]
+        public void testGetTimestampLTZ()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetTimestampLTZ(cola timestamp_ltz)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                DateTimeOffset now = DateTimeOffset.Now;
+
+                string insertCommand = "insert into testgettimestampltz values (?)";
+                cmd.CommandText = insertCommand;
+
+                var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.Value = now;
+                p1.DbType = DbType.DateTimeOffset;
+                p1.SFDataType = Core.SFDataType.TIMESTAMP_LTZ;
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgettimestampltz";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+
+                Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
+
+                cmd.CommandText = "drop table if exists testgettimestamptz";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetBoolean()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetBoolean(cola boolean)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string insertCommand = "insert into testgetboolean values (?)";
+                cmd.CommandText = insertCommand;
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Boolean;
+                p1.Value = true;
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgetboolean";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                Assert.IsTrue(reader.GetBoolean(0));
+
+                cmd.CommandText = "drop table if exists testgetboolean";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetBinary()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetBinary(cola binary)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string insertCommand = "insert into testgetbinary values (?)";
+                cmd.CommandText = insertCommand;
+                
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes; 
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgetbinary";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
+
+                cmd.CommandText = "drop table if exists testgetbinary";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
         }
     }
 }

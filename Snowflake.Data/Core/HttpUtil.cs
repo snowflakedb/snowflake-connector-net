@@ -12,19 +12,28 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
-        static private HttpClient httpclient;
+        static private HttpClient httpClient;
 
         static public HttpClient getHttpClient()
         {
-            return httpclient == null ? initHttpClient() : httpclient;
+            if (httpClient == null)
+            {
+                initHttpClient();
+            }
+            return httpClient;
         }
 
-        static private HttpClient initHttpClient()
+        static private void initHttpClient()
         {
-            ServicePointManager.ServerCertificateValidationCallback = MyRemoteCertificateValidationCallback;
+            // ocsp check callback
+            ServicePointManager.ServerCertificateValidationCallback += 
+                new RemoteCertificateValidationCallback(MyRemoteCertificateValidationCallback);
 
-            var client = new HttpClient();
-            return client;
+            // enforce tls v1.2
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.UseNagleAlgorithm = false;
+
+            httpClient = new HttpClient();
         }
         public static bool MyRemoteCertificateValidationCallback(System.Object sender,
             X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
