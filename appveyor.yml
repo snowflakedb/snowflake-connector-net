@@ -3,3 +3,12 @@ platform: Any CPU
 
 before_build:
   - nuget restore
+
+build:
+  parallel: true
+  project: snowflake-connector-net.sln
+  
+test:
+  assemblies:
+    only:
+      - Snowflake.Data.Tests.dll
