@@ -1,6 +1,14 @@
 configuration: Release 
 platform: Any CPU
 
+environment:
+  my_secret:
+    secure: wCQetQvPT4ZLs/RkRfze5yPhzstxdyBV/G8EoptCL8Y=
+ 
+install:
+  - nuget install secure-file -ExcludeVersion
+  - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret%
+  
 before_build:
   - nuget restore
 
