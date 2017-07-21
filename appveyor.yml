@@ -25,5 +25,5 @@ after_test:
  - pip install codecov
  - codecov -f "coverage.xml" -t ffc6a21d-8176-4849-9047-e3a631dcd35a      
 
- artifacts:
+artifacts:
   - path: 'Snowflake.Data.Tests\bin\${configuration}\*.log'      
