@@ -16,10 +16,14 @@ build:
   parallel: true
   project: snowflake-connector-net.sln
   
-test:
-  assemblies:
-    only:
-      - Snowflake.Data.Tests.dll
       
-artifacts:
+test_script:
+  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"%xunit20%\xunit.console.x86.exe" -targetargs:".\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll" -register:user -filter:"+[Snowflake.Data.Tests*]*" -output:"coverage.xml"      
+
+after_test:
+ - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
+ - pip install codecov
+ - codecov -f "coverage.xml" -t ffc6a21d-8176-4849-9047-e3a631dcd35a      
+
+ artifacts:
   - path: 'Snowflake.Data.Tests\bin\${configuration}\*.log'      
