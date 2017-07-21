@@ -3,9 +3,7 @@ using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -19,11 +17,11 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-        private const string SF_SESSION_EXPIRED_CODE = "390112";
+        private const int SF_SESSION_EXPIRED_CODE = 390112;
 
-        private const string SF_QUERY_IN_PROGRESS = "333333";
+        private const int SF_QUERY_IN_PROGRESS = 333333;
 
-        private const string SF_QUERY_IN_PROGRESS_ASYNC = "333334";
+        private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
         private IRestRequest restRequest;
 
@@ -111,7 +109,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                throw new SFException();
+                throw new SnowflakeDbException(execResponse.data.sqlState, execResponse.code, execResponse.message);
             }
         }
     }

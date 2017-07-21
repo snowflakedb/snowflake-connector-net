@@ -10,8 +10,8 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
         
-        [JsonProperty(PropertyName = "code")]
-        internal String code { get; set; }
+        [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
+        internal int code { get; set; }
         
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }

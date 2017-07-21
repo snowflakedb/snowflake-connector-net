@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -174,7 +175,9 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                throw new SFException();
+                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message);
+                logger.Error("Authentication failed", e);
+                throw e;
             } 
         }
 
