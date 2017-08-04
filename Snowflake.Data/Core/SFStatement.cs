@@ -71,66 +71,73 @@ namespace Snowflake.Data.Core
             queryRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
             queryRequest.jsonBody = postBody;
 
-            JObject rawResponse = restRequest.post(queryRequest);
-            QueryExecResponse execResponse = rawResponse.ToObject<QueryExecResponse>();
-            
-            if (execResponse.code == SF_SESSION_EXPIRED_CODE)
+            try
             {
-                sfSession.renewSession();
-                this.execute(sql, bindings, describeOnly);
-            }
-            else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
-                     execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
-            {
-                logger.Info("Query execution in progress.");
-                bool isSessionRenewed = false;
-                string getResultUrl = null;
-                while(execResponse.code == SF_QUERY_IN_PROGRESS ||
-                      execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
+                JObject rawResponse = restRequest.post(queryRequest);
+                QueryExecResponse execResponse = rawResponse.ToObject<QueryExecResponse>();
+
+                if (execResponse.code == SF_SESSION_EXPIRED_CODE)
                 {
-                    if (!isSessionRenewed)
+                    sfSession.renewSession();
+                    this.execute(sql, bindings, describeOnly);
+                }
+                else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
+                         execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
+                {
+                    logger.Info("Query execution in progress.");
+                    bool isSessionRenewed = false;
+                    string getResultUrl = null;
+                    while (execResponse.code == SF_QUERY_IN_PROGRESS ||
+                          execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
                     {
-                        getResultUrl = execResponse.data.getResultUrl;
-                    }
+                        if (!isSessionRenewed)
+                        {
+                            getResultUrl = execResponse.data.getResultUrl;
+                        }
 
-                    UriBuilder getResultUriBuilder = new UriBuilder();
-                    getResultUriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
-                    getResultUriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
-                    getResultUriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
-                    getResultUriBuilder.Path = getResultUrl;
+                        UriBuilder getResultUriBuilder = new UriBuilder();
+                        getResultUriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
+                        getResultUriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
+                        getResultUriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
+                        getResultUriBuilder.Path = getResultUrl;
 
-                    SFRestRequest getResultRequest = new SFRestRequest()
-                    {
-                        uri = getResultUriBuilder.Uri,
-                        authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken)
-                    };
+                        SFRestRequest getResultRequest = new SFRestRequest()
+                        {
+                            uri = getResultUriBuilder.Uri,
+                            authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken)
+                        };
 
-                    execResponse = null;
-                    execResponse = restRequest.get(getResultRequest).ToObject<QueryExecResponse>();
-                    
-                    if (execResponse.code == SF_SESSION_EXPIRED_CODE)
-                    {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        sfSession.renewSession();
-                        isSessionRenewed = true;
-                    }
-                    else
-                    {
-                        isSessionRenewed = false;
+                        execResponse = null;
+                        execResponse = restRequest.get(getResultRequest).ToObject<QueryExecResponse>();
+
+                        if (execResponse.code == SF_SESSION_EXPIRED_CODE)
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            sfSession.renewSession();
+                            isSessionRenewed = true;
+                        }
+                        else
+                        {
+                            isSessionRenewed = false;
+                        }
                     }
                 }
-            }
 
-            if (execResponse.success)
-            {
-                return new SFResultSet(execResponse.data, this);
+                if (execResponse.success)
+                {
+                    return new SFResultSet(execResponse.data, this);
+                }
+                else
+                {
+                    SnowflakeDbException e = new SnowflakeDbException(
+                        execResponse.data.sqlState, execResponse.code, execResponse.message);
+                    logger.Error("Query execution failed.", e);
+                    throw e;
+                }
             }
-            else
+            finally
             {
-                SnowflakeDbException e = new SnowflakeDbException(
-                    execResponse.data.sqlState, execResponse.code, execResponse.message);
-                logger.Error("Query execution failed.", e);
-                throw e;
+                this.requestId = null;
             }
         }
 

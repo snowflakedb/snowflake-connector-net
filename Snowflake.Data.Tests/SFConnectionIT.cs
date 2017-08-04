@@ -18,10 +18,10 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                connectionString = "host=invalidaccount.snowflakecomputing.com;connection_timeout=30;"
+                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com;connection_timeout=30;"
                     + "account=invalidaccount;user=snowman;password=test;";
 
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 try

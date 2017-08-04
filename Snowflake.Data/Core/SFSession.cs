@@ -97,11 +97,12 @@ namespace Snowflake.Data.Core
             };
 
             // build request
+            int connectionTimeoutSec = Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
             SFRestRequest loginRequest = new SFRestRequest();
             loginRequest.jsonBody = new AuthnRequest() { data = data };
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
-            loginRequest.timeout = Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]) * 1000;
+            loginRequest.timeout = connectionTimeoutSec == -1 ? -1 : connectionTimeoutSec * 1000;
 
             if (logger.IsTraceEnabled)
             {

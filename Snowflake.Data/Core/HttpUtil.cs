@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core
             ServicePointManager.UseNagleAlgorithm = false;
             ServicePointManager.CheckCertificateRevocationList = true;
 
-            httpClient = new HttpClient(new RetryHandler());
+            httpClient = new HttpClient(new RetryHandler(new HttpClientHandler()));
             // default timeout for each request is 16 seconds
             //httpClient.Timeout = TimeSpan.FromSeconds(16);
         }
@@ -36,12 +36,8 @@ namespace Snowflake.Data.Core
         {
             static private ILog logger = LogManager.GetLogger<RetryHandler>();
             
-            // each request timeout in 16 seconds if hanging
-            const int singleRequestTimeout = 16 * 1000;
-
-            internal RetryHandler()
+            internal RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
             {
-                InnerHandler = new HttpClientHandler();
             }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
@@ -50,20 +46,16 @@ namespace Snowflake.Data.Core
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
 
-                var currentCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                currentCts.CancelAfter(singleRequestTimeout);
+                var childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
                 while (true)
                 {
                     try
                     {   
-                        // for each http request, we retry up to 16 seconds if hanging. Mark it timeout if 
-                        // parent method pass in cancel signal
-                        response = await base.SendAsync(requestMessage, currentCts.Token);
+                        response = await base.SendAsync(requestMessage, childCts.Token);
                     }
                     catch(OperationCanceledException e)
                     {
-                        logger.Debug("http request timeout reached. Cacnel the request.");
                         if (cancellationToken.IsCancellationRequested)
                         {
                             logger.Debug("SF rest request timeout.");
