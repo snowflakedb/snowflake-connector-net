@@ -18,7 +18,7 @@ build:
   
       
 test_script:
-  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:".\packages\NUnit.ConsoleRunner.3.6.1\tools\nunit3-console.exe" -targetargs:".\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll" -register:user -filter:"+[Snowflake.Data]*" -output:"coverage.xml"      
+  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:".\packages\NUnit.ConsoleRunner.3.6.1\tools\nunit3-console.exe" -returntargetcode -targetargs:".\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll" -register:user -filter:"+[Snowflake.Data]*" -output:"coverage.xml"      
 
 after_test:
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
