@@ -4,14 +4,20 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
+using Common.Logging;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
     class SFStatement
     {
+        static private ILog logger = LogManager.GetLogger<SFStatement>();
+
         internal SFSession sfSession { get; set; }
 
         private const string SF_QUERY_PATH = "/queries/v1/query-request";
+
+        private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
 
         private const string SF_QUERY_REQUEST_ID = "requestId";
 
@@ -23,6 +29,8 @@ namespace Snowflake.Data.Core
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
+        private string requestId = null;
+
         private IRestRequest restRequest;
 
         internal SFStatement(SFSession session)
@@ -33,6 +41,14 @@ namespace Snowflake.Data.Core
 
         internal SFBaseResultSet execute(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
+            if (requestId != null)
+            {
+                logger.Info("Another query is running.");
+                throw new SFException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
+            }
+            this.requestId = Guid.NewGuid().ToString(); 
+
+
             UriBuilder uriBuilder = new UriBuilder();
             uriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
             uriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
@@ -40,7 +56,7 @@ namespace Snowflake.Data.Core
             uriBuilder.Path = SF_QUERY_PATH;
 
             var queryString = HttpUtility.ParseQueryString(string.Empty);
-            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            queryString[SF_QUERY_REQUEST_ID] = requestId;
             uriBuilder.Query = queryString.ToString();
 
             QueryRequest postBody = new QueryRequest()
@@ -66,6 +82,7 @@ namespace Snowflake.Data.Core
             else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
                      execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
             {
+                logger.Info("Query execution in progress.");
                 bool isSessionRenewed = false;
                 string getResultUrl = null;
                 while(execResponse.code == SF_QUERY_IN_PROGRESS ||
@@ -93,6 +110,7 @@ namespace Snowflake.Data.Core
                     
                     if (execResponse.code == SF_SESSION_EXPIRED_CODE)
                     {
+                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
                         sfSession.renewSession();
                         isSessionRenewed = true;
                     }
@@ -109,8 +127,66 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                throw new SnowflakeDbException(execResponse.data.sqlState, execResponse.code, execResponse.message);
+                SnowflakeDbException e = new SnowflakeDbException(
+                    execResponse.data.sqlState, execResponse.code, execResponse.message);
+                logger.Error("Query execution failed.", e);
+                throw e;
             }
+        }
+
+        internal void cancel()
+        {
+            if (this.requestId == null)
+            {
+                logger.Info("No query to be cancelled.");
+                return;
+            }
+
+            UriBuilder uriBuilder = new UriBuilder();
+            uriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
+            uriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
+            uriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
+            uriBuilder.Path = SF_QUERY_CANCEL_PATH;
+
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            uriBuilder.Query = queryString.ToString();
+
+            QueryCancelRequest postBody = new QueryCancelRequest()
+            {
+                requestId = this.requestId
+            };
+
+            SFRestRequest cancelRequest = new SFRestRequest();
+            cancelRequest.uri = uriBuilder.Uri;
+            cancelRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
+            cancelRequest.jsonBody = postBody;
+
+            NullDataResponse cancelResponse = restRequest.post(cancelRequest).ToObject<NullDataResponse>();
+            if (cancelResponse.success)
+            {
+                logger.Info("Query cancellation succeed");
+            }
+            else
+            {
+                SnowflakeDbException e = new SnowflakeDbException(
+                    "", cancelResponse.code, cancelResponse.message);
+                logger.Error("Query cancellation failed.", e);
+                throw e;
+            }
+            
+        }
+
+        internal void setQueryTimeoutBomb(int timeout)
+        {
+            System.Threading.Timer timer = null;
+            timer = new System.Threading.Timer(
+                (object state) =>
+                {
+                    this.cancel();
+                    timer.Dispose();
+                },
+                null, TimeSpan.FromSeconds(timeout), TimeSpan.FromMilliseconds(-1));
         }
     }
 }

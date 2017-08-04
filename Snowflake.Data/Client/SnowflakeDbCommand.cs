@@ -19,6 +19,9 @@ namespace Snowflake.Data.Client
         {
             this.connection = connection;
             this.sfStatement = new SFStatement(connection.sfSession);
+            this.CommandTimeout = 0;
+
+            // by default, no query timeout
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
@@ -29,15 +32,7 @@ namespace Snowflake.Data.Client
 
         public override int CommandTimeout
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
-
-            set
-            {
-                throw new NotImplementedException();
-            }
+            get; set;
         }
 
         public override CommandType CommandType
@@ -121,12 +116,12 @@ namespace Snowflake.Data.Client
 
         public override void Cancel()
         {
-            throw new NotImplementedException();
+            sfStatement.cancel();
         }
 
         public override int ExecuteNonQuery()
         {
-            SFBaseResultSet resultSet = sfStatement.execute(CommandText, 
+            SFBaseResultSet resultSet = executeInternal(CommandText, 
                 convertToBindList(parameterCollection.parameterList), false);
             resultSet.next();
             return ResultSetUtil.calculateUpdateCount(resultSet);
@@ -134,9 +129,9 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
-            SFBaseResultSet resultSet = sfStatement.execute(CommandText, null, false);
+            SFBaseResultSet resultSet = executeInternal(CommandText, null, false);
             resultSet.next();
-            return resultSet.getObject(1);
+            return resultSet.getObject(0);
         }
 
         public override void Prepare()
@@ -151,7 +146,7 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            SFBaseResultSet resultSet = sfStatement.execute(CommandText, null, false);
+            SFBaseResultSet resultSet = executeInternal(CommandText, null, false);
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
@@ -185,6 +180,19 @@ namespace Snowflake.Data.Client
                 }
                 return binding;
             }
+        }
+
+        private SFBaseResultSet executeInternal(string sql, 
+            Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        {
+            if (CommandTimeout != 0)
+            {
+                sfStatement.setQueryTimeoutBomb(CommandTimeout);
+            }
+
+            SFBaseResultSet resultSet = sfStatement.execute(sql, bindings, describeOnly);
+
+            return resultSet;
         }
     }
 }

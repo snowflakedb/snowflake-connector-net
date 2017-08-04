@@ -7,6 +7,7 @@ using System.Text;
 namespace Snowflake.Data.Tests
 {
     using Snowflake.Data.Client;
+    using Snowflake.Data.Core;
     using NUnit.Framework;
 
     [TestFixture]
@@ -391,6 +392,45 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+        }
+
+        [Test]
+        public void testGetValueIndexOutOfBound()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select 1";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+
+                try
+                {
+                    reader.GetInt16(-1);
+                    Assert.Fail();
+                }
+                catch(SFException e)
+                {
+                    Assert.AreEqual(e.Data["ErrorCode"], 270002);
+                }
+
+                try
+                {
+                    reader.GetInt16(1);
+                    Assert.Fail();
+                }
+                catch(SFException e)
+                {
+                    Assert.AreEqual(e.Data["ErrorCode"], 270002);
+                }
+
+                conn.Close();
+            }
+
         }
     }
 }

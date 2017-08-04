@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
+using System;
+using System.Threading;
+using Common.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -25,43 +22,68 @@ namespace Snowflake.Data.Core
 
         static private void initHttpClient()
         {
-            // ocsp check callback
-            ServicePointManager.ServerCertificateValidationCallback += 
-                new RemoteCertificateValidationCallback(MyRemoteCertificateValidationCallback);
-
             // enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             ServicePointManager.UseNagleAlgorithm = false;
+            ServicePointManager.CheckCertificateRevocationList = true;
 
-            httpClient = new HttpClient();
+            httpClient = new HttpClient(new RetryHandler());
+            // default timeout for each request is 16 seconds
+            //httpClient.Timeout = TimeSpan.FromSeconds(16);
         }
-        public static bool MyRemoteCertificateValidationCallback(System.Object sender,
-            X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+
+        class RetryHandler : DelegatingHandler
         {
-            bool isOk = true;
-            // If there are errors in the certificate chain,
-            // look at each error to determine the cause.
-            if (sslPolicyErrors != SslPolicyErrors.None)
+            static private ILog logger = LogManager.GetLogger<RetryHandler>();
+            
+            // each request timeout in 16 seconds if hanging
+            const int singleRequestTimeout = 16 * 1000;
+
+            internal RetryHandler()
             {
-                for (int i = 0; i < chain.ChainStatus.Length; i++)
+                InnerHandler = new HttpClientHandler();
+            }
+
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
+                CancellationToken cancellationToken)
+            {
+                HttpResponseMessage response = null;
+                int backOffInSec = 1;
+
+                var currentCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                currentCts.CancelAfter(singleRequestTimeout);
+
+                while (true)
                 {
-                    if (chain.ChainStatus[i].Status == X509ChainStatusFlags.RevocationStatusUnknown)
-                    {
-                        continue;
+                    try
+                    {   
+                        // for each http request, we retry up to 16 seconds if hanging. Mark it timeout if 
+                        // parent method pass in cancel signal
+                        response = await base.SendAsync(requestMessage, currentCts.Token);
                     }
-                    chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EntireChain;
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
-                    chain.ChainPolicy.UrlRetrievalTimeout = new TimeSpan(0, 1, 0);
-                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
-                    bool chainIsValid = chain.Build((X509Certificate2)certificate);
-                    if (!chainIsValid)
+                    catch(OperationCanceledException e)
                     {
-                        isOk = false;
-                        break;
+                        logger.Debug("http request timeout reached. Cacnel the request.");
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            logger.Debug("SF rest request timeout.");
+                            cancellationToken.ThrowIfCancellationRequested(); 
+                        }
                     }
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        logger.Info("Retried request succeed.");
+                        logger.TraceFormat("Success Response {0}", response.ToString());
+                        return response;
+                    }
+
+                    logger.TraceFormat("Failed Response: {0}", response.ToString());
+                    logger.DebugFormat("Sleep {0} seconds and then retry the request", backOffInSec);
+                    Thread.Sleep(backOffInSec * 1000);
+                    backOffInSec = backOffInSec >= 16 ? 16 : backOffInSec * 2;
                 }
             }
-            return isOk;
         }
     }
 }

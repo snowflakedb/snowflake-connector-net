@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core
         ACCOUNT,
         [SFSessionPropertyAttr(required = false)]
         DB,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = false)] 
         HOST,
         [SFSessionPropertyAttr(required = true)] 
         PASSWORD,
@@ -24,7 +24,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = true)] 
         USER,
         [SFSessionPropertyAttr(required = false)]
-        WAREHOUSE
+        WAREHOUSE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "-1")]
+        CONNECTION_TIMEOUT
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -37,7 +39,7 @@ namespace Snowflake.Data.Core
     {
         internal SFSessionProperties(String connectionString)
         {
-            string[] properties = connectionString.Split(new string[] { ";" }, StringSplitOptions.None);
+            string[] properties = connectionString.Split(new char[] { ';' }, StringSplitOptions.None);
 
             foreach (string keyVal in properties)
             {
@@ -49,6 +51,45 @@ namespace Snowflake.Data.Core
                     this.Add(p, token[1]);
                 }
             }
+
+            checkSessionProperties();
+
+            // compose host value if not specified
+            if (!this.ContainsKey(SFSessionProperty.HOST))
+            {
+                this.Add(SFSessionProperty.HOST, String.Format("%s.snowflakecomputing.com", 
+                    this[SFSessionProperty.ACCOUNT]));
+            }
+        }
+
+        private void checkSessionProperties()
+        {
+            foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
+            {
+                // if required property, check if exists in the dictionary
+                if (sessionProperty.GetAttribute<SFSessionPropertyAttr>().required &&
+                    !this.ContainsKey(sessionProperty))
+                {
+                    throw new SFException(SFError.MISSING_CONNECTION_PROPERTY, 
+                        sessionProperty);
+                }
+                
+                // add default value to the map
+                string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+                if (defaultVal != null && !this.ContainsKey(sessionProperty))
+                {
+                    this.Add(sessionProperty, defaultVal);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Check that given a value in string format if it it valid  
+        /// </summary>
+        /// <returns>true if the value of a property is valid</returns>
+        private bool isValueValid(string value)
+        {
+            return true;
         }
     }
 

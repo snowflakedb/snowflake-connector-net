@@ -21,7 +21,15 @@ namespace Snowflake.Data.Client
                 return errorMessage;
             }
         }
-            
+
+        public override int ErrorCode
+        {
+            get
+            {
+                return vendorCode;
+            }
+        }
+
         public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage)
         {
             this.sqlState = sqlState;

@@ -16,9 +16,12 @@ namespace Snowflake.Data.Client
 
         private ConnectionState connectionState;
 
+        private int connectionTimeout;
+
         public SnowflakeDbConnection()
         {
             connectionState = ConnectionState.Closed;
+            connectionTimeout = 0;
         }
 
         public override string ConnectionString
@@ -31,6 +34,14 @@ namespace Snowflake.Data.Client
             get
             {
                 return connectionState == ConnectionState.Open ? sfSession.database : "";
+            }
+        }
+
+        public override int ConnectionTimeout
+        {
+            get
+            {
+                return this.connectionTimeout;
             }
         }
 
@@ -89,8 +100,10 @@ namespace Snowflake.Data.Client
         public override void Open()
         {
             sfSession = new SFSession(ConnectionString);
+            connectionState = ConnectionState.Connecting;
             sfSession.open();
             connectionState = ConnectionState.Open;
+            connectionTimeout = sfSession.connectionTimeout;
         }
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)

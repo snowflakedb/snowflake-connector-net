@@ -63,7 +63,7 @@ namespace Snowflake.Data.Core
 
                 if (chunk == null)
                 {
-                    throw new SFException();
+                    throw new SFException(SFError.INTERNAL_ERROR, "Failed to get chunk to consume");
                 }
                 currentChunk = chunk;
                 currentChunkRowIdx = 0;
@@ -79,6 +79,10 @@ namespace Snowflake.Data.Core
 
         protected override string getObjectInternal(int columnIndex)
         {
+            if (columnIndex < 0 || columnIndex >= columnCount)
+            {
+                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
+            }
             return currentChunk.extractCell(currentChunkRowIdx, columnIndex);
         }
 

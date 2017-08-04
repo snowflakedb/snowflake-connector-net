@@ -8,13 +8,31 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using System.Data;
+    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
         [Test]
-        public void testConnectionTimeout()
+        public void testLoginTimeout()
         {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                connectionString = "host=invalidaccount.snowflakecomputing.com;connection_timeout=30;"
+                    + "account=invalidaccount;user=snowman;password=test;";
+
+                conn.ConnectionString = connectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    conn.Open();
+                }
+                catch(SFException e)
+                {
+                    Assert.AreEqual(270007, e.Data["ErrorCode"]);
+                }
+            }
 
         }
 
@@ -25,8 +43,11 @@ namespace Snowflake.Data.Tests
             {
                 conn.ConnectionString = connectionString;
 
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
                 conn.Open();
                 Assert.AreEqual("TESTDB_DOTNET", conn.Database);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
                 Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);

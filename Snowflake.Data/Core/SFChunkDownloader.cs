@@ -111,7 +111,9 @@ namespace Snowflake.Data.Core
             S3DownloadRequest downloadRequest = new S3DownloadRequest()
             {
                 uri = new UriBuilder(chunk.url).Uri,
-                qrmk = downloadContext.qrmk
+                qrmk = downloadContext.qrmk,
+                // s3 download request timeout to one hour
+                timeout = 60 * 60
             };
 
             HttpResponseMessage httpResponse = restRequest.get(downloadRequest);

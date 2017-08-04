@@ -1,17 +1,20 @@
-﻿using System;
+﻿using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
+using System;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Common.Logging;
 
 namespace Snowflake.Data.Core
 {
     public class RestRequestImpl : IRestRequest
     {
+        private static ILog logger = LogManager.GetLogger<RestRequestImpl>();
+
         private static readonly RestRequestImpl instance = new RestRequestImpl();
 
         private static MediaTypeHeaderValue applicationJson = new MediaTypeHeaderValue("applicaion/json");
@@ -39,6 +42,8 @@ namespace Snowflake.Data.Core
         {
             var json = JsonConvert.SerializeObject(postRequest.jsonBody);
             HttpContent httpContent = new StringContent(json);
+            CancellationTokenSource cancellationTokenSource = 
+                new CancellationTokenSource(postRequest.timeout);
 
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, postRequest.uri);
 
@@ -47,7 +52,7 @@ namespace Snowflake.Data.Core
             message.Headers.Add(SF_AUTHORIZATION_HEADER, postRequest.authorizationToken);
             message.Headers.Accept.Add(applicationSnowflake);
 
-            var responseContent = sendRequest(message).Content;
+            var responseContent = sendRequest(message, cancellationTokenSource.Token).Content;
 
             var jsonString = responseContent.ReadAsStringAsync();
             jsonString.Wait();
@@ -61,7 +66,10 @@ namespace Snowflake.Data.Core
             message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
             message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
 
-            return sendRequest(message);
+            CancellationTokenSource cancellationTokenSource = 
+                new CancellationTokenSource(getRequest.timeout);
+
+            return sendRequest(message, cancellationTokenSource.Token);
         }
 
         public JObject get(SFRestRequest getRequest)
@@ -70,7 +78,10 @@ namespace Snowflake.Data.Core
             message.Headers.Add(SF_AUTHORIZATION_HEADER, getRequest.authorizationToken);
             message.Headers.Accept.Add(applicationSnowflake);
 
-            var responseContent = sendRequest(message).Content;
+            CancellationTokenSource cancellationTokenSource = 
+                new CancellationTokenSource(getRequest.timeout);
+
+            var responseContent = sendRequest(message, cancellationTokenSource.Token).Content;
 
             var jsonString = responseContent.ReadAsStringAsync();
             jsonString.Wait();
@@ -78,12 +89,27 @@ namespace Snowflake.Data.Core
             return JObject.Parse(jsonString.Result);
         }
 
-        private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage)
+        private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
         {
-            // TODO: wrap up retry logic
-            var response = HttpUtil.getHttpClient().SendAsync(requestMessage).Result.EnsureSuccessStatusCode();
+            try
+            {
+                var response = HttpUtil.getHttpClient().SendAsync(requestMessage, cancellationToken)
+                    .Result.EnsureSuccessStatusCode();
 
-            return response;
+                return response;
+            }
+            catch(AggregateException e)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new SFException(SFError.REQUEST_TIMEOUT);
+                }
+                else
+                {
+                    throw e;
+                }
+            }
         }
     }
+
 }

@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                throw new SFException();
+                throw new SFException(SFError.INTERNAL_ERROR, "Invalid destination type.");
             }
         }
 
@@ -92,7 +92,8 @@ namespace Snowflake.Data.Core
                     int spaceIndex = srcVal.IndexOf(' ');
                     if (spaceIndex == -1)
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INTERNAL_ERROR, 
+                            String.Format("Invalid timestamp_tz value: {0}", srcVal));
                     }
                     else
                     {
@@ -110,7 +111,8 @@ namespace Snowflake.Data.Core
                         (secAndNsecLTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecLTZ.Item2) / 100, TimeSpan.Zero).ToLocalTime(); 
 
                 default:
-                    throw new SFException();
+                    throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                        srcType, typeof(DateTimeOffset).ToString());
             }
         }
 
@@ -169,7 +171,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.DATE.ToString();
                     if (srcVal.GetType() != typeof(DateTime))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), DbType.Date.ToString());
                     }
                     else
                     {
@@ -183,7 +186,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.TIME.ToString();
                     if (srcVal.GetType() != typeof(DateTime))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), DbType.Time.ToString());
                     }
                     else
                     {
@@ -198,7 +202,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.TIMESTAMP_NTZ.ToString();
                     if (srcVal.GetType() != typeof(DateTime))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), DbType.DateTime.ToString());
                     }
                     else
                     {
@@ -212,7 +217,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.TIMESTAMP_TZ.ToString();
                     if (srcVal.GetType() != typeof(DateTimeOffset))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), DbType.DateTimeOffset.ToString());
                     }
                     else
                     {
@@ -226,7 +232,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.BINARY.ToString();
                     if (srcVal.GetType() != typeof(byte[]))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), DbType.Binary.ToString());
                     }
                     else
                     {
@@ -235,7 +242,7 @@ namespace Snowflake.Data.Core
                     break;
 
                 default:
-                    throw new SFException();
+                    throw new NotImplementedException();
             }
             return Tuple.Create(destType, destVal);
         }
@@ -266,7 +273,8 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIMESTAMP_LTZ:
                     if (srcVal.GetType() != typeof(DateTimeOffset))
                     {
-                        throw new SFException();
+                        throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                            srcVal.GetType().ToString(), SFDataType.TIMESTAMP_LTZ.ToString());
                     }
                     else
                     {

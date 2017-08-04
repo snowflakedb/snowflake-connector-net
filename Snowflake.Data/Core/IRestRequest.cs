@@ -20,15 +20,26 @@ namespace Snowflake.Data.Core
         internal Uri uri{ get; set; }
 
         internal string qrmk { get; set; }
+
+        // request timeout in millis
+        internal int timeout { get; set; }
     }
 
     public class SFRestRequest
     {
+        public SFRestRequest()
+        {
+            timeout = -1;
+        }
+
         internal Uri uri { get; set; }
 
         internal Object jsonBody { get; set;  }
 
         internal String authorizationToken { get; set; }
+        
+        // request timeout in millis
+        internal int timeout { get; set; }
 
         public override string ToString()
         {
@@ -90,6 +101,12 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "bindings")]
         internal Dictionary<string, BindingDTO> parameterBindings { get; set; }
+    }
+
+    class QueryCancelRequest
+    {
+        [JsonProperty(PropertyName = "requestId")]
+        internal string requestId { get; set; }
     }
 
     class RenewSessionRequest

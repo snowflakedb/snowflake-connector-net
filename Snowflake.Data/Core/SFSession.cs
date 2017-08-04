@@ -47,6 +47,14 @@ namespace Snowflake.Data.Core
 
         internal string serverVersion { get; set; }
 
+        internal int connectionTimeout
+        {
+            get
+            {
+                return Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+            }
+        }
+
         internal Dictionary<string, string> parameterMap { get; set; }
 
         /// <summary>
@@ -93,6 +101,7 @@ namespace Snowflake.Data.Core
             loginRequest.jsonBody = new AuthnRequest() { data = data };
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
+            loginRequest.timeout = Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]) * 1000;
 
             if (logger.IsTraceEnabled)
             {
@@ -125,7 +134,8 @@ namespace Snowflake.Data.Core
             NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
             if (!deleteSessionResponse.success)
             {
-                throw new SFException();
+                logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {0}", 
+                    deleteSessionResponse.code, deleteSessionResponse.message);
             }
         }
 
@@ -141,22 +151,26 @@ namespace Snowflake.Data.Core
             queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             uriBuilder.Query = queryString.ToString();
 
-            RenewSessionRequest renewSessionRequest = new RenewSessionRequest()
+            RenewSessionRequest postBody = new RenewSessionRequest()
             {
                 oldSessionToken = this.sessionToken,
                 requestType = "RENEW"
             };
 
-            SFRestRequest closeSessionRequest = new SFRestRequest();
-            closeSessionRequest.jsonBody = null;
-            closeSessionRequest.uri = uriBuilder.Uri;
-            closeSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
+            SFRestRequest renewSessionRequest = new SFRestRequest();
+            renewSessionRequest.jsonBody = postBody;
+            renewSessionRequest.uri = uriBuilder.Uri;
+            renewSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
+            renewSessionRequest.timeout = 0;
 
-            JObject response = restRequest.post(closeSessionRequest);
-            NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
-            if (!deleteSessionResponse.success)
+            JObject response = restRequest.post(renewSessionRequest);
+            NullDataResponse sessionRenewResponse = response.ToObject<NullDataResponse>();
+            if (!sessionRenewResponse.success)
             {
-                throw new SFException();
+                SnowflakeDbException e = new SnowflakeDbException("", 
+                    sessionRenewResponse.code, sessionRenewResponse.message);
+                logger.Error("Renew session failed", e);
+                throw e;
             }
         }
 
