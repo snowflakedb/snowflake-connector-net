@@ -7,12 +7,47 @@ Snowflake Connector for .NET
 
 Build
 =====
+Prerequisites
+-------------
+This project is developed under Visual Studio 2015. All other version of visual studio is not supported.
+
+Steps
+-----
+1. Pulldown dependency:
+```{r, engine='bash', code_block_name}
+nuget restore
+```
+
+2. Buidl the solution file 
+```{r, engine='bash', code_block_name}
+msbuild snowflake-connector-net.sln /p:Configuration=Release
+```
 
 Install
 =======
 
 Test
 ====
+
+Run Tests from Command Prompt
+-----------------------------
+Build Solution file will both build connector binary and tests binary. Issue the following command from command line will run the tests. The test binary will be under Debug directory if building the solution file in Debug mode. 
+
+```{r, engine='bash', code_block_name}
+.\packages\NUnit.ConsoleRunner.3.6.1\tools\nunit3-console.exe .\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll
+```
+
+
+Tests can also be run under code coverage:
+
+```{r, engine='bash', code_block_name}
+.\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:".\packages\NUnit.ConsoleRunner.3.6.1\tools\nunit3-console.exe" -returntargetcode -targetargs:".\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll" -register:user -filter:"+[Snowflake.Data]*" -output:"coverage.xml"  
+```
+
+Run Tests from Visual Studio 2015
+---------------------------------
+Test can also be run under Visual Studio 2015. Open the solution file in VS2015 and run tests under Test Explorer.
+
 
 Usage
 =====
@@ -112,3 +147,43 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
 Logging
 -------
+Snowflake .Net Driver use [Common.Logging](https://github.com/net-commons/common-logging) as logging framework. The driver package only includes facade, which means application should provide actaul logging implementation package. 
+
+
+Here is a sample app.config which use [log4net](http://logging.apache.org/log4net/) as actual logging implementation.
+```xml
+  <configSections>
+    <sectionGroup name="common">
+      <section name="logging" type="Common.Logging.ConfigurationSectionHandler, Common.Logging" />
+    </sectionGroup>
+    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
+  </configSections>
+  <common>
+    <logging>
+      <factoryAdapter type="Common.Logging.Log4Net.Log4NetLoggerFactoryAdapter, Common.Logging.Log4Net1215">
+        <arg key="configType" value="INLINE" />
+      </factoryAdapter>
+    </logging>
+  </common>
+  
+  <log4net>
+    <appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
+      <file value="snowflake_dotnet.log" />
+      <appendToFile value="true"/>
+      <rollingStyle value="Size" />
+      <maximumFileSize value="10MB" />
+      <staticLogFileName value="true" />
+      <maxSizeRollBackups value="10" />
+      <layout type="log4net.Layout.PatternLayout">
+        <!-- <header value="[DateTime]  [Thread]  [Level]  [ClassName] Message&#13;&#10;" /> -->
+        <conversionPattern value="[%date] [%t] [%-5level] [%logger] %message%newline" />
+      </layout>
+    </appender>
+
+    <root>
+      <level value="ALL" />
+      <appender-ref ref="MyRollingFileAppender" />
+    </root>
+  </log4net>
+```
+
