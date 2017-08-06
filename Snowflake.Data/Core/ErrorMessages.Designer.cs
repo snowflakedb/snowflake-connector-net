@@ -79,7 +79,7 @@ namespace Snowflake.Data.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Connection string is invalid {0}.
+        ///   Looks up a localized string similar to Connection string is invalid: {0}.
         /// </summary>
         internal static string INVALID_CONNECTION_STRING {
             get {

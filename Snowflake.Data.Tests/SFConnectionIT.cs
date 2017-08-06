@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // invalid propety will be ignored.
-                conn.ConnectionString = connectionString += ";invalidProperty=invalidvalue";
+                conn.ConnectionString = connectionString += ";invalidProperty=invalidvalue;";
 
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);

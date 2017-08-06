@@ -50,28 +50,32 @@ namespace Snowflake.Data.Core
 
             foreach (string keyVal in propertyEntry)
             {
-                string[] token = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                if (token.Length == 2)
+                if (keyVal.Length > 0)
                 {
-                    try
+                    string[] token = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
+                    if (token.Length == 2)
                     {
-                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                            typeof(SFSessionProperty), token[0].ToUpper());
-                        properties.Add(p, token[1]);
-                        logger.InfoFormat("Connection property: {0}, value: {1}", p, 
-                            p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : token[1]);
+                        try
+                        {
+                            SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), token[0].ToUpper());
+                            properties.Add(p, token[1]);
+                            logger.InfoFormat("Connection property: {0}, value: {1}", p,
+                                p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : token[1]);
+                        }
+                        catch (ArgumentException e)
+                        {
+                            logger.WarnFormat("Property {0} not found ignored.", token[0]);
+                        }
                     }
-                    catch (ArgumentException e)
+                    else
                     {
-                        logger.WarnFormat("Property {0} not found ignored.", token[0]);
+                        string invalidStringDetail = String.Format("Invalid kay value pair {0}", keyVal);
+                        SFException e = new SFException(SFError.INVALID_CONNECTION_STRING, 
+                            new object[] { invalidStringDetail });
+                        logger.Error(e);
+                        throw e;
                     }
-                }
-                else
-                {
-                    string invalidStringDetail = String.Format("Invalid kay value pair {0}", keyVal);
-                    SFException e = new SFException(SFError.INVALID_CONNECTION_STRING, new object[]{ invalidStringDetail });
-                    logger.Error(e);
-                    throw e;
                 }
             }
 
