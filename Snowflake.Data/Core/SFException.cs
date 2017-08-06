@@ -77,7 +77,10 @@ namespace Snowflake.Data.Core
         MISSING_CONNECTION_PROPERTY,
 
         [SFErrorAttr(errorCode = 270007)]
-        REQUEST_TIMEOUT
+        REQUEST_TIMEOUT,
+
+        [SFErrorAttr(errorCode = 270008)]
+        INVALID_CONNECTION_STRING
     }
     
     public class SqlState

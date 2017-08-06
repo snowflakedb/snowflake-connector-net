@@ -79,6 +79,15 @@ namespace Snowflake.Data.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Connection string is invalid {0}.
+        /// </summary>
+        internal static string INVALID_CONNECTION_STRING {
+            get {
+                return ResourceManager.GetString("INVALID_CONNECTION_STRING", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to convert data {0} from type {0} to type {1}..
         /// </summary>
         internal static string INVALID_DATA_CONVERSION {

@@ -123,6 +123,9 @@
   <data name="INTERNAL_ERROR" xml:space="preserve">
     <value>Snowflake Internal Error: {0}</value>
   </data>
+  <data name="INVALID_CONNECTION_STRING" xml:space="preserve">
+    <value>Connection string is invalid {0}</value>
+  </data>
   <data name="INVALID_DATA_CONVERSION" xml:space="preserve">
     <value>Failed to convert data {0} from type {0} to type {1}.</value>
   </data>

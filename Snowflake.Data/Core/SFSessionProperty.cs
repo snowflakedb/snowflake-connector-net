@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Common.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -35,61 +36,80 @@ namespace Snowflake.Data.Core
 
         public string defaultValue { get; set; }
     }
+
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
-        internal SFSessionProperties(String connectionString)
-        {
-            string[] properties = connectionString.Split(new char[] { ';' }, StringSplitOptions.None);
+        static private ILog logger = LogManager.GetLogger<SFSessionProperties>();
 
-            foreach (string keyVal in properties)
+        internal static SFSessionProperties parseConnectionString(String connectionString)
+        {
+            logger.Info("Start parsing connection string.");
+            SFSessionProperties properties = new SFSessionProperties();
+
+            string[] propertyEntry = connectionString.Split(new char[] { ';' }, StringSplitOptions.None);
+
+            foreach (string keyVal in propertyEntry)
             {
                 string[] token = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
                 if (token.Length == 2)
                 {
-                    SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                        typeof(SFSessionProperty), token[0].ToUpper());
-                    this.Add(p, token[1]);
+                    try
+                    {
+                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                            typeof(SFSessionProperty), token[0].ToUpper());
+                        properties.Add(p, token[1]);
+                        logger.InfoFormat("Connection property: {0}, value: {1}", p, 
+                            p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : token[1]);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        logger.WarnFormat("Property {0} not found ignored.", token[0]);
+                    }
+                }
+                else
+                {
+                    string invalidStringDetail = String.Format("Invalid kay value pair {0}", keyVal);
+                    SFException e = new SFException(SFError.INVALID_CONNECTION_STRING, new object[]{ invalidStringDetail });
+                    logger.Error(e);
+                    throw e;
                 }
             }
 
-            checkSessionProperties();
+            checkSessionProperties(properties);
 
             // compose host value if not specified
-            if (!this.ContainsKey(SFSessionProperty.HOST))
+            if (!properties.ContainsKey(SFSessionProperty.HOST))
             {
-                this.Add(SFSessionProperty.HOST, String.Format("%s.snowflakecomputing.com", 
-                    this[SFSessionProperty.ACCOUNT]));
+                string hostName = String.Format("%s.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                properties.Add(SFSessionProperty.HOST, hostName);
+                logger.InfoFormat("Compose host name: {0}", hostName);
             }
+
+            return properties; 
         }
 
-        private void checkSessionProperties()
+        private static void checkSessionProperties(SFSessionProperties properties)
         {
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 // if required property, check if exists in the dictionary
                 if (sessionProperty.GetAttribute<SFSessionPropertyAttr>().required &&
-                    !this.ContainsKey(sessionProperty))
+                    !properties.ContainsKey(sessionProperty))
                 {
-                    throw new SFException(SFError.MISSING_CONNECTION_PROPERTY, 
+                    SFException e = new SFException(SFError.MISSING_CONNECTION_PROPERTY, 
                         sessionProperty);
+                    logger.Error(e);
+                    throw e;
                 }
                 
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
-                if (defaultVal != null && !this.ContainsKey(sessionProperty))
+                if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
-                    this.Add(sessionProperty, defaultVal);
+                    logger.DebugFormat("Sesssion property {0} set to default value: {1}", sessionProperty, defaultVal);
+                    properties.Add(sessionProperty, defaultVal);
                 }
             }
-        }
-
-        /// <summary>
-        ///     Check that given a value in string format if it it valid  
-        /// </summary>
-        /// <returns>true if the value of a property is valid</returns>
-        private bool isValueValid(string value)
-        {
-            return true;
         }
     }
 

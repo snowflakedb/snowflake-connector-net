@@ -37,6 +37,51 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void testInvalidConnectioinString()
+        {
+            string[] invalidStrings = {
+                // missing required connection property password
+                "ACCOUNT=testaccount;user=testuser",
+                // invalid account value
+                "ACCOUNT=A=C;USER=testuser;password=123",
+                "complete_invalid_string",
+            };
+
+            int[] expectedErrorCode = { 270006, 270008, 270008 };
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                for (int i=0; i<invalidStrings.Length; i++)
+                {
+                    try
+                    {
+                        conn.ConnectionString = invalidStrings[i];
+                        conn.Open();
+                        Assert.Fail();
+                    }
+                    catch (SFException e)
+                    {
+                        Assert.AreEqual(expectedErrorCode[i], e.Data["ErrorCode"]);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void testUnknownConnectionProperty()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // invalid propety will be ignored.
+                conn.ConnectionString = connectionString += ";invalidProperty=invalidvalue";
+
+                conn.Open();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void testSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

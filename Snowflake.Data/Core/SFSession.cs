@@ -64,9 +64,10 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString)
         {
             restRequest = RestRequestImpl.Instance;
-            properties = new SFSessionProperties(connectionString);
+            properties = SFSessionProperties.parseConnectionString(connectionString);
             parameterMap = new Dictionary<string, string>();
         }
+
         internal void open()
         {
             logger.Debug("Open Session");
