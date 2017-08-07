@@ -108,12 +108,11 @@ namespace Snowflake.Data.Client
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            throw new NotImplementedException();
+            return new SnowflakeDbTransaction(isolationLevel, this);
         }
 
         protected override DbCommand CreateDbCommand()
         {
-            SFStatement sfStatement = new SFStatement(sfSession);
             return new SnowflakeDbCommand(this);
         }
     }

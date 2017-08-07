@@ -103,15 +103,9 @@ namespace Snowflake.Data.Client
 
         protected override DbTransaction DbTransaction
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get;
 
-            set
-            {
-                throw new NotImplementedException();
-            }
+            set;
         }
 
         public override void Cancel()

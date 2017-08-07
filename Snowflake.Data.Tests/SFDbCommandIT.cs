@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -136,6 +137,56 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
 
+        }
+
+        [Test]
+        public void testTransaction()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                try
+                {
+                    conn.BeginTransaction(IsolationLevel.ReadUncommitted);
+                    Assert.Fail();
+                }
+                catch (NotImplementedException) { }
+
+                IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                IDbCommand command = conn.CreateCommand();
+                command.Transaction = tran;
+                command.CommandText = "create or replace table testtransaction(cola string)";
+                command.ExecuteNonQuery();
+                command.Transaction.Commit();
+
+                command.CommandText = "show tables like 'testtransaction'";
+                IDataReader reader = command.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                Assert.IsFalse(reader.Read());
+
+                // start another transaction to test rollback
+                tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
+                command.Transaction = tran;
+                command.CommandText = "insert into testtransaction values('test')";
+
+                command.ExecuteNonQuery();
+                command.CommandText = "select * from testtransaction";
+                reader = command.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("test", reader.GetString(0));
+                command.Transaction.Rollback();
+                
+                // no value will be in table since it has been rollbacked
+                command.CommandText = "select * from testtransaction";
+                reader = command.ExecuteReader();
+                Assert.IsFalse(reader.Read());
+
+                conn.Close();
+            }
         }
     }
 }

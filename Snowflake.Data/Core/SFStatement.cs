@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Common.Logging;
-using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {

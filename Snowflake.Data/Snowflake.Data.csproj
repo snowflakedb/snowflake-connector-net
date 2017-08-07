@@ -60,6 +60,7 @@
     <Compile Include="Client\SnowflakeDbException.cs" />
     <Compile Include="Client\SnowflakeDbParameter.cs" />
     <Compile Include="Client\SnowflakeDbParameterCollection.cs" />
+    <Compile Include="Client\SnowflakeDbTransaction.cs" />
     <Compile Include="Core\ErrorMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
