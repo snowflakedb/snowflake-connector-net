@@ -13,18 +13,34 @@ This project is developed under Visual Studio 2015. All other version of visual 
 
 Steps
 -----
-1. Pulldown dependency:
+1. Checkout source code from Github:
 ```{r, engine='bash', code_block_name}
+git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
+```
+
+2. Pulldown dependency:
+```{r, engine='bash', code_block_name}
+cd snowflake-connector-net
 nuget restore
 ```
 
-2. Buidl the solution file 
+3. Build the solution file 
 ```{r, engine='bash', code_block_name}
 msbuild snowflake-connector-net.sln /p:Configuration=Release
 ```
 
 Install
 =======
+Package ID for Snowflake Connector for .Net is Snowflake.Data. 
+
+Packages can be directly downloaded from [nuget.org](https://www.nuget.org/). 
+
+It can also be downloaded using Visual Studio UI (Tools > NuGet Package Manager > Manage NuGet Packages for Solution and search for "Snowflake.Data")
+
+Alternatively, packages can also be downloaded using Package Manager Console:
+```{r, engine='bash', code_block_name}
+PM> Install-Package Snowflake.Data
+```
 
 Test
 ====
