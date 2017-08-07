@@ -79,6 +79,10 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "PASSWORD")]
         internal String password { get; set; }
+
+        [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
+        internal AuthnRequestClientEnv clientEnv { get; set; }
+
         public override string ToString()
         {
             return String.Format("AuthRequestData {{ClientAppVersion: {0} , AccountName: {1}, loginName: {2} }}", 

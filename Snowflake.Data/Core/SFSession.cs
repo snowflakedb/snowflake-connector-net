@@ -92,13 +92,20 @@ namespace Snowflake.Data.Core
             uriBuilder.Query = queryString.ToString();
 
             // build post body
+            AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
+            {
+                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                osVersion = System.Environment.OSVersion.VersionString
+            };
+
             AuthnRequestData data = new AuthnRequestData()
             {
                 loginName = properties[SFSessionProperty.USER],
                 password = properties[SFSessionProperty.PASSWORD],
                 clientAppId = ".NET",
-                clientAppVersion = "0.1",
-                accountName = properties[SFSessionProperty.ACCOUNT]
+                clientAppVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+                accountName = properties[SFSessionProperty.ACCOUNT],
+                clientEnv = clientEnv
             };
 
             // build request
