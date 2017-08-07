@@ -1,4 +1,8 @@
-﻿using System.Threading;
+﻿/*
+ * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;

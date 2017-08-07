@@ -1,4 +1,8 @@
-﻿using System.Data.Common;
+﻿/*
+ * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.Data.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

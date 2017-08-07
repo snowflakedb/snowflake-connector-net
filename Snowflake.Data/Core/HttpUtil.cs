@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿/*
+ * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net;
 using System;

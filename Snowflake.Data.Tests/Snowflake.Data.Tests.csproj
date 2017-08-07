@@ -87,6 +87,7 @@
     <None Include="App.config" />
     <None Include="packages.config" />
     <None Include="parameters.json" />
+    <None Include="Snowflake.Data.Tests.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Snowflake.Data\Snowflake.Data.csproj">

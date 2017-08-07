@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System;
 using System.Data.Common;
 using System.Collections;
 using Snowflake.Data.Core;
