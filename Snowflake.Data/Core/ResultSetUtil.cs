@@ -33,6 +33,9 @@ namespace Snowflake.Data.Core
                 case SFStatementType.COPY:
                     updateCount = resultSet.getInt32(3);
                     break;
+                case SFStatementType.SELECT:
+                    updateCount = -1;
+                    break;
                 default:
                     updateCount = 0;
                     break;

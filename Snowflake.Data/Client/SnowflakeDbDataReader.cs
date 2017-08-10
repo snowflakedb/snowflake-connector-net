@@ -19,16 +19,19 @@ namespace Snowflake.Data.Client
         private SnowflakeDbCommand dbCommand;
 
         private SFBaseResultSet resultSet;
+
+        private bool isClosed;
         public SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
             this.resultSet = resultSet;
+            this.isClosed = false;
         }
         public override object this[string name]
         {
             get
             {
-                throw new NotImplementedException();
+                return resultSet.getObject(GetOrdinal(name));
             }
         }
 
@@ -36,7 +39,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return resultSet.getObject(ordinal);
             }
         }
 
@@ -44,7 +47,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return 0;
             }
         }
 
@@ -52,7 +55,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return resultSet.columnCount;
             }
         }
 
@@ -60,7 +63,9 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                // return true for now since every query returned from server
+                // will have at least one row
+                return true;
             }
         }
 
@@ -68,7 +73,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return this.isClosed;
             }
         }
 
@@ -76,7 +81,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return ResultSetUtil.calculateUpdateCount(resultSet);
             }
         }
 
@@ -87,7 +92,8 @@ namespace Snowflake.Data.Client
 
         public override byte GetByte(int ordinal)
         {
-            throw new NotImplementedException();
+            byte[] bytes = resultSet.getBytes(ordinal);
+            return bytes[0];
         }
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
@@ -97,7 +103,8 @@ namespace Snowflake.Data.Client
 
         public override char GetChar(int ordinal)
         {
-            throw new NotImplementedException();
+            string val = resultSet.getString(ordinal);
+            return val[0];
         }
 
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
@@ -107,7 +114,7 @@ namespace Snowflake.Data.Client
 
         public override string GetDataTypeName(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.sfResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
         }
 
         public override DateTime GetDateTime(int ordinal)
@@ -132,7 +139,7 @@ namespace Snowflake.Data.Client
 
         public override Type GetFieldType(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.sfResultSetMetaData.getCSharpTypeByIndex(ordinal);
         }
 
         public override float GetFloat(int ordinal)
@@ -162,12 +169,12 @@ namespace Snowflake.Data.Client
 
         public override string GetName(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.sfResultSetMetaData.getColumnNameByIndex(ordinal);
         }
 
         public override int GetOrdinal(string name)
         {
-            throw new NotImplementedException();
+            return resultSet.sfResultSetMetaData.getColumnIndexByName(name);
         }
 
         public override string GetString(int ordinal)
@@ -182,17 +189,22 @@ namespace Snowflake.Data.Client
 
         public override int GetValues(object[] values)
         {
-            throw new NotImplementedException();
+            int count = Math.Min(FieldCount, values.Length);
+            for (int i=0; i< count; i++)
+            {
+                values[i] = GetValue(i);
+            }
+            return count;
         }
 
         public override bool IsDBNull(int ordinal)
         {
-            throw new NotImplementedException();
+            return resultSet.getObject(ordinal) == null;
         }
 
         public override bool NextResult()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override bool Read()
@@ -200,9 +212,10 @@ namespace Snowflake.Data.Client
             return resultSet.next();
         }
 
-        public override DataTable GetSchemaTable()
+        public override void Close()
         {
-            return resultSet.sfResultSetMetaData.toDataTable();
+            base.Close();
+            isClosed = true;
         }
     }
 }

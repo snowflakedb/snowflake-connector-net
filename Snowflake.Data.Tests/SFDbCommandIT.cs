@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
     using Snowflake.Data.Client;
+    using Snowflake.Data.Core;
 
     [TestFixture]    
     class SFDbCommandIT : SFBaseTest
@@ -157,7 +158,7 @@ namespace Snowflake.Data.Tests
                     conn.BeginTransaction(IsolationLevel.ReadUncommitted);
                     Assert.Fail();
                 }
-                catch (NotImplementedException) { }
+                catch (SFException) { }
 
                 IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
 

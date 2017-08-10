@@ -14,8 +14,6 @@ namespace Snowflake.Data.Client
     {
         internal List<SnowflakeDbParameter> parameterList;
         
-        private int indexCount = 0;
-
         internal SnowflakeDbParameterCollection()
         {
             parameterList = new List<SnowflakeDbParameter>();

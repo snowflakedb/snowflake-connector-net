@@ -18,11 +18,6 @@ namespace Snowflake.Data.Core
         TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN
     }
 
-    /*enum CSharpType
-    {
-        BOOLEAN, BYTE, CHAR, DATETIME, DECIMAL, DOUBLE, FLOAT, GUID, INT16, INT32, INT64, STRING 
-    }*/
-
     class SFDataConverter
     {
         static private ILog logger = LogManager.GetLogger<SFDataConverter>();
@@ -62,7 +57,8 @@ namespace Snowflake.Data.Core
             }
             else if (destType == typeof(byte[]))
             {
-                return hexToBytes(srcVal);
+                return srcType == SFDataType.BINARY ? 
+                    hexToBytes(srcVal) : Encoding.UTF8.GetBytes(srcVal);
             }
             else
             {
@@ -72,19 +68,20 @@ namespace Snowflake.Data.Core
 
         static private DateTime convertToDateTime(string srcVal, SFDataType srcType)
         {
-            if (srcType == SFDataType.DATE)
+            switch (srcType)
             {
-                long srcValLong = Int64.Parse(srcVal);
-                return unixEpoch.AddDays(srcValLong);
-            }
-            else if (srcType == SFDataType.TIME || srcType == SFDataType.TIMESTAMP_NTZ)
-            {
-                Tuple<long, long> secAndNsec = extractTimestamp(srcVal);
-                return unixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
-            }
-            else
-            {
-                return DateTime.Today;
+                case SFDataType.DATE:
+                    long srcValLong = Int64.Parse(srcVal);
+                    return unixEpoch.AddDays(srcValLong);
+
+                case SFDataType.TIME:
+                case SFDataType.TIMESTAMP_NTZ:
+
+                    Tuple<long, long> secAndNsec = extractTimestamp(srcVal);
+                    return unixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
+
+                default:
+                    throw new SFException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
             }
         }
 

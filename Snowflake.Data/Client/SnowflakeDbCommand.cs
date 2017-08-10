@@ -13,7 +13,7 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbCommand : DbCommand
     {
-        private SnowflakeDbConnection connection;
+        private DbConnection connection;
 
         private SFStatement sfStatement;
 
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Client
             {
                 if (CommandType != CommandType.Text)
                 {
-                    throw new NotImplementedException();
+                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
                 }
             }
         }
@@ -59,12 +59,15 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return false;
             }
 
             set
             {
-                throw new NotImplementedException();
+                if (DesignTimeVisible)
+                {
+                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 
@@ -79,7 +82,7 @@ namespace Snowflake.Data.Client
             {
                 if (UpdatedRowSource != UpdateRowSource.FirstReturnedRecord)
                 {
-                    throw new NotImplementedException();
+                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
                 }
             }
         }
@@ -93,7 +96,7 @@ namespace Snowflake.Data.Client
 
             set
             {
-                throw new NotImplementedException();
+                throw new SFException(SFError.UNSUPPORTED_FEATURE);
             }
         }
 

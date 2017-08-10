@@ -131,5 +131,14 @@ namespace Snowflake.Data.Core {
                 return ResourceManager.GetString("STATEMENT_ALREADY_RUNNING_QUERY", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Feature is not supported. .
+        /// </summary>
+        internal static string UNSUPPORTED_FEATURE {
+            get {
+                return ResourceManager.GetString("UNSUPPORTED_FEATURE", resourceCulture);
+            }
+        }
     }
 }

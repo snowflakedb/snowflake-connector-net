@@ -19,6 +19,7 @@ namespace Snowflake.Data.Core
         internal int columnCount;
 
         internal abstract bool next();
+
         internal byte[] getBytes(int columnIndex)
         {
             string val = getObjectInternal(columnIndex);
@@ -115,20 +116,45 @@ namespace Snowflake.Data.Core
 
         internal object getValue(int columnIndex)
         {
-            SFDataType sfDataType = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
-            switch(sfDataType)
+            Type type = sfResultSetMetaData.getCSharpTypeByIndex(columnIndex);
+            if (type == typeof(long))
             {
-                case SFDataType.TIMESTAMP_TZ:
-                case SFDataType.TIMESTAMP_LTZ:
-                    return getDateTimeOffset(columnIndex);
-                case SFDataType.BINARY:
-                    return getBytes(columnIndex);
-                default:
-                    throw new NotImplementedException();
+                return getInt64(columnIndex);
+            }
+            else if (type == typeof(decimal))
+            {
+                return getDecimal(columnIndex);
+            }
+            else if (type == typeof(string))
+            {
+                return getString(columnIndex);
+            }
+            else if (type == typeof(byte))
+            {
+                return getBytes(columnIndex);
+            }
+            else if (type == typeof(double))
+            {
+                return getDouble(columnIndex);
+            }
+            else if (type == typeof(DateTime))
+            {
+                return getDateTime(columnIndex);
+            }
+            else if (type == typeof(DateTimeOffset))
+            {
+                return getDateTimeOffset(columnIndex);
+            }
+            else if (type == typeof(bool))
+            {
+                return getBoolean(columnIndex);
+            }
+            else
+            { 
+                throw new NotImplementedException();
             }
         }
 
         protected abstract string getObjectInternal(int columnIndex);
-
     }
 }

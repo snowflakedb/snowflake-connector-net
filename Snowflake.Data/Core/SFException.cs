@@ -84,7 +84,10 @@ namespace Snowflake.Data.Core
         REQUEST_TIMEOUT,
 
         [SFErrorAttr(errorCode = 270008)]
-        INVALID_CONNECTION_STRING
+        INVALID_CONNECTION_STRING,
+
+        [SFErrorAttr(errorCode = 270009)]
+        UNSUPPORTED_FEATURE
     }
     
     public class SqlState

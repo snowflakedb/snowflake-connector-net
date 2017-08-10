@@ -19,7 +19,7 @@ namespace Snowflake.Data.Client
         {
             if (isolationLevel != IsolationLevel.ReadCommitted)
             {
-                throw new NotImplementedException(); 
+                throw new SFException(SFError.UNSUPPORTED_FEATURE);
             }
 
             this.isolationLevel = IsolationLevel;

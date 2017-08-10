@@ -82,8 +82,59 @@ namespace Snowflake.Data.Core
 
         internal SFDataType getColumnTypeByIndex(int targetIndex)
         {
+            if (targetIndex < 0 || targetIndex >= columnCount)
+            {
+                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+            }
+
             string sfDataTypeStr = rowTypes[targetIndex].type;
             return (SFDataType)Enum.Parse(typeof(SFDataType), sfDataTypeStr.ToUpper());
+        }
+
+        internal Type getCSharpTypeByIndex(int targetIndex)
+        {
+            if (targetIndex < 0 || targetIndex >= columnCount)
+            {
+                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+            }
+
+            SFDataType sfType = getColumnTypeByIndex(targetIndex);
+
+            switch (sfType)
+            {
+                case SFDataType.FIXED:
+                    return rowTypes[targetIndex].scale == 0 ? typeof(long) : typeof(decimal);
+                case SFDataType.REAL:
+                    return typeof(double);
+                case SFDataType.TEXT:
+                case SFDataType.VARIANT:
+                case SFDataType.OBJECT:
+                    return typeof(string);
+                case SFDataType.DATE:
+                case SFDataType.TIME:
+                case SFDataType.TIMESTAMP_NTZ:
+                    return typeof(DateTime);
+                case SFDataType.TIMESTAMP_LTZ:
+                case SFDataType.TIMESTAMP_TZ:
+                    return typeof(DateTimeOffset);
+                case SFDataType.BINARY:
+                    return typeof(byte);
+                case SFDataType.BOOLEAN:
+                    return typeof(bool);
+                default:
+                    throw new SFException(SFError.INTERNAL_ERROR,
+                        String.Format("Unknow column type: {0}", sfType));
+            }
+        }
+
+        internal string getColumnNameByIndex(int targetIndex)
+        {
+            if (targetIndex < 0 || targetIndex >= columnCount)
+            {
+                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+            }
+
+            return rowTypes[targetIndex].name;
         }
 
         internal DataTable toDataTable()
