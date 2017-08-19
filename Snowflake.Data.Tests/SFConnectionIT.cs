@@ -2,17 +2,11 @@
  * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using System.Data;
-    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -32,9 +26,9 @@ namespace Snowflake.Data.Tests
                 {
                     conn.Open();
                 }
-                catch(SFException e)
+                catch(SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270007, e.Data["ErrorCode"]);
+                    Assert.AreEqual(270007, e.ErrorCode);
                 }
             }
 
@@ -63,9 +57,9 @@ namespace Snowflake.Data.Tests
                         conn.Open();
                         Assert.Fail();
                     }
-                    catch (SFException e)
+                    catch (SnowflakeDbException e)
                     {
-                        Assert.AreEqual(expectedErrorCode[i], e.Data["ErrorCode"]);
+                        Assert.AreEqual(expectedErrorCode[i], e.ErrorCode);
                     }
                 }
             }

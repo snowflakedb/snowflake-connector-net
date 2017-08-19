@@ -114,7 +114,8 @@ namespace Snowflake.Data.Core
             loginRequest.jsonBody = new AuthnRequest() { data = data };
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
-            loginRequest.timeout = connectionTimeoutSec == -1 ? -1 : connectionTimeoutSec * 1000;
+            // total login timeout  
+            loginRequest.sfRestRequestTimeout = connectionTimeoutSec == -1 ? -1 : connectionTimeoutSec * 1000;
 
             if (logger.IsTraceEnabled)
             {
@@ -174,14 +175,14 @@ namespace Snowflake.Data.Core
             renewSessionRequest.jsonBody = postBody;
             renewSessionRequest.uri = uriBuilder.Uri;
             renewSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
-            renewSessionRequest.timeout = 0;
+            renewSessionRequest.sfRestRequestTimeout = -1;
 
             JObject response = restRequest.post(renewSessionRequest);
             NullDataResponse sessionRenewResponse = response.ToObject<NullDataResponse>();
             if (!sessionRenewResponse.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("", 
-                    sessionRenewResponse.code, sessionRenewResponse.message);
+                    sessionRenewResponse.code, sessionRenewResponse.message, "");
                 logger.Error("Renew session failed", e);
                 throw e;
             }
@@ -202,7 +203,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message);
+                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
                 logger.Error("Authentication failed", e);
                 throw e;
             } 

@@ -27,13 +27,19 @@ namespace Snowflake.Data.Core
 
         // request timeout in millis
         internal int timeout { get; set; }
+
+        // timeout for each http request 
+        internal int httpRequestTimeout { get; set; } 
     }
 
     public class SFRestRequest
     {
         public SFRestRequest()
         {
-            timeout = -1;
+            sfRestRequestTimeout = -1;
+
+            // default each http request timeout to 16 seconds
+            httpRequestTimeout = 16000;
         }
 
         internal Uri uri { get; set; }
@@ -42,8 +48,11 @@ namespace Snowflake.Data.Core
 
         internal String authorizationToken { get; set; }
         
-        // request timeout in millis
-        internal int timeout { get; set; }
+        // timeout for the whole rest request in millis (adding up all http retry)
+        internal int sfRestRequestTimeout { get; set; }
+        
+        // timeout for each http request 
+        internal int httpRequestTimeout { get; set; } 
 
         public override string ToString()
         {

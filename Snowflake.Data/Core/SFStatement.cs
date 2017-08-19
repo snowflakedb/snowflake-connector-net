@@ -4,7 +4,6 @@
 
 using System;
 using System.Web;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
@@ -47,7 +46,7 @@ namespace Snowflake.Data.Core
             if (requestId != null)
             {
                 logger.Info("Another query is running.");
-                throw new SFException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
+                throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
             }
             this.requestId = Guid.NewGuid().ToString(); 
 
@@ -73,6 +72,7 @@ namespace Snowflake.Data.Core
             queryRequest.uri = uriBuilder.Uri;
             queryRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
             queryRequest.jsonBody = postBody;
+            queryRequest.httpRequestTimeout = -1;
 
             try
             {
@@ -109,6 +109,7 @@ namespace Snowflake.Data.Core
                             uri = getResultUriBuilder.Uri,
                             authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken)
                         };
+                        getResultRequest.httpRequestTimeout = -1;
 
                         execResponse = null;
                         execResponse = restRequest.get(getResultRequest).ToObject<QueryExecResponse>();
@@ -133,7 +134,8 @@ namespace Snowflake.Data.Core
                 else
                 {
                     SnowflakeDbException e = new SnowflakeDbException(
-                        execResponse.data.sqlState, execResponse.code, execResponse.message);
+                        execResponse.data.sqlState, execResponse.code, execResponse.message, 
+                        execResponse.data.queryId);
                     logger.Error("Query execution failed.", e);
                     throw e;
                 }
@@ -180,7 +182,7 @@ namespace Snowflake.Data.Core
             else
             {
                 SnowflakeDbException e = new SnowflakeDbException(
-                    "", cancelResponse.code, cancelResponse.message);
+                    "", cancelResponse.code, cancelResponse.message, "");
                 logger.Error("Query cancellation failed.", e);
                 throw e;
             }

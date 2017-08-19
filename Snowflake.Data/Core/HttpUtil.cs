@@ -50,20 +50,36 @@ namespace Snowflake.Data.Core
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
 
-                var childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                int httpTimeout = (int)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
+
+                CancellationTokenSource childCts = null;
+                if (httpTimeout != -1)
+                {
+                    childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    childCts.CancelAfter(httpTimeout);
+                }
 
                 while (true)
                 {
                     try
                     {   
-                        response = await base.SendAsync(requestMessage, childCts.Token);
+                        response = await base.SendAsync(requestMessage, childCts == null ? 
+                            cancellationToken : childCts.Token);
                     }
-                    catch(OperationCanceledException e)
+                    catch(Exception e)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
                             logger.Debug("SF rest request timeout.");
                             cancellationToken.ThrowIfCancellationRequested(); 
+                        }
+                        else if (childCts != null && childCts.Token.IsCancellationRequested)
+                        {
+                            logger.Warn("Http request timeout. Retry the request");
+                        }
+                        else
+                        {
+                            throw e;
                         }
                     }
 

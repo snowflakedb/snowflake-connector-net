@@ -76,7 +76,8 @@ namespace Snowflake.Data.Tests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(e.ErrorCode, 2003);
+                    Assert.AreEqual(2003, e.ErrorCode);
+                    Assert.AreNotEqual("", e.queryId);
                 }
 
                 conn.Close();
@@ -158,7 +159,10 @@ namespace Snowflake.Data.Tests
                     conn.BeginTransaction(IsolationLevel.ReadUncommitted);
                     Assert.Fail();
                 }
-                catch (SFException) { }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(270009, e.ErrorCode);
+                }
 
                 IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
 

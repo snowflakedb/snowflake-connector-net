@@ -3,15 +3,13 @@
  */
 
 using System.Threading;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -47,9 +45,10 @@ namespace Snowflake.Data.Core
             var json = JsonConvert.SerializeObject(postRequest.jsonBody);
             HttpContent httpContent = new StringContent(json);
             CancellationTokenSource cancellationTokenSource = 
-                new CancellationTokenSource(postRequest.timeout);
+                new CancellationTokenSource(postRequest.sfRestRequestTimeout);
 
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, postRequest.uri);
+            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = postRequest.httpRequestTimeout;
 
             message.Content = httpContent;
             message.Content.Headers.ContentType = applicationJson;
@@ -69,6 +68,7 @@ namespace Snowflake.Data.Core
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
             message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
             message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
+            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
 
             CancellationTokenSource cancellationTokenSource = 
                 new CancellationTokenSource(getRequest.timeout);
@@ -81,9 +81,10 @@ namespace Snowflake.Data.Core
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
             message.Headers.Add(SF_AUTHORIZATION_HEADER, getRequest.authorizationToken);
             message.Headers.Accept.Add(applicationSnowflake);
+            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
 
             CancellationTokenSource cancellationTokenSource = 
-                new CancellationTokenSource(getRequest.timeout);
+                new CancellationTokenSource(getRequest.sfRestRequestTimeout);
 
             var responseContent = sendRequest(message, cancellationTokenSource.Token).Content;
 
@@ -106,7 +107,7 @@ namespace Snowflake.Data.Core
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    throw new SFException(SFError.REQUEST_TIMEOUT);
+                    throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT);
                 }
                 else
                 {

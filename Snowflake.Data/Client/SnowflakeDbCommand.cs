@@ -50,7 +50,7 @@ namespace Snowflake.Data.Client
             {
                 if (CommandType != CommandType.Text)
                 {
-                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
             }
         }
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Client
             {
                 if (DesignTimeVisible)
                 {
-                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
             }
         }
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Client
             {
                 if (UpdatedRowSource != UpdateRowSource.FirstReturnedRecord)
                 {
-                    throw new SFException(SFError.UNSUPPORTED_FEATURE);
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
             }
         }
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Client
 
             set
             {
-                throw new SFException(SFError.UNSUPPORTED_FEATURE);
+                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
         }
 

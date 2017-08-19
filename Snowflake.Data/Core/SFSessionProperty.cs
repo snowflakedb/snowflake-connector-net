@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Common.Logging;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         string invalidStringDetail = String.Format("Invalid kay value pair {0}", keyVal);
-                        SFException e = new SFException(SFError.INVALID_CONNECTION_STRING, 
+                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, 
                             new object[] { invalidStringDetail });
                         logger.Error(e);
                         throw e;
@@ -104,7 +105,7 @@ namespace Snowflake.Data.Core
                 if (sessionProperty.GetAttribute<SFSessionPropertyAttr>().required &&
                     !properties.ContainsKey(sessionProperty))
                 {
-                    SFException e = new SFException(SFError.MISSING_CONNECTION_PROPERTY, 
+                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, 
                         sessionProperty);
                     logger.Error(e);
                     throw e;

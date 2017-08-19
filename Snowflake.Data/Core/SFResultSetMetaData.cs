@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using Common.Logging;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -84,7 +85,7 @@ namespace Snowflake.Data.Core
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
             {
-                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
             string sfDataTypeStr = rowTypes[targetIndex].type;
@@ -95,7 +96,7 @@ namespace Snowflake.Data.Core
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
             {
-                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
             SFDataType sfType = getColumnTypeByIndex(targetIndex);
@@ -122,7 +123,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.BOOLEAN:
                     return typeof(bool);
                 default:
-                    throw new SFException(SFError.INTERNAL_ERROR,
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
                         String.Format("Unknow column type: {0}", sfType));
             }
         }
@@ -131,7 +132,7 @@ namespace Snowflake.Data.Core
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
             {
-                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
             return rowTypes[targetIndex].name;

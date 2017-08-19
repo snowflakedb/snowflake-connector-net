@@ -75,7 +75,7 @@
     <Compile Include="Core\SFBaseResultSet.cs" />
     <Compile Include="Core\SFChunkDownloader.cs" />
     <Compile Include="Core\SFDataConverter.cs" />
-    <Compile Include="Core\SFException.cs" />
+    <Compile Include="Core\SFError.cs" />
     <Compile Include="Core\SFResultChunk.cs" />
     <Compile Include="Core\SFResultSet.cs" />
     <Compile Include="Core\SFResultSetMetaData.cs" />

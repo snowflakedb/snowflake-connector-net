@@ -2,8 +2,8 @@
  * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
 using Common.Logging;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Core
 
                 if (chunk == null)
                 {
-                    throw new SFException(SFError.INTERNAL_ERROR, "Failed to get chunk to consume");
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Failed to get chunk to consume");
                 }
                 currentChunk = chunk;
                 currentChunkRowIdx = 0;
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Core
         {
             if (columnIndex < 0 || columnIndex >= columnCount)
             {
-                throw new SFException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
             return currentChunk.extractCell(currentChunkRowIdx, columnIndex);
         }

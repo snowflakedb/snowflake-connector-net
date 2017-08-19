@@ -417,9 +417,9 @@ namespace Snowflake.Data.Tests
                     reader.GetInt16(-1);
                     Assert.Fail();
                 }
-                catch(SFException e)
+                catch(SnowflakeDbException e)
                 {
-                    Assert.AreEqual(e.Data["ErrorCode"], 270002);
+                    Assert.AreEqual(270002, e.ErrorCode);
                 }
 
                 try
@@ -427,9 +427,9 @@ namespace Snowflake.Data.Tests
                     reader.GetInt16(1);
                     Assert.Fail();
                 }
-                catch(SFException e)
+                catch(SnowflakeDbException e)
                 {
-                    Assert.AreEqual(e.Data["ErrorCode"], 270002);
+                    Assert.AreEqual(270002, e.ErrorCode);
                 }
 
                 conn.Close();
