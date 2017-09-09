@@ -79,6 +79,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="SFBaseTest.cs" />
+    <Compile Include="SFBindTestIT.cs" />
     <Compile Include="SFConnectionIT.cs" />
     <Compile Include="SFDbCommandIT.cs" />
     <Compile Include="SFDbDataReaderIT.cs" />

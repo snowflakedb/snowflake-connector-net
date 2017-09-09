@@ -115,7 +115,7 @@ namespace Snowflake.Data.Core
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
             // total login timeout  
-            loginRequest.sfRestRequestTimeout = connectionTimeoutSec == -1 ? -1 : connectionTimeoutSec * 1000;
+            loginRequest.sfRestRequestTimeout = connectionTimeoutSec <= 0 ? -1 : connectionTimeoutSec * 1000;
 
             if (logger.IsTraceEnabled)
             {
