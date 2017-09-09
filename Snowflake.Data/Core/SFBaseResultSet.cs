@@ -77,11 +77,6 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal Object getObject(int columnIndex)
-        {
-            return getObjectInternal(columnIndex);
-        }
-
         internal short getInt16(int columnIndex)
         {
             string val = getObjectInternal(columnIndex);

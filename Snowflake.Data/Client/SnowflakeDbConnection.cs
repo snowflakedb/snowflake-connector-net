@@ -104,10 +104,10 @@ namespace Snowflake.Data.Client
         public override void Open()
         {
             sfSession = new SFSession(ConnectionString);
+            this.connectionTimeout = sfSession.connectionTimeout;
             connectionState = ConnectionState.Connecting;
             sfSession.open();
             connectionState = ConnectionState.Open;
-            connectionTimeout = sfSession.connectionTimeout;
         }
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)

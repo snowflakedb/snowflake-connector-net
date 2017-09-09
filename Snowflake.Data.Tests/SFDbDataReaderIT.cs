@@ -470,6 +470,12 @@ namespace Snowflake.Data.Tests
                         Assert.IsFalse(reader.NextResult());
                         Assert.AreEqual(-1, reader.RecordsAffected);
 
+                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
+                        // reapet calling to test if cache in memory worked or not
+                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
+                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
+                        Assert.AreEqual(1, reader.GetOrdinal("COLTWO"));
+
                         reader.Close();
                         Assert.IsTrue(reader.IsClosed);
                         

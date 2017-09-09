@@ -31,7 +31,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.getObject(GetOrdinal(name));
+                return resultSet.getValue(GetOrdinal(name));
             }
         }
 
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.getObject(ordinal);
+                return resultSet.getValue(ordinal);
             }
         }
 
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Client
 
         public override bool IsDBNull(int ordinal)
         {
-            return resultSet.getObject(ordinal) == null;
+            return resultSet.getValue(ordinal) == null;
         }
 
         public override bool NextResult()

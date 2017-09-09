@@ -198,6 +198,7 @@ namespace Snowflake.Data.Core
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
+                serverVersion = authnResponse.data.serverVersion;
 
                 updateParameterMap(parameterMap, authnResponse.data.nameValueParameter);
             }

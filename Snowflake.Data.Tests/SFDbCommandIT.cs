@@ -60,6 +60,21 @@ namespace Snowflake.Data.Tests
                 {
                     Assert.AreEqual(270009, e.ErrorCode);
                 }
+
+                Assert.IsFalse(((SnowflakeDbCommand)cmd).DesignTimeVisible);
+                try
+                {
+                    ((SnowflakeDbCommand)cmd).DesignTimeVisible = true;
+                    Assert.Fail();
+                }
+                catch(SnowflakeDbException e)
+                {
+                    Assert.AreEqual(270009, e.ErrorCode);
+                }
+
+                object val = cmd.ExecuteScalar();
+                Assert.AreEqual(1L, (long)val);
+
                 conn.Close();
             }
         }

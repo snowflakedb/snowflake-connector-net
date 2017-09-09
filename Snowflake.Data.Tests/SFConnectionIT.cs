@@ -12,6 +12,26 @@ namespace Snowflake.Data.Tests
     class SFConnectionIT : SFBaseTest
     {
         [Test]
+        public void testBasicConnection()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                Assert.AreEqual(0, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                string[] versionElements = serverVersion.Split('.');
+                Assert.AreEqual(3, versionElements.Length);
+
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void testLoginTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -31,6 +51,7 @@ namespace Snowflake.Data.Tests
                 {
                     Assert.AreEqual(270007, e.ErrorCode);
                 }
+                Assert.AreEqual(30, conn.ConnectionTimeout);
             }
 
         }
