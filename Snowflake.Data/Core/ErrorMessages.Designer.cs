@@ -70,6 +70,15 @@ namespace Snowflake.Data.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Data reader has already been closed..
+        /// </summary>
+        internal static string DATA_READER_ALREADY_CLOSED {
+            get {
+                return ResourceManager.GetString("DATA_READER_ALREADY_CLOSED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Snowflake Internal Error: {0}.
         /// </summary>
         internal static string INTERNAL_ERROR {

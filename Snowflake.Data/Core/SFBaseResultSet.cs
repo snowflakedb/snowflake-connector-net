@@ -18,7 +18,11 @@ namespace Snowflake.Data.Core
 
         internal int columnCount;
 
+        internal bool isClosed;
+
         internal abstract bool next();
+
+        protected abstract string getObjectInternal(int columnIndex);
 
         internal byte[] getBytes(int columnIndex)
         {
@@ -154,7 +158,10 @@ namespace Snowflake.Data.Core
                 throw new NotImplementedException();
             }
         }
-
-        protected abstract string getObjectInternal(int columnIndex);
+        
+        internal void close()
+        {
+            isClosed = true;
+        }
     }
 }

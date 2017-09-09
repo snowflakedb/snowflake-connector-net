@@ -25,6 +25,7 @@ namespace Snowflake.Data.Tests
                 try
                 {
                     conn.Open();
+                    Assert.Fail();
                 }
                 catch(SnowflakeDbException e)
                 {

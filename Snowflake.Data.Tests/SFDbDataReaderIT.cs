@@ -73,6 +73,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(numShort, reader.GetInt16(0));
 
                 Assert.IsFalse(reader.Read());
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetnumber";
                 count = cmd.ExecuteNonQuery();
@@ -127,6 +128,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(numDouble, reader.GetDouble(0));
 
                 Assert.IsFalse(reader.Read());
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetdouble";
                 count = cmd.ExecuteNonQuery();
@@ -180,6 +182,7 @@ namespace Snowflake.Data.Tests
                 // For time, we getDateTime on the column and ignore date part
                 DateTime actualTime = reader.GetDateTime(1);
                 Assert.AreEqual(now.Ticks - now.Date.Ticks, actualTime.Ticks - actualTime.Date.Ticks);
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetdatetime";
                 count = cmd.ExecuteNonQuery();
@@ -221,6 +224,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(0, DateTime.Compare(now, reader.GetDateTime(0)));
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgettimestampntz";
                 count = cmd.ExecuteNonQuery();
@@ -262,6 +266,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+                reader.Close();
 
                 Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
 
@@ -307,6 +312,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+                reader.Close();
 
                 Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
 
@@ -348,6 +354,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 Assert.IsTrue(reader.GetBoolean(0));
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetboolean";
                 count = cmd.ExecuteNonQuery();
@@ -389,6 +396,7 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
+                reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetbinary";
                 count = cmd.ExecuteNonQuery();
@@ -431,10 +439,90 @@ namespace Snowflake.Data.Tests
                 {
                     Assert.AreEqual(270002, e.ErrorCode);
                 }
+                reader.Close();
 
                 conn.Close();
             }
+        }
 
+        [Test]
+        public void testBasicDataReader()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "select 1 as colone, 2 as coltwo";
+                    using (IDataReader reader = cmd.ExecuteReader())
+                    {
+                        Assert.AreEqual(2, reader.FieldCount);
+                        Assert.AreEqual(0, reader.Depth);
+                        Assert.IsFalse(reader.IsClosed);
+                        Assert.AreEqual("COLONE", reader.GetName(0));
+                        Assert.AreEqual("COLTWO", reader.GetName(1));
+
+                        Assert.AreEqual(typeof(long), reader.GetFieldType(0));
+                        Assert.AreEqual(typeof(long), reader.GetFieldType(1));
+
+                        Assert.IsFalse(reader.NextResult());
+                        Assert.AreEqual(-1, reader.RecordsAffected);
+
+                        reader.Close();
+                        Assert.IsTrue(reader.IsClosed);
+                        
+                        try
+                        {
+                            reader.Read();
+                            Assert.Fail();
+                        }
+                        catch(SnowflakeDbException e)
+                        {
+                            Assert.AreEqual(270010, e.ErrorCode);
+                        }
+
+                        try
+                        {
+                            reader.GetInt16(0);
+                            Assert.Fail();
+                        }
+                        catch(SnowflakeDbException e)
+                        {
+                            Assert.AreEqual(270010, e.ErrorCode);
+                        }
+                    }
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testReadOutNullVal()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "select null";
+                    using (IDataReader reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        object nullVal = reader.GetValue(0);
+                        Assert.IsNull(nullVal);
+                        Assert.IsTrue(reader.IsDBNull(0));
+
+                        reader.Close();
+                    }
+                }
+
+                conn.Close();
+            } 
         }
     }
 }

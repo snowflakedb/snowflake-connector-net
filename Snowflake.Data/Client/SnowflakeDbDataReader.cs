@@ -215,6 +215,7 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             base.Close();
+            resultSet.close();
             isClosed = true;
         }
     }

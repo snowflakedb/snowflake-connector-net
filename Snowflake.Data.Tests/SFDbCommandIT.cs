@@ -17,6 +17,54 @@ namespace Snowflake.Data.Tests
     class SFDbCommandIT : SFBaseTest
     {
         [Test]
+        public void testSimpleCommand()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select 1";
+
+                // command type can only be text, stored procedure are not supported.
+                Assert.AreEqual(CommandType.Text, cmd.CommandType);
+                try
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    Assert.Fail();
+                }
+                catch(SnowflakeDbException e)
+                {
+                    Assert.AreEqual(270009, e.ErrorCode);
+                }
+
+                Assert.AreEqual(UpdateRowSource.None, cmd.UpdatedRowSource);
+                try
+                {
+                    cmd.UpdatedRowSource = UpdateRowSource.FirstReturnedRecord;
+                    Assert.Fail();
+                }
+                catch(SnowflakeDbException e)
+                {
+                    Assert.AreEqual(270009, e.ErrorCode);
+                }
+
+                Assert.AreSame(conn, cmd.Connection);
+                try
+                {
+                    cmd.Connection = null;
+                    Assert.Fail();
+                }
+                catch(SnowflakeDbException e)
+                {
+                    Assert.AreEqual(270009, e.ErrorCode);
+                }
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void testSimpleLargeResultSet()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -196,6 +244,45 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+        }
+
+        [Test]
+        public void testRowsAffected()
+        {
+            String[] testCommands =
+            {
+                "create or replace table test_rows_affected(cola int, colb string)",
+                "insert into test_rows_affected values(1, 'a'),(2, 'b')",
+                "merge into test_rows_affected using (select 1 as cola, 'c' as colb) m on " +
+                "test_rows_affected.cola = m.cola when matched then update set test_rows_affected.colb='update' " +
+                "when not matched then insert (cola, colb) values (3, 'd')",
+                "drop table if exists test_rows_affected"
+            };
+
+            int[] expectedResult =
+            {
+                0, 2, 1, 0 
+            };
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    int rowsAffected = -1;
+                    for (int i=0; i<testCommands.Length; i++)
+                    {
+                        command.CommandText = testCommands[i];
+                        rowsAffected = command.ExecuteNonQuery();
+
+                        Assert.AreEqual(expectedResult[i], rowsAffected);
+                    }
+                }
+                conn.Close();
+            }    
         }
     }
 }

@@ -36,7 +36,10 @@ namespace Snowflake.Data.Core
         INVALID_CONNECTION_STRING,
 
         [SFErrorAttr(errorCode = 270009)]
-        UNSUPPORTED_FEATURE
+        UNSUPPORTED_FEATURE,
+
+        [SFErrorAttr(errorCode = 270010)]
+        DATA_READER_ALREADY_CLOSED
     }
 
     class SFErrorAttr : Attribute

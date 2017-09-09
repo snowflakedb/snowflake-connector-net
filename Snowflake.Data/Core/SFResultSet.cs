@@ -49,10 +49,16 @@ namespace Snowflake.Data.Core
             sfResultSetMetaData = new SFResultSetMetaData(responseData);
 
             updateSessionStatus(responseData);
+            isClosed = false;
         }
 
         internal override bool next()
         {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+
             currentChunkRowIdx++;
             
             if (currentChunkRowIdx < currentChunkRowCount)
@@ -84,10 +90,16 @@ namespace Snowflake.Data.Core
 
         protected override string getObjectInternal(int columnIndex)
         {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+
             if (columnIndex < 0 || columnIndex >= columnCount)
             {
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
+
             return currentChunk.extractCell(currentChunkRowIdx, columnIndex);
         }
 

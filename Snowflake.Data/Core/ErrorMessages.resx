@@ -120,6 +120,9 @@
   <data name="COLUMN_INDEX_OUT_OF_BOUND" xml:space="preserve">
     <value>Column index {0} is out of bound of valid index.</value>
   </data>
+  <data name="DATA_READER_ALREADY_CLOSED" xml:space="preserve">
+    <value>Data reader has already been closed.</value>
+  </data>
   <data name="INTERNAL_ERROR" xml:space="preserve">
     <value>Snowflake Internal Error: {0}</value>
   </data>

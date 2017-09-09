@@ -23,9 +23,8 @@ namespace Snowflake.Data.Client
         {
             this.connection = connection;
             this.sfStatement = new SFStatement(connection.sfSession);
-            this.CommandTimeout = 0;
-
             // by default, no query timeout
+            this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
@@ -48,7 +47,7 @@ namespace Snowflake.Data.Client
 
             set
             {
-                if (CommandType != CommandType.Text)
+                if (value != CommandType.Text)
                 {
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
@@ -64,7 +63,7 @@ namespace Snowflake.Data.Client
 
             set
             {
-                if (DesignTimeVisible)
+                if (value)
                 {
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
@@ -75,12 +74,12 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return UpdateRowSource.FirstReturnedRecord;
+                return UpdateRowSource.None;
             }
 
             set
             {
-                if (UpdatedRowSource != UpdateRowSource.FirstReturnedRecord)
+                if (value != UpdateRowSource.None)
                 {
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
