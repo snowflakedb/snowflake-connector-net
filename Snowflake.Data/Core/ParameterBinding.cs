@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
 {
     public class BindingDTO
     {
-        public BindingDTO(string type, string value)
+        public BindingDTO(string type, object value)
         {
             this.type = type;
             this.value = value;
@@ -20,6 +20,6 @@ namespace Snowflake.Data.Core
 
         public string type { get; set;  }
 
-        public string value { get; set; }
+        public object value { get; set; }
     }
 }

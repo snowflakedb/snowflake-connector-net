@@ -7,6 +7,7 @@ using Snowflake.Data.Core;
 using System.Data.Common;
 using System.Data;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Snowflake.Data.Client
 {
@@ -161,22 +162,50 @@ namespace Snowflake.Data.Client
                 Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
                 foreach(SnowflakeDbParameter parameter in parameters)
                 {
-                    // if the user is using interface, SFDataType will be None and there will a conversion from DbType to SFDataType
-                    // if the user is using concrete class, they should specify SFDataType. 
-                    if (parameter.SFDataType == SFDataType.None)
-                    {
-                        Tuple<string, string> typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                    string bindingType = "";
+                    object bindingVal;
 
-                        BindingDTO bindingDto = new BindingDTO(typeAndVal.Item1, typeAndVal.Item2);
-                        binding[parameter.ParameterName] = bindingDto;
+                    if (parameter.Value.GetType().IsArray)
+                    {
+                        List<object> vals = new List<object>();
+                        foreach(object val in (Array)parameter.Value)
+                        {
+                            // if the user is using interface, SFDataType will be None and there will 
+                            // a conversion from DbType to SFDataType
+                            // if the user is using concrete class, they should specify SFDataType. 
+                            if (parameter.SFDataType == SFDataType.None)
+                            {
+                                Tuple<string, string> typeAndVal = SFDataConverter
+                                    .csharpTypeValToSfTypeVal(parameter.DbType, val);
+
+                                bindingType = typeAndVal.Item1;
+                                vals.Add(typeAndVal.Item2);
+                            }
+                            else
+                            {
+                                bindingType = parameter.SFDataType.ToString(); 
+                                vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
+                            }
+                        }
+                        bindingVal = vals;
                     }
                     else
                     {
-                        // for now just support TIMESTAMP_LTZ
-                        string val = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
-                        BindingDTO bindingDto = new BindingDTO(parameter.SFDataType.ToString(), val);
-                        binding[parameter.ParameterName] = bindingDto;
+                        if (parameter.SFDataType == SFDataType.None)
+                        {
+                            Tuple<string, string> typeAndVal = SFDataConverter
+                                .csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                            bindingType = typeAndVal.Item1;
+                            bindingVal = typeAndVal.Item2;
+                        }
+                        else
+                        {
+                            bindingType = parameter.SFDataType.ToString();
+                            bindingVal = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
+                        }
                     }
+
+                    binding[parameter.ParameterName] = new BindingDTO(bindingType, bindingVal);
                 }
                 return binding;
             }

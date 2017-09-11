@@ -475,6 +475,7 @@ namespace Snowflake.Data.Tests
                         Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
                         Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
                         Assert.AreEqual(1, reader.GetOrdinal("COLTWO"));
+                        Assert.AreEqual(-1, reader.GetOrdinal("COL_NOT_EXISTS"));
 
                         reader.Close();
                         Assert.IsTrue(reader.IsClosed);

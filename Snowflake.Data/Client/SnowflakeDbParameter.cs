@@ -40,12 +40,15 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                throw new NotImplementedException();
+                return ParameterDirection.Input;
             }
 
             set
             {
-                throw new NotImplementedException();
+                if (value != ParameterDirection.Input)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 

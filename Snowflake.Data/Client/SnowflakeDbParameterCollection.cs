@@ -55,13 +55,6 @@ namespace Snowflake.Data.Client
             return parameter;   
         }
 
-        public SnowflakeDbParameter Add(int parameterIndex, SFDataType dataType)
-        {
-            SnowflakeDbParameter parameter = new SnowflakeDbParameter(parameterIndex, dataType);
-            parameterList.Add(parameter);
-            return parameter;   
-        }
-
         public override void AddRange(Array values)
         {
             throw new NotImplementedException();
@@ -69,7 +62,7 @@ namespace Snowflake.Data.Client
 
         public override void Clear()
         {
-            throw new NotImplementedException();
+            parameterList.Clear();
         }
 
         public override bool Contains(string value)

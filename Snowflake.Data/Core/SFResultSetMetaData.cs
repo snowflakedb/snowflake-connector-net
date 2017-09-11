@@ -73,6 +73,7 @@ namespace Snowflake.Data.Core
                     if (String.Compare(rowType.name, targetColumnName, false ) == 0 )
                     {
                         logger.DebugFormat("Found colun name {0} under index {1}", targetColumnName, indexCounter);
+                        columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
                     indexCounter++; 
