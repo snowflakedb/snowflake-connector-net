@@ -460,6 +460,7 @@ namespace Snowflake.Data.Tests
                     {
                         Assert.AreEqual(2, reader.FieldCount);
                         Assert.AreEqual(0, reader.Depth);
+                        Assert.IsTrue(((SnowflakeDbDataReader)reader).HasRows);
                         Assert.IsFalse(reader.IsClosed);
                         Assert.AreEqual("COLONE", reader.GetName(0));
                         Assert.AreEqual("COLTWO", reader.GetName(1));

@@ -12,7 +12,7 @@ using Common.Logging;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbDataReader : DbDataReader
+    public class SnowflakeDbDataReader : DbDataReader
     {
         static private readonly ILog logger = LogManager.GetLogger<SnowflakeDbDataReader>();
 
@@ -21,7 +21,8 @@ namespace Snowflake.Data.Client
         private SFBaseResultSet resultSet;
 
         private bool isClosed;
-        public SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
+
+        internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
             this.resultSet = resultSet;

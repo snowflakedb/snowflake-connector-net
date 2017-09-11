@@ -165,7 +165,10 @@ namespace Snowflake.Data.Client
                     string bindingType = "";
                     object bindingVal;
 
-                    if (parameter.Value.GetType().IsArray)
+                    if (parameter.Value.GetType().IsArray &&
+                        // byte array and char array will not be treated as array binding
+                        parameter.Value.GetType().GetElementType() != typeof(char) && 
+                        parameter.Value.GetType().GetElementType() != typeof(byte))
                     {
                         List<object> vals = new List<object>();
                         foreach(object val in (Array)parameter.Value)

@@ -10,7 +10,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbParameterCollection : DbParameterCollection
+    public class SnowflakeDbParameterCollection : DbParameterCollection
     {
         internal List<SnowflakeDbParameter> parameterList;
         
@@ -37,15 +37,8 @@ namespace Snowflake.Data.Client
 
         public override int Add(object value)
         {
-            if ( value.GetType() != typeof(SnowflakeDbParameter))
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                parameterList.Add((SnowflakeDbParameter)value);
-                return parameterList.Count - 1;
-            }
+            parameterList.Add(tryCastThrow(value));
+            return parameterList.Count - 1;
         }
 
         public SnowflakeDbParameter Add(string parameterName, SFDataType dataType)
@@ -57,7 +50,11 @@ namespace Snowflake.Data.Client
 
         public override void AddRange(Array values)
         {
-            throw new NotImplementedException();
+            IEnumerator e = values.GetEnumerator();
+            while(e.MoveNext())
+            {
+                parameterList.Add(tryCastThrow(e.Current));
+            }
         }
 
         public override void Clear()
@@ -67,12 +64,13 @@ namespace Snowflake.Data.Client
 
         public override bool Contains(string value)
         {
-            throw new NotImplementedException();
+            return IndexOf(value) != -1;
         }
 
         public override bool Contains(object value)
         {
-            throw new NotImplementedException();
+            SnowflakeDbParameter parameter = tryCast(value);
+            return parameter != null && parameterList.Contains(parameter);
         }
 
         public override void CopyTo(Array array, int index)
@@ -82,57 +80,94 @@ namespace Snowflake.Data.Client
 
         public override IEnumerator GetEnumerator()
         {
-            throw new NotImplementedException();
+            return parameterList.GetEnumerator();
         }
 
         public override int IndexOf(string parameterName)
         {
-            throw new NotImplementedException();
+            int index = 0;
+            foreach (SnowflakeDbParameter parameter in parameterList)
+            {
+                if (String.Compare(parameterName, parameter.ParameterName) == 0)
+                {
+                    return index;
+                }
+                index++; 
+            }
+            return -1;
         }
 
         public override int IndexOf(object value)
         {
-            throw new NotImplementedException();
+            SnowflakeDbParameter parameter = tryCast(value);
+            return parameter == null ? -1 : parameterList.IndexOf(parameter);
         }
 
         public override void Insert(int index, object value)
         {
-            throw new NotImplementedException();
+            parameterList.Insert(index, tryCastThrow(value));
         }
 
         public override void Remove(object value)
         {
-            throw new NotImplementedException();
+            parameterList.Remove(tryCastThrow(value));
         }
 
         public override void RemoveAt(string parameterName)
         {
-            throw new NotImplementedException();
+            int index = IndexOf(parameterName);
+            parameterList.RemoveAt(index);
         }
 
         public override void RemoveAt(int index)
         {
-            throw new NotImplementedException();
+            parameterList.RemoveAt(index);
         }
 
         protected override DbParameter GetParameter(string parameterName)
         {
-            throw new NotImplementedException();
+            int index = IndexOf(parameterName);
+            return parameterList[index];
         }
 
         protected override DbParameter GetParameter(int index)
         {
-            throw new NotImplementedException();
+            return parameterList[index];
         }
 
         protected override void SetParameter(string parameterName, DbParameter value)
         {
-            throw new NotImplementedException();
+            int index = IndexOf(parameterName);
+            parameterList[index] = tryCastThrow(value);
         }
 
         protected override void SetParameter(int index, DbParameter value)
         {
-            throw new NotImplementedException();
+            parameterList[index] = tryCastThrow(value);
+        }
+
+        private SnowflakeDbParameter tryCast(object parameter)
+        {
+            if (parameter.GetType() != typeof(SnowflakeDbParameter))
+            {
+                return null;
+            }
+            else
+            {
+                return (SnowflakeDbParameter)parameter;
+            }
+        }
+
+        private SnowflakeDbParameter tryCastThrow(object parameter)
+        {
+            if (parameter.GetType() != typeof(SnowflakeDbParameter))
+            {
+                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+            }
+            else
+            {
+                return (SnowflakeDbParameter)parameter;
+            }
         }
     }
 }
