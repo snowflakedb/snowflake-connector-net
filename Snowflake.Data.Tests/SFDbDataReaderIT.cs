@@ -123,6 +123,8 @@ namespace Snowflake.Data.Tests
                 
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(numFloat, reader.GetFloat(0));
+                Assert.AreEqual((decimal)numFloat, reader.GetDecimal(0));
+
 
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(numDouble, reader.GetDouble(0));
@@ -531,6 +533,58 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             } 
+        }
+
+        [Test]
+        public void testGetGuid()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetGuid(cola string)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string insertCommand = "insert into testgetguid values (?)";
+                cmd.CommandText = insertCommand;
+
+                Guid val = Guid.NewGuid();
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Guid;
+                p1.Value = val;
+                cmd.Parameters.Add(p1);
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testgetguid";
+                IDataReader reader = cmd.ExecuteReader();
+                
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(val, reader.GetGuid(0));
+
+                // test using [] operator
+                Assert.AreEqual(val.ToString(), reader[0]);
+                Assert.AreEqual(val.ToString(), reader["COLA"]);
+
+                object[] values = new object[1];
+                Assert.AreEqual(1, reader.GetValues(values));
+                Assert.AreEqual(val.ToString(), values[0]);
+
+                reader.Close();
+
+                cmd.CommandText = "drop table if exists testgetguid";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+
         }
     }
 }
