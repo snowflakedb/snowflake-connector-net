@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Security;
 using System.Web;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
@@ -65,10 +67,15 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString)
+        internal SFSession(String connectionString, SecureString password)
         {
             restRequest = RestRequestImpl.Instance;
             properties = SFSessionProperties.parseConnectionString(connectionString);
+            if (password != null)
+            {
+                properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
+            }
+
             parameterMap = new Dictionary<string, string>();
         }
 

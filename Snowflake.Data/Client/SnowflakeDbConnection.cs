@@ -5,6 +5,7 @@
 using System;
 using System.Data.Common;
 using Snowflake.Data.Core;
+using System.Security;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,11 @@ namespace Snowflake.Data.Client
         }
 
         public override string ConnectionString
+        {
+            get; set;
+        }
+
+        public SecureString Password
         {
             get; set;
         }
@@ -103,7 +109,7 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
-            sfSession = new SFSession(ConnectionString);
+            sfSession = new SFSession(ConnectionString, Password);
             this.connectionTimeout = sfSession.connectionTimeout;
             connectionState = ConnectionState.Connecting;
             sfSession.open();
