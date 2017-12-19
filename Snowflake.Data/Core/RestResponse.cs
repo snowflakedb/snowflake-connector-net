@@ -148,7 +148,7 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "numberOfBinds", NullValueHandling = NullValueHandling.Ignore)]
         internal int numberOfBinds { get; set; }
-        
+
         [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
         internal Int64 statementTypeId { get; set; }
 
@@ -160,6 +160,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "qrmk", NullValueHandling = NullValueHandling.Ignore)]
         internal string qrmk { get; set; }
+
+        [JsonProperty(PropertyName = "chunkHeaders", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<string, string> chunkHeaders { get; set; }
 
         // ping pong response data
         [JsonProperty(PropertyName = "getResultUrl", NullValueHandling = NullValueHandling.Ignore)]

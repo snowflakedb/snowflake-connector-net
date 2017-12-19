@@ -29,7 +29,9 @@ namespace Snowflake.Data.Core
         internal int timeout { get; set; }
 
         // timeout for each http request 
-        internal int httpRequestTimeout { get; set; } 
+        internal int httpRequestTimeout { get; set; }
+
+        internal Dictionary<string, string> chunkHeaders { get; set; }
     }
 
     public class SFRestRequest
