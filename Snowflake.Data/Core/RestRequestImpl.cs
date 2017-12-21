@@ -66,8 +66,19 @@ namespace Snowflake.Data.Core
         public HttpResponseMessage get(S3DownloadRequest getRequest)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
-            message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
-            message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
+
+            if (getRequest.chunkHeaders != null)
+            {
+                foreach(var item in getRequest.chunkHeaders)
+                {
+                    message.Headers.Add(item.Key, item.Value);
+                }
+            }
+            else
+            {
+                message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
+                message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
+            }
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
 
             CancellationTokenSource cancellationTokenSource = 

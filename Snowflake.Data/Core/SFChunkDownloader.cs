@@ -37,11 +37,15 @@ namespace Snowflake.Data.Core
 
         private static JsonSerializer jsonSerializer = new JsonSerializer();
 
-        public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk)
+        private Dictionary<string, string> chunkHeaders;
+
+        public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
+            Dictionary<string, string> chunkHeaders)
         {
             
             this.colCount = colCount;
             this.qrmk = qrmk;
+            this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
             this.nextChunkToConsumeIndex = 0;
@@ -62,7 +66,8 @@ namespace Snowflake.Data.Core
                 {
                     chunk = chunks[nextChunkToDownloadIndex],
                     chunkIndex = nextChunkToDownloadIndex,
-                    qrmk = this.qrmk
+                    qrmk = this.qrmk,
+                    chunkHeaders = this.chunkHeaders
                 };
                 ThreadPool.QueueUserWorkItem(new WaitCallback(downloadChunkCallBack), downloadContext);
                 nextChunkToDownloadIndex++;
@@ -118,7 +123,8 @@ namespace Snowflake.Data.Core
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
                 timeout = 60 * 60,
-                httpRequestTimeout = 16000
+                httpRequestTimeout = 16000,
+                chunkHeaders = downloadContext.chunkHeaders
             };
 
             HttpResponseMessage httpResponse = restRequest.get(downloadRequest);
@@ -179,6 +185,8 @@ namespace Snowflake.Data.Core
         public int chunkIndex { get; set; }
 
         public string qrmk { get; set; }
+
+        public Dictionary<string, string> chunkHeaders { get; set; }
     }
     
     /// <summary>

@@ -41,7 +41,8 @@ namespace Snowflake.Data.Core
                 totalChunkCount = responseData.chunks.Count + 1;
                 chunkDownloader = new SFChunkDownloader(responseData.rowType.Count,
                                                         responseData.chunks,
-                                                        responseData.qrmk);
+                                                        responseData.qrmk,
+                                                        responseData.chunkHeaders);
             }
 
             currentChunk = new SFResultChunk(responseData.rowSet);
