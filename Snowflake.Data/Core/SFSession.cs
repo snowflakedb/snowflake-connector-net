@@ -155,7 +155,7 @@ namespace Snowflake.Data.Core
             NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
             if (!deleteSessionResponse.success)
             {
-                logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {0}", 
+                logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {1}", 
                     deleteSessionResponse.code, deleteSessionResponse.message);
             }
         }
@@ -185,14 +185,18 @@ namespace Snowflake.Data.Core
             renewSessionRequest.sfRestRequestTimeout = -1;
 
             JObject response = restRequest.post(renewSessionRequest);
-            NullDataResponse sessionRenewResponse = response.ToObject<NullDataResponse>();
+			RenewSessionResponse sessionRenewResponse = response.ToObject<RenewSessionResponse>();
             if (!sessionRenewResponse.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("", 
                     sessionRenewResponse.code, sessionRenewResponse.message, "");
                 logger.Error("Renew session failed", e);
                 throw e;
-            }
+            } 
+            else 
+            {
+				sessionToken = sessionRenewResponse.data.sessionToken;
+			}
         }
 
         private void parseLoginResponse(JObject response)
