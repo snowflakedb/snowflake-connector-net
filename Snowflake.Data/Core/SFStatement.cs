@@ -82,6 +82,7 @@ namespace Snowflake.Data.Core
                 if (execResponse.code == SF_SESSION_EXPIRED_CODE)
                 {
                     sfSession.renewSession();
+					this.requestId = null;
                     this.execute(sql, bindings, describeOnly);
                 }
                 else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
