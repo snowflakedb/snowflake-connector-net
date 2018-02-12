@@ -10,6 +10,7 @@ using System.Web;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
 using Snowflake.Data.Client;
+using System.Threading;
 
 namespace Snowflake.Data.Core
 {
@@ -122,7 +123,8 @@ namespace Snowflake.Data.Core
             loginRequest.uri = uriBuilder.Uri;
             loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
             // total login timeout  
-            loginRequest.sfRestRequestTimeout = connectionTimeoutSec <= 0 ? -1 : connectionTimeoutSec * 1000;
+            if (connectionTimeoutSec <= 0) loginRequest.sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
+            else loginRequest.sfRestRequestTimeout = TimeSpan.FromSeconds(connectionTimeoutSec);
 
             if (logger.IsTraceEnabled)
             {
@@ -182,10 +184,10 @@ namespace Snowflake.Data.Core
             renewSessionRequest.jsonBody = postBody;
             renewSessionRequest.uri = uriBuilder.Uri;
             renewSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
-            renewSessionRequest.sfRestRequestTimeout = -1;
+            renewSessionRequest.sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
 
             JObject response = restRequest.post(renewSessionRequest);
-			RenewSessionResponse sessionRenewResponse = response.ToObject<RenewSessionResponse>();
+            RenewSessionResponse sessionRenewResponse = response.ToObject<RenewSessionResponse>();
             if (!sessionRenewResponse.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("", 
@@ -195,8 +197,8 @@ namespace Snowflake.Data.Core
             } 
             else 
             {
-				sessionToken = sessionRenewResponse.data.sessionToken;
-			}
+                sessionToken = sessionRenewResponse.data.sessionToken;
+            }
         }
 
         private void parseLoginResponse(JObject response)
