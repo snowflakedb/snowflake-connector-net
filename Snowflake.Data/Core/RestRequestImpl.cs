@@ -79,9 +79,6 @@ namespace Snowflake.Data.Core
             }
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
 
-            CancellationTokenSource cancellationTokenSource = 
-                new CancellationTokenSource();
-
             return sendRequest(message, getRequest.timeout);
         }
 
