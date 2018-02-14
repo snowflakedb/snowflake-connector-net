@@ -11,6 +11,8 @@ Build
 Prerequisites
 -------------
 This project is developed under Visual Studio 2015. All other version of visual studio is not supported.
+I compiled the .net driver against .net framework 4.6, but not .net core (there is a plan porting it).
+
 
 Steps
 -----
