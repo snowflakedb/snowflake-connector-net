@@ -11,22 +11,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
+using System.Threading;
 
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
-        internal SFSession sfSession { get; set; } 
+        internal SFSession SfSession { get; private set; } 
 
-        private ConnectionState connectionState;
+        private ConnectionState _connectionState;
 
-        private int connectionTimeout;
+        private int _connectionTimeout;
 
         public SnowflakeDbConnection()
         {
-            connectionState = ConnectionState.Closed;
-            connectionTimeout = 0;
+            _connectionState = ConnectionState.Closed;
+            _connectionTimeout = 0;
         }
 
         public override string ConnectionString
@@ -39,21 +40,9 @@ namespace Snowflake.Data.Client
             get; set;
         }
 
-        public override string Database
-        {
-            get
-            {
-                return connectionState == ConnectionState.Open ? sfSession.database : "";
-            }
-        }
+        public override string Database => _connectionState == ConnectionState.Open ? SfSession.database : string.Empty;
 
-        public override int ConnectionTimeout
-        {
-            get
-            {
-                return this.connectionTimeout;
-            }
-        }
+        public override int ConnectionTimeout => this._connectionTimeout;
 
         /// <summary>
         ///     If the connection to the database is closed, the DataSource returns whatever is contained 
@@ -72,25 +61,13 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override string ServerVersion
-        {
-            get
-            {
-                return connectionState == ConnectionState.Open ? sfSession.serverVersion : "";
-            }
-        }
+        public override string ServerVersion => _connectionState == ConnectionState.Open ? SfSession.serverVersion : "";
 
-        public override ConnectionState State
-        {
-            get
-            {
-                return connectionState;
-            }
-        }
+        public override ConnectionState State => _connectionState;
 
         public override void ChangeDatabase(string databaseName)
         {
-            string alterDbCommand = String.Format("use database {0}", databaseName);
+            string alterDbCommand = $"use database {databaseName}";
 
             using (IDbCommand cmd = this.CreateCommand())
             {
@@ -101,20 +78,43 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
-            if (connectionState != ConnectionState.Closed && sfSession != null)
+            if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
-                sfSession.close();
+                SfSession.close();
             }
         }
 
         public override void Open()
         {
-            sfSession = new SFSession(ConnectionString, Password);
-            this.connectionTimeout = sfSession.connectionTimeout;
-            connectionState = ConnectionState.Connecting;
-            sfSession.open();
-            connectionState = ConnectionState.Open;
+            SetSession();
+            SfSession.Open();
+            OnSessionEstablished();
         }
+        
+        public override Task OpenAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled(cancellationToken);
+
+            SetSession();
+            //TODO: Respect the cancellation tokens...
+            return SfSession.OpenAsync().ContinueWith(t => OnSessionEstablished(), cancellationToken);
+        }
+
+        private void SetSession()
+        {
+            SfSession = new SFSession(ConnectionString, Password);
+            _connectionTimeout = SfSession.connectionTimeout;
+            _connectionState = ConnectionState.Connecting;
+        }
+
+        private void OnSessionEstablished()
+        {
+            _connectionState = ConnectionState.Open;
+        }
+
+
+
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {

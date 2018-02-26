@@ -23,7 +23,7 @@ namespace Snowflake.Data.Client
         public SnowflakeDbCommand(SnowflakeDbConnection connection)
         {
             this.connection = connection;
-            this.sfStatement = new SFStatement(connection.sfSession);
+            this.sfStatement = new SFStatement(connection.SfSession);
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
