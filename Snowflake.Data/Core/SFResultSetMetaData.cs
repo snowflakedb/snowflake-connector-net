@@ -81,7 +81,7 @@ namespace Snowflake.Data.Core
             }
             return -1;
         }
-
+        
         internal SFDataType getColumnTypeByIndex(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
@@ -89,23 +89,38 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
-            string sfDataTypeStr = rowTypes[targetIndex].type;
-            return (SFDataType)Enum.Parse(typeof(SFDataType), sfDataTypeStr.ToUpper());
+            return GetSFDataType(rowTypes[targetIndex].type);
         }
 
-        internal Type getCSharpTypeByIndex(int targetIndex)
+        internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
             {
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
-            SFDataType sfType = getColumnTypeByIndex(targetIndex);
+            var column = rowTypes[targetIndex];
+            var dataType = GetSFDataType(column.type);
+            var nativeType = GetNativeTypeForColumn(dataType, column);
 
+            return Tuple.Create(dataType, nativeType);
+        }
+
+        private SFDataType GetSFDataType(string type)
+        {
+            if (Enum.TryParse(type, true, out SFDataType rslt))
+                return rslt;
+
+            throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                $"Unknow column type: {type}"); 
+        }
+
+        private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
+        {
             switch (sfType)
             {
                 case SFDataType.FIXED:
-                    return rowTypes[targetIndex].scale == 0 ? typeof(long) : typeof(decimal);
+                    return col.scale == 0 ? typeof(long) : typeof(decimal);
                 case SFDataType.REAL:
                     return typeof(double);
                 case SFDataType.TEXT:
@@ -125,8 +140,19 @@ namespace Snowflake.Data.Core
                     return typeof(bool);
                 default:
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                        String.Format("Unknow column type: {0}", sfType));
+                        $"Unknow column type: {sfType}");
             }
+        }
+        
+        internal Type getCSharpTypeByIndex(int targetIndex)
+        {
+            if (targetIndex < 0 || targetIndex >= columnCount)
+            {
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
+            }
+
+            SFDataType sfType = getColumnTypeByIndex(targetIndex);
+            return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);  
         }
 
         internal string getColumnNameByIndex(int targetIndex)
