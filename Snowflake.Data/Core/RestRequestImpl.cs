@@ -6,6 +6,8 @@ using System.Threading;
 using System.Net.Http;
 using System;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Common.Logging;
@@ -43,7 +45,7 @@ namespace Snowflake.Data.Core
         public JObject post(SFRestRequest postRequest)
         {
             var json = JsonConvert.SerializeObject(postRequest.jsonBody);
-            HttpContent httpContent = new StringContent(json);
+            HttpContent httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, postRequest.uri);
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = postRequest.httpRequestTimeout;
@@ -61,6 +63,39 @@ namespace Snowflake.Data.Core
             return JObject.Parse(jsonString.Result);
         }
 
+        public T Post<T>(SFRestRequest postRequest)
+        {
+            //Run synchronous in a new thread-pool task.
+            return Task.Run(async () => await PostAsync<T>(postRequest)).Result;
+        }
+
+        public async Task<T> PostAsync<T>(SFRestRequest postRequest)
+        {
+            var req = ToRequestMessage(HttpMethod.Post, postRequest);
+
+            var response = await SendAsync(req, postRequest.sfRestRequestTimeout);
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        private HttpRequestMessage ToRequestMessage(HttpMethod method, SFRestRequest request)
+        {
+            var msg = new HttpRequestMessage(method, request.uri);
+            if (method != HttpMethod.Get && request.jsonBody != null)
+            {
+                var json = JsonConvert.SerializeObject(request.jsonBody);
+                //TODO: Check if we should use other encodings...
+                msg.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
+
+            msg.Headers.Add(SF_AUTHORIZATION_HEADER, request.authorizationToken);
+            msg.Headers.Accept.Add(applicationSnowflake);
+            
+            msg.Properties["TIMEOUT_PER_HTTP_REQUEST"] = request.httpRequestTimeout;
+
+            return msg;
+        }
+        
         public HttpResponseMessage get(S3DownloadRequest getRequest)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
@@ -97,6 +132,14 @@ namespace Snowflake.Data.Core
             return JObject.Parse(jsonString.Result);
         }
 
+        private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, TimeSpan timeout)
+        {
+            var response = await HttpUtil.initHttpClient(timeout).SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            return response;
+        }
+
         private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage, TimeSpan timeoutPerRestRequest)
         {
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(timeoutPerRestRequest);
@@ -115,5 +158,4 @@ namespace Snowflake.Data.Core
             }
         }
     }
-
 }

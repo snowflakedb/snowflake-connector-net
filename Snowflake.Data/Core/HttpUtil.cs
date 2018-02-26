@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
             internal RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
             {
             }
-
+            
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
                 CancellationToken cancellationToken)
             {

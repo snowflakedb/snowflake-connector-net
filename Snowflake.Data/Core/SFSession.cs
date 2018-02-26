@@ -11,12 +11,14 @@ using Newtonsoft.Json.Linq;
 using Common.Logging;
 using Snowflake.Data.Client;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
     class SFSession
     {
         private static readonly ILog logger = LogManager.GetLogger<SFSession>();
+        private static readonly Tuple<AuthnRequestClientEnv, string> _EnvironmentData;
 
         private const string SF_SESSION_PATH = "/session";
 
@@ -64,6 +66,19 @@ namespace Snowflake.Data.Core
 
         internal Dictionary<string, string> parameterMap { get; set; }
 
+        static SFSession()
+        {
+            AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
+            {
+                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                osVersion = System.Environment.OSVersion.VersionString
+            };
+
+            var clientVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+            _EnvironmentData = Tuple.Create(clientEnv, clientVersion);
+        }
+
         /// <summary>
         ///     Constructor 
         /// </summary>
@@ -79,11 +94,9 @@ namespace Snowflake.Data.Core
 
             parameterMap = new Dictionary<string, string>();
         }
-
-        internal void open()
+        
+        private SFRestRequest BuildLoginRequest()
         {
-            logger.Debug("Open Session");
-
             // build uri
             UriBuilder uriBuilder = new UriBuilder();
             uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
@@ -99,40 +112,57 @@ namespace Snowflake.Data.Core
             queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             uriBuilder.Query = queryString.ToString();
 
-            // build post body
-            AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
-            {
-                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString
-            };
-
             AuthnRequestData data = new AuthnRequestData()
             {
                 loginName = properties[SFSessionProperty.USER],
                 password = properties[SFSessionProperty.PASSWORD],
                 clientAppId = ".NET",
-                clientAppVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+                clientAppVersion = _EnvironmentData.Item2,
                 accountName = properties[SFSessionProperty.ACCOUNT],
-                clientEnv = clientEnv
+                clientEnv = _EnvironmentData.Item1
             };
 
-            // build request
-            int connectionTimeoutSec = Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-            SFRestRequest loginRequest = new SFRestRequest();
-            loginRequest.jsonBody = new AuthnRequest() { data = data };
-            loginRequest.uri = uriBuilder.Uri;
-            loginRequest.authorizationToken = SF_AUTHORIZATION_BASIC;
-            // total login timeout  
-            if (connectionTimeoutSec <= 0) loginRequest.sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
-            else loginRequest.sfRestRequestTimeout = TimeSpan.FromSeconds(connectionTimeoutSec);
+            int connectionTimeoutSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+
+            return new SFRestRequest()
+            {
+                jsonBody = new AuthnRequest() { data = data },
+                uri = uriBuilder.Uri,
+                authorizationToken = SF_AUTHORIZATION_BASIC,
+                sfRestRequestTimeout = connectionTimeoutSec > 0 ? TimeSpan.FromSeconds(connectionTimeoutSec) : Timeout.InfiniteTimeSpan
+            };
+        }
+
+       
+
+        internal void Open()
+        {
+            logger.Debug("Open Session");
+
+            var loginRequest = BuildLoginRequest();
 
             if (logger.IsTraceEnabled)
             {
                 logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
             }
 
-            JObject response = restRequest.post(loginRequest);
-            parseLoginResponse(response);
+            var response = restRequest.Post<AuthnResponse>(loginRequest);
+            ProcessLoginResponse(response);
+        }
+
+        internal async Task OpenAsync()
+        {
+            logger.Debug("Open Session");
+
+            var loginRequest = BuildLoginRequest();
+
+            if (logger.IsTraceEnabled)
+            {
+                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+            }
+
+            var response = await restRequest.PostAsync<AuthnResponse>(loginRequest);
+            ProcessLoginResponse(response);
         }
 
         internal void close()
@@ -201,10 +231,8 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private void parseLoginResponse(JObject response)
+        private void ProcessLoginResponse(AuthnResponse authnResponse)
         {
-            AuthnResponse authnResponse = response.ToObject<AuthnResponse>();
-            
             if (authnResponse.success)
             {
                 sessionToken = authnResponse.data.token;
@@ -222,7 +250,7 @@ namespace Snowflake.Data.Core
                 throw e;
             } 
         }
-
+        
         internal static void updateParameterMap(Dictionary<string, string> parameters, List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");

@@ -8,11 +8,16 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
     public interface IRestRequest
     {
+        Task<T> PostAsync<T>(SFRestRequest postRequest);
+
+        T Post<T>(SFRestRequest postRequest);
+
         JObject post(SFRestRequest postRequest);
 
         JObject get(SFRestRequest getRequest);
