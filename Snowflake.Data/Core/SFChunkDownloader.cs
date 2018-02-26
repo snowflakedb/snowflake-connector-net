@@ -122,8 +122,8 @@ namespace Snowflake.Data.Core
                 uri = new UriBuilder(chunk.url).Uri,
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
-                timeout = 60 * 60,
-                httpRequestTimeout = 16000,
+                timeout = TimeSpan.FromHours(1),
+                httpRequestTimeout = TimeSpan.FromSeconds(16),
                 chunkHeaders = downloadContext.chunkHeaders
             };
 

@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Common.Logging;
+using System.Threading;
 
 namespace Snowflake.Data.Core
 {
@@ -72,7 +73,7 @@ namespace Snowflake.Data.Core
             queryRequest.uri = uriBuilder.Uri;
             queryRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
             queryRequest.jsonBody = postBody;
-            queryRequest.httpRequestTimeout = -1;
+            queryRequest.httpRequestTimeout = Timeout.InfiniteTimeSpan;
 
             try
             {
@@ -82,7 +83,8 @@ namespace Snowflake.Data.Core
                 if (execResponse.code == SF_SESSION_EXPIRED_CODE)
                 {
                     sfSession.renewSession();
-                    this.execute(sql, bindings, describeOnly);
+                    this.requestId = null;
+                    return this.execute(sql, bindings, describeOnly);
                 }
                 else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
                          execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
@@ -109,7 +111,7 @@ namespace Snowflake.Data.Core
                             uri = getResultUriBuilder.Uri,
                             authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken)
                         };
-                        getResultRequest.httpRequestTimeout = -1;
+                        getResultRequest.httpRequestTimeout = Timeout.InfiniteTimeSpan;
 
                         execResponse = null;
                         execResponse = restRequest.get(getResultRequest).ToObject<QueryExecResponse>();

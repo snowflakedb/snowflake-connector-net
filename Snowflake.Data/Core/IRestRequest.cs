@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Threading;
 
 namespace Snowflake.Data.Core
 {
@@ -26,10 +27,10 @@ namespace Snowflake.Data.Core
         internal string qrmk { get; set; }
 
         // request timeout in millis
-        internal int timeout { get; set; }
+        internal TimeSpan timeout { get; set; }
 
         // timeout for each http request 
-        internal int httpRequestTimeout { get; set; }
+        internal TimeSpan httpRequestTimeout { get; set; }
 
         internal Dictionary<string, string> chunkHeaders { get; set; }
     }
@@ -38,10 +39,10 @@ namespace Snowflake.Data.Core
     {
         public SFRestRequest()
         {
-            sfRestRequestTimeout = -1;
+            sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
 
             // default each http request timeout to 16 seconds
-            httpRequestTimeout = 16000;
+            httpRequestTimeout = TimeSpan.FromSeconds(16); 
         }
 
         internal Uri uri { get; set; }
@@ -51,10 +52,10 @@ namespace Snowflake.Data.Core
         internal String authorizationToken { get; set; }
         
         // timeout for the whole rest request in millis (adding up all http retry)
-        internal int sfRestRequestTimeout { get; set; }
+        internal TimeSpan sfRestRequestTimeout { get; set; }
         
         // timeout for each http request 
-        internal int httpRequestTimeout { get; set; } 
+        internal TimeSpan httpRequestTimeout { get; set; } 
 
         public override string ToString()
         {
