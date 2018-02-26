@@ -32,7 +32,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.getValue(GetOrdinal(name));
+                return resultSet.GetValue(GetOrdinal(name));
             }
         }
 
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.getValue(ordinal);
+                return resultSet.GetValue(ordinal);
             }
         }
 
@@ -88,12 +88,12 @@ namespace Snowflake.Data.Client
 
         public override bool GetBoolean(int ordinal)
         {
-            return resultSet.getBoolean(ordinal);
+            return resultSet.GetValue<bool>(ordinal);
         }
 
         public override byte GetByte(int ordinal)
         {
-            byte[] bytes = resultSet.getBytes(ordinal);
+            byte[] bytes = resultSet.GetValue<byte[]>(ordinal);
             return bytes[0];
         }
 
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Client
 
         public override char GetChar(int ordinal)
         {
-            string val = resultSet.getString(ordinal);
+            string val = resultSet.GetString(ordinal);
             return val[0];
         }
 
@@ -120,17 +120,17 @@ namespace Snowflake.Data.Client
 
         public override DateTime GetDateTime(int ordinal)
         {
-            return resultSet.getDateTime(ordinal);
+            return resultSet.GetValue<DateTime>(ordinal);
         }
 
         public override decimal GetDecimal(int ordinal)
         {
-            return resultSet.getDecimal(ordinal);
+            return resultSet.GetValue<decimal>(ordinal);
         }
 
         public override double GetDouble(int ordinal)
         {
-            return resultSet.getDouble(ordinal);
+            return resultSet.GetValue<double>(ordinal);
         }
 
         public override IEnumerator GetEnumerator()
@@ -145,27 +145,27 @@ namespace Snowflake.Data.Client
 
         public override float GetFloat(int ordinal)
         {
-            return resultSet.getFloat(ordinal);
+            return resultSet.GetValue<float>(ordinal);
         }
 
         public override Guid GetGuid(int ordinal)
         {
-            return resultSet.getGuid(ordinal);
+            return resultSet.GetValue<Guid>(ordinal);
         }
 
         public override short GetInt16(int ordinal)
         {
-            return resultSet.getInt16(ordinal);
+            return resultSet.GetValue<short>(ordinal);
         }
 
         public override int GetInt32(int ordinal)
         {
-            return resultSet.getInt32(ordinal);
+            return resultSet.GetValue<int>(ordinal);
         }
 
         public override long GetInt64(int ordinal)
         {
-            return resultSet.getInt64(ordinal);
+            return resultSet.GetValue<long>(ordinal);
         }
 
         public override string GetName(int ordinal)
@@ -180,12 +180,12 @@ namespace Snowflake.Data.Client
 
         public override string GetString(int ordinal)
         {
-            return resultSet.getString(ordinal);
+            return resultSet.GetString(ordinal);
         }
 
         public override object GetValue(int ordinal)
         {
-            return resultSet.getValue(ordinal);
+            return resultSet.GetValue(ordinal);
         }
 
         public override int GetValues(object[] values)
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Client
 
         public override bool IsDBNull(int ordinal)
         {
-            return resultSet.getValue(ordinal) == null;
+            return resultSet.GetValue(ordinal) == DBNull.Value;
         }
 
         public override bool NextResult()

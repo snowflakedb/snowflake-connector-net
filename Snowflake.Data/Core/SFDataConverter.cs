@@ -19,28 +19,33 @@ namespace Snowflake.Data.Core
 
     class SFDataConverter
     {
-        static private ILog logger = LogManager.GetLogger<SFDataConverter>();
+        private static readonly ILog Logger = LogManager.GetLogger<SFDataConverter>();
 
-        static private DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        static internal Object convertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        
+        
+        internal static object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
-            logger.TraceFormat("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
-            if (destType == typeof(Int16) 
-                || destType == typeof(Int32)
-                || destType == typeof(Int64)
+            Logger.TraceFormat("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
+            
+            if (srcVal == null)
+                return DBNull.Value;
+
+            if (destType == typeof(short) 
+                || destType == typeof(int)
+                || destType == typeof(long)
                 || destType == typeof(Guid)
-                || destType == typeof(Double)
+                || destType == typeof(double)
                 || destType == typeof(float)
-                || destType == typeof(Decimal))
+                || destType == typeof(decimal))
             {
                 var typeConverter = TypeDescriptor.GetConverter(destType);
                 return typeConverter.ConvertFrom(srcVal);
             }
             else if (destType == typeof(Boolean))
             {
-                return String.Compare(srcVal, "1", true) == 0 
-                    || String.Compare(srcVal, "true", true) == 0;
+                return srcVal.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+                       srcVal.Equals("true", StringComparison.OrdinalIgnoreCase);
             }
             else if (destType == typeof(string))
             {
@@ -48,16 +53,16 @@ namespace Snowflake.Data.Core
             }
             else if (destType == typeof(DateTime))
             {
-                return convertToDateTime(srcVal, srcType);
+                return ConvertToDateTime(srcVal, srcType);
             }
             else if (destType == typeof(DateTimeOffset))
             {
-                return convertToDateTimeOffset(srcVal, srcType);
+                return ConvertToDateTimeOffset(srcVal, srcType);
             }
             else if (destType == typeof(byte[]))
             {
                 return srcType == SFDataType.BINARY ? 
-                    hexToBytes(srcVal) : Encoding.UTF8.GetBytes(srcVal);
+                    HexToBytes(srcVal) : Encoding.UTF8.GetBytes(srcVal);
             }
             else
             {
@@ -65,26 +70,26 @@ namespace Snowflake.Data.Core
             }
         }
 
-        static private DateTime convertToDateTime(string srcVal, SFDataType srcType)
+        private static DateTime ConvertToDateTime(string srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
                 case SFDataType.DATE:
                     long srcValLong = Int64.Parse(srcVal);
-                    return unixEpoch.AddDays(srcValLong);
+                    return UnixEpoch.AddDays(srcValLong);
 
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
 
-                    Tuple<long, long> secAndNsec = extractTimestamp(srcVal);
-                    return unixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
+                    Tuple<long, long> secAndNsec = ExtractTimestamp(srcVal);
+                    return UnixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
             }
         }
 
-        static private DateTimeOffset convertToDateTimeOffset(string srcVal, SFDataType srcType)
+        private static DateTimeOffset ConvertToDateTimeOffset(string srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
@@ -92,22 +97,22 @@ namespace Snowflake.Data.Core
                     int spaceIndex = srcVal.IndexOf(' ');
                     if (spaceIndex == -1)
                     {
-                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR, 
-                            String.Format("Invalid timestamp_tz value: {0}", srcVal));
+                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                            $"Invalid timestamp_tz value: {srcVal}");
                     }
                     else
                     {
-                        Tuple<long, long> secAndNsecTZ = extractTimestamp(srcVal.Substring(0, spaceIndex));
+                        Tuple<long, long> secAndNsecTZ = ExtractTimestamp(srcVal.Substring(0, spaceIndex));
 
                         int offset = Int32.Parse(srcVal.Substring(spaceIndex + 1, srcVal.Length - spaceIndex - 1));
                         TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
-                        return new DateTimeOffset(unixEpoch.Ticks +
+                        return new DateTimeOffset(UnixEpoch.Ticks +
                             (secAndNsecTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecTZ.Item2) / 100, TimeSpan.Zero).ToOffset(offSetTimespan);
                     }
                 case SFDataType.TIMESTAMP_LTZ:
-                    Tuple<long, long> secAndNsecLTZ = extractTimestamp(srcVal);
+                    Tuple<long, long> secAndNsecLTZ = ExtractTimestamp(srcVal);
                       
-                    return new DateTimeOffset(unixEpoch.Ticks +
+                    return new DateTimeOffset(UnixEpoch.Ticks +
                         (secAndNsecLTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecLTZ.Item2) / 100, TimeSpan.Zero).ToLocalTime(); 
 
                 default:
@@ -116,7 +121,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static Tuple<long, long> extractTimestamp(string srcVal)
+        private static Tuple<long, long> ExtractTimestamp(string srcVal)
         {
             int dotIndex = srcVal.IndexOf('.');
             if (dotIndex == -1)
@@ -131,7 +136,7 @@ namespace Snowflake.Data.Core
         }
 
             
-        static internal Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
+        internal static Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
         {
             string destType;
             string destVal;
@@ -177,7 +182,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         long millis = (long)((DateTime)srcVal).ToUniversalTime().Subtract(
-                            unixEpoch).TotalMilliseconds;
+                            UnixEpoch).TotalMilliseconds;
                         destVal = millis.ToString();
                     }
                     break;
@@ -208,7 +213,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         DateTime srcDt = ((DateTime)srcVal);
-                        destVal = ((long)(srcDt.Subtract(unixEpoch).Ticks * 100)).ToString();
+                        destVal = ((long)(srcDt.Subtract(UnixEpoch).Ticks * 100)).ToString();
                     }
                     break;
                 
@@ -223,7 +228,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         DateTimeOffset dtOffset = (DateTimeOffset)srcVal;
-                        destVal = String.Format("{0} {1}", (dtOffset.UtcTicks - unixEpoch.Ticks) * 100L, 
+                        destVal = String.Format("{0} {1}", (dtOffset.UtcTicks - UnixEpoch.Ticks) * 100L, 
                             dtOffset.Offset.TotalMinutes + 1440);
                     }
                     break;
@@ -237,7 +242,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        destVal = bytesToHex((byte[])srcVal);
+                        destVal = BytesToHex((byte[])srcVal);
                     }
                     break;
 
@@ -247,7 +252,7 @@ namespace Snowflake.Data.Core
             return Tuple.Create(destType, destVal);
         }
 
-        static private string bytesToHex(byte[] bytes)
+        private static string BytesToHex(byte[] bytes)
         {
             StringBuilder hexBuilder = new StringBuilder(bytes.Length * 2);
             foreach(byte b in bytes)
@@ -257,7 +262,7 @@ namespace Snowflake.Data.Core
             return hexBuilder.ToString();
         }
 
-        static private byte[] hexToBytes(string hex)
+        private static byte[] HexToBytes(string hex)
         {
             int NumberChars = hex.Length;
             byte[] bytes = new byte[NumberChars / 2];
@@ -266,7 +271,7 @@ namespace Snowflake.Data.Core
             return bytes;
         }
 
-        static internal string csharpValToSfVal(SFDataType sfDataType, object srcVal)
+        internal static string csharpValToSfVal(SFDataType sfDataType, object srcVal)
         {
             switch(sfDataType)
             {
@@ -278,14 +283,14 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                       return ((long)(((DateTimeOffset)srcVal).UtcTicks - unixEpoch.Ticks) * 100).ToString();
+                       return ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
                     }
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        static internal string toDateString(DateTime date, string formatter)
+        internal static string toDateString(DateTime date, string formatter)
         {
             // change formatter from "YYYY-MM-DD" to "yyyy-MM-dd"
             formatter = formatter.Replace("Y", "y").Replace("m", "M").Replace("D", "d");

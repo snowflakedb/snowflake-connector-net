@@ -132,7 +132,7 @@ namespace Snowflake.Data.Client
         {
             SFBaseResultSet resultSet = executeInternal(CommandText, null, false);
             resultSet.next();
-            return resultSet.getValue(0);
+            return resultSet.GetValue(0);
         }
 
         public override void Prepare()
