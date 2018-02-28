@@ -68,7 +68,7 @@ namespace Snowflake.Data.Core
             }
 
             SFResultChunk nextChunk;
-            if ((nextChunk = _chunkDownloader.GetNextChunk()) != null)
+            if ((nextChunk = _chunkDownloader?.GetNextChunk()) != null)
             {
                 Logger.DebugFormat("Recieved chunk #{0} of {1}", nextChunk.ChunkIndex+1, _totalChunkCount);
                 _currentChunk.rowSet = null;
