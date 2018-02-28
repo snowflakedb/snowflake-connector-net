@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Common.Logging;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Core
     {
         static private ILog logger = LogManager.GetLogger<SFStatement>();
 
-        internal SFSession sfSession { get; set; }
+        internal SFSession SfSession { get; set; }
 
         private const string SF_QUERY_PATH = "/queries/v1/query-request";
 
@@ -32,35 +33,49 @@ namespace Snowflake.Data.Core
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
-        private string requestId = null;
+        private string _requestId;
 
-        private IRestRequest restRequest;
+        private readonly object _requestIdLock = new object();
+
+        private readonly IRestRequest _restRequest;
+
+        private CancellationTokenSource _timeoutTokenSource;
 
         internal SFStatement(SFSession session)
         {
-            this.sfSession = session;
-            restRequest = RestRequestImpl.Instance;
+            SfSession = session;
+            _restRequest = RestRequestImpl.Instance;
         }
 
-        internal SFBaseResultSet execute(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private void AssignQueryRequestId()
         {
-            if (requestId != null)
+            lock (_requestIdLock)
             {
-                logger.Info("Another query is running.");
-                throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
+                
+                if (_requestId != null)
+                {
+                    logger.Info("Another query is running.");
+                    throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
+                }
+
+                _requestId = Guid.NewGuid().ToString();
             }
-            this.requestId = Guid.NewGuid().ToString(); 
+        }
 
+        private void ClearQueryRequestId()
+        {
+            _timeoutTokenSource?.Cancel();
 
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
-            uriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = SF_QUERY_PATH;
+            lock (_requestIdLock)
+                _requestId = null;
+        }
 
-            var queryString = HttpUtility.ParseQueryString(string.Empty);
-            queryString[SF_QUERY_REQUEST_ID] = requestId;
-            uriBuilder.Query = queryString.ToString();
+        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        {
+            AssignQueryRequestId();
+
+            var queryUri = SfSession.BuildUri(SF_QUERY_PATH,
+                new Dictionary<string, string>() {{SF_QUERY_REQUEST_ID, _requestId}});
 
             QueryRequest postBody = new QueryRequest()
             {
@@ -69,138 +84,210 @@ namespace Snowflake.Data.Core
                 describeOnly = describeOnly,
             };
 
-            SFRestRequest queryRequest = new SFRestRequest();
-            queryRequest.uri = uriBuilder.Uri;
-            queryRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
-            queryRequest.jsonBody = postBody;
-            queryRequest.httpRequestTimeout = Timeout.InfiniteTimeSpan;
-
-            try
+            return new SFRestRequest
             {
-                JObject rawResponse = restRequest.post(queryRequest);
-                QueryExecResponse execResponse = rawResponse.ToObject<QueryExecResponse>();
+                uri = queryUri,
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                jsonBody = postBody,
+                httpRequestTimeout = Timeout.InfiniteTimeSpan
+            };
+        }
 
-                if (execResponse.code == SF_SESSION_EXPIRED_CODE)
-                {
-                    sfSession.renewSession();
-                    this.requestId = null;
-                    return this.execute(sql, bindings, describeOnly);
-                }
-                else if (execResponse.code == SF_QUERY_IN_PROGRESS ||
-                         execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
-                {
-                    logger.Info("Query execution in progress.");
-                    bool isSessionRenewed = false;
-                    string getResultUrl = null;
-                    while (execResponse.code == SF_QUERY_IN_PROGRESS ||
-                          execResponse.code == SF_QUERY_IN_PROGRESS_ASYNC)
-                    {
-                        if (!isSessionRenewed)
-                        {
-                            getResultUrl = execResponse.data.getResultUrl;
-                        }
+        private SFRestRequest BuildResultRequest(string resultPath)
+        {
+            var uri = SfSession.BuildUri(resultPath);
+            return new SFRestRequest()
+            {
+                uri = uri,
+                authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                httpRequestTimeout = Timeout.InfiniteTimeSpan
+            };
+        }
 
-                        UriBuilder getResultUriBuilder = new UriBuilder();
-                        getResultUriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
-                        getResultUriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
-                        getResultUriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
-                        getResultUriBuilder.Path = getResultUrl;
-
-                        SFRestRequest getResultRequest = new SFRestRequest()
-                        {
-                            uri = getResultUriBuilder.Uri,
-                            authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken)
-                        };
-                        getResultRequest.httpRequestTimeout = Timeout.InfiniteTimeSpan;
-
-                        execResponse = null;
-                        execResponse = restRequest.get(getResultRequest).ToObject<QueryExecResponse>();
-
-                        if (execResponse.code == SF_SESSION_EXPIRED_CODE)
-                        {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            sfSession.renewSession();
-                            isSessionRenewed = true;
-                        }
-                        else
-                        {
-                            isSessionRenewed = false;
-                        }
-                    }
-                }
-
-                if (execResponse.success)
-                {
-                    return new SFResultSet(execResponse.data, this);
-                }
-                else
-                {
-                    SnowflakeDbException e = new SnowflakeDbException(
-                        execResponse.data.sqlState, execResponse.code, execResponse.message, 
-                        execResponse.data.queryId);
-                    logger.Error("Query execution failed.", e);
-                    throw e;
-                }
+        private SFBaseResultSet BuildResultSet(QueryExecResponse response)
+        {
+            if (response.success)
+            {
+                return new SFResultSet(response.data, this);
             }
-            finally
+
+            throw new SnowflakeDbException(response.data.sqlState,
+                response.code, response.message, response.data.queryId);
+        }
+
+        private void SetTimeout(int timeout)
+        {
+            if (timeout > 0)
             {
-                this.requestId = null;
+                _timeoutTokenSource = new CancellationTokenSource();
+                Task.Delay(TimeSpan.FromSeconds(timeout), _timeoutTokenSource.Token)
+                    .ContinueWith(async (t) => await CancelAsync(), _timeoutTokenSource.Token);
             }
         }
 
-        internal void cancel()
+        private bool RequestInProgress(QueryExecResponse r) =>
+            r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
+
+        private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
+
+        
+        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
-            if (this.requestId == null)
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            try
             {
-                logger.Info("No query to be cancelled.");
-                return;
+                SetTimeout(timeout);
+                var response = await _restRequest.PostAsync<QueryExecResponse>(queryRequest);
+                if (SessionExpired(response))
+                {
+                    SfSession.renewSession();
+                    ClearQueryRequestId();
+                    return await ExecuteAsync(timeout, sql, bindings, describeOnly);
+                }
+
+                var lastResultUrl = response.data?.getResultUrl;
+
+                while (RequestInProgress(response) || SessionExpired(response))
+                {
+                    var req = BuildResultRequest(lastResultUrl);
+                    response = await _restRequest.GetAsync<QueryExecResponse>(req);
+
+                    if (SessionExpired(response))
+                    {
+                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                        SfSession.renewSession();
+                    }
+                    else
+                    {
+                        lastResultUrl = response.data?.getResultUrl;
+                    }
+                }
+
+                return BuildResultSet(response);
             }
-
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = sfSession.properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = sfSession.properties[SFSessionProperty.HOST];
-            uriBuilder.Port = Int32.Parse(sfSession.properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = SF_QUERY_CANCEL_PATH;
-
-            var queryString = HttpUtility.ParseQueryString(string.Empty);
-            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            uriBuilder.Query = queryString.ToString();
-
-            QueryCancelRequest postBody = new QueryCancelRequest()
+            catch (Exception ex)
             {
-                requestId = this.requestId
-            };
+                logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+        
+        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        {
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            try
+            {
+                SetTimeout(timeout);
 
-            SFRestRequest cancelRequest = new SFRestRequest();
-            cancelRequest.uri = uriBuilder.Uri;
-            cancelRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sfSession.sessionToken);
-            cancelRequest.jsonBody = postBody;
+                var response = _restRequest.Post<QueryExecResponse>(queryRequest);
+                if (SessionExpired(response))
+                {
+                    SfSession.renewSession();
+                    ClearQueryRequestId();
+                    return Execute(timeout, sql, bindings, describeOnly);
+                }
 
-            NullDataResponse cancelResponse = restRequest.post(cancelRequest).ToObject<NullDataResponse>();
-            if (cancelResponse.success)
+                var lastResultUrl = response.data?.getResultUrl;
+                while (RequestInProgress(response) || SessionExpired(response))
+                {
+                    var req = BuildResultRequest(lastResultUrl);
+                    response = _restRequest.Get<QueryExecResponse>(req);
+
+                    if (SessionExpired(response))
+                    {
+                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                        SfSession.renewSession();
+                    }
+                    else
+                    {
+                        lastResultUrl = response.data?.getResultUrl;
+                    }
+                }
+
+                return BuildResultSet(response);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+
+        private SFRestRequest BuildCancelQueryRequest()
+        {
+            lock (_requestIdLock)
+            {
+                if (_requestId == null)
+                    return null;
+
+                var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH,
+                    new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}});
+
+                QueryCancelRequest postBody = new QueryCancelRequest()
+                {
+                    requestId = _requestId
+                };
+
+                return new SFRestRequest()
+                {
+                    uri = uri,
+                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                    jsonBody = postBody
+                };
+            }
+        }
+
+        internal async Task CancelAsync()
+        {
+            SFRestRequest request = BuildCancelQueryRequest();
+            if (request == null)
+                return;
+
+            var response = await _restRequest.PostAsync<NullDataResponse>(request);
+
+            if(response.success)
             {
                 logger.Info("Query cancellation succeed");
             }
             else
             {
                 SnowflakeDbException e = new SnowflakeDbException(
-                    "", cancelResponse.code, cancelResponse.message, "");
+                    "", response.code, response.message, "");
                 logger.Error("Query cancellation failed.", e);
                 throw e;
             }
-            
-        }
 
-        internal void setQueryTimeoutBomb(int timeout)
-        {
-            System.Threading.Timer timer = null;
-            timer = new System.Threading.Timer(
-                (object state) =>
-                {
-                    this.cancel();
-                    timer.Dispose();
-                },
-                null, TimeSpan.FromSeconds(timeout), TimeSpan.FromMilliseconds(-1));
         }
+        
+
+        internal void Cancel()
+        {
+            SFRestRequest request = BuildCancelQueryRequest();
+            if (request == null)
+                return;
+
+            var response = _restRequest.Post<NullDataResponse>(request);
+
+            if (response.success)
+            {
+                logger.Info("Query cancellation succeed");
+            }
+            else
+            {
+                SnowflakeDbException e = new SnowflakeDbException(
+                    "", response.code, response.message, "");
+                logger.Error("Query cancellation failed.", e);
+                throw e;
+            }
+        }
+        
     }
 }

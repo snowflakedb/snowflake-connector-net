@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Security;
 using System.Web;
@@ -98,20 +99,15 @@ namespace Snowflake.Data.Core
         private SFRestRequest BuildLoginRequest()
         {
             // build uri
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = properties[SFSessionProperty.HOST];
-            uriBuilder.Port = Int32.Parse(properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = SF_LOGIN_PATH;
-            var queryString = HttpUtility.ParseQueryString(string.Empty);
+            var queryParams = new Dictionary<string,string>();
+            queryParams[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
+            queryParams[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
+            queryParams[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+            queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            
+            var loginUri = BuildUri(SF_LOGIN_PATH, queryParams);
 
-            string value;
-            queryString[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out value) ? value : "";
-            queryString[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out value) ? value : "";
-            queryString[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out value) ? value : "";
-            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            uriBuilder.Query = queryString.ToString();
-
+     
             AuthnRequestData data = new AuthnRequestData()
             {
                 loginName = properties[SFSessionProperty.USER],
@@ -127,12 +123,31 @@ namespace Snowflake.Data.Core
             return new SFRestRequest()
             {
                 jsonBody = new AuthnRequest() { data = data },
-                uri = uriBuilder.Uri,
+                uri = loginUri,
                 authorizationToken = SF_AUTHORIZATION_BASIC,
                 sfRestRequestTimeout = connectionTimeoutSec > 0 ? TimeSpan.FromSeconds(connectionTimeoutSec) : Timeout.InfiniteTimeSpan
             };
         }
 
+        internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
+        {
+            UriBuilder uriBuilder = new UriBuilder();
+            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
+            uriBuilder.Host = properties[SFSessionProperty.HOST];
+            uriBuilder.Port = int.Parse(properties[SFSessionProperty.PORT]);
+            uriBuilder.Path = path;
+
+            if (queryParams != null && queryParams.Any())
+            {
+                var queryString = HttpUtility.ParseQueryString(string.Empty);
+                foreach (var kvp in queryParams)
+                    queryString[kvp.Key] = kvp.Value;
+
+                uriBuilder.Query = queryString.ToString();
+            }
+            
+            return uriBuilder.Uri;
+        }
        
 
         internal void Open()
@@ -167,67 +182,52 @@ namespace Snowflake.Data.Core
 
         internal void close()
         {
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = properties[SFSessionProperty.HOST];
-            uriBuilder.Port = Int32.Parse(properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = SF_SESSION_PATH;
-
-            var queryString = HttpUtility.ParseQueryString(string.Empty);
-            queryString[SF_QUERY_SESSION_DELETE] = "true";
-            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            uriBuilder.Query = queryString.ToString();
-
-            SFRestRequest closeSessionRequest = new SFRestRequest();
-            closeSessionRequest.jsonBody = null;
-            closeSessionRequest.uri = uriBuilder.Uri;
-            closeSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken);
-
-            JObject response = restRequest.post(closeSessionRequest);
-            NullDataResponse deleteSessionResponse = response.ToObject<NullDataResponse>();
-            if (!deleteSessionResponse.success)
+            var queryParams = new Dictionary<string, string>();
+            queryParams[SF_QUERY_SESSION_DELETE] = "true";
+            queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            
+            SFRestRequest closeSessionRequest = new SFRestRequest
+            {
+                uri = BuildUri(SF_SESSION_PATH, queryParams),
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+            };
+          
+            var response = restRequest.Post<NullDataResponse>(closeSessionRequest);
+            if (!response.success)
             {
                 logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {1}", 
-                    deleteSessionResponse.code, deleteSessionResponse.message);
+                    response.code, response.message);
             }
         }
 
         internal void renewSession()
         {
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = properties[SFSessionProperty.HOST];
-            uriBuilder.Port = Int32.Parse(properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = SF_TOKEN_REQUEST_PATH;
-
-            var queryString = HttpUtility.ParseQueryString(string.Empty);
-            queryString[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            uriBuilder.Query = queryString.ToString();
-
             RenewSessionRequest postBody = new RenewSessionRequest()
             {
                 oldSessionToken = this.sessionToken,
                 requestType = "RENEW"
             };
 
-            SFRestRequest renewSessionRequest = new SFRestRequest();
-            renewSessionRequest.jsonBody = postBody;
-            renewSessionRequest.uri = uriBuilder.Uri;
-            renewSessionRequest.authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken);
-            renewSessionRequest.sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
-
-            JObject response = restRequest.post(renewSessionRequest);
-            RenewSessionResponse sessionRenewResponse = response.ToObject<RenewSessionResponse>();
-            if (!sessionRenewResponse.success)
+            SFRestRequest renewSessionRequest = new SFRestRequest
+            {
+                jsonBody = postBody,
+                uri = BuildUri(SF_TOKEN_REQUEST_PATH,
+                    new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}}),
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
+                sfRestRequestTimeout = Timeout.InfiniteTimeSpan
+            };
+            
+            var response = restRequest.Post<RenewSessionResponse>(renewSessionRequest);
+            if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("", 
-                    sessionRenewResponse.code, sessionRenewResponse.message, "");
+                    response.code, response.message, "");
                 logger.Error("Renew session failed", e);
                 throw e;
             } 
             else 
             {
-                sessionToken = sessionRenewResponse.data.sessionToken;
+                sessionToken = response.data.sessionToken;
             }
         }
 
@@ -261,3 +261,4 @@ namespace Snowflake.Data.Core
         }
     }
 }
+

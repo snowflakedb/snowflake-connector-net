@@ -4,7 +4,7 @@
 
 namespace Snowflake.Data.Core
 {
-    class SFResultChunk
+    internal class SFResultChunk
     {
         public string[,] rowSet { get; set; }
 
@@ -15,21 +15,23 @@ namespace Snowflake.Data.Core
         public string url { get; set; }
 
         public DownloadState downloadState { get; set; }
+        public int ChunkIndex { get;  }
 
         public readonly object syncPrimitive; 
 
         public SFResultChunk(string[,] rowSet)
         {
             this.rowSet = rowSet;
-            this.rowCount = rowSet.Length;
+            this.rowCount = rowSet.GetLength(0);
             this.downloadState = DownloadState.NOT_STARTED;
         }
 
-        public SFResultChunk(string url, int rowCount, int colCount)
+        public SFResultChunk(string url, int rowCount, int colCount, int index)
         {
             this.rowCount = rowCount;
             this.colCount = colCount;
             this.url = url;
+            ChunkIndex = index;
             syncPrimitive = new object();
             this.downloadState = DownloadState.NOT_STARTED;
         }
