@@ -20,7 +20,8 @@ namespace Snowflake.Data.Core
 
         internal bool isClosed;
 
-        internal abstract bool next();
+        internal abstract bool Next();
+        internal abstract Task<bool> NextAsync();
 
         protected abstract string getObjectInternal(int columnIndex);
 
@@ -158,5 +159,6 @@ namespace Snowflake.Data.Core
         {
             isClosed = true;
         }
+        
     }
 }

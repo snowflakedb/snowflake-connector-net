@@ -20,7 +20,10 @@ namespace Snowflake.Data.Core
             ServicePointManager.UseNagleAlgorithm = false;
             ServicePointManager.CheckCertificateRevocationList = true;
 
-            return new HttpClient(new RetryHandler(new HttpClientHandler())) { Timeout  = timeout };
+            return new HttpClient(new RetryHandler(new HttpClientHandler()))
+            {
+                Timeout  = timeout
+            };
         }
 
         class RetryHandler : DelegatingHandler

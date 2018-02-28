@@ -78,6 +78,21 @@ namespace Snowflake.Data.Core
             return JsonConvert.DeserializeObject<T>(json);
         }
 
+        public T Get<T>(SFRestRequest request)
+        {
+            //Run synchronous in a new thread-pool task.
+            return Task.Run(async () => await GetAsync<T>(request)).Result;
+        }
+
+        public async Task<T> GetAsync<T>(SFRestRequest request)
+        {
+            var req = ToRequestMessage(HttpMethod.Get, request);
+
+            var response = await SendAsync(req, request.sfRestRequestTimeout);
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
         private HttpRequestMessage ToRequestMessage(HttpMethod method, SFRestRequest request)
         {
             var msg = new HttpRequestMessage(method, request.uri);
@@ -96,7 +111,7 @@ namespace Snowflake.Data.Core
             return msg;
         }
         
-        public HttpResponseMessage get(S3DownloadRequest getRequest)
+        public Task<HttpResponseMessage> GetAsync(S3DownloadRequest getRequest)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
 
@@ -114,24 +129,9 @@ namespace Snowflake.Data.Core
             }
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
 
-            return sendRequest(message, getRequest.timeout);
+            return SendAsync(message, getRequest.timeout);
         }
-
-        public JObject get(SFRestRequest getRequest)
-        {
-            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
-            message.Headers.Add(SF_AUTHORIZATION_HEADER, getRequest.authorizationToken);
-            message.Headers.Accept.Add(applicationSnowflake);
-            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
-
-            var responseContent = sendRequest(message, getRequest.sfRestRequestTimeout).Content;
-
-            var jsonString = responseContent.ReadAsStringAsync();
-            jsonString.Wait();
-
-            return JObject.Parse(jsonString.Result);
-        }
-
+        
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, TimeSpan timeout)
         {
             var response = await HttpUtil.initHttpClient(timeout).SendAsync(request);
@@ -142,17 +142,10 @@ namespace Snowflake.Data.Core
 
         private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage, TimeSpan timeout)
         {
-            try
-            {
-                var response = HttpUtil.initHttpClient(timeout).SendAsync(requestMessage)
-                    .Result.EnsureSuccessStatusCode();
+            var response = HttpUtil.initHttpClient(timeout).SendAsync(requestMessage)
+                .Result.EnsureSuccessStatusCode();
 
-                return response;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            return response;
         }
     }
 

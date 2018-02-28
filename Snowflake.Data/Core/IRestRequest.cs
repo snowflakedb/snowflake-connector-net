@@ -18,11 +18,12 @@ namespace Snowflake.Data.Core
 
         T Post<T>(SFRestRequest postRequest);
 
-        JObject post(SFRestRequest postRequest);
+        T Get<T>(SFRestRequest request);
 
-        JObject get(SFRestRequest getRequest);
+        Task<T> GetAsync<T>(SFRestRequest request);
 
-        HttpResponseMessage get(S3DownloadRequest getRequest);
+        Task<HttpResponseMessage> GetAsync(S3DownloadRequest request);
+        
     }
 
     public class S3DownloadRequest
