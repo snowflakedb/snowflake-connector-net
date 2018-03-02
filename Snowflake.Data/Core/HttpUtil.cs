@@ -13,14 +13,25 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
-        static public HttpClient initHttpClient(TimeSpan timeout)
+        static private HttpClient httpClient = null;
+        
+        static public HttpClient getHttpClient()
+        {
+            if (httpClient == null)
+            {
+                initHttpClient();
+            }
+            return httpClient;
+        }        
+
+        static private void initHttpClient()
         {
             // enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             ServicePointManager.UseNagleAlgorithm = false;
             ServicePointManager.CheckCertificateRevocationList = true;
 
-            return new HttpClient(new RetryHandler(new HttpClientHandler())) { Timeout  = timeout };
+            HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler()));
         }
 
         class RetryHandler : DelegatingHandler

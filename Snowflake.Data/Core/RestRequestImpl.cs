@@ -97,18 +97,21 @@ namespace Snowflake.Data.Core
             return JObject.Parse(jsonString.Result);
         }
 
-        private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage, TimeSpan timeout)
+        private HttpResponseMessage sendRequest(HttpRequestMessage requestMessage, TimeSpan timeoutPerRestRequest)
         {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(timeoutPerRestRequest);
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
             try
             {
-                var response = HttpUtil.initHttpClient(timeout).SendAsync(requestMessage)
+                var response = HttpUtil.getHttpClient().SendAsync(requestMessage, cancellationToken)
                     .Result.EnsureSuccessStatusCode();
 
                 return response;
             }
             catch (Exception e)
             {
-                throw e;
+                throw cancellationToken.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) 
+                    : e;
             }
         }
     }
