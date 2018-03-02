@@ -90,13 +90,13 @@ namespace Snowflake.Data.Core
 		internal string sessionToken { get; set; }
 
 		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
+		internal Int16 sessionTokenValidityInSeconds { get; set; }
 
 		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
 		internal string masterToken { get; set; }
 
 		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 validityInSeconds { get; set; }
+		internal Int16 masterTokenValidityInSeconds { get; set; }
 
 		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
 		internal Int64 sessionId { get; set; }
