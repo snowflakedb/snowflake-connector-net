@@ -26,6 +26,8 @@ namespace Snowflake.Data.Core
         static internal Object convertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
             logger.TraceFormat("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
+            if (srcVal == null) return srcVal;
+            
             if (destType == typeof(Int16) 
                 || destType == typeof(Int32)
                 || destType == typeof(Int64)

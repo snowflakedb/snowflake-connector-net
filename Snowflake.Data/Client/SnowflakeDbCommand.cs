@@ -7,6 +7,8 @@ using Snowflake.Data.Core;
 using System.Data.Common;
 using System.Data;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace Snowflake.Data.Client
@@ -23,7 +25,7 @@ namespace Snowflake.Data.Client
         public SnowflakeDbCommand(SnowflakeDbConnection connection)
         {
             this.connection = connection;
-            this.sfStatement = new SFStatement(connection.sfSession);
+            this.sfStatement = new SFStatement(connection.SfSession);
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
@@ -117,22 +119,44 @@ namespace Snowflake.Data.Client
 
         public override void Cancel()
         {
-            sfStatement.cancel();
+            sfStatement.Cancel();
         }
-
+        
         public override int ExecuteNonQuery()
         {
-            SFBaseResultSet resultSet = executeInternal(CommandText, 
-                convertToBindList(parameterCollection.parameterList), false);
-            resultSet.next();
-            return ResultSetUtil.calculateUpdateCount(resultSet);
+            SFBaseResultSet resultSet = ExecuteInternal();
+            resultSet.Next();
+            return resultSet.CalculateUpdateCount();
+        }
+
+        public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            //TODO: Respect these cancellation tokens.
+
+            var resultSet = await ExecuteInternalAsync();
+            await resultSet.NextAsync();
+            return resultSet.CalculateUpdateCount();
         }
 
         public override object ExecuteScalar()
         {
-            SFBaseResultSet resultSet = executeInternal(CommandText, null, false);
-            resultSet.next();
+            SFBaseResultSet resultSet = ExecuteInternal();
+            resultSet.Next();
             return resultSet.getValue(0);
+        }
+
+        public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            //TODO: Respect these cancellation tokens.
+            var result = await ExecuteInternalAsync();
+            await result.NextAsync();
+            return result.getValue(0);
         }
 
         public override void Prepare()
@@ -147,11 +171,17 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            SFBaseResultSet resultSet = executeInternal(CommandText, null, false);
+            SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
-        private Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
+        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        {
+            var result = await ExecuteInternalAsync();
+            return new SnowflakeDbDataReader(this, result);
+        }
+
+        private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
         {
             if (parameters == null || parameters.Count == 0)
             {
@@ -214,17 +244,14 @@ namespace Snowflake.Data.Client
             }
         }
 
-        private SFBaseResultSet executeInternal(string sql, 
-            Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
         {
-            if (CommandTimeout != 0)
-            {
-                sfStatement.setQueryTimeoutBomb(CommandTimeout);
-            }
+            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+        }
 
-            SFBaseResultSet resultSet = sfStatement.execute(sql, bindings, describeOnly);
-
-            return resultSet;
+        private Task<SFBaseResultSet> ExecuteInternalAsync(bool describeOnly = false)
+        {
+            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
         }
     }
 }

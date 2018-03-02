@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
-    class ResultSetUtil
+    internal static class ResultSetUtil
     {
-        internal static int calculateUpdateCount(SFBaseResultSet resultSet)
+        internal static int CalculateUpdateCount(this SFBaseResultSet resultSet)
         {
             SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
             SFStatementType statementType = metaData.statementType;
