@@ -524,7 +524,7 @@ namespace Snowflake.Data.Tests
                     {
                         reader.Read();
                         object nullVal = reader.GetValue(0);
-                        Assert.IsNull(nullVal);
+                        Assert.AreEqual(DBNull.Value, nullVal);
                         Assert.IsTrue(reader.IsDBNull(0));
 
                         reader.Close();

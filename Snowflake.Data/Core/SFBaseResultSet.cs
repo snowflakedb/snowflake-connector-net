@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core
                         return null;
                     return SFDataConverter.toDateString((DateTime)val, 
                         sfResultSetMetaData.dateOutputFormat);
-                //TODO: Feels like were missing some implementations here, at least for time?
+                //TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
                 default:
                     return getObjectInternal(columnIndex); 
             }

@@ -108,7 +108,8 @@ namespace Snowflake.Data.Core
 
         private SFDataType GetSFDataType(string type)
         {
-            if (Enum.TryParse(type, true, out SFDataType rslt))
+            SFDataType rslt;
+            if (Enum.TryParse(type, true, out rslt))
                 return rslt;
 
             throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
