@@ -27,11 +27,11 @@ namespace Snowflake.Data.Core
                 case SFStatementType.MULTI_INSERT:
                     for(int i=0; i<resultSet.columnCount; i++)
                     {
-                        updateCount += resultSet.getInt32(i);
+                        updateCount += resultSet.GetValue<int>(i);
                     }
                     break;
                 case SFStatementType.COPY:
-                    updateCount = resultSet.getInt32(3);
+                    updateCount = resultSet.GetValue<int>(3);
                     break;
                 case SFStatementType.SELECT:
                     updateCount = -1;

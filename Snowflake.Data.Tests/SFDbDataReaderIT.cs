@@ -519,16 +519,26 @@ namespace Snowflake.Data.Tests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "select null";
+                    cmd.CommandText = "create or replace table testnull(a integer, b string)";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "insert into testnull values(null, null)";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "select * from testnull";
                     using (IDataReader reader = cmd.ExecuteReader())
                     {
                         reader.Read();
                         object nullVal = reader.GetValue(0);
-                        Assert.IsNull(nullVal);
+                        Assert.AreEqual(DBNull.Value, nullVal);
                         Assert.IsTrue(reader.IsDBNull(0));
+                        Assert.IsTrue(reader.IsDBNull(1));
 
                         reader.Close();
                     }
+
+                    cmd.CommandText = "drop table if exists testnull";
+                    cmd.ExecuteNonQuery();
                 }
 
                 conn.Close();
