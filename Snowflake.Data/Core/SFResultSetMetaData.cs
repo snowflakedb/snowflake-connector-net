@@ -136,7 +136,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIMESTAMP_TZ:
                     return typeof(DateTimeOffset);
                 case SFDataType.BINARY:
-                    return typeof(byte);
+                    return typeof(byte[]);
                 case SFDataType.BOOLEAN:
                     return typeof(bool);
                 default:
