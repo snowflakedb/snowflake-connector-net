@@ -1,12 +1,8 @@
-﻿/*1/
+﻿/*
  * Copyright (c) 2012-2017 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
@@ -26,7 +22,9 @@ namespace Snowflake.Data.Core
 
         internal T GetValue<T>(int columnIndex)
         {
-            return (T) GetValue(columnIndex);
+            string val = getObjectInternal(columnIndex);
+            var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
+            return (T) SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
         }
 
         internal string GetString(int columnIndex)
@@ -36,7 +34,7 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.DATE:
                     var val = GetValue(columnIndex);
-                    if (val == null)
+                    if (val == DBNull.Value)
                         return null;
                     return SFDataConverter.toDateString((DateTime)val, 
                         sfResultSetMetaData.dateOutputFormat);
