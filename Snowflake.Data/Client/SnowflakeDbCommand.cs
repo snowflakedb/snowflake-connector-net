@@ -134,9 +134,7 @@ namespace Snowflake.Data.Client
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            //TODO: Respect these cancellation tokens.
-
-            var resultSet = await ExecuteInternalAsync();
+            var resultSet = await ExecuteInternalAsync(cancellationToken);
             await resultSet.NextAsync();
             return resultSet.CalculateUpdateCount();
         }
@@ -153,8 +151,7 @@ namespace Snowflake.Data.Client
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            //TODO: Respect these cancellation tokens.
-            var result = await ExecuteInternalAsync();
+            var result = await ExecuteInternalAsync(cancellationToken);
             await result.NextAsync();
             return result.GetValue(0);
         }
@@ -177,7 +174,7 @@ namespace Snowflake.Data.Client
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            var result = await ExecuteInternalAsync();
+            var result = await ExecuteInternalAsync(cancellationToken);
             return new SnowflakeDbDataReader(this, result);
         }
 
@@ -249,9 +246,9 @@ namespace Snowflake.Data.Client
             return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(bool describeOnly = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
         {
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
         }
     }
 }

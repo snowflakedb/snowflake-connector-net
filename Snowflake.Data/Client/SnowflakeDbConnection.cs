@@ -97,8 +97,7 @@ namespace Snowflake.Data.Client
                 return Task.FromCanceled(cancellationToken);
 
             SetSession();
-            //TODO: Respect the cancellation tokens...
-            return SfSession.OpenAsync().ContinueWith(t => OnSessionEstablished(), cancellationToken);
+            return SfSession.OpenAsync(cancellationToken).ContinueWith(t => OnSessionEstablished(), cancellationToken);
         }
 
         private void SetSession()
@@ -112,9 +111,6 @@ namespace Snowflake.Data.Client
         {
             _connectionState = ConnectionState.Open;
         }
-
-
-
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {

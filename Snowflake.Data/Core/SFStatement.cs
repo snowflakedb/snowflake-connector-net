@@ -40,6 +40,10 @@ namespace Snowflake.Data.Core
         private readonly IRestRequest _restRequest;
 
         private CancellationTokenSource _timeoutTokenSource;
+        
+        // Merged cancellation token source for all canellation signal. 
+        // Cancel callback will be registered under token issued by this source.
+        private CancellationTokenSource _linkedCancellationTokenSouce;
 
         internal SFStatement(SFSession session)
         {
@@ -64,8 +68,6 @@ namespace Snowflake.Data.Core
 
         private void ClearQueryRequestId()
         {
-            _timeoutTokenSource?.Cancel();
-
             lock (_requestIdLock)
                 _requestId = null;
         }
@@ -104,11 +106,11 @@ namespace Snowflake.Data.Core
             };
         }
 
-        private SFBaseResultSet BuildResultSet(QueryExecResponse response)
+        private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
             if (response.success)
             {
-                return new SFResultSet(response.data, this);
+                return new SFResultSet(response.data, this, cancellationToken);
             }
 
             throw new SnowflakeDbException(response.data.sqlState,
@@ -117,11 +119,24 @@ namespace Snowflake.Data.Core
 
         private void SetTimeout(int timeout)
         {
-            if (timeout > 0)
+            this._timeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) :
+                                                     new CancellationTokenSource(Timeout.InfiniteTimeSpan);
+        }
+        
+        /// <summary>
+        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
+        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
+        /// </summary>
+        /// <param name="timeout">query timeout. 0 means no timeout</param>
+        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
+        private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
+        {
+            SetTimeout(timeout);
+            _linkedCancellationTokenSouce = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
+                externalCancellationToken);
+            if (!_linkedCancellationTokenSouce.IsCancellationRequested)
             {
-                _timeoutTokenSource = new CancellationTokenSource();
-                Task.Delay(TimeSpan.FromSeconds(timeout), _timeoutTokenSource.Token)
-                    .ContinueWith(async (t) => await CancelAsync(), _timeoutTokenSource.Token);
+                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
             }
         }
 
@@ -130,19 +145,19 @@ namespace Snowflake.Data.Core
 
         private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
-        
-        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
+                                                          CancellationToken cancellationToken)
         {
+            registerQueryCancellationCallback(timeout, cancellationToken);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                SetTimeout(timeout);
-                var response = await _restRequest.PostAsync<QueryExecResponse>(queryRequest);
+                var response = await _restRequest.PostAsync<QueryExecResponse>(queryRequest, cancellationToken);
                 if (SessionExpired(response))
                 {
                     SfSession.renewSession();
                     ClearQueryRequestId();
-                    return await ExecuteAsync(timeout, sql, bindings, describeOnly);
+                    return await ExecuteAsync(timeout, sql, bindings, describeOnly, cancellationToken);
                 }
 
                 var lastResultUrl = response.data?.getResultUrl;
@@ -150,7 +165,7 @@ namespace Snowflake.Data.Core
                 while (RequestInProgress(response) || SessionExpired(response))
                 {
                     var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequest.GetAsync<QueryExecResponse>(req);
+                    response = await _restRequest.GetAsync<QueryExecResponse>(req, cancellationToken);
 
                     if (SessionExpired(response))
                     {
@@ -163,7 +178,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                return BuildResultSet(response);
+                return BuildResultSet(response, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -178,11 +193,10 @@ namespace Snowflake.Data.Core
         
         internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
+            registerQueryCancellationCallback(timeout, CancellationToken.None);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                SetTimeout(timeout);
-
                 var response = _restRequest.Post<QueryExecResponse>(queryRequest);
                 if (SessionExpired(response))
                 {
@@ -208,7 +222,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                return BuildResultSet(response);
+                return BuildResultSet(response, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -244,30 +258,7 @@ namespace Snowflake.Data.Core
                 };
             }
         }
-
-        internal async Task CancelAsync()
-        {
-            SFRestRequest request = BuildCancelQueryRequest();
-            if (request == null)
-                return;
-
-            var response = await _restRequest.PostAsync<NullDataResponse>(request);
-
-            if(response.success)
-            {
-                logger.Info("Query cancellation succeed");
-            }
-            else
-            {
-                SnowflakeDbException e = new SnowflakeDbException(
-                    "", response.code, response.message, "");
-                logger.Error("Query cancellation failed.", e);
-                throw e;
-            }
-
-        }
         
-
         internal void Cancel()
         {
             SFRestRequest request = BuildCancelQueryRequest();

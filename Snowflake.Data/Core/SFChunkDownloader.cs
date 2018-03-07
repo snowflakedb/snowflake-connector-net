@@ -26,10 +26,11 @@ namespace Snowflake.Data.Core
         private string qrmk;
         
         private int nextChunkToDownloadIndex;
-
-        private int nextChunkToConsumeIndex;
         
-        // TODO: parameterize prefetch slot
+        // External cancellation token, used to stop donwload
+        private CancellationToken externalCancellationToken;
+
+        //TODO: parameterize prefetch slot
         const int prefetchSlot = 2;
 
         private static IRestRequest restRequest = RestRequestImpl.Instance;
@@ -39,13 +40,12 @@ namespace Snowflake.Data.Core
         private Dictionary<string, string> chunkHeaders;
 
         public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders)
+            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
-            this.nextChunkToConsumeIndex = 0;
 
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
@@ -72,7 +72,8 @@ namespace Snowflake.Data.Core
                         chunk = c,
                         chunkIndex = nextChunkToDownloadIndex,
                         qrmk = this.qrmk,
-                        chunkHeaders = this.chunkHeaders
+                        chunkHeaders = this.chunkHeaders,
+                        cancellationToken = this.externalCancellationToken
                     }));
                 }
 
@@ -101,7 +102,7 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await restRequest.GetAsync(downloadRequest);
+            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken);
             Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.
@@ -114,10 +115,6 @@ namespace Snowflake.Data.Core
             }
 
             parseStreamIntoChunk(stream, chunk);
-
-            /*StreamReader r = new StreamReader(stream);
-            string l = r.ReadLine();
-            Console.WriteLine(l);*/
 
             chunk.downloadState = DownloadState.SUCCESS;
 
@@ -159,6 +156,7 @@ namespace Snowflake.Data.Core
         public string qrmk { get; set; }
 
         public Dictionary<string, string> chunkHeaders { get; set; }
+        public CancellationToken cancellationToken { get; set; }
     }
     
     /// <summary>

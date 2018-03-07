@@ -14,16 +14,15 @@ namespace Snowflake.Data.Core
 {
     public interface IRestRequest
     {
-        Task<T> PostAsync<T>(SFRestRequest postRequest);
+        Task<T> PostAsync<T>(SFRestRequest postRequest, CancellationToken cancellationToken);
 
         T Post<T>(SFRestRequest postRequest);
 
         T Get<T>(SFRestRequest request);
 
-        Task<T> GetAsync<T>(SFRestRequest request);
+        Task<T> GetAsync<T>(SFRestRequest request, CancellationToken cancellationToken);
 
-        Task<HttpResponseMessage> GetAsync(S3DownloadRequest request);
-        
+        Task<HttpResponseMessage> GetAsync(S3DownloadRequest request, CancellationToken cancellationToken);
     }
 
     public class S3DownloadRequest

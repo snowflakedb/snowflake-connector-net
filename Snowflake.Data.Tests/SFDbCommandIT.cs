@@ -3,6 +3,7 @@
  */
 
 using System.Data;
+using System.Data.Common;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -200,6 +201,7 @@ namespace Snowflake.Data.Tests
                 }
                 catch(SnowflakeDbException e)
                 {
+                    // 604 is error code from server meaning query has been cancelled
                     Assert.AreEqual(e.ErrorCode, 604);
                 }
 
@@ -298,6 +300,76 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }    
+        }
+
+        [Test]
+        public void testExecAsyncAPI()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                Assert.AreEqual(ConnectionState.Connecting, conn.State);
+
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                using (DbCommand cmd = conn.CreateCommand())
+                {
+                    int queryResult = 0;
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
+                    Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
+                    Task readCallback = execution.ContinueWith((t) =>
+                    {
+                        using (DbDataReader reader = t.Result)
+                        {
+                            Assert.IsTrue(reader.Read());
+                            queryResult = reader.GetInt32(0);
+                            Assert.IsFalse(reader.Read());
+                        }
+                    });
+                    // query is not finished yet, result is still 0;
+                    Assert.AreEqual(0, queryResult);
+                    // block till query finished
+                    readCallback.Wait();
+                    // queryResult should be updated by callback
+                    Assert.AreNotEqual(0, queryResult);
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testCancelExecuteAsync()
+        {
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                DbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
+                // external cancellation should be triggered before timeout
+                cmd.CommandTimeout = 10;
+                try
+                {
+                    Task<object> t = cmd.ExecuteScalarAsync(externalCancel.Token);
+                    t.Wait();
+                    Assert.Fail();
+                }
+                catch(AggregateException e)
+                {
+                    // assert that cancel is not triggered by timeout, but external cancellation 
+                    Assert.IsTrue(externalCancel.IsCancellationRequested);
+                }
+                conn.Close();
+            }
+
         }
     }
 }

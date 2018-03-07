@@ -100,9 +100,12 @@ namespace Snowflake.Data.Core
         {
             // build uri
             var queryParams = new Dictionary<string,string>();
-            queryParams[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
-            queryParams[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
-            queryParams[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+            string warehouseValue;
+            string dbValue;
+            string schemaValue; 
+            queryParams[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
+            queryParams[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
+            queryParams[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
             queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             
             var loginUri = BuildUri(SF_LOGIN_PATH, queryParams);
@@ -165,7 +168,7 @@ namespace Snowflake.Data.Core
             ProcessLoginResponse(response);
         }
 
-        internal async Task OpenAsync()
+        internal async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session");
 
@@ -176,7 +179,7 @@ namespace Snowflake.Data.Core
                 logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
             }
 
-            var response = await restRequest.PostAsync<AuthnResponse>(loginRequest);
+            var response = await restRequest.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
             ProcessLoginResponse(response);
         }
 
