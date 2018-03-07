@@ -14,14 +14,19 @@ namespace Snowflake.Data.Core
     class HttpUtil
     {
         static private HttpClient httpClient = null;
+
+        static private object httpClientInitLock = new object();
         
         static public HttpClient getHttpClient()
         {
-            if (httpClient == null)
+            lock (httpClientInitLock)
             {
-                initHttpClient();
+                if (httpClient == null)
+                {
+                    initHttpClient();
+                }
+                return httpClient;
             }
-            return httpClient;
         }        
 
         static private void initHttpClient()

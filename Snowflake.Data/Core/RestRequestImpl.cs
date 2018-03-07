@@ -120,10 +120,17 @@ namespace Snowflake.Data.Core
             CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
                 restRequestTimeout.Token);
 
-            var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token);
+                response.EnsureSuccessStatusCode();
 
-            return response;
+                return response;
+            }
+            catch(Exception e)
+            {
+                throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+            }
         }
     }
 }
