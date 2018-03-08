@@ -7,7 +7,8 @@ using System.Data.Common;
 using System.Collections;
 using Snowflake.Data.Core;
 using System.Data;
-
+using System.Threading;
+using System.Threading.Tasks;
 using Common.Logging;
 
 namespace Snowflake.Data.Client
@@ -78,13 +79,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override int RecordsAffected
-        {
-            get
-            {
-                return ResultSetUtil.calculateUpdateCount(resultSet);
-            }
-        }
+        public override int RecordsAffected => resultSet.CalculateUpdateCount();
 
         public override bool GetBoolean(int ordinal)
         {
@@ -210,7 +205,15 @@ namespace Snowflake.Data.Client
 
         public override bool Read()
         {
-            return resultSet.next();
+            return resultSet.Next();
+        }
+
+        public override Task<bool> ReadAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            return resultSet.NextAsync();
         }
 
         public override void Close()

@@ -8,16 +8,21 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
     public interface IRestRequest
     {
-        JObject post(SFRestRequest postRequest);
+        Task<T> PostAsync<T>(SFRestRequest postRequest, CancellationToken cancellationToken);
 
-        JObject get(SFRestRequest getRequest);
+        T Post<T>(SFRestRequest postRequest);
 
-        HttpResponseMessage get(S3DownloadRequest getRequest);
+        T Get<T>(SFRestRequest request);
+
+        Task<T> GetAsync<T>(SFRestRequest request, CancellationToken cancellationToken);
+
+        Task<HttpResponseMessage> GetAsync(S3DownloadRequest request, CancellationToken cancellationToken);
     }
 
     public class S3DownloadRequest

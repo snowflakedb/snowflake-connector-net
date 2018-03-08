@@ -6,6 +6,7 @@ using System;
 using System.IO.Compression;
 using System.IO;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,14 +24,13 @@ namespace Snowflake.Data.Core
         private List<SFResultChunk> chunks;
 
         private string qrmk;
-
-        private int colCount;
-
-        private int nextChunkToDownloadIndex;
-
-        private int nextChunkToConsumeIndex;
         
-        // TODO: parameterize prefetch slot
+        private int nextChunkToDownloadIndex;
+        
+        // External cancellation token, used to stop donwload
+        private CancellationToken externalCancellationToken;
+
+        //TODO: parameterize prefetch slot
         const int prefetchSlot = 2;
 
         private static IRestRequest restRequest = RestRequestImpl.Instance;
@@ -40,82 +40,57 @@ namespace Snowflake.Data.Core
         private Dictionary<string, string> chunkHeaders;
 
         public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders)
+            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken)
         {
-            
-            this.colCount = colCount;
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
-            this.nextChunkToConsumeIndex = 0;
 
+            var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
             {
-                this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount));
+                this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
             }
 
-            startNextDownload();
+            FillDownloads();
         }
 
-        private void startNextDownload()
+        private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
+        
+
+        private void FillDownloads()
         {
-            while(nextChunkToDownloadIndex - nextChunkToConsumeIndex < prefetchSlot && nextChunkToDownloadIndex < chunks.Count)
+            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchSlot);
+
+            Task.Run(() =>
             {
-                DownloadContext downloadContext = new DownloadContext()
+                foreach (var c in chunks)
                 {
-                    chunk = chunks[nextChunkToDownloadIndex],
-                    chunkIndex = nextChunkToDownloadIndex,
-                    qrmk = this.qrmk,
-                    chunkHeaders = this.chunkHeaders
-                };
-                ThreadPool.QueueUserWorkItem(new WaitCallback(downloadChunkCallBack), downloadContext);
-                nextChunkToDownloadIndex++;
-            }
-        }
-
-        public SFResultChunk getNextChunkToConsume()
-        {
-            // prefetch 
-            startNextDownload();
-
-            SFResultChunk currentChunk = this.chunks[nextChunkToConsumeIndex];
-
-            if (currentChunk.downloadState == DownloadState.SUCCESS)
-            {
-                nextChunkToConsumeIndex++;
-                return currentChunk; 
-            }
-            else
-            {
-                // wait until donwload finish
-                lock(currentChunk.syncPrimitive)
-                {
-                    while(currentChunk.downloadState == DownloadState.IN_PROGRESS 
-                        || currentChunk.downloadState == DownloadState.NOT_STARTED)
+                    _downloadTasks.Add(DownloadChunkAsync(new DownloadContext()
                     {
-                        Monitor.Wait(currentChunk.syncPrimitive);
-                    }
+                        chunk = c,
+                        chunkIndex = nextChunkToDownloadIndex,
+                        qrmk = this.qrmk,
+                        chunkHeaders = this.chunkHeaders,
+                        cancellationToken = this.externalCancellationToken
+                    }));
                 }
-                nextChunkToConsumeIndex++;
-                return currentChunk;
-            }
-        } 
-        static void downloadChunkCallBack(Object context)
+
+                _downloadTasks.CompleteAdding();
+            });
+        }
+        
+        public SFResultChunk GetNextChunk()
         {
-            DownloadContext downloadContext = (DownloadContext)context;
+            return _downloadTasks.IsCompleted ? null : _downloadTasks.Take().Result;
+        }
+        
+        private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
+        {
             SFResultChunk chunk = downloadContext.chunk;
 
-            // change download status
-            Monitor.Enter(chunk.syncPrimitive);
-            try
-            {
-                chunk.downloadState = DownloadState.IN_PROGRESS;
-            }
-            finally
-            {
-                Monitor.Exit(chunk.syncPrimitive);
-            }
+            chunk.downloadState = DownloadState.IN_PROGRESS;
 
             S3DownloadRequest downloadRequest = new S3DownloadRequest()
             {
@@ -127,9 +102,10 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            HttpResponseMessage httpResponse = restRequest.get(downloadRequest);
+            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken);
             Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
             IEnumerable<string> encoding;
+            //TODO this shouldn't be required.
             if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
             {
                 if (String.Compare(encoding.First(), "gzip", true) == 0)
@@ -140,18 +116,11 @@ namespace Snowflake.Data.Core
 
             parseStreamIntoChunk(stream, chunk);
 
-            /*StreamReader r = new StreamReader(stream);
-            string l = r.ReadLine();
-            Console.WriteLine(l);*/
-
             chunk.downloadState = DownloadState.SUCCESS;
 
-            // signal main thread to start consuming 
-            lock(chunk.syncPrimitive)
-            {
-                Monitor.Pulse(chunk.syncPrimitive);
-            }
+            return chunk;
         }
+
         
         /// <summary>
         ///     Content from s3 in format of 
@@ -187,6 +156,7 @@ namespace Snowflake.Data.Core
         public string qrmk { get; set; }
 
         public Dictionary<string, string> chunkHeaders { get; set; }
+        public CancellationToken cancellationToken { get; set; }
     }
     
     /// <summary>
