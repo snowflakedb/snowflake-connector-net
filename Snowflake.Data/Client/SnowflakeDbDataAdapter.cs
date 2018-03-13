@@ -5,7 +5,7 @@ using System.Data;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
+    public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
     {
         private static readonly object EventRowUpdated = new object();
         private static readonly object EventRowUpdating = new object();
