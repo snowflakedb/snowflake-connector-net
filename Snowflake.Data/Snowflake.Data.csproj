@@ -57,9 +57,7 @@
   <ItemGroup>
     <Compile Include="Client\SnowflakeDbConnection.cs" />
     <Compile Include="Client\SnowflakeDbCommand.cs" />
-    <Compile Include="Client\SnowflakeDbDataAdapter.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Client\SnowflakeDbDataAdapter.cs" />
     <Compile Include="Client\SnowflakeDbDataReader.cs" />
     <Compile Include="Client\SnowflakeDbException.cs" />
     <Compile Include="Client\SnowflakeDbParameter.cs" />
