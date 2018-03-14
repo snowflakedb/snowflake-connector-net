@@ -1,7 +1,7 @@
-version: 0.1.0.{build}
-configuration: Release 
+version: '{branch}-{build}'
+configuration: Debug 
 platform: Any CPU
-
+image: Visual Studio 2017
 environment:
   my_secret:
     secure: wCQetQvPT4ZLs/RkRfze5yPhzstxdyBV/G8EoptCL8Y=
@@ -11,20 +11,27 @@ install:
   - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret%
   
 before_build:
-  - nuget restore
+  - cmd: dotnet restore
 
-build:
-  parallel: true
-  project: snowflake-connector-net.sln
+build_script:
+  - cmd: dotnet build snowflake-connector-net.sln /p:DebugType=Full
   
+before_test:
+  - cmd: nuget install OpenCover -Version 4.6.519
       
 test_script:
-  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:".\packages\NUnit.ConsoleRunner.3.6.1\tools\nunit3-console.exe" -returntargetcode -targetargs:".\Snowflake.Data.Tests\bin\Release\Snowflake.Data.Tests.dll" -register:user -filter:"+[Snowflake.Data]*" -output:"coverage.xml"      
+  - cmd: cd Snowflake.Data.Tests
+  # test against .net core 2.0 
+  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle  
+  # test against .net framework 4.6
+  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f net46" -register:user -filter:"+[Snowflake.Data]*" -output:"net46_coverage.xml" -oldStyle   
 
 after_test:
+ - cd ..
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
  - pip install codecov
- - codecov -f "coverage.xml" -t ffc6a21d-8176-4849-9047-e3a631dcd35a      
+ - codecov -f Snowflake.Data.Tests\netcoreapp2.0_coverage.xml Snowflake.Data.Tests\net46_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
 artifacts:
-  - path: 'Snowflake.Data.Tests\bin\${configuration}\*.log'      
+  - path: 'Snowflake.Data.Tests\bin\${platform}\${configuration}\*\*.log'  
+  - path: 'Snowflake.Data.Tests\*_coverage.xml'

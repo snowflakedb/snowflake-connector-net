@@ -9,7 +9,7 @@ using System.Net;
 using System.Security;
 using System.Web;
 using Newtonsoft.Json.Linq;
-using Common.Logging;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
 {
     class SFSession
     {
-        private static readonly ILog logger = LogManager.GetLogger<SFSession>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
         private static readonly Tuple<AuthnRequestClientEnv, string> _EnvironmentData;
 
         private const string SF_SESSION_PATH = "/session";
@@ -159,9 +159,9 @@ namespace Snowflake.Data.Core
 
             var loginRequest = BuildLoginRequest();
 
-            if (logger.IsTraceEnabled)
+            if (logger.IsDebugEnabled())
             {
-                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
             var response = restRequest.Post<AuthnResponse>(loginRequest);
@@ -174,9 +174,9 @@ namespace Snowflake.Data.Core
 
             var loginRequest = BuildLoginRequest();
 
-            if (logger.IsTraceEnabled)
+            if (logger.IsDebugEnabled())
             {
-                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
             var response = await restRequest.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
@@ -198,8 +198,7 @@ namespace Snowflake.Data.Core
             var response = restRequest.Post<NullDataResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {1}", 
-                    response.code, response.message);
+                logger.Warn($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
             }
         }
 

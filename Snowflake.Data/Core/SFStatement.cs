@@ -7,7 +7,7 @@ using System.Web;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
-using Common.Logging;
+using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core
 {
     class SFStatement
     {
-        static private ILog logger = LogManager.GetLogger<SFStatement>();
+        static private SFLogger logger = SFLoggerFactory.GetLogger<SFStatement>();
 
         internal SFSession SfSession { get; set; }
 
