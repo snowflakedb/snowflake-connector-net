@@ -2,9 +2,15 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
     <Title>Snowflake.Data</Title>
+    <PackageId>Snowflake.Data</PackageId>
+    <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
+    <Authors>howryu</Authors>
     <Copyright>Copyright (c) 2012-2018 Snowflake Computing Inc. All rights reserved.</Copyright>
     <Version>0.3.0</Version>
     <DebugType>Full</DebugType>
