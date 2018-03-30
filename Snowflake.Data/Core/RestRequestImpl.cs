@@ -10,14 +10,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Common.Logging;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
     public class RestRequestImpl : IRestRequest
     {
-        private static ILog logger = LogManager.GetLogger<RestRequestImpl>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequestImpl>();
 
         private static readonly RestRequestImpl instance = new RestRequestImpl();
 

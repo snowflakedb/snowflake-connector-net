@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.IO;
 
 namespace Snowflake.Data.Tests
@@ -30,8 +30,19 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void SFTestSetup()
         {
-            string testConfigString = Encoding.UTF8.GetString(Properties.Resources.parameters);
+#if NET46
+            log4net.GlobalContext.Properties["framework"] = "net46";
+            log4net.Config.XmlConfigurator.Configure();
 
+#else
+            log4net.GlobalContext.Properties["framework"] = "netcoreapp2.0";
+            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
+#endif
+
+            var reader = new StreamReader("parameters.json");
+            var testConfigString = reader.ReadToEnd();
+           
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
             // for now hardcode to get "testconnection"

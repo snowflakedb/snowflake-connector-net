@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Net;
 using System;
 using System.Threading;
-using Common.Logging;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
 
         class RetryHandler : DelegatingHandler
         {
-            static private ILog logger = LogManager.GetLogger<RetryHandler>();
+            static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
             
             internal RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
             {
@@ -91,17 +91,17 @@ namespace Snowflake.Data.Core
                     if (response != null)
                     {
                         if (response.IsSuccessStatusCode) {
-                            logger.TraceFormat("Success Response {0}", response.ToString());
+                            logger.Debug($"Success Response: {response.ToString()}");
                             return response;
                         }
-                        logger.TraceFormat("Failed Response: {0}", response.ToString());
+                        logger.Debug($"Failed Response: {response.ToString()}");
                     }
                     else 
                     {
                         logger.Info("Response returned was null.");
                     }
 
-                    logger.DebugFormat("Sleep {0} seconds and then retry the request", backOffInSec);
+                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
                     Thread.Sleep(backOffInSec * 1000);
                     backOffInSec = backOffInSec >= 16 ? 16 : backOffInSec * 2;
                 }
