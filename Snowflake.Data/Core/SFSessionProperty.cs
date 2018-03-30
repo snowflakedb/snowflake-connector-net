@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core
             logger.Info("Start parsing connection string.");
             SFSessionProperties properties = new SFSessionProperties();
 
-            string[] propertyEntry = connectionString.Split(new char[] { ';' }, StringSplitOptions.None);
+            string[] propertyEntry = connectionString.Split(';');
 
             foreach (string keyVal in propertyEntry)
             {

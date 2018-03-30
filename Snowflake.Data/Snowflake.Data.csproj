@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
-		<Title>Snowflake.Data</Title>
+    <Title>Snowflake.Data</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Copyright>Copyright (c) 2012-2018 Snowflake Computing Inc. All rights reserved.</Copyright>
-		<Version>0.3.0</Version>
+    <Version>0.3.0</Version>
     <DebugType>Full</DebugType>
   </PropertyGroup>
 	
-	<ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="log4net" Version="2.0.8" />
   </ItemGroup>
   
