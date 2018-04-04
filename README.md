@@ -6,12 +6,15 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+This is package for Snowflake .NET connector. Currently PUT/GET commands are not supported. All other query types are supported. 
+
+Library target is under .NET Framework 4.6 and .NET Standard 2.0.
+
 Build
 =====
 Prerequisites
 -------------
 This project is developed under Visual Studio 2017. All other version of visual studio is not supported.
-Library target is under .NET Framework 4.6 and .NET Standard 2.0.
 
 Steps
 -----
