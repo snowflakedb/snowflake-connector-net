@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Security;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
@@ -46,7 +48,7 @@ namespace Snowflake.Data.Core
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
-        internal static SFSessionProperties parseConnectionString(String connectionString)
+        internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
             SFSessionProperties properties = new SFSessionProperties();
@@ -83,6 +85,10 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            if (password != null)
+            {
+                properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
+            }
             checkSessionProperties(properties);
 
             // compose host value if not specified

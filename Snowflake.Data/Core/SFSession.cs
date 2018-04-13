@@ -87,11 +87,7 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString, SecureString password)
         {
             restRequest = RestRequestImpl.Instance;
-            properties = SFSessionProperties.parseConnectionString(connectionString);
-            if (password != null)
-            {
-                properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
-            }
+            properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             parameterMap = new Dictionary<string, string>();
         }
