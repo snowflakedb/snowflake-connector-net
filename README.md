@@ -49,6 +49,18 @@ PM> Install-Package Snowflake.Data
 
 Test
 ====
+Before running tests, create a parameters.json file under Snowflake.Data.Tests\ directory. In this file, specify username, password and account info that tests will run against. Here is a sample parameters.json file
+```
+{
+  "SNOWFLAKE_TEST_USER": "snowman",
+  "SNOWFLAKE_TEST_PASSWORD": "XXXXX",
+  "SNOWFLAKE_TEST_ACCOUNT": "testaccount",
+  "SNOWFLAKE_TEST_WAREHOUSE": "testwh",
+  "SNOWFLAKE_TEST_DATABASE": "testdb",
+  "SNOWFLAKE_TEST_SCHEMA": "testschema",
+  "SNOWFLAKE_TEST_ROLE": "testrole"
+}
+```
 
 Run Tests from Command Prompt
 -----------------------------
