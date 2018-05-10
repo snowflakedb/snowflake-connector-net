@@ -79,6 +79,7 @@ namespace Snowflake.Data.Core
                 // So put this piece of code in a seperate task
                 return Task.Run(() =>
                 {
+                    Logger.Info("Get next chunk from chunk downloader");
                     SFResultChunk nextChunk;
                     if ((nextChunk = _chunkDownloader.GetNextChunk()) != null)
                     {
@@ -108,6 +109,7 @@ namespace Snowflake.Data.Core
                 return true;
             }
 
+            Logger.Info("Get next chunk from chunk downloader");
             SFResultChunk nextChunk;
             if ((nextChunk = _chunkDownloader?.GetNextChunk()) != null)
             {

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Web;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
@@ -19,6 +19,7 @@ namespace Snowflake.Data.Core
     class SFSession
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+
         private static readonly Tuple<AuthnRequestClientEnv, string> _EnvironmentData;
 
         private const string SF_SESSION_PATH = "/session";
@@ -161,6 +162,7 @@ namespace Snowflake.Data.Core
             }
 
             var response = restRequest.Post<AuthnResponse>(loginRequest);
+
             ProcessLoginResponse(response);
         }
 
@@ -176,6 +178,7 @@ namespace Snowflake.Data.Core
             }
 
             var response = await restRequest.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
+
             ProcessLoginResponse(response);
         }
 
@@ -214,7 +217,8 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 sfRestRequestTimeout = Timeout.InfiniteTimeSpan
             };
-            
+
+            logger.Info("Renew the session.");
             var response = restRequest.Post<RenewSessionResponse>(renewSessionRequest);
             if (!response.success)
             {

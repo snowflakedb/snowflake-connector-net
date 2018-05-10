@@ -54,7 +54,14 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, postRequest.sfRestRequestTimeout, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<T>(json);
+            T responseObj = JsonConvert.DeserializeObject<T>(json);
+
+            if (logger.IsDebugEnabled())
+            {
+                logger.Debug($"Post response: {JsonConvert.SerializeObject(responseObj, Formatting.Indented)}");
+            }
+
+            return responseObj;
         }
 
         public T Get<T>(SFRestRequest request)
@@ -87,6 +94,8 @@ namespace Snowflake.Data.Core
             
             msg.Properties["TIMEOUT_PER_HTTP_REQUEST"] = request.httpRequestTimeout;
 
+            logger.Debug($"Http method: {method.ToString()}, http request message: {msg.ToString()}");
+
             return msg;
         }
         
@@ -107,6 +116,8 @@ namespace Snowflake.Data.Core
                 message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
             }
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
+
+            logger.Debug($"S3 Download request message {message.ToString()}");
 
             return SendAsync(message, getRequest.timeout, cancellationToken);
         }
