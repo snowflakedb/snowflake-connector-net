@@ -76,7 +76,7 @@ namespace Snowflake.Data.Core
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
 #if NET46
-                netRuntime = "CLR:" + Environment.Version.ToString();
+                netRuntime = "CLR:" + Environment.Version.ToString()
 #else
                 netRuntime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
 #endif
