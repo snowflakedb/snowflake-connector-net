@@ -13,6 +13,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -73,7 +74,12 @@ namespace Snowflake.Data.Core
             AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString
+                osVersion = System.Environment.OSVersion.VersionString,
+#if NET46
+                netRuntime = "CLR:" + Environment.Version.ToString();
+#else
+                netRuntime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
+#endif
             };
 
             var clientVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();

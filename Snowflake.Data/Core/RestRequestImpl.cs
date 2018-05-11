@@ -54,14 +54,8 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, postRequest.sfRestRequestTimeout, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
-            T responseObj = JsonConvert.DeserializeObject<T>(json);
-
-            if (logger.IsDebugEnabled())
-            {
-                logger.Debug($"Post response: {JsonConvert.SerializeObject(responseObj, Formatting.Indented)}");
-            }
-
-            return responseObj;
+            logger.Debug($"Post response: {json}");
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
         public T Get<T>(SFRestRequest request)
@@ -76,6 +70,7 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, request.sfRestRequestTimeout, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
+            logger.Debug($"Get response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
