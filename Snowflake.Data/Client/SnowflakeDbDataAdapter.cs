@@ -35,26 +35,14 @@ namespace Snowflake.Data.Client
 
         IDbCommand IDbDataAdapter.DeleteCommand
         {
-            get
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
-            set
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
+            get;
+            set;
         }
 
         IDbCommand IDbDataAdapter.InsertCommand
         {
-            get
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
-            set
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
+            get;
+            set;
         }
 
         new public SnowflakeDbCommand SelectCommand
@@ -71,14 +59,8 @@ namespace Snowflake.Data.Client
 
         IDbCommand IDbDataAdapter.UpdateCommand
         {
-            get
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
-            set
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-            }
+            get;
+            set;
         }
     }
 }
