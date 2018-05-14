@@ -102,8 +102,8 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("AuthRequestData {{ClientAppVersion: {0} , AccountName: {1}, loginName: {2} }}", 
-                clientAppVersion, accountName, loginName);
+            return String.Format("AuthRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
+                clientAppVersion, accountName, loginName, clientEnv.ToString());
         }
     }
 
@@ -114,6 +114,15 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "OS_VERSION")]
         internal String osVersion { get; set; }
+
+        [JsonProperty(PropertyName = "NET_RUNTIME")]
+        internal String netRuntime { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2} }}", 
+                application, osVersion, netRuntime);
+        }
     }
 
     class QueryRequest

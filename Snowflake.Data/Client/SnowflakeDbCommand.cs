@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
 {
@@ -22,8 +23,11 @@ namespace Snowflake.Data.Client
 
         private SnowflakeDbParameterCollection parameterCollection;
 
+        private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
+
         public SnowflakeDbCommand(SnowflakeDbConnection connection)
         {
+            logger.Debug("Constucting SnowflakeDbCommand class");
             this.connection = connection;
             this.sfStatement = new SFStatement(connection.SfSession);
             // by default, no query timeout
@@ -124,6 +128,7 @@ namespace Snowflake.Data.Client
         
         public override int ExecuteNonQuery()
         {
+            logger.Debug($"ExecuteNonQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
             resultSet.Next();
             return resultSet.CalculateUpdateCount();
@@ -131,6 +136,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
+            logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
@@ -141,6 +147,7 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
+            logger.Debug($"ExecuteScalar, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
             resultSet.Next();
             return resultSet.GetValue(0);
@@ -148,6 +155,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
+            logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
@@ -168,12 +176,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
+            logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
+            logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
             var result = await ExecuteInternalAsync(cancellationToken);
             return new SnowflakeDbDataReader(this, result);
         }
