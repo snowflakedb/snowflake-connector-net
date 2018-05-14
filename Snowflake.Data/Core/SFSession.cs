@@ -8,17 +8,19 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Web;
-using Newtonsoft.Json.Linq;
-using Common.Logging;
+using Newtonsoft.Json;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
     class SFSession
     {
-        private static readonly ILog logger = LogManager.GetLogger<SFSession>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+
         private static readonly Tuple<AuthnRequestClientEnv, string> _EnvironmentData;
 
         private const string SF_SESSION_PATH = "/session";
@@ -72,7 +74,12 @@ namespace Snowflake.Data.Core
             AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString
+                osVersion = System.Environment.OSVersion.VersionString,
+#if NET46
+                netRuntime = "CLR:" + Environment.Version.ToString()
+#else
+                netRuntime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
+#endif
             };
 
             var clientVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -87,11 +94,7 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString, SecureString password)
         {
             restRequest = RestRequestImpl.Instance;
-            properties = SFSessionProperties.parseConnectionString(connectionString);
-            if (password != null)
-            {
-                properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
-            }
+            properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             parameterMap = new Dictionary<string, string>();
         }
@@ -159,12 +162,13 @@ namespace Snowflake.Data.Core
 
             var loginRequest = BuildLoginRequest();
 
-            if (logger.IsTraceEnabled)
+            if (logger.IsDebugEnabled())
             {
-                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
             var response = restRequest.Post<AuthnResponse>(loginRequest);
+
             ProcessLoginResponse(response);
         }
 
@@ -174,12 +178,13 @@ namespace Snowflake.Data.Core
 
             var loginRequest = BuildLoginRequest();
 
-            if (logger.IsTraceEnabled)
+            if (logger.IsDebugEnabled())
             {
-                logger.TraceFormat("Login Request Data: {0}", loginRequest.ToString());
+                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
             var response = await restRequest.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
+
             ProcessLoginResponse(response);
         }
 
@@ -198,8 +203,7 @@ namespace Snowflake.Data.Core
             var response = restRequest.Post<NullDataResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.WarnFormat("Failed to delete session, error ignored. Code: {0} Message: {1}", 
-                    response.code, response.message);
+                logger.Warn($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
             }
         }
 
@@ -219,7 +223,8 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 sfRestRequestTimeout = Timeout.InfiniteTimeSpan
             };
-            
+
+            logger.Info("Renew the session.");
             var response = restRequest.Post<RenewSessionResponse>(renewSessionRequest);
             if (!response.success)
             {

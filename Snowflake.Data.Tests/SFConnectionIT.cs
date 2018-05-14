@@ -33,6 +33,42 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectViaSecureString()
+        {
+            String[] connEntries = connectionString.Split(';');
+            String connectionStringWithoutPassword = "";
+            using (var conn = new SnowflakeDbConnection())
+            {
+                var password = new System.Security.SecureString();
+                foreach (String entry in connEntries)
+                {
+                    if (!entry.StartsWith("password="))
+                    {
+                        connectionStringWithoutPassword += entry;
+                        connectionStringWithoutPassword += ';';
+                    }
+                    else
+                    {
+                        var pass = entry.Substring(9);
+                        foreach (char c in pass)
+                        {
+                            password.AppendChar(c);
+                        }
+                    }
+                }
+                conn.ConnectionString = connectionStringWithoutPassword;
+                conn.Password = password;
+                conn.Open();
+                Assert.AreEqual("TESTDB_DOTNET", conn.Database);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
+                Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void testLoginTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

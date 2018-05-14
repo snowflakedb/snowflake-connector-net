@@ -4,14 +4,14 @@
 
 using System.Threading;
 using System.Threading.Tasks;
-using Common.Logging;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
     class SFResultSet : SFBaseResultSet
     {
-        private static readonly ILog Logger = LogManager.GetLogger<SFResultSet>();
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFResultSet>();
         
         private int _currentChunkRowIdx;
 
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Core
 
         internal void resetChunkInfo(SFResultChunk nextChunk)
         {
-            Logger.DebugFormat("Recieved chunk #{0} of {1}", nextChunk.ChunkIndex+1, _totalChunkCount);
+            Logger.Debug($"Recieved chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}");
             _currentChunk.rowSet = null;
             _currentChunk = nextChunk;
             _currentChunkRowIdx = 0;
@@ -79,6 +79,7 @@ namespace Snowflake.Data.Core
                 // So put this piece of code in a seperate task
                 return Task.Run(() =>
                 {
+                    Logger.Info("Get next chunk from chunk downloader");
                     SFResultChunk nextChunk;
                     if ((nextChunk = _chunkDownloader.GetNextChunk()) != null)
                     {
@@ -108,6 +109,7 @@ namespace Snowflake.Data.Core
                 return true;
             }
 
+            Logger.Info("Get next chunk from chunk downloader");
             SFResultChunk nextChunk;
             if ((nextChunk = _chunkDownloader?.GetNextChunk()) != null)
             {

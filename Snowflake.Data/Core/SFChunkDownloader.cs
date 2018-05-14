@@ -16,11 +16,14 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using Newtonsoft.Json.Serialization;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     class SFChunkDownloader
     {
+        static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloader>();
+
         private List<SFResultChunk> chunks;
 
         private string qrmk;
@@ -52,13 +55,13 @@ namespace Snowflake.Data.Core
             {
                 this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
             }
+            logger.Info($"Total chunk number: {chunks.Count}");
 
             FillDownloads();
         }
 
         private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
         
-
         private void FillDownloads()
         {
             _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchSlot);
@@ -88,6 +91,7 @@ namespace Snowflake.Data.Core
         
         private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
+            logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
             SFResultChunk chunk = downloadContext.chunk;
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
@@ -117,6 +121,7 @@ namespace Snowflake.Data.Core
             parseStreamIntoChunk(stream, chunk);
 
             chunk.downloadState = DownloadState.SUCCESS;
+            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
 
             return chunk;
         }
@@ -156,6 +161,7 @@ namespace Snowflake.Data.Core
         public string qrmk { get; set; }
 
         public Dictionary<string, string> chunkHeaders { get; set; }
+
         public CancellationToken cancellationToken { get; set; }
     }
     

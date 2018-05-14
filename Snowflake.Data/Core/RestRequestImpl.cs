@@ -10,14 +10,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Common.Logging;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
     public class RestRequestImpl : IRestRequest
     {
-        private static ILog logger = LogManager.GetLogger<RestRequestImpl>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequestImpl>();
 
         private static readonly RestRequestImpl instance = new RestRequestImpl();
 
@@ -54,6 +54,7 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, postRequest.sfRestRequestTimeout, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
+            logger.Debug($"Post response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
@@ -69,6 +70,7 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, request.sfRestRequestTimeout, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
+            logger.Debug($"Get response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
@@ -86,6 +88,8 @@ namespace Snowflake.Data.Core
             msg.Headers.Accept.Add(applicationSnowflake);
             
             msg.Properties["TIMEOUT_PER_HTTP_REQUEST"] = request.httpRequestTimeout;
+
+            logger.Debug($"Http method: {method.ToString()}, http request message: {msg.ToString()}");
 
             return msg;
         }
@@ -107,6 +111,8 @@ namespace Snowflake.Data.Core
                 message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
             }
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
+
+            logger.Debug($"S3 Download request message {message.ToString()}");
 
             return SendAsync(message, getRequest.timeout, cancellationToken);
         }

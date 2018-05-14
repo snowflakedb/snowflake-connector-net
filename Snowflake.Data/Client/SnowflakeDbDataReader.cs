@@ -9,13 +9,13 @@ using Snowflake.Data.Core;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using Common.Logging;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
 {
     public class SnowflakeDbDataReader : DbDataReader
     {
-        static private readonly ILog logger = LogManager.GetLogger<SnowflakeDbDataReader>();
+        static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
 
         private SnowflakeDbCommand dbCommand;
 

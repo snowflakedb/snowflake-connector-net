@@ -12,12 +12,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
+        private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+
         internal SFSession SfSession { get; private set; } 
 
         private ConnectionState _connectionState;
@@ -67,6 +70,8 @@ namespace Snowflake.Data.Client
 
         public override void ChangeDatabase(string databaseName)
         {
+            logger.Debug($"ChangeDatabase to:{databaseName}");
+
             string alterDbCommand = $"use database {databaseName}";
 
             using (IDbCommand cmd = this.CreateCommand())
@@ -78,6 +83,8 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
+            logger.Debug($"Close Connection.");
+
             if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
                 SfSession.close();
@@ -86,6 +93,7 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
+            logger.Debug($"Open Connection.");
             SetSession();
             SfSession.Open();
             OnSessionEstablished();
@@ -93,6 +101,7 @@ namespace Snowflake.Data.Client
         
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
+            logger.Debug($"Open Connection Async.");
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled(cancellationToken);
 

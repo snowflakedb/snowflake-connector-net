@@ -6,7 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Text;
-using Common.Logging;
+using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
@@ -19,14 +19,14 @@ namespace Snowflake.Data.Core
 
     class SFDataConverter
     {
-        private static readonly ILog Logger = LogManager.GetLogger<SFDataConverter>();
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFDataConverter>();
 
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         
         
         internal static object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
-            Logger.TraceFormat("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
+            Logger.Debug($"src value: {srcVal}, srcType: {srcType}, destType: {destType}");
             
             if (srcVal == null)
                 return DBNull.Value;
