@@ -22,9 +22,9 @@ before_test:
 test_script:
   - cmd: cd Snowflake.Data.Tests
   # test against .net core 2.0 
-  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle  
+  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle  
   # test against .net framework 4.6
-  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f net46" -register:user -filter:"+[Snowflake.Data]*" -output:"net46_coverage.xml" -oldStyle   
+  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f net46 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net46_coverage.xml" -oldStyle   
 
 after_test:
  - cd ..
