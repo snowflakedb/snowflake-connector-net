@@ -341,7 +341,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        //[Test]
+        [Test]
         public void testCancelExecuteAsync()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -367,6 +367,7 @@ namespace Snowflake.Data.Tests
                     // assert that cancel is not triggered by timeout, but external cancellation 
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
+                Thread.Sleep(2000);
                 conn.Close();
             }
 
