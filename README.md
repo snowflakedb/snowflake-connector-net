@@ -120,7 +120,7 @@ Sample code to open a connection to Snowflake:
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
-    conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema"
+    conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema";
 
     conn.Open();
     
