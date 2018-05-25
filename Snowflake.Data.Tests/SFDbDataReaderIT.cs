@@ -598,7 +598,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestCopyWithZeroFiles()
+        public void TestCopyCmdUpdateCount()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -609,19 +609,26 @@ namespace Snowflake.Data.Tests
                 cmd.CommandText = "create or replace stage emptyStage";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "create or replace table testZeroCopy (cola string)";
+                cmd.CommandText = "create or replace table testCopy (cola string)";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "copy into testZeroCopy from @emptyStage";
-
+                cmd.CommandText = "copy into testCopy from @emptyStage";
                 int updateCount = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, updateCount);
+
+                // test rows_loaded exists
+                cmd.CommandText = "copy into @%testcopy from (select 'test_string')";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "copy into testcopy";
+                updateCount = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, updateCount);
 
                 // clean up
                 cmd.CommandText = "drop stage emptyStage";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "drop table testZeroCopy";
+                cmd.CommandText = "drop table testCopy";
                 cmd.ExecuteNonQuery();
 
                 conn.Close();
