@@ -6,24 +6,27 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-This is package for Snowflake .NET connector. Currently PUT/GET commands are not supported. All other query types are supported. 
+The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
 
 Library target is under .NET Framework 4.6 and .NET Standard 2.0.
 
-Build
-=====
+Building the Package
+====================
+
 Prerequisites
 -------------
-This project is developed under Visual Studio 2017. All other version of visual studio is not supported.
+
+This project is developed under Visual Studio 2017. All other versions of Visual Studio are not supported.
 
 Steps
 -----
-1. Checkout source code from Github:
+
+1. Check out the source code from GitHub:
 ```{r, engine='bash', code_block_name}
 git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
 ```
 
-2. Pulldown dependency:
+2. Pull down the dependency:
 ```{r, engine='bash', code_block_name}
 cd snowflake-connector-net
 nuget restore
@@ -34,8 +37,9 @@ nuget restore
 msbuild snowflake-connector-net.sln /p:Configuration=Release
 ```
 
-Install
-=======
+Installing the Package
+======================
+
 Package ID for Snowflake Connector for .Net is Snowflake.Data. 
 
 Packages can be directly downloaded from [nuget.org](https://www.nuget.org/). 
@@ -47,8 +51,9 @@ Alternatively, packages can also be downloaded using Package Manager Console:
 PM> Install-Package Snowflake.Data
 ```
 
-Test
-====
+Testing the Connector
+=====================
+
 Before running tests, create a parameters.json file under Snowflake.Data.Tests\ directory. In this file, specify username, password and account info that tests will run against. Here is a sample parameters.json file
 ```
 {
@@ -64,9 +69,9 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
 }
 ```
 
-Run Tests from Command Prompt
------------------------------
-Build Solution file will both build connector binary and tests binary. Issue the following command from command line will run the tests. The test binary will be under Debug directory if building the solution file in Debug mode. 
+Command Prompt
+--------------
+The build solution file builds the connector and tests binaries. Issue the following command from the command line to run the tests. The test binary is located in the Debug directory if you built the solution file in Debug mode. 
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
@@ -80,20 +85,19 @@ Tests can also be run under code coverage:
 OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle 
 ```
 
-Run Tests from Visual Studio 2017
----------------------------------
-Test can also be run under Visual Studio 2017. Open the solution file in VS2017 and run tests under Test Explorer.
+Visual Studio 2017
+------------------
+Tests can also be run under Visual Studio 2017. Open the solution file in Visual Studio 2017 and run tests using Test Explorer.
 
 
 Usage
 =====
 
-Create Connection
------------------
+Create a Connection
+-------------------
 
-To connect to Snowflake, specify a valid connection string, which is key value pairs seperated by semi colon, 
-i.e in the format of "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". Valid connection property can be found in 
-the following table.
+To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
+i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all valid connection properties:
 
 <br />
 
@@ -112,6 +116,7 @@ the following table.
 <br />
 
 Sample code to open a connection to Snowflake:
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -123,8 +128,9 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
-Run a query and Read data
+Run a Query and Read Data
 -------------------------
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -144,8 +150,9 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
-Bind paramter
--------------
+Bind Parameter
+--------------
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -183,10 +190,10 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
 Logging
 -------
-Snowflake .Net Driver use [log4net](http://logging.apache.org/log4net/) as logging framework.
+The Snowflake Connector for .NET uses [log4net](http://logging.apache.org/log4net/) as the logging framework.
 
+Here is a sample app.config file that uses [log4net](http://logging.apache.org/log4net/)
 
-Here is a sample app.config which use [log4net](http://logging.apache.org/log4net/)
 ```xml
   <configSections>
     <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
