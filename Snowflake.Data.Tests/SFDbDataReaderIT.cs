@@ -594,7 +594,45 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+         
+        }
 
+        [Test]
+        public void TestCopyCmdUpdateCount()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace stage emptyStage";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "create or replace table testCopy (cola string)";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "copy into testCopy from @emptyStage";
+                int updateCount = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, updateCount);
+
+                // test rows_loaded exists
+                cmd.CommandText = "copy into @%testcopy from (select 'test_string')";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "copy into testcopy";
+                updateCount = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, updateCount);
+
+                // clean up
+                cmd.CommandText = "drop stage emptyStage";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "drop table testCopy";
+                cmd.ExecuteNonQuery();
+
+                conn.Close();
+            }
         }
     }
 }
