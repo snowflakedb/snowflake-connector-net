@@ -13,7 +13,6 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
