@@ -52,13 +52,15 @@ Test
 Before running tests, create a parameters.json file under Snowflake.Data.Tests\ directory. In this file, specify username, password and account info that tests will run against. Here is a sample parameters.json file
 ```
 {
-  "SNOWFLAKE_TEST_USER": "snowman",
-  "SNOWFLAKE_TEST_PASSWORD": "XXXXX",
-  "SNOWFLAKE_TEST_ACCOUNT": "testaccount",
-  "SNOWFLAKE_TEST_WAREHOUSE": "testwh",
-  "SNOWFLAKE_TEST_DATABASE": "testdb",
-  "SNOWFLAKE_TEST_SCHEMA": "testschema",
-  "SNOWFLAKE_TEST_ROLE": "testrole"
+  "testconnection": {
+    "SNOWFLAKE_TEST_USER": "snowman",
+    "SNOWFLAKE_TEST_PASSWORD": "XXXXXXX",
+    "SNOWFLAKE_TEST_ACCOUNT": "TESTACCOUNT",
+    "SNOWFLAKE_TEST_WAREHOUSE": "TESTWH",
+    "SNOWFLAKE_TEST_DATABASE": "TESTDB",
+    "SNOWFLAKE_TEST_SCHEMA": "TESTSCHEMA",
+    "SNOWFLAKE_TEST_ROLE": "TESTROLE"
+  }
 }
 ```
 
