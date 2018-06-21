@@ -23,6 +23,8 @@ namespace Snowflake.Data.Tests
 
         protected string connectionString {get; set;}
 
+        protected TestConfig testConfig { get; set; }
+
         public SFBaseTest()
         {
         }
@@ -58,6 +60,7 @@ namespace Snowflake.Data.Tests
                     testConnectionConfig.database,
                     testConnectionConfig.schema,
                     testConnectionConfig.warehouse);
+                this.testConfig = testConnectionConfig;
             }
             else
             {
@@ -66,7 +69,7 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    class TestConfig
+    public class TestConfig
     {
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_USER", NullValueHandling = NullValueHandling.Ignore)]
         internal string user { get; set; }
