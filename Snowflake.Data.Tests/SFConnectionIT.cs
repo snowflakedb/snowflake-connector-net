@@ -158,5 +158,19 @@ namespace Snowflake.Data.Tests
             }
 
         }
+
+        [Test]
+        public void TestConnectWithoutHost()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                String connStrFmt = "account={0};user={1};password={2}";
+                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
+                    testConfig.user, testConfig.password);
+                conn.Open();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+                conn.Close();
+            }
+        }
     }
 }
