@@ -104,10 +104,12 @@ namespace Snowflake.Data.Core
             var queryParams = new Dictionary<string,string>();
             string warehouseValue;
             string dbValue;
-            string schemaValue; 
+            string schemaValue;
+            string roleName;
             queryParams[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
             queryParams[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
             queryParams[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
+            queryParams[SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
             queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             
             var loginUri = BuildUri(SF_LOGIN_PATH, queryParams);
