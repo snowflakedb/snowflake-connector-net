@@ -172,5 +172,34 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestConnectWithDifferentRole()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                String connStrFmt = "account={0};user={1};password={2};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=shige_wh";
+                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
+                    testConfig.user, testConfig.password);
+                conn.Open();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "select current_role()";
+                    Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
+
+                    command.CommandText = "select current_database()";
+                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SNOWFLAKE_SAMPLE_DATA");
+
+                    command.CommandText = "select current_schema()";
+                    Assert.AreEqual(command.ExecuteScalar().ToString(), "INFORMATION_SCHEMA");
+
+                    command.CommandText = "select current_warehouse()";
+                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SHIGE_WH");
+                }
+                conn.Close();
+            }
+        }
     }
 }
