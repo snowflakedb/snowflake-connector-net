@@ -634,5 +634,31 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestRetrieveSemiStructuredData()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testsemi(cola variant, colb array, colc object) " +
+                    "as select '[\"1\", \"2\"]', '[\"1\", \"2\"]', '{\"key\": \"value\"}'";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "select * from testsemi";
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    Assert.AreEqual(true, reader.Read());
+                    Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
+                    Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(1));
+                    Assert.AreEqual("{\n  \"key\": \"value\"\n}", reader.GetString(2));
+                }
+
+                conn.Close();
+            }
+        }
     }
 }
