@@ -43,7 +43,6 @@
   
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Core\" />
     <Folder Include="Client\" />
   </ItemGroup>
 </Project>

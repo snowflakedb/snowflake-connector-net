@@ -45,11 +45,14 @@ namespace Snowflake.Data.Core
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSouce;
 
-        internal SFStatement(SFSession session)
+        internal SFStatement(SFSession session, IRestRequest rest)
         {
             SfSession = session;
-            _restRequest = RestRequestImpl.Instance;
+            _restRequest = rest;
         }
+
+        internal SFStatement(SFSession session) : this(session, RestRequestImpl.Instance)
+        { }
 
         private void AssignQueryRequestId()
         {
