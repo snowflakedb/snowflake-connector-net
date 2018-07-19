@@ -90,9 +90,14 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString, SecureString password)
+        internal SFSession(String connectionString, SecureString password) : 
+            this(connectionString, password, RestRequestImpl.Instance)
         {
-            restRequest = RestRequestImpl.Instance;
+        }
+
+        internal SFSession(String connectionString, SecureString password, IRestRequest restRequest)
+        {
+            this.restRequest = restRequest;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             parameterMap = new Dictionary<string, string>();
