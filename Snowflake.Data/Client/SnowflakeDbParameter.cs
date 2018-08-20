@@ -103,6 +103,7 @@ namespace Snowflake.Data.Client
 
             set
             {
+                // ReSharper disable once RedundantBoolCompare (compare to false for clarity)
                 if (value != false)
                 {
                     throw  new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
