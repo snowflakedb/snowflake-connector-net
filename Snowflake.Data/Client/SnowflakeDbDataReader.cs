@@ -23,11 +23,14 @@ namespace Snowflake.Data.Client
 
         private bool isClosed;
 
+        private readonly DataTable SchemaTable;
+
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
             this.resultSet = resultSet;
             this.isClosed = false;
+            this.SchemaTable = PopuldateSchemaTable(resultSet);
         }
         public override object this[string name]
         {
@@ -83,12 +86,11 @@ namespace Snowflake.Data.Client
 
         public override DataTable GetSchemaTable()
         {
-            if (this.FieldCount == 0)
-            {
-                // No result
-                return null;
-            }
+            return this.SchemaTable;
+        }
 
+        private DataTable PopuldateSchemaTable(SFBaseResultSet resultSet)
+        {
             var table = new DataTable("SchemaTable");
 
             table.Columns.Add(SchemaTableColumn.ColumnName, typeof(string));
@@ -101,7 +103,7 @@ namespace Snowflake.Data.Client
             table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SFDataType));
 
             int columnOrdinal = 0;
-            SFResultSetMetaData sfResultSetMetaData = this.resultSet.sfResultSetMetaData;
+            SFResultSetMetaData sfResultSetMetaData = resultSet.sfResultSetMetaData;
             foreach (ExecResponseRowType rowType in sfResultSetMetaData.rowTypes)
             {
                 var row = table.NewRow();
