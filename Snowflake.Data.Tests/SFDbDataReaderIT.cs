@@ -4,7 +4,7 @@
 
 using System;
 using System.Linq;
-using System.Collections.Generic;
+using System.Data.Common;
 using System.Data;
 using System.Text;
 
@@ -655,6 +655,72 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
                     Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(1));
                     Assert.AreEqual("{\n  \"key\": \"value\"\n}", reader.GetString(2));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestResultSetMetadata()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table meta(c1 number(20, 4), c2 string(100), " +
+                    "c3 double, c4 timestamp_ntz, c5 variant not null, c6 boolean) ";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "select * from meta";
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    var dataTable = reader.GetSchemaTable();
+                    dataTable.DefaultView.Sort = SchemaTableColumn.ColumnName;
+                    dataTable = dataTable.DefaultView.ToTable();
+
+                    DataRow row = dataTable.Rows[0];
+                    Assert.AreEqual("C1", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(20, row[SchemaTableColumn.NumericPrecision]);
+                    Assert.AreEqual(4, row[SchemaTableColumn.NumericScale]);
+                    Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+
+                    row = dataTable.Rows[1];
+                    Assert.AreEqual("C2", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(100, row[SchemaTableColumn.ColumnSize]);
+                    Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+
+                    row = dataTable.Rows[2];
+                    Assert.AreEqual("C3", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(SFDataType.REAL, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+
+                    row = dataTable.Rows[3];
+                    Assert.AreEqual("C4", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(3, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(0, row[SchemaTableColumn.NumericPrecision]);
+                    Assert.AreEqual(9, row[SchemaTableColumn.NumericScale]);
+                    Assert.AreEqual(SFDataType.TIMESTAMP_NTZ, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+
+                    row = dataTable.Rows[4];
+                    Assert.AreEqual("C5", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(4, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(SFDataType.VARIANT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(false, row[SchemaTableColumn.AllowDBNull]);
+
+                    row = dataTable.Rows[5];
+                    Assert.AreEqual("C6", row[SchemaTableColumn.ColumnName]);
+                    Assert.AreEqual(5, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.AreEqual(SFDataType.BOOLEAN, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
                 }
 
                 conn.Close();

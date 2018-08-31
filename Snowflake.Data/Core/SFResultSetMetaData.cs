@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core
 
         internal readonly string timestampeTZOutputFormat;
 
-        List<ExecResponseRowType> rowTypes;
+        internal List<ExecResponseRowType> rowTypes;
 
         internal readonly SFStatementType statementType;  
         
@@ -127,6 +127,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
+                case SFDataType.ARRAY:    
                     return typeof(string);
                 case SFDataType.DATE:
                 case SFDataType.TIME:
