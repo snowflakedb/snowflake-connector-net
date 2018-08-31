@@ -54,14 +54,14 @@ namespace Snowflake.Data.Client
 
         public override bool IsNullable
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get { return false; }
 
             set
             {
-                throw new NotImplementedException();
+                if (value != false)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 
@@ -73,40 +73,41 @@ namespace Snowflake.Data.Client
 
         public override int Size
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get { return 0; }
 
             set
             {
-                throw new NotImplementedException();
+                if (value != 0)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 
         public override string SourceColumn
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get { return null; }
 
             set
             {
-                throw new NotImplementedException();
+                if (value != null)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 
         public override bool SourceColumnNullMapping
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get { return false; }
 
             set
             {
-                throw new NotImplementedException();
+                // ReSharper disable once RedundantBoolCompare (compare to false for clarity)
+                if (value != false)
+                {
+                    throw  new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
             }
         }
 
