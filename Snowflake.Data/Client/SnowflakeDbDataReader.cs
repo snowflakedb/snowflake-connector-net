@@ -81,6 +81,49 @@ namespace Snowflake.Data.Client
 
         public override int RecordsAffected => resultSet.CalculateUpdateCount();
 
+        public override DataTable GetSchemaTable()
+        {
+            if (this.FieldCount == 0)
+            {
+                // No result
+                return null;
+            }
+
+            var table = new DataTable("SchemaTable");
+
+            table.Columns.Add(SchemaTableColumn.ColumnName, typeof(string));
+            table.Columns.Add(SchemaTableColumn.ColumnOrdinal, typeof(int));
+            table.Columns.Add(SchemaTableColumn.ColumnSize, typeof(int));
+            table.Columns.Add(SchemaTableColumn.NumericPrecision, typeof(int));
+            table.Columns.Add(SchemaTableColumn.NumericScale, typeof(int));
+            table.Columns.Add(SchemaTableColumn.DataType, typeof(Type));
+            table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
+            table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SFDataType));
+
+            int columnOrdinal = 0;
+            SFResultSetMetaData sfResultSetMetaData = this.resultSet.sfResultSetMetaData;
+            foreach (ExecResponseRowType rowType in sfResultSetMetaData.rowTypes)
+            {
+                var row = table.NewRow();
+
+                row[SchemaTableColumn.ColumnName] = rowType.name;
+                row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
+                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
+                row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
+                row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
+                row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
+
+                Tuple<SFDataType, Type> types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
+                row[SchemaTableColumn.ProviderType] = types.Item1;
+                row[SchemaTableColumn.DataType] = types.Item2;
+
+                table.Rows.Add(row);
+                columnOrdinal++;
+            }
+
+            return table;
+        }
+		
         public override bool GetBoolean(int ordinal)
         {
             return resultSet.GetValue<bool>(ordinal);
