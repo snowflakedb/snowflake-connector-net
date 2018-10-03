@@ -149,8 +149,11 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteScalar, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
-            resultSet.Next();
-            return resultSet.GetValue(0);
+
+            if(resultSet.Next())
+                return resultSet.GetValue(0);
+
+            return DBNull.Value;
         }
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
@@ -160,8 +163,11 @@ namespace Snowflake.Data.Client
                 throw new TaskCanceledException();
 
             var result = await ExecuteInternalAsync(cancellationToken);
-            await result.NextAsync();
-            return result.GetValue(0);
+
+            if(await result.NextAsync())
+                return result.GetValue(0);
+
+            return DBNull.Value;
         }
 
         public override void Prepare()
