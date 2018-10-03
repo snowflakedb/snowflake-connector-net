@@ -28,13 +28,11 @@ namespace Snowflake.Data.Core
 
         private string qrmk;
         
-        private int nextChunkToDownloadIndex;
-        
         // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
         //TODO: parameterize prefetch slot
-        const int prefetchSlot = 2;
+        const int prefetchSlot = 4;
 
         private static IRestRequest restRequest = RestRequestImpl.Instance;
 
@@ -48,8 +46,7 @@ namespace Snowflake.Data.Core
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
-            this.nextChunkToDownloadIndex = 0;
-
+        
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
             {
@@ -60,38 +57,62 @@ namespace Snowflake.Data.Core
             FillDownloads();
         }
 
-        private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
-        
+        private BlockingCollection<Lazy<Task<SFResultChunk>>> _downloadTasks;
+        private ConcurrentQueue<Lazy<Task<SFResultChunk>>> _downloadQueue;
+
+        private void RunDownloads()
+        {
+            try
+            {
+                while (_downloadQueue.TryDequeue(out var task) && !externalCancellationToken.IsCancellationRequested)
+                {
+                    if (!task.IsValueCreated)
+                    {
+                        task.Value.Wait(externalCancellationToken);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                //Don't blow from background threads.
+            }
+        }
+
+
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchSlot);
+            _downloadTasks = new BlockingCollection<Lazy<Task<SFResultChunk>>>();
 
-            Task.Run(() =>
+            foreach (var c in chunks)
             {
-                foreach (var c in chunks)
+                _downloadTasks.Add(new Lazy<Task<SFResultChunk>>(() => DownloadChunkAsync(new DownloadContext()
                 {
-                    _downloadTasks.Add(DownloadChunkAsync(new DownloadContext()
-                    {
-                        chunk = c,
-                        chunkIndex = nextChunkToDownloadIndex,
-                        qrmk = this.qrmk,
-                        chunkHeaders = this.chunkHeaders,
-                        cancellationToken = this.externalCancellationToken
-                    }));
-                }
+                    chunk = c,
+                    chunkIndex = c.ChunkIndex,
+                    qrmk = this.qrmk,
+                    chunkHeaders = this.chunkHeaders,
+                    cancellationToken = this.externalCancellationToken
+                })));
+            }
 
-                _downloadTasks.CompleteAdding();
-            });
+            _downloadTasks.CompleteAdding();
+            _downloadQueue = new ConcurrentQueue<Lazy<Task<SFResultChunk>>>(_downloadTasks);
+
+            for (var i = 0; i < prefetchSlot; i++)
+            {
+                Thread t = new Thread(RunDownloads) { IsBackground = true};
+                t.Start();
+            }
         }
         
-        public SFResultChunk GetNextChunk()
+        public Task<SFResultChunk> GetNextChunkAsync()
         {
-            return _downloadTasks.IsCompleted ? null : _downloadTasks.Take().Result;
+            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take().Value;
         }
         
         private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
-            logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
+            logger.Info($"Start downloading chunk #{downloadContext.chunkIndex+1}");
             SFResultChunk chunk = downloadContext.chunk;
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
@@ -121,7 +142,7 @@ namespace Snowflake.Data.Core
             parseStreamIntoChunk(stream, chunk);
 
             chunk.downloadState = DownloadState.SUCCESS;
-            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
+            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1}");
 
             return chunk;
         }

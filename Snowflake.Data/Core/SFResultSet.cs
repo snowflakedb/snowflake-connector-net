@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core
             if (responseData.chunks != null)
             {
                 // counting the first chunk
-                _totalChunkCount = responseData.chunks.Count + 1;
+                _totalChunkCount = responseData.chunks.Count;
                 _chunkDownloader = new SFChunkDownloader(columnCount,
                                                         responseData.chunks,
                                                         responseData.qrmk,
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Core
             _currentChunkRowCount = _currentChunk.rowCount;
         }
 
-        internal override Task<bool> NextAsync()
+        internal override async Task<bool> NextAsync()
         {
             if (isClosed)
             {
@@ -70,30 +70,27 @@ namespace Snowflake.Data.Core
             _currentChunkRowIdx++;
             if (_currentChunkRowIdx < _currentChunkRowCount)
             {
-                return Task.FromResult(true);
+                return true;
             }
 
             if (_chunkDownloader != null)
             {
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
-                return Task.Run(() =>
+                Logger.Info("Get next chunk from chunk downloader");
+                SFResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync();
+                if (nextChunk != null)
                 {
-                    Logger.Info("Get next chunk from chunk downloader");
-                    SFResultChunk nextChunk;
-                    if ((nextChunk = _chunkDownloader.GetNextChunk()) != null)
-                    {
-                        resetChunkInfo(nextChunk);
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                });
+                    resetChunkInfo(nextChunk);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             
-           return Task.FromResult(false);
+           return false;
         }
 
         internal override bool Next()
@@ -111,7 +108,7 @@ namespace Snowflake.Data.Core
 
             Logger.Info("Get next chunk from chunk downloader");
             SFResultChunk nextChunk;
-            if ((nextChunk = _chunkDownloader?.GetNextChunk()) != null)
+            if ((nextChunk = _chunkDownloader?.GetNextChunkAsync().Result) != null)
             {
                 resetChunkInfo(nextChunk);
                 return true;
