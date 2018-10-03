@@ -88,6 +88,7 @@ namespace Snowflake.Data.Client
             if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
                 SfSession.close();
+                _connectionState = ConnectionState.Closed;
             }
         }
 
