@@ -242,6 +242,7 @@ namespace Snowflake.Data.Core
             else 
             {
                 sessionToken = response.data.sessionToken;
+                masterToken = response.data.masterToken;
             }
         }
 
