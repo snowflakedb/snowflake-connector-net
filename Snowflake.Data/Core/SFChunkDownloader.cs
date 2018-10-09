@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Snowflake.Data.Log;
 
@@ -46,7 +47,8 @@ namespace Snowflake.Data.Core
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
-        
+            externalCancellationToken = cancellationToken;
+
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
             {
@@ -91,25 +93,27 @@ namespace Snowflake.Data.Core
                     chunkIndex = c.ChunkIndex,
                     qrmk = this.qrmk,
                     chunkHeaders = this.chunkHeaders,
-                    cancellationToken = this.externalCancellationToken
+                    cancellationToken = this.externalCancellationToken,
                 })));
             }
 
             _downloadTasks.CompleteAdding();
             _downloadQueue = new ConcurrentQueue<Lazy<Task<SFResultChunk>>>(_downloadTasks);
 
-            for (var i = 0; i < prefetchSlot; i++)
-            {
-                Thread t = new Thread(RunDownloads) { IsBackground = true};
-                t.Start();
-            }
+            for (var i = 0; i < prefetchSlot && i < chunks.Count; i++)
+                Task.Run(new Action(RunDownloads));
         }
         
         public Task<SFResultChunk> GetNextChunkAsync()
         {
+            if(_downloadTasks.IsCompleted)
+                logger.Info($"Total Parse Time: {TotalParseTime} ms");
+
             return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take().Value;
         }
-        
+
+        private long TotalParseTime = 0;
+
         private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
             logger.Info($"Start downloading chunk #{downloadContext.chunkIndex+1}");
@@ -127,22 +131,26 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken);
-            Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
-            IEnumerable<string> encoding;
-            //TODO this shouldn't be required.
-            if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
+            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            Stream stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+            if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
             {
-                if (String.Compare(encoding.First(), "gzip", true) == 0)
+                if (string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
                 {
                     stream = new GZipStream(stream, CompressionMode.Decompress);
                 }
             }
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             parseStreamIntoChunk(stream, chunk);
+            sw.Stop();
+
+            Interlocked.Add(ref TotalParseTime, sw.ElapsedMilliseconds);
 
             chunk.downloadState = DownloadState.SUCCESS;
-            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1}");
+            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1} - {sw.ElapsedMilliseconds} parse - {chunk.rowCount}");
 
             return chunk;
         }
@@ -164,11 +172,45 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
+            var outputMatrix = new string[resultChunk.rowCount, resultChunk.colCount];
+            
             // parse results row by row
             using (StreamReader sr = new StreamReader(concatStream))
             using (JsonTextReader jr = new JsonTextReader(sr))
             {
-                resultChunk.rowSet = jsonSerializer.Deserialize<string[,]>(jr);
+                int row = 0;
+                int col = 0;
+                while (jr.Read())
+                {
+                    switch (jr.TokenType)
+                    {
+                        case JsonToken.StartArray:
+                        case JsonToken.None:
+                            break;
+
+                        case JsonToken.EndArray:
+                            if (col > 0)
+                            {
+                                col = 0;
+                                row++;
+                            }
+
+                            break;
+
+                        case JsonToken.Null:
+                            outputMatrix[row, col++] = null;
+                            break;
+
+                        case JsonToken.String:
+                            outputMatrix[row, col++] = (string)jr.Value;
+                            break;
+
+                        default:
+                            throw new NotImplementedException($"Unexpected token type: {jr.TokenType}");
+                    }
+                }
+                
+                resultChunk.rowSet = outputMatrix;
             }
         }
     }
