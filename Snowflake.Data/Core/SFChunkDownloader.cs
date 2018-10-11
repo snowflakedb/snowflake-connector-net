@@ -33,12 +33,10 @@ namespace Snowflake.Data.Core
         private CancellationToken externalCancellationToken;
 
         //TODO: parameterize prefetch slot
-        const int prefetchSlot = 4;
-
+        private const int prefetchSlot = 5;
+        
         private static IRestRequest restRequest = RestRequestImpl.Instance;
-
-        private static JsonSerializer jsonSerializer = new JsonSerializer();
-
+        
         private Dictionary<string, string> chunkHeaders;
 
         public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
@@ -87,33 +85,32 @@ namespace Snowflake.Data.Core
 
             foreach (var c in chunks)
             {
-                _downloadTasks.Add(new Lazy<Task<SFResultChunk>>(() => DownloadChunkAsync(new DownloadContext()
+                var t = new Lazy<Task<SFResultChunk>>(() => DownloadChunkAsync(new DownloadContext()
                 {
                     chunk = c,
                     chunkIndex = c.ChunkIndex,
                     qrmk = this.qrmk,
                     chunkHeaders = this.chunkHeaders,
                     cancellationToken = this.externalCancellationToken,
-                })));
+                }));
+
+                _downloadTasks.Add(t);
             }
 
             _downloadTasks.CompleteAdding();
+
             _downloadQueue = new ConcurrentQueue<Lazy<Task<SFResultChunk>>>(_downloadTasks);
 
             for (var i = 0; i < prefetchSlot && i < chunks.Count; i++)
                 Task.Run(new Action(RunDownloads));
+
         }
-        
+
         public Task<SFResultChunk> GetNextChunkAsync()
         {
-            if(_downloadTasks.IsCompleted)
-                logger.Info($"Total Parse Time: {TotalParseTime} ms");
-
             return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take().Value;
         }
-
-        private long TotalParseTime = 0;
-
+        
         private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
             logger.Info($"Start downloading chunk #{downloadContext.chunkIndex+1}");
@@ -142,15 +139,10 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
             parseStreamIntoChunk(stream, chunk);
-            sw.Stop();
-
-            Interlocked.Add(ref TotalParseTime, sw.ElapsedMilliseconds);
-
+            
             chunk.downloadState = DownloadState.SUCCESS;
-            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1} - {sw.ElapsedMilliseconds} parse - {chunk.rowCount}");
+            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1}");
 
             return chunk;
         }
