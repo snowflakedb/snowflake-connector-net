@@ -18,9 +18,6 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class SFBaseTest
     {
-        private const string connectionStringFmt = "scheme=https;host={0}.snowflakecomputing.com;port=443;" +
-            "user={1};password={2};account={3};role={4};db={5};schema={6};warehouse={7}";
-
         protected string connectionString {get; set;}
 
         protected TestConfig testConfig { get; set; }
@@ -51,16 +48,18 @@ namespace Snowflake.Data.Tests
             TestConfig testConnectionConfig;
             if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
             {
-                connectionString = String.Format(connectionStringFmt,
-                    testConnectionConfig.account,
-                    testConnectionConfig.user,
-                    testConnectionConfig.password,
-                    testConnectionConfig.account,
-                    testConnectionConfig.role,
-                    testConnectionConfig.database,
-                    testConnectionConfig.schema,
-                    testConnectionConfig.warehouse);
-                this.testConfig = testConnectionConfig;
+                // Add host to connection string only if it is specified.
+                var host = testConnectionConfig.host ?? string.Empty;
+                if (host != string.Empty)
+                {
+                    host = $"host={host};";
+                }
+
+                connectionString = $"scheme=https;{host}port=443;" +
+                                   $"user={testConnectionConfig.user};password={testConnectionConfig.password};" +
+                                   $"account={testConnectionConfig.account};role={testConnectionConfig.role};" +
+                                   $"db={testConnectionConfig.database};schema={testConnectionConfig.schema};warehouse={testConnectionConfig.warehouse}";
+                testConfig = testConnectionConfig;
             }
             else
             {
@@ -79,6 +78,9 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_ACCOUNT", NullValueHandling = NullValueHandling.Ignore)]
         internal string account { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_HOST", NullValueHandling = NullValueHandling.Ignore)]
+        internal string host { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_WAREHOUSE", NullValueHandling = NullValueHandling.Ignore)]
         internal string warehouse { get; set; }
