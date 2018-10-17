@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests
                 int count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
-                DateTime today = DateTime.Today;
+                DateTime today = DateTime.UtcNow.Date;
                 DateTime now = DateTime.Now;
 
                 string insertCommand = "insert into testgetdatetime values (?, ?)";
