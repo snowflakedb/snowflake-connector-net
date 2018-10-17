@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Text;
+using System.Threading.Tasks;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -61,8 +64,11 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = connectionStringWithoutPassword;
                 conn.Password = password;
                 conn.Open();
+
                 Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                conn.Close();
             }
         }
 
@@ -147,6 +153,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 conn.Open();
+
                 Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -164,12 +171,21 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                String connStrFmt = "account={0};user={1};password={2}";
-                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
+                string connStrFmt = "account={0};user={1};password={2}";
+                conn.ConnectionString = string.Format(connStrFmt, testConfig.account,
                     testConfig.user, testConfig.password);
-                conn.Open();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
-                conn.Close();
+                // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
+                if (string.IsNullOrEmpty(testConfig.host))
+                {
+                    conn.Open();
+                    Assert.AreEqual(conn.State, ConnectionState.Open);
+                    conn.Close();
+                }
+                // If host is specified in the configs the reason probably is that the different AWS region is used and host must be specified, otherwise the connection will fail.
+                else
+                {
+                    Assert.Throws<AggregateException>(() => conn.Open(), "Connection attempt should fail if the account uses non-default region.");
+                }
             }
         }
 
@@ -179,9 +195,14 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                String connStrFmt = "account={0};user={1};password={2};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=shige_wh";
-                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
-                    testConfig.user, testConfig.password);
+                var host = testConfig.host;
+                if (string.IsNullOrEmpty(host))
+                {
+                    host = $"{testConfig.account}.snowflakecomputing.com";
+                }
+
+                string connStrFmt = "host={0};port=443;account={1};user={2};password={3};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=shige_wh";
+                conn.ConnectionString = string.Format(connStrFmt, host, testConfig.account, testConfig.user, testConfig.password);
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -197,7 +218,8 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(command.ExecuteScalar().ToString(), "INFORMATION_SCHEMA");
 
                     command.CommandText = "select current_warehouse()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SHIGE_WH");
+                    // Command will return empty string if the hardcoded warehouse does not exist.
+                    CollectionAssert.Contains(new [] { "SHIGE_WH", "" }, command.ExecuteScalar().ToString());
                 }
                 conn.Close();
             }
