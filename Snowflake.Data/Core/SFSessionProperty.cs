@@ -71,12 +71,12 @@ namespace Snowflake.Data.Core
                         }
                         catch (ArgumentException e)
                         {
-                            logger.Warn($"Property {token[0]} not found ignored.");
+                            logger.Warn($"Property {token[0]} not found ignored.", e);
                         }
                     }
                     else
                     {
-                        string invalidStringDetail = String.Format("Invalid kay value pair {0}", keyVal);
+                        string invalidStringDetail = String.Format("Invalid key value pair {0}", keyVal);
                         SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, 
                             new object[] { invalidStringDetail });
                         logger.Error("Invalid string.", e);
