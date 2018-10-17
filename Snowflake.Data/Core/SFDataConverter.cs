@@ -5,7 +5,9 @@
 using System;
 using System.ComponentModel;
 using System.Data;
+using System.Globalization;
 using System.Text;
+using System.Threading;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
@@ -39,6 +41,7 @@ namespace Snowflake.Data.Core
                 || destType == typeof(float)
                 || destType == typeof(decimal))
             {
+                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
                 var typeConverter = TypeDescriptor.GetConverter(destType);
                 return typeConverter.ConvertFrom(srcVal);
             }
@@ -140,8 +143,9 @@ namespace Snowflake.Data.Core
         {
             string destType;
             string destVal;
+            var srcValAsCultureInvariantString = string.Format(CultureInfo.InvariantCulture, "{0}", srcVal);
 
-            switch(srcType)
+            switch (srcType)
             {
                 case DbType.Decimal:
                 case DbType.Int16:
@@ -152,24 +156,24 @@ namespace Snowflake.Data.Core
                 case DbType.UInt64:
                 case DbType.VarNumeric:
                     destType = SFDataType.FIXED.ToString();
-                    destVal = srcVal.ToString();
+                    destVal = srcValAsCultureInvariantString;
                     break;
 
                 case DbType.Boolean:
                     destType = SFDataType.BOOLEAN.ToString();
-                    destVal = srcVal.ToString();
+                    destVal = srcValAsCultureInvariantString;
                     break;
 
                 case DbType.Double:
                     destType = SFDataType.REAL.ToString();
-                    destVal = srcVal.ToString();
+                    destVal = srcValAsCultureInvariantString;
                     break;
 
                 case DbType.Guid:
                 case DbType.String:
                 case DbType.StringFixedLength:
                     destType = SFDataType.TEXT.ToString();
-                    destVal = srcVal.ToString();
+                    destVal = srcValAsCultureInvariantString;
                     break;
 
                 case DbType.Date:
