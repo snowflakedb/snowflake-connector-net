@@ -25,6 +25,14 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        public SnowflakeDbCommand()
+        {
+            logger.Debug("Constucting SnowflakeDbCommand class");
+            // by default, no query timeout
+            this.CommandTimeout = 0;
+            parameterCollection = new SnowflakeDbParameterCollection();
+        }
+
         public SnowflakeDbCommand(SnowflakeDbConnection connection)
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
@@ -79,10 +87,7 @@ namespace Snowflake.Data.Client
 
         public override UpdateRowSource UpdatedRowSource
         {
-            get
-            {
-                return UpdateRowSource.None;
-            }
+            get => UpdateRowSource.None;
 
             set
             {
@@ -95,14 +100,36 @@ namespace Snowflake.Data.Client
 
         protected override DbConnection DbConnection
         {
-            get
-            {
-                return connection;
-            }
+            get => connection;
 
             set
             {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                if (value == null)
+                {
+                    if (connection == null)
+                    {
+                        return;
+                    }
+
+                    // Unsetting connection not supported.
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+
+                if (!(value is SnowflakeDbConnection))
+                {
+                    // Must be of type SnowflakeDbConnection.
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+
+                var sfc = (SnowflakeDbConnection) value;
+                if (connection != null && connection != sfc)
+                {
+                    // Connection already set.
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+
+                connection = sfc;
+                sfStatement = new SFStatement(sfc.SfSession);
             }
         }
 
