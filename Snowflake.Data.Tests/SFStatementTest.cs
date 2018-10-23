@@ -24,6 +24,8 @@ namespace Snowflake.Data.Tests
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
+            Assert.AreEqual("new_session_token", sfSession.sessionToken);
+            Assert.AreEqual("new_master_token", sfSession.masterToken);
         }
 
         [Test]
