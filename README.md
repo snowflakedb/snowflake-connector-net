@@ -103,9 +103,9 @@ i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all 
 
 | Connection Property | Required | Comment                                                                       |
 |---------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT             | Yes      |                                                                               |
+| ACCOUNT             | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instad of XXX.us-east1.|
 | DB                  | No       |                                                                               |
-| HOST                | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com     |
+| HOST                | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com |
 | PASSWORD            | Yes      |                                                                               |
 | ROLE                | No       |                                                                               |
 | SCHEMA              | No       |                                                                               |
