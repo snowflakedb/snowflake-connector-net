@@ -46,7 +46,7 @@ namespace Snowflake.Data.Core
 
         internal string sessionToken { get; set; }
 
-        private String masterToken;
+        internal string masterToken;
 
         private IRestRequest restRequest;
 
@@ -242,6 +242,7 @@ namespace Snowflake.Data.Core
             else 
             {
                 sessionToken = response.data.sessionToken;
+                masterToken = response.data.masterToken;
             }
         }
 

@@ -87,7 +87,8 @@ namespace Snowflake.Data.Tests.Mock
                     success = true,
                     data = new RenewSessionResponseData()
                     {
-                        sessionToken = "new_session_token"
+                        sessionToken = "new_session_token",
+                        masterToken = "new_master_token"
                     }
                 });
             }
