@@ -13,12 +13,13 @@ namespace Snowflake.Data.Tests
     class SFConnectionIT : SFBaseTest
     {
         [Test]
-        public void testBasicConnection()
+        public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;
                 conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
 
                 Assert.AreEqual(0, conn.ConnectionTimeout);
                 // Data source is empty string for now
@@ -29,6 +30,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(3, versionElements.Length);
 
                 conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -69,7 +71,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testLoginTimeout()
+        public void TestLoginTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -94,7 +96,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testInvalidConnectioinString()
+        public void TestInvalidConnectioinString()
         {
             string[] invalidStrings = {
                 // missing required connection property password
@@ -125,7 +127,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testUnknownConnectionProperty()
+        public void TestUnknownConnectionProperty()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -139,7 +141,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testSwitchDb()
+        public void TestSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
