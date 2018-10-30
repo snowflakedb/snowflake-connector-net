@@ -126,8 +126,7 @@ namespace Snowflake.Data.Client
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             // Parameterless BeginTransaction() method of the super class calls this method with IsolationLevel.Unspecified,
-            // but the SnowflakeDbTransaction supports only ReadCommitted for some reason.
-            // Change the isolation level here as a workaround.
+            // Change the isolation level to ReadCommitted
             if (isolationLevel == IsolationLevel.Unspecified)
             {
                 isolationLevel = IsolationLevel.ReadCommitted;

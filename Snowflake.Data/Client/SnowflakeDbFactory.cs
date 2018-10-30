@@ -4,6 +4,8 @@ namespace Snowflake.Data.Client
 {
     public sealed class SnowflakeDbFactory : DbProviderFactory
     {
+        public static readonly SnowflakeDbFactory Instance = new SnowflakeDbFactory();
+
         /// <summary>
         /// Returns a strongly typed <see cref="DbCommand"/> instance.
         /// </summary>
