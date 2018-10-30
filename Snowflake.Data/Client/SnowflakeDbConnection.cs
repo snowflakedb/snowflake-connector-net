@@ -83,18 +83,20 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
-            logger.Debug($"Close Connection.");
+            logger.Debug("Close Connection.");
 
             if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
                 SfSession.close();
                 _connectionState = ConnectionState.Closed;
             }
+
+            _connectionState = ConnectionState.Closed;
         }
 
         public override void Open()
         {
-            logger.Debug($"Open Connection.");
+            logger.Debug("Open Connection.");
             SetSession();
             SfSession.Open();
             OnSessionEstablished();
@@ -102,7 +104,7 @@ namespace Snowflake.Data.Client
         
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"Open Connection Async.");
+            logger.Debug("Open Connection Async.");
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled(cancellationToken);
 
@@ -124,6 +126,13 @@ namespace Snowflake.Data.Client
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
+            // Parameterless BeginTransaction() method of the super class calls this method with IsolationLevel.Unspecified,
+            // Change the isolation level to ReadCommitted
+            if (isolationLevel == IsolationLevel.Unspecified)
+            {
+                isolationLevel = IsolationLevel.ReadCommitted;
+            }
+
             return new SnowflakeDbTransaction(isolationLevel, this);
         }
 

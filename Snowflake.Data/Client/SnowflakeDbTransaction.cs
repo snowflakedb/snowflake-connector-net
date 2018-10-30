@@ -26,7 +26,7 @@ namespace Snowflake.Data.Client
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
-            this.isolationLevel = IsolationLevel;
+            this.isolationLevel = isolationLevel;
             this.connection = connection;
 
             using (IDbCommand command = connection.CreateCommand())
