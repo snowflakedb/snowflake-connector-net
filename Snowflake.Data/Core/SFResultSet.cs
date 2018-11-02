@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
 
         private readonly int _totalChunkCount;
         
-        private readonly SFChunkDownloader _chunkDownloader;
+        private readonly IChunkDownloader _chunkDownloader;
 
         private SFResultChunk _currentChunk;
 

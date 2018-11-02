@@ -15,13 +15,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class SFChunkDownloader
+    class SFChunkDownloader : IChunkDownloader
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloader>();
 
@@ -29,14 +28,18 @@ namespace Snowflake.Data.Core
 
         private string qrmk;
         
+        private int nextChunkToDownloadIndex;
+        
         // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
         //TODO: parameterize prefetch slot
-        private const int prefetchSlot = 5;
-        
+        const int prefetchSlot = 2;
+
         private static IRestRequest restRequest = RestRequestImpl.Instance;
-        
+
+        private static JsonSerializer jsonSerializer = new JsonSerializer();
+
         private Dictionary<string, string> chunkHeaders;
 
         public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
@@ -45,7 +48,7 @@ namespace Snowflake.Data.Core
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
-            externalCancellationToken = cancellationToken;
+            this.nextChunkToDownloadIndex = 0;
 
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
@@ -57,63 +60,38 @@ namespace Snowflake.Data.Core
             FillDownloads();
         }
 
-        private BlockingCollection<Lazy<Task<SFResultChunk>>> _downloadTasks;
-        private ConcurrentQueue<Lazy<Task<SFResultChunk>>> _downloadQueue;
-
-        private void RunDownloads()
-        {
-            try
-            {
-                while (_downloadQueue.TryDequeue(out var task) && !externalCancellationToken.IsCancellationRequested)
-                {
-                    if (!task.IsValueCreated)
-                    {
-                        task.Value.Wait(externalCancellationToken);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                //Don't blow from background threads.
-            }
-        }
-
-
+        private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
+        
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Lazy<Task<SFResultChunk>>>();
+            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchSlot);
 
-            foreach (var c in chunks)
+            Task.Run(() =>
             {
-                var t = new Lazy<Task<SFResultChunk>>(() => DownloadChunkAsync(new DownloadContext()
+                foreach (var c in chunks)
                 {
-                    chunk = c,
-                    chunkIndex = c.ChunkIndex,
-                    qrmk = this.qrmk,
-                    chunkHeaders = this.chunkHeaders,
-                    cancellationToken = this.externalCancellationToken,
-                }));
+                    _downloadTasks.Add(DownloadChunkAsync(new DownloadContext()
+                    {
+                        chunk = c,
+                        chunkIndex = nextChunkToDownloadIndex,
+                        qrmk = this.qrmk,
+                        chunkHeaders = this.chunkHeaders,
+                        cancellationToken = this.externalCancellationToken
+                    }));
+                }
 
-                _downloadTasks.Add(t);
-            }
-
-            _downloadTasks.CompleteAdding();
-
-            _downloadQueue = new ConcurrentQueue<Lazy<Task<SFResultChunk>>>(_downloadTasks);
-
-            for (var i = 0; i < prefetchSlot && i < chunks.Count; i++)
-                Task.Run(new Action(RunDownloads));
-
+                _downloadTasks.CompleteAdding();
+            });
         }
-
+        
         public Task<SFResultChunk> GetNextChunkAsync()
         {
-            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take().Value;
+            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take();
         }
         
         private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
-            logger.Info($"Start downloading chunk #{downloadContext.chunkIndex+1}");
+            logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
             SFResultChunk chunk = downloadContext.chunk;
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
@@ -128,21 +106,22 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
-            Stream stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
-
-            if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
+            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken);
+            Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
+            IEnumerable<string> encoding;
+            //TODO this shouldn't be required.
+            if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
             {
-                if (string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
+                if (String.Compare(encoding.First(), "gzip", true) == 0)
                 {
                     stream = new GZipStream(stream, CompressionMode.Decompress);
                 }
             }
 
             parseStreamIntoChunk(stream, chunk);
-            
+
             chunk.downloadState = DownloadState.SUCCESS;
-            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1}");
+            logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
 
             return chunk;
         }
@@ -164,45 +143,11 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            var outputMatrix = new string[resultChunk.rowCount, resultChunk.colCount];
-            
             // parse results row by row
             using (StreamReader sr = new StreamReader(concatStream))
             using (JsonTextReader jr = new JsonTextReader(sr))
             {
-                int row = 0;
-                int col = 0;
-                while (jr.Read())
-                {
-                    switch (jr.TokenType)
-                    {
-                        case JsonToken.StartArray:
-                        case JsonToken.None:
-                            break;
-
-                        case JsonToken.EndArray:
-                            if (col > 0)
-                            {
-                                col = 0;
-                                row++;
-                            }
-
-                            break;
-
-                        case JsonToken.Null:
-                            outputMatrix[row, col++] = null;
-                            break;
-
-                        case JsonToken.String:
-                            outputMatrix[row, col++] = (string)jr.Value;
-                            break;
-
-                        default:
-                            throw new NotImplementedException($"Unexpected token type: {jr.TokenType}");
-                    }
-                }
-                
-                resultChunk.rowSet = outputMatrix;
+                resultChunk.rowSet = jsonSerializer.Deserialize<string[,]>(jr);
             }
         }
     }
@@ -219,84 +164,4 @@ namespace Snowflake.Data.Core
 
         public CancellationToken cancellationToken { get; set; }
     }
-    
-    /// <summary>
-    ///     Used to concat multiple streams without copying. Since we need to preappend '[' and append ']'
-    /// </summary>
-    class ConcatenatedStream : Stream
-    {
-        Queue<Stream> streams;
-
-        public ConcatenatedStream(IEnumerable<Stream> streams)
-        {
-            this.streams = new Queue<Stream>(streams);
-        }
-
-        public override bool CanRead
-        {
-            get { return true; }
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            if (streams.Count == 0)
-                return 0;
-
-            int bytesRead = streams.Peek().Read(buffer, offset, count);
-            if (bytesRead == 0)
-            {
-                streams.Dequeue().Dispose();
-                bytesRead += Read(buffer, offset + bytesRead, count - bytesRead);
-            }
-            return bytesRead;
-        }
-
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
-
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
-
-        public override void Flush()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long Length
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override long Position
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
 }
