@@ -30,16 +30,13 @@ namespace Snowflake.Data.Core
             _currentChunkRowCount = responseData.rowSet.GetLength(0);
            
             this.sfStatement = sfStatement;
+            updateSessionStatus(responseData);
 
             if (responseData.chunks != null)
             {
                 // counting the first chunk
                 _totalChunkCount = responseData.chunks.Count;
-                _chunkDownloader = new SFChunkDownloader(columnCount,
-                                                        responseData.chunks,
-                                                        responseData.qrmk,
-                                                        responseData.chunkHeaders,
-                                                        cancellationToken);
+                _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
             }
 
             _currentChunk = new SFResultChunk(responseData.rowSet);
@@ -47,7 +44,6 @@ namespace Snowflake.Data.Core
 
             sfResultSetMetaData = new SFResultSetMetaData(responseData);
 
-            updateSessionStatus(responseData);
             isClosed = false;
         }
 
@@ -138,7 +134,7 @@ namespace Snowflake.Data.Core
             session.database = responseData.finalDatabaseName;
             session.schema = responseData.finalSchemaName;
 
-            SFSession.updateParameterMap(session.parameterMap, responseData.parameters);
+            session.UpdateSessionParameterMap(responseData.parameters);
         }
     }
 }

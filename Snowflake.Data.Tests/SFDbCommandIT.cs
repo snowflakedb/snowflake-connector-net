@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
     using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
+    using Snowflake.Data.Configuration;
 
     [TestFixture]    
     class SFDbCommandIT : SFBaseTest
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testSimpleLargeResultSet()
+        public void TestSimpleLargeResultSet()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -103,7 +103,56 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testLongRunningQuery()
+        public void TestUseV1ResultParser()
+        {
+            SFConfiguration.Instance().UseV2JsonParser = false;
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
+                {
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    counter++;
+                }
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestUseV2ChunkDownloader()
+        {
+            SFConfiguration.Instance().UseV2ChunkDownloader = true;
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
+                {
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    counter++;
+                }
+                conn.Close();
+            }
+        }
+
+
+        [Test]
+        public void TestLongRunningQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
