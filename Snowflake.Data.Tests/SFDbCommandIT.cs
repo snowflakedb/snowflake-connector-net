@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testCancelQuery()
+        public void TestCancelQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests
                     }
                 });
 
-                Thread.Sleep(5000);
+                Thread.Sleep(8000);
                 cmd.Cancel();
 
                 executionThread.Wait();
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testQueryTimeout()
+        public void TestQueryTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -391,9 +391,9 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testCancelExecuteAsync()
+        public void TestCancelExecuteAsync()
         {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
