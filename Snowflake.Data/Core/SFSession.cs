@@ -13,6 +13,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace Snowflake.Data.Core
 {
@@ -66,7 +67,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal Dictionary<string, string> parameterMap { get; set; }
+        internal readonly Dictionary<SFSessionParameter, string> ParameterMap;
 
         static SFSession()
         {
@@ -100,7 +101,7 @@ namespace Snowflake.Data.Core
             this.restRequest = restRequest;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
-            parameterMap = new Dictionary<string, string>();
+            ParameterMap = new Dictionary<SFSessionParameter, string>();
         }
         
         private SFRestRequest BuildLoginRequest()
@@ -256,7 +257,7 @@ namespace Snowflake.Data.Core
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
                 serverVersion = authnResponse.data.serverVersion;
 
-                updateParameterMap(parameterMap, authnResponse.data.nameValueParameter);
+                UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
             }
             else
             {
@@ -266,12 +267,15 @@ namespace Snowflake.Data.Core
             } 
         }
         
-        internal static void updateParameterMap(Dictionary<string, string> parameters, List<NameValueParameter> parameterList)
+        internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
             foreach (NameValueParameter parameter in parameterList)
             {
-                parameters[parameter.name] = parameter.value;
+                if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
+                {
+                    ParameterMap[parameterName] = parameter.value;
+                }
             }
         }
     }

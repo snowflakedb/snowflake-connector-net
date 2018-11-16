@@ -20,9 +20,12 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class SFChunkDownloader : IChunkDownloader
+    /// <summary>
+    ///     Downloader implementation that will be blocked if main thread consume falls behind
+    /// </summary>
+    class SFBlockingChunkDownloader : IChunkDownloader
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloader>();
+        static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloader>();
 
         private List<SFResultChunk> chunks;
 
@@ -33,22 +36,26 @@ namespace Snowflake.Data.Core
         // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
-        //TODO: parameterize prefetch slot
-        const int prefetchSlot = 2;
+        private readonly int prefetchThreads;
 
         private static IRestRequest restRequest = RestRequestImpl.Instance;
 
-        private static JsonSerializer jsonSerializer = new JsonSerializer();
-
         private Dictionary<string, string> chunkHeaders;
 
-        public SFChunkDownloader(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken)
+        private readonly SFBaseResultSet ResultSet;
+
+        public SFBlockingChunkDownloader(int colCount, 
+            List<ExecResponseChunk>chunkInfos, string qrmk, 
+            Dictionary<string, string> chunkHeaders, 
+            CancellationToken cancellationToken,
+            SFBaseResultSet ResultSet)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
+            this.ResultSet = ResultSet;
+            this.prefetchThreads = GetPrefetchThreads(ResultSet);
 
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)
@@ -60,11 +67,18 @@ namespace Snowflake.Data.Core
             FillDownloads();
         }
 
+        private int GetPrefetchThreads(SFBaseResultSet resultSet)
+        {
+            Dictionary<SFSessionParameter, String> sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+            String val = sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+            return Int32.Parse(val);
+        }
+
         private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
         
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchSlot);
+            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchThreads);
 
             Task.Run(() =>
             {
@@ -118,7 +132,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            parseStreamIntoChunk(stream, chunk);
+            ParseStreamIntoChunk(stream, chunk);
 
             chunk.downloadState = DownloadState.SUCCESS;
             logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
@@ -136,19 +150,15 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="content"></param>
         /// <param name="resultChunk"></param>
-        private static void parseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
+        private void ParseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
         {
             Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
             Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            // parse results row by row
-            using (StreamReader sr = new StreamReader(concatStream))
-            using (JsonTextReader jr = new JsonTextReader(sr))
-            {
-                resultChunk.rowSet = jsonSerializer.Deserialize<string[,]>(jr);
-            }
+            IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
+            parser.ParseChunk(resultChunk);
         }
     }
 

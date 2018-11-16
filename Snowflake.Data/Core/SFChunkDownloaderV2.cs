@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
 {
     class SFChunkDownloaderV2 : IChunkDownloader
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloader>();
+        static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloaderV2>();
 
         private List<SFResultChunk> chunks;
 
@@ -159,46 +159,8 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            var outputMatrix = new string[resultChunk.rowCount, resultChunk.colCount];
-            
-            // parse results row by row
-            using (StreamReader sr = new StreamReader(concatStream))
-            using (JsonTextReader jr = new JsonTextReader(sr))
-            {
-                int row = 0;
-                int col = 0;
-                while (jr.Read())
-                {
-                    switch (jr.TokenType)
-                    {
-                        case JsonToken.StartArray:
-                        case JsonToken.None:
-                            break;
-
-                        case JsonToken.EndArray:
-                            if (col > 0)
-                            {
-                                col = 0;
-                                row++;
-                            }
-
-                            break;
-
-                        case JsonToken.Null:
-                            outputMatrix[row, col++] = null;
-                            break;
-
-                        case JsonToken.String:
-                            outputMatrix[row, col++] = (string)jr.Value;
-                            break;
-
-                        default:
-                            throw new NotImplementedException($"Unexpected token type: {jr.TokenType}");
-                    }
-                }
-                
-                resultChunk.rowSet = outputMatrix;
-            }
+            IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
+            parser.ParseChunk(resultChunk);
         }
     }
 
