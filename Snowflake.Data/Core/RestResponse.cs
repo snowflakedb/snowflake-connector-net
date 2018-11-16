@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
     class NullDataResponse : BaseRestResponse
     {
         [JsonProperty(PropertyName = "data")]
-        internal string data { get; set; }
+        internal object data { get; set; }
     }
 
     internal class AuthnResponse : BaseRestResponse
