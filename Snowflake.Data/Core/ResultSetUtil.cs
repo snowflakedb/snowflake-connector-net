@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core
             SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
             SFStatementType statementType = metaData.statementType;
 
-            int updateCount = 0;
+            long updateCount = 0;
             switch (statementType)
             {
                 case SFStatementType.INSERT:
@@ -27,12 +27,13 @@ namespace Snowflake.Data.Core
                 case SFStatementType.MULTI_INSERT:
                     for (int i = 0; i < resultSet.columnCount; i++)
                     {
-                        updateCount += resultSet.GetValue<int>(i);
+                        updateCount += resultSet.GetValue<long>(i);
                     }
+
                     break;
                 case SFStatementType.COPY:
                     var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
-                    if (index >= 0) updateCount = resultSet.GetValue<int>(index);
+                    if (index >= 0) updateCount = resultSet.GetValue<long>(index);
                     break;
                 case SFStatementType.SELECT:
                     updateCount = -1;
@@ -42,7 +43,10 @@ namespace Snowflake.Data.Core
                     break;
             }
 
-            return updateCount;
+            if (updateCount > int.MaxValue)
+                return -1;
+
+            return (int)updateCount;
         }
     }
 }

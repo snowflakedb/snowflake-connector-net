@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests
     class SFDbCommandIT : SFBaseTest
     {
         [Test]
-        public void testSimpleCommand()
+        public void TestSimpleCommand()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testDataSourceError()
+        public void TestDataSourceError()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testTransaction()
+        public void TestTransaction()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -313,7 +313,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testRowsAffected()
+        public void TestRowsAffected()
         {
             String[] testCommands =
             {
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testExecAsyncAPI()
+        public void TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -419,7 +419,31 @@ namespace Snowflake.Data.Tests
                 Thread.Sleep(2000);
                 conn.Close();
             }
+        }
 
+        [Test]
+        public void TestRowsAffectedOverflowInt()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "create or replace table test_rows_affected_overflow(c1 number)";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "insert into test_rows_affected_overflow select seq4() from table(generator(rowcount=>2147484000))";
+                    int affected = command.ExecuteNonQuery();
+
+                    Assert.AreEqual(-1, affected);
+
+                    command.CommandText = "drop table if exists test_rows_affected_overflow";
+                    command.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
         }
     }
 }
