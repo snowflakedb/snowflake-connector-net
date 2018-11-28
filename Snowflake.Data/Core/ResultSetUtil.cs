@@ -47,7 +47,6 @@ namespace Snowflake.Data.Core
                 return -1;
 
             return (int)updateCount;
-
         }
     }
 }
