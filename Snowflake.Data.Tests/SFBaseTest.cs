@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class SFBaseTest
     {
-        private const string connectionStringFmt = "scheme=https;host={0}.snowflakecomputing.com;port=443;" +
+        private const string connectionStringFmt = "scheme=https;host={0};port=443;" +
             "user={1};password={2};account={3};role={4};db={5};schema={6};warehouse={7}";
 
         protected string connectionString {get; set;}
@@ -47,12 +47,19 @@ namespace Snowflake.Data.Tests
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
-            // for now hardcode to get "testconnection"
+            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            if (cloud == null)
+            {
+                // use AWS env if not specified
+                cloud = "AZURE";
+            }
+            Assert.IsTrue(cloud == "AWS" || cloud == "AZURE", "{} is not supported. Specify AWS or AZURE as cloud environment", cloud);
+
             TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
+            if (testConfigs.TryGetValue(cloud, out testConnectionConfig))
             {
                 connectionString = String.Format(connectionStringFmt,
-                    testConnectionConfig.account,
+                    testConnectionConfig.host,
                     testConnectionConfig.user,
                     testConnectionConfig.password,
                     testConnectionConfig.account,
@@ -91,5 +98,8 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_ROLE", NullValueHandling = NullValueHandling.Ignore)]
         internal string role { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_HOST", NullValueHandling = NullValueHandling.Ignore)]
+        internal string host { get; set; }
     }
 }

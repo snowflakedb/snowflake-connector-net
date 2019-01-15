@@ -4,7 +4,17 @@ platform: Any CPU
 image: Visual Studio 2017
 environment:
   my_secret:
-    secure: wCQetQvPT4ZLs/RkRfze5yPhzstxdyBV/G8EoptCL8Y=
+    secure: TQ6UX7StbAoySBfSbBAu+B0XnNUQ7I9Tsb/2Wy7XPOc=
+
+  matrix:
+    - test_framework: netcoreapp2.0
+      snowflake_cloud_env: AWS
+    - test_framework: net46
+      snowflake_cloud_env: AWS
+    - test_framework: netcoreapp2.0
+      snowflake_cloud_env: AZURE
+    - test_framework: net46
+      snowflake_cloud_env: AZURE    
  
 install:
   - nuget install secure-file -ExcludeVersion
@@ -22,15 +32,13 @@ before_test:
 test_script:
   - cmd: cd Snowflake.Data.Tests
   # test against .net core 2.0 
-  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle  
-  # test against .net framework 4.6
-  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f net46 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net46_coverage.xml" -oldStyle   
+  - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f %test_framework% -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"%test_framework%_coverage.xml" -oldStyle
 
 after_test:
  - cd ..
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
  - pip install codecov
- - codecov -f Snowflake.Data.Tests\netcoreapp2.0_coverage.xml Snowflake.Data.Tests\net46_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+ - codecov -f Snowflake.Data.Tests\%test_framework%_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
 artifacts:
   - path: 'Snowflake.Data.Tests\bin\${platform}\${configuration}\*\*.log'  
