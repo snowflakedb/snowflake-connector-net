@@ -12,6 +12,7 @@ using System.IO;
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
+    using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -48,12 +49,11 @@ namespace Snowflake.Data.Tests
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
             String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            if (cloud == null)
-            {
-                // use AWS env if not specified
-                cloud = "AZURE";
-            }
-            Assert.IsTrue(cloud == "AWS" || cloud == "AZURE", "{} is not supported. Specify AWS or AZURE as cloud environment", cloud);
+            Assert.IsTrue(cloud == "AWS" || cloud == "AZURE", "{0} is not supported. Specify AWS or AZURE as cloud environment", cloud);
+
+            // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
+            // find connection object
+            String connectionKey = cloud == null ? "testconnection" : cloud;
 
             TestConfig testConnectionConfig;
             if (testConfigs.TryGetValue(cloud, out testConnectionConfig))
@@ -101,5 +101,34 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_HOST", NullValueHandling = NullValueHandling.Ignore)]
         internal string host { get; set; }
+    }
+
+    public class IgnoreOnEnvIsAttribute : Attribute, ITestAction
+    {
+        String key;
+
+        String value;
+         public IgnoreOnEnvIsAttribute(String key, String value)
+         {
+             this.key = key;
+             this.value = value;
+         }
+
+         public void BeforeTest(ITest test)
+         {
+             if (Environment.GetEnvironmentVariable(key) == value)
+             {
+                 Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+             }
+         }
+
+         public void AfterTest(ITest test)
+         {
+         }
+
+         public ActionTargets Targets
+         {
+            get { return ActionTargets.Test | ActionTargets.Suite; }
+         }
     }
 }

@@ -61,12 +61,8 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = connectionStringWithoutPassword;
                 conn.Password = password;
                 conn.Open();
-                Assert.AreEqual("TESTDB_DOTNET", conn.Database);
+                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
-
-                conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
-                Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
-                conn.Close();
             }
         }
 
@@ -141,6 +137,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -150,7 +147,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 conn.Open();
-                Assert.AreEqual("TESTDB_DOTNET", conn.Database);
+                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
@@ -162,6 +159,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithoutHost()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -176,6 +174,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithDifferentRole()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
