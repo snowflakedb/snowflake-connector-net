@@ -64,7 +64,8 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
     "SNOWFLAKE_TEST_WAREHOUSE": "TESTWH",
     "SNOWFLAKE_TEST_DATABASE": "TESTDB",
     "SNOWFLAKE_TEST_SCHEMA": "TESTSCHEMA",
-    "SNOWFLAKE_TEST_ROLE": "TESTROLE"
+    "SNOWFLAKE_TEST_ROLE": "TESTROLE",
+    "SNOWFLAKE_TEST_HOST": "testaccount.snowflakecomputing.com"
   }
 }
 ```
