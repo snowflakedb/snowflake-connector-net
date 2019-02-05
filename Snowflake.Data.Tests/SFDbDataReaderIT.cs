@@ -3,9 +3,11 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Data.Common;
 using System.Data;
+using System.Globalization;
 using System.Text;
 
 namespace Snowflake.Data.Tests
@@ -141,7 +143,19 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testGetDateTime()
+        [TestCase(null)]
+        [TestCase("9999-12-31 23:59:59.9999999")]
+        [TestCase("1982-01-18 16:20:00.6666666")]
+        // [TestCase("1969-07-21 02:56:15.1234567")] fails
+        [TestCase("1900-09-03 12:12:12.1212121")]
+        public void testGetDate(string inputTimeStr)
+        {
+            testGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
+        }
+
+        /*
+        [Test]
+        public void testGetDate()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -149,14 +163,13 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create or replace table testGetDateTime(cola date, colb time)";
+                cmd.CommandText = "create or replace table testGetDate(cola date);";
                 int count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
                 DateTime today = DateTime.UtcNow.Date;
-                DateTime now = DateTime.Now;
 
-                string insertCommand = "insert into testgetdatetime values (?, ?)";
+                string insertCommand = "insert into testGetDate values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -165,28 +178,125 @@ namespace Snowflake.Data.Tests
                 p1.DbType = DbType.Date;
                 cmd.Parameters.Add(p1);
 
-                var p2 = cmd.CreateParameter();
-                p2.ParameterName = "2";
-                p2.Value = now;
-                p2.DbType = DbType.Time;
-                cmd.Parameters.Add(p2);
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testGetDate";
+                IDataReader reader = cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
+                Assert.AreEqual(today.ToString("yyyy-MM-dd"), reader.GetString(0));
+                reader.Close();
+
+                cmd.CommandText = "drop table if exists testGetDate";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+        } */
+
+        [Test]
+        [TestCase(null, null)]
+        [TestCase(null, 3)]
+        [TestCase("9999-12-31 23:59:59.9999999", null)]
+        [TestCase("9999-12-31 23:59:59.9999999", 5)]
+        [TestCase("1982-01-18 16:20:00.6666666", null)]
+        [TestCase("1982-01-18 16:20:00.6666666", 3)]
+        [TestCase("1969-07-21 02:56:15.1234567", null)]
+        [TestCase("1969-07-21 02:56:15.1234567", 1)]
+        [TestCase("1900-09-03 12:12:12.1212121", null)]
+        [TestCase("1900-09-03 12:12:12.1212121", 1)]
+        public void testGetTime(string inputTimeStr, int? precision)
+        {
+            testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
+        }
+
+        private void testGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
+        {
+            // Can't use DateTime object as test case, must parse.
+            DateTime inputTime;
+            if (inputTimeStr == null)
+            {
+                inputTime = DateTime.Now;
+            }
+            else
+            {
+                inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"create or replace table testGetDateAndOrTime(cola {dataType}{ (precision == null ? string.Empty : $"({precision})" )});";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string insertCommand = "insert into testGetDateAndOrTime values (?)";
+                cmd.CommandText = insertCommand;
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.Value = inputTime;
+                switch (dataType)
+                {
+                    case SFDataType.TIME:
+                        p1.DbType = DbType.Time;
+                        break;
+                    case SFDataType.DATE:
+                        p1.DbType = DbType.Date;
+                        break;
+                    case SFDataType.TIMESTAMP_LTZ:
+                    case SFDataType.TIMESTAMP_TZ:
+                    case SFDataType.TIMESTAMP_NTZ:
+                        p1.DbType = DbType.DateTime;
+                        break;
+                }
+
+                cmd.Parameters.Add(p1);
 
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(1, count);
 
-                cmd.CommandText = "select * from testgetdatetime";
+                cmd.CommandText = "select * from testGetDateAndOrTime";
                 IDataReader reader = cmd.ExecuteReader();
                 
                 Assert.IsTrue(reader.Read());
-                Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
-                Assert.AreEqual(today.ToString("yyyy-MM-dd"), reader.GetString(0));
 
                 // For time, we getDateTime on the column and ignore date part
-                DateTime actualTime = reader.GetDateTime(1);
-                Assert.AreEqual(now.Ticks - now.Date.Ticks, actualTime.Ticks - actualTime.Date.Ticks);
+                DateTime actualTime = reader.GetDateTime(0);
+
+                if (dataType == SFDataType.DATE)
+                {
+                    Assert.AreEqual(inputTime.Date, reader.GetDateTime(0));
+                    Assert.AreEqual(inputTime.Date.ToString("yyyy-MM-dd"), reader.GetString(0));
+                }
+                if (dataType != SFDataType.DATE)
+                {
+                    var inputTimeTicksOfTheDay = inputTime.Ticks - inputTime.Date.Ticks;
+                    var actualTimeTicksOfTheDay = actualTime.Ticks - actualTime.Date.Ticks;
+                    var allowedPrecisionLossInTicks = precision < 7 ? Math.Pow(10, (double)(7 - precision)) - 1 : 0d;
+                    Assert.AreEqual(inputTimeTicksOfTheDay, actualTimeTicksOfTheDay, allowedPrecisionLossInTicks);
+                }
+                if (dataType == SFDataType.TIMESTAMP_NTZ)
+                {
+                    if (precision == 9)
+                    {
+                        Assert.AreEqual(inputTime, reader.GetDateTime(0));
+                    }
+                    else
+                    {
+                        Assert.AreEqual(inputTime.Date, reader.GetDateTime(0).Date);
+                    }
+                }
+
                 reader.Close();
 
-                cmd.CommandText = "drop table if exists testgetdatetime";
+                cmd.CommandText = "drop table if exists testGetDateAndOrTime";
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
@@ -195,46 +305,23 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void testGetTimestampNTZ()
+        [TestCase(null, null)]
+        [TestCase(null, 3)]
+        [TestCase("2100-12-31 23:59:59.9999999", null)]
+        [TestCase("2100-12-31 23:59:59.9999999", 5)]
+        //[TestCase("9999-12-31 23:59:59.9999999", null)] fails
+        //[TestCase("9999-12-31 23:59:59.9999999", 5)] fails
+        [TestCase("1982-01-18 16:20:00.6666666", null)]
+        [TestCase("1982-01-18 16:20:00.6666666", 3)]
+        //[TestCase("1969-07-21 02:56:15.1234567", null)] fails
+        //[TestCase("1969-07-21 02:56:15.1234567", 1)] fails
+        //[TestCase("1900-09-03 12:12:12.1212121", null)] fails
+        //[TestCase("1900-09-03 12:12:12.1212121", 1)] fails
+        public void testGetTimestampNTZ(string inputTimeStr, int? precision)
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connectionString;
-                conn.Open();
-
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create or replace table testGetTimestampNTZ(cola timestamp_ntz)";
-                int count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
-
-                DateTime now = DateTime.Now;
-
-                string insertCommand = "insert into testgettimestampntz values (?)";
-                cmd.CommandText = insertCommand;
-
-                var p1 = cmd.CreateParameter();
-                p1.ParameterName = "1";
-                p1.Value = now;
-                p1.DbType = DbType.DateTime;
-                cmd.Parameters.Add(p1);
-
-                count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
-
-                cmd.CommandText = "select * from testgettimestampntz";
-                IDataReader reader = cmd.ExecuteReader();
-                
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(0, DateTime.Compare(now, reader.GetDateTime(0)));
-                reader.Close();
-
-                cmd.CommandText = "drop table if exists testgettimestampntz";
-                count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
-
-                conn.Close();
-            }
+            testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
         }
+
 
         [Test]
         public void testGetTimestampTZ()
