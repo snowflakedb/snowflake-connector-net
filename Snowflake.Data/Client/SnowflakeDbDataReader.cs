@@ -30,7 +30,7 @@ namespace Snowflake.Data.Client
             this.dbCommand = command;
             this.resultSet = resultSet;
             this.isClosed = false;
-            this.SchemaTable = PopuldateSchemaTable(resultSet);
+            this.SchemaTable = PopulateSchemaTable(resultSet);
         }
         public override object this[string name]
         {
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Client
             return this.SchemaTable;
         }
 
-        private DataTable PopuldateSchemaTable(SFBaseResultSet resultSet)
+        private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
         {
             var table = new DataTable("SchemaTable");
 
