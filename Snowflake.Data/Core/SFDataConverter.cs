@@ -133,8 +133,18 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                return Tuple.Create(Int64.Parse(srcVal.Substring(0, dotIndex)), 
-                    Int64.Parse(srcVal.Substring(dotIndex+1, srcVal.Length-dotIndex-1)));
+                var intPart = Int64.Parse(srcVal.Substring(0, dotIndex));
+                var decimalPartLength = srcVal.Length - dotIndex - 1;
+                var decimalPartStr = srcVal.Substring(dotIndex + 1, decimalPartLength);
+                var decimalPart = Int64.Parse(decimalPartStr);
+                // If the decimal part contained less than nine characters, we must convert the value to nanoseconds by
+                // multiplying by 10^[precision difference].
+                if (decimalPartLength < 9)
+                {
+                    decimalPart *= (int) Math.Pow(10, 9 - decimalPartLength);
+                }
+
+                return Tuple.Create(intPart, decimalPart);                
             }
         }
 
