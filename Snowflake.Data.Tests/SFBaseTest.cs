@@ -49,14 +49,14 @@ namespace Snowflake.Data.Tests
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
             String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == "AWS" || cloud == "AZURE", "{0} is not supported. Specify AWS or AZURE as cloud environment", cloud);
+            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE", "{0} is not supported. Specify AWS or AZURE as cloud environment", cloud);
 
             // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
             // find connection object
             String connectionKey = cloud == null ? "testconnection" : cloud;
 
             TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue(cloud, out testConnectionConfig))
+            if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
             {
                 connectionString = String.Format(connectionStringFmt,
                     testConnectionConfig.host,
