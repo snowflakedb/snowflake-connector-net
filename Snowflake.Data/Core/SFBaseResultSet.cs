@@ -23,11 +23,18 @@ namespace Snowflake.Data.Core
 
         protected abstract string getObjectInternal(int columnIndex);
 
+        private SFDataConverter dataConverter;
+
+        protected SFBaseResultSet()
+        {
+            dataConverter = new SFDataConverter();
+        }
+
         internal T GetValue<T>(int columnIndex)
         {
             string val = getObjectInternal(columnIndex);
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return (T) SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
+            return (T) dataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
         }
 
         internal string GetString(int columnIndex)
@@ -51,7 +58,7 @@ namespace Snowflake.Data.Core
         {
             string val = getObjectInternal(columnIndex);
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+            return dataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
         }
         
         internal void close()

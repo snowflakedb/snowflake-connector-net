@@ -42,9 +42,19 @@ namespace Snowflake.Data.Log
             logger.Debug(msg, ex);
         }
 
+        public void DebugFmt(string fmt, params object[] args)
+        {
+            logger.DebugFormat(fmt, args);
+        }
+
         public void Info(string msg, Exception ex = null)
         {
             logger.Info(msg, ex);
+        }
+
+        public void InfoFmt(string fmt, params object[] args)
+        {
+            logger.InfoFormat(fmt, args);
         }
 
         public void Warn(string msg, Exception ex = null)
@@ -52,14 +62,29 @@ namespace Snowflake.Data.Log
             logger.Warn(msg, ex);
         }
 
+        public void WarnFmt(string fmt, params object[] args)
+        {
+            logger.WarnFormat(fmt, args);
+        }
+
         public void Error(string msg, Exception ex = null)
         {
             logger.Error(msg, ex);
         }
 
+        public void ErrorFmt(string fmt, params object[] args)
+        {
+            logger.InfoFormat(fmt, args);
+        }
+
         public void Fatal(string msg, Exception ex = null)
         {
             logger.Fatal(msg, ex);
+        }
+
+        public void FatalFmt(string fmt, params object[] args)
+        {
+            logger.InfoFormat(fmt, args);
         }
     }
 }
