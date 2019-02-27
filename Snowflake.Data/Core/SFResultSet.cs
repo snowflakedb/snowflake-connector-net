@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core
 
         private SFResultChunk _currentChunk;
 
-        public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
+        public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
             columnCount = responseData.rowType.Count;
             _currentChunkRowIdx = -1;

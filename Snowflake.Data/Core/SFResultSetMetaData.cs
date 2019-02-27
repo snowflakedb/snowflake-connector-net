@@ -28,7 +28,9 @@ namespace Snowflake.Data.Core
 
         internal List<ExecResponseRowType> rowTypes;
 
-        internal readonly SFStatementType statementType;  
+        internal readonly SFStatementType statementType;
+
+        internal readonly List<Tuple<SFDataType, Type>> columnTypes;
         
         /// <summary>
         ///     This map is used to cache column name to column index. Index is 0-based.
@@ -40,6 +42,7 @@ namespace Snowflake.Data.Core
             rowTypes = queryExecResponseData.rowType;
             columnCount = rowTypes.Count;
             statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
+            columnTypes = InitColumnTypes();
             
             foreach (NameValueParameter parameter in queryExecResponseData.parameters)
             {
@@ -53,6 +56,20 @@ namespace Snowflake.Data.Core
                         break;
                 }
             }
+        }
+
+        private List<Tuple<SFDataType, Type>> InitColumnTypes()
+        {
+            List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
+            for(int i=0; i<columnCount; i++)
+            {
+                var column = rowTypes[i];
+                var dataType = GetSFDataType(column.type);
+                var nativeType = GetNativeTypeForColumn(dataType, column);
+
+                types.Add(Tuple.Create(dataType, nativeType));
+            }
+            return types;
         }
 
         /// <summary>
@@ -89,7 +106,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
-            return GetSFDataType(rowTypes[targetIndex].type);
+            return columnTypes[targetIndex].Item1;
         }
 
         internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
@@ -99,11 +116,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
             }
 
-            var column = rowTypes[targetIndex];
-            var dataType = GetSFDataType(column.type);
-            var nativeType = GetNativeTypeForColumn(dataType, column);
-
-            return Tuple.Create(dataType, nativeType);
+            return columnTypes[targetIndex];
         }
 
         private SFDataType GetSFDataType(string type)

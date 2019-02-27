@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Text;
@@ -24,12 +25,18 @@ namespace Snowflake.Data.Core
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFDataConverter>();
 
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        
-        
-        internal static object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
+
+        private Dictionary<Type, TypeConverter> typeConverters = new Dictionary<Type, TypeConverter>();
+
+        internal SFDataConverter()
         {
-            Logger.Debug($"src value: {srcVal}, srcType: {srcType}, destType: {destType}");
-            
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+        }
+        
+        internal object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
+        {
+            Logger.DebugFmt("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
+
             if (srcVal == null)
                 return DBNull.Value;
 
@@ -41,9 +48,11 @@ namespace Snowflake.Data.Core
                 || destType == typeof(float)
                 || destType == typeof(decimal))
             {
-                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-                var typeConverter = TypeDescriptor.GetConverter(destType);
-                return typeConverter.ConvertFrom(srcVal);
+                if (!typeConverters.ContainsKey(destType))
+                {
+                    typeConverters.Add(destType, TypeDescriptor.GetConverter(destType));
+                }
+                return typeConverters[destType].ConvertFrom(srcVal);
             }
             else if (destType == typeof(Boolean))
             {
