@@ -230,5 +230,8 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "rowCount")]
         internal int rowCount { get; set; }
+
+        [JsonProperty(PropertyName = "uncompressedSize")]
+        internal int uncompressedSize { get; set; }
     }
  } 

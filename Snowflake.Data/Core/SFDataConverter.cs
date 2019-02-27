@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core
         
         internal object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
-            Logger.DebugFmt("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
+            //Logger.DebugFmt("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
 
             if (srcVal == null)
                 return DBNull.Value;

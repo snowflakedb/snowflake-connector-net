@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                return new SFBlockingChunkDownloader(responseData.rowType.Count,
+                return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                     responseData.chunks,
                     responseData.qrmk,
                     responseData.chunkHeaders,

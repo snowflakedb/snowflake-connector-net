@@ -5,57 +5,43 @@ namespace Snowflake.Data.Core
 {
     using Snowflake.Data.Client;
 
-    class ChunkStreamingParser : IChunkParser
+    class ReusableChunkParser : IChunkParser
     {
         private readonly Stream stream;
 
-        internal ChunkStreamingParser(Stream stream)
+        internal ReusableChunkParser(Stream stream)
         {
             this.stream = stream;
         }
 
         public void ParseChunk(IResultChunk chunk)
         {
+            SFReusableChunk rc = (SFReusableChunk)chunk;
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))
             using (JsonTextReader jr = new JsonTextReader(sr))
             {
-                int row = 0;
-                int col = 0;
-
-                var outputMatrix = new string[chunk.GetRowCount(), ((SFResultChunk)chunk).colCount];
-
                 while (jr.Read())
                 {
                     switch (jr.TokenType)
                     {
                         case JsonToken.StartArray:
                         case JsonToken.None:
-                            break;
-
                         case JsonToken.EndArray:
-                            if (col > 0)
-                            {
-                                col = 0;
-                                row++;
-                            }
-
                             break;
 
                         case JsonToken.Null:
-                            outputMatrix[row, col++] = null;
+                            rc.AddCell(null);
                             break;
 
                         case JsonToken.String:
-                            outputMatrix[row, col++] = (string)jr.Value;
+                            rc.AddCell((string)jr.Value);
                             break;
 
                         default:
                             throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected token type: {jr.TokenType}");
                     }
                 }
-
-                ((SFResultChunk)chunk).rowSet = outputMatrix;
             }
         }
     }
