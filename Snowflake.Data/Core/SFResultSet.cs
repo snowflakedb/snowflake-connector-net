@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core
         
         private readonly IChunkDownloader _chunkDownloader;
 
-        private SFResultChunk _currentChunk;
+        private IResultChunk _currentChunk;
 
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
@@ -47,13 +47,16 @@ namespace Snowflake.Data.Core
             isClosed = false;
         }
 
-        internal void resetChunkInfo(SFResultChunk nextChunk)
+        internal void resetChunkInfo(IResultChunk nextChunk)
         {
-            Logger.Debug($"Recieved chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}");
-            _currentChunk.rowSet = null;
+            Logger.Debug($"Recieved chunk #{nextChunk.GetChunkIndex() + 1} of {_totalChunkCount}");
+            if (_currentChunk is SFResultChunk)
+            {
+                ((SFResultChunk)_currentChunk).rowSet = null;
+            }
             _currentChunk = nextChunk;
             _currentChunkRowIdx = 0;
-            _currentChunkRowCount = _currentChunk.rowCount;
+            _currentChunkRowCount = _currentChunk.GetRowCount();
         }
 
         internal override async Task<bool> NextAsync()
@@ -74,7 +77,7 @@ namespace Snowflake.Data.Core
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
                 Logger.Info("Get next chunk from chunk downloader");
-                SFResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync();
+                IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync();
                 if (nextChunk != null)
                 {
                     resetChunkInfo(nextChunk);
@@ -103,7 +106,7 @@ namespace Snowflake.Data.Core
             }
 
             Logger.Info("Get next chunk from chunk downloader");
-            SFResultChunk nextChunk;
+            IResultChunk nextChunk;
             if ((nextChunk = _chunkDownloader?.GetNextChunkAsync().Result) != null)
             {
                 resetChunkInfo(nextChunk);
@@ -125,7 +128,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
 
-            return _currentChunk.extractCell(_currentChunkRowIdx, columnIndex);
+            return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
         }
 
         private void updateSessionStatus(QueryExecResponseData responseData)

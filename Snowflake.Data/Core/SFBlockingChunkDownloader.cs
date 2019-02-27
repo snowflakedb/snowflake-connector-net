@@ -74,11 +74,11 @@ namespace Snowflake.Data.Core
             return Int32.Parse(val);
         }
 
-        private BlockingCollection<Task<SFResultChunk>> _downloadTasks;
+        private BlockingCollection<Task<IResultChunk>> _downloadTasks;
         
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Task<SFResultChunk>>(prefetchThreads);
+            _downloadTasks = new BlockingCollection<Task<IResultChunk>>(prefetchThreads);
 
             Task.Run(() =>
             {
@@ -98,12 +98,19 @@ namespace Snowflake.Data.Core
             });
         }
         
-        public Task<SFResultChunk> GetNextChunkAsync()
+        public Task<IResultChunk> GetNextChunkAsync()
         {
-            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take();
+            if (_downloadTasks.IsAddingCompleted)
+            {
+                return Task.FromResult<IResultChunk>(null);
+            }
+            else
+            {
+                return _downloadTasks.Take();
+            }
         }
         
-        private async Task<SFResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
+        private async Task<IResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
             logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
             SFResultChunk chunk = downloadContext.chunk;
