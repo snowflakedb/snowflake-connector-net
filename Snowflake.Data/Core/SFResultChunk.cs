@@ -4,7 +4,7 @@
 
 namespace Snowflake.Data.Core
 {
-    internal class SFResultChunk
+    internal class SFResultChunk : IResultChunk
     {
         public string[,] rowSet { get; set; }
 
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
             this.downloadState = DownloadState.NOT_STARTED;
         }
 
-        public string extractCell(int rowIndex, int columnIndex)
+        public string ExtractCell(int rowIndex, int columnIndex)
         {
             return rowSet[rowIndex, columnIndex];
         }
@@ -44,6 +44,16 @@ namespace Snowflake.Data.Core
         public void addValue(string val, int rowCount, int colCount)
         {
             rowSet[rowCount, colCount] = val;
+        }
+
+        public int GetRowCount()
+        {
+            return rowCount;
+        }
+
+        public int GetChunkIndex()
+        {
+            return ChunkIndex;
         }
     }
 

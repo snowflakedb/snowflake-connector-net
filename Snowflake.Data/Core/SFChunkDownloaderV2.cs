@@ -52,8 +52,8 @@ namespace Snowflake.Data.Core
             FillDownloads();
         }
 
-        private BlockingCollection<Lazy<Task<SFResultChunk>>> _downloadTasks;
-        private ConcurrentQueue<Lazy<Task<SFResultChunk>>> _downloadQueue;
+        private BlockingCollection<Lazy<Task<IResultChunk>>> _downloadTasks;
+        private ConcurrentQueue<Lazy<Task<IResultChunk>>> _downloadQueue;
 
         private void RunDownloads()
         {
@@ -76,11 +76,11 @@ namespace Snowflake.Data.Core
 
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Lazy<Task<SFResultChunk>>>();
+            _downloadTasks = new BlockingCollection<Lazy<Task<IResultChunk>>>();
 
             foreach (var c in chunks)
             {
-                var t = new Lazy<Task<SFResultChunk>>(() => DownloadChunkAsync(new DownloadContextV2()
+                var t = new Lazy<Task<IResultChunk>>(() => DownloadChunkAsync(new DownloadContextV2()
                 {
                     chunk = c,
                     chunkIndex = c.ChunkIndex,
@@ -94,19 +94,26 @@ namespace Snowflake.Data.Core
 
             _downloadTasks.CompleteAdding();
 
-            _downloadQueue = new ConcurrentQueue<Lazy<Task<SFResultChunk>>>(_downloadTasks);
+            _downloadQueue = new ConcurrentQueue<Lazy<Task<IResultChunk>>>(_downloadTasks);
 
             for (var i = 0; i < prefetchSlot && i < chunks.Count; i++)
                 Task.Run(new Action(RunDownloads));
 
         }
 
-        public Task<SFResultChunk> GetNextChunkAsync()
+        public Task<IResultChunk> GetNextChunkAsync()
         {
-            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take().Value;
+            if (_downloadTasks.IsAddingCompleted)
+            {
+                return Task.FromResult<IResultChunk>(null);
+            }
+            else
+            {
+                return _downloadTasks.Take().Value;
+            }
         }
         
-        private async Task<SFResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
+        private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
         {
             logger.Info($"Start downloading chunk #{downloadContext.chunkIndex+1}");
             SFResultChunk chunk = downloadContext.chunk;
