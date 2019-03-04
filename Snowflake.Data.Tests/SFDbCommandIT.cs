@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
                 while (reader.Read())

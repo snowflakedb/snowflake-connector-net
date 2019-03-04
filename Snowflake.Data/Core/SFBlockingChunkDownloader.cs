@@ -100,7 +100,7 @@ namespace Snowflake.Data.Core
         
         public Task<IResultChunk> GetNextChunkAsync()
         {
-            if (_downloadTasks.IsAddingCompleted)
+            if (_downloadTasks.IsCompleted)
             {
                 return Task.FromResult<IResultChunk>(null);
             }
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Core
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
                 timeout = TimeSpan.FromHours(1),
-                httpRequestTimeout = TimeSpan.FromSeconds(16),
+                httpRequestTimeout = TimeSpan.FromSeconds(32),
                 chunkHeaders = downloadContext.chunkHeaders
             };
 

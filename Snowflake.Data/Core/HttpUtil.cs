@@ -36,7 +36,9 @@ namespace Snowflake.Data.Core
             ServicePointManager.UseNagleAlgorithm = false;
             ServicePointManager.CheckCertificateRevocationList = true;
 
-            HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler()));
+            HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            }));
         }
 
         class RetryHandler : DelegatingHandler

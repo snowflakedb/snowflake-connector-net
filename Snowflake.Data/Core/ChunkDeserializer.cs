@@ -14,13 +14,13 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public void ParseChunk(SFResultChunk chunk)
+        public void ParseChunk(IResultChunk chunk)
         {
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))
             using (JsonTextReader jr = new JsonTextReader(sr))
             {
-                chunk.rowSet = JsonSerializer.Deserialize<string[,]>(jr);
+                ((SFResultChunk)chunk).rowSet = JsonSerializer.Deserialize<string[,]>(jr);
             }
         }
     }
