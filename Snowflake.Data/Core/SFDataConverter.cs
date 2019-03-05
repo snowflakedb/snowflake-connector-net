@@ -94,7 +94,8 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIMESTAMP_NTZ:
 
                     Tuple<long, long> secAndNsec = ExtractTimestamp(srcVal);
-                    return UnixEpoch.AddTicks((long)(secAndNsec.Item1 * 1000 * 1000 * 1000 + secAndNsec.Item2) / 100);
+                    var tickDiff = secAndNsec.Item1 * 10000000L + secAndNsec.Item2 / 100L;
+                    return UnixEpoch.AddTicks(tickDiff);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
@@ -235,8 +236,10 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        DateTime srcDt = ((DateTime)srcVal);
-                        destVal = ((long)(srcDt.Subtract(UnixEpoch).Ticks * 100)).ToString();
+                        DateTime srcDt = (DateTime)srcVal;
+                        var diff = srcDt.Subtract(UnixEpoch);
+                        var tickDiff = diff.Ticks;
+                        destVal = $"{tickDiff}00"; // Cannot multiple tickDiff by 100 because long might overflow.
                     }
                     break;
                 

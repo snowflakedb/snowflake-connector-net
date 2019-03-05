@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Data.Common;
 using System.Data;
@@ -144,58 +143,16 @@ namespace Snowflake.Data.Tests
 
         [Test]
         [TestCase(null)]
-        //[TestCase("9999-12-31 23:59:59.9999999")] fails
-        [TestCase("1982-01-18 16:20:00.6666666")]
-        // [TestCase("1969-07-21 02:56:15.1234567")] fails
-        [TestCase("1900-09-03 12:12:12.1212121")]
+        [TestCase("9999-12-31 00:00:00.0000000")]
+        [TestCase("9999-12-30 00:00:00.0000000")]
+        [TestCase("1982-01-18 00:00:00.0000000")]
+        [TestCase("1969-07-21 00:00:00.0000000")]
+        [TestCase("1900-09-03 00:00:00.0000000")]
         public void TestGetDate(string inputTimeStr)
         {
             testGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
-        /*
-        [Test]
-        public void testGetDate()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connectionString;
-                conn.Open();
-
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create or replace table testGetDate(cola date);";
-                int count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
-
-                DateTime today = DateTime.UtcNow.Date;
-
-                string insertCommand = "insert into testGetDate values (?)";
-                cmd.CommandText = insertCommand;
-
-                var p1 = cmd.CreateParameter();
-                p1.ParameterName = "1";
-                p1.Value = today;
-                p1.DbType = DbType.Date;
-                cmd.Parameters.Add(p1);
-
-                count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
-
-                cmd.CommandText = "select * from testGetDate";
-                IDataReader reader = cmd.ExecuteReader();
-
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(0, DateTime.Compare(today, reader.GetDateTime(0)));
-                Assert.AreEqual(today.ToString("yyyy-MM-dd"), reader.GetString(0));
-                reader.Close();
-
-                cmd.CommandText = "drop table if exists testGetDate";
-                count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
-
-                conn.Close();
-            }
-        } */
 
         [Test]
         [TestCase(null, null)]
@@ -219,7 +176,7 @@ namespace Snowflake.Data.Tests
             DateTime inputTime;
             if (inputTimeStr == null)
             {
-                inputTime = DateTime.Now;
+                inputTime = dataType == SFDataType.DATE ? DateTime.Today : DateTime.Now;
             }
             else
             {
@@ -309,14 +266,16 @@ namespace Snowflake.Data.Tests
         [TestCase(null, 3)]
         [TestCase("2100-12-31 23:59:59.9999999", null)]
         [TestCase("2100-12-31 23:59:59.9999999", 5)]
-        //[TestCase("9999-12-31 23:59:59.9999999", null)] fails
-        //[TestCase("9999-12-31 23:59:59.9999999", 5)] fails
+        [TestCase("9999-12-31 23:59:59.9999999", null)]
+        [TestCase("9999-12-31 23:59:59.9999999", 5)]
+        [TestCase("9999-12-30 23:59:59.9999999", null)]
+        [TestCase("9999-12-30 23:59:59.9999999", 5)]
         [TestCase("1982-01-18 16:20:00.6666666", null)]
         [TestCase("1982-01-18 16:20:00.6666666", 3)]
-        //[TestCase("1969-07-21 02:56:15.1234567", null)] fails
-        //[TestCase("1969-07-21 02:56:15.1234567", 1)] fails
-        //[TestCase("1900-09-03 12:12:12.1212121", null)] fails
-        //[TestCase("1900-09-03 12:12:12.1212121", 1)] fails
+        //[TestCase("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
+        [TestCase("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
+        //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
+        [TestCase("1900-09-03 12:12:12.0000000", 1)]
         public void testGetTimestampNTZ(string inputTimeStr, int? precision)
         {
             testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
