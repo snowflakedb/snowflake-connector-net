@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Data;
 
 namespace Snowflake.Data.Tests
 {
@@ -34,18 +33,10 @@ namespace Snowflake.Data.Tests
             testThread.Join();
         }
 
-        private static readonly DateTime[] _testConvertDatetimeInputData =
-        {
-            new DateTime(2019, 2, 4, 15, 30, 1, 123),
-            new DateTime(1982, 1, 18, 16, 20, 00, 666),
-            /* This test and conversion will fail if not-even-seconds before unix epoch are used.
-            new DateTime(1900, 9, 3).AddTicks(1), */
-            new DateTime(2100, 1, 1, 1, 1, 1, 1).AddTicks(1)
-        };
-
         [Test]
         [TestCase("2100-12-31 23:59:59.9999999")]
-        //[TestCase("9999-12-31 23:59:59.9999999")] fails
+        [TestCase("2200-01-01 11:22:33.4455667")]
+        [TestCase("9999-12-31 23:59:59.9999999")]
         [TestCase("1982-01-18 16:20:00.6666666")]
         [TestCase(null)]
         public void TestConvertDatetime(string inputTimeStr)
