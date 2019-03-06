@@ -1,4 +1,8 @@
-﻿namespace Snowflake.Data.Tests
+﻿/*
+ * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ */
+
+namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
     using System.IO;
