@@ -445,5 +445,24 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestExecuteScalarNull()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "select 1 where 2 > 3";
+                    object val = command.ExecuteScalar();
+
+                    Assert.AreEqual(DBNull.Value, val);
+                }
+                conn.Close();
+            }
+        }
     }
 }

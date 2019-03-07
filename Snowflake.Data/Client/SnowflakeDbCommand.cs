@@ -179,8 +179,8 @@ namespace Snowflake.Data.Client
 
             if(resultSet.Next())
                 return resultSet.GetValue(0);
-
-            return DBNull.Value;
+            else
+                return DBNull.Value;
         }
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
@@ -193,8 +193,8 @@ namespace Snowflake.Data.Client
 
             if(await result.NextAsync())
                 return result.GetValue(0);
-
-            return DBNull.Value;
+            else
+                return DBNull.Value;
         }
 
         public override void Prepare()
