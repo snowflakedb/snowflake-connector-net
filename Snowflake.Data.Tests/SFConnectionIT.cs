@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Text;
+using System.Threading.Tasks;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -61,8 +64,11 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = connectionStringWithoutPassword;
                 conn.Password = password;
                 conn.Open();
+
                 Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                conn.Close();
             }
         }
 
@@ -147,6 +153,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 conn.Open();
+
                 Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -159,29 +166,36 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithoutHost()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                String connStrFmt = "account={0};user={1};password={2}";
-                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
+                string connStrFmt = "account={0};user={1};password={2}";
+                conn.ConnectionString = string.Format(connStrFmt, testConfig.account,
                     testConfig.user, testConfig.password);
-                conn.Open();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
-                conn.Close();
+                // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
+                if (string.IsNullOrEmpty(testConfig.host))
+                {
+                    conn.Open();
+                    Assert.AreEqual(conn.State, ConnectionState.Open);
+                    conn.Close();
+                }
             }
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithDifferentRole()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                String connStrFmt = "account={0};user={1};password={2};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=shige_wh";
-                conn.ConnectionString = String.Format(connStrFmt, testConfig.account,
-                    testConfig.user, testConfig.password);
+                var host = testConfig.host;
+                if (string.IsNullOrEmpty(host))
+                {
+                    host = $"{testConfig.account}.snowflakecomputing.com";
+                }
+
+                string connStrFmt = "host={0};port=443;account={1};user={2};password={3};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
+                conn.ConnectionString = string.Format(connStrFmt, host, testConfig.account, testConfig.user, testConfig.password);
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -191,13 +205,14 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
 
                     command.CommandText = "select current_database()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SNOWFLAKE_SAMPLE_DATA");
+                    CollectionAssert.Contains(new [] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_schema()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "INFORMATION_SCHEMA");
+                    CollectionAssert.Contains(new [] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_warehouse()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SHIGE_WH");
+                    // Command will return empty string if the hardcoded warehouse does not exist.
+                    Assert.AreEqual("", command.ExecuteScalar().ToString());
                 }
                 conn.Close();
             }
