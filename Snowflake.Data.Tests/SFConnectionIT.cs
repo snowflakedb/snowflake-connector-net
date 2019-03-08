@@ -166,7 +166,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithoutHost()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -181,16 +180,10 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(conn.State, ConnectionState.Open);
                     conn.Close();
                 }
-                // If host is specified in the configs the reason probably is that the different AWS region is used and host must be specified, otherwise the connection will fail.
-                else
-                {
-                    Assert.Throws<AggregateException>(() => conn.Open(), "Connection attempt should fail if the account uses non-default region.");
-                }
             }
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
         public void TestConnectWithDifferentRole()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -201,7 +194,7 @@ namespace Snowflake.Data.Tests
                     host = $"{testConfig.account}.snowflakecomputing.com";
                 }
 
-                string connStrFmt = "host={0};port=443;account={1};user={2};password={3};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=shige_wh";
+                string connStrFmt = "host={0};port=443;account={1};user={2};password={3};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
                 conn.ConnectionString = string.Format(connStrFmt, host, testConfig.account, testConfig.user, testConfig.password);
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
@@ -212,14 +205,14 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
 
                     command.CommandText = "select current_database()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "SNOWFLAKE_SAMPLE_DATA");
+                    CollectionAssert.Contains(new [] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_schema()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "INFORMATION_SCHEMA");
+                    CollectionAssert.Contains(new [] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_warehouse()";
                     // Command will return empty string if the hardcoded warehouse does not exist.
-                    CollectionAssert.Contains(new [] { "SHIGE_WH", "" }, command.ExecuteScalar().ToString());
+                    Assert.AreEqual("", command.ExecuteScalar().ToString());
                 }
                 conn.Close();
             }
