@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core
 
         private readonly object _requestIdLock = new object();
 
-        private readonly IRestRequest _restRequest;
+        private readonly IRestRequester _restRequester;
 
         private CancellationTokenSource _timeoutTokenSource;
         
@@ -45,13 +45,13 @@ namespace Snowflake.Data.Core
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSouce;
 
-        internal SFStatement(SFSession session, IRestRequest rest)
+        internal SFStatement(SFSession session, IRestRequester rest)
         {
             SfSession = session;
-            _restRequest = rest;
+            _restRequester = rest;
         }
 
-        internal SFStatement(SFSession session) : this(session, RestRequestImpl.Instance)
+        internal SFStatement(SFSession session) : this(session, RestRequesterImpl.Instance)
         { }
 
         private void AssignQueryRequestId()
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Core
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                var response = await _restRequest.PostAsync<QueryExecResponse>(queryRequest, cancellationToken);
+                var response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken);
                 if (SessionExpired(response))
                 {
                     SfSession.renewSession();
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Core
                 while (RequestInProgress(response) || SessionExpired(response))
                 {
                     var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequest.GetAsync<QueryExecResponse>(req, cancellationToken);
+                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken);
 
                     if (SessionExpired(response))
                     {
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Core
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                var response = _restRequest.Post<QueryExecResponse>(queryRequest);
+                var response = _restRequester.Post<QueryExecResponse>(queryRequest);
                 if (SessionExpired(response))
                 {
                     SfSession.renewSession();
@@ -212,7 +212,7 @@ namespace Snowflake.Data.Core
                 while (RequestInProgress(response) || SessionExpired(response))
                 {
                     var req = BuildResultRequest(lastResultUrl);
-                    response = _restRequest.Get<QueryExecResponse>(req);
+                    response = _restRequester.Get<QueryExecResponse>(req);
 
                     if (SessionExpired(response))
                     {
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Core
             if (request == null)
                 return;
 
-            var response = _restRequest.Post<NullDataResponse>(request);
+            var response = _restRequester.Post<NullDataResponse>(request);
 
             if (response.success)
             {

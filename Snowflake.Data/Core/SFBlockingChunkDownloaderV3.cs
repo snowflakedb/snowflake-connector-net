@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchSlot;
 
-        private static IRestRequest restRequest = RestRequestImpl.Instance;
+        private static IRestRequester restRequester = RestRequesterImpl.Instance;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            using (var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken)
+            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
                            .ConfigureAwait(continueOnCapturedContext: false))
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))

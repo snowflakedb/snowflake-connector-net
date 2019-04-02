@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpired : IRestRequest
+    class MockRestSessionExpired : IRestRequester
     {
         static private readonly String EXPIRED_SESSION_TOKEN="session_expired_token";
 
@@ -23,9 +23,10 @@ namespace Snowflake.Data.Tests.Mock
 
         public MockRestSessionExpired() { }
 
-        public Task<T> PostAsync<T>(SFRestRequest postRequest, CancellationToken cancellationToken)
+        public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            if (postRequest.jsonBody is AuthnRequest)
+            SFRestRequest sfRequest = (SFRestRequest)request;
+            if (sfRequest.jsonBody is AuthnRequest)
             {
                 AuthnResponse authnResponse = new AuthnResponse
                 {
@@ -42,9 +43,9 @@ namespace Snowflake.Data.Tests.Mock
                 // login request return success
                 return Task.FromResult<T>((T)(object)authnResponse);
             }
-            else if (postRequest.jsonBody is QueryRequest)
+            else if (sfRequest.jsonBody is QueryRequest)
             {
-                if (postRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+                if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
                 {
                     QueryExecResponse queryExecResponse = new QueryExecResponse
                     {
@@ -53,7 +54,7 @@ namespace Snowflake.Data.Tests.Mock
                     };
                     return Task.FromResult<T>((T)(object)queryExecResponse);
                 }
-                else if (postRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, "new_session_token")))
+                else if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, "new_session_token")))
                 {
                     QueryExecResponse queryExecResponse = new QueryExecResponse
                     {
@@ -84,7 +85,7 @@ namespace Snowflake.Data.Tests.Mock
                     return Task.FromResult<T>((T)(object)queryExecResponse);
                 }
             }
-            else if (postRequest.jsonBody is RenewSessionRequest)
+            else if (sfRequest.jsonBody is RenewSessionRequest)
             {
                 return Task.FromResult<T>((T)(object)new RenewSessionResponse
                 {
@@ -102,22 +103,22 @@ namespace Snowflake.Data.Tests.Mock
             }
         }
 
-        public T Post<T>(SFRestRequest postRequest)
+        public T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
         }
 
-        public T Get<T>(SFRestRequest request)
+        public T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
         }
 
-        public Task<T> GetAsync<T>(SFRestRequest request, CancellationToken cancellationToken)
+        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult<T>((T)(object)null);
         }
 
-        public Task<HttpResponseMessage> GetAsync(S3DownloadRequest request, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult<HttpResponseMessage>(null);
         }

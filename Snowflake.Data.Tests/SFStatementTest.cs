@@ -17,10 +17,10 @@ namespace Snowflake.Data.Tests
         [Test]
          public void TestSessionRenew()
         {
-            Mock.MockRestSessionExpired rest = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, rest);
+            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession, rest);
+            SFStatement statement = new SFStatement(sfSession, restRequester);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
@@ -31,10 +31,10 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestSessionRenewDuringQueyrExec()
         {
-            Mock.MockRestSessionExpiredInQueryExec rest = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, rest);
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession, rest);
+            SFStatement statement = new SFStatement(sfSession, restRequester);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
