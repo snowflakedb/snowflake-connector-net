@@ -86,6 +86,7 @@ namespace Snowflake.Data.Core
         private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
 
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
+        private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
         public SFRestRequest()
         {
@@ -126,6 +127,10 @@ namespace Snowflake.Data.Core
             }
 
             message.Headers.Add(SF_AUTHORIZATION_HEADER, authorizationToken);
+            if (serviceName != null)
+            {
+                message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
+            }
             message.Headers.Accept.Add(applicationSnowflake);
 
             message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = httpRequestTimeout;
