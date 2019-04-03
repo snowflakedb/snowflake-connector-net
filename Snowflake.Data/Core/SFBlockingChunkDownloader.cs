@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchThreads;
 
-        private static IRestRequest restRequest = RestRequestImpl.Instance;
+        private static IRestRequester restRequester = RestRequesterImpl.Instance;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await restRequest.GetAsync(downloadRequest, downloadContext.cancellationToken);
+            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken);
             Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.

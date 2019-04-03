@@ -5,28 +5,44 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace Snowflake.Data.Core
 {
-    public interface IRestRequest
+    /**
+     * The RestRequester is responsible to send out a rest request and receive response
+     */
+    public interface IRestRequester
     {
-        Task<T> PostAsync<T>(SFRestRequest postRequest, CancellationToken cancellationToken);
+        Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken);
 
-        T Post<T>(SFRestRequest postRequest);
+        T Post<T>(IRestRequest postRequest);
 
-        T Get<T>(SFRestRequest request);
+        T Get<T>(IRestRequest request);
 
-        Task<T> GetAsync<T>(SFRestRequest request, CancellationToken cancellationToken);
+        Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken);
 
-        Task<HttpResponseMessage> GetAsync(S3DownloadRequest request, CancellationToken cancellationToken);
+        Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken);
     }
 
-    public class S3DownloadRequest
+    public interface IRestRequest
     {
+        HttpRequestMessage ToRequestMessage(HttpMethod method);
+        TimeSpan RestTimeout();
+    }
+
+    public class S3DownloadRequest : IRestRequest
+    {
+        private const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
+
+        private const string SSE_C_KEY = "x-amz-server-side-encryption-customer-key";
+
+        private const string SSE_C_AES = "AES256";
+
         internal Uri uri{ get; set; }
 
         internal string qrmk { get; set; }
@@ -38,10 +54,40 @@ namespace Snowflake.Data.Core
         internal TimeSpan httpRequestTimeout { get; set; }
 
         internal Dictionary<string, string> chunkHeaders { get; set; }
+
+        public HttpRequestMessage ToRequestMessage(HttpMethod method)
+        {
+            HttpRequestMessage message = new HttpRequestMessage(method, uri);
+            if (chunkHeaders != null)
+            {
+                foreach (var item in chunkHeaders)
+                {
+                    message.Headers.Add(item.Key, item.Value);
+                }
+            } else
+            {
+                message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
+                message.Headers.Add(SSE_C_KEY, qrmk);
+            }
+
+            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = httpRequestTimeout;
+
+            return message;
+        }
+
+        public TimeSpan RestTimeout()
+        {
+            return timeout;
+        }
     }
 
-    public class SFRestRequest
+    public class SFRestRequest : IRestRequest
     {
+        private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
+
+        private const string SF_AUTHORIZATION_HEADER = "Authorization";
+        private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
+
         public SFRestRequest()
         {
             sfRestRequestTimeout = Timeout.InfiniteTimeSpan;
@@ -55,17 +101,46 @@ namespace Snowflake.Data.Core
         internal Object jsonBody { get; set;  }
 
         internal String authorizationToken { get; set; }
+
+        internal String serviceName { get; set; }
         
         // timeout for the whole rest request in millis (adding up all http retry)
         internal TimeSpan sfRestRequestTimeout { get; set; }
         
         // timeout for each http request 
-        internal TimeSpan httpRequestTimeout { get; set; } 
+        internal TimeSpan httpRequestTimeout { get; set; }
 
         public override string ToString()
         {
             return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", uri.ToString(), 
                 jsonBody.ToString());
+        }
+
+        public HttpRequestMessage ToRequestMessage(HttpMethod method)
+        {
+            var message = new HttpRequestMessage(method, uri);
+            if (method != HttpMethod.Get && jsonBody != null)
+            {
+                var json = JsonConvert.SerializeObject(jsonBody);
+                //TODO: Check if we should use other encodings...
+                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
+
+            message.Headers.Add(SF_AUTHORIZATION_HEADER, authorizationToken);
+            if (serviceName != null)
+            {
+                message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
+            }
+            message.Headers.Accept.Add(applicationSnowflake);
+
+            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = httpRequestTimeout;
+            
+            return message;
+        }
+
+        public TimeSpan RestTimeout()
+        {
+            return sfRestRequestTimeout;
         }
     }
 

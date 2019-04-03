@@ -49,7 +49,7 @@ namespace Snowflake.Data.Core
 
         internal string masterToken;
 
-        private IRestRequest restRequest;
+        private IRestRequester restRequester;
 
         internal SFSessionProperties properties { get; }
 
@@ -92,13 +92,13 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(String connectionString, SecureString password) : 
-            this(connectionString, password, RestRequestImpl.Instance)
+            this(connectionString, password, RestRequesterImpl.Instance)
         {
         }
 
-        internal SFSession(String connectionString, SecureString password, IRestRequest restRequest)
+        internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
         {
-            this.restRequest = restRequest;
+            this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, string>();
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
-            var response = restRequest.Post<AuthnResponse>(loginRequest);
+            var response = restRequester.Post<AuthnResponse>(loginRequest);
 
             ProcessLoginResponse(response);
         }
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Login Request Data: {loginRequest.ToString()}");
             }
 
-            var response = await restRequest.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
+            var response = await restRequester.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
 
             ProcessLoginResponse(response);
         }
@@ -207,7 +207,7 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
           
-            var response = restRequest.Post<NullDataResponse>(closeSessionRequest);
+            var response = restRequester.Post<NullDataResponse>(closeSessionRequest);
             if (!response.success)
             {
                 logger.Warn($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Core
             };
 
             logger.Info("Renew the session.");
-            var response = restRequest.Post<RenewSessionResponse>(renewSessionRequest);
+            var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("", 

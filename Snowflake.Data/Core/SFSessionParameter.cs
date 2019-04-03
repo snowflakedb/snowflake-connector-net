@@ -10,6 +10,7 @@ namespace Snowflake.Data.Core
 {
     internal enum SFSessionParameter
     {
-        CLIENT_PREFETCH_THREADS
+        CLIENT_PREFETCH_THREADS,
+        SERVICE_NAME
     }
 }

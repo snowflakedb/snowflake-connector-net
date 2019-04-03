@@ -5,116 +5,65 @@
 using System.Threading;
 using System.Net.Http;
 using System;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
-    public class RestRequestImpl : IRestRequest
+    public class RestRequesterImpl : IRestRequester
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequestImpl>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequesterImpl>();
 
-        private static readonly RestRequestImpl instance = new RestRequestImpl();
+        private static readonly RestRequesterImpl instance = new RestRequesterImpl();
 
-        private static MediaTypeHeaderValue applicationJson = new MediaTypeHeaderValue("applicaion/json");
-
-        private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
-
-        private const string SF_AUTHORIZATION_HEADER = "Authorization";
-
-        private const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
-
-        private const string SSE_C_KEY = "x-amz-server-side-encryption-customer-key";
-
-        private const string SSE_C_AES = "AES256";
-
-        private RestRequestImpl()
+        private RestRequesterImpl()
         {
         }
         
-        static internal RestRequestImpl Instance
+        static internal RestRequesterImpl Instance
         {
             get { return instance; }
         }
 
-        public T Post<T>(SFRestRequest postRequest)
+        public T Post<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None)).Result;
         }
 
-        public async Task<T> PostAsync<T>(SFRestRequest postRequest, CancellationToken cancellationToken)
+        public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            var req = ToRequestMessage(HttpMethod.Post, postRequest);
+            var req = request.ToRequestMessage(HttpMethod.Post);
 
-            var response = await SendAsync(req, postRequest.sfRestRequestTimeout, cancellationToken);
+            var response = await SendAsync(req, request.RestTimeout(), cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
             logger.Debug($"Post response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public T Get<T>(SFRestRequest request)
+        public T Get<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
         }
 
-        public async Task<T> GetAsync<T>(SFRestRequest request, CancellationToken cancellationToken)
+        public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            var req = ToRequestMessage(HttpMethod.Get, request);
-
-            var response = await SendAsync(req, request.sfRestRequestTimeout, cancellationToken);
+            HttpResponseMessage response = await GetAsync(request, cancellationToken);
             var json = await response.Content.ReadAsStringAsync();
             logger.Debug($"Get response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
-
-        private HttpRequestMessage ToRequestMessage(HttpMethod method, SFRestRequest request)
-        {
-            var msg = new HttpRequestMessage(method, request.uri);
-            if (method != HttpMethod.Get && request.jsonBody != null)
-            {
-                var json = JsonConvert.SerializeObject(request.jsonBody);
-                //TODO: Check if we should use other encodings...
-                msg.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            }
-
-            msg.Headers.Add(SF_AUTHORIZATION_HEADER, request.authorizationToken);
-            msg.Headers.Accept.Add(applicationSnowflake);
-            
-            msg.Properties["TIMEOUT_PER_HTTP_REQUEST"] = request.httpRequestTimeout;
-
-            logger.Debug($"Http method: {method.ToString()}, http request message: {msg.ToString()}");
-
-            return msg;
-        }
         
-        public Task<HttpResponseMessage> GetAsync(S3DownloadRequest getRequest, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, getRequest.uri);
+            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
+            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
 
-            if (getRequest.chunkHeaders != null)
-            {
-                foreach(var item in getRequest.chunkHeaders)
-                {
-                    message.Headers.Add(item.Key, item.Value);
-                }
-            }
-            else
-            {
-                message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
-                message.Headers.Add(SSE_C_KEY, getRequest.qrmk);
-            }
-            message.Properties["TIMEOUT_PER_HTTP_REQUEST"] = getRequest.httpRequestTimeout;
-
-            logger.Debug($"S3 Download request message {message.ToString()}");
-
-            return SendAsync(message, getRequest.timeout, cancellationToken);
+            return SendAsync(message, request.RestTimeout(), cancellationToken);
         }
         
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, 
