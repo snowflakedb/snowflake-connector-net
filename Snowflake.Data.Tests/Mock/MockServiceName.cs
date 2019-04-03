@@ -16,31 +16,6 @@ namespace Snowflake.Data.Tests.Mock
         public const string INIT_SERVICE_NAME = "init";
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            return PrepareResponse<T>(HttpMethod.Post, request, cancellationToken);
-        }
-
-        public T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
-        }
-
-        public T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
-        }
-
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return PrepareResponse<T>(HttpMethod.Get, request, cancellationToken);
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        private Task<T> PrepareResponse<T>(HttpMethod method, IRestRequest request, CancellationToken cancellationToken)
-        {
             var message = request.ToRequestMessage(HttpMethod.Post);
             var param = new NameValueParameter { name = "SERVICE_NAME" };
             if (!message.Headers.Contains("X-Snowflake-Service"))
@@ -101,7 +76,27 @@ namespace Snowflake.Data.Tests.Mock
                 return Task.FromResult<T>((T)(object)null);
             }
 
+       
         }
 
+        public T Post<T>(IRestRequest postRequest)
+        {
+            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+        }
+
+        public T Get<T>(IRestRequest request)
+        {
+            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+        }
+
+        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<T>((T)(object)null);
+        }
+
+        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<HttpResponseMessage>(null);
+        }
     }
 }

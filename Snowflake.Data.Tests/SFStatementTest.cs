@@ -6,7 +6,6 @@ namespace Snowflake.Data.Tests
 {
     using Snowflake.Data.Core;
     using NUnit.Framework;
-    using System;
 
     /**
      * Mock rest request test
