@@ -79,8 +79,12 @@ namespace Snowflake.Data.Client
             if (disposed)
                 return;
 
-            // Snowflake can handle a rollback for a rollback without any transaction
-            this.Rollback();
+            // Rollback the uncommitted transaction when the connection is open
+            if (connection != null && connection.IsOpen())
+            {
+                // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
+                this.Rollback();
+            }
             disposed = true;
 
             base.Dispose(disposing);

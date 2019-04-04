@@ -45,6 +45,11 @@ namespace Snowflake.Data.Client
             get; set;
         }
 
+        public bool IsOpen()
+        {
+            return _connectionState == ConnectionState.Open;
+        }
+
         public override string Database => _connectionState == ConnectionState.Open ? SfSession.database : string.Empty;
 
         public override int ConnectionTimeout => this._connectionTimeout;
@@ -100,7 +105,16 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Open Connection.");
             SetSession();
-            SfSession.Open();
+            try
+            {
+                SfSession.Open();
+            }
+            catch (Exception e)
+            {
+                // Otherwise when Dispose() is called, the close request would timeout.
+                _connectionState = ConnectionState.Closed;
+                throw e;
+            }
             OnSessionEstablished();
         }
         
