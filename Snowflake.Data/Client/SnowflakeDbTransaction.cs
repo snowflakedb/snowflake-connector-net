@@ -18,6 +18,8 @@ namespace Snowflake.Data.Client
 
         private SnowflakeDbConnection connection;
 
+        private bool disposed = false;
+
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
             logger.Debug("Begin transaction.");
@@ -70,6 +72,23 @@ namespace Snowflake.Data.Client
                 command.CommandText = "ROLLBACK";
                 command.ExecuteNonQuery();
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            // Snowflake can handle a rollback for a rollback without any transaction
+            this.Rollback();
+            disposed = true;
+
+            base.Dispose(disposing);
+        }
+
+        ~SnowflakeDbTransaction()
+        {
+            Dispose(false);
         }
     }
 }

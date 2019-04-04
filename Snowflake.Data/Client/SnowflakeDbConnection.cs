@@ -27,6 +27,8 @@ namespace Snowflake.Data.Client
 
         private int _connectionTimeout;
 
+        private bool disposed = false;
+
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
@@ -139,6 +141,22 @@ namespace Snowflake.Data.Client
         protected override DbCommand CreateDbCommand()
         {
             return new SnowflakeDbCommand(this);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            this.Close();
+            disposed = true;
+
+            base.Dispose(disposing);
+        }
+
+        ~SnowflakeDbConnection()
+        {
+            Dispose(false);
         }
     }
 }
