@@ -27,6 +27,8 @@ namespace Snowflake.Data.Client
 
         private int _connectionTimeout;
 
+        private bool disposed = false;
+
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
@@ -41,6 +43,11 @@ namespace Snowflake.Data.Client
         public SecureString Password
         {
             get; set;
+        }
+
+        public bool IsOpen()
+        {
+            return _connectionState == ConnectionState.Open;
         }
 
         public override string Database => _connectionState == ConnectionState.Open ? SfSession.database : string.Empty;
@@ -98,7 +105,16 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Open Connection.");
             SetSession();
-            SfSession.Open();
+            try
+            {
+                SfSession.Open();
+            }
+            catch (Exception e)
+            {
+                // Otherwise when Dispose() is called, the close request would timeout.
+                _connectionState = ConnectionState.Closed;
+                throw e;
+            }
             OnSessionEstablished();
         }
         
@@ -139,6 +155,22 @@ namespace Snowflake.Data.Client
         protected override DbCommand CreateDbCommand()
         {
             return new SnowflakeDbCommand(this);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            this.Close();
+            disposed = true;
+
+            base.Dispose(disposing);
+        }
+
+        ~SnowflakeDbConnection()
+        {
+            Dispose(false);
         }
     }
 }

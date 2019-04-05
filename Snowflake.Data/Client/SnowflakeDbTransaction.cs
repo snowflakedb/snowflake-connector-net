@@ -18,6 +18,8 @@ namespace Snowflake.Data.Client
 
         private SnowflakeDbConnection connection;
 
+        private bool disposed = false;
+
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
             logger.Debug("Begin transaction.");
@@ -70,6 +72,27 @@ namespace Snowflake.Data.Client
                 command.CommandText = "ROLLBACK";
                 command.ExecuteNonQuery();
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            // Rollback the uncommitted transaction when the connection is open
+            if (connection != null && connection.IsOpen())
+            {
+                // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
+                this.Rollback();
+            }
+            disposed = true;
+
+            base.Dispose(disposing);
+        }
+
+        ~SnowflakeDbTransaction()
+        {
+            Dispose(false);
         }
     }
 }

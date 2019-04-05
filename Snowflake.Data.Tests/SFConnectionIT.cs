@@ -217,5 +217,42 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
+        [Test]
+        public void TestConnectionDispose()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Setup
+                conn.ConnectionString = connectionString;
+                conn.Open();
+                IDbCommand command = conn.CreateCommand();
+                command.CommandText = "create or replace table testConnDispose(c int)";
+                command.ExecuteNonQuery();
+
+                IDbTransaction t1 = conn.BeginTransaction();
+                IDbCommand t1c1 = conn.CreateCommand();
+                t1c1.Transaction = t1;
+                t1c1.CommandText = "insert into testConnDispose values (1)";
+                t1c1.ExecuteNonQuery();
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Previous connection would be disposed and 
+                // uncommitted txn would rollback at this point
+                conn.ConnectionString = connectionString;
+                conn.Open();
+                IDbCommand command = conn.CreateCommand();
+                command.CommandText = "SELECT * FROM testConnDispose";
+                IDataReader reader = command.ExecuteReader();
+                Assert.IsFalse(reader.Read());
+
+                // Cleanup
+                command.CommandText = "DROP TABLE IF EXISTS testConnDispose";
+                command.ExecuteNonQuery();
+            }
+        }
     }
 }
