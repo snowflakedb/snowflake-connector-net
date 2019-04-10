@@ -14,22 +14,30 @@ namespace Snowflake.Data.Core
                                                      CancellationToken cancellationToken)
         {
             if (SFConfiguration.Instance().UseV2ChunkDownloader)
+                SFConfiguration.Instance().ChunkDownloaderVersion = 2;
+
+            switch(SFConfiguration.Instance().ChunkDownloaderVersion)
             {
-                return new SFChunkDownloaderV2(responseData.rowType.Count,
+                case 1:
+                    return new SFBlockingChunkDownloader(responseData.rowType.Count,
                     responseData.chunks,
                     responseData.qrmk,
                     responseData.chunkHeaders,
-                    cancellationToken);
-            }
-            else
-            {
-                return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
+                    cancellationToken,
+                    resultSet);
+                case 2:
+                    return new SFChunkDownloaderV2(responseData.rowType.Count,
+                        responseData.chunks,
+                        responseData.qrmk,
+                        responseData.chunkHeaders,
+                        cancellationToken);
+                default:
+                    return new SFBlockingChunkDownloader(responseData.rowType.Count,
                     responseData.chunks,
                     responseData.qrmk,
                     responseData.chunkHeaders,
                     cancellationToken,
                     resultSet);
             }
-        }
     }
 }
