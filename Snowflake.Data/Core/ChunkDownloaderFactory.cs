@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core
             if (SFConfiguration.Instance().UseV2ChunkDownloader)
                 SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
-            switch(SFConfiguration.Instance().ChunkDownloaderVersion)
+            switch (SFConfiguration.Instance().ChunkDownloaderVersion)
             {
                 case 1:
                     return new SFBlockingChunkDownloader(responseData.rowType.Count,
@@ -39,5 +39,6 @@ namespace Snowflake.Data.Core
                     cancellationToken,
                     resultSet);
             }
+        }
     }
 }
