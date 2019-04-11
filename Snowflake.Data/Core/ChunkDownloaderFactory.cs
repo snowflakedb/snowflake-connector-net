@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core
                         responseData.chunkHeaders,
                         cancellationToken);
                 default:
-                    return new SFBlockingChunkDownloader(responseData.rowType.Count,
+                    return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                     responseData.chunks,
                     responseData.qrmk,
                     responseData.chunkHeaders,
