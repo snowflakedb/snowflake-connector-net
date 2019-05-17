@@ -68,10 +68,10 @@ namespace Snowflake.Data.Tests
                         command.ExecuteNonQuery();
                     }
                     
-                    using (IDbCommand command = dbConnection.CreateCommand()) // does not work
+                    using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         command.CommandText = "insert into TEST_TBL values(:p0)";
-                        var param = (SnowflakeDbParameter)command.CreateParameter();
+                        var param = command.CreateParameter();
                         param.ParameterName = "p0";
                         param.DbType = System.Data.DbType.Int32;
                         param.Value = DBNull.Value;
@@ -79,13 +79,25 @@ namespace Snowflake.Data.Tests
                         int rowsInserted = command.ExecuteNonQuery();
                         Assert.AreEqual(1, rowsInserted);
                     }
+
+                    using (IDbCommand command = dbConnection.CreateCommand())
+                    {
+                        command.CommandText = "select ID from TEST_TBL;";
+                        using (IDataReader reader = command.ExecuteReader())
+                        {
+                            reader.Read();
+                            Assert.IsTrue(reader.IsDBNull(0));
+                            reader.Close();
+                        }
+                    }
+
                 }
                 finally
                 {
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        command.CommandText = "drop table TEST_TBL";
-                        command.ExecuteNonQuery();
+                       // /command.CommandText = "drop table TEST_TBL";
+                    //    command.ExecuteNonQuery();
                     }
                 }
             }
