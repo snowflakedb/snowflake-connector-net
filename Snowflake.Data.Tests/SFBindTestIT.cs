@@ -56,7 +56,39 @@ namespace Snowflake.Data.Tests
         [Test]
         public void testBindNullValue()
         {
-
+            using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+            {
+                dbConnection.ConnectionString = connectionString;
+                dbConnection.Open();
+                try
+                {
+                    using (IDbCommand command = dbConnection.CreateCommand())
+                    {
+                        command.CommandText = "create or replace table TEST_TBL (ID number);";
+                        command.ExecuteNonQuery();
+                    }
+                    
+                    using (IDbCommand command = dbConnection.CreateCommand()) // does not work
+                    {
+                        command.CommandText = "insert into TEST_TBL values(:p0)";
+                        var param = (SnowflakeDbParameter)command.CreateParameter();
+                        param.ParameterName = "p0";
+                        param.DbType = System.Data.DbType.Int32;
+                        param.Value = DBNull.Value;
+                        command.Parameters.Add(param);
+                        int rowsInserted = command.ExecuteNonQuery();
+                        Assert.AreEqual(1, rowsInserted);
+                    }
+                }
+                finally
+                {
+                    using (IDbCommand command = dbConnection.CreateCommand())
+                    {
+                        command.CommandText = "drop table TEST_TBL";
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
         }
 
         [Test]
