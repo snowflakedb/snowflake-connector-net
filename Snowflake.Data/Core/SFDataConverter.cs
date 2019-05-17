@@ -163,7 +163,7 @@ namespace Snowflake.Data.Core
         {
             string destType;
             string destVal;
-            var srcValAsCultureInvariantString = string.Format(CultureInfo.InvariantCulture, "{0}", srcVal);
+            var srcValAsCultureInvariantString = (srcVal == DBNull.Value) ? null : string.Format(CultureInfo.InvariantCulture, "{0}", srcVal);
 
             switch (srcType)
             {
