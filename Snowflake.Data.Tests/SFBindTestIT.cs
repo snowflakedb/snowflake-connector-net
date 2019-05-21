@@ -96,8 +96,8 @@ namespace Snowflake.Data.Tests
                 {
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                       // /command.CommandText = "drop table TEST_TBL";
-                    //    command.ExecuteNonQuery();
+                       command.CommandText = "drop table TEST_TBL";
+                       command.ExecuteNonQuery();
                     }
                 }
             }
