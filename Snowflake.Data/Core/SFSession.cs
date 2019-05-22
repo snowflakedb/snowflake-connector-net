@@ -20,24 +20,8 @@ namespace Snowflake.Data.Core
     class SFSession
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
-
-        private static readonly Tuple<AuthnRequestClientEnv, string> _EnvironmentData;
-
-        private const string SF_SESSION_PATH = "/session";
-
-        private const string SF_LOGIN_PATH = SF_SESSION_PATH + "/v1/login-request";
-
-        private const string SF_TOKEN_REQUEST_PATH = SF_SESSION_PATH + "/token-request";
-
+        
         private const string SF_QUERY_SESSION_DELETE = "delete";
-
-        private const string SF_QUERY_WAREHOUSE = "warehouse";
-
-        private const string SF_QUERY_DB = "databaseName";
-
-        private const string SF_QUERY_SCHEMA = "schemaName";
-
-        private const string SF_QUERY_ROLE = "roleName";
 
         private const string SF_QUERY_REQUEST_ID = "requestId";
 
@@ -45,19 +29,21 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-        internal string sessionToken { get; set; }
+        internal string sessionToken;
 
         internal string masterToken;
 
-        private IRestRequester restRequester;
+        internal IRestRequester restRequester;
 
-        internal SFSessionProperties properties { get; }
+        private IAuthenticator authenticator;
 
-        internal string database { get; set; }
+        internal SFSessionProperties properties;
 
-        internal string schema { get; set; }
+        internal string database;
 
-        internal string serverVersion { get; set; }
+        internal string schema;
+
+        internal string serverVersion;
 
         internal int connectionTimeout
         {
@@ -68,24 +54,6 @@ namespace Snowflake.Data.Core
         }
 
         internal readonly Dictionary<SFSessionParameter, string> ParameterMap;
-
-        static SFSession()
-        {
-            AuthnRequestClientEnv clientEnv = new AuthnRequestClientEnv()
-            {
-                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString,
-#if NET46
-                netRuntime = "CLR:" + Environment.Version.ToString()
-#else
-                netRuntime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
-#endif
-            };
-
-            var clientVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-
-            _EnvironmentData = Tuple.Create(clientEnv, clientVersion);
-        }
 
         /// <summary>
         ///     Constructor 
@@ -102,44 +70,6 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, string>();
-        }
-        
-        private SFRestRequest BuildLoginRequest()
-        {
-            // build uri
-            var queryParams = new Dictionary<string,string>();
-            string warehouseValue;
-            string dbValue;
-            string schemaValue;
-            string roleName;
-            queryParams[SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-            queryParams[SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-            queryParams[SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
-            queryParams[SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
-            queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            
-            var loginUri = BuildUri(SF_LOGIN_PATH, queryParams);
-
-     
-            AuthnRequestData data = new AuthnRequestData()
-            {
-                loginName = properties[SFSessionProperty.USER],
-                password = properties[SFSessionProperty.PASSWORD],
-                clientAppId = ".NET",
-                clientAppVersion = _EnvironmentData.Item2,
-                accountName = properties[SFSessionProperty.ACCOUNT],
-                clientEnv = _EnvironmentData.Item1
-            };
-
-            int connectionTimeoutSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
-            return new SFRestRequest()
-            {
-                jsonBody = new AuthnRequest() { data = data },
-                uri = loginUri,
-                authorizationToken = SF_AUTHORIZATION_BASIC,
-                sfRestRequestTimeout = connectionTimeoutSec > 0 ? TimeSpan.FromSeconds(connectionTimeoutSec) : Timeout.InfiniteTimeSpan
-            };
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -167,32 +97,24 @@ namespace Snowflake.Data.Core
         {
             logger.Debug("Open Session");
 
-            var loginRequest = BuildLoginRequest();
-
-            if (logger.IsDebugEnabled())
+            if (authenticator == null)
             {
-                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
+                authenticator = new BasicAuthenticator(this);
             }
 
-            var response = restRequester.Post<AuthnResponse>(loginRequest);
-
-            ProcessLoginResponse(response);
+            authenticator.Authenticate();
         }
 
         internal async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session");
 
-            var loginRequest = BuildLoginRequest();
-
-            if (logger.IsDebugEnabled())
+            if (authenticator == null)
             {
-                logger.Debug($"Login Request Data: {loginRequest.ToString()}");
+                authenticator = new BasicAuthenticator(this);
             }
 
-            var response = await restRequester.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
-
-            ProcessLoginResponse(response);
+            await authenticator.AuthenticateAsync(cancellationToken);
         }
 
         internal void close()
@@ -203,7 +125,7 @@ namespace Snowflake.Data.Core
             
             SFRestRequest closeSessionRequest = new SFRestRequest
             {
-                uri = BuildUri(SF_SESSION_PATH, queryParams),
+                uri = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
           
@@ -225,7 +147,7 @@ namespace Snowflake.Data.Core
             SFRestRequest renewSessionRequest = new SFRestRequest
             {
                 jsonBody = postBody,
-                uri = BuildUri(SF_TOKEN_REQUEST_PATH,
+                uri = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH,
                     new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}}),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 sfRestRequestTimeout = Timeout.InfiniteTimeSpan
@@ -247,25 +169,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private void ProcessLoginResponse(AuthnResponse authnResponse)
-        {
-            if (authnResponse.success)
-            {
-                sessionToken = authnResponse.data.token;
-                masterToken = authnResponse.data.masterToken;
-                database = authnResponse.data.authResponseSessionInfo.databaseName;
-                schema = authnResponse.data.authResponseSessionInfo.schemaName;
-                serverVersion = authnResponse.data.serverVersion;
-
-                UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
-            }
-            else
-            {
-                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
-                logger.Error("Authentication failed", e);
-                throw e;
-            } 
-        }
+        
         
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {

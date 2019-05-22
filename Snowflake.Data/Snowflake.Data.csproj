@@ -48,6 +48,5 @@
   
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Client\" />
   </ItemGroup>
 </Project>
