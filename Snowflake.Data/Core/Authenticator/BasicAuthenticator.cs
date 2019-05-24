@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Snowflake.Data.Log;
@@ -6,13 +10,13 @@ using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : IAuthenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
-        private const string SF_AUTHORIZATION_BASIC = "Basic";
         private SFSession session;
+        private const string SF_LOGIN_PATH = RestPath.SF_SESSION_PATH + "/v1/login-request";
 
         internal BasicAuthenticator(SFSession session)
         {
@@ -51,7 +55,7 @@ namespace Snowflake.Data.Core
             queryParams[RestParams.SF_QUERY_ROLE] = session.properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
 
-            var loginUri = session.BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
+            var loginUri = session.BuildUri(SF_LOGIN_PATH, queryParams);
 
 
             AuthnRequestData data = new AuthnRequestData()
@@ -66,13 +70,7 @@ namespace Snowflake.Data.Core
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return new SFRestRequest()
-            {
-                jsonBody = new AuthnRequest() { data = data },
-                uri = loginUri,
-                authorizationToken = SF_AUTHORIZATION_BASIC,
-                sfRestRequestTimeout = connectionTimeoutSec > 0 ? TimeSpan.FromSeconds(connectionTimeoutSec) : Timeout.InfiniteTimeSpan
-            };
+            return session.BuildTimeoutRestRequest(loginUri, new AuthnRequest() { data = data });
         }
 
         private void ProcessLoginResponse(AuthnResponse authnResponse)

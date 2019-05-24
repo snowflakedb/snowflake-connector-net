@@ -5,15 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Security;
 using System.Web;
-using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Configuration;
 
 namespace Snowflake.Data.Core
 {
@@ -45,13 +43,7 @@ namespace Snowflake.Data.Core
 
         internal string serverVersion;
 
-        internal int connectionTimeout
-        {
-            get
-            {
-                return Int32.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-            }
-        }
+        internal TimeSpan connectionTimeout;
 
         internal readonly Dictionary<SFSessionParameter, string> ParameterMap;
 
@@ -60,7 +52,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(String connectionString, SecureString password) : 
-            this(connectionString, password, RestRequesterImpl.Instance)
+            this(connectionString, password, RestRequester.Instance)
         {
         }
 
@@ -70,6 +62,9 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, string>();
+
+            int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -125,7 +120,7 @@ namespace Snowflake.Data.Core
             
             SFRestRequest closeSessionRequest = new SFRestRequest
             {
-                uri = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
+                Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
           
@@ -147,10 +142,10 @@ namespace Snowflake.Data.Core
             SFRestRequest renewSessionRequest = new SFRestRequest
             {
                 jsonBody = postBody,
-                uri = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH,
+                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH,
                     new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}}),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                sfRestRequestTimeout = Timeout.InfiniteTimeSpan
+                RestTimeout = Timeout.InfiniteTimeSpan
             };
 
             logger.Info("Renew the session.");
@@ -169,7 +164,16 @@ namespace Snowflake.Data.Core
             }
         }
 
-        
+        internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
+        {
+            return new SFRestRequest()
+            {
+                jsonBody = body,
+                Url = uri,
+                authorizationToken = SF_AUTHORIZATION_BASIC,
+                RestTimeout = connectionTimeout,
+            };
+        }
         
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {

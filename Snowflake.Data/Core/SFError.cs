@@ -39,7 +39,13 @@ namespace Snowflake.Data.Core
         UNSUPPORTED_FEATURE,
 
         [SFErrorAttr(errorCode = 270010)]
-        DATA_READER_ALREADY_CLOSED
+        DATA_READER_ALREADY_CLOSED,
+
+        [SFErrorAttr(errorCode = 270011)]
+        UNKNOWN_AUTHENTICATOR,
+
+        [SFErrorAttr(errorCode = 270040)]
+        IDP_INCORRECT_DESTINATION,
     }
 
     class SFErrorAttr : Attribute

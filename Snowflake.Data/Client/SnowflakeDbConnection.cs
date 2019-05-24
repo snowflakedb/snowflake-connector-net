@@ -131,7 +131,7 @@ namespace Snowflake.Data.Client
         private void SetSession()
         {
             SfSession = new SFSession(ConnectionString, Password);
-            _connectionTimeout = SfSession.connectionTimeout;
+            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
             _connectionState = ConnectionState.Connecting;
         }
 

@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core
         //TODO: parameterize prefetch slot
         private const int prefetchSlot = 5;
         
-        private static IRestRequester restRequester = RestRequesterImpl.Instance;
+        private static IRestRequester restRequester = RestRequester.Instance;
         
         private Dictionary<string, string> chunkHeaders;
 
@@ -122,11 +122,11 @@ namespace Snowflake.Data.Core
 
             S3DownloadRequest downloadRequest = new S3DownloadRequest()
             {
-                uri = new UriBuilder(chunk.url).Uri,
+                Url = new UriBuilder(chunk.url).Uri,
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
-                timeout = TimeSpan.FromHours(1),
-                httpRequestTimeout = TimeSpan.FromSeconds(16),
+                RestTimeout = TimeSpan.FromHours(1),
+                HttpTimeout = TimeSpan.FromSeconds(16),
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
