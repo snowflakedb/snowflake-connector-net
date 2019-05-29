@@ -210,7 +210,7 @@ namespace Snowflake.Data.Core
             var response = restRequester.Post<NullDataResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.Warn($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
             }
         }
 
