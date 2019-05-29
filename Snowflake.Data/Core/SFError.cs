@@ -45,6 +45,9 @@ namespace Snowflake.Data.Core
         UNKNOWN_AUTHENTICATOR,
 
         [SFErrorAttr(errorCode = 270040)]
+        IDP_CONNECTION_ERROR,
+
+        [SFErrorAttr(errorCode = 270040)]
         IDP_INCORRECT_DESTINATION,
     }
 

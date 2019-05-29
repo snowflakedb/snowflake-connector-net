@@ -16,20 +16,10 @@ namespace Snowflake.Data.Core.Authenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
         private SFSession session;
-        private const string SF_LOGIN_PATH = RestPath.SF_SESSION_PATH + "/v1/login-request";
 
         internal BasicAuthenticator(SFSession session)
         {
             this.session = session;
-        }
-
-        void IAuthenticator.Authenticate()
-        {
-            var loginRequest = BuildLoginRequest();
-
-            var response = session.restRequester.Post<AuthnResponse>(loginRequest);
-
-            ProcessLoginResponse(response);
         }
 
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
@@ -38,25 +28,13 @@ namespace Snowflake.Data.Core.Authenticator
 
             var response = await session.restRequester.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
 
-            ProcessLoginResponse(response);
+            session.ProcessLoginResponse(response);
         }
 
         private SFRestRequest BuildLoginRequest()
         {
             // build uri
-            var queryParams = new Dictionary<string, string>();
-            string warehouseValue;
-            string dbValue;
-            string schemaValue;
-            string roleName;
-            queryParams[RestParams.SF_QUERY_WAREHOUSE] = session.properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-            queryParams[RestParams.SF_QUERY_DB] = session.properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-            queryParams[RestParams.SF_QUERY_SCHEMA] = session.properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
-            queryParams[RestParams.SF_QUERY_ROLE] = session.properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
-            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-
-            var loginUri = session.BuildUri(SF_LOGIN_PATH, queryParams);
-
+            var loginUrl = session.BuildLoginUrl();
 
             AuthnRequestData data = new AuthnRequestData()
             {
@@ -70,29 +48,9 @@ namespace Snowflake.Data.Core.Authenticator
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return session.BuildTimeoutRestRequest(loginUri, new AuthnRequest() { data = data });
+            return session.BuildTimeoutRestRequest(loginUrl, new AuthnRequest() { data = data });
         }
 
-        private void ProcessLoginResponse(AuthnResponse authnResponse)
-        {
-            if (authnResponse.success)
-            {
-                session.sessionToken = authnResponse.data.token;
-                session.masterToken = authnResponse.data.masterToken;
-                session.database = authnResponse.data.authResponseSessionInfo.databaseName;
-                session.schema = authnResponse.data.authResponseSessionInfo.schemaName;
-                session.serverVersion = authnResponse.data.serverVersion;
-
-                session.UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
-            }
-            else
-            {
-                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
-                logger.Error("Authentication failed", e);
-                throw e;
-            }
-        }
     }
-
 
 }

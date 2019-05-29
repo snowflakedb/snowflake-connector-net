@@ -45,7 +45,44 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan connectionTimeout;
 
+        internal void ProcessLoginResponse(AuthnResponse authnResponse)
+        {
+            if (authnResponse.success)
+            {
+                sessionToken = authnResponse.data.token;
+                masterToken = authnResponse.data.masterToken;
+                database = authnResponse.data.authResponseSessionInfo.databaseName;
+                schema = authnResponse.data.authResponseSessionInfo.schemaName;
+                serverVersion = authnResponse.data.serverVersion;
+
+                UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+            }
+            else
+            {
+                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
+                logger.Error("Authentication failed", e);
+                throw e;
+            }
+        }
+
         internal readonly Dictionary<SFSessionParameter, string> ParameterMap;
+
+        internal Uri BuildLoginUrl()
+        {
+            var queryParams = new Dictionary<string, string>();
+            string warehouseValue;
+            string dbValue;
+            string schemaValue;
+            string roleName;
+            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
+            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
+            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
+            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
+            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+
+            var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
+            return loginUrl;
+        }
 
         /// <summary>
         ///     Constructor 
@@ -86,7 +123,6 @@ namespace Snowflake.Data.Core
             
             return uriBuilder.Uri;
         }
-       
 
         internal void Open()
         {
@@ -94,10 +130,10 @@ namespace Snowflake.Data.Core
 
             if (authenticator == null)
             {
-                authenticator = new BasicAuthenticator(this);
+                authenticator = AuthenticatorFactory.GetAuthenticator(this);
             }
 
-            authenticator.Authenticate();
+            authenticator.AuthenticateAsync(CancellationToken.None).GetAwaiter().GetResult();
         }
 
         internal async Task OpenAsync(CancellationToken cancellationToken)

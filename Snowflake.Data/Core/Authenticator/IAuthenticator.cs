@@ -12,8 +12,6 @@ namespace Snowflake.Data.Core.Authenticator
 {
     internal interface IAuthenticator
     {
-        void Authenticate();
-
         Task AuthenticateAsync(CancellationToken cancellationToken);
     }
 
@@ -27,7 +25,7 @@ namespace Snowflake.Data.Core.Authenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
 
-        internal IAuthenticator GetAuthenticator(SFSession session)
+        internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
             switch (type)

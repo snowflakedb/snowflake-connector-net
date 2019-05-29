@@ -254,5 +254,16 @@ namespace Snowflake.Data.Tests
                 command.ExecuteNonQuery();
             }
         }
+
+        [Test]
+        public void TestOktaConnection()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = "scheme=http;host=10.211.55.3;port=8080;user=qa@snowflakecomputing.com;password=Test123!;" +
+                    "account=testaccount;role=sysadmin;db=testdb;schema=public;warehouse=regress;authenticator=https://snowflakecomputing.okta.com";
+                conn.Open();
+            }
+        }
     }
 }

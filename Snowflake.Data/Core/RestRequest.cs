@@ -147,17 +147,20 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
         internal String accountName { get; set; }
 
-        [JsonProperty(PropertyName = "LOGIN_NAME")]
+        [JsonProperty(PropertyName = "LOGIN_NAME", NullValueHandling = NullValueHandling.Ignore)]
         internal String loginName { get; set; }
 
-        [JsonProperty(PropertyName = "PASSWORD")]
+        [JsonProperty(PropertyName = "PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
         internal String password { get; set; }
 
         [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
         internal AuthnRequestClientEnv clientEnv { get; set; }
 
-        [JsonProperty(PropertyName = "Authenticator")]
+        [JsonProperty(PropertyName = "AUTHENTICATOR")]
         internal String Authenticator { get; set; }
+
+        [JsonProperty(PropertyName = "RAW_SAML_RESPONSE", NullValueHandling = NullValueHandling.Ignore)]
+        internal String RawSamlResponse { get; set; }
 
         public override string ToString()
         {
