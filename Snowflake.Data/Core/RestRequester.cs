@@ -12,9 +12,9 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    /**
-     * The RestRequester is responsible to send out a rest request and receive response
-     */
+    /// <summary>
+    /// The RestRequester is responsible to send out a rest request and receive response
+    /// </summary>
     internal interface IRestRequester
     {
         Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken);

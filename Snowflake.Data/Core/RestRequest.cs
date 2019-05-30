@@ -18,11 +18,20 @@ namespace Snowflake.Data.Core
         TimeSpan GetRestTimeout();
     }
 
+    /// <summary>
+    /// A base rest request implementation with timeout defined
+    /// </summary>
     internal abstract class BaseRestRequest : IRestRequest
     {
         private const string HTTP_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_HTTP_REQUEST";
         internal Uri Url { get; set; }
+        /// <summary>
+        /// Timeout of the overall rest request
+        /// </summary>
         internal TimeSpan RestTimeout { get; set; }
+        /// <summary>
+        /// Timeout for every single HTTP request
+        /// </summary>
         internal TimeSpan HttpTimeout { get; set; }
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
