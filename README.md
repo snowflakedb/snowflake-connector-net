@@ -113,6 +113,7 @@ i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all 
 | USER                | Yes      |                                                                               |
 | WAREHOUSE           | No       |                                                                               |
 | CONNECTION_TIMEOUT  | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default) and [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only).  |
 
 <br />
 
