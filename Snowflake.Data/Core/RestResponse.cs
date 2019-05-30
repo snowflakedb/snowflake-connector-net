@@ -234,4 +234,19 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "uncompressedSize")]
         internal int uncompressedSize { get; set; }
     }
- } 
+
+    internal class CloseResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal CloseResponseData data { get; set; }
+    }
+
+    internal class CloseResponseData
+    {
+        [JsonProperty(PropertyName = "internalError")]
+        internal bool internalError { get; set; }
+
+        [JsonProperty(PropertyName = "errorCode")]
+        internal string errorCode { get; set; }
+    }
+} 
