@@ -3,9 +3,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Resources;
 
 namespace Snowflake.Data.Core
 {
@@ -39,7 +36,19 @@ namespace Snowflake.Data.Core
         UNSUPPORTED_FEATURE,
 
         [SFErrorAttr(errorCode = 270010)]
-        DATA_READER_ALREADY_CLOSED
+        DATA_READER_ALREADY_CLOSED,
+
+        [SFErrorAttr(errorCode = 270011)]
+        UNKNOWN_AUTHENTICATOR,
+
+        [SFErrorAttr(errorCode = 270040)]
+        IDP_SSO_TOKEN_URL_MISMATCH,
+
+        [SFErrorAttr(errorCode = 270041)]
+        IDP_SAML_POSTBACK_NOTFOUND,
+
+        [SFErrorAttr(errorCode = 270042)]
+        IDP_SAML_POSTBACK_INVALID,
     }
 
     class SFErrorAttr : Attribute

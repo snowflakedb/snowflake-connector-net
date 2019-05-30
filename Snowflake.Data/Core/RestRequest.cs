@@ -1,0 +1,225 @@
+﻿/*
+ * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.Threading;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System;
+using System.Text;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+
+namespace Snowflake.Data.Core
+{
+    internal interface IRestRequest
+    {
+        HttpRequestMessage ToRequestMessage(HttpMethod method);
+        TimeSpan GetRestTimeout();
+    }
+
+    /// <summary>
+    /// A base rest request implementation with timeout defined
+    /// </summary>
+    internal abstract class BaseRestRequest : IRestRequest
+    {
+        private const string HTTP_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_HTTP_REQUEST";
+        internal Uri Url { get; set; }
+        /// <summary>
+        /// Timeout of the overall rest request
+        /// </summary>
+        internal TimeSpan RestTimeout { get; set; }
+        /// <summary>
+        /// Timeout for every single HTTP request
+        /// </summary>
+        internal TimeSpan HttpTimeout { get; set; }
+
+        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
+        {
+            HttpRequestMessage message = new HttpRequestMessage(method, url);
+            message.Properties[HTTP_REQUEST_TIMEOUT_KEY] = HttpTimeout;
+            return message;
+        }
+
+        TimeSpan IRestRequest.GetRestTimeout()
+        {
+            return RestTimeout;
+        }
+    }
+
+    internal class S3DownloadRequest : BaseRestRequest, IRestRequest
+    {
+        private const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
+
+        private const string SSE_C_KEY = "x-amz-server-side-encryption-customer-key";
+
+        private const string SSE_C_AES = "AES256";
+
+
+        internal string qrmk { get; set; }
+
+        internal Dictionary<string, string> chunkHeaders { get; set; }
+
+        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
+        {
+            HttpRequestMessage message = newMessage(method, Url);
+            if (chunkHeaders != null)
+            {
+                foreach (var item in chunkHeaders)
+                {
+                    message.Headers.Add(item.Key, item.Value);
+                }
+            } else
+            {
+                message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
+                message.Headers.Add(SSE_C_KEY, qrmk);
+            }
+
+            return message;
+        }
+
+    }
+
+    internal class SFRestRequest : BaseRestRequest, IRestRequest
+    {
+        private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
+
+        private const string SF_AUTHORIZATION_HEADER = "Authorization";
+        private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
+
+        internal SFRestRequest()
+        {
+            RestTimeout = Timeout.InfiniteTimeSpan;
+
+            // default each http request timeout to 16 seconds
+            HttpTimeout = TimeSpan.FromSeconds(16); 
+        }
+
+        internal Object jsonBody { get; set;  }
+
+        internal String authorizationToken { get; set; }
+
+        internal String serviceName { get; set; }
+        
+        public override string ToString()
+        {
+            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(), 
+                jsonBody.ToString());
+        }
+
+        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
+        {
+            var message = newMessage(method, Url);
+            if (method != HttpMethod.Get && jsonBody != null)
+            {
+                var json = JsonConvert.SerializeObject(jsonBody);
+                //TODO: Check if we should use other encodings...
+                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
+
+            message.Headers.Add(SF_AUTHORIZATION_HEADER, authorizationToken);
+            if (serviceName != null)
+            {
+                message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
+            }
+            message.Headers.Accept.Add(applicationSnowflake);
+
+            return message;
+        }
+
+    }
+
+    class AuthnRequest
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal AuthnRequestData data { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("AuthRequest {{data: {0} }}", data.ToString());
+        }
+    }
+
+    class AuthnRequestData
+    {
+        [JsonProperty(PropertyName = "CLIENT_APP_ID")]
+        internal String clientAppId { get; set; }
+
+        [JsonProperty(PropertyName = "CLIENT_APP_VERSION")]
+        internal String clientAppVersion { get; set; }
+
+        [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        internal String accountName { get; set; }
+
+        [JsonProperty(PropertyName = "LOGIN_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        internal String loginName { get; set; }
+
+        [JsonProperty(PropertyName = "PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
+        internal String password { get; set; }
+
+        [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
+        internal AuthnRequestClientEnv clientEnv { get; set; }
+
+        [JsonProperty(PropertyName = "AUTHENTICATOR")]
+        internal String Authenticator { get; set; }
+
+        [JsonProperty(PropertyName = "RAW_SAML_RESPONSE", NullValueHandling = NullValueHandling.Ignore)]
+        internal String RawSamlResponse { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("AuthRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
+                clientAppVersion, accountName, loginName, clientEnv.ToString());
+        }
+    }
+
+    class AuthnRequestClientEnv
+    {
+        [JsonProperty(PropertyName = "APPLICATION")]
+        internal String application { get; set; }
+
+        [JsonProperty(PropertyName = "OS_VERSION")]
+        internal String osVersion { get; set; }
+
+        [JsonProperty(PropertyName = "NET_RUNTIME")]
+        internal String netRuntime { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2} }}", 
+                application, osVersion, netRuntime);
+        }
+    }
+
+    class QueryRequest
+    {
+        [JsonProperty(PropertyName = "sqlText")]
+        internal string sqlText { get; set; }
+
+        [JsonProperty(PropertyName = "describeOnly")]
+        internal bool describeOnly { get; set; }
+
+        [JsonProperty(PropertyName = "bindings")]
+        internal Dictionary<string, BindingDTO> parameterBindings { get; set; }
+    }
+
+    class QueryCancelRequest
+    {
+        [JsonProperty(PropertyName = "requestId")]
+        internal string requestId { get; set; }
+    }
+
+    class RenewSessionRequest
+    {
+        [JsonProperty(PropertyName = "oldSessionToken")]
+        internal string oldSessionToken { get; set; }
+
+        [JsonProperty(PropertyName = "requestType")]
+        internal string requestType { get; set; }
+    }
+}

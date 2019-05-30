@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core
             _restRequester = rest;
         }
 
-        internal SFStatement(SFSession session) : this(session, RestRequesterImpl.Instance)
+        internal SFStatement(SFSession session) : this(session, RestRequester.Instance)
         { }
 
         private void AssignQueryRequestId()
@@ -91,12 +91,12 @@ namespace Snowflake.Data.Core
 
             return new SFRestRequest
             {
-                uri = queryUri,
+                Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
                                 ? SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
                 jsonBody = postBody,
-                httpRequestTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
@@ -105,9 +105,9 @@ namespace Snowflake.Data.Core
             var uri = SfSession.BuildUri(resultPath);
             return new SFRestRequest()
             {
-                uri = uri,
+                Url = uri,
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                httpRequestTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Core
 
                 return new SFRestRequest()
                 {
-                    uri = uri,
+                    Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                     jsonBody = postBody
                 };
