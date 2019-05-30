@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Mock
 
     class MockCloseSessionGone : IRestRequester
     {
-        static private readonly string SESSION_GONE = "390112";
+        static private readonly string SESSION_GONE = "390111";
 
         public T Get<T>(IRestRequest request)
         {
