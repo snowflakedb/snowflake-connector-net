@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using System.Data;
     using System;
+    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -88,9 +89,9 @@ namespace Snowflake.Data.Tests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch(AggregateException e)
+                catch(SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270007, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,e.ErrorCode);
                 }
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
@@ -256,6 +257,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

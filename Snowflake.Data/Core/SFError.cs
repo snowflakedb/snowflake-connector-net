@@ -3,9 +3,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Resources;
 
 namespace Snowflake.Data.Core
 {
@@ -45,10 +42,13 @@ namespace Snowflake.Data.Core
         UNKNOWN_AUTHENTICATOR,
 
         [SFErrorAttr(errorCode = 270040)]
-        IDP_CONNECTION_ERROR,
+        IDP_SSO_TOKEN_URL_MISMATCH,
 
-        [SFErrorAttr(errorCode = 270040)]
-        IDP_INCORRECT_DESTINATION,
+        [SFErrorAttr(errorCode = 270041)]
+        IDP_SAML_POSTBACK_NOTFOUND,
+
+        [SFErrorAttr(errorCode = 270042)]
+        IDP_SAML_POSTBACK_INVALID,
     }
 
     class SFErrorAttr : Attribute

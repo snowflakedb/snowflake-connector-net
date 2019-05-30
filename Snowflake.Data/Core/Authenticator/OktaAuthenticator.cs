@@ -11,23 +11,37 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text;
-using System.Collections.Generic;
 using System.Web;
 
 namespace Snowflake.Data.Core.Authenticator
 {
+    /// <summary>
+    /// OktaAuthenticator would perform serveral steps of authentication with Snowflake and Okta idp
+    /// </summary>
     class OktaAuthenticator : IAuthenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
+        /// <summary>
+        /// Session that create this authenticator
+        /// </summary>
         private SFSession session;
+        /// <summary>
+        /// url of the okta idp
+        /// </summary>
         private Uri oktaUrl;
 
+        /// <summary>
+        /// Constructor of the Okta authenticator
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="oktaUriString"></param>
         internal OktaAuthenticator(SFSession session, string oktaUriString)
         {
             this.session = session;
             oktaUrl = new Uri(oktaUriString);
         }
 
+        /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("Okta Authentication");
@@ -128,13 +142,12 @@ namespace Snowflake.Data.Core.Authenticator
             return session.BuildTimeoutRestRequest(loginUrl, new AuthnRequest() { data = data });
         }
 
-        private void VerifyUrls(Uri url1, Uri url2)
+        private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)
         {
-            if (url1.Scheme != url2.Scheme || url1.Host != url2.Host)
+            if (tokenOrSsoUrl.Scheme != sessionUrl.Scheme || tokenOrSsoUrl.Host != sessionUrl.Host)
             {
                 var e = new SnowflakeDbException(
-                    SFError.IDP_CONNECTION_ERROR,
-                    new object[] { "url 1: " + url1.ToString(), "url 2: " + oktaUrl.ToString() });
+                    SFError.IDP_SSO_TOKEN_URL_MISMATCH, tokenOrSsoUrl.ToString(), oktaUrl.ToString());
                 logger.Error("Different urls", e);
                 throw e;
             }
@@ -143,14 +156,33 @@ namespace Snowflake.Data.Core.Authenticator
         private void VerifyPostbackUrl(string samlRawHtmlString)
         {
             int formIndex = samlRawHtmlString.IndexOf("<form");
+            bool extractSuccess = formIndex == -1;
+
             // skip 'action="' (length = 8)
             int startIndex = samlRawHtmlString.IndexOf("action=", formIndex) + 8;
             int length = samlRawHtmlString.IndexOf('"', startIndex) - startIndex;
-            var postBackUrl = new Uri(HttpUtility.HtmlDecode(samlRawHtmlString.Substring(startIndex, length)));
-            if (postBackUrl.Host != session.properties[SFSessionProperty.HOST] ||
-                postBackUrl.Scheme != session.properties[SFSessionProperty.SCHEME])
-            {
 
+            Uri postBackUrl;
+            try
+            {
+                postBackUrl = new Uri(HttpUtility.HtmlDecode(samlRawHtmlString.Substring(startIndex, length)));
+            } catch (Exception e)
+            {
+                logger.Error("Fail to extract SAML from html", e);
+                throw new SnowflakeDbException(SFError.IDP_SAML_POSTBACK_NOTFOUND);
+            }
+
+            string sessionHost = session.properties[SFSessionProperty.HOST];
+            string sessionScheme = session.properties[SFSessionProperty.SCHEME];
+            if (postBackUrl.Host != sessionHost ||
+                postBackUrl.Scheme != sessionScheme)
+            {
+                var e = new SnowflakeDbException(
+                    SFError.IDP_SAML_POSTBACK_INVALID,
+                    postBackUrl.ToString(),
+                    sessionScheme + ":\\\\" + sessionHost);
+                logger.Error("Different urls", e);
+                throw e;
             }
         }
 

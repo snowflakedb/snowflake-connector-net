@@ -123,6 +123,15 @@
   <data name="DATA_READER_ALREADY_CLOSED" xml:space="preserve">
     <value>Data reader has already been closed.</value>
   </data>
+  <data name="IDP_SAML_POSTBACK_INVALID" xml:space="preserve">
+    <value>Scheme/Hostname mismatch: postback lrl: {0}  session url: {1}</value>
+  </data>
+  <data name="IDP_SAML_POSTBACK_NOTFOUND" xml:space="preserve">
+    <value>Cannot found the postback url from the SAML response</value>
+  </data>
+  <data name="IDP_SSO_TOKEN_URL_MISMATCH" xml:space="preserve">
+    <value>Scheme/Hostname mismatch: token/sso url 1: {0}  session url: {1}</value>
+  </data>
   <data name="INTERNAL_ERROR" xml:space="preserve">
     <value>Snowflake Internal Error: {0}</value>
   </data>

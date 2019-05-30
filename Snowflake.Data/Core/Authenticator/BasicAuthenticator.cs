@@ -2,11 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Snowflake.Data.Log;
-using Snowflake.Data.Client;
 using System.Threading;
 using System.Threading.Tasks;
 
