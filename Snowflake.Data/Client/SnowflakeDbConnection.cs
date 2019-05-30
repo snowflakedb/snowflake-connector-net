@@ -6,9 +6,6 @@ using System;
 using System.Data.Common;
 using Snowflake.Data.Core;
 using System.Security;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
@@ -131,7 +128,7 @@ namespace Snowflake.Data.Client
         private void SetSession()
         {
             SfSession = new SFSession(ConnectionString, Password);
-            _connectionTimeout = SfSession.connectionTimeout;
+            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
             _connectionState = ConnectionState.Connecting;
         }
 

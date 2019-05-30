@@ -17,6 +17,7 @@
   </PropertyGroup>
 	
   <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.12.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="log4net" Version="2.0.8" />
   </ItemGroup>
@@ -48,6 +49,5 @@
   
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Client\" />
   </ItemGroup>
 </Project>

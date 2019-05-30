@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using System.Data;
     using System;
+    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -88,9 +89,9 @@ namespace Snowflake.Data.Tests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch(AggregateException e)
+                catch(SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270007, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,e.ErrorCode);
                 }
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
@@ -252,6 +253,44 @@ namespace Snowflake.Data.Tests
                 // Cleanup
                 command.CommandText = "DROP TABLE IF EXISTS testConnDispose";
                 command.ExecuteNonQuery();
+            }
+        }
+
+        [Test]
+        public void TestUnknownAuthenticator()
+        {
+            string[] wrongAuthenticators = new string[]
+            {
+                "http://snowflakecomputing.okta.com",
+                "https://snowflake.com",
+                "unknown",
+            };
+
+            foreach (string wrongAuthenticator in wrongAuthenticators)
+            {
+                try
+                {
+                    IDbConnection conn = new SnowflakeDbConnection();
+                    conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
+                    conn.Open();
+                    Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
+                } catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                }
+
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
+        public void TestOktaConnection()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = "scheme=http;host=10.211.55.3;port=8080;user=qa@snowflakecomputing.com;password=Test123!;" +
+                    "account=testaccount;role=sysadmin;db=testdb;schema=public;warehouse=regress;authenticator=https://snowflakecomputing.okta.com";
+                conn.Open();
             }
         }
     }

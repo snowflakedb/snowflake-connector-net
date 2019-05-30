@@ -5,17 +5,12 @@
 using System;
 using System.IO.Compression;
 using System.IO;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Diagnostics;
-using Newtonsoft.Json.Serialization;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
@@ -38,7 +33,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchThreads;
 
-        private static IRestRequester restRequester = RestRequesterImpl.Instance;
+        private static IRestRequester restRequester = RestRequester.Instance;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -119,13 +114,14 @@ namespace Snowflake.Data.Core
 
             S3DownloadRequest downloadRequest = new S3DownloadRequest()
             {
-                uri = new UriBuilder(chunk.url).Uri,
+                Url = new UriBuilder(chunk.url).Uri,
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
-                timeout = TimeSpan.FromHours(1),
-                httpRequestTimeout = TimeSpan.FromSeconds(32),
+                RestTimeout = TimeSpan.FromHours(1),
+                HttpTimeout = TimeSpan.FromSeconds(32),
                 chunkHeaders = downloadContext.chunkHeaders
             };
+
 
             var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken);
             Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
