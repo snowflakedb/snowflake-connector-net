@@ -257,6 +257,32 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestUnknownAuthenticator()
+        {
+            string[] wrongAuthenticators = new string[]
+            {
+                "http://snowflakecomputing.okta.com",
+                "https://snowflake.com",
+                "unknown",
+            };
+
+            foreach (string wrongAuthenticator in wrongAuthenticators)
+            {
+                try
+                {
+                    IDbConnection conn = new SnowflakeDbConnection();
+                    conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
+                    conn.Open();
+                    Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
+                } catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                }
+
+            }
+        }
+
+        [Test]
         [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnection()
         {

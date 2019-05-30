@@ -48,18 +48,17 @@ namespace Snowflake.Data.Core.Authenticator
         internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
-            switch (type)
+            if (type == "snowflake")
             {
-                case "snowflake":
-                    return new BasicAuthenticator(session);
+                return new BasicAuthenticator(session);
             }
-
-            if (type.EndsWith("okta.com") && type.StartsWith("https://"))
+            // Okta would provide a url of form: https://xxxxxx.okta.com
+            else if (type.EndsWith("okta.com") && type.StartsWith("https://"))
             {
                 return new OktaAuthenticator(session, type);
             }
 
-            var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, new object[] { type });
+            var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
 
             logger.Error("Unknown authenticator", e);
 

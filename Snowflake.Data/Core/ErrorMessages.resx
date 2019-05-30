@@ -153,6 +153,9 @@
   <data name="STATEMENT_ALREADY_RUNNING_QUERY" xml:space="preserve">
     <value>Another query is already running against this statement.</value>
   </data>
+  <data name="UNKNOWN_AUTHENTICATOR" xml:space="preserve">
+    <value>Unknown authenticator: {0}</value>
+  </data>
   <data name="UNSUPPORTED_FEATURE" xml:space="preserve">
     <value>Feature is not supported. </value>
   </data>
