@@ -21,6 +21,38 @@ namespace Snowflake.Data.Tests
         static private readonly Random rand = new Random();
 
         [Test]
+        public void testRecordsAffected()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testRecordsAffected(cola number)";
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string insertCommand = "insert into testRecordsAffected values (1),(1),(1)";
+                cmd.CommandText = insertCommand;
+                IDataReader reader = cmd.ExecuteReader();
+                Assert.AreEqual(3, reader.RecordsAffected);
+
+                // Reader's RecordsAffected should be available even if the reader is closed
+                reader.Close();
+                Assert.AreEqual(3, reader.RecordsAffected);
+
+                cmd.CommandText = "drop table if exists testRecordsAffected";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                // Reader's RecordsAffected should be available even if the connection is closed
+                conn.Close();
+                Assert.AreEqual(3, reader.RecordsAffected);
+            }
+        }
+
+        [Test]
         public void testGetNumber()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

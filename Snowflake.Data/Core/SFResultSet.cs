@@ -128,8 +128,6 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
 
-            //Logger.DebugFmt("RowIndex: {0}, ColumnIndex:{1}, CurrentChunkIndex: {2}, CurrentChunkRowCount: {3}", 
-            //    _currentChunkRowIdx, columnIndex, _currentChunk.GetChunkIndex(), _currentChunk.GetRowCount());
             return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
         }
 

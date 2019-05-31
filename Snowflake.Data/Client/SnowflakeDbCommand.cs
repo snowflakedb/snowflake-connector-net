@@ -157,7 +157,6 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteNonQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
-            resultSet.Next();
             return resultSet.CalculateUpdateCount();
         }
 
@@ -168,7 +167,6 @@ namespace Snowflake.Data.Client
                 throw new TaskCanceledException();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken);
-            await resultSet.NextAsync();
             return resultSet.CalculateUpdateCount();
         }
 

@@ -31,7 +31,9 @@ namespace Snowflake.Data.Client
             this.resultSet = resultSet;
             this.isClosed = false;
             this.SchemaTable = PopulateSchemaTable(resultSet);
+            RecordsAffected = resultSet.CalculateUpdateCount();
         }
+
         public override object this[string name]
         {
             get
@@ -82,7 +84,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override int RecordsAffected => resultSet.CalculateUpdateCount();
+        public override int RecordsAffected { get; }
 
         public override DataTable GetSchemaTable()
         {
