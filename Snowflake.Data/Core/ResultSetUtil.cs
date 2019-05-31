@@ -25,6 +25,7 @@ namespace Snowflake.Data.Core
                 case SFStatementType.DELETE:
                 case SFStatementType.MERGE:
                 case SFStatementType.MULTI_INSERT:
+                    resultSet.Next();
                     for (int i = 0; i < resultSet.columnCount; i++)
                     {
                         updateCount += resultSet.GetValue<long>(i);
@@ -32,6 +33,7 @@ namespace Snowflake.Data.Core
 
                     break;
                 case SFStatementType.COPY:
+                    resultSet.Next();
                     var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
                     if (index >= 0) updateCount = resultSet.GetValue<long>(index);
                     break;
