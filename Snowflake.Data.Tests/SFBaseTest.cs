@@ -19,8 +19,8 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class SFBaseTest
     {
-        private const string connectionStringFmt = "scheme=https;host={0};port=443;" +
-            "user={1};password={2};account={3};role={4};db={5};schema={6};warehouse={7}";
+        private const string connectionStringFmt = "scheme={0};host={1};port={2};" +
+            "user={3};password={4};account={5};role={6};db={7};schema={8};warehouse={9}";
 
         protected string connectionString {get; set;}
 
@@ -59,7 +59,9 @@ namespace Snowflake.Data.Tests
             if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
             {
                 connectionString = String.Format(connectionStringFmt,
+                    testConnectionConfig.protocol,
                     testConnectionConfig.host,
+                    testConnectionConfig.port,
                     testConnectionConfig.user,
                     testConnectionConfig.password,
                     testConnectionConfig.account,
@@ -90,6 +92,9 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_HOST", NullValueHandling = NullValueHandling.Ignore)]
         internal string host { get; set; }
 
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PORT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string port { get; set; }
+
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_WAREHOUSE", NullValueHandling = NullValueHandling.Ignore)]
         internal string warehouse { get; set; }
 
@@ -101,6 +106,15 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_ROLE", NullValueHandling = NullValueHandling.Ignore)]
         internal string role { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTOCOL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string protocol { get; set; }
+
+        public TestConfig()
+        {
+            this.protocol = "https";
+            this.port = "443";
+        }
     }
 
     public class IgnoreOnEnvIsAttribute : Attribute, ITestAction

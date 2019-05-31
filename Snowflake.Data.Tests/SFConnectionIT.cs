@@ -30,8 +30,11 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
                 string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
-                string[] versionElements = serverVersion.Split('.');
-                Assert.AreEqual(3, versionElements.Length);
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
 
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -195,8 +198,18 @@ namespace Snowflake.Data.Tests
                     host = $"{testConfig.account}.snowflakecomputing.com";
                 }
 
-                string connStrFmt = "host={0};port=443;account={1};user={2};password={3};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
-                conn.ConnectionString = string.Format(connStrFmt, host, testConfig.account, testConfig.user, testConfig.password);
+                string connStrFmt = "scheme={0};host={1};port={2};" +
+                    "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
+
+                conn.ConnectionString = string.Format(
+                    connStrFmt,
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.user,
+                    testConfig.password,
+                    testConfig.account
+                    );
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
