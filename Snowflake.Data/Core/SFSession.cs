@@ -133,7 +133,7 @@ namespace Snowflake.Data.Core
                 authenticator = AuthenticatorFactory.GetAuthenticator(this);
             }
 
-            authenticator.AuthenticateAsync(CancellationToken.None).GetAwaiter().GetResult();
+            authenticator.Authenticate();
         }
 
         internal async Task OpenAsync(CancellationToken cancellationToken)

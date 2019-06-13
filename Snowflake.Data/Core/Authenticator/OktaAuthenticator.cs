@@ -78,6 +78,42 @@ namespace Snowflake.Data.Core.Authenticator
             session.ProcessLoginResponse(authnResponse);   
         }
 
+        void IAuthenticator.Authenticate()
+        {
+            logger.Info("Okta Authentication");
+
+            logger.Debug("step 1: get sso and token url");
+            var authenticatorRestRequest = BuildAuthenticatorRestRequest();
+            var authenticatorResponse = session.restRequester.Post<AuthnResponse>(authenticatorRestRequest);
+            FilterFailedResponse(authenticatorResponse);
+            Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
+            Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
+
+            logger.Debug("step 2: verify urls fetched from step 1");
+            logger.Debug("Checking sso url");
+            VerifyUrls(ssoUrl, oktaUrl);
+            logger.Debug("Checking token url");
+            VerifyUrls(tokenUrl, oktaUrl);
+
+            logger.Debug("step 3: get idp onetime token");
+            IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
+            var idpResponse =  session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+            string onetimeToken = idpResponse.CookieToken;
+
+            logger.Debug("step 4: get SAML reponse from sso");
+            var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
+            var samlRawResponse = session.restRequester.Get(samlRestRequest);
+            var samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+
+            logger.Debug("step 5: verify postback url in SAML reponse");
+            VerifyPostbackUrl(samlRawHtmlString);
+
+            logger.Debug("step 6: send SAML reponse to snowflake to login");
+            var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
+            var authnResponse = session.restRequester.Post<AuthnResponse>(loginRestRequest);
+            session.ProcessLoginResponse(authnResponse);   
+        }
+
         private SFRestRequest BuildAuthenticatorRestRequest()
         {
             var fedUrl = session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);

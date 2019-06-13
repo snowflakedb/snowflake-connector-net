@@ -27,6 +27,15 @@ namespace Snowflake.Data.Core.Authenticator
             session.ProcessLoginResponse(response);
         }
 
+        void IAuthenticator.Authenticate()
+        {
+            var loginRequest = BuildLoginRequest();
+
+            var response = session.restRequester.Post<AuthnResponse>(loginRequest);
+
+            session.ProcessLoginResponse(response);
+        }
+
         private SFRestRequest BuildLoginRequest()
         {
             // build uri

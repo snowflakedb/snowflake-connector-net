@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            throw new System.NotImplementedException();
+            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
         }
 
         public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
@@ -65,6 +65,11 @@ namespace Snowflake.Data.Tests.Mock
                 };
                 return Task.FromResult<T>((T)(object)tokenResponse);
             }
+        }
+
+        public HttpResponseMessage Get(IRestRequest request)
+        {
+            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
         }
     }
 }

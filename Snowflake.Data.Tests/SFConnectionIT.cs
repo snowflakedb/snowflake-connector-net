@@ -92,9 +92,9 @@ namespace Snowflake.Data.Tests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,e.ErrorCode);
+                    Assert.AreEqual(270007, ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }

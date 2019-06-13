@@ -139,6 +139,11 @@ namespace Snowflake.Data.Tests.Mock
         {
             return Task.FromResult<HttpResponseMessage>(null);
         }
+
+        public HttpResponseMessage Get(IRestRequest request)
+        {
+            return null;
+        }
     }
 }
 
