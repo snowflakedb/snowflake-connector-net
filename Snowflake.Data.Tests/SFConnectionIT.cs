@@ -94,7 +94,8 @@ namespace Snowflake.Data.Tests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(270007, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, 
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
@@ -301,9 +302,14 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = "scheme=http;host=10.211.55.3;port=8080;user=qa@snowflakecomputing.com;password=Test123!;" +
+                conn.ConnectionString = "scheme=http;host=testaccount.reg.snowflakecomputing.com;port=8082;user=qa@snowflakecomputing.com;password=Test123!;" +
                     "account=testaccount;role=sysadmin;db=testdb;schema=public;warehouse=regress;authenticator=https://snowflakecomputing.okta.com";
                 conn.Open();
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT 1";
+                    Assert.AreEqual("1", command.ExecuteScalar().ToString());
+                }
             }
         }
     }
