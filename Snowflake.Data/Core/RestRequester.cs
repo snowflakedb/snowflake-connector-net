@@ -21,11 +21,13 @@ namespace Snowflake.Data.Core
 
         T Post<T>(IRestRequest postRequest);
 
-        T Get<T>(IRestRequest request);
-
         Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken);
 
+        T Get<T>(IRestRequest request);
+
         Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken);
+
+        HttpResponseMessage Get(IRestRequest request);
     }
 
     internal class RestRequester : IRestRequester
@@ -79,6 +81,15 @@ namespace Snowflake.Data.Core
             logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
 
             return SendAsync(message, request.GetRestTimeout(), cancellationToken);
+        }
+
+        public HttpResponseMessage Get(IRestRequest request)
+        {
+            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
+            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
+
+            //Run synchronous in a new thread-pool task.
+            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
         }
         
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, 
