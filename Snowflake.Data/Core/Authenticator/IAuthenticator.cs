@@ -22,6 +22,12 @@ namespace Snowflake.Data.Core.Authenticator
         /// <returns></returns>
         /// <exception cref="SnowflakeDbException"></exception>
         Task AuthenticateAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Process the authentication synchronously
+        /// </summary>
+        /// <exception cref="SnowflakeDbException"></exception>
+        void Authenticate();
     }
 
     /// <summary>

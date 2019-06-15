@@ -29,6 +29,11 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult<HttpResponseMessage>(null);
         }
 
+        public HttpResponseMessage Get(IRestRequest request)
+        {
+            return null;
+        }
+
         public T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
