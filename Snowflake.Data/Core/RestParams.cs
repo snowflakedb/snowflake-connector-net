@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core
     {
         static SFEnvironment()
         {
-            ClientEnv = new AuthnRequestClientEnv()
+            ClientEnv = new LoginRequestClientEnv()
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
@@ -48,6 +48,6 @@ namespace Snowflake.Data.Core
         }
 
         internal static string Version { get; private set; }
-        internal static AuthnRequestClientEnv ClientEnv { get; private set; }
+        internal static LoginRequestClientEnv ClientEnv { get; private set; }
     }
 }

@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
 
-            var reader = new StreamReader("parameters.json");
+            var reader = new StreamReader("C:\\Snowflake\\snowflake-connector-net\\Snowflake.Data.Tests\\parameters.json");
             var testConfigString = reader.ReadToEnd();
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);

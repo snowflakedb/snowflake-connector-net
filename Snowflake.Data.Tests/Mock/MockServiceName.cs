@@ -32,11 +32,11 @@ namespace Snowflake.Data.Tests.Mock
             }
 
             SFRestRequest sfRequest = (SFRestRequest)request;
-            if (sfRequest.jsonBody is AuthnRequest)
+            if (sfRequest.jsonBody is LoginRequest)
             {
-                AuthnResponse authnResponse = new AuthnResponse
+                LoginResponse authnResponse = new LoginResponse
                 {
-                    data = new AuthnResponseData()
+                    data = new LoginResponseData()
                     {
                         token = "session_token",
                         masterToken = "master_token",

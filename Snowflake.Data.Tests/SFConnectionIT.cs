@@ -312,5 +312,21 @@ namespace Snowflake.Data.Tests
                 }
             }
         }
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnection()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = "scheme=http;host=testaccount.reg.snowflakecomputing.com;port=8082;user=qa@snowflakecomputing.com;password=Test123!;" +
+                    "account=testaccount;role=sysadmin;db=testdb;schema=public;warehouse=regress;authenticator=externalbrowser";
+                conn.Open();
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT 1";
+                    Assert.AreEqual("1", command.ExecuteScalar().ToString());
+                }
+            }
+        }
     }
 }

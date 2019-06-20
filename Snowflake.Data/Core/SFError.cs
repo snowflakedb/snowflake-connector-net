@@ -41,6 +41,7 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270011)]
         UNKNOWN_AUTHENTICATOR,
 
+        // Okta related
         [SFErrorAttr(errorCode = 270040)]
         IDP_SSO_TOKEN_URL_MISMATCH,
 
@@ -49,6 +50,13 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270042)]
         IDP_SAML_POSTBACK_INVALID,
+
+        // External browser related
+        [SFErrorAttr(errorCode = 270050)]
+        BROWSER_RESPONSE_WRONG_METHOD,
+
+        [SFErrorAttr(errorCode = 270051)]
+        BROWSER_RESPONSE_INVALID_PREFIX,
     }
 
     class SFErrorAttr : Attribute

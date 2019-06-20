@@ -44,10 +44,10 @@ namespace Snowflake.Data.Tests.Mock
             if (postRequest is SFRestRequest)
             {
                 // authenticator
-                AuthnResponse authnResponse = new AuthnResponse
+                var authnResponse = new AuthenticatorResponse 
                 {
                     success = true,
-                    data = new AuthnResponseData
+                    data = new AuthenticatorResponseData 
                     {
                         tokenUrl = TokenUrl,
                         ssoUrl = SSOUrl,

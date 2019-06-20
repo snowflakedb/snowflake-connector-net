@@ -131,21 +131,44 @@ namespace Snowflake.Data.Core
 
             return message;
         }
-
     }
 
-    class AuthnRequest
+    class AuthenticatorRequest
     {
         [JsonProperty(PropertyName = "data")]
-        internal AuthnRequestData data { get; set; }
+        internal AuthenticatorRequestData Data { get; set; }
 
         public override string ToString()
         {
-            return String.Format("AuthRequest {{data: {0} }}", data.ToString());
+            return String.Format("AuthenticatorRequest {{data: {0} }}", Data.ToString());
         }
     }
 
-    class AuthnRequestData
+    class AuthenticatorRequestData
+    {
+        [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        internal String AccountName { get; set; }
+
+        [JsonProperty(PropertyName = "AUTHENTICATOR")]
+        internal String Authenticator { get; set; }
+
+        [JsonProperty(PropertyName = "BROWSER_MODE_REDIRECT_PORT", NullValueHandling = NullValueHandling.Ignore)]
+        internal String BrowserModeRedirectPort { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("AuthenticatorRequestData {{ACCOUNT_NANM: {0} }}",
+                AccountName.ToString());
+        }
+    }
+
+    class LoginRequest
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal LoginRequestData data { get; set; }
+    }
+
+    class LoginRequestData
     {
         [JsonProperty(PropertyName = "CLIENT_APP_ID")]
         internal String clientAppId { get; set; }
@@ -162,23 +185,29 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
         internal String password { get; set; }
 
-        [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
-        internal AuthnRequestClientEnv clientEnv { get; set; }
-
-        [JsonProperty(PropertyName = "AUTHENTICATOR")]
+        [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
         internal String Authenticator { get; set; }
+
+        [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
+        internal LoginRequestClientEnv clientEnv { get; set; }
 
         [JsonProperty(PropertyName = "RAW_SAML_RESPONSE", NullValueHandling = NullValueHandling.Ignore)]
         internal String RawSamlResponse { get; set; }
 
+        [JsonProperty(PropertyName = "TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string Token { get; set; }
+
+        [JsonProperty(PropertyName = "PROOF_KEY", NullValueHandling = NullValueHandling.Ignore)]
+        internal string ProofKey { get; set; }
+
         public override string ToString()
         {
-            return String.Format("AuthRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
+            return String.Format("LoginRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
                 clientAppVersion, accountName, loginName, clientEnv.ToString());
         }
     }
 
-    class AuthnRequestClientEnv
+    class LoginRequestClientEnv
     {
         [JsonProperty(PropertyName = "APPLICATION")]
         internal String application { get; set; }
