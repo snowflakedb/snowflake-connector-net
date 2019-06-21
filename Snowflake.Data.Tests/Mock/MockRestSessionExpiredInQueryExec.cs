@@ -24,11 +24,11 @@ namespace Snowflake.Data.Tests.Mock
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
-            if (sfRequest.jsonBody is AuthnRequest)
+            if (sfRequest.jsonBody is LoginRequest)
             {
-                AuthnResponse authnResponse = new AuthnResponse
+                LoginResponse authnResponse = new LoginResponse
                 {
-                    data = new AuthnResponseData()
+                    data = new LoginResponseData()
                     {
                         token = "session_token",
                         masterToken = "master_token",

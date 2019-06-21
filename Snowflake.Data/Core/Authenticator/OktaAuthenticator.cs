@@ -48,8 +48,8 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-            var authenticatorResponse = await session.restRequester.PostAsync<AuthnResponse>(authenticatorRestRequest, cancellationToken);
-            FilterFailedResponse(authenticatorResponse);
+            var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken);
+            authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
             var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
-            var authnResponse = await session.restRequester.PostAsync<AuthnResponse>(loginRestRequest, cancellationToken);
+            var authnResponse = await session.restRequester.PostAsync<LoginResponse>(loginRestRequest, cancellationToken);
             session.ProcessLoginResponse(authnResponse);   
         }
 
@@ -84,8 +84,8 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-            var authenticatorResponse = session.restRequester.Post<AuthnResponse>(authenticatorRestRequest);
-            FilterFailedResponse(authenticatorResponse);
+            var authenticatorResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+            authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
@@ -110,25 +110,22 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
             var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
-            var authnResponse = session.restRequester.Post<AuthnResponse>(loginRestRequest);
+            var authnResponse = session.restRequester.Post<LoginResponse>(loginRestRequest);
             session.ProcessLoginResponse(authnResponse);   
         }
 
         private SFRestRequest BuildAuthenticatorRestRequest()
         {
             var fedUrl = session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
-            var data = new AuthnRequestData()
+            var data = new AuthenticatorRequestData()
             {
-                accountName = session.properties[SFSessionProperty.ACCOUNT],
+                AccountName = session.properties[SFSessionProperty.ACCOUNT],
                 Authenticator = oktaUrl.ToString(),
-                clientAppId = ".NET",
-                clientAppVersion = SFEnvironment.Version,
-                clientEnv = SFEnvironment.ClientEnv,
             };
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return session.BuildTimeoutRestRequest(fedUrl, new AuthnRequest() { data = data });
+            return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
         }
 
         private IdpTokenRestRequest BuildIdpTokenRestRequest(Uri tokenUrl)
@@ -162,7 +159,7 @@ namespace Snowflake.Data.Core.Authenticator
             // build uri
             var loginUrl = session.BuildLoginUrl();
 
-            AuthnRequestData data = new AuthnRequestData()
+            LoginRequestData data = new LoginRequestData()
             {
                 loginName = session.properties[SFSessionProperty.USER],
                 password = session.properties[SFSessionProperty.PASSWORD],
@@ -175,7 +172,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new AuthnRequest() { data = data });
+            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
 
         private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)

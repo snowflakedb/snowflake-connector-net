@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan connectionTimeout;
 
-        internal void ProcessLoginResponse(AuthnResponse authnResponse)
+        internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
             {
