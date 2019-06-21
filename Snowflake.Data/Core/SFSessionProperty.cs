@@ -130,8 +130,7 @@ namespace Snowflake.Data.Core
 
         private static bool IsRequired(SFSessionProperty sessionProperty, SFSessionProperties properties)
         {
-            if (sessionProperty.Equals(SFSessionProperty.USER) || 
-                sessionProperty.Equals(SFSessionProperty.PASSWORD))
+            if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
             {
                 return !(properties.ContainsKey(SFSessionProperty.AUTHENTICATOR)
                     && properties[SFSessionProperty.AUTHENTICATOR] == "externalbrowser");

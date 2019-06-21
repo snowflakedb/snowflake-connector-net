@@ -228,6 +228,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             LoginRequestData data = new LoginRequestData()
             {
+                loginName = session.properties[SFSessionProperty.USER],
                 clientAppId = ".NET",
                 clientAppVersion = SFEnvironment.Version,
                 clientEnv = SFEnvironment.ClientEnv,
@@ -235,10 +236,6 @@ namespace Snowflake.Data.Core.Authenticator
                 ProofKey = proofKey,
                 Authenticator = AUTH_NAME,
             };
-            if (session.properties.ContainsKey(SFSessionProperty.USER))
-            {
-                data.loginName = session.properties[SFSessionProperty.USER];
-            }
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
