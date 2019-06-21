@@ -332,5 +332,45 @@ namespace Snowflake.Data.Tests
                 }
             }
         }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUser()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithWrongUser()
+        {
+            try
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + ";authenticator=externalbrowser;user=wrong@snowflakecomputing.com";
+                    conn.Open();
+                    Assert.Fail();
+                }
+            } catch (SnowflakeDbException e)
+            {
+                Assert.AreEqual(390191, e.ErrorCode);
+            }
+       }
+
     }
 }
