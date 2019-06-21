@@ -107,13 +107,13 @@ i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all 
 | ACCOUNT             | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instad of XXX.us-east-1.|
 | DB                  | No       |                                                                               |
 | HOST                | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com |
-| PASSWORD            | Yes      |                                                                               |
+| PASSWORD            | Depends  | Not required for external browser, required for other authentication methods. |
 | ROLE                | No       |                                                                               |
 | SCHEMA              | No       |                                                                               |
-| USER                | Yes      |                                                                               |
+| USER                | Depends  | Not required for external browser, but will check if presented; required for other authetication methods.|
 | WAREHOUSE           | No       |                                                                               |
 | CONNECTION_TIMEOUT  | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
-| AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default) and [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only).  |
+| AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default), [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only) and externalbrowser.  |
 
 <br />
 
