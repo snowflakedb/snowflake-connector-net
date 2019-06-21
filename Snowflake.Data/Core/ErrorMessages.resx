@@ -165,4 +165,7 @@
   <data name="UNSUPPORTED_FEATURE" xml:space="preserve">
     <value>Feature is not supported. </value>
   </data>
+  <data name="UNSUPPORTED_PLATFORM" xml:space="preserve">
+    <value>OS platform is not supported.</value>
+  </data>
 </root>

@@ -180,13 +180,9 @@ namespace Snowflake.Data.Core.Authenticator
                 url = url.Replace("&", "^&");
                 Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else
             {
-                Process.Start("xdg-open", url);
-            }
-            else 
-            {
-                Process.Start("open", url);
+                throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
             }
 #endif
         }

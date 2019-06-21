@@ -41,6 +41,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270011)]
         UNKNOWN_AUTHENTICATOR,
 
+        [SFErrorAttr(errorCode = 270012)]
+        UNSUPPORTED_PLATFORM,
+
         // Okta related
         [SFErrorAttr(errorCode = 270040)]
         IDP_SSO_TOKEN_URL_MISMATCH,
