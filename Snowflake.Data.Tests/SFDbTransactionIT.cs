@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests
             var conn = new SnowflakeDbConnection();
             try
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbCommand command = conn.CreateCommand();

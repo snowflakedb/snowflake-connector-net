@@ -20,11 +20,11 @@ namespace Snowflake.Data.Core.Authenticator
     class ExternalBrowserAuthenticator : IAuthenticator
     {
         public static readonly string AUTH_NAME = "externalbrowser";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
-            "<title> SAML Response for Snowflake </title></ head >" +
+            "<title> SAML Response for Snowflake </title></head>" +
             "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
             "</body></html>;"
             );
@@ -226,7 +226,6 @@ namespace Snowflake.Data.Core.Authenticator
 
             LoginRequestData data = new LoginRequestData()
             {
-                loginName = session.properties[SFSessionProperty.USER],
                 clientAppId = ".NET",
                 clientAppVersion = SFEnvironment.Version,
                 clientEnv = SFEnvironment.ClientEnv,

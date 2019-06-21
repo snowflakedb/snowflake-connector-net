@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
         DB,
         [SFSessionPropertyAttr(required = false)] 
         HOST,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = false)] 
         PASSWORD,
         [SFSessionPropertyAttr(required = false, defaultValue = "443")] 
         PORT,
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Core
         SCHEMA,
         [SFSessionPropertyAttr(required = false, defaultValue = "https")] 
         SCHEME,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = false)] 
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
