@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -19,6 +19,16 @@ namespace Snowflake.Data.Core
         
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
+
+        internal void FilterFailedResponse()
+        {
+            if (!success)
+            {
+                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                throw e;
+            }
+
+        }
     }
 
     class NullDataResponse : BaseRestResponse
@@ -27,48 +37,32 @@ namespace Snowflake.Data.Core
         internal object data { get; set; }
     }
 
-    internal class AuthnResponse : BaseRestResponse
+    internal class AuthenticatorResponse : BaseRestResponse
     {
         [JsonProperty(PropertyName = "data")]
-        internal AuthnResponseData data { get; set; }
+        internal AuthenticatorResponseData data { get; set; }
     }
-    
+    internal class LoginResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal LoginResponseData data { get; set; }
+    }
+
     internal class RenewSessionResponse : BaseRestResponse {
 		[JsonProperty(PropertyName = "data")]
 		internal RenewSessionResponseData data { get; set; }
 	}
 
-    internal class AuthnResponseData
+    internal class LoginResponseData
     {
         [JsonProperty(PropertyName = "token", NullValueHandling = NullValueHandling.Ignore)]
         internal string token { get; set; }
 
-        [JsonProperty(PropertyName = "validityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int16 validityInSeconds { get; set; }
-
         [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
         internal string masterToken { get; set; }
 
-        [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int16 masterTokenValidityInSeconds { get; set; }
-
-        [JsonProperty(PropertyName = "displayUserName", NullValueHandling = NullValueHandling.Ignore)]
-        internal string displayUserName { get; set; }
-
         [JsonProperty(PropertyName = "serverVersion", NullValueHandling = NullValueHandling.Ignore)]
         internal string serverVersion { get; set; }
-
-        [JsonProperty(PropertyName = "firstLogin", NullValueHandling = NullValueHandling.Ignore)]
-        internal bool firstLogin { get; set; }
-
-        [JsonProperty(PropertyName = "healthCheckInterval", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int16 healthCheckInterval { get; set; }
-
-        [JsonProperty(PropertyName = "newClientForUpgrade", NullValueHandling = NullValueHandling.Ignore)]
-        internal string newClientForUpgrade { get; set; }
-
-        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 sessionId { get; set; }
 
         [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
         internal List<NameValueParameter> nameValueParameter { get; set; }
@@ -76,11 +70,18 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal SessionInfo authResponseSessionInfo { get; set; }
 
+   }
+
+    internal class AuthenticatorResponseData
+    {
         [JsonProperty(PropertyName = "tokenUrl", NullValueHandling = NullValueHandling.Ignore)]
         internal string tokenUrl { get; set; }
 
         [JsonProperty(PropertyName = "ssoUrl", NullValueHandling = NullValueHandling.Ignore)]
         internal string ssoUrl { get; set; }
+
+        [JsonProperty(PropertyName = "proofKey", NullValueHandling = NullValueHandling.Ignore)]
+        internal string proofKey { get; set; }
     }
 
 

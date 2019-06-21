@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -54,9 +55,13 @@ namespace Snowflake.Data.Core.Authenticator
         internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
-            if (type == "snowflake")
+            if (type.Equals(BasicAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new BasicAuthenticator(session);
+            }
+            else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new ExternalBrowserAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com
             else if (type.EndsWith("okta.com") && type.StartsWith("https://"))

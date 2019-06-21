@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests
 #endif
             DbCommand command = factory.CreateCommand();
             DbConnection connection = factory.CreateConnection();
-            connection.ConnectionString = connectionString;
+            connection.ConnectionString = ConnectionString;
             connection.Open();
             // set commnad's connection object
             command.Connection = connection;

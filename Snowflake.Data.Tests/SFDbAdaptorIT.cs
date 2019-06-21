@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests
             DataSet ds = new DataSet("ds");
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbDataAdapter adaptor = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);

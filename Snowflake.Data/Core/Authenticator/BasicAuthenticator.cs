@@ -10,6 +10,7 @@ namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : IAuthenticator
     {
+        public static readonly string AUTH_NAME = "snowflake";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
         private SFSession session;
 
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = await session.restRequester.PostAsync<AuthnResponse>(loginRequest, cancellationToken);
+            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken);
 
             session.ProcessLoginResponse(response);
         }
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = session.restRequester.Post<AuthnResponse>(loginRequest);
+            var response = session.restRequester.Post<LoginResponse>(loginRequest);
 
             session.ProcessLoginResponse(response);
         }
@@ -41,7 +42,7 @@ namespace Snowflake.Data.Core.Authenticator
             // build uri
             var loginUrl = session.BuildLoginUrl();
 
-            AuthnRequestData data = new AuthnRequestData()
+            LoginRequestData data = new LoginRequestData()
             {
                 loginName = session.properties[SFSessionProperty.USER],
                 password = session.properties[SFSessionProperty.PASSWORD],
@@ -53,7 +54,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new AuthnRequest() { data = data });
+            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
 
     }

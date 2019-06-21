@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
                 IDbCommand cmd = conn.CreateCommand();
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -235,7 +235,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -332,7 +332,7 @@ namespace Snowflake.Data.Tests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
@@ -397,7 +397,7 @@ namespace Snowflake.Data.Tests
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
@@ -426,7 +426,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (IDbCommand command = conn.CreateCommand())
@@ -451,7 +451,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (IDbCommand command = conn.CreateCommand())

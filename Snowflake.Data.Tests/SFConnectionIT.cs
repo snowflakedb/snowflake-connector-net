@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectViaSecureString()
         {
-            String[] connEntries = connectionString.Split(';');
+            String[] connEntries = ConnectionString.Split(';');
             String connectionStringWithoutPassword = "";
             using (var conn = new SnowflakeDbConnection())
             {
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // invalid propety will be ignored.
-                conn.ConnectionString = connectionString += ";invalidProperty=invalidvalue;";
+                conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
 
                 conn.Open();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
@@ -240,7 +240,7 @@ namespace Snowflake.Data.Tests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // Setup
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
                 IDbCommand command = conn.CreateCommand();
                 command.CommandText = "create or replace table testConnDispose(c int)";
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests
             {
                 // Previous connection would be disposed and 
                 // uncommitted txn would rollback at this point
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
                 IDbCommand command = conn.CreateCommand();
                 command.CommandText = "SELECT * FROM testConnDispose";
@@ -300,17 +300,58 @@ namespace Snowflake.Data.Tests
         [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnection()
         {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString 
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator={0};user={1};password={2};",
+                        testConfig.OktaURL,
+                        testConfig.OktaUser,
+                        testConfig.OktaPassword);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUser()
+        {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = "scheme=http;host=testaccount.reg.snowflakecomputing.com;port=8082;user=qa@snowflakecomputing.com;password=Test123!;" +
-                    "account=testaccount;role=sysadmin;db=testdb;schema=public;warehouse=regress;authenticator=https://snowflakecomputing.okta.com";
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
                 conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = "SELECT 1";
-                    Assert.AreEqual("1", command.ExecuteScalar().ToString());
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
                 }
             }
         }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithWrongUser()
+        {
+            try
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + ";authenticator=externalbrowser;user=wrong@snowflakecomputing.com";
+                    conn.Open();
+                    Assert.Fail();
+                }
+            } catch (SnowflakeDbException e)
+            {
+                Assert.AreEqual(390191, e.ErrorCode);
+            }
+       }
+
     }
 }
