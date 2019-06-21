@@ -67,7 +67,7 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken);
-            var samlRawHtmlString = samlRawResponse.Content.ReadAsStringAsync().Result;
+            var samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync();
 
             logger.Debug("step 5: verify postback url in SAML reponse");
             VerifyPostbackUrl(samlRawHtmlString);
