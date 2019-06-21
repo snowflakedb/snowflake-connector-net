@@ -12,7 +12,6 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
-    using System.Security;
 
     [SetUpFixture]
     public class SFBaseTest

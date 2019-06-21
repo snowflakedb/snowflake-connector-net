@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
         DB,
         [SFSessionPropertyAttr(required = false)] 
         HOST,
-        [SFSessionPropertyAttr(required = false)] 
+        [SFSessionPropertyAttr(required = true)] 
         PASSWORD,
         [SFSessionPropertyAttr(required = false, defaultValue = "443")] 
         PORT,
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Core
         SCHEMA,
         [SFSessionPropertyAttr(required = false, defaultValue = "https")] 
         SCHEME,
-        [SFSessionPropertyAttr(required = false)] 
+        [SFSessionPropertyAttr(required = true)] 
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 // if required property, check if exists in the dictionary
-                if (sessionProperty.GetAttribute<SFSessionPropertyAttr>().required &&
+                if (IsRequired(sessionProperty, properties) &&
                     !properties.ContainsKey(sessionProperty))
                 {
                     SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, 
@@ -125,6 +125,20 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Sesssion property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
+            }
+        }
+
+        private static bool IsRequired(SFSessionProperty sessionProperty, SFSessionProperties properties)
+        {
+            if (sessionProperty.Equals(SFSessionProperty.USER) || 
+                sessionProperty.Equals(SFSessionProperty.PASSWORD))
+            {
+                return !(properties.ContainsKey(SFSessionProperty.AUTHENTICATOR)
+                    && properties[SFSessionProperty.AUTHENTICATOR] == "externalbrowser");
+            }
+            else
+            {
+                return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
         }
     }
