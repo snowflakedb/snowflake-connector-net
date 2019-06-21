@@ -85,6 +85,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (Exception e)
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
+                    logger.Warn("External browser response not sent out");
                 }
 
                 httpListener.Stop();
@@ -136,6 +137,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (Exception e)
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
+                    logger.Warn("External browser response not sent out");
                 }
 
                 httpListener.Stop();
