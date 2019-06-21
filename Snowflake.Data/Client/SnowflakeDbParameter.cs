@@ -3,6 +3,10 @@
  */
 
 using System.Data.Common;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System;
 using System.Data;
 using Snowflake.Data.Core;
@@ -13,19 +17,15 @@ namespace Snowflake.Data.Client
     {
         public SFDataType SFDataType { get; set; }
 
-        private SFDataType OriginType;
-
         public SnowflakeDbParameter()
         {
             SFDataType = SFDataType.None;
-            OriginType = SFDataType.None;
         }
 
         public SnowflakeDbParameter(string ParameterName, SFDataType SFDataType)
         {
             this.ParameterName = ParameterName;
             this.SFDataType = SFDataType;
-            OriginType = SFDataType;
         }
 
         public SnowflakeDbParameter(int ParameterIndex, SFDataType SFDataType)
@@ -52,21 +52,75 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override bool IsNullable { get; set; }
+        public override bool IsNullable
+        {
+            get { return false; }
 
-        public override string ParameterName { get; set; }
+            set
+            {
+                if (value != false)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+            }
+        }
 
-        public override int Size { get; set; }
+        public override string ParameterName
+        {
+            get;
+            set;
+        }
 
-        public override string SourceColumn { get; set; }
+        public override int Size
+        {
+            get { return 0; }
 
-        public override bool SourceColumnNullMapping { get; set; }
+            set
+            {
+                if (value != 0)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+            }
+        }
 
-        public override object Value { get; set; }
+        public override string SourceColumn
+        {
+            get { return null; }
+
+            set
+            {
+                if (value != null)
+                {
+                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+            }
+        }
+
+        public override bool SourceColumnNullMapping
+        {
+            get { return false; }
+
+            set
+            {
+                // ReSharper disable once RedundantBoolCompare (compare to false for clarity)
+                if (value != false)
+                {
+                    throw  new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                }
+            }
+        }
+
+        public override object Value
+        {
+            get;
+
+            set;
+        }
 
         public override void ResetDbType()
         {
-            SFDataType = OriginType;
+            throw new NotImplementedException();
         }
     }
 }
