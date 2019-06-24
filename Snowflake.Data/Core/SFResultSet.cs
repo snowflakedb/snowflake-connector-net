@@ -105,14 +105,16 @@ namespace Snowflake.Data.Core
                 return true;
             }
 
-            Logger.Info("Get next chunk from chunk downloader");
-            IResultChunk nextChunk;
-            if ((nextChunk = _chunkDownloader?.GetNextChunkAsync().Result) != null)
+            if (_chunkDownloader != null)
             {
-                resetChunkInfo(nextChunk);
-                return true;
+                Logger.Info("Get next chunk from chunk downloader");
+                IResultChunk nextChunk = Task.Run(async() => await _chunkDownloader.GetNextChunkAsync()).Result;
+                if (nextChunk != null)
+                {
+                    resetChunkInfo(nextChunk);
+                    return true;
+                }
             }
-            
            return false;
         }
 
