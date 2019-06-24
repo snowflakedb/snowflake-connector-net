@@ -124,7 +124,7 @@ namespace Snowflake.Data.Core
 
 
             var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken);
-            Stream stream = httpResponse.Content.ReadAsStreamAsync().Result;
+            Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.
             if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
