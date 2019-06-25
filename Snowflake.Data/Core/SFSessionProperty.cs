@@ -50,6 +50,35 @@ namespace Snowflake.Data.Core
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            try
+            {
+                SFSessionProperties prop = (SFSessionProperties)obj;
+                foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
+                {
+                    if (this.ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
+                    {
+                        return false;
+                    }
+                    if (!this.ContainsKey(sessionProperty))
+                    {
+                        continue;
+                    }
+                    if (!this[sessionProperty].Equals(prop[sessionProperty]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (InvalidCastException)
+            {
+                logger.Warn("Invalid casting to SFSessionProperties");
+                return false;
+            }
+        }
+
         internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
@@ -101,6 +130,8 @@ namespace Snowflake.Data.Core
                 logger.Info($"Compose host name: {hostName}");
             }
 
+            properties[SFSessionProperty.ACCOUNT] = ParseAccount(properties[SFSessionProperty.ACCOUNT]);
+
             return properties; 
         }
 
@@ -139,6 +170,26 @@ namespace Snowflake.Data.Core
             {
                 return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
+        }
+
+        private static string ParseAccount(string rawAccount)
+        {
+            // filter the .<region> or .global
+            string parsedAccount = rawAccount;
+            int firstDot = parsedAccount.IndexOf('.');
+            if (firstDot != -1)
+            {
+                parsedAccount = parsedAccount.Substring(0, firstDot);
+            }
+
+            // filter the connection group
+            int firstDash = parsedAccount.IndexOf('-');
+            if (firstDash != -1)
+            {
+                parsedAccount = parsedAccount.Substring(0, firstDash);
+            }
+
+            return parsedAccount;
         }
     }
 
