@@ -47,21 +47,6 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.PORT, "443" },
                     },
                 },
-                new Testcase()
-                {
-                    ConnectionString = "ACCOUNT=testaccount-asdfopinwefinpoe.global;USER=testuser;PASSWORD=123;",
-                    ExpectedProperties = new SFSessionProperties()
-                    {
-                        { SFSessionProperty.ACCOUNT, "testaccount" },
-                        { SFSessionProperty.USER, "testuser" },
-                        { SFSessionProperty.HOST, "testaccount-asdfopinwefinpoe.global.snowflakecomputing.com" },
-                        { SFSessionProperty.AUTHENTICATOR, "snowflake" },
-                        { SFSessionProperty.SCHEME, "https" },
-                        { SFSessionProperty.CONNECTION_TIMEOUT, "0" },
-                        { SFSessionProperty.PASSWORD, "123" },
-                        { SFSessionProperty.PORT, "443" },
-                    },
-                }
             };
 
             foreach (Testcase testcase in testcases)

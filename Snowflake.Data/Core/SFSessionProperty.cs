@@ -72,7 +72,8 @@ namespace Snowflake.Data.Core
                     }
                 }
                 return true;
-            } catch (InvalidCastException)
+            }
+            catch (InvalidCastException)
             {
                 logger.Warn("Invalid casting to SFSessionProperties");
                 return false;
@@ -108,7 +109,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         string invalidStringDetail = String.Format("Invalid key value pair {0}", keyVal);
-                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, 
+                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
                             new object[] { invalidStringDetail });
                         logger.Error("Invalid string.", e);
                         throw e;
@@ -130,9 +131,7 @@ namespace Snowflake.Data.Core
                 logger.Info($"Compose host name: {hostName}");
             }
 
-            properties[SFSessionProperty.ACCOUNT] = ParseAccount(properties[SFSessionProperty.ACCOUNT]);
-
-            return properties; 
+            return properties;
         }
 
         private static void checkSessionProperties(SFSessionProperties properties)
@@ -143,12 +142,12 @@ namespace Snowflake.Data.Core
                 if (IsRequired(sessionProperty, properties) &&
                     !properties.ContainsKey(sessionProperty))
                 {
-                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, 
+                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY,
                         sessionProperty);
                     logger.Error("Missing connetion property", e);
                     throw e;
                 }
-                
+
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
@@ -170,26 +169,6 @@ namespace Snowflake.Data.Core
             {
                 return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
-        }
-
-        private static string ParseAccount(string rawAccount)
-        {
-            // filter the .<region> or .global
-            string parsedAccount = rawAccount;
-            int firstDot = parsedAccount.IndexOf('.');
-            if (firstDot != -1)
-            {
-                parsedAccount = parsedAccount.Substring(0, firstDot);
-            }
-
-            // filter the connection group
-            int firstDash = parsedAccount.IndexOf('-');
-            if (firstDash != -1)
-            {
-                parsedAccount = parsedAccount.Substring(0, firstDash);
-            }
-
-            return parsedAccount;
         }
     }
 
