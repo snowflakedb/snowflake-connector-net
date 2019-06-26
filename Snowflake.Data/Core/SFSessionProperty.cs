@@ -50,6 +50,36 @@ namespace Snowflake.Data.Core
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            try
+            {
+                SFSessionProperties prop = (SFSessionProperties)obj;
+                foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
+                {
+                    if (this.ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
+                    {
+                        return false;
+                    }
+                    if (!this.ContainsKey(sessionProperty))
+                    {
+                        continue;
+                    }
+                    if (!this[sessionProperty].Equals(prop[sessionProperty]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            catch (InvalidCastException)
+            {
+                logger.Warn("Invalid casting to SFSessionProperties");
+                return false;
+            }
+        }
+
         internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
@@ -79,7 +109,7 @@ namespace Snowflake.Data.Core
                     else
                     {
                         string invalidStringDetail = String.Format("Invalid key value pair {0}", keyVal);
-                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, 
+                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
                             new object[] { invalidStringDetail });
                         logger.Error("Invalid string.", e);
                         throw e;
@@ -101,7 +131,7 @@ namespace Snowflake.Data.Core
                 logger.Info($"Compose host name: {hostName}");
             }
 
-            return properties; 
+            return properties;
         }
 
         private static void checkSessionProperties(SFSessionProperties properties)
@@ -112,12 +142,12 @@ namespace Snowflake.Data.Core
                 if (IsRequired(sessionProperty, properties) &&
                     !properties.ContainsKey(sessionProperty))
                 {
-                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, 
+                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY,
                         sessionProperty);
                     logger.Error("Missing connetion property", e);
                     throw e;
                 }
-                
+
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
