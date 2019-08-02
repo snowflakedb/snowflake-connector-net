@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core.Authenticator
                     await session.restRequester.PostAsync<AuthenticatorResponse>(
                         authenticatorRestRequest,
                         cancellationToken
-                    );
+                    ).ConfigureAwait(false);
                 authenticatorRestResponse.FilterFailedResponse();
 
                 var idpUrl = authenticatorRestResponse.data.ssoUrl;
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Core.Authenticator
                 StartBrowser(idpUrl);
 
                 logger.Debug("Get the redirect SAML request");
-                var context = await httpListener.GetContextAsync();
+                var context = await httpListener.GetContextAsync().ConfigureAwait(false);
                 var request = context.Request;
                 samlResponseToken = ValidateAndExtractToken(request);
                 HttpListenerResponse response = context.Response;
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     using (var output = response.OutputStream)
                     {
-                        await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                        await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
                     }
                 }
                 catch (Exception e)
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core.Authenticator
             var loginResponse = await session.restRequester.PostAsync<LoginResponse>(
                 BuildExternalBrowserLoginRequest(samlResponseToken, proofKey),
                 cancellationToken
-                );
+                ).ConfigureAwait(false);
             session.ProcessLoginResponse(loginResponse);
         }
 

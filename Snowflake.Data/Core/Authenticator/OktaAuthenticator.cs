@@ -48,7 +48,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-            var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken);
+            var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
             authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
@@ -61,20 +61,20 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 3: get idp onetime token");
             IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-            var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken);
+            var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
             string onetimeToken = idpResponse.CookieToken;
 
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-            var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken);
-            var samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync();
+            var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
+            var samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             logger.Debug("step 5: verify postback url in SAML reponse");
             VerifyPostbackUrl(samlRawHtmlString);
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
             var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
-            var authnResponse = await session.restRequester.PostAsync<LoginResponse>(loginRestRequest, cancellationToken);
+            var authnResponse = await session.restRequester.PostAsync<LoginResponse>(loginRestRequest, cancellationToken).ConfigureAwait(false);
             session.ProcessLoginResponse(authnResponse);   
         }
 

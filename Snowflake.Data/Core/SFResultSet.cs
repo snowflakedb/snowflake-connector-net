@@ -77,7 +77,7 @@ namespace Snowflake.Data.Core
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
                 Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync();
+                IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 if (nextChunk != null)
                 {
                     resetChunkInfo(nextChunk);

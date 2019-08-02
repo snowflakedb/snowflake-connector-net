@@ -157,12 +157,12 @@ namespace Snowflake.Data.Core
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                var response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken);
+                var response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
                 if (SessionExpired(response))
                 {
                     SfSession.renewSession();
                     ClearQueryRequestId();
-                    return await ExecuteAsync(timeout, sql, bindings, describeOnly, cancellationToken);
+                    return await ExecuteAsync(timeout, sql, bindings, describeOnly, cancellationToken).ConfigureAwait(false);
                 }
 
                 var lastResultUrl = response.data?.getResultUrl;
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Core
                 while (RequestInProgress(response) || SessionExpired(response))
                 {
                     var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken);
+                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
 
                     if (SessionExpired(response))
                     {

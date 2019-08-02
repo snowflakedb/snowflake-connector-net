@@ -55,8 +55,8 @@ namespace Snowflake.Data.Core
         {
             var req = request.ToRequestMessage(HttpMethod.Post);
 
-            var response = await SendAsync(req, request.GetRestTimeout(), cancellationToken);
-            var json = await response.Content.ReadAsStringAsync();
+            var response = await SendAsync(req, request.GetRestTimeout(), cancellationToken).ConfigureAwait(false);
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             logger.Debug($"Post response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -69,8 +69,8 @@ namespace Snowflake.Data.Core
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpResponseMessage response = await GetAsync(request, cancellationToken);
-            var json = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false);
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             logger.Debug($"Get response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token);
+                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 return response;

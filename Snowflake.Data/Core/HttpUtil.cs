@@ -71,7 +71,7 @@ namespace Snowflake.Data.Core
                         }
 
                         response = await base.SendAsync(requestMessage, childCts == null ? 
-                            cancellationToken : childCts.Token);
+                            cancellationToken : childCts.Token).ConfigureAwait(false);
                     }
                     catch(Exception e)
                     {
