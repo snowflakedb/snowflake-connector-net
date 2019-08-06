@@ -14,6 +14,133 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
 
+    [TestFixture]
+    class SFDbCommandITAsync : SFBaseTestAsync
+    {
+
+        [Test]
+        public void TestExecAsyncAPI()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                Assert.AreEqual(ConnectionState.Connecting, conn.State);
+
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                using (DbCommand cmd = conn.CreateCommand())
+                {
+                    int queryResult = 0;
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
+                    Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
+                    Task readCallback = execution.ContinueWith((t) =>
+                    {
+                        using (DbDataReader reader = t.Result)
+                        {
+                            Assert.IsTrue(reader.Read());
+                            queryResult = reader.GetInt32(0);
+                            Assert.IsFalse(reader.Read());
+                        }
+                    });
+                    // query is not finished yet, result is still 0;
+                    Assert.AreEqual(0, queryResult);
+                    // block till query finished
+                    readCallback.Wait();
+                    // queryResult should be updated by callback
+                    Assert.AreNotEqual(0, queryResult);
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestCancelExecuteAsync()
+        {
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                conn.Open();
+
+                DbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
+                // external cancellation should be triggered before timeout
+                cmd.CommandTimeout = 10;
+                try
+                {
+                    Task<object> t = cmd.ExecuteScalarAsync(externalCancel.Token);
+                    t.Wait();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    // assert that cancel is not triggered by timeout, but external cancellation 
+                    Assert.IsTrue(externalCancel.IsCancellationRequested);
+                }
+                Thread.Sleep(2000);
+                conn.Close();
+            }
+        }
+
+    }
+
+    [TestFixture]
+    class SFDbCommandITSlow : SFBaseTest
+    {
+
+        [Test]
+        public void TestLongRunningQuery()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                // only one result is returned
+                Assert.IsTrue(reader.Read());
+
+                conn.Close();
+            }
+
+        }
+
+        [Test]
+        public void TestRowsAffectedOverflowInt()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "create or replace table test_rows_affected_overflow(c1 number)";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "insert into test_rows_affected_overflow select seq4() from table(generator(rowcount=>2147484000))";
+                    int affected = command.ExecuteNonQuery();
+
+                    Assert.AreEqual(-1, affected);
+
+                    command.CommandText = "drop table if exists test_rows_affected_overflow";
+                    command.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+        }
+
+    }
+
     [TestFixture]    
     class SFDbCommandIT : SFBaseTest
     {
@@ -150,26 +277,6 @@ namespace Snowflake.Data.Tests
             }
         }
 
-
-        [Test]
-        public void TestLongRunningQuery()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-
-                conn.Open();
-
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
-                IDataReader reader = cmd.ExecuteReader();
-                // only one result is returned
-                Assert.IsTrue(reader.Read());
-
-                conn.Close();
-            }
-
-        }
 
         [Test]
         public void TestDataSourceError()
@@ -349,101 +456,6 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }    
-        }
-
-        [Test]
-        public void TestExecAsyncAPI()
-        {
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                Assert.AreEqual(ConnectionState.Connecting, conn.State);
-
-                connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    int queryResult = 0;
-                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
-                    Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
-                    Task readCallback = execution.ContinueWith((t) =>
-                    {
-                        using (DbDataReader reader = t.Result)
-                        {
-                            Assert.IsTrue(reader.Read());
-                            queryResult = reader.GetInt32(0);
-                            Assert.IsFalse(reader.Read());
-                        }
-                    });
-                    // query is not finished yet, result is still 0;
-                    Assert.AreEqual(0, queryResult);
-                    // block till query finished
-                    readCallback.Wait();
-                    // queryResult should be updated by callback
-                    Assert.AreNotEqual(0, queryResult);
-                }
-
-                conn.Close();
-            }
-        }
-
-        [Test]
-        public void TestCancelExecuteAsync()
-        {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-
-                conn.Open();
-
-                DbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
-                // external cancellation should be triggered before timeout
-                cmd.CommandTimeout = 10;
-                try
-                {
-                    Task<object> t = cmd.ExecuteScalarAsync(externalCancel.Token);
-                    t.Wait();
-                    Assert.Fail();
-                }
-                catch(AggregateException e)
-                {
-                    // assert that cancel is not triggered by timeout, but external cancellation 
-                    Assert.IsTrue(externalCancel.IsCancellationRequested);
-                }
-                Thread.Sleep(2000);
-                conn.Close();
-            }
-        }
-
-        [Test]
-        public void TestRowsAffectedOverflowInt()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                using (IDbCommand command = conn.CreateCommand())
-                {
-                    command.CommandText = "create or replace table test_rows_affected_overflow(c1 number)";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "insert into test_rows_affected_overflow select seq4() from table(generator(rowcount=>2147484000))";
-                    int affected = command.ExecuteNonQuery();
-
-                    Assert.AreEqual(-1, affected);
-
-                    command.CommandText = "drop table if exists test_rows_affected_overflow";
-                    command.ExecuteNonQuery();
-                }
-                conn.Close();
-            }
         }
 
         [Test]

@@ -166,7 +166,7 @@ namespace Snowflake.Data.Client
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            var resultSet = await ExecuteInternalAsync(cancellationToken);
+            var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
             return resultSet.CalculateUpdateCount();
         }
 
@@ -187,9 +187,9 @@ namespace Snowflake.Data.Client
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            var result = await ExecuteInternalAsync(cancellationToken);
+            var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
 
-            if(await result.NextAsync())
+            if(await result.NextAsync().ConfigureAwait(false))
                 return result.GetValue(0);
             else
                 return DBNull.Value;
@@ -215,7 +215,7 @@ namespace Snowflake.Data.Client
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
-            var result = await ExecuteInternalAsync(cancellationToken);
+            var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
             return new SnowflakeDbDataReader(this, result);
         }
 

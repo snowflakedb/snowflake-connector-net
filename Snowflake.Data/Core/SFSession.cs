@@ -145,7 +145,7 @@ namespace Snowflake.Data.Core
                 authenticator = new BasicAuthenticator(this);
             }
 
-            await authenticator.AuthenticateAsync(cancellationToken);
+            await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
         }
 
         internal void close()

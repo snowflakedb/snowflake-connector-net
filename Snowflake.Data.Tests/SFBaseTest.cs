@@ -13,8 +13,33 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
 
+    /*
+     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that 
+     * there are no async deadlocks in the library
+     * 
+     */
+    [TestFixture]
+    public class SFBaseTest : SFBaseTestAsync
+    {
+        [SetUp]
+        public static void SetUpContext()
+        {
+            MockSynchronizationContext.SetupContext();
+        }
+
+        [TearDown]
+        public static void TearDownContext()
+        {
+            MockSynchronizationContext.Verify();
+        }
+    }
+
+    /*
+     * This is the base class for all tests that call async metodes in the library - it does not use a special SynchronizationContext
+     * 
+     */
     [SetUpFixture]
-    public class SFBaseTest
+    public class SFBaseTestAsync
     {
         private const string connectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
             "account={3};role={4};db={5};schema={6};warehouse={7}";
@@ -47,10 +72,6 @@ namespace Snowflake.Data.Tests
         }
 
         protected TestConfig testConfig { get; set; }
-
-        public SFBaseTest()
-        {
-        }
 
         [OneTimeSetUp]
         public void SFTestSetup()
