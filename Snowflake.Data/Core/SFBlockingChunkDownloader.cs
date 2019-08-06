@@ -123,7 +123,7 @@ namespace Snowflake.Data.Core
             };
 
 
-            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken);
+            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
             Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.
