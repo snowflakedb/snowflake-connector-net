@@ -205,7 +205,8 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        long millis = (long)((DateTime)srcVal).Subtract(UnixEpoch).TotalMilliseconds;
+                        long millis = (long)((DateTime)srcVal).ToUniversalTime().Subtract(
+                            UnixEpoch).TotalMilliseconds;
                         destVal = millis.ToString();
                     }
                     break;
