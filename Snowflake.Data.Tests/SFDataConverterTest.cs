@@ -58,5 +58,44 @@ namespace Snowflake.Data.Tests
             var result = dataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
             Assert.AreEqual(inputTime, result);
         }
+
+        [Test]
+        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
+        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
+        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
+        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Utc)]
+        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Local)]
+        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
+        [TestCase("1960-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
+        [TestCase("9999-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
+        [TestCase("1982-01-18 16:20:00.6666666", DateTimeKind.Unspecified)]
+        [TestCase("1982-01-18 23:59:59.0000000", DateTimeKind.Unspecified)]
+        [TestCase(null, DateTimeKind.Unspecified)]
+        public void TestConvertDate(string inputTimeStr, object kind = null)
+        {
+            if (kind == null)
+                kind = 0;
+            DateTime inputTime;
+            if (inputTimeStr == null)
+            {
+                inputTime = DateTime.Now;
+            }
+            else
+            {
+                inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+            }
+            var dtExpected = inputTime.Date;
+            internalTestConvertDate(dtExpected, DateTime.SpecifyKind(inputTime, (DateTimeKind)kind));
+        }
+
+        private void internalTestConvertDate(DateTime dtExpected, DateTime testValue)
+        {
+            var result = SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
+            // Convert result to DateTime for easier interpretation
+            var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime dtResult = unixEpoch.AddMilliseconds(Int64.Parse(result.Item2));
+            Assert.AreEqual(dtExpected, dtResult);
+        }
+
     }
 }
