@@ -200,13 +200,14 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.DATE.ToString();
                     if (srcVal.GetType() != typeof(DateTime))
                     {
-                        throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                        throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal,
                             srcVal.GetType().ToString(), DbType.Date.ToString());
                     }
                     else
                     {
-                        long millis = (long)((DateTime)srcVal).ToUniversalTime().Subtract(
-                            UnixEpoch).TotalMilliseconds;
+                        DateTime dt = ((DateTime)srcVal).Date;
+                        var ts = dt.Subtract(UnixEpoch);
+                        long millis = (long)(ts.TotalMilliseconds);
                         destVal = millis.ToString();
                     }
                     break;
