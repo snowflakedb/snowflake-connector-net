@@ -52,7 +52,13 @@ namespace Snowflake.Data.Core
 
         public void AddCell(string val)
         {
-            data.add(val);
+            // This method should not be used - we want to avoid unnecessary conversions between string and bytes
+            throw new NotImplementedException();
+        }
+
+        public void AddCell(byte[] bytes, int length)
+        {
+            data.add(bytes, length);
         }
 
         private class BlockResultData
@@ -72,15 +78,19 @@ namespace Snowflake.Data.Core
             private int nextIndex = 0;
             private int currentDatOffset = 0;
 
+            int savedRowCount;
+            int savedColCount;
+
             internal BlockResultData()
             { }
 
             internal void Reset(int rowCount, int colCount, int uncompressedSize)
             {
+                savedRowCount = rowCount;
+                savedColCount = colCount;
                 currentDatOffset = 0;
                 nextIndex = 0;
                 int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-
                 this.blockCount = getBlock(bytesNeeded - 1) + 1;
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
             }
@@ -123,32 +133,29 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            public void add(String val)
+            public void add(byte[] bytes, int length)
             {
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
                     allocateArrays();
                 }
 
-                if (val == null)
+                if (bytes == null)
                 {
                     lengths[getMetaBlock(nextIndex)]
                         [getMetaBlockIndex(nextIndex)] = NULL_VALUE;
                 }
                 else
                 {
-                    byte[] bytes = Encoding.UTF8.GetBytes(val);
-
                     int offset = currentDatOffset;
-                    int length = bytes.Length;
 
                     // store offset and length
-                    offsets[getMetaBlock(nextIndex)]
-                        [getMetaBlockIndex(nextIndex)] = offset;
-                    lengths[getMetaBlock(nextIndex)]
-                        [getMetaBlockIndex(nextIndex)] = length;
+                    int block = getMetaBlock(nextIndex);
+                    int index = getMetaBlockIndex(nextIndex);
+                    offsets[block][index] = offset;
+                    lengths[block][index] = length;
 
-                    // copy string to the char array
+                    // copy bytes to data array
                     int copied = 0;
                     if (spaceLeftOnBlock(offset) < length)
                     {

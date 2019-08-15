@@ -58,6 +58,7 @@ namespace Snowflake.Data.Core
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
+            this.prefetchSlot = 2;
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<IResultChunk>>();
@@ -163,12 +164,7 @@ namespace Snowflake.Data.Core
         /// <param name="resultChunk"></param>
         private void ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
         {
-            Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
-            Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
-
-            Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
-
-            IChunkParser parser = new ReusableChunkParser(concatStream);
+            IChunkParser parser = new ReusableChunkParser(content);
             parser.ParseChunk(resultChunk);
         }
     }
