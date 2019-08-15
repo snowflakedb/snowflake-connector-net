@@ -57,8 +57,10 @@ namespace Snowflake.Data.Core
             this.chunkHeaders = chunkHeaders;
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
-            this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
-            this.prefetchSlot = 2;
+            // To reduce memory consumption we never use more than two prefetch threads
+            // Each slot can use over 300MB of memory
+            //this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
+            this.prefetchSlot = Math.Min(chunkInfos.Count, 2);
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<IResultChunk>>();
