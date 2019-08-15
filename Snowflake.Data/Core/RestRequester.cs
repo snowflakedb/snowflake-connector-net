@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token).ConfigureAwait(false);
+                var response = await HttpUtil.getHttpClient().SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 return response;
