@@ -58,8 +58,6 @@ namespace Snowflake.Data.Core
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
-            // This code does not work properly with prefetchSlot<2, silently adjust if necessary
-            this.prefetchSlot = Math.Max(this.prefetchSlot, 2);
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<IResultChunk>>();
