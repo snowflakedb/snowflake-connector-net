@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core
             SFReusableChunk rc = (SFReusableChunk)chunk;
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))
-            using (JsonTextReader jr = new JsonTextReader(sr))
+            using (JsonTextReader jr = new JsonTextReader(sr) { DateParseHandling = DateParseHandling.None })
             {
                 while (jr.Read())
                 {
