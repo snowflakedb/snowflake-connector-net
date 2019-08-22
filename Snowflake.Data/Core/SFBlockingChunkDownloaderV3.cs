@@ -136,7 +136,7 @@ namespace Snowflake.Data.Core
                 qrmk = downloadContext.qrmk,
                 // s3 download request timeout to one hour
                 RestTimeout = TimeSpan.FromHours(1),
-                HttpTimeout = TimeSpan.FromSeconds(16),
+                HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
