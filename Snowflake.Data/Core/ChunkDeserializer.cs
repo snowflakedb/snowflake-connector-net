@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core
 {
     class ChunkDeserializer : IChunkParser
     {
-        private static JsonSerializer JsonSerializer = new JsonSerializer();
+        private static JsonSerializer JsonSerializer = new JsonSerializer() { DateParseHandling = DateParseHandling.None };
 
         private readonly Stream stream;
 

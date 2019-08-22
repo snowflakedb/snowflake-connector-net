@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core
         {
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))
-            using (JsonTextReader jr = new JsonTextReader(sr))
+            using (JsonTextReader jr = new JsonTextReader(sr) { DateParseHandling = DateParseHandling.None })
             {
                 int row = 0;
                 int col = 0;
