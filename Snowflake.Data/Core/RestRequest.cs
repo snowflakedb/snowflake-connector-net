@@ -92,6 +92,14 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
+        private static ProductInfoHeaderValue USER_AGENT_HEADER = new ProductInfoHeaderValue(string.Format("{0}/{1}/{2}/{3}/{4}", 
+                                                                                             SFEnvironment.DriverName,
+                                                                                             SFEnvironment.DriverVersion,
+                                                                                             ".NET",
+                                                                                             SFEnvironment.ClientEnv.netRuntime,
+                                                                                             SFEnvironment.ClientEnv.osVersion)
+                                                                                            );
+
         internal SFRestRequest()
         {
             RestTimeout = Timeout.InfiniteTimeSpan;
@@ -128,6 +136,7 @@ namespace Snowflake.Data.Core
                 message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
             }
             message.Headers.Accept.Add(applicationSnowflake);
+            message.Headers.UserAgent.Add(USER_AGENT_HEADER);
 
             return message;
         }

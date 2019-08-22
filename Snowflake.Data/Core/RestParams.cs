@@ -43,11 +43,12 @@ namespace Snowflake.Data.Core
 #endif
             };
 
-            Version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            
+            DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            DriverName = ".NET";
         }
 
-        internal static string Version { get; private set; }
+        internal static string DriverName { get; private set; }
+        internal static string DriverVersion { get; private set; }
         internal static LoginRequestClientEnv ClientEnv { get; private set; }
     }
 }
