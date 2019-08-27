@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(null, chunk.ExtractCell(1, 1));
             Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
         }
-        
+
         [Test]
         public void TestChunkWithDate()
         {
@@ -95,6 +95,7 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual("2", chunk.ExtractCell(1, 0));
             Assert.AreEqual(null, chunk.ExtractCell(1, 1));
             Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
+        }
 
         [Test]
         public void TestChunkWithEscape()
