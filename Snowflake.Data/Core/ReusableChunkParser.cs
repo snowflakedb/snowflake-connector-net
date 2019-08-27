@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
     public class FastStreamWrapper
     {
         Stream wrappedStream;
-        byte[] buffer = new byte[8192];
+        byte[] buffer = new byte[32768];
         int count = 0;
         int next = 0;
 
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
             if (count >= 0)
             {
                 next = 0;
-                count = wrappedStream.ReadAsync(buffer, 0, buffer.Length).GetAwaiter().GetResult();
+                count = wrappedStream.Read(buffer, 0, buffer.Length);
             }
 
             if (count <= 0)

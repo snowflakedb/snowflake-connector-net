@@ -229,6 +229,10 @@ namespace Snowflake.Data.Tests
             }
         }
 
+
+        /*
+         * Disabled to make sure that configuration changes does not cause problems with appveyor
+         * 
         [Test]
         public void TestUseV1ResultParser()
         {
@@ -251,6 +255,7 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
+            SFConfiguration.Instance().UseV2JsonParser = true;
         }
 
         [Test]
@@ -275,7 +280,9 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
+            SFConfiguration.Instance().UseV2ChunkDownloader = false;
         }
+        */
 
 
         [Test]
