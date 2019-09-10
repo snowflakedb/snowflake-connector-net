@@ -52,7 +52,13 @@ namespace Snowflake.Data.Core
 
         public void AddCell(string val)
         {
-            data.add(val);
+            // This method should not be used - we want to avoid unnecessary conversions between string and bytes
+            throw new NotImplementedException();
+        }
+
+        public void AddCell(byte[] bytes, int length)
+        {
+            data.add(bytes, length);
         }
 
         private class BlockResultData
@@ -66,21 +72,25 @@ namespace Snowflake.Data.Core
             private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
-            private readonly List<char[]> data = new List<char[]>();
+            private readonly List<byte[]> data = new List<byte[]>();
             private readonly List<int[]> offsets = new List<int[]>();
             private readonly List<int[]> lengths = new List<int[]>();
             private int nextIndex = 0;
             private int currentDatOffset = 0;
+
+            int savedRowCount;
+            int savedColCount;
 
             internal BlockResultData()
             { }
 
             internal void Reset(int rowCount, int colCount, int uncompressedSize)
             {
+                savedRowCount = rowCount;
+                savedColCount = colCount;
                 currentDatOffset = 0;
                 nextIndex = 0;
                 int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-
                 this.blockCount = getBlock(bytesNeeded - 1) + 1;
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
             }
@@ -102,7 +112,7 @@ namespace Snowflake.Data.Core
                     if (spaceLeftOnBlock(offset) < length)
                     {
                         int copied = 0;
-                        char[] cell = new char[length];
+                        byte[] cell = new byte[length];
                         while (copied < length)
                         {
                             int copySize
@@ -114,23 +124,23 @@ namespace Snowflake.Data.Core
 
                             copied += copySize;
                         }
-                        return new String(cell);
+                        return Encoding.UTF8.GetString(cell);
                     }
                     else
                     {
-                        return new String(data[getBlock(offset)], getBlockOffset(offset), length);
+                        return Encoding.UTF8.GetString(data[getBlock(offset)], getBlockOffset(offset), length);
                     }
                 }
             }
 
-            public void add(String val)
+            public void add(byte[] bytes, int length)
             {
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
                     allocateArrays();
                 }
 
-                if (val == null)
+                if (bytes == null)
                 {
                     lengths[getMetaBlock(nextIndex)]
                         [getMetaBlockIndex(nextIndex)] = NULL_VALUE;
@@ -138,24 +148,22 @@ namespace Snowflake.Data.Core
                 else
                 {
                     int offset = currentDatOffset;
-                    int length = val.Length;
 
                     // store offset and length
-                    offsets[getMetaBlock(nextIndex)]
-                        [getMetaBlockIndex(nextIndex)] = offset;
-                    lengths[getMetaBlock(nextIndex)]
-                        [getMetaBlockIndex(nextIndex)] = length;
+                    int block = getMetaBlock(nextIndex);
+                    int index = getMetaBlockIndex(nextIndex);
+                    offsets[block][index] = offset;
+                    lengths[block][index] = length;
 
-                    // copy string to the char array
+                    // copy bytes to data array
                     int copied = 0;
                     if (spaceLeftOnBlock(offset) < length)
                     {
-                        char[] source = val.ToCharArray();
                         while (copied < length)
                         {
                             int copySize
                                 = Math.Min(length - copied, spaceLeftOnBlock(offset + copied));
-                            Array.Copy(source, copied,
+                            Array.Copy(bytes, copied,
                                              data[getBlock(offset + copied)],
                                              getBlockOffset(offset + copied),
                                              copySize);
@@ -164,7 +172,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        Array.Copy(val.ToCharArray(), 0,
+                        Array.Copy(bytes, 0,
                                          data[getBlock(offset)],
                                          getBlockOffset(offset), length);
                     }
@@ -202,7 +210,7 @@ namespace Snowflake.Data.Core
             {
                 while (data.Count < blockCount)
                 {
-                    data.Add(new char[1 << blockLengthBits]);
+                    data.Add(new byte[1 << blockLengthBits]);
                 }
                 while (offsets.Count < metaBlockCount)
                 {

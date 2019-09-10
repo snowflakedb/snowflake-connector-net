@@ -13,10 +13,11 @@ namespace Snowflake.Data.Core
                                                      SFBaseResultSet resultSet,
                                                      CancellationToken cancellationToken)
         {
+            int ChunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
             if (SFConfiguration.Instance().UseV2ChunkDownloader)
-                SFConfiguration.Instance().ChunkDownloaderVersion = 2;
+                ChunkDownloaderVersion = 2;
 
-            switch (SFConfiguration.Instance().ChunkDownloaderVersion)
+            switch (ChunkDownloaderVersion)
             {
                 case 1:
                     return new SFBlockingChunkDownloader(responseData.rowType.Count,
