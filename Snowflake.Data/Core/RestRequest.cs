@@ -92,14 +92,6 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
-        private static ProductInfoHeaderValue USER_AGENT_HEADER = new ProductInfoHeaderValue(string.Format("{0}/{1}/{2}/{3}/{4}", 
-                                                                                             SFEnvironment.DriverName,
-                                                                                             SFEnvironment.DriverVersion,
-                                                                                             ".NET",
-                                                                                             SFEnvironment.ClientEnv.netRuntime,
-                                                                                             SFEnvironment.ClientEnv.osVersion)
-                                                                                            );
-
         internal SFRestRequest()
         {
             RestTimeout = Timeout.InfiniteTimeSpan;
@@ -136,7 +128,9 @@ namespace Snowflake.Data.Core
                 message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
             }
             message.Headers.Accept.Add(applicationSnowflake);
-            message.Headers.UserAgent.Add(USER_AGENT_HEADER);
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue("(Windows NT)"));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(".NET", "core_4.6.26614.01"));
 
             return message;
         }
@@ -227,10 +221,13 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_RUNTIME")]
         internal String netRuntime { get; set; }
 
+        [JsonProperty(PropertyName = "NET_VERSION")]
+        internal string netVersion { get; set; }
+
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2} }}", 
-                application, osVersion, netRuntime);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3} }}", 
+                application, osVersion, netRuntime, netVersion);
         }
     }
 
