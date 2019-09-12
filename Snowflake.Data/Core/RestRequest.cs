@@ -127,10 +127,16 @@ namespace Snowflake.Data.Core
             {
                 message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
             }
+
+            // add quote otherwise it would be reported as error format
+            string osInfo = "(" + SFEnvironment.ClientEnv.osVersion + ")";
+
             message.Headers.Accept.Add(applicationSnowflake);
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
-            message.Headers.UserAgent.Add(new ProductInfoHeaderValue("(Windows NT)"));
-            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(".NET", "core_4.6.26614.01"));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(osInfo));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(
+                SFEnvironment.ClientEnv.netRuntime,
+                SFEnvironment.ClientEnv.netVersion));
 
             return message;
         }
