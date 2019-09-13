@@ -225,8 +225,8 @@ namespace Snowflake.Data.Core.Authenticator
             LoginRequestData data = new LoginRequestData()
             {
                 loginName = session.properties[SFSessionProperty.USER],
-                clientAppId = ".NET",
-                clientAppVersion = SFEnvironment.Version,
+                clientAppId = SFEnvironment.DriverName,
+                clientAppVersion = SFEnvironment.DriverVersion,
                 clientEnv = SFEnvironment.ClientEnv,
                 Token = token,
                 ProofKey = proofKey,

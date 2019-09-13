@@ -164,8 +164,8 @@ namespace Snowflake.Data.Core.Authenticator
                 loginName = session.properties[SFSessionProperty.USER],
                 password = session.properties[SFSessionProperty.PASSWORD],
                 accountName = session.properties[SFSessionProperty.ACCOUNT],
-                clientAppId = ".NET",
-                clientAppVersion = SFEnvironment.Version,
+                clientAppId = SFEnvironment.DriverName,
+                clientAppVersion = SFEnvironment.DriverVersion,
                 clientEnv = SFEnvironment.ClientEnv,
                 RawSamlResponse = samlRawHtmlString,
             };

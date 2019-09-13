@@ -127,7 +127,16 @@ namespace Snowflake.Data.Core
             {
                 message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
             }
+
+            // add quote otherwise it would be reported as error format
+            string osInfo = "(" + SFEnvironment.ClientEnv.osVersion + ")";
+
             message.Headers.Accept.Add(applicationSnowflake);
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(osInfo));
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(
+                SFEnvironment.ClientEnv.netRuntime,
+                SFEnvironment.ClientEnv.netVersion));
 
             return message;
         }
@@ -218,10 +227,13 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_RUNTIME")]
         internal String netRuntime { get; set; }
 
+        [JsonProperty(PropertyName = "NET_VERSION")]
+        internal string netVersion { get; set; }
+
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2} }}", 
-                application, osVersion, netRuntime);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3} }}", 
+                application, osVersion, netRuntime, netVersion);
         }
     }
 
