@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
 
         internal SFSession SfSession { get; set; }
 
-        private const string SF_QUERY_PATH = "/queries/v1/query-request";
+        
 
         private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
 
@@ -79,8 +79,16 @@ namespace Snowflake.Data.Core
         {
             AssignQueryRequestId();
 
-            var queryUri = SfSession.BuildUri(SF_QUERY_PATH,
-                new Dictionary<string, string>() {{SF_QUERY_REQUEST_ID, _requestId}});
+            TimeSpan startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            string secondsSinceEpoch = startTime.TotalMilliseconds.ToString();
+            Dictionary<string, string> parameters = new Dictionary<string, string>()
+            {
+                { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                { RestParams.SF_QUERY_START_TIME, secondsSinceEpoch },
+            };
+
+            var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
 
             QueryRequest postBody = new QueryRequest()
             {
@@ -246,9 +254,12 @@ namespace Snowflake.Data.Core
             {
                 if (_requestId == null)
                     return null;
-
-                var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH,
-                    new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}});
+                Dictionary<string, string> parameters = new Dictionary<string, string>()
+                {
+                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                };
+                var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
 
                 QueryCancelRequest postBody = new QueryCancelRequest()
                 {

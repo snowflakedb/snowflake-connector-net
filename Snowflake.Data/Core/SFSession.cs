@@ -18,10 +18,6 @@ namespace Snowflake.Data.Core
     class SFSession
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
-        
-        private const string SF_QUERY_SESSION_DELETE = "delete";
-
-        private const string SF_QUERY_REQUEST_ID = "requestId";
 
         private const string SF_AUTHORIZATION_BASIC = "Basic";
 
@@ -79,6 +75,7 @@ namespace Snowflake.Data.Core
             queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
             queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
             var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
             return loginUrl;
@@ -151,9 +148,10 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             var queryParams = new Dictionary<string, string>();
-            queryParams[SF_QUERY_SESSION_DELETE] = "true";
-            queryParams[SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            
+            queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
+            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+
             SFRestRequest closeSessionRequest = new SFRestRequest
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
@@ -175,11 +173,17 @@ namespace Snowflake.Data.Core
                 requestType = "RENEW"
             };
 
+            var parameters = new Dictionary<string, string>
+                {
+                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                };
+
             SFRestRequest renewSessionRequest = new SFRestRequest
             {
                 jsonBody = postBody,
-                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH,
-                    new Dictionary<string, string> {{SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString()}}),
+                
+                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 RestTimeout = Timeout.InfiniteTimeSpan
             };
