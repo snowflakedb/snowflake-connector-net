@@ -19,8 +19,6 @@ namespace Snowflake.Data.Core
 
         internal SFSession SfSession { get; set; }
 
-        
-
         private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
 
         private const string SF_QUERY_REQUEST_ID = "requestId";
@@ -83,7 +81,7 @@ namespace Snowflake.Data.Core
             string secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
             Dictionary<string, string> parameters = new Dictionary<string, string>()
             {
-                { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                { RestParams.SF_QUERY_REQUEST_ID, _requestId },
                 { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                 { RestParams.SF_QUERY_START_TIME, secondsSinceEpoch },
             };
