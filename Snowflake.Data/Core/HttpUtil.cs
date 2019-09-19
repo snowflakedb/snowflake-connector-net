@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core
         /// UriUpdater would update the uri in each retry. During construction, it would take in an uri that would later
         /// be updated in each retry and figure out the rules to apply when updating.
         /// </summary>
-        class UriUpdater
+        internal class UriUpdater
         {
             UriBuilder uriBuilder;
             List<IRule> rules;
