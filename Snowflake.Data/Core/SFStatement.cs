@@ -80,7 +80,7 @@ namespace Snowflake.Data.Core
             AssignQueryRequestId();
 
             TimeSpan startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            string secondsSinceEpoch = startTime.TotalMilliseconds.ToString();
+            string secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
             Dictionary<string, string> parameters = new Dictionary<string, string>()
             {
                 { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
