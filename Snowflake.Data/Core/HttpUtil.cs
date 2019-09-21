@@ -7,7 +7,10 @@ using System.Net.Http;
 using System.Net;
 using System;
 using System.Threading;
+using System.Collections.Generic;
 using Snowflake.Data.Log;
+using System.Collections.Specialized;
+using System.Web;
 
 namespace Snowflake.Data.Core
 {
@@ -44,6 +47,96 @@ namespace Snowflake.Data.Core
             }));
         }
 
+        /// <summary>
+        /// IRule defines how the queryParams of a uri should be updated in each retry
+        /// </summary>
+        interface IRule
+        {
+            void apply(NameValueCollection queryParams);
+        }
+
+        /// <summary>
+        /// RetryCoundRule would update the retryCount parameter
+        /// </summary>
+        class RetryCountRule : IRule
+        {
+            int retryCount;
+
+            internal RetryCountRule()
+            {
+                retryCount = 1;
+            }
+
+            void IRule.apply(NameValueCollection queryParams)
+            {
+                if (retryCount == 1)
+                {
+                    queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
+                }
+                else
+                {
+                    queryParams.Set(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
+                }
+                retryCount++;
+            }
+        }
+
+        /// <summary>
+        /// RequestUUIDRule would update the request_guid query with a new RequestGUID
+        /// </summary>
+        class RequestUUIDRule : IRule
+        {
+            void IRule.apply(NameValueCollection queryParams)
+            {
+                queryParams.Set(RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString());
+            }
+        }
+
+        /// <summary>
+        /// UriUpdater would update the uri in each retry. During construction, it would take in an uri that would later
+        /// be updated in each retry and figure out the rules to apply when updating.
+        /// </summary>
+        internal class UriUpdater
+        {
+            UriBuilder uriBuilder;
+            List<IRule> rules;
+            internal UriUpdater(Uri uri)
+            {
+                uriBuilder = new UriBuilder(uri);
+                rules = new List<IRule>();
+
+                if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH))
+                {
+                    rules.Add(new RetryCountRule());
+                }
+
+                if (uri.Query != null && uri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID))
+                {
+                    rules.Add(new RequestUUIDRule());
+                }
+            }
+
+            internal Uri Update()
+            {
+                // Optimization to bypass parsing if there is no rules at all.
+                if (rules.Count == 0)
+                {
+                    return uriBuilder.Uri;
+                }
+
+                var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
+
+                foreach (IRule rule in rules)
+                {
+                    rule.apply(queryParams);
+                }
+
+                uriBuilder.Query = queryParams.ToString();
+                
+                return uriBuilder.Uri;
+            }
+        }
+
         class RetryHandler : DelegatingHandler
         {
             static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
@@ -61,6 +154,8 @@ namespace Snowflake.Data.Core
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
 
                 CancellationTokenSource childCts = null;
+
+                UriUpdater updater = new UriUpdater(requestMessage.RequestUri);
 
                 while (true)
                 {
@@ -106,6 +201,8 @@ namespace Snowflake.Data.Core
                     {
                         logger.Info("Response returned was null.");
                     }
+
+                    requestMessage.RequestUri = updater.Update();
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
                     Thread.Sleep(backOffInSec * 1000);
