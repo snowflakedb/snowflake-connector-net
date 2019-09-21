@@ -15,6 +15,14 @@ namespace Snowflake.Data.Core
         internal const string SF_QUERY_ROLE = "roleName";
 
         internal const string SF_QUERY_REQUEST_ID = "requestId";
+
+        internal const string SF_QUERY_REQUEST_GUID = "request_guid";
+
+        internal const string SF_QUERY_START_TIME = "clientStartTime";
+
+        internal const string SF_QUERY_RETRY_COUNT = "retryCount";
+
+        internal const string SF_QUERY_SESSION_DELETE = "delete";
     }
 
     internal static class RestPath
@@ -26,6 +34,8 @@ namespace Snowflake.Data.Core
         internal const string SF_TOKEN_REQUEST_PATH = SF_SESSION_PATH + "/token-request";
 
         internal const string SF_AUTHENTICATOR_REQUEST_PATH = SF_SESSION_PATH + "/authenticator-request";
+
+        internal const string SF_QUERY_PATH = "/queries/v1/query-request";
     }
 
     internal class SFEnvironment
