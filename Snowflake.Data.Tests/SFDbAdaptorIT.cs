@@ -7,7 +7,6 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using System.Data;
-    using System;
 
     [TestFixture]
     class SFDbAdaptorIT : SFBaseTest
@@ -27,6 +26,29 @@ namespace Snowflake.Data.Tests
             }
             Assert.AreEqual(ds.Tables[0].Rows[0]["col1"].ToString(), "1");
             Assert.AreEqual(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
+        }
+
+        [Test]
+        public void TestSelectTimeout()
+        {
+            DataSet ds = new DataSet("ds");
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                try
+                {
+                    IDbDataAdapter adaptor = new SnowflakeDbDataAdapter("select count(seq4()) from table(generator(timelimit => 60))", conn);
+                    adaptor.SelectCommand.CommandTimeout = 1;
+                    adaptor.Fill(ds);
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(e.ErrorCode, 604);
+                }
+            }
         }
     }
 }
