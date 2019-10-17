@@ -2,9 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -100,6 +97,36 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
 
+        }
+
+        [Test]
+        public void TestValidateDefaultParameters()
+        {
+            string connStrFmt = "account={0};user={1};password={2};schema=notExists;";
+            string connectionString = string.Format(connStrFmt, testConfig.account,
+                testConfig.user, testConfig.password);
+
+            // By default should validate parameters
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                try
+                {
+                    conn.ConnectionString = connectionString;
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(390201, e.ErrorCode);
+                }
+            }
+
+            // This should succeed
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString + ";CLIENT_VALIDATE_DEFAULT_PARAMETERS=false";
+                conn.Open();
+            }
         }
 
         [Test]
