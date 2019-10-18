@@ -102,9 +102,18 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestValidateDefaultParameters()
         {
-            string connStrFmt = "account={0};user={1};password={2};schema=notExists;";
-            string connectionString = string.Format(connStrFmt, testConfig.account,
-                testConfig.user, testConfig.password);
+            string connectionString = String.Format("scheme={0};host={1};port={2};" +
+            "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.role,
+                    testConfig.database,
+                    testConfig.schema,
+                    "WAREHOUSE_NEVER_EXISTS",
+                    testConfig.user,
+                    testConfig.password);
 
             // By default should validate parameters
             using (IDbConnection conn = new SnowflakeDbConnection())
