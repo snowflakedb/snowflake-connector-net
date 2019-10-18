@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
-        CLIENT_VALIDATE_DEFAULT_PARAMETERS,
+        VALIDATE_DEFAULT_PARAMETERS,
     }
 
     class SFSessionPropertyAttr : Attribute

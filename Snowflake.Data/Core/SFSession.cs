@@ -97,7 +97,7 @@ namespace Snowflake.Data.Core
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
             ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = 
-                Boolean.Parse(properties[SFSessionProperty.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
+                Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
             int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
             connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;

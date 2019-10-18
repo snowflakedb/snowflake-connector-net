@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests
             // This should succeed
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString + ";CLIENT_VALIDATE_DEFAULT_PARAMETERS=false";
+                conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
                 conn.Open();
             }
         }
