@@ -209,6 +209,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PROOF_KEY", NullValueHandling = NullValueHandling.Ignore)]
         internal string ProofKey { get; set; }
 
+        [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
+
         public override string ToString()
         {
             return String.Format("LoginRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 

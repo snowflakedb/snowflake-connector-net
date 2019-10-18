@@ -100,7 +100,7 @@ namespace Snowflake.Data.Core
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                                ? SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+                                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
                 jsonBody = postBody,
                 HttpTimeout = Timeout.InfiniteTimeSpan
             };

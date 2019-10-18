@@ -64,8 +64,8 @@ namespace Snowflake.Data.Core
 
         private int GetPrefetchThreads(SFBaseResultSet resultSet)
         {
-            Dictionary<SFSessionParameter, String> sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
-            String val = sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+            Dictionary<SFSessionParameter, Object> sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+            String val = (String)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
             return Int32.Parse(val);
         }
 

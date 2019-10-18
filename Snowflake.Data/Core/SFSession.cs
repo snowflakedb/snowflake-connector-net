@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal readonly Dictionary<SFSessionParameter, string> ParameterMap;
+        internal readonly Dictionary<SFSessionParameter, Object> ParameterMap;
 
         internal Uri BuildLoginUrl()
         {
@@ -95,7 +95,9 @@ namespace Snowflake.Data.Core
             this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
-            ParameterMap = new Dictionary<SFSessionParameter, string>();
+            ParameterMap = new Dictionary<SFSessionParameter, object>();
+            ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = 
+                Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
             int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
             connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
