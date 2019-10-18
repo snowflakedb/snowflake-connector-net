@@ -45,6 +45,7 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.CONNECTION_TIMEOUT, "0" },
                         { SFSessionProperty.PASSWORD, "123" },
                         { SFSessionProperty.PORT, "443" },
+                        { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     },
                 },
             };

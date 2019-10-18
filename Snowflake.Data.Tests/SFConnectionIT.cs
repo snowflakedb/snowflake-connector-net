@@ -2,9 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -100,6 +97,45 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
 
+        }
+
+        [Test]
+        public void TestValidateDefaultParameters()
+        {
+            string connectionString = String.Format("scheme={0};host={1};port={2};" +
+            "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.role,
+                    testConfig.database,
+                    testConfig.schema,
+                    "WAREHOUSE_NEVER_EXISTS",
+                    testConfig.user,
+                    testConfig.password);
+
+            // By default should validate parameters
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                try
+                {
+                    conn.ConnectionString = connectionString;
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(390201, e.ErrorCode);
+                }
+            }
+
+            // This should succeed
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
+                conn.Open();
+            }
         }
 
         [Test]
@@ -200,7 +236,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 string connStrFmt = "scheme={0};host={1};port={2};" +
-                    "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
+                    "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
 
                 conn.ConnectionString = string.Format(
                     connStrFmt,

@@ -168,6 +168,7 @@ namespace Snowflake.Data.Core.Authenticator
                 clientAppVersion = SFEnvironment.DriverVersion,
                 clientEnv = SFEnvironment.ClientEnv,
                 RawSamlResponse = samlRawHtmlString,
+                SessionParameters = session.ParameterMap,
             };
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);

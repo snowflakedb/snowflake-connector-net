@@ -231,6 +231,7 @@ namespace Snowflake.Data.Core.Authenticator
                 Token = token,
                 ProofKey = proofKey,
                 Authenticator = AUTH_NAME,
+                SessionParameters = session.ParameterMap,
             };
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
