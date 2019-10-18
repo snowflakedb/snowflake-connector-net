@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 string connStrFmt = "scheme={0};host={1};port={2};" +
-                    "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED";
+                    "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
 
                 conn.ConnectionString = string.Format(
                     connStrFmt,
