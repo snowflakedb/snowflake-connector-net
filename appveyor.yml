@@ -5,6 +5,8 @@ image: Visual Studio 2017
 environment:
   my_secret:
     secure: TQ6UX7StbAoySBfSbBAu+B0XnNUQ7I9Tsb/2Wy7XPOc=
+  my_gcp_secret:
+    secure: Di8lBr4cx+/Cn38LE4Sm+dPuBGmglAW1SkQwnJaVewYydJrVpfU=
 
   matrix:
     - test_framework: netcoreapp2.0
@@ -14,11 +16,16 @@ environment:
     - test_framework: netcoreapp2.0
       snowflake_cloud_env: AZURE
     - test_framework: net46
-      snowflake_cloud_env: AZURE    
+      snowflake_cloud_env: AZURE
+    - test_framework: netcoreapp2.0
+      snowflake_cloud_env: GCP
+    - test_framework: net46
+      snowflake_cloud_env: GCP
  
 install:
   - nuget install secure-file -ExcludeVersion
   - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret%
+  - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters_gcp.json.enc -secret %my_gcp_secret%
   
 before_build:
   - cmd: dotnet restore
