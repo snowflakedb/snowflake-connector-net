@@ -5,8 +5,10 @@ image: Visual Studio 2017
 environment:
   my_secret:
     secure: TQ6UX7StbAoySBfSbBAu+B0XnNUQ7I9Tsb/2Wy7XPOc=
-  my_gcp_secret:
-    secure: Di8lBr4cx+/Cn38LE4Sm+dPuBGmglAW1SkQwnJaVewYydJrVpfU=
+  gcp_secret:
+    secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
+  gcp_salt:
+    secure: 2BzQWDF0B3gTkjbIVVpTOUk81AFaF1uoUhtndP39ZXJsfa5a4PUTsgKK23fWoW41+4iOcOSy2Yqoa636AZby3A==
 
   matrix:
     - test_framework: netcoreapp2.0
@@ -25,7 +27,7 @@ environment:
 install:
   - nuget install secure-file -ExcludeVersion
   - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret%
-  - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters_gcp.json.enc -secret %my_gcp_secret%
+  - secure-file\tools\secure-file -decrypt Snowflake.Data.Tests\parameters_gcp.json.enc -secret %gcp_secret% -salt %gcp_salt%
   
 before_build:
   - cmd: dotnet restore
