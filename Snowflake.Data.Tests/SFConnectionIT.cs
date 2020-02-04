@@ -185,6 +185,7 @@ namespace Snowflake.Data.Tests
 
         [Test]
         [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
+        [IgnoreOnEnvIs("snowflake_cloud_env", "GCP")]
         public void TestSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

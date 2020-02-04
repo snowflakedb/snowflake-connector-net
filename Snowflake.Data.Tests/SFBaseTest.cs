@@ -85,14 +85,22 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
+            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            var reader = new StreamReader("parameters.json");
+            StreamReader reader;
+            if (cloud.Equals("GCP"))
+            {
+                reader = new StreamReader("parameters_gcp.json");
+            }
+            else
+            {
+                reader = new StreamReader("parameters.json");
+            }
+
             var testConfigString = reader.ReadToEnd();
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
-
-            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE", "{0} is not supported. Specify AWS or AZURE as cloud environment", cloud);
 
             // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
             // find connection object
