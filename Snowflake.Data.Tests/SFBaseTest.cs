@@ -85,14 +85,22 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
+            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            var reader = new StreamReader("parameters.json");
+            StreamReader reader;
+            if (cloud != null && cloud.Equals("GCP"))
+            {
+                reader = new StreamReader("parameters_gcp.json");
+            }
+            else
+            {
+                reader = new StreamReader("parameters.json");
+            }
+
             var testConfigString = reader.ReadToEnd();
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
-
-            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE", "{0} is not supported. Specify AWS or AZURE as cloud environment", cloud);
 
             // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
             // find connection object
@@ -162,18 +170,21 @@ namespace Snowflake.Data.Tests
     {
         String key;
 
-        String value;
-        public IgnoreOnEnvIsAttribute(String key, String value)
+        string[] values;
+        public IgnoreOnEnvIsAttribute(String key, string[] values)
         {
             this.key = key;
-            this.value = value;
+            this.values = values;
         }
 
         public void BeforeTest(ITest test)
         {
-            if (Environment.GetEnvironmentVariable(key) == value)
+            foreach (var value in this.values)
             {
-                Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+                if (Environment.GetEnvironmentVariable(key) == value)
+                {
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+                }
             }
         }
 
