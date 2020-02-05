@@ -11,14 +11,14 @@ environment:
     secure: STXopp4a0aI3JjAyA4S1V7Z1UDkfnXk2hZkqADE2CDbPvo2YvTtF/Jjjqzd7GQN9s72TvfG6d8Fdc78GdLldsQ==
 
   matrix:
-    - test_framework: netcoreapp2.0
-      snowflake_cloud_env: AWS
-    - test_framework: net46
-      snowflake_cloud_env: AWS
-    - test_framework: netcoreapp2.0
-      snowflake_cloud_env: AZURE
-    - test_framework: net46
-      snowflake_cloud_env: AZURE
+#    - test_framework: netcoreapp2.0
+#      snowflake_cloud_env: AWS
+#    - test_framework: net46
+#      snowflake_cloud_env: AWS
+#    - test_framework: netcoreapp2.0
+#      snowflake_cloud_env: AZURE
+#    - test_framework: net46
+#      snowflake_cloud_env: AZURE
     - test_framework: netcoreapp2.0
       snowflake_cloud_env: GCP
     - test_framework: net46
