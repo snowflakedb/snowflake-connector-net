@@ -8,7 +8,7 @@ environment:
   gcp_secret:
     secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
   gcp_salt:
-    secure: oXL5sUGBnvxt2ZosZMOaZYwnkex0pUgboBHoCZFhlFSgxhHMfqsfJkeRjzP8YFcXDXjdrEeE9Jrplc9K0lyd8g==
+    secure: STXopp4a0aI3JjAyA4S1V7Z1UDkfnXk2hZkqADE2CDbPvo2YvTtF/Jjjqzd7GQN9s72TvfG6d8Fdc78GdLldsQ==
 
   matrix:
     - test_framework: netcoreapp2.0
