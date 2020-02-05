@@ -170,18 +170,21 @@ namespace Snowflake.Data.Tests
     {
         String key;
 
-        String value;
-        public IgnoreOnEnvIsAttribute(String key, String value)
+        string[] values;
+        public IgnoreOnEnvIsAttribute(String key, string[] values)
         {
             this.key = key;
-            this.value = value;
+            this.values = values;
         }
 
         public void BeforeTest(ITest test)
         {
-            if (Environment.GetEnvironmentVariable(key) == value)
+            foreach (var value in this.values)
             {
-                Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+                if (Environment.GetEnvironmentVariable(key) == value)
+                {
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+                }
             }
         }
 

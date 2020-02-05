@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, 
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 Assert.AreEqual(5, conn.ConnectionTimeout);
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                for (int i=0; i<invalidStrings.Length; i++)
+                for (int i = 0; i < invalidStrings.Length; i++)
                 {
                     try
                     {
@@ -184,8 +184,8 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "AZURE")]
-        [IgnoreOnEnvIs("snowflake_cloud_env", "GCP")]
+        [IgnoreOnEnvIs("snowflake_cloud_env", 
+                       new string[]{"AZURE", "GCP"})]
         public void TestSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
