@@ -57,7 +57,6 @@ namespace Snowflake.Data.Core
 
             var response = await SendAsync(req, request.GetRestTimeout(), cancellationToken).ConfigureAwait(false);
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            logger.Debug($"Post response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
 
@@ -71,14 +70,12 @@ namespace Snowflake.Data.Core
         {
             HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false);
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            logger.Debug($"Get response: {json}");
             return JsonConvert.DeserializeObject<T>(json);
         }
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
 
             return SendAsync(message, request.GetRestTimeout(), cancellationToken);
         }
@@ -86,7 +83,6 @@ namespace Snowflake.Data.Core
         public HttpResponseMessage Get(IRestRequest request)
         {
             HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
 
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
