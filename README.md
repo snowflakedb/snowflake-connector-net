@@ -10,6 +10,7 @@ The Snowflake .NET connector supports most core functionality. Currently, the PU
 
 Library target is under .NET Framework 4.6 and .NET Standard 2.0.
 
+
 Building the Package
 ====================
 
@@ -222,4 +223,17 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
     </root>
   </log4net>
 ```
+
+Notice
+----------------
+Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+
+Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
+
+If you are using the .NET driver please take the following action:
+1. Upgrade to the latest version(v1.1.0) as soon as possible.
+2. Remove all “Debugging” options for any existing .NET drivers in use.
+3. Delete any logs collected thus far and make sure that all copies are deleted. 
+4. If you cannot upgrade for any reason, please ensure all debugging is disabled
+5. If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
 
