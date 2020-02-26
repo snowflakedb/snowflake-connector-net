@@ -487,5 +487,21 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestCreateCommandBeforeOpeningConnection()
+        {
+            using(var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                
+                using(var command = conn.CreateCommand())
+                {
+                    conn.Open();
+                    command.CommandText = "select 1";
+                    Assert.DoesNotThrow(() => command.ExecuteNonQuery());
+                }
+            }
+        }
     }
 }

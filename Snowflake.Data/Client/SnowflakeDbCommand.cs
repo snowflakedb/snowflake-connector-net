@@ -37,7 +37,6 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
             this.connection = connection;
-            this.sfStatement = new SFStatement(connection.SfSession);
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
@@ -45,7 +44,7 @@ namespace Snowflake.Data.Client
 
         public override string CommandText
         {
-            get;  set;
+            get; set;
         }
 
         public override int CommandTimeout
@@ -150,9 +149,10 @@ namespace Snowflake.Data.Client
 
         public override void Cancel()
         {
-            sfStatement.Cancel();
+            // doesn't throw exception when sfStatement is null
+            sfStatement?.Cancel();
         }
-        
+
         public override int ExecuteNonQuery()
         {
             logger.Debug($"ExecuteNonQuery, command: {CommandText}");
@@ -282,13 +282,27 @@ namespace Snowflake.Data.Client
             }
         }
 
+        private void SetStatement() 
+        {
+            var session = (connection as SnowflakeDbConnection).SfSession;
+
+            // SetStatement is called when executing a command. If SfSession is null
+            // the connection has never been opened. Exception might be a bit vague.
+            if (session == null)
+                throw new Exception("Can't execute command when connection has never been opened");
+
+            this.sfStatement = new SFStatement(session);
+        }
+
         private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
         {
+            SetStatement();
             return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
         }
 
         private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
         {
+            SetStatement();
             return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
         }
     }
