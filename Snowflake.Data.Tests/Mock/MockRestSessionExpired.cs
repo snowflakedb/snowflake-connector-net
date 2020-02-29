@@ -20,6 +20,10 @@ namespace Snowflake.Data.Tests.Mock
 
         static private readonly int SESSION_EXPIRED_CODE = 390112;
 
+        public string FirstTimeRequestID;
+
+        public string SecondTimeRequestID;
+
         public MockRestSessionExpired() { }
 
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -46,6 +50,7 @@ namespace Snowflake.Data.Tests.Mock
             {
                 if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
                 {
+                    FirstTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                     QueryExecResponse queryExecResponse = new QueryExecResponse
                     {
                         success = false,
@@ -55,6 +60,7 @@ namespace Snowflake.Data.Tests.Mock
                 }
                 else if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, "new_session_token")))
                 {
+                    SecondTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                     QueryExecResponse queryExecResponse = new QueryExecResponse
                     {
                         success = true,
@@ -125,6 +131,13 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
+        }
+        
+        private string ExtractRequestID(string queries)
+        {
+            int start = queries.IndexOf("requestId=");
+            start += 10;
+            return queries.Substring(start, 36);
         }
     }
 }

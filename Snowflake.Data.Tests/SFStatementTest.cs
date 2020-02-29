@@ -26,6 +26,7 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual("1", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
             Assert.AreEqual("new_master_token", sfSession.masterToken);
+            Assert.AreEqual(restRequester.FirstTimeRequestID, restRequester.SecondTimeRequestID);
         }
 
         // Mock test for session renew during query execution
