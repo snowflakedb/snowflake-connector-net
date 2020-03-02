@@ -163,12 +163,20 @@ namespace Snowflake.Data.Core
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                var response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                if (SessionExpired(response))
+                QueryExecResponse response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
                 {
-                    SfSession.renewSession();
-                    ClearQueryRequestId();
-                    return await ExecuteAsync(timeout, sql, bindings, describeOnly, cancellationToken).ConfigureAwait(false);
+                    response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
                 }
 
                 var lastResultUrl = response.data?.getResultUrl;
@@ -208,12 +216,20 @@ namespace Snowflake.Data.Core
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
-                var response = _restRequester.Post<QueryExecResponse>(queryRequest);
-                if (SessionExpired(response))
+                QueryExecResponse response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
                 {
-                    SfSession.renewSession();
-                    ClearQueryRequestId();
-                    return Execute(timeout, sql, bindings, describeOnly);
+                    response = _restRequester.Post<QueryExecResponse>(queryRequest);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
                 }
 
                 var lastResultUrl = response.data?.getResultUrl;
