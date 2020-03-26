@@ -45,6 +45,7 @@ test_script:
   # test against .net core 2.0 
   - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f %test_framework% -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"%test_framework%_coverage.xml" -oldStyle
   # perform whitesource scan
+  - cmd: cd ..
   - cmd: wss.bat
 
 after_test:
