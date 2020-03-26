@@ -9,7 +9,7 @@ environment:
     secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
   my_gcp_salt:
     secure: STXopp4a0aI3JjAyA4S1V7Z1UDkfnXk2hZkqADE2CDbPvo2YvTtF/Jjjqzd7GQN9s72TvfG6d8Fdc78GdLldsQ==
-  wss_secret:
+  WHITESOURCE_API_KEY:
     secure: iZbbx7JscluHEEpME5IXyMMRPSof6eXy9E0Ujndw7lcKFVlJayf0hrPaaATBt/iELDYCz8sASYpwOvjkIr+vJCeVYY1saCXkh9fdiSp5Txk=
 
   matrix:
@@ -44,8 +44,6 @@ test_script:
   - cmd: cd Snowflake.Data.Tests
   # test against .net core 2.0 
   - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f %test_framework% -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"%test_framework%_coverage.xml" -oldStyle
-  # set whitesource api key
-  - cmd: SET WHITESOURCE_API_KEY=%wss_secret%
   # perform whitesource scan
   - cmd: wss.bat
 
