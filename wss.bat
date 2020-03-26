@@ -17,4 +17,4 @@ java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
    -project %PROJECT_NAME%^
    -product %PRODUCT_NAME%^
    -projectVersion %DATE%^
-   -d ${SCAN_DIRECTORIES%
+   -d %SCAN_DIRECTORIES%
