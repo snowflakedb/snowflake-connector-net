@@ -49,7 +49,6 @@ test_script:
   - cmd: wss.bat
 
 after_test:
- - cd ..
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
  - pip install codecov
  - codecov -f Snowflake.Data.Tests\%test_framework%_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
