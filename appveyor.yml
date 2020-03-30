@@ -9,6 +9,8 @@ environment:
     secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
   my_gcp_salt:
     secure: STXopp4a0aI3JjAyA4S1V7Z1UDkfnXk2hZkqADE2CDbPvo2YvTtF/Jjjqzd7GQN9s72TvfG6d8Fdc78GdLldsQ==
+  WHITESOURCE_API_KEY:
+    secure: iZbbx7JscluHEEpME5IXyMMRPSof6eXy9E0Ujndw7lcKFVlJayf0hrPaaATBt/iELDYCz8sASYpwOvjkIr+vJCeVYY1saCXkh9fdiSp5Txk=
 
   matrix:
     - test_framework: netcoreapp2.0
@@ -42,9 +44,11 @@ test_script:
   - cmd: cd Snowflake.Data.Tests
   # test against .net core 2.0 
   - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f %test_framework% -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"%test_framework%_coverage.xml" -oldStyle
+  # perform whitesource scan
+  - cmd: cd ..
+  - cmd: wss.bat
 
 after_test:
- - cd ..
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
  - pip install codecov
  - codecov -f Snowflake.Data.Tests\%test_framework%_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
