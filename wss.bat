@@ -6,7 +6,7 @@ IF "%PRODUCT_NAME%"=="" SET PRODUCT_NAME="Snowflake_Drivers_Connectors"
 
 SET PROJECT_NAME="Dot-Net-Connector"
 
-SET DATE="%date%"
+SET DATE=%date:~4,2%-%date:~7,2%-%date:~10,4%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 
