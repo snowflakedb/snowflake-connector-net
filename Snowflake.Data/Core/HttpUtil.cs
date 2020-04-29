@@ -18,8 +18,24 @@ namespace Snowflake.Data.Core
     {
         static private HttpClient httpClient = null;
 
+        static private CookieContainer cookieContainer = null;
+
         static private object httpClientInitLock = new object();
-        
+
+        static public void ClearCookies(Uri uri)
+        {
+            if (cookieContainer == null)
+            {
+                return;
+            }
+
+            var cookies = cookieContainer.GetCookies(uri);
+            foreach (Cookie cookie in cookies)
+            {
+                cookie.Expired = true;
+            }
+        }
+
         static public HttpClient getHttpClient()
         {
             lock (httpClientInitLock)
@@ -43,7 +59,8 @@ namespace Snowflake.Data.Core
             ServicePointManager.DefaultConnectionLimit = 20;
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                CookieContainer = cookieContainer = new CookieContainer()
             }));
         }
 

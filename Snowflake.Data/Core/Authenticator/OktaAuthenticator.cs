@@ -45,6 +45,7 @@ namespace Snowflake.Data.Core.Authenticator
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("Okta Authentication");
+            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
@@ -81,6 +82,7 @@ namespace Snowflake.Data.Core.Authenticator
         void IAuthenticator.Authenticate()
         {
             logger.Info("Okta Authentication");
+            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
