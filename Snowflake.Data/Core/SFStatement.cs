@@ -147,7 +147,7 @@ namespace Snowflake.Data.Core
                 externalCancellationToken);
             if (!_linkedCancellationTokenSouce.IsCancellationRequested)
             {
-                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
+                _linkedCancellationTokenSouce.Token.Register(() => Cancel(false));
             }
         }
 
@@ -289,24 +289,37 @@ namespace Snowflake.Data.Core
             }
         }
         
-        internal void Cancel()
+        internal void Cancel(bool throwOnFailure = true)
         {
             SFRestRequest request = BuildCancelQueryRequest();
             if (request == null)
                 return;
 
-            var response = _restRequester.Post<NullDataResponse>(request);
+            try {
+                var response = _restRequester.Post<NullDataResponse>(request);
 
-            if (response.success)
-            {
-                logger.Info("Query cancellation succeed");
+                if (response.success)
+                {
+                    logger.Info("Query cancellation succeed");
+                }
+                else
+                {
+                    SnowflakeDbException e = new SnowflakeDbException(
+                        "", response.code, response.message, "");
+                    logger.Error("Query cancellation failed.", e);
+                    if (throwOnFailure)
+                    {
+                        throw e;
+                    }
+                }
             }
-            else
+            catch (Exception e)
             {
-                SnowflakeDbException e = new SnowflakeDbException(
-                    "", response.code, response.message, "");
                 logger.Error("Query cancellation failed.", e);
-                throw e;
+                if (throwOnFailure)
+                {
+                    throw e;
+                }
             }
         }
         
