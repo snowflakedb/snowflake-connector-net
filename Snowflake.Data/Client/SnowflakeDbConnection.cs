@@ -115,14 +115,23 @@ namespace Snowflake.Data.Client
             OnSessionEstablished();
         }
         
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Connection Async.");
             if (cancellationToken.IsCancellationRequested)
-                return Task.FromCanceled(cancellationToken);
+                return;
 
             SetSession();
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(t => OnSessionEstablished(), cancellationToken);
+            try {
+                await SfSession.OpenAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                // Otherwise when Dispose() is called, the close request would timeout.
+                _connectionState = ConnectionState.Closed;
+                throw e;
+            }
+            OnSessionEstablished();
         }
 
         private void SetSession()
