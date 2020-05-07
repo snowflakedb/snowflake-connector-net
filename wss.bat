@@ -21,13 +21,13 @@ java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
    -wss.url https://saas.whitesourcesoftware.com/agent^
    -offline true
 
-IF java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
+IF (java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
     -c %WSS_CONFIG%^
     -project %PROJECT_NAME%^
     -product %PRODUCT_NAME%^
     -projectVersion baseline^
     -requestFiles whitesource\update-request.txt^
-    -wss.url https://saas.whitesourcesoftware.com/agent
+    -wss.url https://saas.whitesourcesoftware.com/agent)
 (
 	ECHO "checkPolicies=false" >> %WSS_CONFIG% && java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
 	    -c %WSS_CONFIG%^
