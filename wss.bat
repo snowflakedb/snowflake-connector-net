@@ -21,17 +21,15 @@ java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
    -wss.url https://saas.whitesourcesoftware.com/agent^
    -offline true
 
-FOR /F "tokens=* USEBACKQ" %%F IN (`java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
+java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
     -c %WSS_CONFIG%^
     -project %PROJECT_NAME%^
     -product %PRODUCT_NAME%^
     -projectVersion baseline^
     -requestFiles whitesource\update-request.txt^
-    -wss.url https://saas.whitesourcesoftware.com/agent`) DO (
-	SET TO_SCAN=%%F
-)
-IF TO_SCAN==0
-(
+    -wss.url https://saas.whitesourcesoftware.com/agent
+
+IF NOT %ERRORLEVEL% 0 (
 	ECHO "checkPolicies=false" >> %WSS_CONFIG% && java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
 	    -c %WSS_CONFIG%^
 	    -project %PROJECT_NAME%^
