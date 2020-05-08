@@ -29,7 +29,7 @@ java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
     -requestFiles whitesource\update-request.txt^
     -wss.url https://saas.whitesourcesoftware.com/agent
 
-IF NOT %ERRORLEVEL% 0 (
+IF %ERRORLEVEL% NEQ 0 (
 	ECHO "checkPolicies=false" >> %WSS_CONFIG% && java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
 	    -c %WSS_CONFIG%^
 	    -project %PROJECT_NAME%^
