@@ -17,26 +17,32 @@ java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
    -c %WSS_CONFIG%^
    -project %PROJECT_NAME%^
    -product %PRODUCT_NAME%^
-   -projectVersion %DATE%^
    -d %SCAN_DIRECTORIES%^
    -wss.url https://saas.whitesourcesoftware.com/agent^
    -offline true
+IF %ERRORLEVEL% NEQ 0 (
+    echo == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in offline mode
+    exit /b 1
+)
 
 java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
     -c %WSS_CONFIG%^
-    -project %PROJECT_NAME%^
     -product %PRODUCT_NAME%^
+    -project %PROJECT_NAME%^
     -projectVersion baseline^
     -requestFiles whitesource\update-request.txt^
     -wss.url https://saas.whitesourcesoftware.com/agent
 
 IF %ERRORLEVEL% NEQ 0 (
-	ECHO "checkPolicies=false" >> %WSS_CONFIG% && java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
-	    -c %WSS_CONFIG%^
-	    -project %PROJECT_NAME%^
-	    -product %PRODUCT_NAME%^
-	    -projectVersion %CURRENT_DATE%^
-	    -requestFiles whitesource\update-request.txt^
-	    -wss.url https://saas.whitesourcesoftware.com/agent
+    echo == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% with baseline
+    exit /b 1
 )
+echo checkPolicies=false>>%WSS_CONFIG%
+java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
+    -c %WSS_CONFIG%^
+    -product %PRODUCT_NAME%^
+    -project %PROJECT_NAME%^
+    -projectVersion %CURRENT_DATE%^
+    -requestFiles whitesource\update-request.txt^
+    -wss.url https://saas.whitesourcesoftware.com/agent
 
