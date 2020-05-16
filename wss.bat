@@ -1,6 +1,11 @@
 REM Run whitesource for components which need versioning
+@echo off
 setlocal
 
+if not defined WHITESOURCE_API_KEY (
+    echo == No WHITESOURCE_API_KEY is set. Skipping WhiteSource scan
+    exit /b 0
+)
 SET SCAN_DIRECTORIES="%cd%"
 
 SET PRODUCT_NAME=DotNETDriver
@@ -12,6 +17,7 @@ SET CURRENT_DATE=%date:~4,2%-%date:~7,2%-%date:~10,4%
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 
 SET WSS_CONFIG="wss-net.config"
+COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
 java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
    -c %WSS_CONFIG%^
