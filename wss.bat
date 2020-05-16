@@ -2,9 +2,8 @@ REM Run whitesource for components which need versioning
 
 SET SCAN_DIRECTORIES="%cd%"
 
-IF "%PRODUCT_NAME%"=="" SET PRODUCT_NAME="Snowflake_Drivers_Connectors"
-
-SET PROJECT_NAME="Dot-Net-Connector"
+SET PRODUCT_NAME=DotNETDriver
+SET PROJECT_NAME=DotNETDriver
 
 SET DATE="%date%"
 
