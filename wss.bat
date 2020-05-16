@@ -1,11 +1,13 @@
 REM Run whitesource for components which need versioning
+setlocal
 
 SET SCAN_DIRECTORIES="%cd%"
 
 SET PRODUCT_NAME=DotNETDriver
 SET PROJECT_NAME=DotNETDriver
 
-SET DATE="%date%"
+REM Format MM-DD-YYYY
+SET CURRENT_DATE=%date:~4,2%-%date:~7,2%-%date:~10,4%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 
@@ -33,7 +35,7 @@ IF %ERRORLEVEL% NEQ 0 (
 	    -c %WSS_CONFIG%^
 	    -project %PROJECT_NAME%^
 	    -product %PRODUCT_NAME%^
-	    -projectVersion %DATE%^
+	    -projectVersion %CURRENT_DATE%^
 	    -requestFiles whitesource\update-request.txt^
 	    -wss.url https://saas.whitesourcesoftware.com/agent
 )
