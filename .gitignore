@@ -297,3 +297,8 @@ __pycache__/
 # Unencrypted file
 Snowflake.Data.Tests/parameters.json
 *.xml
+
+# WhiteSource
+wss-*.config
+wss-unified-agent.jar
+whitesource/
