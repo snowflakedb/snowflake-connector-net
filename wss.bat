@@ -8,8 +8,8 @@ if not defined WHITESOURCE_API_KEY (
 )
 SET SCAN_DIRECTORIES="%cd%"
 
-SET PRODUCT_NAME=DotNETDriver
-SET PROJECT_NAME=DotNETDriver
+SET PRODUCT_NAME=snowflake-connector-net
+SET PROJECT_NAME=snowflake-connector-net
 
 REM Format MM-DD-YYYY
 SET CURRENT_DATE=%date:~4,2%-%date:~7,2%-%date:~10,4%

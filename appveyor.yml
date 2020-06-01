@@ -10,7 +10,7 @@ environment:
   my_gcp_salt:
     secure: STXopp4a0aI3JjAyA4S1V7Z1UDkfnXk2hZkqADE2CDbPvo2YvTtF/Jjjqzd7GQN9s72TvfG6d8Fdc78GdLldsQ==
   WHITESOURCE_API_KEY:
-    secure: iZbbx7JscluHEEpME5IXyMMRPSof6eXy9E0Ujndw7lcKFVlJayf0hrPaaATBt/iELDYCz8sASYpwOvjkIr+vJCeVYY1saCXkh9fdiSp5Txk=
+    secure: DO9//hUqoDrq1k/+HIdZbekwNKsQXJoB/xT5A5okWYTa4Xoe51grKd81nS3ysR8pouujgWd2n8YAJoRHXCjYTajeyv+UgUy9wUQ51hOhhsM=
 
   matrix:
     - test_framework: netcoreapp2.0
