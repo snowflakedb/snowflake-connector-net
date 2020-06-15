@@ -29,7 +29,7 @@ IF %ERRORLEVEL% NEQ 0 (
 SET WSS_CONFIG="wss-net.config"
 COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
-IF "%GIT_BRANCH%"==%PROD_BRANCH% (
+IF "%APPVEYOR_REPO_BRANCH%"==%PROD_BRANCH% (
   java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
      -c %WSS_CONFIG%^
      -project %PROJECT_NAME%^
