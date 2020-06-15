@@ -1,5 +1,5 @@
 REM Run whitesource for components which need versioning
-@echo off
+rem @echo off
 setlocal
 
 if not defined WHITESOURCE_API_KEY (
@@ -20,7 +20,7 @@ SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
 
 echo branch: %APPVEYOR_REPO_BRANCH%
 echo commit: %APPVEYOR_REPO_COMMIT%
-echo pr: %APPVEYOR_PULL_REQUEST_NUMBER%
+echo %APPVEYOR_PULL_REQUEST_NUMBER%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 IF %ERRORLEVEL% NEQ 0 (
