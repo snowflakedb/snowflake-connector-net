@@ -18,6 +18,9 @@ SET PROJECT_NAME=%APPVEYOR_REPO_BRANCH%
 
 SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
 
+echo branch: %APPVEYOR_REPO_BRANCH%
+echo commit: %APPVEYOR_REPO_COMMIT%
+
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 IF %ERRORLEVEL% NEQ 0 (
     echo == failed to download whitesource unified agent
