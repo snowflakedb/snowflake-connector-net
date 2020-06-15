@@ -11,12 +11,12 @@ SET SCAN_DIRECTORIES="%cd%"
 SET PRODUCT_NAME=snowflake-connector-net
 
 REM If your PROD_BRANCH is not master, you can define it here based on the need
-SET PROD_BRANCH="%base%"
+SET PROD_BRANCH=master
 
 REM PROJECT_NAME as git branch name
-SET PROJECT_NAME="%APPVEYOR_REPO_BRANCH%"
+SET PROJECT_NAME=%APPVEYOR_REPO_BRANCH%
 
-SET PROJECT_VERSION="%APPVEYOR_REPO_COMMIT%"
+SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 IF %ERRORLEVEL% NEQ 0 (
@@ -29,7 +29,7 @@ IF %ERRORLEVEL% NEQ 0 (
 SET WSS_CONFIG="wss-net.config"
 COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
-IF "%APPVEYOR_REPO_BRANCH%"==%PROD_BRANCH% (
+IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
   java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
      -c %WSS_CONFIG%^
      -project %PROJECT_NAME%^
