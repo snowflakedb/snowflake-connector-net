@@ -65,6 +65,8 @@ namespace Snowflake.Data.Core
         {
             isClosed = true;
         }
-        
+
+        internal abstract int CalculateUpdateCount();
+
     }
 }
