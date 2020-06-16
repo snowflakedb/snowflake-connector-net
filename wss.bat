@@ -18,14 +18,14 @@ echo commit: %APPVEYOR_REPO_COMMIT%
 echo pr-number: %APPVEYOR_PULL_REQUEST_NUMBER%
 
 REM Exit Whitesource scanning if no PR is defined in the Job
-if not "%APPVEYOR_REPO_BRANCH%" == "%PROD_BRANCH%" (
-    if not defined APPVEYOR_PULL_REQUEST_NUMBER (
-      ECHO == APPVEYOR_PULL_REQUEST_NUMBER is NOT defined. Skipping wss.sh
-      EXIT /b 0
+if not defined APPVEYOR_PULL_REQUEST_NUMBER (
+    if not "%APPVEYOR_REPO_BRANCH%" == "%PROD_BRANCH%" (
+        ECHO == APPVEYOR_PULL_REQUEST_NUMBER is NOT defined. Skipping wss.sh
+        EXIT /b 0
     )
-    SET PROJECT_NAME=PR-%APPVEYOR_PULL_REQUEST_NUMBER%
-) else (
     SET PROJECT_NAME=%PROD_BRANCH%
+) else (
+    SET PROJECT_NAME=PR-%APPVEYOR_PULL_REQUEST_NUMBER%
 )
 
 SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
@@ -41,7 +41,7 @@ IF %ERRORLEVEL% NEQ 0 (
 SET WSS_CONFIG=wss-net.config
 COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
-IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
+IF %PROJECT_NAME%==%PROD_BRANCH% (
   java -jar wss-unified-agent.jar -apiKey %WHITESOURCE_API_KEY%^
      -c %WSS_CONFIG%^
      -project %PROJECT_NAME%^
@@ -82,7 +82,7 @@ IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
       -wss.url https://saas.whitesourcesoftware.com/agent
       IF %ERRORLEVEL% NEQ -2 (
         IF %ERRORLEVEL% NEQ 0 (
-          ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% with baseline 
+          ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in %PROJECT_VERSION%
           REM exit /b can capture the error when failing to run whitesource with projectName GIT_COMMIT but will NOT fail the build
           EXIT /b 1
           REM if you want to fail the build when failing to run whitesource with projectName GIT_COMMIT, please use exit /b 1 instead
@@ -97,7 +97,7 @@ IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
       -d %SCAN_DIRECTORIES%
       IF %ERRORLEVEL% NEQ -2 (
         IF %ERRORLEVEL% NEQ 0 (
-          ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% with baseline 
+          ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in %PROJECT_VERSION%
           REM exit /b can capture the error when failing to run whitesource with projectName feature branch but will NOT fail the build
           EXIT /b 1
           REM if you want to fail the build when failing to run whitesource with projectName feature branchT, please use exit /b 1 instead
