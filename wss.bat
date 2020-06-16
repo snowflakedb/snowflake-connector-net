@@ -13,20 +13,22 @@ SET PRODUCT_NAME=snowflake-connector-net
 REM If your PROD_BRANCH is not master, you can define it here based on the need
 SET PROD_BRANCH=master
 
-REM Exit Whitesource scanning if no PR is defined in the Job
-IF not defined APPVEYOR_PULL_REQUEST_NUMBER (
-  ECHO == Variable is NOT defined
-  EXIT /b 0
-)
-
-REM PROJECT_NAME as git branch name
-SET PROJECT_NAME=%APPVEYOR_PULL_REQUEST_NUMBER%
-
-SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
-
 echo branch: %APPVEYOR_REPO_BRANCH%
 echo commit: %APPVEYOR_REPO_COMMIT%
-echo pr: %APPVEYOR_PULL_REQUEST_NUMBER%
+echo pr-number: %APPVEYOR_PULL_REQUEST_NUMBER%
+
+REM Exit Whitesource scanning if no PR is defined in the Job
+if not "%APPVEYOR_REPO_BRANCH%" == "%PROD_BRANCH%" (
+    if not defined APPVEYOR_PULL_REQUEST_NUMBER (
+      ECHO == APPVEYOR_PULL_REQUEST_NUMBER is NOT defined. Skipping wss.sh
+      EXIT /b 0
+    )
+    SET PROJECT_NAME=PR-%APPVEYOR_PULL_REQUEST_NUMBER%
+) else (
+    SET PROJECT_NAME=%PROD_BRANCH%
+)
+
+SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 IF %ERRORLEVEL% NEQ 0 (
