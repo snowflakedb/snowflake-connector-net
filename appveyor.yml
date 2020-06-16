@@ -36,6 +36,7 @@ before_build:
 
 build_script:
   - cmd: dotnet build snowflake-connector-net.sln /p:DebugType=Full
+  - cmd: wss.bat
   
 before_test:
   - cmd: nuget install OpenCover -Version 4.6.519
@@ -46,7 +47,7 @@ test_script:
   - cmd: ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f %test_framework% -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"%test_framework%_coverage.xml" -oldStyle
   # perform whitesource scan
   - cmd: cd ..
-  - cmd: wss.bat
+  
 
 after_test:
  - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
