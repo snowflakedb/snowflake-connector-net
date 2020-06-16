@@ -6,7 +6,7 @@ if not defined WHITESOURCE_API_KEY (
     echo == No WHITESOURCE_API_KEY is set. Skipping WhiteSource scan
     exit /b 0
 )
-SET SCAN_DIRECTORIES="%cd%"
+SET SCAN_DIRECTORIES=%cd%
 
 SET PRODUCT_NAME=snowflake-connector-net
 
@@ -14,7 +14,7 @@ REM If your PROD_BRANCH is not master, you can define it here based on the need
 SET PROD_BRANCH=master
 
 REM Exit Whitesource scanning if no PR is defined in the Job
-IF "%APPVEYOR_PULL_REQUEST_NUMBE%"=="" (
+IF not defined APPVEYOR_PULL_REQUEST_NUMBER (
   ECHO == Variable is NOT defined
   EXIT /b 0
 )
@@ -36,7 +36,7 @@ IF %ERRORLEVEL% NEQ 0 (
     REM if you want to fail the build when failing to download whitesource unified agent, please use exit /b 1 instead
 )
 
-SET WSS_CONFIG="wss-net.config"
+SET WSS_CONFIG"wss-net.config
 COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
 IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
