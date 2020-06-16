@@ -1,5 +1,5 @@
 REM Run whitesource for components which need versioning
-echo on
+@echo off
 setlocal
 
 if not defined WHITESOURCE_API_KEY (
@@ -13,6 +13,12 @@ SET PRODUCT_NAME=snowflake-connector-net
 REM If your PROD_BRANCH is not master, you can define it here based on the need
 SET PROD_BRANCH=master
 
+REM Exit Whitesource scanning if no PR is defined in the Job
+IF "%APPVEYOR_PULL_REQUEST_NUMBE%"=="" (
+  ECHO == Variable is NOT defined
+  EXIT /b 0
+)
+
 REM PROJECT_NAME as git branch name
 SET PROJECT_NAME=%APPVEYOR_PULL_REQUEST_NUMBER%
 
@@ -20,14 +26,13 @@ SET PROJECT_VERSION=%APPVEYOR_REPO_COMMIT%
 
 echo branch: %APPVEYOR_REPO_BRANCH%
 echo commit: %APPVEYOR_REPO_COMMIT%
-
-set
+echo pr: %APPVEYOR_PULL_REQUEST_NUMBER%
 
 curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
 IF %ERRORLEVEL% NEQ 0 (
-    echo == failed to download whitesource unified agent
+    ECHO == failed to download whitesource unified agent
     REM exit /b can capture the error when failing to download whitesource unified agent but will NOT fail the build
-    exit /b 1
+    EXIT /b 1
     REM if you want to fail the build when failing to download whitesource unified agent, please use exit /b 1 instead
 )
 
