@@ -38,7 +38,7 @@ IF %ERRORLEVEL% NEQ 0 (
     REM if you want to fail the build when failing to download whitesource unified agent, please use exit /b 1 instead
 )
 
-SET WSS_CONFIG"wss-net.config
+SET WSS_CONFIG=wss-net.config
 COPY %WSS_CONFIG%.templ %WSS_CONFIG%
 
 IF %APPVEYOR_REPO_BRANCH%==%PROD_BRANCH% (
