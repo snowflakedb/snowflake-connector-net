@@ -207,6 +207,8 @@ namespace Snowflake.Data.Core
             finally
             {
                 ClearQueryRequestId();
+                _timeoutTokenSource.Dispose();
+                _linkedCancellationTokenSouce.Dispose();
             }
         }
         
