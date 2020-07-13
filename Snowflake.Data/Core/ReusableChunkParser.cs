@@ -116,6 +116,9 @@ namespace Snowflake.Data.Core
                             case 'b':
                                 c = '\b';
                                 break;
+                            case 't':
+                                c = '\t';
+                                break;
                             case -1:
                                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
                         }
