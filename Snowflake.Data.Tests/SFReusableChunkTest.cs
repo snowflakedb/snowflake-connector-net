@@ -213,5 +213,29 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
+
+        [Test]
+        public void TestParserWithTab()
+        {
+            // Unterminated string
+            string data = "[[\"abc\t\"]]";
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            IChunkParser parser = new ReusableChunkParser(stream);
+
+            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+            {
+                url = "fake",
+                uncompressedSize = bytes.Length,
+                rowCount = 1
+            };
+
+            SFReusableChunk chunk = new SFReusableChunk(1);
+            chunk.Reset(chunkInfo, 0);
+
+            parser.ParseChunk(chunk);
+            string val = chunk.ExtractCell(0, 0);
+            Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0));
+        }
     }
 }
