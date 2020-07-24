@@ -32,6 +32,11 @@ namespace Snowflake.Data.Client
             _connectionTimeout = 0;
         }
 
+        public SnowflakeDbConnection(string connectionString) : this()
+        {
+            ConnectionString = connectionString;
+        }
+
         public override string ConnectionString
         {
             get; set;
