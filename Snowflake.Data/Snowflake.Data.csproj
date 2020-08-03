@@ -12,7 +12,7 @@
     <Product>Snowflake Connector for .NET</Product>
     <Authors>howryu, tchen</Authors>
     <Copyright>Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.</Copyright>
-    <Version>1.1.2</Version>
+    <Version>1.1.3</Version>
     <DebugType>Full</DebugType>
   </PropertyGroup>
 	
