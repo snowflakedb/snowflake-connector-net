@@ -115,7 +115,7 @@ i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all 
 | WAREHOUSE           | No       |                                                                               |
 | CONNECTION_TIMEOUT  | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
 | AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default), [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only) and [externalbrowser](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#browser-based-sso).  |
-|VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when makeing connection. Default to be true. |
+|VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 
 <br />
 
