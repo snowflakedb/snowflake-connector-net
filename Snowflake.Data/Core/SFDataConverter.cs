@@ -192,6 +192,8 @@ namespace Snowflake.Data.Core
                 case DbType.Guid:
                 case DbType.String:
                 case DbType.StringFixedLength:
+                case DbType.AnsiString:
+                case DbType.AnsiStringFixedLength:
                     destType = SFDataType.TEXT.ToString();
                     destVal = srcValAsCultureInvariantString;
                     break;
