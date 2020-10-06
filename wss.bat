@@ -50,7 +50,7 @@ IF %PROJECT_NAME%==%PROD_BRANCH% (
      -d %SCAN_DIRECTORIES%^
      -wss.url https://saas.whitesourcesoftware.com/agent^
      -offline true
-     IF %ERRORLEVEL% NEQ -2 (
+     IF %ERRORLEVEL% NEQ 254 (
         IF %ERRORLEVEL% NEQ 0 (
           ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in offline mode 
           REM exit /b can capture the error when failing to run whitesource in offline mode but will NOT fail the build
@@ -65,7 +65,7 @@ IF %PROJECT_NAME%==%PROD_BRANCH% (
       -projectVersion baseline^
       -requestFiles whitesource\update-request.txt^
       -wss.url https://saas.whitesourcesoftware.com/agent
-      IF %ERRORLEVEL% NEQ -2 (
+      IF %ERRORLEVEL% NEQ 254 (
         IF %ERRORLEVEL% NEQ 0 (
           ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% with baseline 
           REM exit /b can capture the error when failing to run whitesource with projectName baseline but will NOT fail the build
@@ -80,7 +80,7 @@ IF %PROJECT_NAME%==%PROD_BRANCH% (
       -projectVersion %PROJECT_VERSION%^
       -requestFiles whitesource\update-request.txt^
       -wss.url https://saas.whitesourcesoftware.com/agent
-      IF %ERRORLEVEL% NEQ -2 (
+      IF %ERRORLEVEL% NEQ 254 (
         IF %ERRORLEVEL% NEQ 0 (
           ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in %PROJECT_VERSION%
           REM exit /b can capture the error when failing to run whitesource with projectName GIT_COMMIT but will NOT fail the build
@@ -95,7 +95,7 @@ IF %PROJECT_NAME%==%PROD_BRANCH% (
       -product %PRODUCT_NAME%^
       -projectVersion %PROJECT_VERSION%^
       -d %SCAN_DIRECTORIES%
-      IF %ERRORLEVEL% NEQ -2 (
+      IF %ERRORLEVEL% NEQ 254 (
         IF %ERRORLEVEL% NEQ 0 (
           ECHO == failed to run WSS for %PRODUCT_NAME%_%PROJECT_NAME% in %PROJECT_VERSION%
           REM exit /b can capture the error when failing to run whitesource with projectName feature branch but will NOT fail the build
