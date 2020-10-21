@@ -1,17 +1,15 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
-using log4net;
+﻿using log4net;
 using System;
 
 namespace Snowflake.Data.Log
 {
-    class Log4netImpl : SFLogger
+    // Default implementation for SFLogger
+
+    class Log4NetImpl : SFLogger
     {
         private readonly ILog logger;
 
-        public Log4netImpl(ILog logger)
+        public Log4NetImpl(ILog logger)
         {
             this.logger = logger;
         }
@@ -46,19 +44,9 @@ namespace Snowflake.Data.Log
             logger.Debug(msg, ex);
         }
 
-        public void DebugFmt(string fmt, params object[] args)
-        {
-            logger.DebugFormat(fmt, args);
-        }
-
         public void Info(string msg, Exception ex = null)
         {
             logger.Info(msg, ex);
-        }
-
-        public void InfoFmt(string fmt, params object[] args)
-        {
-            logger.InfoFormat(fmt, args);
         }
 
         public void Warn(string msg, Exception ex = null)
@@ -66,29 +54,15 @@ namespace Snowflake.Data.Log
             logger.Warn(msg, ex);
         }
 
-        public void WarnFmt(string fmt, params object[] args)
-        {
-            logger.WarnFormat(fmt, args);
-        }
 
         public void Error(string msg, Exception ex = null)
         {
             logger.Error(msg, ex);
         }
 
-        public void ErrorFmt(string fmt, params object[] args)
-        {
-            logger.InfoFormat(fmt, args);
-        }
-
         public void Fatal(string msg, Exception ex = null)
         {
             logger.Fatal(msg, ex);
-        }
-
-        public void FatalFmt(string fmt, params object[] args)
-        {
-            logger.InfoFormat(fmt, args);
         }
     }
 }
