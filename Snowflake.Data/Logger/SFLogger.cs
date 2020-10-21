@@ -35,4 +35,5 @@ namespace Snowflake.Data.Log
     {
         DEBUG, INFO, WARN, ERROR, FATAL
     }
+
 }

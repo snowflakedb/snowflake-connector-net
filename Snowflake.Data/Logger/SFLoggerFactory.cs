@@ -33,7 +33,7 @@ namespace Snowflake.Data.Log
 
         public static void Instance(SFLogger customLogger)
         {            
-                logger = customLogger;
+            logger = customLogger;
         }
 
         public static SFLogger GetLogger<T>()
