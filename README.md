@@ -10,6 +10,7 @@ The Snowflake .NET connector supports most core functionality. Currently, the PU
 
 Library target is under .NET Framework 4.6 and .NET Standard 2.0.
 
+Please refer to the Notice section below for information about safe usage of the .NET Driver
 
 Building the Package
 ====================
@@ -225,7 +226,16 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
 
 Notice
 ----------------
-Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+1. CVE-2019-0820 - This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used: 
+
+v1.0 branch: 1.0 - 1.0.16 (exclusive)
+v1.1 branch: 1.1 - 1.1.13 (exclusive)
+v2.1 branch: 2.1 - 2.1.11 (exclusive)
+v2.2 branch: 2.2 - 2.2.5  (exclusive)
+
+In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability. 
+
+2. Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
 
 Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
 
