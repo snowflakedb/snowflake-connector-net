@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests
 {
@@ -110,6 +111,7 @@ namespace Snowflake.Data.Tests
             if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
+		logger.info($"Test schema - {testConfig.schema}");
             }
             else
             {
