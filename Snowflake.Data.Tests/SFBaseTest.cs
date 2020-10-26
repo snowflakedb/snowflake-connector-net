@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests
             if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
-		logger.info($"Test schema - {testConfig.schema}");
+		logger.Info($"Test schema - {testConfig.schema}");
             }
             else
             {
