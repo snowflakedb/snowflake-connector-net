@@ -42,6 +42,7 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class SFBaseTestAsync
     {
+	static private SFLogger logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
         private const string connectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
             "account={3};role={4};db={5};schema={6};warehouse={7}";
 
