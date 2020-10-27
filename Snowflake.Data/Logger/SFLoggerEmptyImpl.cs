@@ -11,8 +11,6 @@ namespace Snowflake.Data.Log
 
     class SFLoggerEmptyImpl : SFLogger
     {
-        private readonly SFLoggerEmptyImpl logger = null;
-
         public bool IsDebugEnabled()
         {
             return false;
@@ -63,4 +61,5 @@ namespace Snowflake.Data.Log
             return;
         }
     }
+
 }

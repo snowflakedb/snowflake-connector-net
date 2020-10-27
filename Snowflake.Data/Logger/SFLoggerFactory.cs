@@ -56,4 +56,5 @@ namespace Snowflake.Data.Log
             }
         }
     }
+
 }

@@ -69,4 +69,5 @@ namespace Snowflake.Data.Log
             logger.Fatal(msg, ex);
         }
     }
+
 }
