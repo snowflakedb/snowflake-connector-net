@@ -95,8 +95,7 @@ namespace Snowflake.Data.Core
 
         public Task<IResultChunk> GetNextChunkAsync()
         {
-            logger.InfoFmt("NextChunkToConsume: {0}, NextChunkToDownload: {1}",
-                nextChunkToConsumeIndex, nextChunkToDownloadIndex);
+            logger.Info($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
             if (nextChunkToConsumeIndex < chunkInfos.Count)
             {
                 Task<IResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
@@ -147,7 +146,7 @@ namespace Snowflake.Data.Core
             {
                 ParseStreamIntoChunk(stream, chunk);
             }
-            logger.InfoFmt("Succeed downloading chunk #{0}", chunk.chunkIndexToDownload);
+            logger.Info($"Succeed downloading chunk #{chunk.chunkIndexToDownload}");
             return chunk;
         }
 
