@@ -4,9 +4,9 @@ platform: Any CPU
 image: Visual Studio 2017
 environment:
   my_secret:
-    secure: XwupaTEU6vRyeuB7ZOOniA==
+    secure: Zb410wXwi0n5OR/ZQ4NgBLN0hiTdGttXF/iyJ+SDHJY=
   my_salt:
-    secure: Zxm5GDkhuz8HYLnA0G4RV1eaBxptWCbGUFLIEGytdPF9ryvuM4w=
+    secure: rNbecV3CyhplvzQJXvvDDP7Bu1tPaL7pCdLHCbI0rPjwEEj4kWZ0MUd7cr5S8gINS7OfHPiY1x9pK7qr3A57Eg==
   my_gcp_secret:
     secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
   my_gcp_salt:
