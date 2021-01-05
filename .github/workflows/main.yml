@@ -9,7 +9,15 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-    
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        default: warning
+        description: "Log level"
+        required: true
+      tags:
+        description: "Test scenario tags"
+
 env:
   DOTNET_CORE_VERSION: 2.0
   DOTNET_LEGACY_VERSION: 4.6
@@ -30,7 +38,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
+
       #Setup .NET
       - uses: actions/checkout@main
       - name: Setup Dotnet
@@ -40,13 +48,13 @@ jobs:
       - name: Decrypt Parameters
         shell: bash
         env:
-           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }} 
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
-  
+
   build-framework:
     name: Build-Framework
     runs-on: windows-latest
@@ -65,7 +73,7 @@ jobs:
     - name: Decrypt Azure Parameters
       shell: bash
       env:
-         PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }} 
+         PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
       run: |
          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
           ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
@@ -86,7 +94,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.402 
+          dotnet-version: 2.2.402
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -96,7 +104,7 @@ jobs:
       - name: Decrypt Parameters
         shell: bash
         env:
-           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }} 
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
@@ -108,11 +116,10 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
-        with: 
+        with:
           name: code-coverage-report
           path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Install Codecov
         run: pip install codecov
       - name: Run Codecoverage
         run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
-
