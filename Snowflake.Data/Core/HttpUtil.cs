@@ -20,19 +20,19 @@ namespace Snowflake.Data.Core
 
         static private object httpClientInitLock = new object();
         
-        static public HttpClient getHttpClient()
+        static public HttpClient getHttpClient(IWebProxy proxy)
         {
             lock (httpClientInitLock)
             {
                 if (httpClient == null)
                 {
-                    initHttpClient();
+                    initHttpClient(proxy);
                 }
                 return httpClient;
             }
         }        
 
-        static private void initHttpClient()
+        static private void initHttpClient(IWebProxy proxy)
         {
             // enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -43,7 +43,8 @@ namespace Snowflake.Data.Core
             ServicePointManager.DefaultConnectionLimit = 20;
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                Proxy = proxy
             }));
         }
 
