@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
 using Snowflake.Data.Log;
+using System.Net;
 
 namespace Snowflake.Data.Client
 {
@@ -40,6 +41,11 @@ namespace Snowflake.Data.Client
         public SecureString Password
         {
             get; set;
+        }
+
+        public IWebProxy Proxy
+        {
+            get { return RestRequester.Instance.Proxy; } set { RestRequester.Instance.Proxy = value; }
         }
 
         public bool IsOpen()

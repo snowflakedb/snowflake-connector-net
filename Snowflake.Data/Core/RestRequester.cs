@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using System.Net;
 
 namespace Snowflake.Data.Core
 {
@@ -35,6 +36,8 @@ namespace Snowflake.Data.Core
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         private static readonly RestRequester instance = new RestRequester();
+
+        internal IWebProxy Proxy { get; set; }
 
         private RestRequester()
         {
@@ -102,9 +105,9 @@ namespace Snowflake.Data.Core
 #if NET46
                 // The following optimization is going to cause test failure in net core 2.0 when testing against Azure deployment
                 // We might want to revisit when we upgrade the framework.
-                var response = await HttpUtil.getHttpClient().SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
+                var response = await HttpUtil.getHttpClient(Proxy).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
 #else
-                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token).ConfigureAwait(false);
+                var response = await HttpUtil.getHttpClient(Proxy).SendAsync(request, linkedCts.Token).ConfigureAwait(false);
 #endif
                 response.EnsureSuccessStatusCode();
 
