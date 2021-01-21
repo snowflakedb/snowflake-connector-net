@@ -110,6 +110,7 @@ namespace Snowflake.Data.Client
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
+                logger.Error("Unable to connect", e);
                 throw e;
             }
             OnSessionEstablished();

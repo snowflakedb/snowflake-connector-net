@@ -39,11 +39,91 @@ namespace Snowflake.Data.Core.Authenticator
         SNOWFLAKE,
         OKTA,
     }
-
     /// <summary>
-    /// Authenticator Factory to build authenticators
+    /// A base implementation for all authenticators to create and send a login request.
     /// </summary>
-    internal class AuthenticatorFactory
+    internal abstract class BaseAuthenticator
+    {
+        // The logger.
+        private static readonly SFLogger logger =
+            SFLoggerFactory.GetLogger<BaseAuthenticator>();
+
+        // The name of the authenticator.
+        protected string authName;
+
+        // The session which created this authenticator.
+        protected SFSession session;
+
+        /// <summary>
+        /// The abstract base for all authenticators.
+        /// </summary>
+        /// <param name="session">The session which created the authenticator.</param>
+        public BaseAuthenticator(SFSession session, string authName)
+        {
+            this.session = session;
+            this.authName = authName;
+        }
+
+        //// <see cref="IAuthenticator.AuthenticateAsync"/>
+        protected async Task LoginAsync(CancellationToken cancellationToken)
+        {
+            var loginRequest = BuildLoginRequest();
+
+            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+
+            session.ProcessLoginResponse(response);
+        }
+
+        /// <see cref="IAuthenticator.Authenticate"/>
+        protected void Login()
+        {
+            var loginRequest = BuildLoginRequest();
+
+            var response = session.restRequester.Post<LoginResponse>(loginRequest);
+
+            session.ProcessLoginResponse(response);
+        }
+
+        /// <summary>
+        /// Specialized authenticator data to add to the login request. 
+        /// </summary>
+        /// <param name="data">The login request data to update.</param>
+        protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
+
+        /// <summary>
+        /// Builds a simple login request. Each authenticator will fill the Data part with their
+        /// specialized information. The common Data attributes are already filled (clientAppId, 
+        /// ClienAppVersion...).
+        /// </summary>
+        /// <returns>A login request to send to the server.</returns>
+        private SFRestRequest BuildLoginRequest()
+        {
+            // build uri
+            var loginUrl = session.BuildLoginUrl();
+
+            LoginRequestData data = new LoginRequestData()
+            {
+                loginName = session.properties[SFSessionProperty.USER],
+                accountName = session.properties[SFSessionProperty.ACCOUNT],
+                clientAppId = SFEnvironment.DriverName,
+                clientAppVersion = SFEnvironment.DriverVersion,
+                clientEnv = SFEnvironment.ClientEnv,
+                SessionParameters = session.ParameterMap,
+                Authenticator = authName,
+            };
+
+            SetSpecializedAuthenticatorData(ref data);
+
+            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+
+            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+        }
+    }
+
+        /// <summary>
+        /// Authenticator Factory to build authenticators
+        /// </summary>
+        internal class AuthenticatorFactory
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
@@ -62,6 +142,40 @@ namespace Snowflake.Data.Core.Authenticator
             else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new ExternalBrowserAuthenticator(session);
+            }
+            else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                // Get private key path or private key from connection settings
+                if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath))
+                {
+                    // There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
+                    string invalidStringDetail =
+                        "Missing required PRIVATE_KEY_FILE for key pair authentication";
+                    var error = new SnowflakeDbException(
+                        SFError.INVALID_CONNECTION_STRING,
+                        new object[] { invalidStringDetail });
+                    logger.Error(error.Message, error);
+                    throw error;
+                }
+
+                return new KeyPairAuthenticator(session);
+            }
+            else if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                // Get private key path or private key from connection settings
+                if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
+                {
+                    // There is no TOKEN defined, can't authenticate with oauth
+                    string invalidStringDetail =
+                        "Missing required TOKEN for Oauth authentication";
+                    var error = new SnowflakeDbException(
+                        SFError.INVALID_CONNECTION_STRING,
+                        new object[] { invalidStringDetail });
+                    logger.Error(error.Message, error);
+                    throw error;
+                }
+
+                return new OAuthAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com
             else if (type.EndsWith("okta.com") && type.StartsWith("https://"))
