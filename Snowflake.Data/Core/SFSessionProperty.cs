@@ -8,6 +8,7 @@ using System.Net;
 using System.Security;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
@@ -29,7 +30,7 @@ namespace Snowflake.Data.Core
         SCHEMA,
         [SFSessionPropertyAttr(required = false, defaultValue = "https")] 
         SCHEME,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = true, defaultValue = "")] 
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
@@ -39,6 +40,14 @@ namespace Snowflake.Data.Core
         AUTHENTICATOR,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         VALIDATE_DEFAULT_PARAMETERS,
+        [SFSessionPropertyAttr(required = false)]
+        PRIVATE_KEY_FILE,
+        [SFSessionPropertyAttr(required = false)]
+        PRIVATE_KEY_FILE_PWD,
+        [SFSessionPropertyAttr(required = false)]
+        PRIVATE_KEY,
+        [SFSessionPropertyAttr(required = false)]
+        TOKEN,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -164,8 +173,21 @@ namespace Snowflake.Data.Core
         {
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
             {
-                return !(properties.ContainsKey(SFSessionProperty.AUTHENTICATOR)
-                    && properties[SFSessionProperty.AUTHENTICATOR] == "externalbrowser");
+                var authenticatorDefined = 
+                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
+
+                // External browser, jwt and oauth don't require a password for authenticating
+                return !(authenticatorDefined && (authenticator == ExternalBrowserAuthenticator.AUTH_NAME ||
+                            authenticator == KeyPairAuthenticator.AUTH_NAME ||
+                            authenticator == OAuthAuthenticator.AUTH_NAME));
+            }
+            else if (sessionProperty.Equals(SFSessionProperty.USER))
+            {
+                var authenticatorDefined =
+                   properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
+
+                // Oauth don't require a username for authenticating
+                return !(authenticatorDefined && (authenticator == OAuthAuthenticator.AUTH_NAME));
             }
             else
             {

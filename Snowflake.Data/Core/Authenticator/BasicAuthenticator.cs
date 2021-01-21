@@ -8,56 +8,33 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    class BasicAuthenticator : IAuthenticator
+    class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public static readonly string AUTH_NAME = "snowflake";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
-        private SFSession session;
 
-        internal BasicAuthenticator(SFSession session)
+        internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
-            this.session = session;
         }
 
+        /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
-            var loginRequest = BuildLoginRequest();
-
-            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
-
-            session.ProcessLoginResponse(response);
+            await base.LoginAsync(cancellationToken);
         }
 
+        /// <see cref="IAuthenticator.Authenticate"/>
         void IAuthenticator.Authenticate()
         {
-            var loginRequest = BuildLoginRequest();
-
-            var response = session.restRequester.Post<LoginResponse>(loginRequest);
-
-            session.ProcessLoginResponse(response);
+             base.Login();
         }
 
-        private SFRestRequest BuildLoginRequest()
+        /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
+        protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            // build uri
-            var loginUrl = session.BuildLoginUrl();
-
-            LoginRequestData data = new LoginRequestData()
-            {
-                loginName = session.properties[SFSessionProperty.USER],
-                password = session.properties[SFSessionProperty.PASSWORD],
-                accountName = session.properties[SFSessionProperty.ACCOUNT],
-                clientAppId = SFEnvironment.DriverName,
-                clientAppVersion = SFEnvironment.DriverVersion,
-                clientEnv = SFEnvironment.ClientEnv,
-                SessionParameters = session.ParameterMap,
-            };
-
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            // Only need to add the password to Data for basic authentication
+            data.password = session.properties[SFSessionProperty.PASSWORD];
         }
-
     }
 
 }

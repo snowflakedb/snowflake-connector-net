@@ -151,6 +151,21 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_URL", NullValueHandling = NullValueHandling.Ignore)]
         internal string OktaURL { get; set; }
 
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_JWT_USER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string jwtAuthUser { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKeyFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pwdProtectedPrivateKeyFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_PWD", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKeyFilePwd { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthToken { get; set; }
+
         public TestConfig()
         {
             this.protocol = "https";

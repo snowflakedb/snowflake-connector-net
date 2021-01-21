@@ -175,6 +175,11 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "data")]
         internal LoginRequestData data { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("LoginRequest {{data: {0} }}", data.ToString());
+        }
     }
 
     class LoginRequestData
@@ -214,8 +219,8 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("LoginRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
-                clientAppVersion, accountName, loginName, clientEnv.ToString());
+            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}", 
+                clientAppVersion, accountName, loginName, clientEnv.ToString(), Authenticator);
         }
     }
 
