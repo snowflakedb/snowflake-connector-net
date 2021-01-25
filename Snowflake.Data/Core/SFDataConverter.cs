@@ -26,13 +26,27 @@ namespace Snowflake.Data.Core
 
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        private Dictionary<Type, TypeConverter> typeConverters = new Dictionary<Type, TypeConverter>();
+        private readonly Dictionary<Type, TypeConverter> typeConverters = new Dictionary<Type, TypeConverter>();
 
         internal SFDataConverter()
         {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
         }
-        
+
+        private static long ParseInt64(string s)
+        {
+            return long.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        private static string Int64ToString(long v)
+        {
+            return v.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static int ParseInt32(string s)
+        {
+            return int.Parse(s, CultureInfo.InvariantCulture);
+        }
+
         internal object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
             //Logger.DebugFmt("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
@@ -52,7 +66,7 @@ namespace Snowflake.Data.Core
                 {
                     typeConverters.Add(destType, TypeDescriptor.GetConverter(destType));
                 }
-                return typeConverters[destType].ConvertFrom(srcVal);
+                return typeConverters[destType].ConvertFromInvariantString(srcVal);
             }
             else if (destType == typeof(Boolean))
             {
@@ -87,7 +101,7 @@ namespace Snowflake.Data.Core
             switch (srcType)
             {
                 case SFDataType.DATE:
-                    long srcValLong = Int64.Parse(srcVal);
+                    long srcValLong = ParseInt64(srcVal);
                     return UnixEpoch.AddDays(srcValLong);
 
                 case SFDataType.TIME:
@@ -117,7 +131,7 @@ namespace Snowflake.Data.Core
                     {
                         Tuple<long, long> secAndNsecTZ = ExtractTimestamp(srcVal.Substring(0, spaceIndex));
 
-                        int offset = Int32.Parse(srcVal.Substring(spaceIndex + 1, srcVal.Length - spaceIndex - 1));
+                        int offset = ParseInt32(srcVal.Substring(spaceIndex + 1, srcVal.Length - spaceIndex - 1));
                         TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
                         return new DateTimeOffset(UnixEpoch.Ticks +
                             (secAndNsecTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecTZ.Item2) / 100, TimeSpan.Zero).ToOffset(offSetTimespan);
@@ -139,14 +153,14 @@ namespace Snowflake.Data.Core
             int dotIndex = srcVal.IndexOf('.');
             if (dotIndex == -1)
             {
-                return Tuple.Create(Int64.Parse(srcVal), (long)0);
+                return Tuple.Create(ParseInt64(srcVal), (long)0);
             }
             else
             {
-                var intPart = Int64.Parse(srcVal.Substring(0, dotIndex));
+                var intPart = ParseInt64(srcVal.Substring(0, dotIndex));
                 var decimalPartLength = srcVal.Length - dotIndex - 1;
                 var decimalPartStr = srcVal.Substring(dotIndex + 1, decimalPartLength);
-                var decimalPart = Int64.Parse(decimalPartStr);
+                var decimalPart = ParseInt64(decimalPartStr);
                 // If the decimal part contained less than nine characters, we must convert the value to nanoseconds by
                 // multiplying by 10^[precision difference].
                 if (decimalPartLength < 9)
@@ -208,7 +222,7 @@ namespace Snowflake.Data.Core
                         DateTime dt = ((DateTime)srcVal).Date;
                         var ts = dt.Subtract(UnixEpoch);
                         long millis = (long)(ts.TotalMilliseconds);
-                        destVal = millis.ToString();
+                        destVal = Int64ToString(millis);
                     }
                     break;
 
@@ -224,7 +238,7 @@ namespace Snowflake.Data.Core
                         DateTime srcDt = ((DateTime)srcVal);
                         long nanoSinceMidNight = (long)(srcDt.Ticks - srcDt.Date.Ticks) * 100L; 
 
-                        destVal = nanoSinceMidNight.ToString();
+                        destVal = Int64ToString(nanoSinceMidNight);
                     }
                     break;
 
@@ -310,7 +324,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                       return ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
+                        return Int64ToString((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100);
                     }
                 default:
                     throw new NotImplementedException();

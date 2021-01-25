@@ -68,6 +68,10 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new OktaAuthenticator(session, type);
             }
+            else if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new OAuthAuthenticator(session);
+            }
 
             var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
 

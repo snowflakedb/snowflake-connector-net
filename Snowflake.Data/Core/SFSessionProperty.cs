@@ -39,6 +39,8 @@ namespace Snowflake.Data.Core
         AUTHENTICATOR,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         VALIDATE_DEFAULT_PARAMETERS,
+        [SFSessionPropertyAttr(required = false)]
+        OAUTH_TOKEN,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -165,7 +167,8 @@ namespace Snowflake.Data.Core
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
             {
                 return !(properties.ContainsKey(SFSessionProperty.AUTHENTICATOR)
-                    && properties[SFSessionProperty.AUTHENTICATOR] == "externalbrowser");
+                    && (properties[SFSessionProperty.AUTHENTICATOR] == "externalbrowser" ||
+                        properties[SFSessionProperty.AUTHENTICATOR] == "oauth"));
             }
             else
             {
