@@ -169,6 +169,6 @@
     <value>OS platform is not supported.</value>
   </data>
   <data name="JWT_ERROR_READING_PK" xml:space="preserve">
-    <value>Could not read RSA private key {0}. \n Error : {1}</value>
+    <value>Could not read private key {0}. \n Error : {1}</value>
   </data>
 </root>

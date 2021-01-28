@@ -19,7 +19,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.X509;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-
 namespace Snowflake.Data.Core.Authenticator
 {
     /// <summary>
@@ -28,6 +27,9 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     {
+        // The RSA provider to use to sign the tokens
+        private static RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
+
         // The authenticator setting value to use to authenticate using key pair authentication.
         public static readonly string AUTH_NAME = "snowflake_jwt";
 
@@ -50,7 +52,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async public Task AuthenticateAsync(CancellationToken cancellationToken)
         {
-            GenerateJwtToken();
+            jwtToken = GenerateJwtToken();
 
             // Send the http request with the generate token
             logger.Debug("Send login request");
@@ -60,7 +62,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.Authenticate"/>
         public void Authenticate()
         {
-            GenerateJwtToken();
+            jwtToken = GenerateJwtToken();
 
             // Send the http request with the generate token
             logger.Debug("Send login request");
@@ -86,32 +88,47 @@ namespace Snowflake.Data.Core.Authenticator
         {
             logger.Info("Key-pair Authentication");
 
-            var pkPath = session.properties[SFSessionProperty.PRIVATE_KEY_FILE];
-            session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE_PWD, out var pkPwd);
+            bool hasPkPath = 
+                session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
+            bool hasPkContent = 
+                session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
+            session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
             // Extract the public key from the private key to generate the fingerprints
             RSAParameters rsaParams;
             String publicKeyFingerPrint = null;
             AsymmetricCipherKeyPair keypair = null;
-            using (TextReader tr = new StreamReader(pkPath))
+            using (TextReader tr =
+                hasPkPath ? (TextReader) new StreamReader(pkPath) : new StringReader(pkContent))
             {
                 try
                 {
+                    PemReader pr = null;
                     if (null != pkPwd)
                     {
-                        // Encrypted key
                         IPasswordFinder ipwdf = new PasswordFinder(pkPwd);
-                        PemReader pr = new PemReader(tr, ipwdf);
-                        RsaPrivateCrtKeyParameters pk = pr.ReadObject() as RsaPrivateCrtKeyParameters;
-                        rsaParams = DotNetUtilities.ToRSAParameters(pk);
-                        keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
+                        pr = new PemReader(tr, ipwdf);
                     }
                     else
                     {
-                        // Unencrypted key
-                        keypair = new PemReader(tr).ReadObject() as AsymmetricCipherKeyPair;
+                        pr = new PemReader(tr);
+                    }
+
+                    object key = pr.ReadObject();
+                    // Infer what the pem reader is sending back based on the object properties
+                    if (key.GetType().GetProperty("Private") != null)
+                    {
+                        // PKCS1 key
+                        keypair = (AsymmetricCipherKeyPair)key;
                         rsaParams = DotNetUtilities.ToRSAParameters(
-                            keypair.Private as RsaPrivateCrtKeyParameters);
+                        keypair.Private as RsaPrivateCrtKeyParameters);
+                    }
+                    else
+                    {
+                        // PKCS8 key
+                        RsaPrivateCrtKeyParameters pk = (RsaPrivateCrtKeyParameters)key;
+                        rsaParams = DotNetUtilities.ToRSAParameters(pk);
+                        keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
                     }
                     if (keypair == null)
                     {
@@ -122,7 +139,7 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     throw new SnowflakeDbException(
                         SFError.JWT_ERROR_READING_PK,
-                        pkPath,
+                        hasPkPath ? pkPath : "with value passed in connection string",
                         e.ToString(),
                         e);
                 }
@@ -136,7 +153,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 byte[] sha256Hash = SHA256Encoder.ComputeHash(publicKeyEncoded);
                 publicKeyFingerPrint = "SHA256:" + Convert.ToBase64String(sha256Hash);
-                logger.Debug("publicKeyFingerPrint " + publicKeyFingerPrint);
             }
             
             // Generating the token 
@@ -167,38 +183,30 @@ namespace Snowflake.Data.Core.Authenticator
                         new Claim(JwtRegisteredClaimNames.Sub, accountUser),
                     };
 
-            using (RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider())
-            {
-                logger.Debug("claims " + claims);
-                rsaProvider.ImportParameters(rsaParams);
-                var token = new JwtSecurityToken(
-                    // Issuer
-                    issuer,
-                    // Audience
-                    null,
-                    // Subject
-                    claims,
-                    //NotBefore
-                    null,
-                    // Expires
-                    now.AddSeconds(60),
-                    //SigningCredentials
-                    new SigningCredentials(
-                        new RsaSecurityKey(rsaProvider), SecurityAlgorithms.RsaSha256)
-                );
+            rsaProvider.ImportParameters(rsaParams);
+            var token = new JwtSecurityToken(
+                // Issuer
+                issuer,
+                // Audience
+                null,
+                // Subject
+                claims,
+                //NotBefore
+                null,
+                // Expires
+                now.AddSeconds(60),
+                //SigningCredentials
+                new SigningCredentials(
+                    new RsaSecurityKey(rsaProvider), SecurityAlgorithms.RsaSha256)
+            );
 
-                logger.Debug("Unserialized token " + token);
+            // Serialize the jwt token
+            // Base64URL-encoded parts delimited by period ('.'), with format :
+            //     [header-base64url].[payload-base64url].[signature-base64url]
+            var handler = new JwtSecurityTokenHandler();
+            string jwtToken = handler.WriteToken(token);
 
-                logger.Debug("encoded header " + token.EncodedHeader);
-                logger.Debug("encoded payload " + token.EncodedPayload);
-                logger.Debug("SignatureAlgorithm " + token.SignatureAlgorithm);
-
-                // Serialize the jwt token
-                // Base64URL-encoded parts delimited by period ('.'), with format :
-                //     [header-base64url].[payload-base64url].[signature-base64url]
-                var handler = new JwtSecurityTokenHandler();
-                return handler.WriteToken(token);
-            }
+            return jwtToken;
         }
 
         /// <summary>

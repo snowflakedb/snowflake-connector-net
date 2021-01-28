@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false)]
         PRIVATE_KEY_FILE,
         [SFSessionPropertyAttr(required = false)]
-        PRIVATE_KEY_FILE_PWD,
+        PRIVATE_KEY_PWD,
         [SFSessionPropertyAttr(required = false)]
         PRIVATE_KEY,
         [SFSessionPropertyAttr(required = false)]
