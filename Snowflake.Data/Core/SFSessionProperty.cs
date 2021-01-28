@@ -101,29 +101,81 @@ namespace Snowflake.Data.Core
             foreach (string keyVal in propertyEntry)
             {
                 if (keyVal.Length > 0)
-                {
-                    string[] token = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    if (token.Length == 2)
+                {                    
+                    string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
+                    if (tokens.Length != 2)
                     {
-                        try
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring
+                        // To include an equal sign (=) in a keyword or value, it must be preceded 
+                        // by another equal sign. For example, in the hypothetical connection 
+                        // string "key==word=value" :
+                        // the keyword is "key=word" and the value is "value".
+                        int currentIndex = 0;
+                        int singleEqualIndex = -1;
+                        while (currentIndex <= keyVal.Length)
                         {
-                            SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), token[0].ToUpper());
-                            properties.Add(p, token[1]);
-                            logger.Info($"Connection property: {p}, value: {(p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : token[1])}");
+                            currentIndex = keyVal.IndexOf("=", currentIndex);
+                            if (-1 == currentIndex)
+                            {
+                                // No '=' found
+                                break;
+                            }
+                            if ((currentIndex < (keyVal.Length - 1)) && 
+                                ('=' != keyVal[currentIndex + 1]))
+                            {
+                                if (0 > singleEqualIndex)
+                                {
+                                    // First single '=' encountered
+                                    singleEqualIndex = currentIndex;
+                                    currentIndex++;
+                                }
+                                else
+                                {
+                                    // Found another single '=' which is not allowed
+                                    singleEqualIndex = -1;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                // skip the doubled one
+                                currentIndex += 2;
+                            }
                         }
-                        catch (ArgumentException e)
+                        
+                        if ((singleEqualIndex > 0) && (singleEqualIndex < keyVal.Length - 1))
                         {
-                            logger.Warn($"Property {token[0]} not found ignored.", e);
+                            // Split the key/value at the right index and deduplicate '=='
+                            tokens = new string[2];
+                            tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==","=");
+                            tokens[1] = keyVal.Substring(
+                                singleEqualIndex + 1, 
+                                keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
+                        }
+                        else
+                        {
+                            // An equal sign was not doubled or something else happended
+                            // making the connection invalid
+                            string invalidStringDetail =
+                                String.Format("Invalid key value pair {0}", keyVal);
+                            SnowflakeDbException e =
+                                new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
+                                new object[] { invalidStringDetail });
+                            logger.Error("Invalid string.", e);
+                            throw e;
                         }
                     }
-                    else
+
+                    try
                     {
-                        string invalidStringDetail = String.Format("Invalid key value pair {0}", keyVal);
-                        SnowflakeDbException e = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
-                            new object[] { invalidStringDetail });
-                        logger.Error("Invalid string.", e);
-                        throw e;
+                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                            typeof(SFSessionProperty), tokens[0].ToUpper());
+                        properties.Add(p, tokens[1]);
+                        logger.Info($"Connection property: {p}, value: {(p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : tokens[1])}");
+                    }
+                    catch (ArgumentException e)
+                    {
+                        logger.Warn($"Property {tokens[0]} not found ignored.", e);
                     }
                 }
             }
