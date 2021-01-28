@@ -27,15 +27,15 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        // The RSA provider to use to sign the tokens
-        private static RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
-
         // The authenticator setting value to use to authenticate using key pair authentication.
         public static readonly string AUTH_NAME = "snowflake_jwt";
 
         // The logger.
         private static readonly SFLogger logger =
             SFLoggerFactory.GetLogger<KeyPairAuthenticator>();
+
+        // The RSA provider to use to sign the tokens
+        private static RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
 
         // The jwt token to send in the login request.
         private string jwtToken;
@@ -79,10 +79,6 @@ namespace Snowflake.Data.Core.Authenticator
         /// <summary>
         /// Generates a JwtToken to use for login.
         /// </summary>
-        /// <param name="pkPath">The path to the private key file.</param>
-        /// <param name="pkPwd">The password to decrypt the key or null if no password</param>
-        /// <param name="account">The Snowflake account.</param>
-        /// <param name="user">The Snowflake user.</param>
         /// <returns>The generated JWT token.</returns>
         private string GenerateJwtToken()
         {
