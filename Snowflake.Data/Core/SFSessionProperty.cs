@@ -61,6 +61,13 @@ namespace Snowflake.Data.Core
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
+        // Connection string properties to obfuscate in the log
+        static private List<SFSessionProperty> secretProps = 
+            new List<SFSessionProperty>{
+                SFSessionProperty.PASSWORD,
+                SFSessionProperty.PRIVATE_KEY,
+                SFSessionProperty.TOKEN};
+
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
@@ -171,7 +178,7 @@ namespace Snowflake.Data.Core
                         SFSessionProperty p = (SFSessionProperty)Enum.Parse(
                             typeof(SFSessionProperty), tokens[0].ToUpper());
                         properties.Add(p, tokens[1]);
-                        logger.Info($"Connection property: {p}, value: {(p == SFSessionProperty.PASSWORD ? "XXXXXXXX" : tokens[1])}");
+                        logger.Info($"Connection property: {p}, value: {(secretProps.Contains(p) ? "XXXXXXXX" : tokens[1])}");
                     }
                     catch (ArgumentException e)
                     {
