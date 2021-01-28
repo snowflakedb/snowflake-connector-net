@@ -66,7 +66,8 @@ namespace Snowflake.Data.Core
             new List<SFSessionProperty>{
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
-                SFSessionProperty.TOKEN};
+                SFSessionProperty.TOKEN,
+                SFSessionProperty.PRIVATE_KEY_PWD};
 
         public override bool Equals(object obj)
         {
