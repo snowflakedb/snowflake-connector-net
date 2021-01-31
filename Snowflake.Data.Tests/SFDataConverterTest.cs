@@ -51,11 +51,10 @@ namespace Snowflake.Data.Tests
                 inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
             }
 
-            var dataConverter = new SFDataConverter();
             var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var tickDiff = inputTime.Ticks - unixEpoch.Ticks;
             var inputStringAsItWasFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
-            var result = dataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+            var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
             Assert.AreEqual(inputTime, result);
         }
 
@@ -97,5 +96,29 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(dtExpected, dtResult);
         }
 
+        [Test]
+        [TestCase("9223372036854775807")]
+        [TestCase("-9223372036854775808")]
+        [TestCase("-1")]
+        [TestCase("999999999999999999")]
+        public void TestConvertToInt64(string s)
+        {
+            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64));
+            Int64 expected = Convert.ToInt64(s);
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        [TestCase("9223372036854775807.9223372036854775807")]
+        [TestCase("-9223372036854775807.1234567890")]
+        [TestCase("-1.300")]
+        [TestCase("999999999999999999.000000000000100000000000")]
+        [TestCase("4294967295.4294967296")]
+        public void TestConvertToDecimal(string s)
+        {
+            decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
+            decimal expected = Convert.ToDecimal(s, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

@@ -20,74 +20,100 @@ namespace Snowflake.Data.Core
         TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY
     }
 
-    class SFDataConverter
+    static class SFDataConverter
     {
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFDataConverter>();
-
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        private Dictionary<Type, TypeConverter> typeConverters = new Dictionary<Type, TypeConverter>();
-
-        internal SFDataConverter()
+        // Method with the same signature as before the performance work
+        // Used by unit tests only
+        internal static object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
         {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            // Create an UTF8Buffer with an offset to get better testing
+            byte[] b1 = Encoding.UTF8.GetBytes(srcVal);
+            byte[] b2 = new byte[b1.Length + 100];
+            Array.Copy(b1, 0, b2, 100, b1.Length);
+            var v = new UTF8Buffer(b2, 100, b1.Length);
+            return ConvertToCSharpVal(v, srcType, destType);
         }
-        
-        internal object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
-        {
-            //Logger.DebugFmt("src value: {0}, srcType: {1}, destType: {2}", srcVal, srcType, destType);
 
+        internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType)
+        {
             if (srcVal == null)
                 return DBNull.Value;
 
-            if (destType == typeof(short) 
-                || destType == typeof(int)
-                || destType == typeof(long)
-                || destType == typeof(Guid)
-                || destType == typeof(double)
-                || destType == typeof(float)
-                || destType == typeof(decimal))
+            try
             {
-                if (!typeConverters.ContainsKey(destType))
+                // The most common conversions are checked first for maximum performance
+                if (destType == typeof(Int64)) 
                 {
-                    typeConverters.Add(destType, TypeDescriptor.GetConverter(destType));
+                    return FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
                 }
-                return typeConverters[destType].ConvertFrom(srcVal);
+                else if (destType == typeof(Int32))
+                {
+                    return FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                }
+                else if (destType == typeof(decimal))
+                {
+                    return FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length);
+                }
+                else if (destType == typeof(string))
+                {
+                    return srcVal.ToString();
+                }
+                else if (destType == typeof(DateTime))
+                {
+                    return ConvertToDateTime(srcVal, srcType);
+                }
+                else if (destType == typeof(DateTimeOffset))
+                {
+                    return ConvertToDateTimeOffset(srcVal, srcType);
+                }
+                else if (destType == typeof(Boolean))
+                {
+                    return srcVal.Buffer[0] == '1' || srcVal.Buffer[0] == 't' || srcVal.Buffer[0] == 'T';
+                }
+                else if (destType == typeof(byte[]))
+                {
+                    return srcType == SFDataType.BINARY ?
+                        HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
+                }
+                else if (destType == typeof(Int16))
+                {
+                    return (Int16)FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                }
+                else if (destType == typeof(byte))
+                {
+                    return (byte)FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                }
+                else if (destType == typeof(double))
+                {
+                    return Convert.ToDouble(srcVal.ToString(), CultureInfo.InvariantCulture);
+                }
+                else if (destType == typeof(float))
+                {
+                    return Convert.ToSingle(srcVal.ToString(), CultureInfo.InvariantCulture);
+                }
+                else if (destType == typeof(Guid))
+                {
+                    return new Guid(srcVal.ToString());
+                }
+                else
+                {
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Invalid destination type.");
+                }
             }
-            else if (destType == typeof(Boolean))
+            catch (OverflowException)
             {
-                return srcVal.Equals("1", StringComparison.OrdinalIgnoreCase) ||
-                       srcVal.Equals("true", StringComparison.OrdinalIgnoreCase);
-            }
-            else if (destType == typeof(string))
-            {
-                return srcVal;
-            }
-            else if (destType == typeof(DateTime))
-            {
-                return ConvertToDateTime(srcVal, srcType);
-            }
-            else if (destType == typeof(DateTimeOffset))
-            {
-                return ConvertToDateTimeOffset(srcVal, srcType);
-            }
-            else if (destType == typeof(byte[]))
-            {
-                return srcType == SFDataType.BINARY ? 
-                    HexToBytes(srcVal) : Encoding.UTF8.GetBytes(srcVal);
-            }
-            else
-            {
-                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Invalid destination type.");
+                throw new OverflowException($"Error converting '{srcVal} to {destType.Name}'. Use GetString() to handle very large values");
             }
         }
 
-        private static DateTime ConvertToDateTime(string srcVal, SFDataType srcType)
+        private static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
                 case SFDataType.DATE:
-                    long srcValLong = Int64.Parse(srcVal);
+                    long srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
                     return UnixEpoch.AddDays(srcValLong);
 
                 case SFDataType.TIME:
@@ -102,12 +128,12 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static DateTimeOffset ConvertToDateTimeOffset(string srcVal, SFDataType srcType)
+        private static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    int spaceIndex = srcVal.IndexOf(' ');
+                    int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length); ;
                     if (spaceIndex == -1)
                     {
                         throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
@@ -115,9 +141,10 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        Tuple<long, long> secAndNsecTZ = ExtractTimestamp(srcVal.Substring(0, spaceIndex));
+                        spaceIndex -= srcVal.offset;
+                        Tuple<long, long> secAndNsecTZ = ExtractTimestamp(new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex));
 
-                        int offset = Int32.Parse(srcVal.Substring(spaceIndex + 1, srcVal.Length - spaceIndex - 1));
+                        int offset = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset + spaceIndex + 1, srcVal.length - spaceIndex - 1);
                         TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
                         return new DateTimeOffset(UnixEpoch.Ticks +
                             (secAndNsecTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecTZ.Item2) / 100, TimeSpan.Zero).ToOffset(offSetTimespan);
@@ -134,30 +161,41 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static Tuple<long, long> ExtractTimestamp(string srcVal)
+        static int[] powersOf10 =  { 
+            1, 
+            10, 
+            100, 
+            1000, 
+            10000, 
+            100000, 
+            1000000, 
+            10000000, 
+            100000000 
+        };
+
+        private static Tuple<long, long> ExtractTimestamp(UTF8Buffer srcVal)
         {
-            int dotIndex = srcVal.IndexOf('.');
+            int dotIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)'.', srcVal.offset, srcVal.length);
             if (dotIndex == -1)
             {
-                return Tuple.Create(Int64.Parse(srcVal), (long)0);
+                return Tuple.Create(FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length), (long)0);
             }
             else
             {
-                var intPart = Int64.Parse(srcVal.Substring(0, dotIndex));
-                var decimalPartLength = srcVal.Length - dotIndex - 1;
-                var decimalPartStr = srcVal.Substring(dotIndex + 1, decimalPartLength);
-                var decimalPart = Int64.Parse(decimalPartStr);
+                dotIndex -= srcVal.offset;
+                var intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, dotIndex);
+                var decimalPartLength = srcVal.length - dotIndex - 1;
+                var decimalPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset + dotIndex + 1, decimalPartLength);
                 // If the decimal part contained less than nine characters, we must convert the value to nanoseconds by
                 // multiplying by 10^[precision difference].
-                if (decimalPartLength < 9)
+                if (decimalPartLength < 9 && decimalPartLength > 0)
                 {
-                    decimalPart *= (int) Math.Pow(10, 9 - decimalPartLength);
+                    decimalPart *= powersOf10[9 - decimalPartLength];
                 }
 
                 return Tuple.Create(intPart, decimalPart);                
             }
         }
-
             
         internal static Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
         {
