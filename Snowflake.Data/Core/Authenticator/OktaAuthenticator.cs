@@ -21,10 +21,7 @@ namespace Snowflake.Data.Core.Authenticator
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
-        /// <summary>
-        /// Session that create this authenticator
-        /// </summary>
-        private SFSession session;
+
         /// <summary>
         /// url of the okta idp
         /// </summary>
@@ -41,7 +38,6 @@ namespace Snowflake.Data.Core.Authenticator
         internal OktaAuthenticator(SFSession session, string oktaUriString) : 
             base(session, oktaUriString)
         {
-            this.session = session;
             oktaUrl = new Uri(oktaUriString);
         }
 
@@ -71,10 +67,10 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
-            var samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl(samlRawHtmlString);
+            VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
             await base.LoginAsync(cancellationToken);  
@@ -105,10 +101,10 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = session.restRequester.Get(samlRestRequest);
-            var samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+            samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
 
             logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl(samlRawHtmlString);
+            VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
             base.Login();
@@ -171,7 +167,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        private void VerifyPostbackUrl(string samlRawHtmlString)
+        private void VerifyPostbackUrl()
         {
             int formIndex = samlRawHtmlString.IndexOf("<form");
             bool extractSuccess = formIndex == -1;
