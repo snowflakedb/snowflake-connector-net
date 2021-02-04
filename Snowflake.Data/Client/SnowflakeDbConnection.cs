@@ -59,6 +59,7 @@ namespace Snowflake.Data.Client
         ///     the connection to the database is open, the property returns what the native provider 
         ///     returns for the DBPROP_INIT_DATASOURCE, and if that is empty, the native provider's 
         ///     DBPROP_DATASOURCENAME is returned.
+        ///     Note: not yet implemented
         /// </summary>
         public override string DataSource
         {
