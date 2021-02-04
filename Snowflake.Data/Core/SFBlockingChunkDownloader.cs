@@ -51,6 +51,7 @@ namespace Snowflake.Data.Core
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
             this.prefetchThreads = GetPrefetchThreads(ResultSet);
+            externalCancellationToken = cancellationToken;
 
             var idx = 0;
             foreach(ExecResponseChunk chunkInfo in chunkInfos)

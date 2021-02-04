@@ -61,6 +61,7 @@ namespace Snowflake.Data.Core
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<IResultChunk>>();
+            externalCancellationToken = cancellationToken;
 
             for (int i=0; i<prefetchSlot; i++)
             {

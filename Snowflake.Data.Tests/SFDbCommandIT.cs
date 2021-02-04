@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests
                     t.Wait();
                     Assert.Fail();
                 }
-                catch (AggregateException e)
+                catch
                 {
                     // assert that cancel is not triggered by timeout, but external cancellation 
                     Assert.IsTrue(externalCancel.IsCancellationRequested);

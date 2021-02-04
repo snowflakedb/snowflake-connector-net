@@ -82,6 +82,11 @@ namespace Snowflake.Data.Core
             }
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");

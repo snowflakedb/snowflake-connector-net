@@ -82,7 +82,7 @@ namespace Snowflake.Data.Core.Authenticator
                         await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
                     logger.Warn("External browser response not sent out");
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core.Authenticator
                         output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
                     logger.Warn("External browser response not sent out");
