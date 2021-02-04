@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Core.Authenticator
 {
     /// <summary>
-    /// AUthenticator used when using OAuth authenticator.
+    /// OAuthenticator is used when using  an OAuth token for authentication.
     /// See <see cref="https://docs.snowflake.com/en/user-guide/oauth.html"/> for more information.
     /// </summary>
     class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         // The logger.
         private static readonly SFLogger logger =
-            SFLoggerFactory.GetLogger<KeyPairAuthenticator>();
+            SFLoggerFactory.GetLogger<OAuthAuthenticator>();
 
         /// <summary>
         /// Constructor for the oauth authenticator.
