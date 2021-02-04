@@ -1,3 +1,4 @@
+
 Snowflake Connector for .NET
 ============================
 
@@ -100,23 +101,30 @@ Create a Connection
 -------------------
 
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
-i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all valid connection properties:
+i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
+To include an equal sign (=) in a keyword or value, it must be preceded by another equal sign. For example, in the hypothetical connection string "key==word=value" : the keyword is "key=word" and the value is "value".
+
+The following table lists all valid connection properties:
 <br />
 
-| Connection Property | Required | Comment                                                                       |
-|---------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT             | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instead of XXX.us-east-1.|
-| DB                  | No       |                                                                               |
-| HOST                | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
-| PASSWORD            | Depends  | Ignored for external browser, required for other authentication methods.      |
-| ROLE                | No       |                                                                               |
-| SCHEMA              | No       |                                                                               |
-| USER                | Yes      | For okta and externalbrowser, this should be the login name for your idp.     |
-| WAREHOUSE           | No       |                                                                               |
-| CONNECTION_TIMEOUT  | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
-| AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default), [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only) and [externalbrowser](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#browser-based-sso).  |
+| Connection Property       | Required | Comment                                                                       |
+|---------------------------|----------|-------------------------------------------------------------------------------|
+| ACCOUNT                   | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instead of XXX.us-east-1.|
+| DB                        | No       |                                                                               |
+| HOST                      | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
+| PASSWORD                  | Depends  | Required for snowflake(default) and native sso okta authentication methods. Ignored for all the other authentication types.|
+| ROLE                      | No       |                                                                               |
+| SCHEMA                    | No       |                                                                               |
+| USER                      | Yes      | For native sso okta and externalbrowser, this should be the login name for your idp.     |
+| WAREHOUSE                 | No       |                                                                               |
+| CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| AUTHENTICATOR             | No       | The method of authentication. Currently supports snowflake(default), [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only), [externalbrowser](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#browser-based-sso), [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html) and [oauth](https://docs.snowflake.com/en/user-guide/oauth.html)<br />- When using *snowflake*: USER and PASSWORD are required.<br />- When using *externalbrowser*: USER is required.<br /> - When using *snowflake_jwt*: PRIVATE_KEY_FILE or PRIVATE_KEY are required. <br />- When using *oauth*: TOKEN is required. <br />- When using *native sso okta*: USER and PASSWORD are required. |
 |VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
+|PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
+|PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key if the key is crypted.|
+|PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. Don't forget to double all equal signs in the private key value to ensure that the connection string is parsed correctly.|
+|TOKEN                      |Depends   |The oauth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 
 <br />
 
