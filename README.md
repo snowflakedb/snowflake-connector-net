@@ -123,7 +123,7 @@ The following table lists all valid connection properties:
 |VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 |PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
 |PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key, if the key is encrypted.|
-|PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. Don't forget to double all equal signs in the private key value to ensure that the connection string is parsed correctly.|
+|PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
 |TOKEN                      |Depends   |The oauth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 
 <br />
