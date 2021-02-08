@@ -103,7 +103,7 @@ Create a Connection
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
-To include an equal sign (=) in a keyword or value, it must be preceded by another equal sign. For example, in the hypothetical connection string "key==word=value" : the keyword is "key=word" and the value is "value".
+Note: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
 
 The following table lists all valid connection properties:
 <br />
