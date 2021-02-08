@@ -113,7 +113,7 @@ The following table lists all valid connection properties:
 | ACCOUNT                   | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instead of XXX.us-east-1.|
 | DB                        | No       |                                                                               |
 | HOST                      | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
-| PASSWORD                  | Depends  | Required for snowflake(default) and native sso okta authentication methods. Ignored for all the other authentication types.|
+| PASSWORD                  | Depends  | Required if AUTHENTICATOR is set to snowflake (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
 | ROLE                      | No       |                                                                               |
 | SCHEMA                    | No       |                                                                               |
 | USER                      | Yes      | For native sso okta and externalbrowser, this should be the login name for your idp.     |
