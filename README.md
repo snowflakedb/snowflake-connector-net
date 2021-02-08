@@ -122,7 +122,7 @@ The following table lists all valid connection properties:
 | AUTHENTICATOR             | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br / > - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
 |VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 |PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
-|PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key if the key is crypted.|
+|PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key, if the key is encrypted.|
 |PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. Don't forget to double all equal signs in the private key value to ensure that the connection string is parsed correctly.|
 |TOKEN                      |Depends   |The oauth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 
