@@ -128,7 +128,7 @@ The following table lists all valid connection properties:
 
 <br />
 
-The following example demonstrate how to open a connection to Snowflake. This example uses a password for authentication.
+The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
