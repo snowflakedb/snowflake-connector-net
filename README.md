@@ -110,13 +110,13 @@ The following table lists all valid connection properties:
 
 | Connection Property       | Required | Comment                                                                       |
 |---------------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT                   | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instead of XXX.us-east-1.|
+| ACCOUNT                   | Yes      | Account should not include region or cloud provider information. e.g. account should be XXX instead of XXX.us-east-1.|
 | DB                        | No       |                                                                               |
-| HOST                      | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
-| PASSWORD                  | Depends  | Required if AUTHENTICATOR is set to snowflake (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
+| HOST                      | No       | If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, e.g. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
+| PASSWORD                  | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
 | ROLE                      | No       |                                                                               |
 | SCHEMA                    | No       |                                                                               |
-| USER                      | Yes      | For native sso okta and externalbrowser, this should be the login name for your idp.     |
+| USER                      | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
 | WAREHOUSE                 | No       |                                                                               |
 | CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
 | AUTHENTICATOR             | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
@@ -124,7 +124,7 @@ The following table lists all valid connection properties:
 |PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
 |PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key, if the key is encrypted.|
 |PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
-|TOKEN                      |Depends   |The oauth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
+|TOKEN                      |Depends   |The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 
 <br />
 
@@ -143,7 +143,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
 If you are using a different method for authentication, see the examples below:
 
-* Key-pair authentication
+* **Key-pair authentication**
 
   After setting up [key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth.html), you can specify the
   private key for authentication in one of the following ways:
@@ -153,7 +153,7 @@ If you are using a different method for authentication, see the examples below:
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
-        conn.ConnectionString = "account=testaccount;user=testuser;authenticator=snowflake_jwt;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
+        conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
 
         conn.Open();
     
@@ -170,7 +170,7 @@ If you are using a different method for authentication, see the examples below:
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
-        conn.ConnectionString = "account=testaccount;user=testuser;authenticator=snowflake_jwt;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
+        conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
 
         conn.Open();
     
@@ -190,7 +190,7 @@ If you are using a different method for authentication, see the examples below:
     {
         string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
 
-        conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0}", privateKeyContent);
+        conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
         conn.Open();
     
@@ -202,9 +202,10 @@ If you are using a different method for authentication, see the examples below:
 
     * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
 
-* OAuth
+* **OAuth**
 
-  After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), you can specify the
+  After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), set `AUTHENTICATOR=oauth` and `TOKEN` to the
+  OAuth token in the connection string.
 
   ```cs
   using (IDbConnection conn = new SnowflakeDbConnection())
@@ -221,6 +222,48 @@ If you are using a different method for authentication, see the examples below:
 
   * `{oauthTokenValue}` is the oauth token to use for authentication.
 
+* **Browser-based SSO**
+
+  In the connection string, set `AUTHENTICATOR=externalbrowser`, and set `USER` to the login name for your IdP.
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;authenticator=externalbrowser;user={login_name_for_IdP};db=testdb;schema=testschema";
+
+      conn.Open();
+
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{login_name_for_IdP}` is your login name for your IdP.
+
+
+* **Native SSO through Okta**
+
+  In the connection string, set `AUTHENTICATOR` to the
+  [URL of the endpoint for your Okta account](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#label-native-sso-okta),
+  and set `USER` to the login name for your IdP.
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;authenticator={okta_url_endpoint};user={login_name_for_IdP};db=testdb;schema=testschema";
+
+      conn.Open();
+
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{okta_url_endpoint}` is the URL for the endpoint for your Okta account (e.g. `https://<okta_account_name>.okta.com`).
+  * `{login_name_for_IdP}` is your login name for your IdP.
+
 
 Run a Query and Read Data
 -------------------------
@@ -234,12 +277,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     IDbCommand cmd = conn.CreateCommand();
     cmd.CommandText = "select * from t";
     IDataReader reader = cmd.ExecuteReader();
-                
+
     while(reader.Read())
     {
         Console.WriteLine(reader.GetString(0));
     }
-    
+
     conn.Close();
 }
 ```
@@ -255,7 +298,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     IDbCommand cmd = conn.CreateCommand();
     cmd.CommandText = "insert into t values (?),(?),(?)";
-                  
+
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
     p1.Value = 10;
@@ -275,8 +318,8 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     cmd.Parameters.Add(p3);
 
     var count = cmd.ExecuteNonQuery();
-    Assert.AreEqual(3, count);             
-    
+    Assert.AreEqual(3, count);
+
     conn.Close();
 }
 ```
@@ -291,7 +334,7 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
   <configSections>
     <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
   </configSections>
-  
+
   <log4net>
     <appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
       <file value="snowflake_dotnet.log" />
