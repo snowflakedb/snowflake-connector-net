@@ -128,7 +128,7 @@ The following table lists all valid connection properties:
 
 <br />
 
-Sample code to open a connection to Snowflake:
+The following example demonstrate how to open a connection to Snowflake. This example uses a password for authentication.
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -140,6 +140,87 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+If you are using a different method for authentication, see the examples below:
+
+* Key-pair authentication
+
+  After setting up [key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth.html), you can specify the
+  private key for authentication in one of the following ways:
+
+  * Specify the file containing an unencrypted private key:
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        conn.ConnectionString = "account=testaccount;user=testuser;authenticator=snowflake_jwt;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+
+  * Specify the file containing an encrypted private key:
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        conn.ConnectionString = "account=testaccount;user=testuser;authenticator=snowflake_jwt;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    * `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
+
+  * Specify an unencrypted private key (read from a file):
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
+
+        conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0}", privateKeyContent);
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+
+* OAuth
+
+  After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), you can specify the
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
+
+      conn.Open();
+    
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{oauthTokenValue}` is the oauth token to use for authentication.
+
 
 Run a Query and Read Data
 -------------------------
