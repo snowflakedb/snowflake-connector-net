@@ -4,7 +4,9 @@ platform: Any CPU
 image: Visual Studio 2017
 environment:
   my_secret:
-    secure: TQ6UX7StbAoySBfSbBAu+B0XnNUQ7I9Tsb/2Wy7XPOc=
+    secure: Zb410wXwi0n5OR/ZQ4NgBLN0hiTdGttXF/iyJ+SDHJY=
+  my_salt:
+    secure: rNbecV3CyhplvzQJXvvDDP7Bu1tPaL7pCdLHCbI0rPjwEEj4kWZ0MUd7cr5S8gINS7OfHPiY1x9pK7qr3A57Eg==
   my_gcp_secret:
     secure: zkVb0HH9YV7arn4DrfEoiYSywjIyzpjT0n7OJaN/n5Y=
   my_gcp_salt:
@@ -28,7 +30,7 @@ environment:
  
 install:
   - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
-  - cmd: appveyor-tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret%
+  - cmd: appveyor-tools\secure-file -decrypt Snowflake.Data.Tests\parameters.json.enc -secret %my_secret% -salt %my_salt%
   - cmd: appveyor-tools\secure-file -decrypt Snowflake.Data.Tests\parameters_gcp.json.enc -secret %my_gcp_secret% -salt %my_gcp_salt%
   
 before_build:
