@@ -66,7 +66,6 @@ namespace Snowflake.Data.Core
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 CookieContainer = cookieContainer = new CookieContainer()
-                
             }));
         }
 
