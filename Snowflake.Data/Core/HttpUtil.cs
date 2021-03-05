@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Threading.Tasks;
@@ -18,8 +18,29 @@ namespace Snowflake.Data.Core
     {
         static private HttpClient httpClient = null;
 
+        static private CookieContainer cookieContainer = null;
+
         static private object httpClientInitLock = new object();
+
+        /// <summary>
+        /// Clear all the cookies for the given uri.
+        /// </summary>
+        /// <param name="uri">The URI to clear.</param>
+        static public void ClearCookies(Uri uri)
+        {
+            if (cookieContainer == null)
+            {
+                return;
+            }
+
+            var cookies = cookieContainer.GetCookies(uri);
+            foreach (Cookie cookie in cookies)
+            {
+                cookie.Expired = true;
+            }
+        }
         
+
         static public HttpClient getHttpClient()
         {
             lock (httpClientInitLock)
@@ -43,7 +64,9 @@ namespace Snowflake.Data.Core
             ServicePointManager.DefaultConnectionLimit = 20;
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                CookieContainer = cookieContainer = new CookieContainer()
+                
             }));
         }
 
