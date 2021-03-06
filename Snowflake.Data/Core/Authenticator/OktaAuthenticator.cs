@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -46,6 +46,11 @@ namespace Snowflake.Data.Core.Authenticator
         {
             logger.Info("Okta Authentication");
 
+            // Clear cookies before authenticating because when a cookie is present in the request,
+            // Okta will assume it is coming from a browser and perform a CSRF check.
+            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
+            HttpUtil.ClearCookies(oktaUrl);
+
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
             var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
@@ -79,6 +84,11 @@ namespace Snowflake.Data.Core.Authenticator
         void IAuthenticator.Authenticate()
         {
             logger.Info("Okta Authentication");
+
+            // Clear cookies before authenticating because when a cookie is present in the request,
+            // Okta will assume it is coming from a browser and perform a CSRF check.
+            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
+            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
