@@ -112,6 +112,10 @@ namespace Snowflake.Data.Core
             }
             catch(Exception e)
             {
+                if (externalCancellationToken.IsCancellationRequested)
+                {
+                    return null;
+                }
                 throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
             }
         }
