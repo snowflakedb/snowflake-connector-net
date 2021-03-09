@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -18,26 +18,26 @@ namespace Snowflake.Data.Core.Authenticator
     /// <summary>
     /// OktaAuthenticator would perform serveral steps of authentication with Snowflake and Okta idp
     /// </summary>
-    class OktaAuthenticator : IAuthenticator
+    class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
-        /// <summary>
-        /// Session that create this authenticator
-        /// </summary>
-        private SFSession session;
+
         /// <summary>
         /// url of the okta idp
         /// </summary>
         private Uri oktaUrl;
+
+        // The raw Saml token.
+        private string samlRawHtmlString;
 
         /// <summary>
         /// Constructor of the Okta authenticator
         /// </summary>
         /// <param name="session"></param>
         /// <param name="oktaUriString"></param>
-        internal OktaAuthenticator(SFSession session, string oktaUriString)
+        internal OktaAuthenticator(SFSession session, string oktaUriString) : 
+            base(session, oktaUriString)
         {
-            this.session = session;
             oktaUrl = new Uri(oktaUriString);
         }
 
@@ -45,6 +45,11 @@ namespace Snowflake.Data.Core.Authenticator
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("Okta Authentication");
+
+            // Clear cookies before authenticating because when a cookie is present in the request,
+            // Okta will assume it is coming from a browser and perform a CSRF check.
+            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
+            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
@@ -67,20 +72,23 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
-            var samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl(samlRawHtmlString);
+            VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
-            var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
-            var authnResponse = await session.restRequester.PostAsync<LoginResponse>(loginRestRequest, cancellationToken).ConfigureAwait(false);
-            session.ProcessLoginResponse(authnResponse);   
+            await base.LoginAsync(cancellationToken);  
         }
 
         void IAuthenticator.Authenticate()
         {
             logger.Info("Okta Authentication");
+
+            // Clear cookies before authenticating because when a cookie is present in the request,
+            // Okta will assume it is coming from a browser and perform a CSRF check.
+            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
+            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
@@ -103,15 +111,13 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = session.restRequester.Get(samlRestRequest);
-            var samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+            samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
 
             logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl(samlRawHtmlString);
+            VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
-            var loginRestRequest = BuildOktaLoginRestRequest(samlRawHtmlString);
-            var authnResponse = session.restRequester.Post<LoginResponse>(loginRestRequest);
-            session.ProcessLoginResponse(authnResponse);   
+            base.Login();
         }
 
         private SFRestRequest BuildAuthenticatorRestRequest()
@@ -154,26 +160,10 @@ namespace Snowflake.Data.Core.Authenticator
             };
         }
 
-        private SFRestRequest BuildOktaLoginRestRequest(string samlRawHtmlString)
+        /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
+        protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            // build uri
-            var loginUrl = session.BuildLoginUrl();
-
-            LoginRequestData data = new LoginRequestData()
-            {
-                loginName = session.properties[SFSessionProperty.USER],
-                password = session.properties[SFSessionProperty.PASSWORD],
-                accountName = session.properties[SFSessionProperty.ACCOUNT],
-                clientAppId = SFEnvironment.DriverName,
-                clientAppVersion = SFEnvironment.DriverVersion,
-                clientEnv = SFEnvironment.ClientEnv,
-                RawSamlResponse = samlRawHtmlString,
-                SessionParameters = session.ParameterMap,
-            };
-
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            data.RawSamlResponse = samlRawHtmlString;
         }
 
         private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)
@@ -187,7 +177,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        private void VerifyPostbackUrl(string samlRawHtmlString)
+        private void VerifyPostbackUrl()
         {
             int formIndex = samlRawHtmlString.IndexOf("<form");
             bool extractSuccess = formIndex == -1;

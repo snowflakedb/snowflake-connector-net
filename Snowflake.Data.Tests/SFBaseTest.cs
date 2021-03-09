@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -150,6 +150,30 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_URL", NullValueHandling = NullValueHandling.Ignore)]
         internal string OktaURL { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_JWT_USER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string jwtAuthUser { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PEM_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pemFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_P8_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string p8FilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pwdProtectedPrivateKeyFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKey { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pwdProtectedPrivateKey { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_PWD", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKeyFilePwd { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthToken { get; set; }
 
         public TestConfig()
         {

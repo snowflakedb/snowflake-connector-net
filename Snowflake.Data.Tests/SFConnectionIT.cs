@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 namespace Snowflake.Data.Tests
@@ -184,8 +184,8 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", 
-                       new string[]{"AZURE", "GCP"})]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "AZURE", "GCP" })]
         public void TestSwitchDb()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -257,10 +257,10 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
 
                     command.CommandText = "select current_database()";
-                    CollectionAssert.Contains(new [] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
+                    CollectionAssert.Contains(new[] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_schema()";
-                    CollectionAssert.Contains(new [] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
+                    CollectionAssert.Contains(new[] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_warehouse()";
                     // Command will return empty string if the hardcoded warehouse does not exist.
@@ -325,7 +325,8 @@ namespace Snowflake.Data.Tests
                     conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
                     conn.Open();
                     Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
-                } catch (SnowflakeDbException e)
+                }
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
                 }
@@ -339,7 +340,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString 
+                conn.ConnectionString
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
@@ -384,11 +385,286 @@ namespace Snowflake.Data.Tests
                     conn.Open();
                     Assert.Fail();
                 }
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.AreEqual(390191, e.ErrorCode);
             }
-       }
+        }
 
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtUnencryptedPemFileConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
+                        testConfig.jwtAuthUser,
+                        testConfig.pemFilePath);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtUnencryptedP8FileConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
+                        testConfig.jwtAuthUser,
+                        testConfig.p8FilePath);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtEncryptedPkFileConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
+                        testConfig.jwtAuthUser,
+                        testConfig.pwdProtectedPrivateKeyFilePath,
+                        testConfig.privateKeyFilePwd);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtUnencryptedPkConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=snowflake_jwt;user={0};private_key={1}",
+                        testConfig.jwtAuthUser,
+                        testConfig.privateKey);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtEncryptedPkConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=snowflake_jwt;user={0};private_key={1};private_key_pwd={2}",
+                        testConfig.jwtAuthUser,
+                        testConfig.pwdProtectedPrivateKey,
+                        testConfig.privateKeyFilePwd);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtMissingConnectionSettingConnection()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator=snowflake_jwt;user={0};private_key_pwd={1}",
+                            testConfig.jwtAuthUser,
+                            testConfig.privateKeyFilePwd);
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Missing PRIVATE_KEY_FILE connection setting required for 
+                // authenticator =snowflake_jwt
+                Assert.AreEqual(270008, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtEncryptedPkFileInvalidPwdConnection()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd=Invalid",
+                            testConfig.jwtAuthUser,
+                            testConfig.pwdProtectedPrivateKeyFilePath);
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Invalid password for decrypting the private key
+                Assert.AreEqual(270052, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtEncryptedPkFileNoPwdConnection()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
+                            testConfig.jwtAuthUser,
+                            testConfig.pwdProtectedPrivateKeyFilePath);
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Invalid password (none provided) for decrypting the private key
+                Assert.AreEqual(270052, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtConnectionWithWrongUser()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
+                            "WrongUser",
+                            testConfig.pemFilePath);
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Jwt token is invalid
+                Assert.AreEqual(390144, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestJwtEncryptedPkConnectionWithWrongUser()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
+                            "WrongUser",
+                            testConfig.pwdProtectedPrivateKeyFilePath,
+                            testConfig.privateKeyFilePwd);
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Jwt token is invalid
+                Assert.AreEqual(390144, e.ErrorCode);
+            }
+        }
+
+        
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestValidOAuthConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + String.Format(
+                        ";authenticator=oauth;token={0}",
+                        testConfig.oauthToken);
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        public void TestInValidOAuthTokenConnection()
+        {
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + ";authenticator=oauth;token=notAValidOAuthToken";
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Invalid OAuth access token
+                Assert.AreEqual(390303, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        public void TestValidOAuthExpiredTokenConnection()
+        {
+
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + ";authenticator=oauth;token=ETMsDgAAAXcmdv0gABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwCAABAAECPcGqa/QJd3BMw5z2V/Fn8AAABQdCCJgbhZpzzIrh2j/ej8rXZBODsPIwM6oODfWZ3a2PNP91PdMadOoUh5NjWanGfUQdZNkVFLzh6BJdAT5XaaQdTiszkqtOao9QaWhtarKVoAFAQ+KiE/CavTBhURVKjXmSfe7k6N";
+                    conn.Open();
+                    Assert.Fail();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Token is expired
+                Assert.AreEqual(390318, e.ErrorCode);
+            }
+        }
     }
 }

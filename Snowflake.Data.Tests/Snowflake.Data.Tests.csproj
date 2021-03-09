@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.2;net46</TargetFrameworks>
+    <RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
@@ -30,7 +31,6 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
-    <PackageReference Include="Microsoft.NetCore.App" Version="2.2.8" />
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
       <Version>6.2.3</Version>
     </PackageReference>

@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// <summary>
     /// ExternalBrowserAuthenticator would start a new browser to perform authentication
     /// </summary>
-    class ExternalBrowserAuthenticator : IAuthenticator
+    class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public static readonly string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
@@ -28,29 +28,24 @@ namespace Snowflake.Data.Core.Authenticator
             "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
             "</body></html>;"
             );
-        /// <summary>
-        /// Session that create this authenticator
-        /// </summary>
-        private SFSession session;
-
+        // The saml token to send in the login request.
+        private string samlResponseToken;
+        // The proof key to send in the login request.
+        private string proofKey;
 
         /// <summary>
         /// Constructor of the External authenticator
         /// </summary>
         /// <param name="session"></param>
-        internal ExternalBrowserAuthenticator(SFSession session)
+        internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
-            this.session = session;
         }
-
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("External Browser Authentication");
 
             int localPort = GetRandomUnusedPort();
-            string proofKey;
-            string samlResponseToken;
             using (var httpListener = GetHttpListener(localPort))
             {
                 httpListener.Start();
@@ -82,7 +77,7 @@ namespace Snowflake.Data.Core.Authenticator
                         await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
                     logger.Warn("External browser response not sent out");
@@ -92,11 +87,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             logger.Debug("Send login request");
-            var loginResponse = await session.restRequester.PostAsync<LoginResponse>(
-                BuildExternalBrowserLoginRequest(samlResponseToken, proofKey),
-                cancellationToken
-                ).ConfigureAwait(false);
-            session.ProcessLoginResponse(loginResponse);
+            await base.LoginAsync(cancellationToken);
         }
 
         /// <see cref="IAuthenticator"/>
@@ -105,8 +96,6 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Info("External Browser Authentication");
 
             int localPort = GetRandomUnusedPort();
-            string proofKey;
-            string samlResponseToken;
             using (var httpListener = GetHttpListener(localPort))
             {
                 httpListener.Start();
@@ -134,7 +123,7 @@ namespace Snowflake.Data.Core.Authenticator
                         output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
                     logger.Warn("External browser response not sent out");
@@ -144,10 +133,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             logger.Debug("Send login request");
-            var loginResponse = session.restRequester.Post<LoginResponse>(
-                BuildExternalBrowserLoginRequest(samlResponseToken, proofKey)
-                );
-            session.ProcessLoginResponse(loginResponse);
+            base.Login();
         }
 
         private static int GetRandomUnusedPort()
@@ -217,26 +203,12 @@ namespace Snowflake.Data.Core.Authenticator
             return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
         }
 
-        private SFRestRequest BuildExternalBrowserLoginRequest(string token, string proofKey)
+        /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
+        protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            // build uri
-            var loginUrl = session.BuildLoginUrl();
-
-            LoginRequestData data = new LoginRequestData()
-            {
-                loginName = session.properties[SFSessionProperty.USER],
-                clientAppId = SFEnvironment.DriverName,
-                clientAppVersion = SFEnvironment.DriverVersion,
-                clientEnv = SFEnvironment.ClientEnv,
-                Token = token,
-                ProofKey = proofKey,
-                Authenticator = AUTH_NAME,
-                SessionParameters = session.ParameterMap,
-            };
-
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            // Add the token and proof key to the Data
+            data.Token = samlResponseToken;
+            data.ProofKey = proofKey;
         }
     }
 }

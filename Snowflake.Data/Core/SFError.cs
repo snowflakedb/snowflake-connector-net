@@ -60,6 +60,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270051)]
         BROWSER_RESPONSE_INVALID_PREFIX,
+
+        [SFErrorAttr(errorCode = 270052)]
+        JWT_ERROR_READING_PK,
     }
 
     class SFErrorAttr : Attribute
