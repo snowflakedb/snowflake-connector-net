@@ -217,7 +217,6 @@ namespace Snowflake.Data.Client
             logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
             try
             {
-
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
                 return new SnowflakeDbDataReader(this, result);
             }
