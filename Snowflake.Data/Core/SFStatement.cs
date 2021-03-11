@@ -201,10 +201,6 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return null;
-                }
                 logger.Error("Query execution failed.", ex);
                 throw;
             }
