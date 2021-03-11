@@ -199,9 +199,9 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
-                logger.Error("Query execution failed.", ex);
+                logger.Error("Query execution failed.");
                 throw;
             }
             finally

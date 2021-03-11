@@ -215,8 +215,17 @@ namespace Snowflake.Data.Client
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
-            var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-            return new SnowflakeDbDataReader(this, result);
+            try
+            {
+
+                var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                return new SnowflakeDbDataReader(this, result);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("The command failed to execute.", ex);
+                throw ex;
+            }
         }
 
         private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
