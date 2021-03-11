@@ -117,7 +117,8 @@ namespace Snowflake.Data.Tests
         public void TestConvertToDecimal(string s)
         {
             decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
-            decimal expected = Convert.ToDecimal(s, System.Globalization.CultureInfo.InvariantCulture);
+            decimal expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
+
             Assert.AreEqual(expected, actual);
         }
     }
