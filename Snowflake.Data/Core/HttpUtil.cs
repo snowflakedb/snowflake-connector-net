@@ -55,13 +55,14 @@ namespace Snowflake.Data.Core
 
         static private void initHttpClient()
         {
-            // enforce tls v1.2
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            ServicePointManager.UseNagleAlgorithm = false;
-            ServicePointManager.CheckCertificateRevocationList = true;
-
-            // Control how many simultaneous connections to each host are allowed from this client
-            ServicePointManager.DefaultConnectionLimit = 20;
+            // Note that these options can only be set globally
+            // We do not want to do this. 
+            // If an end user needs to change these options he can use a configuration file or set these options in the main program
+            //
+            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            // ServicePointManager.CheckCertificateRevocationList = true;
+            //
+            // Other ServicePoint options have been moved to RetryHandler.SendAsync so they only have a local effect
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -172,6 +173,12 @@ namespace Snowflake.Data.Core
             {
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
+
+                // Set service point options in a local way. We do not want to change the global state of the program
+                ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
+                p.Expect100Continue = false; // Saves about 100 ms per request
+                p.UseNagleAlgorithm = false; // Saves about 200 ms per request
+                p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallell queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
 
