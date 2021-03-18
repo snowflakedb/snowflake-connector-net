@@ -109,6 +109,72 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [TestCase("2147483647")]
+        [TestCase("-2147483648")]
+        [TestCase("-1")]
+        [TestCase("0")]
+        public void TestConvertToInt32(string s)
+        {
+            Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32));
+            Int32 expected = Convert.ToInt32(s);
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        [TestCase("32767")]
+        [TestCase("-32768")]
+        [TestCase("-1")]
+        [TestCase("0")]
+        public void TestConvertToInt16(string s)
+        {
+            Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16));
+            Int16 expected = Convert.ToInt16(s);
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        [TestCase("255")]
+        [TestCase("0")]
+        public void TestConvertToByte(string s)
+        {
+            byte actual = (byte)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte));
+            byte expected = Convert.ToByte(s);
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        [TestCase("256")]
+        [TestCase("-1")]
+        public void TestOverflowByte(string s)
+        {
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+        }
+
+        [Test]
+        [TestCase("32768")]
+        [TestCase("-32769")]
+        public void TestOverflowInt16(string s)
+        {
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
+        }
+
+        [Test]
+        [TestCase("2147483648")]
+        [TestCase("-2147483649")]
+        public void TestOverflowInt32(string s)
+        {
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
+        }
+
+        [Test]
+        [TestCase("9223372036854775808")]
+        [TestCase("-9223372036854775809")]
+        public void TestOverflowInt64(string s)
+        {
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
+        }
+
+        [Test]
         [TestCase("9223372036854775807.9223372036854775807")]
         [TestCase("-9223372036854775807.1234567890")]
         [TestCase("-1.300")]

@@ -79,11 +79,15 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(Int16))
                 {
-                    return (Int16)FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    // Use checked keyword to make sure we generate an OverflowException if conversion fails
+                    int result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    return checked((Int16)result);
                 }
                 else if (destType == typeof(byte))
                 {
-                    return (byte)FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    // Use checked keyword to make sure we generate an OverflowException if conversion fails
+                    int result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    return checked((byte)result);
                 }
                 else if (destType == typeof(double))
                 {
