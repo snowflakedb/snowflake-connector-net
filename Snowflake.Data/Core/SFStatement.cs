@@ -199,9 +199,9 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
-                logger.Error("Query execution failed.", ex);
+                logger.Error("Query execution failed.");
                 throw;
             }
             finally
@@ -303,10 +303,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException(
-                    "", response.code, response.message, "");
-                logger.Error("Query cancellation failed.", e);
-                throw e;
+                logger.Warn("Query cancellation failed.");
             }
         }
         
