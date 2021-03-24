@@ -151,10 +151,10 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private bool RequestInProgress(QueryExecResponse r) =>
+        private bool RequestInProgress(BaseRestResponse r) =>
             r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
 
-        private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
+        private bool SessionExpired(BaseRestResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
                                                           CancellationToken cancellationToken)
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Core
                 ClearQueryRequestId();
             }
         }
-        
+
         internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
             registerQueryCancellationCallback(timeout, CancellationToken.None);
@@ -306,6 +306,124 @@ namespace Snowflake.Data.Core
                 logger.Warn("Query cancellation failed.");
             }
         }
-        
+
+        /*
+        /// <summary>
+        /// Execute a sql query and return the response.
+        /// </summary>
+        /// <param name="timeout">The query timeout.</param>
+        /// <param name="sql">The sql query.</param>
+        /// <param name="bindings">Parameter bindings or null if no parameters.</param>
+        /// <param name="describeOnly">Flag indicating if this will only return the metadata.</param>
+        /// <returns>The response data.</returns>
+        /// <exception>The http request fails or the response code is not succes</exception>
+        internal T ExecuteHelper<T,U>(
+            int timeout, 
+            string sql, 
+            Dictionary<string, BindingDTO> bindings, 
+            bool describeOnly) where T : BaseQueryExecResponse<U>
+        {
+            registerQueryCancellationCallback(timeout, CancellationToken.None);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            try
+            {
+                T response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    response = _restRequester.Post<T>(queryRequest);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                if (!response.success)
+                {
+                    throw new SnowflakeDbException(
+                        response.data.sqlState,
+                        response.code,
+                        response.message,
+                        response.data.queryId);
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+
+        /// <summary>
+        /// Execute a sql query and return the response asynchrnously.
+        /// </summary>
+        /// <param name="timeout">The query timeout.</param>
+        /// <param name="sql">The sql query.</param>
+        /// <param name="bindings">Parameter bindings or null if no parameters.</param>
+        /// <param name="describeOnly">Flag indicating if this will only return the metadata.</param>
+        /// <param name="cancellationToken">The cancellation token from the upper layer.</param>
+        /// <returns>The response data.</returns>
+        /// <exception>The http request fails or the response code is not succes</exception>
+        internal async Task<T> ExecuteHelperAsync<T,U>(
+            int timeout,
+            string sql,
+            Dictionary<string, BindingDTO> bindings,
+            bool describeOnly,
+            CancellationToken cancellationToken) where T : BaseQueryExecResponse<U>
+        {
+            registerQueryCancellationCallback(timeout, cancellationToken);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            try
+            {
+                T response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                if (!response.success)
+                {
+                    throw new SnowflakeDbException(
+                        response.data.sqlState,
+                        response.code,
+                        response.message,
+                        response.data.queryId);
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+        */
+
     }
 }

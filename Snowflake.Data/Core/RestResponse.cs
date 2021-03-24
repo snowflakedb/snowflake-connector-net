@@ -13,10 +13,10 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
-        
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
-        
+
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
 
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
                 throw e;
             }
 
@@ -48,10 +48,11 @@ namespace Snowflake.Data.Core
         internal LoginResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
@@ -70,7 +71,7 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal SessionInfo authResponseSessionInfo { get; set; }
 
-   }
+    }
 
     internal class AuthenticatorResponseData
     {
@@ -85,23 +86,24 @@ namespace Snowflake.Data.Core
     }
 
 
-	internal class RenewSessionResponseData {
+    internal class RenewSessionResponseData
+    {
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
+        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {
@@ -127,10 +129,15 @@ namespace Snowflake.Data.Core
         internal string value { get; set; }
     }
 
-    internal class QueryExecResponse : BaseRestResponse
+    internal class BaseQueryExecResponse<T> : BaseRestResponse
     {
         [JsonProperty(PropertyName = "data")]
-        internal QueryExecResponseData data { get; set; }
+        internal T data { get; set; }
+    }
+
+    internal class QueryExecResponse : BaseQueryExecResponse<QueryExecResponseData>
+    {
+        // Defined for easy usage/access
     }
 
     internal class QueryExecResponseData
@@ -200,6 +207,81 @@ namespace Snowflake.Data.Core
         internal Int64 queryAbortAfterSecs { get; set; }
     }
 
+    internal class PutGetExecResponse : BaseQueryExecResponse<PutGetResponseData>
+    {
+        // Defined for easy usage/access
+    }
+    internal class PutGetResponseData
+    {
+        [JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
+        internal string command { get; set; }
+
+        [JsonProperty(PropertyName = "src_locations", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<string> src_locations { get; set; }
+
+        [JsonProperty(PropertyName = "parallel", NullValueHandling = NullValueHandling.Ignore)]
+        internal int parallel { get; set; }
+
+        [JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
+        internal int threshold { get; set; }
+
+        [JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool autoCompress { get; set; }
+
+        [JsonProperty(PropertyName = "overwrite", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool overwrite { get; set; }
+
+        [JsonProperty(PropertyName = "sourceCompression", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sourceCompression { get; set; }
+
+        [JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
+        internal PutGetStageinfo stageInfo { get; set; }
+
+        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        internal string queryId { get; set; }
+
+        [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sqlState { get; set; }
+    }
+
+    internal class PutGetStageinfo
+    {
+        [JsonProperty(PropertyName = "locationType", NullValueHandling = NullValueHandling.Ignore)]
+        internal string locationType { get; set; }
+
+        [JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
+        internal string path { get; set; }
+
+        [JsonProperty(PropertyName = "region", NullValueHandling = NullValueHandling.Ignore)]
+        internal string region { get; set; }
+
+        [JsonProperty(PropertyName = "storageAccount", NullValueHandling = NullValueHandling.Ignore)]
+        internal string storageAccount { get; set; }
+
+        [JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool isClientSideEncrypted { get; set; }
+
+        [JsonProperty(PropertyName = "creds", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<string, string> stageCredentials { get; set; }
+
+        [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal string presignedUrl { get; set; }
+
+        [JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
+        internal string endPoint { get; set; }
+    }
+    internal class PutGetEncryptionMaterial
+    {
+        [JsonProperty(PropertyName = "queryStageMasterKey", NullValueHandling = NullValueHandling.Ignore)]
+        internal string queryStageMasterKey { get; set; }
+
+        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        internal string queryId { get; set; }
+
+        [JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
+        internal long smkId { get; set; }
+    }
+
     internal class ExecResponseRowType
     {
         [JsonProperty(PropertyName = "name")]
@@ -223,7 +305,7 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "nullable")]
         internal bool nullable { get; set; }
     }
-    
+
     internal class ExecResponseChunk
     {
         [JsonProperty(PropertyName = "url")]
@@ -241,4 +323,4 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "data")]
         internal object data { get; set; }
     }
-} 
+}
