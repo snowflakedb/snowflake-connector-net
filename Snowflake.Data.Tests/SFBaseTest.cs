@@ -96,7 +96,9 @@ namespace Snowflake.Data.Tests
 
             // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
             // find connection object
-            String connectionKey = cloud == null ? "testconnection" : cloud;
+            //String connectionKey = cloud == null ? "testconnection" : cloud;
+
+            String connectionKey = "testconnection";
 
             TestConfig testConnectionConfig;
             if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
