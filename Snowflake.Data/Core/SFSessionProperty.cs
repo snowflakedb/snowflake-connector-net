@@ -200,9 +200,12 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
 
             // compose host value if not specified
-            if (!properties.ContainsKey(SFSessionProperty.HOST))
+            if (!properties.ContainsKey(SFSessionProperty.HOST) || 
+                (0 == properties[SFSessionProperty.HOST].Length))
             {
                 string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                // Remove in case it's here but empty
+                properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
                 logger.Info($"Compose host name: {hostName}");
             }
