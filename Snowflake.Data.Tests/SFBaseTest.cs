@@ -171,6 +171,9 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
         internal string oauthToken { get; set; }
 
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string expOauthToken { get; set; }
+
         public TestConfig()
         {
             this.protocol = "https";
