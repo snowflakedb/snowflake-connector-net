@@ -94,14 +94,8 @@ namespace Snowflake.Data.Tests
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
-            // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
-            // find connection object
-            //String connectionKey = cloud == null ? "testconnection" : cloud;
-
-            String connectionKey = "testconnection";
-
             TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
+            if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
             }
