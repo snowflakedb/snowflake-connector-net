@@ -295,7 +295,13 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?),(?),(?)";
+    // Create the table for the example.
+    cmd.CommandText = "create or replace table t(c1 number, c2 number, c3 number)";
+    int count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
+    // Insert a row into the table.
+    cmd.CommandText = "insert into t (c1, c2, c3) values (?, ?, ?)";
 
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
