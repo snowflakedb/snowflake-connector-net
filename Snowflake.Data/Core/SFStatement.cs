@@ -10,6 +10,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace Snowflake.Data.Core
 {
@@ -38,8 +39,11 @@ namespace Snowflake.Data.Core
         private readonly IRestRequester _restRequester;
 
         private CancellationTokenSource _timeoutTokenSource;
+
+        // Flag indicating if the SQL query is a regular query or a PUT/GET query
+        private bool isPutGetQuery = false;
         
-        // Merged cancellation token source for all canellation signal. 
+        // Merged cancellation token source for all cancellation signal. 
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSouce;
 
@@ -102,7 +106,8 @@ namespace Snowflake.Data.Core
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
                                 ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
                 jsonBody = postBody,
-                HttpTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                isPutGet = isPutGetQuery
             };
         }
 
@@ -159,45 +164,53 @@ namespace Snowflake.Data.Core
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
                                                           CancellationToken cancellationToken)
         {
-            registerQueryCancellationCallback(timeout, cancellationToken);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            string trimmedSql = TrimSql(sql);
+
             try
             {
-                QueryExecResponse response = null;
-                bool receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
+                if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
                 {
-                    response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
-                    {
-                        SfSession.renewSession();
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
-                    else
-                    {
-                        receivedFirstQueryResponse = true;
-                    }
+                    isPutGetQuery = true;
+                    PutGetExecResponse response =
+                      await ExecuteHelperAsync<PutGetExecResponse, PutGetResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly,
+                             cancellationToken).ConfigureAwait(false);
+
+                    // TODO
+                    return null;
                 }
-
-                var lastResultUrl = response.data?.getResultUrl;
-
-                while (RequestInProgress(response) || SessionExpired(response))
+                else
                 {
-                    var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+                    QueryExecResponse response =
+                        await ExecuteHelperAsync<QueryExecResponse, QueryExecResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly,
+                             cancellationToken).ConfigureAwait(false);
+                    var lastResultUrl = response.data?.getResultUrl;
 
-                    if (SessionExpired(response))
+                    while (RequestInProgress(response) || SessionExpired(response))
                     {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        SfSession.renewSession();
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            SfSession.renewSession();
+                        }
+                        else
+                        {
+                            lastResultUrl = response.data?.getResultUrl;
+                        }
                     }
-                    else
-                    {
-                        lastResultUrl = response.data?.getResultUrl;
-                    }
+
+                    return BuildResultSet(response, cancellationToken);
                 }
-
-                return BuildResultSet(response, cancellationToken);
             }
             catch
             {
@@ -212,44 +225,54 @@ namespace Snowflake.Data.Core
 
         internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
-            registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            // Trim the sql query and check if this is a PUT/GET command
+            string trimmedSql = TrimSql(sql);
+
             try
             {
-                QueryExecResponse response = null;
-                bool receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
+                if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
                 {
-                    response = _restRequester.Post<QueryExecResponse>(queryRequest);
-                    if (SessionExpired(response))
+                    isPutGetQuery = true;
+                    PutGetExecResponse response = 
+                        ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly);
+
+                    // TODO
+                    return null;
+                }
+                else
+                {
+                    QueryExecResponse response = 
+                        ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly);
+
+                    var lastResultUrl = response.data?.getResultUrl;
+                    while (RequestInProgress(response) || SessionExpired(response))
                     {
-                        SfSession.renewSession();
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = _restRequester.Get<QueryExecResponse>(req);
+
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            SfSession.renewSession();
+                        }
+                        else
+                        {
+                            lastResultUrl = response.data?.getResultUrl;
+                        }
                     }
-                    else
-                    {
-                        receivedFirstQueryResponse = true;
-                    }
+
+                    return BuildResultSet(response, CancellationToken.None);
                 }
 
-                var lastResultUrl = response.data?.getResultUrl;
-                while (RequestInProgress(response) || SessionExpired(response))
-                {
-                    var req = BuildResultRequest(lastResultUrl);
-                    response = _restRequester.Get<QueryExecResponse>(req);
-
-                    if (SessionExpired(response))
-                    {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        SfSession.renewSession();
-                    }
-                    else
-                    {
-                        lastResultUrl = response.data?.getResultUrl;
-                    }
-                }
-
-                return BuildResultSet(response, CancellationToken.None);
+               
             }
             catch (Exception ex)
             {
@@ -307,7 +330,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        /*
+        
         /// <summary>
         /// Execute a sql query and return the response.
         /// </summary>
@@ -321,7 +344,9 @@ namespace Snowflake.Data.Core
             int timeout, 
             string sql, 
             Dictionary<string, BindingDTO> bindings, 
-            bool describeOnly) where T : BaseQueryExecResponse<U>
+            bool describeOnly) 
+            where T : BaseQueryExecResponse<U>
+            where U : IQueryExecResponseData
         {
             registerQueryCancellationCallback(timeout, CancellationToken.None);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
@@ -366,7 +391,7 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Execute a sql query and return the response asynchrnously.
+        /// Execute a sql query and return the response asynchronously.
         /// </summary>
         /// <param name="timeout">The query timeout.</param>
         /// <param name="sql">The sql query.</param>
@@ -380,7 +405,9 @@ namespace Snowflake.Data.Core
             string sql,
             Dictionary<string, BindingDTO> bindings,
             bool describeOnly,
-            CancellationToken cancellationToken) where T : BaseQueryExecResponse<U>
+            CancellationToken cancellationToken) 
+            where T : BaseQueryExecResponse<U>
+            where U : IQueryExecResponseData
         {
             registerQueryCancellationCallback(timeout, cancellationToken);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
@@ -423,7 +450,58 @@ namespace Snowflake.Data.Core
                 ClearQueryRequestId();
             }
         }
-        */
 
+        /// <summary>
+        /// Trim the query by removing spaces and comments at the beginning.
+        /// </summary>
+        /// <param name="originalSql">The original sql query.</param>
+        /// <returns>The query without the blanks and comments at the beginning.</returns>
+        private string TrimSql(string originalSql)
+        {
+            char[] sqlQueryBuf = originalSql.ToCharArray();
+            var builder = new StringBuilder();
+
+            // skip old c-style comment
+            var idx = 0;
+            var sqlQueryLen = sqlQueryBuf.Length;
+            do
+            {
+                if (('/' == sqlQueryBuf[idx]) && 
+                    (idx + 1 < sqlQueryLen) && 
+                    ('*' == sqlQueryBuf[idx + 1]))
+                {
+                    // Search for the matching */
+                    var matchingPos = originalSql.IndexOf("*/", idx + 2);
+                    if (matchingPos >= 0)
+                    {
+                        // Found the comment closing, skip to after
+                        idx = matchingPos + 2;
+                    }
+                }
+                else if ((sqlQueryBuf[idx] == '-') &&
+                         (idx + 1 < sqlQueryLen) &&
+                         (sqlQueryBuf[idx + 1] == '-'))
+                {
+                    // Search for the new line
+                   var newlinePos = originalSql.IndexOf("\n", idx + 2);
+
+                    if (newlinePos >= 0)
+                    {
+                        // Found the new line, skip to after
+                        idx = newlinePos + 1;
+                    }
+                }
+
+                builder.Append(sqlQueryBuf[idx]);
+                idx++;
+            }
+            while (idx < sqlQueryLen);
+
+            var trimmedQuery = builder.ToString();
+            logger.Debug("Trimmed query : " + trimmedQuery);
+            Console.WriteLine("Original query " + originalSql + "\nTrimmed query: " + trimmedQuery);
+
+            return trimmedQuery;
+        }
     }
 }

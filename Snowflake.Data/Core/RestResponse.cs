@@ -129,18 +129,26 @@ namespace Snowflake.Data.Core
         internal string value { get; set; }
     }
 
+    public interface IQueryExecResponseData
+    {
+        string queryId {get;}    
+
+        string sqlState { get; }
+    }
+
     internal class BaseQueryExecResponse<T> : BaseRestResponse
+        where T : IQueryExecResponseData
     {
         [JsonProperty(PropertyName = "data")]
         internal T data { get; set; }
     }
-
+    
     internal class QueryExecResponse : BaseQueryExecResponse<QueryExecResponseData>
     {
         // Defined for easy usage/access
     }
 
-    internal class QueryExecResponseData
+    internal class QueryExecResponseData : IQueryExecResponseData
     {
         [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
         internal List<NameValueParameter> parameters { get; set; }
@@ -158,10 +166,10 @@ namespace Snowflake.Data.Core
         internal Int64 returned { get; set; }
 
         [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-        internal string queryId { get; set; }
+        public string queryId { get; set; }
 
         [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
-        internal string sqlState { get; set; }
+        public string sqlState { get; set; }
 
         [JsonProperty(PropertyName = "databaseProvider", NullValueHandling = NullValueHandling.Ignore)]
         internal string databaseProvider { get; set; }
@@ -211,7 +219,7 @@ namespace Snowflake.Data.Core
     {
         // Defined for easy usage/access
     }
-    internal class PutGetResponseData
+    internal class PutGetResponseData : IQueryExecResponseData
     {
         [JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
         internal string command { get; set; }
@@ -238,10 +246,10 @@ namespace Snowflake.Data.Core
         internal PutGetStageinfo stageInfo { get; set; }
 
         [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-        internal string queryId { get; set; }
+        public string queryId { get; set; }
 
         [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
-        internal string sqlState { get; set; }
+        public string sqlState { get; set; }
     }
 
     internal class PutGetStageinfo
