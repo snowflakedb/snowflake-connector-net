@@ -312,6 +312,8 @@ namespace Snowflake.Data.Core
                     {
                        return ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
                     }
+                case SFDataType.TEXT:
+                    return srcVal.ToString();
                 default:
                     throw new NotImplementedException();
             }
