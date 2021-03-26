@@ -52,6 +52,8 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Clean-up before build
+        run: dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
       - name: Build Driver
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
 
@@ -65,11 +67,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Setup Nuget.exe
-      uses: warrenbuckley/Setup-Nuget@v1
+      uses: nuget/setup-nuget@v1
     - name: Restore packages
       run: nuget restore
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: Decrypt Azure Parameters
       shell: bash
       env:

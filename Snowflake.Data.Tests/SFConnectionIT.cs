@@ -646,22 +646,25 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestValidOAuthExpiredTokenConnection()
         {
-
             try
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
-                        + ";authenticator=oauth;token=ETMsDgAAAXcmdv0gABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwCAABAAECPcGqa/QJd3BMw5z2V/Fn8AAABQdCCJgbhZpzzIrh2j/ej8rXZBODsPIwM6oODfWZ3a2PNP91PdMadOoUh5NjWanGfUQdZNkVFLzh6BJdAT5XaaQdTiszkqtOao9QaWhtarKVoAFAQ+KiE/CavTBhURVKjXmSfe7k6N";
+                   = ConnectionStringWithoutAuth
+                   + String.Format(
+                       ";authenticator=oauth;token={0}",
+                       testConfig.expOauthToken);                
                     conn.Open();
                     Assert.Fail();
                 }
             }
             catch (SnowflakeDbException e)
             {
+                Console.Write(e);
                 // Token is expired
                 Assert.AreEqual(390318, e.ErrorCode);
             }
