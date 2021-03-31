@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
+ */
+
+using Snowflake.Data.Client;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -8,28 +13,28 @@ namespace Snowflake.Data.Core.FileTransfert
     {
         private const byte MAX_MAGIC_BYTES = 4;
 
-        private static readonly byte[] GZIP_MAGIC =new byte[] { 0x1f ,0x8b };
+        private static readonly byte[] GZIP_MAGIC = new byte[] { 0x1f, 0x8b };
         private const string GZIP_NAME = "gzip";
         private const string GZIP_EXTENSION = ".gz";
 
-        private static readonly byte[] DEFLATE_MAGIC_LOW =new byte[] { 0x78, 0x01 };
-        private static readonly byte[] DEFLATE_MAGIC_DEFAULT =new byte[] { 0x78, 0x9c };
-        private static readonly byte[] DEFLATE_MAGIC_BEST =new byte[] {0x78, 0xda };
+        private static readonly byte[] DEFLATE_MAGIC_LOW = new byte[] { 0x78, 0x01 };
+        private static readonly byte[] DEFLATE_MAGIC_DEFAULT = new byte[] { 0x78, 0x9c };
+        private static readonly byte[] DEFLATE_MAGIC_BEST = new byte[] { 0x78, 0xda };
         private const string DEFLATE_NAME = "deflate";
         private const string DEFLATE_EXTENSION = ".deflate";
 
         private const string RAW_DEFLATE_NAME = "raw_deflate";
         private const string RAW_DEFLATE_EXTENSION = ".raw_deflate";
 
-        private static readonly byte[] BZIP2_MAGIC =new byte[] { 0x42, 0x5a };
+        private static readonly byte[] BZIP2_MAGIC = new byte[] { 0x42, 0x5a };
         private const string BZIP2_NAME = "bzip2";
         private const string BZIP2_EXTENSION = ".bz2";
 
-        private static readonly byte[] ZSTD_MAGIC =new byte[] { 0x28, 0xb5, 0x2f, 0xfd };
+        private static readonly byte[] ZSTD_MAGIC = new byte[] { 0x28, 0xb5, 0x2f, 0xfd };
         private const string ZSTD_NAME = "zstd";
         private const string ZSTD_EXTENSION = ".zst";
 
-        private static readonly byte[] BROTLI_MAGIC =new byte[] { 0xce, 0xb2, 0xcf, 0x81 };
+        private static readonly byte[] BROTLI_MAGIC = new byte[] { 0xce, 0xb2, 0xcf, 0x81 };
         private const string BROTLI_NAME = "brotli";
         private const string BROTLI_EXTENSION = ".br";
 
@@ -48,25 +53,25 @@ namespace Snowflake.Data.Core.FileTransfert
         private const string COMPRESS_NAME = "compress";
         private const string COMPRESS_EXTENSION = ".Z";
 
-        private static readonly byte[] PARQUET_MAGIC =new byte[] { 0x50 ,0x41 ,0x52 ,0x31 };
+        private static readonly byte[] PARQUET_MAGIC = new byte[] { 0x50, 0x41, 0x52, 0x31 };
         private const string PARQUET_NAME = "parquet";
         private const string PARQUET_EXTENSION = ".parquet";
 
-        private static readonly byte[] ORC_MAGIC =new byte[] { 0x4f, 0x52, 0x43 };
+        private static readonly byte[] ORC_MAGIC = new byte[] { 0x4f, 0x52, 0x43 };
         private const string ORC_NAME = "orc";
         private const string ORC_EXTENSION = ".orc";
 
         private const string NONE_NAME = "none";
         private const string NONE_EXTENSION = "";
 
-        private static readonly byte[][] gzip_magics = new [] { GZIP_MAGIC };
+        private static readonly byte[][] gzip_magics = new[] { GZIP_MAGIC };
         private static readonly byte[][] deflate_magics =
-            new [] { DEFLATE_MAGIC_LOW, DEFLATE_MAGIC_DEFAULT, DEFLATE_MAGIC_BEST };
-        private static readonly byte[][] bzip2_magics = new [] { BZIP2_MAGIC };
-        private static readonly byte[][] orc_magics = new [] { ORC_MAGIC };
-        private static  readonly byte[][] parquet_magics = new [] { PARQUET_MAGIC };
-        private static readonly byte[][] zstd_magics = new [] { ZSTD_MAGIC };
-        private static readonly byte[][] brotli_magics = new [] { BROTLI_MAGIC };
+            new[] { DEFLATE_MAGIC_LOW, DEFLATE_MAGIC_DEFAULT, DEFLATE_MAGIC_BEST };
+        private static readonly byte[][] bzip2_magics = new[] { BZIP2_MAGIC };
+        private static readonly byte[][] orc_magics = new[] { ORC_MAGIC };
+        private static readonly byte[][] parquet_magics = new[] { PARQUET_MAGIC };
+        private static readonly byte[][] zstd_magics = new[] { ZSTD_MAGIC };
+        private static readonly byte[][] brotli_magics = new[] { BROTLI_MAGIC };
 
         public struct SFFileCompressionType
         {
@@ -77,11 +82,11 @@ namespace Snowflake.Data.Core.FileTransfert
                 short magicBytes,
                 bool isSupported)
             {
-                m_fileExtension = fileExtension;
-                m_isSupported = isSupported;
-                m_magicNumbers = magicNumbers;
-                m_magicBytes = magicBytes;
-                m_name = name;
+                FileExtension = fileExtension;
+                IsSupported = isSupported;
+                _magicNumbers = magicNumbers;
+                _magicBytes = magicBytes;
+                Name = name;
             }
 
             public SFFileCompressionType(
@@ -89,11 +94,11 @@ namespace Snowflake.Data.Core.FileTransfert
                 string name,
                 bool isSupported)
             {
-                m_fileExtension = fileExtension;
-                m_isSupported = isSupported;
-                m_magicNumbers = null;
-                m_magicBytes = 0;
-                m_name = name;
+                FileExtension = fileExtension;
+                IsSupported = isSupported;
+                _magicNumbers = null;
+                _magicBytes = 0;
+                Name = name;
             }
 
             /// <summary>
@@ -104,15 +109,15 @@ namespace Snowflake.Data.Core.FileTransfert
             public bool matchMagicNumber(byte[] header)
             {
                 bool isEquals = true;
-                if ((null != m_magicNumbers) && (null != header))
+                if ((null != _magicNumbers) && (null != header))
                 {
-                    for (int i = 0; i < m_magicNumbers.Length; i++)
+                    for (int i = 0; i < _magicNumbers.Length; i++)
                     {
-                        if (header.Length >= m_magicNumbers[i].Length)
+                        if (header.Length >= _magicNumbers[i].Length)
                         {
-                            for (int j = 0; j < m_magicNumbers[i].Length; i++)
+                            for (int j = 0; j < _magicNumbers[i].Length; i++)
                             {
-                                if (header[j] != m_magicNumbers[i][j])
+                                if (header[j] != _magicNumbers[i][j])
                                 {
                                     isEquals = false;
                                     break;
@@ -130,11 +135,11 @@ namespace Snowflake.Data.Core.FileTransfert
                 return isEquals;
             }
 
-            public string m_fileExtension { get; }
-            private readonly string m_name;
-            private readonly byte[][] m_magicNumbers;
-            private readonly short m_magicBytes;
-            public bool m_isSupported { get; }
+            internal string FileExtension { get; }
+            internal string Name { get; }
+            private readonly byte[][] _magicNumbers;
+            private readonly short _magicBytes;
+            internal bool IsSupported { get; }
         }
 
         public static readonly SFFileCompressionType GZIP =
@@ -143,7 +148,7 @@ namespace Snowflake.Data.Core.FileTransfert
         public static readonly SFFileCompressionType DEFLATE =
             new SFFileCompressionType(DEFLATE_EXTENSION, DEFLATE_NAME, deflate_magics, 2, true);
 
-        public static readonly SFFileCompressionType RAW_DEFLATE=
+        public static readonly SFFileCompressionType RAW_DEFLATE =
             new SFFileCompressionType(RAW_DEFLATE_EXTENSION, RAW_DEFLATE_NAME, true);
 
         public static readonly SFFileCompressionType BZIP2 =
@@ -180,7 +185,7 @@ namespace Snowflake.Data.Core.FileTransfert
             new SFFileCompressionType(NONE_EXTENSION, NONE_NAME, true);
 
 
-        static readonly IReadOnlyList<SFFileCompressionType> compressionTypes = 
+        static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
             new List<SFFileCompressionType> {
                 GZIP,
                 DEFLATE,
@@ -197,7 +202,7 @@ namespace Snowflake.Data.Core.FileTransfert
                 PARQUET
             };
 
-        public static SFFileCompressionType guessCompressionType(string filePath)
+        public static SFFileCompressionType GuessCompressionType(string filePath)
         {
             // read first 4 bytes to determine compression type
             byte[] header = new byte[MAX_MAGIC_BYTES];
@@ -206,7 +211,7 @@ namespace Snowflake.Data.Core.FileTransfert
                 fs.Read(header, 0, header.Length);
             }
 
-            foreach (SFFileCompressionType compType  in compressionTypes)
+            foreach (SFFileCompressionType compType in compressionTypes)
             {
                 if (compType.matchMagicNumber(header))
                 {
@@ -221,16 +226,38 @@ namespace Snowflake.Data.Core.FileTransfert
                 {
                     string extension = Path.GetExtension(filePath);
                     if (!String.IsNullOrEmpty(extension) &&
-                        String.Equals(BROTLI.m_fileExtension, extension, StringComparison.OrdinalIgnoreCase))
+                        String.Equals(BROTLI.FileExtension, extension, StringComparison.OrdinalIgnoreCase))
                     {
                         return BROTLI;
                     }
                 }
             }
 
-            // No compression type match found
+            // Couldn't find a match, last fallback using the file name extension
+            return LookUpByName(new FileInfo(filePath).Extension);
+           
+        }
+
+        /// <summary>
+        /// Lookup the compression type base on the given type name.
+        /// </summary>
+        /// <param name="name">The type name to lookup</param>
+        /// <returns>The corresponding SFFileCompressionType if supported, None if no match</returns>
+        public static SFFileCompressionType LookUpByName(string name)
+        {
+            if (name.StartsWith("."))
+            {
+                name = name.Substring(1);
+            }
+            foreach (SFFileCompressionType compType in compressionTypes)
+            {
+                if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return compType;
+                }
+            }
+
             return NONE;
         }
     }
-
 }

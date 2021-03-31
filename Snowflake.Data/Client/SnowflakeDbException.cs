@@ -57,6 +57,13 @@ namespace Snowflake.Data.Client
             this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
+        public SnowflakeDbException(string sqlState, SFError error, params object[] args)
+        {
+            this.errorMessage = string.Format(rm.GetString(error.ToString()), args);
+            this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            this.sqlState = sqlState;
+        }
+
         public override string ToString()
         {
             return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}", 

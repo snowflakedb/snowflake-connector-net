@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using static Snowflake.Data.Core.FileTransfert.SFFileCompressionTypes;
@@ -27,6 +31,9 @@ namespace Snowflake.Data.Core.FileTransfert
             /// Encrypted stream size, used for content length
             public long cipherStreamSize { set; get; }
         }
+
+        /// Original source file path (full path)
+        public string srcFilePath { set; get; }
 
         /// Original source file name (full path)
         public string srcFileName { set; get; }
@@ -67,8 +74,14 @@ namespace Snowflake.Data.Core.FileTransfert
         /// Target compression
         public SFFileCompressionType targetCompression { set; get; }
 
-        /// Pre-signed url
+        /// Pre-signed url.
         public string presignedUrl { set; get; }
+
+        /// The number of chunks to download in parallel.
+        public int parallel { get; set; }
+
+        /// The outcome of the transfer.
+        public FileTransferOutcome transferOutcome { get; set; }
 
     }
 }

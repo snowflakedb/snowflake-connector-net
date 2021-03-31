@@ -63,6 +63,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270052)]
         JWT_ERROR_READING_PK,
+
+        [SFErrorAttr(errorCode = 270053)]
+        COMPRESSION_TYPE_NOT_SUPPORTED,
     }
 
     class SFErrorAttr : Attribute

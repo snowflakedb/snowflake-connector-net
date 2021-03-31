@@ -240,6 +240,12 @@ namespace Snowflake.Data.Core
                              bindings,
                              describeOnly);
 
+                    SFFileTransferAgent fileTransferAgent = 
+                        new SFFileTransferAgent(SfSession, response.data, CancellationToken.None);
+
+                    // Start the file transfer
+                    fileTransferAgent.execute();
+
                     // TODO
                     return null;
                 }

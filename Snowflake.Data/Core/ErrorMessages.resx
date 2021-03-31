@@ -171,4 +171,7 @@
   <data name="JWT_ERROR_READING_PK" xml:space="preserve">
     <value>Could not read private key {0}. \n Error : {1}</value>
   </data>
+  <data name="COMPRESSION_TYPE_NOT_SUPPORTED" xml:space="preserve">
+    <value>Command does not support compression type {0}</value>
+  </data>
 </root>
