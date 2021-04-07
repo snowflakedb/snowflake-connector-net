@@ -182,7 +182,7 @@ namespace Snowflake.Data.Core
                     resetChunkInfo(nextChunk);
                     if (0 == (fetchCount % 100000))
                     {
-                        Logger.Debug($"Fetched {fetchCount} rows");
+                        Logger.Info($"Fetched {fetchCount} rows");
                     }
                     return true;
                 }

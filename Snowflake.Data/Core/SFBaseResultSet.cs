@@ -40,6 +40,10 @@ namespace Snowflake.Data.Core
             dataConverter = new SFDataConverter();
         }
 
+        /// <summary>
+        /// Measure the time spent in the function action and add the time in the timing maps using 
+        /// the key 'name'. Also return the time spent in currentTime.
+        /// </summary>
         internal T Measure<T>(string name, out long currentTime, Func<T> action)
         {
             if (Logger.IsDebugEnabled())
@@ -61,6 +65,7 @@ namespace Snowflake.Data.Core
                 return action();
             }
         }
+
         private void addTimesToTimingMaps(string key, long value)
         {
             if (timings.TryGetValue(key, out long time))
