@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using System.Collections.Generic;
+using System;
 
 namespace Snowflake.Data.Core
 {
@@ -22,6 +24,8 @@ namespace Snowflake.Data.Core
         private readonly IChunkDownloader _chunkDownloader;
 
         private IResultChunk _currentChunk;
+
+        private long startFetch = 0;
 
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
@@ -66,9 +70,24 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
             }
 
+            if (0 == fetchCount)
+            {
+                Logger.Info("Starting. Fetching first row.");
+                startFetch = Environment.TickCount;
+            }
+            else if (0 == (fetchCount % 100000))
+            {
+                LogAverageConversionTimesForLast100000rows();
+            }
+
+            fetchCount++;
             _currentChunkRowIdx++;
             if (_currentChunkRowIdx < _currentChunkRowCount)
             {
+                if (0 == (fetchCount %100000))
+                {
+                    Logger.Info($"Fetched {fetchCount} rows");
+                }
                 return true;
             }
 
@@ -77,19 +96,46 @@ namespace Snowflake.Data.Core
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
                 Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+                IResultChunk nextChunk = await
+                    Measure(
+                        @"nextChunk",
+                        out long nextChunkTime,
+                        async () =>
+                        {
+                            IResultChunk result = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+                            return result;
+                        });
                 if (nextChunk != null)
                 {
                     resetChunkInfo(nextChunk);
+                    if (0 == (fetchCount % 100000))
+                    {
+                        Logger.Info($"Fetched {fetchCount} rows");
+                    }
                     return true;
                 }
                 else
                 {
+                    Logger.Debug("All data retrieved. Last row returned.");
+                    Logger.Debug("Fetch process took " + (Environment.TickCount - startFetch));
+                    Logger.Debug("---- Time spent getting next chunk ----");
+                    Logger.Debug($"Total time : {timings["nextChunk"]} ms");
+                    Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+                    LogAverageConversionTimes();
                     return false;
                 }
             }
-            
-           return false;
+
+            Logger.Info("All data retrieved. Last row returned.");
+            Logger.Info($"Fetch process took { Environment.TickCount - startFetch} ms");
+            if (Logger.IsDebugEnabled())
+            {
+                Logger.Debug("---- Time spent getting next chunk ----");
+                Logger.Debug($"Total time : {timings["nextChunk"]} ms");
+                Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+                LogAverageConversionTimes();
+            }
+            return false;
         }
 
         internal override bool Next()
@@ -99,23 +145,60 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
             }
 
+            if (0 == fetchCount)
+            {
+                Logger.Info("Starting. Fetching first row.");
+                startFetch = Environment.TickCount;
+            }
+            else if (0 == (fetchCount % 100000))
+            {
+                LogAverageConversionTimesForLast100000rows();
+            }
+
+            fetchCount++;
             _currentChunkRowIdx++;
             if (_currentChunkRowIdx < _currentChunkRowCount)
             {
+                if (0 == (fetchCount % 100000))
+                {
+                    Logger.Info($"Fetched {fetchCount} rows");
+                }
                 return true;
             }
 
             if (_chunkDownloader != null)
             {
                 Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = Task.Run(async() => await _chunkDownloader.GetNextChunkAsync()).Result;
+                IResultChunk nextChunk = Measure(
+                        @"nextChunk",
+                        out long nextChunkTime,
+                        () =>
+                        {
+                            return Task.Run(async () => await _chunkDownloader.GetNextChunkAsync()).Result;
+                        });
+
                 if (nextChunk != null)
                 {
                     resetChunkInfo(nextChunk);
+                    if (0 == (fetchCount % 100000))
+                    {
+                        Logger.Debug($"Fetched {fetchCount} rows");
+                    }
                     return true;
                 }
             }
-           return false;
+
+            Logger.Info("All data retrieved. Last row returned.\n");
+            Logger.Info($"Fetch process took {Environment.TickCount - startFetch} ms");
+            if (Logger.IsDebugEnabled())
+            { 
+                Logger.Debug("---- Time spent getting next chunk ----");
+                Logger.Debug($"Total time : {timings["nextChunk"]} ms");
+                Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+                LogAverageConversionTimes();
+            }
+
+            return false;
         }
 
         protected override string getObjectInternal(int columnIndex)
