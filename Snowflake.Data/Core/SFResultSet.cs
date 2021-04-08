@@ -118,8 +118,8 @@ namespace Snowflake.Data.Core
                 else
                 {
                     stopwatch.Stop();
-                    Logger.Debug("All data retrieved. Last row returned.");
-                    Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
+                    Logger.Info("All data retrieved. Last row returned.");
+                    Logger.Info($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
                     if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
                     {
                         Logger.Debug("---- Time spent getting next chunk ----");
@@ -132,8 +132,8 @@ namespace Snowflake.Data.Core
             }
 
             stopwatch.Stop();
-            Logger.Debug("All data retrieved. Last row returned.");
-            Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Logger.Info("All data retrieved. Last row returned.");
+            Logger.Info($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Logger.IsDebugEnabled())
             {
                 if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
@@ -198,8 +198,8 @@ namespace Snowflake.Data.Core
             }
 
             stopwatch.Stop();
-            Logger.Debug("All data retrieved. Last row returned.");
-            Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
+            Logger.Info("All data retrieved. Last row returned.");
+            Logger.Info($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Logger.IsDebugEnabled())
             {
                 if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
