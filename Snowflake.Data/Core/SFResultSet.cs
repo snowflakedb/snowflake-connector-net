@@ -8,6 +8,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
 using System;
+using System.Diagnostics;
 
 namespace Snowflake.Data.Core
 {
@@ -25,7 +26,7 @@ namespace Snowflake.Data.Core
 
         private IResultChunk _currentChunk;
 
-        private long startFetch = 0;
+        private Stopwatch stopwatch = Stopwatch.StartNew();
 
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
@@ -73,7 +74,7 @@ namespace Snowflake.Data.Core
             if (0 == fetchCount)
             {
                 Logger.Info("Starting. Fetching first row.");
-                startFetch = Environment.TickCount;
+                stopwatch.Restart();
             }
             else if (0 == (fetchCount % 100000))
             {
@@ -99,7 +100,7 @@ namespace Snowflake.Data.Core
                 IResultChunk nextChunk = await
                     Measure(
                         @"nextChunk",
-                        out long nextChunkTime,
+                        out double nextChunkTime,
                         async () =>
                         {
                             IResultChunk result = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
@@ -116,23 +117,31 @@ namespace Snowflake.Data.Core
                 }
                 else
                 {
+                    stopwatch.Stop();
                     Logger.Debug("All data retrieved. Last row returned.");
-                    Logger.Debug("Fetch process took " + (Environment.TickCount - startFetch));
-                    Logger.Debug("---- Time spent getting next chunk ----");
-                    Logger.Debug($"Total time : {timings["nextChunk"]} ms");
-                    Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+                    Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
+                    if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
+                    {
+                        Logger.Debug("---- Time spent getting next chunk ----");
+                        Logger.Debug($"Total time : {nextChunkTotalTime} ms");
+                        Logger.Debug($"Average time : {nextChunkTotalTime / (float)_totalChunkCount } ms\n");
+                    }
                     LogAverageConversionTimes();
                     return false;
                 }
             }
 
-            Logger.Info("All data retrieved. Last row returned.");
-            Logger.Info($"Fetch process took { Environment.TickCount - startFetch} ms");
+            stopwatch.Stop();
+            Logger.Debug("All data retrieved. Last row returned.");
+            Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Logger.IsDebugEnabled())
             {
-                Logger.Debug("---- Time spent getting next chunk ----");
-                Logger.Debug($"Total time : {timings["nextChunk"]} ms");
-                Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+                if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
+                {
+                    Logger.Debug("---- Time spent getting next chunk ----");
+                    Logger.Debug($"Total time : {nextChunkTotalTime} ms");
+                    Logger.Debug($"Average time : {nextChunkTotalTime / (float)_totalChunkCount } ms\n");
+                }
                 LogAverageConversionTimes();
             }
             return false;
@@ -148,7 +157,7 @@ namespace Snowflake.Data.Core
             if (0 == fetchCount)
             {
                 Logger.Info("Starting. Fetching first row.");
-                startFetch = Environment.TickCount;
+                stopwatch.Restart();
             }
             else if (0 == (fetchCount % 100000))
             {
@@ -171,10 +180,10 @@ namespace Snowflake.Data.Core
                 Logger.Info("Get next chunk from chunk downloader");
                 IResultChunk nextChunk = Measure(
                         @"nextChunk",
-                        out long nextChunkTime,
+                        out double nextChunkTime,
                         () =>
                         {
-                            return Task.Run(async () => await _chunkDownloader.GetNextChunkAsync()).Result;
+                            return Task.Run(async () => await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false)).Result;
                         });
 
                 if (nextChunk != null)
@@ -188,13 +197,17 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            Logger.Info("All data retrieved. Last row returned.\n");
-            Logger.Info($"Fetch process took {Environment.TickCount - startFetch} ms");
+            stopwatch.Stop();
+            Logger.Debug("All data retrieved. Last row returned.");
+            Logger.Debug($"Fetch process took {stopwatch.Elapsed.TotalMilliseconds} ms");
             if (Logger.IsDebugEnabled())
-            { 
-                Logger.Debug("---- Time spent getting next chunk ----");
-                Logger.Debug($"Total time : {timings["nextChunk"]} ms");
-                Logger.Debug($"Average time : {timings["nextChunk"] / (float)_totalChunkCount } ms\n");
+            {
+                if (timings.TryGetValue("nextChunk", out double nextChunkTotalTime))
+                {
+                    Logger.Debug("---- Time spent getting next chunk ----");
+                    Logger.Debug($"Total time : {nextChunkTotalTime} ms");
+                    Logger.Debug($"Average time : {nextChunkTotalTime / (float)_totalChunkCount } ms\n");
+                }
                 LogAverageConversionTimes();
             }
 

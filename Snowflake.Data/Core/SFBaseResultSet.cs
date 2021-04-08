@@ -5,6 +5,7 @@
 using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
@@ -21,9 +22,9 @@ namespace Snowflake.Data.Core
 
         internal bool isClosed;
 
-        internal Dictionary<string, long> timings = new Dictionary<string, long>();
+        internal Dictionary<string, double> timings = new Dictionary<string, double>();
 
-        internal Dictionary<string, long> last100000Rowstimings = new Dictionary<string, long>();
+        internal Dictionary<string, double> last100000Rowstimings = new Dictionary<string, double>();
 
         internal int fetchCount = 0;
 
@@ -35,6 +36,8 @@ namespace Snowflake.Data.Core
 
         private SFDataConverter dataConverter;
 
+        private Stopwatch stopwatch = Stopwatch.StartNew();
+
         protected SFBaseResultSet()
         {
             dataConverter = new SFDataConverter();
@@ -44,16 +47,15 @@ namespace Snowflake.Data.Core
         /// Measure the time spent in the function action and add the time in the timing maps using 
         /// the key 'name'. Also return the time spent in currentTime.
         /// </summary>
-        internal T Measure<T>(string name, out long currentTime, Func<T> action)
+        internal T Measure<T>(string name, out double currentTime, Func<T> action)
         {
             if (Logger.IsDebugEnabled())
             {
-                var start = Environment.TickCount;
+                stopwatch.Restart();
                 var result = action();
-                var end = Environment.TickCount;
+                stopwatch.Stop();
 
-                currentTime = end - start;
-
+                currentTime = stopwatch.Elapsed.TotalMilliseconds;
                 addTimesToTimingMaps(name, currentTime);
             
                 return result;
@@ -66,9 +68,10 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private void addTimesToTimingMaps(string key, long value)
+        private void addTimesToTimingMaps(string key, double value)
         {
-            if (timings.TryGetValue(key, out long time))
+            
+            if (timings.TryGetValue(key, out double time))
             {
                 timings[key] = value + time;
             }
@@ -77,7 +80,7 @@ namespace Snowflake.Data.Core
                 timings.Add(key, value);
             }
 
-            if (last100000Rowstimings.TryGetValue(key, out long last100000Rowstime))
+            if (last100000Rowstimings.TryGetValue(key, out double last100000Rowstime))
             {
                 last100000Rowstimings[key] = last100000Rowstime + value;
             }
@@ -89,14 +92,14 @@ namespace Snowflake.Data.Core
 
         internal T GetValue<T>(int columnIndex)
         {
-            string val = Measure(@"getObjectInternal", out long getObjectInternalTime, () =>
+            string val = Measure(@"getObjectInternal", out double getObjectInternalTime, () =>
             {
                 return getObjectInternal(columnIndex);
             }); 
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
             var result = Measure(
                 $"ConvertToCSharpVal(SF {types.Item1} -> C# {typeof(T)})", 
-                out long convertToCSharpValTime, 
+                out double convertToCSharpValTime, 
                 () =>
                 {
                     return (T)dataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
@@ -114,12 +117,12 @@ namespace Snowflake.Data.Core
             switch (type)
             {
                 case SFDataType.DATE:
-                    var val = GetValue(columnIndex, out long GetValueTime);
+                    var val = GetValue(columnIndex, out double GetValueTime);
                     if (val == DBNull.Value)
                         return null;
                     var result = Measure(
                         @"SFDataConverter.toDateString", 
-                        out long toDateStringTime,
+                        out double toDateStringTime,
                         () =>
                     {
                         return SFDataConverter.toDateString((DateTime)val,
@@ -132,23 +135,23 @@ namespace Snowflake.Data.Core
                     return result;
                 //TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
                 default:
-                    return Measure(@"getObjectInternal", out long getObjectInternalTime, () =>
+                    return Measure(@"getObjectInternal", out double getObjectInternalTime, () =>
                     {
                         return getObjectInternal(columnIndex);
                     });
             }
         }
 
-        internal object GetValue(int columnIndex, out long time)
+        internal object GetValue(int columnIndex, out double time)
         {
-            string val = Measure(@"getObjectInternal", out long getObjectInternalTime, () =>
+            string val = Measure(@"getObjectInternal", out double getObjectInternalTime, () =>
             {
                 return getObjectInternal(columnIndex);
             });
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
             var result = Measure(
                 $"ConvertToCSharpVal(SF {types.Item1} -> C# {types.Item2})",
-                out long convertToCSharpValTime,
+                out double convertToCSharpValTime,
                 () =>
             {
                 return dataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
@@ -164,7 +167,7 @@ namespace Snowflake.Data.Core
 
         internal object GetValue(int columnIndex)
         {
-            return GetValue(columnIndex, out long time);
+            return GetValue(columnIndex, out double time);
         }
 
         internal void close()
@@ -175,12 +178,12 @@ namespace Snowflake.Data.Core
         internal void LogAverageConversionTimesForLast100000rows()
         {
             Logger.Debug("Average conversion time for the last 100000");
-            foreach (KeyValuePair<string, long> kvp in last100000Rowstimings)
+            foreach (KeyValuePair<string, double> kvp in last100000Rowstimings)
             {
                 if (!kvp.Key.Equals("nextChunk"))
                 {
                     Logger.Debug($"{kvp.Key} : {kvp.Value / 100000.0} ms");
-                    last100000Rowstimings = new Dictionary<string, long>();
+                    last100000Rowstimings = new Dictionary<string, double>();
                 }
             }
         }
@@ -188,7 +191,7 @@ namespace Snowflake.Data.Core
         internal void LogAverageConversionTimes()
         {
             Logger.Debug("---- Time spent on data conversion operations ----");
-            foreach (KeyValuePair<string, long> kvp in timings)
+            foreach (KeyValuePair<string, double> kvp in timings)
             {
                 if (!kvp.Key.Equals("nextChunk"))
                 {
