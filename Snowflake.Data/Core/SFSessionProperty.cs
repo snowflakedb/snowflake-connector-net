@@ -241,13 +241,17 @@ namespace Snowflake.Data.Core
         {
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
             {
-                var authenticatorDefined = 
+                var authenticatorDefined =
                     properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
                 // External browser, jwt and oauth don't require a password for authenticating
-                return !(authenticatorDefined && (authenticator == ExternalBrowserAuthenticator.AUTH_NAME ||
-                            authenticator == KeyPairAuthenticator.AUTH_NAME ||
-                            authenticator == OAuthAuthenticator.AUTH_NAME));
+                return !(authenticatorDefined &&
+                        (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME,
+                            StringComparison.OrdinalIgnoreCase) ||
+                        authenticator.Equals(KeyPairAuthenticator.AUTH_NAME,
+                            StringComparison.OrdinalIgnoreCase) ||
+                        authenticator.Equals(OAuthAuthenticator.AUTH_NAME,
+                        StringComparison.OrdinalIgnoreCase)));
             }
             else if (sessionProperty.Equals(SFSessionProperty.USER))
             {
@@ -255,7 +259,8 @@ namespace Snowflake.Data.Core
                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
                 // Oauth don't require a username for authenticating
-                return !(authenticatorDefined && (authenticator == OAuthAuthenticator.AUTH_NAME));
+                return !(authenticatorDefined && (
+                    authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase)));
             }
             else
             {
