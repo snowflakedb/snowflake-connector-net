@@ -187,5 +187,67 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(expected, actual);
         }
+
+        [Test]
+        [TestCase("9223372036854775807.9223372036854775807")]
+        [TestCase("-9223372036854775807.1234567890")]
+        [TestCase("-1.300")]
+        [TestCase("999999999999999999.000000000000100000000000")]
+        [TestCase("4294967295.4294967296")]
+        [TestCase("1.5e-36")]
+        [TestCase("1.5e+38")]
+        //[TestCase("inf")] -- TODO - Not supported yet
+        //[TestCase("-inf")] -- TODO - Not supported yet
+        [TestCase("NaN")]
+        public void TestConvertToFloat(string s)
+        {
+            double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double));
+            double expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
+
+            Assert.AreEqual(actualDouble, expectedDoulbe);
+
+            float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float));
+            float expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
+
+            Assert.AreEqual(expectedFloat, actualFloat);
+        }
+
+        [Test]
+        [TestCase("thisIsNotAValidValue")]
+        [TestCase("-1.300")]
+        [TestCase("425.426")]
+        [TestCase("1.5e-36")]
+        [TestCase("1.5e+38")]
+        [TestCase("inf")]
+        [TestCase("-inf")]
+        [TestCase("NaN")]
+        public void TestInvalidConversionInvalidInt(string s)
+        {
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+        }
+
+        [Test]
+        [TestCase("thisIsNotAValidValue")]
+        public void TestInvalidConversionInvalidFloat(string s)
+        {
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double)));
+        }
+
+        [Test]
+        [TestCase("thisIsNotAValidValue")]
+        [TestCase("1.5e-36")]
+        [TestCase("1.5e+38")]
+        [TestCase("inf")]
+        [TestCase("-inf")]
+        [TestCase("NaN")]
+        public void TestInvalidConversionInvalidDecimal(string s)
+        {
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+        }
+
     }
 }
