@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core
 {
     public interface IResultChunk
     {
-        string ExtractCell(int rowIndex, int columnIndex);
+        UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
 
         int GetRowCount();
 

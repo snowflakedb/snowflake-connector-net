@@ -73,7 +73,7 @@ namespace Snowflake.Data.Core
             bool inString = false;
             int c;
             var input = new FastStreamWrapper(stream);
-            MemoryStream ms = new MemoryStream();
+            var ms = new FastMemoryStream();
             while ((c = input.ReadByte()) >= 0)
             {
                 if (!inString)
@@ -97,8 +97,8 @@ namespace Snowflake.Data.Core
                     // Anything else is saved in the buffer
                     if (c == '"')
                     {
-                        rc.AddCell(ms.GetBuffer(), (int)ms.Length);
-                        ms.SetLength(0);
+                        rc.AddCell(ms.GetBuffer(), ms.Length);
+                        ms.Clear();
                         inString = false;
                     }
                     else if (c == '\\')

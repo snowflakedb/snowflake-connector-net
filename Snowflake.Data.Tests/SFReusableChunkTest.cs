@@ -33,12 +33,12 @@ namespace Snowflake.Data.Tests
 
             parser.ParseChunk(chunk);
 
-            Assert.AreEqual("1", chunk.ExtractCell(0, 0));
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1));
-            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2));
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0));
-            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1));
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
+            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
         }
 
         [Test]
@@ -61,12 +61,12 @@ namespace Snowflake.Data.Tests
 
             parser.ParseChunk(chunk);
 
-            Assert.AreEqual(null, chunk.ExtractCell(0, 0));
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1));
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2));
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0));
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1));
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
+            Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
         }
 
         [Test]
@@ -89,12 +89,12 @@ namespace Snowflake.Data.Tests
 
             parser.ParseChunk(chunk);
 
-            Assert.AreEqual(null, chunk.ExtractCell(0, 0));
-            Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(0, 1));
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2));
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0));
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1));
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
+            Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
+            Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
         }
 
         [Test]
@@ -117,12 +117,12 @@ namespace Snowflake.Data.Tests
 
             parser.ParseChunk(chunk);
 
-            Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0));
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1));
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2));
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0));
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1));
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2));
+            Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
         }
 
         [Test]
@@ -146,12 +146,12 @@ namespace Snowflake.Data.Tests
 
             parser.ParseChunk(chunk);
 
-            Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0));
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1));
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2));
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0));
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1));
-            Assert.AreEqual(longstring, chunk.ExtractCell(1, 2));
+            Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual(longstring, chunk.ExtractCell(1, 2).SafeToString());
         }
 
         [Test]
@@ -234,8 +234,8 @@ namespace Snowflake.Data.Tests
             chunk.Reset(chunkInfo, 0);
 
             parser.ParseChunk(chunk);
-            string val = chunk.ExtractCell(0, 0);
-            Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0));
+            string val = chunk.ExtractCell(0, 0).SafeToString();
+            Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0).SafeToString());
         }
     }
 }

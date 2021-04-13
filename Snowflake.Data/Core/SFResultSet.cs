@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core
            return false;
         }
 
-        protected override string getObjectInternal(int columnIndex)
+        protected override UTF8Buffer getObjectInternal(int columnIndex)
         {
             if (isClosed)
             {
