@@ -60,7 +60,12 @@ namespace Snowflake.Data.Core
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
             return dataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
         }
-        
+
+        internal bool IsDBNull(int ordinal)
+        {
+            return (null == getObjectInternal(ordinal));
+        }
+
         internal void close()
         {
             isClosed = true;

@@ -242,7 +242,7 @@ namespace Snowflake.Data.Client
 
         public override bool IsDBNull(int ordinal)
         {
-            return resultSet.GetValue(ordinal) == DBNull.Value;
+            return resultSet.IsDBNull(ordinal);
         }
 
         public override bool NextResult()
