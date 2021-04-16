@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Text;
+
 namespace Snowflake.Data.Core
 {
     internal class SFResultChunk : IResultChunk
@@ -36,9 +38,14 @@ namespace Snowflake.Data.Core
             this.downloadState = DownloadState.NOT_STARTED;
         }
 
-        public string ExtractCell(int rowIndex, int columnIndex)
+        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
-            return rowSet[rowIndex, columnIndex];
+            // Convert string to UTF8Buffer. This makes this method a little slower, but this class is not used for large result sets
+            string s = rowSet[rowIndex, columnIndex];
+            if (s == null)
+                return null;
+            byte[] b = Encoding.UTF8.GetBytes(s);
+            return new UTF8Buffer(b);
         }
 
         public void addValue(string val, int rowCount, int colCount)

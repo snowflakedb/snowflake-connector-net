@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core
             return chunkIndexToDownload;
         }
 
-        public string ExtractCell(int rowIndex, int columnIndex)
+        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
             return data.get(rowIndex * ColCount + columnIndex);
         }
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
             }
 
-            public String get(int index)
+            public UTF8Buffer get(int index)
             {
                 int length = lengths[getMetaBlock(index)]
                     [getMetaBlockIndex(index)];
@@ -124,11 +124,11 @@ namespace Snowflake.Data.Core
 
                             copied += copySize;
                         }
-                        return Encoding.UTF8.GetString(cell);
+                        return new UTF8Buffer(cell);
                     }
                     else
                     {
-                        return Encoding.UTF8.GetString(data[getBlock(offset)], getBlockOffset(offset), length);
+                        return new UTF8Buffer(data[getBlock(offset)], getBlockOffset(offset), length);
                     }
                 }
             }
