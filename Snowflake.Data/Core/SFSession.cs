@@ -160,10 +160,17 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
           
-            var response = restRequester.Post<CloseResponse>(closeSessionRequest);
-            if (!response.success)
+            try
             {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                var response = restRequester.Post<CloseResponse>(closeSessionRequest);
+                if (!response.success)
+                {
+                    logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Failed to delete session, error ignored.", ex);
             }
         }
 

@@ -48,7 +48,19 @@ namespace Snowflake.Data.Core
         public T Post<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None)).Result;
+            var task = Task.Run(async () => await PostAsync<T>(request, CancellationToken.None));
+            try
+            {
+                return task.Result;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (var ex in ae.InnerExceptions)
+                {
+                    logger.Error("Rest request failure", ex);
+                }
+                throw ae.GetBaseException();
+            }
         }
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -63,7 +75,19 @@ namespace Snowflake.Data.Core
         public T Get<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            var task = Task.Run(async () => await GetAsync<T>(request, CancellationToken.None));
+            try
+            {
+                return task.Result;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (var ex in ae.InnerExceptions)
+                {
+                    logger.Error("Rest request failure", ex);
+                }
+                throw ae.GetBaseException();
+            }
         }
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -85,7 +109,19 @@ namespace Snowflake.Data.Core
             HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
 
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
+            var task = Task.Run(async () => await GetAsync(request, CancellationToken.None));
+            try
+            {
+                return task.Result;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (var ex in ae.InnerExceptions)
+                {
+                    logger.Error("Rest request failure", ex);
+                }
+                throw ae.GetBaseException();
+            }
         }
         
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, 
