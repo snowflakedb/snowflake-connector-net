@@ -295,21 +295,15 @@ namespace Snowflake.Data.Core
             if (request == null)
                 return;
 
-            try
+            var response = _restRequester.Post<NullDataResponse>(request);
+
+            if (response.success)
             {
-                var response = _restRequester.Post<NullDataResponse>(request);
-                if (response.success)
-                {
-                    logger.Info("Query cancellation succeed");
-                }
-                else
-                {
-                    logger.Warn("Query cancellation failed.");
-                }
-            }            
-            catch (Exception ex)
+                logger.Info("Query cancellation succeed");
+            }
+            else
             {
-                logger.Error("Query cancellation failed.", ex);
+                logger.Warn("Query cancellation failed.");
             }
         }
         
