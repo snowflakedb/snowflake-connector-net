@@ -103,6 +103,14 @@ namespace Snowflake.Data.Core
                     if (intPart < 0)
                         throw new OverflowException();
                 }
+                else if (intPart == 0)
+                {
+                    // Sign is stripped from the Int64 for value of "-0"
+                    if (s[offset] == '-')
+                    {
+                        isMinus = true;
+                    }
+                }
                 decimal d1 = new decimal(intPart);
                 decimal d2 = new decimal((int)(decimalPart & 0xffffffff), (int)((decimalPart >> 32) & 0xffffffff), 0, false, (byte)decimalLen);
                 decimal result = d1 + d2;
