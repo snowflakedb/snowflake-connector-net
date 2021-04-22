@@ -87,7 +87,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             logger.Debug("Send login request");
-            await base.LoginAsync(cancellationToken);
+            await base.LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <see cref="IAuthenticator"/>

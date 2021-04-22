@@ -48,7 +48,7 @@ namespace Snowflake.Data.Core
         public T Post<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Core
         public T Get<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Core
             HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
 
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await GetAsync(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
         
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, 
