@@ -180,6 +180,7 @@ namespace Snowflake.Data.Tests
         [TestCase("-1.300")]
         [TestCase("999999999999999999.000000000000100000000000")]
         [TestCase("4294967295.4294967296")]
+        [TestCase("-0.999")]
         public void TestConvertToDecimal(string s)
         {
             decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
@@ -192,6 +193,7 @@ namespace Snowflake.Data.Tests
         [TestCase("9223372036854775807.9223372036854775807")]
         [TestCase("-9223372036854775807.1234567890")]
         [TestCase("-1.300")]
+        [TestCase("-0.999")]
         [TestCase("999999999999999999.000000000000100000000000")]
         [TestCase("4294967295.4294967296")]
         [TestCase("1.5e-36")]
@@ -214,6 +216,7 @@ namespace Snowflake.Data.Tests
 
         [Test]
         [TestCase("thisIsNotAValidValue")]
+        [TestCase("-0.999")]
         [TestCase("-1.300")]
         [TestCase("425.426")]
         [TestCase("1.5e-36")]
