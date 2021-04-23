@@ -177,8 +177,6 @@ namespace Snowflake.Data.Core
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
 
-                ServicePointManager.CheckCertificateRevocationList = true;
-
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
