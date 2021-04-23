@@ -11,6 +11,10 @@ using System.Collections.Generic;
 using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
+using System.Security.Authentication;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -51,22 +55,22 @@ namespace Snowflake.Data.Core
                 }
                 return httpClient;
             }
-        }        
+        }
 
         static private void initHttpClient()
         {
-            // enforce tls v1.2
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            ServicePointManager.UseNagleAlgorithm = false;
-            ServicePointManager.CheckCertificateRevocationList = true;
 
-            // Control how many simultaneous connections to each host are allowed from this client
-            ServicePointManager.DefaultConnectionLimit = 20;
-
-            HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
+           HttpClientHandler httpHandler = new HttpClientHandler()
+            {
+                // Verify no certificates have been revoked
+                CheckCertificateRevocationList = true,
+                // Enforce tls v1.2
+                SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 CookieContainer = cookieContainer = new CookieContainer()
-            }));
+            };
+
+             HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
         }
 
         /// <summary>
@@ -172,6 +176,13 @@ namespace Snowflake.Data.Core
             {
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
+
+                ServicePointManager.CheckCertificateRevocationList = true;
+
+                ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
+                p.Expect100Continue = false; // Saves about 100 ms per request
+                p.UseNagleAlgorithm = false; // Saves about 200 ms per request
+                p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
 
