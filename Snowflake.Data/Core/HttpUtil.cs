@@ -55,13 +55,10 @@ namespace Snowflake.Data.Core
 
         static private void initHttpClient()
         {
-            // enforce tls v1.2
+            // Enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            ServicePointManager.UseNagleAlgorithm = false;
+            // Verify no certificates have been revoked
             ServicePointManager.CheckCertificateRevocationList = true;
-
-            // Control how many simultaneous connections to each host are allowed from this client
-            ServicePointManager.DefaultConnectionLimit = 20;
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -172,6 +169,12 @@ namespace Snowflake.Data.Core
             {
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
+
+                ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
+                p.Expect100Continue = false; // Saves about 100 ms per request
+                p.UseNagleAlgorithm = false; // Saves about 200 ms per request
+                // Control how many simultaneous connections to each host are allowed from this client
+                p.ConnectionLimit = 20;
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
 
