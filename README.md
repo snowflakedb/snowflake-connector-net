@@ -295,7 +295,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?),(?),(?)";
+    cmd.CommandText = "insert into t values (?, ?, ?)";
 
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
