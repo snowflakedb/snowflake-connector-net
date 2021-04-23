@@ -20,7 +20,7 @@ on:
 
 env:
   DOTNET_CORE_VERSION: 2.0
-  DOTNET_LEGACY_VERSION: 4.6
+  DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -89,7 +89,7 @@ jobs:
     strategy:
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0', 'net46']
+        dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
