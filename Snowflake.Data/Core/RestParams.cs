@@ -46,9 +46,9 @@ namespace Snowflake.Data.Core
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
-#if NET46
+#if NETFRAMEWORK
                 netRuntime = "NETFramework",
-                netVersion = "4.6",
+                netVersion = "4.7.2",
 #else
                 netRuntime = "NETCore",
                 netVersion ="2.0",

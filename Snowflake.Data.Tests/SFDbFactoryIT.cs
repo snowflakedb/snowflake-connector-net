@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestSimpleDbFactory()
         {
-#if NET46
+#if NETFRAMEWORK
             DbProviderFactory factory = DbProviderFactories.GetFactory("Snowflake.Data");
 #else
             // In .NET Standard, DbProviderFactories is gone. 
