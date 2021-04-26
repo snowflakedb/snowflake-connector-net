@@ -7,7 +7,7 @@ Snowflake Connector for .NET
 
 The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
 
-Library target is under .NET Framework 4.6 and .NET Standard 2.0.
+Library target is under .NET Framework 4.7.2 and .NET Standard 2.0.
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -377,3 +377,10 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 * Delete any logs collected thus far and make sure that all copies are deleted. 
 * If you cannot upgrade for any reason, please ensure all debugging is disabled
 * If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+
+3. Global HTTP connection settings -  
+	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
+	Starting with v2.0.0, the driver will set these locally.  
+	
+	Note that the driver is now targeting .Net framework 4.7.2.  
+	When upgrading to v2.0.0, you might also need to run "Update-Package -reinstall" to update the dependencies.
