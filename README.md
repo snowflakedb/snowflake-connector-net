@@ -381,5 +381,5 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 3. Global http connection settings -  
 	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
 	
-	If your application can not support the global settings, you will need to upgrade to the .NET Driver v12.0.0 or later.  
+	If your application can not support the global settings, you will need to upgrade to the .NET Driver v2.0.0 or later.  
 	Starting with v2.0.0, the connector will set these locally. Note it will also be targeting .Net framework 4.7.2.  
