@@ -301,6 +301,11 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
+    cmd.CommandText = "create or replace table T(cola int)";
+    int count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
+    IDbCommand cmd = conn.CreateCommand();
     cmd.CommandText = "insert into t values (?), (?), (?)";
 
     var p1 = cmd.CreateParameter();
@@ -323,6 +328,10 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     var count = cmd.ExecuteNonQuery();
     Assert.AreEqual(3, count);
+
+    cmd.CommandText = "drop table if exists T";
+    count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
 
     conn.Close();
 }
