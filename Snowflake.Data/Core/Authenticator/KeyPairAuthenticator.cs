@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core.Authenticator
             SFLoggerFactory.GetLogger<KeyPairAuthenticator>();
 
         // The RSA provider to use to sign the tokens
-        private static RSACryptoServiceProvider rsaProvider = new RSACryptoServiceProvider();
+        private RSACryptoServiceProvider rsaProvider;
 
         // The jwt token to send in the login request.
         private string jwtToken;
@@ -47,6 +47,7 @@ namespace Snowflake.Data.Core.Authenticator
         internal KeyPairAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
             this.session = session;
+            this.rsaProvider = new RSACryptoServiceProvider();
         }
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
