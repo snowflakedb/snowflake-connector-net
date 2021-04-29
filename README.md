@@ -288,6 +288,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 Bind Parameter
 --------------
 
+This example shows how bound parameters are converted from C# data types to
+Snowflake data types. For example, if the data type of the Snowflake column
+is INTEGER, then you can bind C# data types Int32 or Int16.
+
+This example inserts 3 rows into a table with one column.
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -295,7 +301,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?),(?),(?)";
+    cmd.CommandText = "create or replace table T(cola int)";
+    int count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
+    IDbCommand cmd = conn.CreateCommand();
+    cmd.CommandText = "insert into t values (?), (?), (?)";
 
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
@@ -317,6 +328,10 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     var count = cmd.ExecuteNonQuery();
     Assert.AreEqual(3, count);
+
+    cmd.CommandText = "drop table if exists T";
+    count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
 
     conn.Close();
 }
