@@ -48,7 +48,7 @@ namespace Snowflake.Data.Core
         public T Post<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None)).Result;
+            return PostAsync<T>(request, CancellationToken.None).Result;
         }
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -114,7 +114,12 @@ namespace Snowflake.Data.Core
             {
                 throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
             }
+            finally
+            {
+                restRequestTimeout.Dispose();
+                linkedCts.Dispose();
+            }
         }
-    }
     
+    }
 }
