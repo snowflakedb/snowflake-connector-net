@@ -10,6 +10,8 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
+using System.Text;
+using System.IO;
 
 namespace Snowflake.Data.Client
 {
@@ -141,7 +143,7 @@ namespace Snowflake.Data.Client
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
-            throw new NotImplementedException();
+            return readSubset<byte>(ordinal, dataOffset, buffer, bufferOffset, length);
         }
 
         public override char GetChar(int ordinal)
@@ -152,7 +154,7 @@ namespace Snowflake.Data.Client
 
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
-            throw new NotImplementedException();
+            return readSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
         }
 
         public override string GetDataTypeName(int ordinal)
@@ -268,6 +270,91 @@ namespace Snowflake.Data.Client
             base.Close();
             resultSet.close();
             isClosed = true;
+        }
+
+        //
+        // Summary:
+        //     Reads a subset of data starting at location indicated by dataOffset into the buffer,
+        //     starting at the location indicated by bufferOffset.
+        //
+        // Parameters:
+        //   ordinal:
+        //     The zero-based column ordinal.
+        //
+        //   dataOffset:
+        //     The index within the data from which to begin the read operation.
+        //
+        //   buffer:
+        //     The buffer into which to copy the data.
+        //
+        //   bufferOffset:
+        //     The index with the buffer to which the data will be copied.
+        //
+        //   length:
+        //     The maximum number of elements to read.
+        //
+        // Returns:
+        //     The actual number of elements read.
+        private long readSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length)
+        {
+            T[] data = resultSet.GetValue<T[]>(ordinal);
+
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getchars?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetChars returns the length of the field in characters.
+            if (null == buffer)
+            {
+                return data.Length;
+            }
+
+            if (dataOffset > data.Length)
+            {
+                throw new System.ArgumentException("Source data is not long enough. " +
+                    "Check the data offset, length, and the data's lower bounds." ,"dataOffset");
+            }
+            else
+            {
+                // How much data is available after the offset
+                long dataLength = data.Length - dataOffset;
+                // How much data to read
+                long elementsRead = Math.Min(length, dataLength);
+                try
+                {
+                    Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
+                }
+                catch (ArgumentException e)
+                {
+                    // Match params name to the ones of getBytes and getChars
+                    string paramName = e.ParamName;
+                    if (paramName.Equals("sourceArray"))
+                    {
+                        throw new ArgumentException(
+                            e.Message.Replace("Parameter name: sourceArray", "").Trim(),
+                            "data");
+                    }
+                    else if (paramName.Equals("sourceIndex"))
+                    {
+                        throw new ArgumentException(
+                            e.Message.Replace("Parameter name: sourceIndex","").Trim(),
+                            "dataOffset");
+                    }
+                    else if (paramName.Equals("destinationArray"))
+                    {
+                        throw new ArgumentException(
+                            e.Message.Replace("Parameter name: destinationArray", "").Trim(),
+                            "buffer");
+                    }
+                    else if (paramName.Equals("destinationIndex"))
+                    {
+                        throw new ArgumentException(
+                            e.Message.Replace("Parameter name: destinationIndex", "").Trim(), 
+                            "bufferOffset");
+                    }
+                }
+
+                return elementsRead;
+            }
         }
     }
 }

@@ -101,6 +101,12 @@ namespace Snowflake.Data.Core
                 {
                     return new Guid(srcVal.ToString());
                 }
+                else if (destType == typeof(char[]))
+                {
+                    byte[] data = srcType == SFDataType.BINARY ? 
+                        HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
+                    return Encoding.UTF8.GetString(data).ToCharArray();
+                }
                 else
                 {
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Invalid destination type.");
