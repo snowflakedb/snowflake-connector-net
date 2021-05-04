@@ -297,6 +297,22 @@ namespace Snowflake.Data.Client
         //     The actual number of elements read.
         private long readSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length)
         {
+            if (dataOffset < 0)
+            {
+                throw new ArgumentOutOfRangeException("dataOffset", "Non negative number is required.");
+            }
+
+            if (bufferOffset < 0)
+            {
+                throw new ArgumentOutOfRangeException("bufferOffset", "Non negative number is required.");
+            }
+
+            if ((null != buffer) && (bufferOffset > buffer.Length))
+            {
+                throw new System.ArgumentException("Destination buffer is not long enough. " +
+                    "Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
+            }
+
             T[] data = resultSet.GetValue<T[]>(ordinal);
 
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
@@ -319,39 +335,7 @@ namespace Snowflake.Data.Client
                 long dataLength = data.Length - dataOffset;
                 // How much data to read
                 long elementsRead = Math.Min(length, dataLength);
-                try
-                {
-                    Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
-                }
-                catch (ArgumentException e)
-                {
-                    // Match params name to the ones of getBytes and getChars
-                    string paramName = e.ParamName;
-                    if (paramName.Equals("sourceArray"))
-                    {
-                        throw new ArgumentException(
-                            e.Message.Replace("Parameter name: sourceArray", "").Trim(),
-                            "data");
-                    }
-                    else if (paramName.Equals("sourceIndex"))
-                    {
-                        throw new ArgumentException(
-                            e.Message.Replace("Parameter name: sourceIndex","").Trim(),
-                            "dataOffset");
-                    }
-                    else if (paramName.Equals("destinationArray"))
-                    {
-                        throw new ArgumentException(
-                            e.Message.Replace("Parameter name: destinationArray", "").Trim(),
-                            "buffer");
-                    }
-                    else if (paramName.Equals("destinationIndex"))
-                    {
-                        throw new ArgumentException(
-                            e.Message.Replace("Parameter name: destinationIndex", "").Trim(), 
-                            "bufferOffset");
-                    }
-                }
+                Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
                 return elementsRead;
             }
