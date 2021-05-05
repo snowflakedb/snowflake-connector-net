@@ -453,15 +453,16 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create or replace table testGetBinary(cola binary)";
+                cmd.CommandText = "create or replace table testGetBinary(col1 binary, col2  VARCHAR(50), col3 double)";
                 int count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
-                string insertCommand = "insert into testgetbinary values (?)";
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+                string testChars = "TEST_GET_CHARS";
+                double testDouble = 1.2345678;
+                string insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble.ToString()})";
                 cmd.CommandText = insertCommand;
                 
-                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
-
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
                 p1.DbType = DbType.Binary;
@@ -475,7 +476,108 @@ namespace Snowflake.Data.Tests
                 IDataReader reader = cmd.ExecuteReader();
                 
                 Assert.IsTrue(reader.Read());
+                // Auto type conversion
                 Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
+                Assert.IsTrue(testChars.Equals(reader.GetValue(1)));
+                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+
+                // Read all 'TEST_GET_BINARAY' data
+                int toReadLength = testBytes.Length;
+                byte[] sub = new byte[toReadLength];
+                long read = reader.GetBytes(0, 0, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testBytes.SequenceEqual(sub));
+
+                // Read subset 'GET_BINARAY' from actual 'TEST_GET_BINARAY' data
+                toReadLength = 11;
+                byte[] testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
+                sub = new byte[toReadLength];
+                read = reader.GetBytes(0, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+
+                // Read subset 'GET_CHARS' from actual 'TEST_GET_CHARS' data
+                toReadLength = 9;
+                testSubBytes = Encoding.UTF8.GetBytes("GET_CHARS");
+                sub = new byte[toReadLength];
+                read = reader.GetBytes(1, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+
+                // Read subset '5678' from actual '1.2345678' data
+                toReadLength = 4;
+                testSubBytes = Encoding.UTF8.GetBytes("5678");
+                sub = new byte[toReadLength];
+                read = reader.GetBytes(2, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+
+                // Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data 
+                // and copy inside existing buffer replacing Xs
+                toReadLength = 11;
+                byte[] testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
+                sub = Encoding.UTF8.GetBytes("OFFSET XXXXXXXXXXX EXTRA");
+                read = reader.GetBytes(0, 5, sub, 7, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubBytesWithTargetOffset.SequenceEqual(sub));
+
+                // Less data than 'ask' for
+                int dataOffset = 10;
+                read = reader.GetBytes(0, dataOffset, sub, 0, toReadLength);
+                Assert.AreEqual(read, testBytes.Length - dataOffset);
+
+                //** Invalid data offsets **/
+                try
+                {
+                    // Data offset > data length 
+                    reader.GetBytes(0, 25, sub, 7, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("dataOffset", e.ParamName);
+                }
+
+                try
+                {
+                    // Data offset < 0
+                    reader.GetBytes(0, -1, sub, 7, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("dataOffset", e.ParamName);
+                }
+
+                //** Invalid buffer offsets **//
+                try
+                {
+                    // Buffer offset > buffer length 
+                    reader.GetBytes(0, 6, sub, 25, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("buffer", e.ParamName);
+                }
+
+                try
+                {
+                    // Buffer offset < 0
+                    reader.GetBytes(0, 6, sub, -1, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("bufferOffset", e.ParamName);
+                }
+
+                //** Null buffer **//
+                // If null, this method returns the size required of the array in order to fit all 
+                // of the specified data.
+                read = reader.GetBytes(0, 6, null, 0, toReadLength);
+                Assert.AreEqual(testBytes.Length, read);
+
                 reader.Close();
 
                 cmd.CommandText = "drop table if exists testgetbinary";
@@ -485,6 +587,230 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void testGetChars()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetChars(col1 VARCHAR(50), col2 binary, col3 double)";
+
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string testChars = "TEST_GET_CHARS";
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+                double testDouble = 1.2345678;
+                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+                cmd.Parameters.Add(p1);
+
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testGetChars";
+                IDataReader reader = cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+                // Auto type conversion
+                Assert.IsTrue(testChars.Equals(reader.GetValue(0)));
+                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
+                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+
+                // Read all 'TEST_GET_CHARS' data
+                int toReadLength = 14;
+                char[] testSubChars = testChars.ToArray<char>();
+                char[] sub = new char[toReadLength];
+                long read = reader.GetChars(0, 0, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+
+                // Read subset 'GET_CHARS' from actual 'TEST_GET_CHARS' data
+                toReadLength = 9;
+                testSubChars = "GET_CHARS".ToArray<char>();
+                sub = new char[toReadLength];
+                read = reader.GetChars(0, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+
+                // Read subset 'GET_BINARY' from actual 'TEST_GET_BINARY' data
+                toReadLength = 10;
+                testSubChars = "GET_BINARY".ToArray<char>();
+                sub = new char[toReadLength];
+                read = reader.GetChars(1, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+
+                // Read subset '5678' from actual '1.2345678' data
+                toReadLength = 4;
+                testSubChars = "5678".ToArray<char>();
+                sub = new char[toReadLength];
+                read = reader.GetChars(2, 5, sub, 0, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+
+
+                // Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data 
+                // and copy inside existing buffer replacing Xs
+                char[] testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
+                toReadLength = 9;
+                sub = "OFFSET XXXXXXXXX EXTRA".ToArray<char>();
+                read = reader.GetChars(0, 5, sub, 7, toReadLength);
+                Assert.AreEqual(read, toReadLength);
+                Assert.IsTrue(testSubCharsWithTargetOffset.SequenceEqual(sub));
+
+                // Less data than 'ask' for
+                int dataOffset = 10;
+                read = reader.GetChars(0, dataOffset, sub, 0, toReadLength);
+                Assert.AreEqual(read, testChars.Length - dataOffset);
+
+                //** Invalid data offsets **//
+                try
+                {
+                    // Data offset > data length 
+                    reader.GetChars(0, 25, sub, 7, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("dataOffset", e.ParamName);
+                }
+
+                try
+                {
+                    // Data offset < 0
+                    reader.GetChars(0, -1, sub, 7, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("dataOffset", e.ParamName);
+                }
+
+                //** Invalid buffer offsets **//
+                try
+                {
+                    // Buffer offset > buffer length 
+                    reader.GetChars(0, 6, sub, 25, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("buffer", e.ParamName);
+                }
+
+                try
+                {
+                    // Buffer offset < 0
+                    reader.GetChars(0, 6, sub, -1, toReadLength);
+                    Assert.Fail();
+                }
+                catch (ArgumentException e)
+                {
+                    Assert.AreEqual("bufferOffset", e.ParamName);
+                }
+
+                //** Null buffer **//
+                // If null, this method returns the size required of the array in order to fit all 
+                // of the specified data.
+                read = reader.GetChars(0, 6, null, 0, toReadLength);
+                Assert.AreEqual(testChars.Length, read);
+
+                reader.Close();
+
+                cmd.CommandText = "drop table if exists testGetChars";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetStream()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetChars(col1 VARCHAR(50), col2 binary, col3 double)";
+
+                int count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                string testChars = "TEST_GET_CHARS";
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+                double testDouble = 1.2345678;
+                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+                cmd.Parameters.Add(p1);
+
+
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "select * from testGetChars";
+                DbDataReader reader = (DbDataReader) cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+
+                // Auto type conversion
+                Assert.IsTrue(testChars.Equals(reader.GetValue(0)));
+                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
+                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+
+                using (var stream = reader.GetStream(0))
+                {
+                    byte[] col1ToBytes = Encoding.UTF8.GetBytes(testChars);
+                    byte[] buf = new byte[col1ToBytes.Length];
+                    stream.Read(buf, 0, col1ToBytes.Length);
+                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
+                    Assert.IsTrue(col1ToBytes.SequenceEqual(buf));
+                }
+
+                using (var stream = reader.GetStream(1))
+                {
+                    byte[] buf = new byte[testBytes.Length];
+                    stream.Read(buf, 0, testBytes.Length);
+                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
+                    Assert.IsTrue(testBytes.SequenceEqual(buf));
+                }
+
+                using (var stream = reader.GetStream(2))
+                {
+                    byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
+                    byte[] buf = new byte[col3ToBytes.Length];
+                    stream.Read(buf, 0, col3ToBytes.Length);
+                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
+                    Assert.IsTrue(col3ToBytes.SequenceEqual(buf));
+                }
+
+
+                reader.Close();
+
+                cmd.CommandText = "drop table if exists testGetChars";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
+
+                conn.Close();
+            }
+        }
+
 
         [Test]
         public void testGetValueIndexOutOfBound()
