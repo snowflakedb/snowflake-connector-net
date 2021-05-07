@@ -63,7 +63,8 @@ namespace Snowflake.Data.Core
            HttpClientHandler httpHandler = new HttpClientHandler()
             {
                 // Verify no certificates have been revoked
-                CheckCertificateRevocationList = true,
+//                Commented out until https://github.com/dotnet/core/issues/6229 is resolved
+//                 CheckCertificateRevocationList = true,
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
