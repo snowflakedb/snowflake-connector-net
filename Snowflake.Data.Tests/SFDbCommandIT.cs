@@ -342,7 +342,16 @@ namespace Snowflake.Data.Tests
                 Thread.Sleep(8000);
                 cmd.Cancel();
 
-                executionThread.Wait();
+                try
+                {
+                    executionThread.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(
+                    "System.Threading.Tasks.TaskCanceledException",
+                    e.InnerException.GetType().ToString());
+                }
 
                 conn.Close();
             }
