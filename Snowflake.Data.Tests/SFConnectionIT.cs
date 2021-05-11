@@ -768,7 +768,6 @@ namespace Snowflake.Data.Tests
 
                 // Sleep for 16min (more than the default connection timeout and the httpclient 
                 // timeout to make sure there are no false positive )
-                //Thread.Sleep(16*60*1000);
                 Thread.Sleep(16*60*1000);
            
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
