@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -92,15 +92,33 @@ namespace Snowflake.Data.Core
 
         internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
         {
-            this.restRequester = restRequester;
-            properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            try
+            {
+                this.restRequester = restRequester;
+                properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
-            ParameterMap = new Dictionary<SFSessionParameter, object>();
-            ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = 
-                Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+                ParameterMap = new Dictionary<SFSessionParameter, object>();
+                ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
+                    Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
-            int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
+                int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+                int recommencedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
+                if (timeoutInSec < recommencedMinTimeoutSec)
+                {
+                    logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
+                        $" {recommencedMinTimeoutSec}");
+                }
+                
+                connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
+
+            }
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                throw new SnowflakeDbException(e.InnerException,
+                            SFError.INTERNAL_ERROR,
+                            "Unable to connect");
+            }
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -149,21 +167,25 @@ namespace Snowflake.Data.Core
 
         internal void close()
         {
-            var queryParams = new Dictionary<string, string>();
-            queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
-            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+            // Only close the session if it is opened
+            if (null != sessionToken)
+            {
+                var queryParams = new Dictionary<string, string>();
+                queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
+                queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+                queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-            SFRestRequest closeSessionRequest = new SFRestRequest
-            {
-                Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
-            };
-          
-            var response = restRequester.Post<CloseResponse>(closeSessionRequest);
-            if (!response.success)
-            {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                SFRestRequest closeSessionRequest = new SFRestRequest
+                {
+                    Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
+                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+                };
+
+                var response = restRequester.Post<CloseResponse>(closeSessionRequest);
+                if (!response.success)
+                {
+                    logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                }
             }
         }
 
@@ -208,6 +230,7 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
         {
+            logger.Debug("RestTimeout " + connectionTimeout);
             return new SFRestRequest()
             {
                 jsonBody = body,

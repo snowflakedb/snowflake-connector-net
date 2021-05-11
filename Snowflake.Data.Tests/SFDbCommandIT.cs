@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Data;
@@ -358,8 +358,10 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
-                cmd.CommandTimeout = 10;
+                // timelimit = 17min
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 1020)) v";
+                // timeout = 16min - Using a timeout > default Rest timeout of 15min
+                cmd.CommandTimeout = 16*60; 
 
                 try
                 {

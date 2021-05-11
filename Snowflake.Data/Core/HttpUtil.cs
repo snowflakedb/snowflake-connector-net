@@ -12,9 +12,6 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -67,10 +64,12 @@ namespace Snowflake.Data.Core
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                CookieContainer = cookieContainer = new CookieContainer()
             };
 
-             HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
+            HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
+            // HttpClient has a default timeout of 100 000 ms, we don't want to interfere with our
+            // own connection and command timeout
+            HttpUtil.httpClient.Timeout = Timeout.InfiniteTimeSpan;
         }
 
         /// <summary>
@@ -176,13 +175,16 @@ namespace Snowflake.Data.Core
             {
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
+                int totalRetryTime = 0;
+                int maxDefaultBackoff = 16;
 
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
                 p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
-                TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties["TIMEOUT_PER_HTTP_REQUEST"];
+                TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
+                TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
 
                 CancellationTokenSource childCts = null;
 
@@ -190,6 +192,7 @@ namespace Snowflake.Data.Core
 
                 while (true)
                 {
+
                     try
                     {
                         childCts = null;
@@ -206,12 +209,13 @@ namespace Snowflake.Data.Core
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            logger.Debug("SF rest request timeout.");
+                            logger.Debug("SF rest request timeout or explicit cancel called.");
                             cancellationToken.ThrowIfCancellationRequested(); 
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
                             logger.Warn("Http request timeout. Retry the request");
+                            totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
                         else
                         {
@@ -225,7 +229,16 @@ namespace Snowflake.Data.Core
                         if (response.IsSuccessStatusCode) {
                             return response;
                         }
-                        logger.Debug($"Failed Response: {response.ToString()}");
+                        else 
+                        {
+                            logger.Debug($"Failed Response: {response.ToString()}");
+                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
+                            if (!isRetryable)
+                            {
+                                // No need to keep retrying, stop here
+                                return response;
+                            }
+                        }
                     }
                     else 
                     {
@@ -236,8 +249,34 @@ namespace Snowflake.Data.Core
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
                     Thread.Sleep(backOffInSec * 1000);
-                    backOffInSec = backOffInSec >= 16 ? 16 : backOffInSec * 2;
+                    totalRetryTime += backOffInSec;
+                    backOffInSec = backOffInSec >= maxDefaultBackoff ?
+                            maxDefaultBackoff : backOffInSec * 2;
+
+                    if (totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    {
+                        // No need to wait more than necessary if it can be avoided.
+                        // If the rest timeout will be reached before the next back-off,
+                        // use a smaller one to give the Rest request a chance to timeout early
+                        backOffInSec = Math.Max(1, (int)restTimeout.TotalSeconds - totalRetryTime - 1);
+                    }
                 }
+            }
+
+            /// <summary>
+            /// Check whether or not the error is retryable or not.
+            /// </summary>
+            /// <param name="statusCode">The http status code.</param>
+            /// <returns>True if the request should be retried, false otherwise.</returns>
+            private bool isRetryableHTTPCode(int statusCode)
+            {
+                return (500 <= statusCode) && (statusCode < 600) ||
+                // Bad request
+                (statusCode == 400) ||
+                // Rate limit reached
+                (statusCode == 429) ||
+                // Request timeout
+                (statusCode == 408);
             }
         }
     }
