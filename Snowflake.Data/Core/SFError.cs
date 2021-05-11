@@ -63,6 +63,12 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270052)]
         JWT_ERROR_READING_PK,
+
+        [SFErrorAttr(errorCode = 270053)]
+        UNSUPPORTED_DOTNET_TYPE,
+
+        [SFErrorAttr(errorCode = 270054)]
+        UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM,
     }
 
     class SFErrorAttr : Attribute
