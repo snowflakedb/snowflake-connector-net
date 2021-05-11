@@ -92,11 +92,12 @@ namespace Snowflake.Data.Core
 
         internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
         {
+
+            this.restRequester = restRequester;
+            properties = SFSessionProperties.parseConnectionString(connectionString, password);
+
             try
             {
-                this.restRequester = restRequester;
-                properties = SFSessionProperties.parseConnectionString(connectionString, password);
-
                 ParameterMap = new Dictionary<SFSessionParameter, object>();
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
@@ -108,7 +109,11 @@ namespace Snowflake.Data.Core
                     logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
                         $" {recommencedMinTimeoutSec}");
                 }
-                
+                else if (timeoutInSec < 0)
+                {
+                    logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
+                }
+
                 connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
 
             }
@@ -116,7 +121,7 @@ namespace Snowflake.Data.Core
             {
                 logger.Error(e.Message);
                 throw new SnowflakeDbException(e.InnerException,
-                            SFError.INTERNAL_ERROR,
+                            SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
             }
         }
@@ -230,7 +235,6 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
         {
-            logger.Debug("RestTimeout " + connectionTimeout);
             return new SFRestRequest()
             {
                 jsonBody = body,

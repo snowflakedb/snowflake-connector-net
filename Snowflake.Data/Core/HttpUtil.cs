@@ -184,7 +184,9 @@ namespace Snowflake.Data.Core
                 p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
+                logger.Debug("Http request timeout : " + httpTimeout);
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
+                logger.Debug("Rest request timeout : " + restTimeout);
 
                 CancellationTokenSource childCts = null;
 

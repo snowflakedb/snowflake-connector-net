@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(0, conn.ConnectionTimeout);
+                Assert.AreEqual(900, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        //[Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtUnencryptedP8FileConnection()
         {
             using (var conn = new SnowflakeDbConnection())
