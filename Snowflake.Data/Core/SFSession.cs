@@ -222,7 +222,6 @@ namespace Snowflake.Data.Core
             logger.Debug("Update parameter map");
             foreach (NameValueParameter parameter in parameterList)
             {
-                logger.Debug(parameter.name + " : " + parameter.value);
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
                 {
                     ParameterMap[parameterName] = parameter.value;
