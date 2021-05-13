@@ -96,26 +96,15 @@ namespace Snowflake.Data.Core
             this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
+            ParameterMap = new Dictionary<SFSessionParameter, object>();
+            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
+            int timeoutInSec = recommendedMinTimeoutSec;
             try
             {
-                ParameterMap = new Dictionary<SFSessionParameter, object>();
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
-                int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-                int recommencedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
-                if (timeoutInSec < recommencedMinTimeoutSec)
-                {
-                    logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
-                        $" {recommencedMinTimeoutSec}");
-                }
-                else if (timeoutInSec < 0)
-                {
-                    logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
-                }
-
-                connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
-
+                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);            
             }
             catch (Exception e)
             {
@@ -124,6 +113,18 @@ namespace Snowflake.Data.Core
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
             }
+
+            if (timeoutInSec < recommendedMinTimeoutSec)
+            {
+                logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
+                    $" {recommendedMinTimeoutSec}");
+            }
+            if (timeoutInSec < 0)
+            {
+                logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
+            }
+
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
