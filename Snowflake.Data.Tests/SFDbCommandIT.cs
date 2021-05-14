@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
+    using System.Diagnostics;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
@@ -374,7 +375,13 @@ namespace Snowflake.Data.Tests
 
                 try
                 {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
                     cmd.ExecuteScalar();
+                    stopwatch.Stop();
+                    //Should timeout before the query time limit of 17min
+                    Assert.Less(stopwatch.ElapsedMilliseconds, 17 * 60 * 1000);
+                    // Should timeout after the defined query timeout of 16min
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 16 * 60 * 1000);
                     Assert.Fail();
                 }
                 catch(SnowflakeDbException e)

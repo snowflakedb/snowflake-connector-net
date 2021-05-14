@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests
                     //Should timeout before the default timeout (15min) * 60 * 1000
                     Assert.Less(stopwatch.ElapsedMilliseconds, 15*60*1000);
                     // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(timeoutSec * 1000, stopwatch.ElapsedMilliseconds);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
                 }
                 catch (AggregateException e)
                 {
