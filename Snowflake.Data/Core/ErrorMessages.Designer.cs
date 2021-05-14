@@ -160,5 +160,29 @@ namespace Snowflake.Data.Core {
                 return ResourceManager.GetString("JWT_ERROR_READING_PK", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string.
+        /// </summary>
+        internal static string UNSUPPORTED_DOTNET_TYPE
+        {
+            get
+            {
+                return ResourceManager.GetString("UNSUPPORTED_DOTNET_TYPE", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string.
+        /// </summary>
+        internal static string UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM
+        {
+            get
+            {
+                return ResourceManager.GetString("UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM", resourceCulture);
+            }
+        }
+
+        
     }
 }
