@@ -199,7 +199,16 @@ namespace Snowflake.Data.Client
             if (disposed)
                 return;
 
-            this.Close();
+            try
+            {
+                this.Close();
+            } 
+            catch (Exception ex)
+            {
+                // Prevent an exception from being thrown when disposing of this object
+                logger.Error("Unable to close connection", ex);
+            }
+            
             disposed = true;
 
             base.Dispose(disposing);
