@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Data;
@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
+    using System.Diagnostics;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
@@ -342,7 +343,16 @@ namespace Snowflake.Data.Tests
                 Thread.Sleep(8000);
                 cmd.Cancel();
 
-                executionThread.Wait();
+                try
+                {
+                    executionThread.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(
+                    "System.Threading.Tasks.TaskCanceledException",
+                    e.InnerException.GetType().ToString());
+                }
 
                 conn.Close();
             }
@@ -358,12 +368,20 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
-                cmd.CommandTimeout = 10;
+                // timelimit = 17min
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 1020)) v";
+                // timeout = 16min - Using a timeout > default Rest timeout of 15min
+                cmd.CommandTimeout = 16*60; 
 
                 try
                 {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
                     cmd.ExecuteScalar();
+                    stopwatch.Stop();
+                    //Should timeout before the query time limit of 17min
+                    Assert.Less(stopwatch.ElapsedMilliseconds, 17 * 60 * 1000);
+                    // Should timeout after the defined query timeout of 16min
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 16 * 60 * 1000);
                     Assert.Fail();
                 }
                 catch(SnowflakeDbException e)
