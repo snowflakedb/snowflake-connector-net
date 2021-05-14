@@ -70,8 +70,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(Boolean))
                 {
-                    var val = srcVal.Buffer[srcVal.offset];
-                    return val == '1' || val == 't' || val == 'T';
+                    return srcVal.Buffer[0] == '1' || srcVal.Buffer[0] == 't' || srcVal.Buffer[0] == 'T';
                 }
                 else if (destType == typeof(byte[]))
                 {
