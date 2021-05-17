@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests
 {
@@ -41,6 +42,7 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class SFBaseTestAsync
     {
+	static private SFLogger logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
         private const string connectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
             "account={3};role={4};db={5};schema={6};warehouse={7}";
 
@@ -98,6 +100,7 @@ namespace Snowflake.Data.Tests
             if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
+		logger.Info($"Test schema - {testConfig.schema}");
             }
             else
             {
