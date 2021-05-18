@@ -9,10 +9,17 @@ namespace Snowflake.Data.Tests
     using System.Data;
     using System;
     using Snowflake.Data.Core;
+    using System.Threading.Tasks;
+    using System.Threading;
+    using Snowflake.Data.Log;
+    using System.Diagnostics;
+    using Snowflake.Data.Tests.Mock;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+
         [Test]
         public void TestBasicConnection()
         {
@@ -22,7 +29,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(0, conn.ConnectionTimeout);
+                Assert.AreEqual(900, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -76,10 +83,70 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestLoginTimeout()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com;connection_timeout=5;"
-                    + "account=invalidaccount;user=snowman;password=test;";
+                int timeoutSec = 5;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
+                    timeoutSec);
+
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+                    conn.Open();
+                    stopwatch.Stop();
+                    Assert.Fail();
+                    //Should timeout before the default timeout (15min) * 60 * 1000
+                    Assert.Less(stopwatch.ElapsedMilliseconds, 15*60*1000);
+                    // Should timeout after the defined connection timeout
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+                Assert.AreEqual(5, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
+        public void TestDefaultLoginTimeout()
+        {
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                // Default timeout is 15 min
+                Assert.AreEqual(15 * 60, conn.ConnectionTimeout);
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+                    conn.Open();
+                    stopwatch.Stop();
+                    //Should timeout after the default timeout (15min)
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 15 * 60 * 1000);
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+            }
+        }
+
+        [Test]
+        public void TestConnectionFailFast()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com/oops;"
+                    + "connection_timeout=0;account=invalidaccount;user=snowman;password=test;";
 
                 conn.ConnectionString = invalidConnectionString;
 
@@ -89,14 +156,14 @@ namespace Snowflake.Data.Tests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch (AggregateException e)
+                catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        e.ErrorCode);
                 }
-                Assert.AreEqual(5, conn.ConnectionTimeout);
-            }
 
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
         }
 
         [Test]
@@ -139,7 +206,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestInvalidConnectioinString()
+        public void TestInvalidConnectionString()
         {
             string[] invalidStrings = {
                 // missing required connection property password
@@ -606,7 +673,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        
+
         [Test]
         [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestValidOAuthConnection()
@@ -657,7 +724,7 @@ namespace Snowflake.Data.Tests
                    = ConnectionStringWithoutAuth
                    + String.Format(
                        ";authenticator=oauth;token={0}",
-                       testConfig.expOauthToken);                
+                       testConfig.expOauthToken);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -670,4 +737,94 @@ namespace Snowflake.Data.Tests
             }
         }
     }
+
+    [TestFixture]
+    class SFConnectionITAsync : SFBaseTestAsync
+    {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
+
+
+        [Test]
+        public void TestCancelLoginBeforeTimeout()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                // No timeout
+                int timeoutSec = 0;
+                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0}",
+                    timeoutSec);
+
+                conn.ConnectionString = infiniteLoginTimeOut;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                // At this point the connection string has not been parsed, it will return the 
+                // default value
+                //Assert.AreEqual(15, conn.ConnectionTimeout);
+
+                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+                logger.Debug("TestNoLoginTimeout token " + connectionCancelToken.Token.GetHashCode());
+
+                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);                
+
+                // Sleep for 16min (more than the default connection timeout and the httpclient 
+                // timeout to make sure there are no false positive )
+                Thread.Sleep(16*60*1000);
+           
+                Assert.AreEqual(ConnectionState.Connecting, conn.State);
+
+                // Cancel the connection because it will never succeed since there is no 
+                // connection_timeout defined
+                logger.Debug("connectionCancelToken.Cancel ");
+                connectionCancelToken.Cancel();
+
+                try
+                {
+                    connectTask.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(
+                        "System.Threading.Tasks.TaskCanceledException",
+                        e.InnerException.GetType().ToString());
+                    
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(0, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
+        public void TestAsyncConnectionFailFast()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string invalidConnectionString ="host=invalidaccount.snowflakecomputing.com;"
+                    + "connection_timeout=0;account=invalidaccount;user=snowman;password=test;";
+
+                conn.ConnectionString = invalidConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+                Task connectTask = null;
+                try
+                {
+                    connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                
+                    connectTask.Wait();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.IsTrue(connectTask.IsFaulted);
+            }
+        }
+    }
 }
+
+

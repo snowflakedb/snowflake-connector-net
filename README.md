@@ -117,6 +117,7 @@ The following table lists all valid connection properties:
 | USER                      | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
 | WAREHOUSE                 | No       |                                                                               |
 | CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 900 seconds |
 | AUTHENTICATOR             | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
 |VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 |PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
@@ -288,6 +289,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 Bind Parameter
 --------------
 
+This example shows how bound parameters are converted from C# data types to
+Snowflake data types. For example, if the data type of the Snowflake column
+is INTEGER, then you can bind C# data types Int32 or Int16.
+
+This example inserts 3 rows into a table with one column.
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -295,7 +302,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?),(?),(?)";
+    cmd.CommandText = "create or replace table T(cola int)";
+    int count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
+    IDbCommand cmd = conn.CreateCommand();
+    cmd.CommandText = "insert into t values (?), (?), (?)";
 
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
@@ -317,6 +329,10 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     var count = cmd.ExecuteNonQuery();
     Assert.AreEqual(3, count);
+
+    cmd.CommandText = "drop table if exists T";
+    count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
 
     conn.Close();
 }

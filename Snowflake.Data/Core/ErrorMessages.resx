@@ -145,7 +145,7 @@
     <value>Connection string is invalid: {0}</value>
   </data>
   <data name="INVALID_DATA_CONVERSION" xml:space="preserve">
-    <value>Failed to convert data {0} from type {0} to type {1}.</value>
+    <value>Failed to convert data {0} from type {1} to type {2}.</value>
   </data>
   <data name="MISSING_CONNECTION_PROPERTY" xml:space="preserve">
     <value>Required property {0} is not provided.</value>
@@ -170,5 +170,11 @@
   </data>
   <data name="JWT_ERROR_READING_PK" xml:space="preserve">
     <value>Could not read private key {0}. \n Error : {1}</value>
+  </data>
+  <data name="UNSUPPORTED_DOTNET_TYPE" xml:space="preserve">
+    <value>No corresponding Snowflake type for type {0}.</value>
+  </data>
+  <data name="UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM" xml:space="preserve">
+    <value>Snowflake type {0} is not supported for parameters.</value>
   </data>
 </root>
