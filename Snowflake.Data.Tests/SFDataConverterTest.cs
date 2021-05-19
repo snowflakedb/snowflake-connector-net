@@ -34,6 +34,18 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [TestCase("0", false)]
+        [TestCase("t", true)]
+        [TestCase("T", true)]
+        [TestCase("1", true)]
+        [TestCase("anything else", false)]
+        public void TestConvertBoolean(string inputBooleanString, bool expected)
+        {
+            var actual = SFDataConverter.ConvertToCSharpVal(inputBooleanString, SFDataType.BOOLEAN, typeof(bool));
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
         [TestCase("2100-12-31 23:59:59.9999999")]
         [TestCase("2200-01-01 11:22:33.4455667")]
         [TestCase("9999-12-31 23:59:59.9999999")]

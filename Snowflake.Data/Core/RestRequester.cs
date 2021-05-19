@@ -99,13 +99,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-#if NET46
-                // The following optimization is going to cause test failure in net core 2.0 when testing against Azure deployment
-                // We might want to revisit when we upgrade the framework.
                 var response = await HttpUtil.getHttpClient().SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
-#else
-                var response = await HttpUtil.getHttpClient().SendAsync(request, linkedCts.Token).ConfigureAwait(false);
-#endif
                 response.EnsureSuccessStatusCode();
 
                 return response;

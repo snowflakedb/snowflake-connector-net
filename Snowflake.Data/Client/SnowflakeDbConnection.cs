@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -18,18 +18,20 @@ namespace Snowflake.Data.Client
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
-        internal SFSession SfSession { get; private set; } 
+        internal SFSession SfSession { get; set; } 
 
-        private ConnectionState _connectionState;
+        internal ConnectionState _connectionState;
 
-        private int _connectionTimeout;
+        internal int _connectionTimeout;
 
         private bool disposed = false;
 
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
-            _connectionTimeout = 0;
+            _connectionTimeout = 
+                int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
+                    defaultValue);
         }
 
         public override string ConnectionString
@@ -112,21 +114,57 @@ namespace Snowflake.Data.Client
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
                 logger.Error("Unable to connect", e);
-                throw e;
+                if (!(e.GetType() == typeof(SnowflakeDbException)))
+                {
+                    throw new SnowflakeDbException(e.InnerException,
+                                SFError.INTERNAL_ERROR,
+                                "Unable to connect");
+                }
+                else
+                {
+                    throw;
+                }
             }
             OnSessionEstablished();
         }
-        
+
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            logger.Debug("Open Connection Async.");
-            if (cancellationToken.IsCancellationRequested)
-                return Task.FromCanceled(cancellationToken);
-
+            registerConnectionCancellationCallback(cancellationToken);
             SetSession();
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(t => OnSessionEstablished(), cancellationToken);
+
+            return SfSession.OpenAsync(cancellationToken).ContinueWith(
+                previousTask =>
+                {
+                    if (previousTask.IsFaulted)
+                    {
+                    // Exception from SfSession.OpenAsync
+                    Exception sfSessionEx = previousTask.Exception;
+                        _connectionState = ConnectionState.Closed;
+                        logger.Error("Unable to connect", sfSessionEx.InnerException);
+                        throw new SnowflakeDbException(sfSessionEx.InnerException,
+                            SFError.INTERNAL_ERROR,
+                            "Unable to connect");
+                    }
+                    else if (previousTask.IsCanceled)
+                    {
+                        _connectionState = ConnectionState.Closed;
+                        logger.Debug("Connection canceled");
+                    }
+                    else
+                    {
+                        logger.Debug("All good");
+                    // Only continue if the session was opened successfully
+                    OnSessionEstablished();
+                    }
+                },
+                cancellationToken);
         }
 
+        /// <summary>
+        /// Create a new SFsession with the connection string settings.
+        /// </summary>
+        /// <exception cref="SnowflakeDbException">If the connection string can't be processed</exception>
         private void SetSession()
         {
             SfSession = new SFSession(ConnectionString, Password);
@@ -161,10 +199,33 @@ namespace Snowflake.Data.Client
             if (disposed)
                 return;
 
-            this.Close();
+            try
+            {
+                this.Close();
+            } 
+            catch (Exception ex)
+            {
+                // Prevent an exception from being thrown when disposing of this object
+                logger.Error("Unable to close connection", ex);
+            }
+            
             disposed = true;
 
             base.Dispose(disposing);
+        }
+
+
+        /// <summary>
+        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
+        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
+        /// </summary>
+        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
+        internal void registerConnectionCancellationCallback(CancellationToken externalCancellationToken)
+        {
+            if (!externalCancellationToken.IsCancellationRequested)
+            {
+                externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
+            }
         }
 
         ~SnowflakeDbConnection()

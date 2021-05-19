@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "0")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "900")] //15min
         CONNECTION_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,

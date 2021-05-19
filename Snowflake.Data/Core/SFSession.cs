@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -92,14 +92,38 @@ namespace Snowflake.Data.Core
 
         internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
         {
+
             this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
-            ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = 
-                Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
+            int timeoutInSec = recommendedMinTimeoutSec;
+            try
+            {
+                ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
+                    Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
-            int timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);            
+            }
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                throw new SnowflakeDbException(e.InnerException,
+                            SFError.INVALID_CONNECTION_STRING,
+                            "Unable to connect");
+            }
+
+            if (timeoutInSec < recommendedMinTimeoutSec)
+            {
+                logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
+                    $" {recommendedMinTimeoutSec}");
+            }
+            if (timeoutInSec < 0)
+            {
+                logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
+            }
+
             connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
@@ -149,6 +173,10 @@ namespace Snowflake.Data.Core
 
         internal void close()
         {
+            // Nothing to do if the session is not open
+            if (null != sessionToken) return;
+
+            // Send a close session request
             var queryParams = new Dictionary<string, string>();
             queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
@@ -159,7 +187,7 @@ namespace Snowflake.Data.Core
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
-          
+
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
