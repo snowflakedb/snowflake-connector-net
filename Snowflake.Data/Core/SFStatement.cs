@@ -149,7 +149,18 @@ namespace Snowflake.Data.Core
                 externalCancellationToken);
             if (!_linkedCancellationTokenSouce.IsCancellationRequested)
             {
-                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
+                _linkedCancellationTokenSouce.Token.Register(() => 
+                {
+                    try
+                    {
+                        Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Prevent an exception from being thrown if Cancel request fails
+                        logger.Error("Unable to cancel query.", ex);
+                    }
+                });
             }
         }
 
@@ -297,23 +308,15 @@ namespace Snowflake.Data.Core
             if (request == null)
                 return;
 
-            try
-            {
-                var response = _restRequester.Post<NullDataResponse>(request);
+            var response = _restRequester.Post<NullDataResponse>(request);
 
-                if (response.success)
-                {
-                    logger.Info("Query cancellation succeed");
-                }
-                else
-                {
-                    logger.Warn("Query cancellation failed.");
-                }
-            } 
-            catch (Exception ex)
+            if (response.success)
             {
-                // Prevent an exception from being thrown if Cancel request fails
-                logger.Error("Unable to cancel query.", ex);
+                logger.Info("Query cancellation succeed");
+            }
+            else
+            {
+                logger.Warn("Query cancellation failed.");
             }
         }
         
