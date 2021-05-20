@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception ex)
                     {
-                        // Prevent an exception from being thrown if Cancel request fails
+                        // Prevent an unhandled exception from being thrown
                         logger.Error("Unable to cancel query.", ex);
                     }
                 });
