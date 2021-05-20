@@ -193,6 +193,12 @@ namespace Snowflake.Data.Tests
         [TestCase("999999999999999999.000000000000100000000000")]
         [TestCase("4294967295.4294967296")]
         [TestCase("-0.999")]
+        [TestCase("307.48100000000000000000")]
+        [TestCase("79228162514264337593543950335")] // Max decimal value
+        [TestCase("-79228162514264337593543950335")] // Min decimal value
+        [TestCase("9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
+        [TestCase("-9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
+        [TestCase("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
         public void TestConvertToDecimal(string s)
         {
             decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
