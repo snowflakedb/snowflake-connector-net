@@ -208,6 +208,15 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [TestCase("79228162514264337593543950336")] // Max decimal value + 1
+        [TestCase("-79228162514264337593543950336")] // Min decimal value - 1
+        [TestCase("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
+        public void TestOverflowDecimal(string s)
+        {
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+        }
+
+        [Test]
         [TestCase("9223372036854775807.9223372036854775807")]
         [TestCase("-9223372036854775807.1234567890")]
         [TestCase("-1.300")]
