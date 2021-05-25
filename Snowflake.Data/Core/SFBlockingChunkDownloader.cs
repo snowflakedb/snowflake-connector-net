@@ -28,12 +28,12 @@ namespace Snowflake.Data.Core
         
         private int nextChunkToDownloadIndex;
         
-        // External cancellation token, used to stop donwload
+        // External cancellation token, used to stop download
         private CancellationToken externalCancellationToken;
 
         private readonly int prefetchThreads;
 
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -43,14 +43,15 @@ namespace Snowflake.Data.Core
             List<ExecResponseChunk>chunkInfos, string qrmk, 
             Dictionary<string, string> chunkHeaders, 
             CancellationToken cancellationToken,
-            SFBaseResultSet ResultSet)
+            SFBaseResultSet resultSet)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
-            this.ResultSet = ResultSet;
-            this.prefetchThreads = GetPrefetchThreads(ResultSet);
+            this.ResultSet = resultSet;
+            this.prefetchThreads = GetPrefetchThreads(resultSet);
+            RestRequester = resultSet.sfStatement.SfSession.restRequester;
             externalCancellationToken = cancellationToken;
 
             var idx = 0;
@@ -124,7 +125,7 @@ namespace Snowflake.Data.Core
             };
 
 
-            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            var httpResponse = await RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
             Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.

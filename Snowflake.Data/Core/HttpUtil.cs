@@ -17,7 +17,14 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
-        static private HttpClient httpClient = null;
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+
+
+        // Pool of http clients per proxy settings
+        private static Dictionary<IWebProxy, HttpClient> httpClients = 
+            new Dictionary<IWebProxy, HttpClient>();
+
+        private static HttpClient noProxyHttpClient;
 
         static private CookieContainer cookieContainer = null;
 
@@ -41,20 +48,36 @@ namespace Snowflake.Data.Core
             }
         }
         
-
-        static public HttpClient getHttpClient()
+        /// <summary>
+        /// Get the http client for the given proxy, or null if no proxy are used.
+        /// </summary>
+        /// <param name="proxy">The proxy to use or null for no proxy.</param>
+        /// <returns>The corresponding Httpclient instance.</returns>
+        static public HttpClient getHttpClient(IWebProxy proxy)
         {
             lock (httpClientInitLock)
             {
-                if (httpClient == null)
+                if ( null == proxy)
                 {
-                    initHttpClient();
+                    logger.Debug("noProxyHttpClient " + noProxyHttpClient);
+                    // Init noProxyHttpClient
+                    if (null == noProxyHttpClient) noProxyHttpClient = initHttpClient(null);
+                    return noProxyHttpClient;
+                }
+
+                if (!httpClients.TryGetValue(proxy, out HttpClient httpClient))
+                {
+                    //logger.Debug("Need a new HttpClient for this proxy.");
+                    // Need a new HttpClient for this proxy
+                    httpClient = initHttpClient(proxy);
+                    // Add to the pool
+                    httpClients.Add(proxy, httpClient);
                 }
                 return httpClient;
             }
         }
 
-        static private void initHttpClient()
+        static private HttpClient initHttpClient(IWebProxy proxy)
         {
 
            HttpClientHandler httpHandler = new HttpClientHandler()
@@ -64,12 +87,17 @@ namespace Snowflake.Data.Core
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            };
+                CookieContainer = cookieContainer = new CookieContainer()
+           };
 
-            HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
+            if (null != proxy) httpHandler.Proxy = proxy;
+            
+            HttpClient httpClient = new HttpClient(new RetryHandler(httpHandler));
             // HttpClient has a default timeout of 100 000 ms, we don't want to interfere with our
             // own connection and command timeout
-            HttpUtil.httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            httpClient.Timeout = Timeout.InfiniteTimeSpan;
+
+            return httpClient;
         }
 
         /// <summary>

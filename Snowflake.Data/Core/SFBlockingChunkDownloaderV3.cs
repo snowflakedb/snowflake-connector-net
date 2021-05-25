@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchSlot;
 
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -61,6 +61,7 @@ namespace Snowflake.Data.Core
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<IResultChunk>>();
+            RestRequester = ResultSet.sfStatement.SfSession.restRequester;
             externalCancellationToken = cancellationToken;
 
             for (int i=0; i<prefetchSlot; i++)
@@ -87,12 +88,6 @@ namespace Snowflake.Data.Core
             String val = (String)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
             return Int32.Parse(val);
         }
-
-
-        /*public Task<IResultChunk> GetNextChunkAsync()
-        {
-            return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take();
-        }*/
 
         public Task<IResultChunk> GetNextChunkAsync()
         {
@@ -140,7 +135,7 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
+            using (var httpResponse = await RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
                            .ConfigureAwait(continueOnCapturedContext: false))
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))

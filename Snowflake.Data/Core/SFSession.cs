@@ -12,6 +12,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Snowflake.Data.Core
 {
@@ -55,7 +56,11 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
+                SnowflakeDbException e = new SnowflakeDbException
+                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE, 
+                    authnResponse.code, 
+                    authnResponse.message,
+                    "");
                 logger.Error("Authentication failed", e);
                 throw e;
             }
@@ -85,15 +90,8 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString, SecureString password) : 
-            this(connectionString, password, RestRequester.Instance)
+        internal SFSession(String connectionString, SecureString password)            
         {
-        }
-
-        internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
-        {
-
-            this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
@@ -103,13 +101,38 @@ namespace Snowflake.Data.Core
             {
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+                string proxyHost = null;
+                string proxyPort = null;
+                string noProxyHosts = null;
+                string proxyPwd = null;
+                string proxyUser = null;
+                if (Boolean.Parse(properties[SFSessionProperty.USEPROXY]))
+                {
+                    // Let's try to get the associated RestRequester
+                    properties.TryGetValue(SFSessionProperty.PROXYHOST, out proxyHost);
+                    properties.TryGetValue(SFSessionProperty.PROXYPORT, out proxyPort);
+                    properties.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out noProxyHosts);
+                    properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out proxyPwd);
+                    properties.TryGetValue(SFSessionProperty.PROXYUSER, out proxyUser);
 
-                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);            
+                    if (!String.IsNullOrEmpty(noProxyHosts))
+                    {
+                        // The list is url-encoded
+                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
+                        noProxyHosts = HttpUtility.UrlDecode(noProxyHosts);
+                    }
+                }
+
+                restRequester =
+                    RestRequester.GetRestRequester(proxyHost, proxyPort, proxyUser, proxyPwd, noProxyHosts);
+                
             }
             catch (Exception e)
             {
-                logger.Error(e.Message);
-                throw new SnowflakeDbException(e.InnerException,
+                logger.Error("Unable to connect", e);
+                throw new SnowflakeDbException(e,
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
             }
@@ -124,7 +147,14 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
             }
 
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;            
+        }
+
+        internal SFSession(String connectionString, SecureString password, IRestRequester restRequester) :
+            this(connectionString, password)
+        {
+            // Override the Rest requester with a mock for testing if necessary
+            this.restRequester = restRequester;            
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -174,7 +204,7 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             // Nothing to do if the session is not open
-            if (null != sessionToken) return;
+            if (null == sessionToken) return;
 
             // Send a close session request
             var queryParams = new Dictionary<string, string>();

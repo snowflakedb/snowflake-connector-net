@@ -46,6 +46,42 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestIncorrectUserOrPasswordBasicConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+            "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.role,
+                    testConfig.database,
+                    testConfig.schema,
+                    testConfig.warehouse,
+                    "unknown",
+                    testConfig.password);
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                
+                }
+                catch (SnowflakeDbException e)
+                {
+                    // Expected
+                    logger.Debug("Failed opening connection ", e);
+                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
@@ -734,6 +770,204 @@ namespace Snowflake.Data.Tests
                 Console.Write(e);
                 // Token is expired
                 Assert.AreEqual(390318, e.ErrorCode);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestCorrectProxySettingFromConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                = ConnectionString
+                + String.Format(
+                    ";useProxy=true;proxyHost={0};proxyPort={1}",
+                    testConfig.proxyHost,
+                    testConfig.proxyPort);
+
+                conn.Open();
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestCorrectProxyWithCredsSettingFromConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                = ConnectionString
+                + String.Format(
+                    ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
+                    testConfig.authProxyHost,
+                    testConfig.authProxyPort,
+                    testConfig.authProxyUser,
+                    testConfig.authProxyPwd);
+
+                conn.Open();
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestCorrectProxySettingWithByPassListFromConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                = ConnectionString
+                + String.Format(
+                    ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
+                    testConfig.authProxyHost,
+                    testConfig.authProxyPort,
+                    testConfig.authProxyUser,
+                    testConfig.authProxyPwd,
+                    "*.foo.com %7C" + testConfig.host + "|localhost");
+
+                conn.Open();
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        public void TestMultipleConnectionWithDifferentProxySettings()
+        {
+            // Authenticated proxy
+            using (var conn1 = new SnowflakeDbConnection())
+            {
+                conn1.ConnectionString = ConnectionString
+                    + String.Format(
+                        ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
+                        testConfig.authProxyHost,
+                        testConfig.authProxyPort,
+                        testConfig.authProxyUser,
+                        testConfig.authProxyPwd);
+                conn1.Open();
+            }
+
+            // No proxy
+            using (var conn2 = new SnowflakeDbConnection())
+            {
+                conn2.ConnectionString = ConnectionString;
+                conn2.Open();
+            }
+
+            // Non authenticated proxy
+            using (var conn3 = new SnowflakeDbConnection())
+            {
+                conn3.ConnectionString = ConnectionString
+                + String.Format(
+                    ";useProxy=true;proxyHost={0};proxyPort={1}",
+                    testConfig.proxyHost,
+                    testConfig.proxyPort);
+                conn3.Open();
+            }
+
+            // Invalid proxy
+            using (var conn4 = new SnowflakeDbConnection())
+            {
+                conn4.ConnectionString =
+                    ConnectionString + "connection_timeout=20;useProxy=true;proxyHost=Invalid;proxyPort=8080";
+                try
+                {
+                    conn4.Open();
+                    Assert.Fail();
+                }
+                catch
+                {
+                    // Expected
+                }
+            }
+
+            // Another authenticated proxy connection
+            //Should use same httpclient than previous authenticated proxy connection
+            using (var conn5 = new SnowflakeDbConnection())
+            {
+                conn5.ConnectionString = ConnectionString
+                    + String.Format(
+                        ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
+                        testConfig.authProxyHost,
+                        testConfig.authProxyPort,
+                        testConfig.authProxyUser,
+                        testConfig.authProxyPwd);
+                conn5.Open();
+            }
+
+            // No proxy again
+            // Should use same httpclient than previous no proxy connection
+            using (var conn6 = new SnowflakeDbConnection())
+            {
+                conn6.ConnectionString = ConnectionString;
+                conn6.Open();
+            }
+
+            // Another authenticated proxy, but this will create a new httpclient because there is
+            // a bypass list
+            using (var conn7 = new SnowflakeDbConnection())
+            {
+                conn7.ConnectionString
+              = ConnectionString
+              + String.Format(
+                  ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
+                  testConfig.authProxyHost,
+                  testConfig.authProxyPort,
+                  testConfig.authProxyUser,
+                  testConfig.authProxyPwd,
+                  "*.foo.com %7C" + testConfig.host + "|localhost");
+
+                conn7.Open();
+            }
+
+        }
+
+        [Test]
+        public void TestInvalidProxySettingFromConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = 
+                    ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {                    
+                    // Expected
+                    logger.Debug("Failed opening connection ", e);
+                    Assert.AreEqual(270001, e.ErrorCode); //Internal error
+                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                }
+            }
+        }
+
+        [Test]
+        public void TestUseProxyFalseWithInvalidProxyConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString =
+                    ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
+                conn.Open();
+                // Because useProxy=false, the proxy settings are ignored
+            }
+        }
+
+        [Test]
+        public void TestInvalidProxySettingWithByPassListFromConnectionString()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                = ConnectionString
+                + String.Format(
+                    ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
+                    "*.foo.com %7C" + testConfig.host + "|localhost");
+
+                conn.Open();
+                // Because testConfig.host is in the bypass list, the proxy should not be used
             }
         }
     }

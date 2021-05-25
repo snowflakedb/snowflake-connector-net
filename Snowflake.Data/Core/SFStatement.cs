@@ -39,18 +39,15 @@ namespace Snowflake.Data.Core
 
         private CancellationTokenSource _timeoutTokenSource;
         
-        // Merged cancellation token source for all canellation signal. 
+        // Merged cancellation token source for all cancellation signal. 
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSouce;
 
-        internal SFStatement(SFSession session, IRestRequester rest)
+        internal SFStatement(SFSession session)
         {
             SfSession = session;
-            _restRequester = rest;
+            _restRequester = session.restRequester;
         }
-
-        internal SFStatement(SFSession session) : this(session, RestRequester.Instance)
-        { }
 
         private void AssignQueryRequestId()
         {
