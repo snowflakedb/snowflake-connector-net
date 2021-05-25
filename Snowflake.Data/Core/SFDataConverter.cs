@@ -113,9 +113,9 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Invalid destination type.");
                 }
             }
-            catch (OverflowException)
+            catch (OverflowException e)
             {
-                throw new OverflowException($"Error converting '{srcVal} to {destType.Name}'. Use GetString() to handle very large values");
+                throw new OverflowException($"Error converting '{srcVal} to {destType.Name}'. Use GetString() to handle very large values", e);
             }
         }
 
