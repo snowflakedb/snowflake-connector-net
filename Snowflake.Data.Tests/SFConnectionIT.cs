@@ -964,7 +964,7 @@ namespace Snowflake.Data.Tests
                 = ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    "*.foo.com %7C" + testConfig.host + "|localhost");
+                    "*.foo.com %7C" + testConfig.account+".snowflakecomputing.com|localhost");
 
                 conn.Open();
                 // Because testConfig.host is in the bypass list, the proxy should not be used

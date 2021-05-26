@@ -240,12 +240,12 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            checkSessionProperties(properties);
-
             if (password != null)
             {
                 properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
             }
+
+            checkSessionProperties(properties);
 
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) || 
