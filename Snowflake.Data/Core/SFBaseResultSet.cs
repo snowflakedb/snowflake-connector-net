@@ -3,10 +3,12 @@
  */
 
 using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
+
     abstract class SFBaseResultSet
     {
         internal SFStatement sfStatement;
@@ -21,20 +23,17 @@ namespace Snowflake.Data.Core
 
         internal abstract Task<bool> NextAsync();
 
-        protected abstract string getObjectInternal(int columnIndex);
-
-        private SFDataConverter dataConverter;
+        protected abstract UTF8Buffer getObjectInternal(int columnIndex);
 
         protected SFBaseResultSet()
         {
-            dataConverter = new SFDataConverter();
         }
 
         internal T GetValue<T>(int columnIndex)
         {
-            string val = getObjectInternal(columnIndex);
+            UTF8Buffer val = getObjectInternal(columnIndex);
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return (T) dataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
+            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
         }
 
         internal string GetString(int columnIndex)
@@ -50,17 +49,22 @@ namespace Snowflake.Data.Core
                         sfResultSetMetaData.dateOutputFormat);
                 //TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
                 default:
-                    return getObjectInternal(columnIndex); 
+                    return getObjectInternal(columnIndex).SafeToString(); 
             }
         }
 
         internal object GetValue(int columnIndex)
         {
-            string val = getObjectInternal(columnIndex);
+            UTF8Buffer val = getObjectInternal(columnIndex);
             var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return dataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
         }
-        
+
+        internal bool IsDBNull(int ordinal)
+        {
+            return (null == getObjectInternal(ordinal));
+        }
+
         internal void close()
         {
             isClosed = true;

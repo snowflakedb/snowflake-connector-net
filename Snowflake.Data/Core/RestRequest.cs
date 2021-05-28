@@ -1,8 +1,7 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Threading;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System;
@@ -23,7 +22,13 @@ namespace Snowflake.Data.Core
     /// </summary>
     internal abstract class BaseRestRequest : IRestRequest
     {
-        private const string HTTP_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_HTTP_REQUEST";
+        internal static string HTTP_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_HTTP_REQUEST";
+
+        internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
+
+        // The default Rest timeout. Set to 15min following back-end team suggestion. 
+        public static int DEFAULT_REST_RETRY_MINUTE_TIMEOUT = 15;
+
         internal Uri Url { get; set; }
         /// <summary>
         /// Timeout of the overall rest request
@@ -43,6 +48,7 @@ namespace Snowflake.Data.Core
         {
             HttpRequestMessage message = new HttpRequestMessage(method, url);
             message.Properties[HTTP_REQUEST_TIMEOUT_KEY] = HttpTimeout;
+            message.Properties[REST_REQUEST_TIMEOUT_KEY] = RestTimeout;
             return message;
         }
 
@@ -94,7 +100,7 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest()
         {
-            RestTimeout = Timeout.InfiniteTimeSpan;
+            RestTimeout = TimeSpan.FromMinutes(DEFAULT_REST_RETRY_MINUTE_TIMEOUT);
 
             // default each http request timeout to 16 seconds
             HttpTimeout = TimeSpan.FromSeconds(16); 
@@ -175,6 +181,11 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "data")]
         internal LoginRequestData data { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("LoginRequest {{data: {0} }}", data.ToString());
+        }
     }
 
     class LoginRequestData
@@ -214,8 +225,8 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("LoginRequestData {{ClientAppVersion: {0} AccountName: {1}, loginName: {2}, ClientEnv: {3} }}", 
-                clientAppVersion, accountName, loginName, clientEnv.ToString());
+            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}", 
+                clientAppVersion, accountName, loginName, clientEnv.ToString(), Authenticator);
         }
     }
 

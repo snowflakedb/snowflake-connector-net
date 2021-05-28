@@ -1,15 +1,15 @@
+
 Snowflake Connector for .NET
 ============================
 
-[![Build status](https://ci.appveyor.com/api/projects/status/2gx5agsb7i3m5ije/branch/master?svg=true)](https://ci.appveyor.com/project/howryu/snowflake-connector-net/branch/master)
-[![codecov](https://codecov.io/gh/snowflakedb/snowflake-connector-net/branch/master/graph/badge.svg)](https://codecov.io/gh/snowflakedb/snowflake-connector-net)
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
 
-Library target is under .NET Framework 4.6 and .NET Standard 2.0.
+Library target is under .NET Framework 4.7.2 and .NET Standard 2.0.
 
+Please refer to the Notice section below for information about safe usage of the .NET Driver
 
 Building the Package
 ====================
@@ -99,27 +99,34 @@ Create a Connection
 -------------------
 
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
-i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...". The following table lists all valid connection properties:
+i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
+
+Note: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
+
+The following table lists all valid connection properties:
+<br />
+
+| Connection Property       | Required | Comment                                                                       |
+|---------------------------|----------|-------------------------------------------------------------------------------|
+| ACCOUNT                   | Yes      | Account should not include region or cloud provider information. e.g. account should be XXX instead of XXX.us-east-1.|
+| DB                        | No       |                                                                               |
+| HOST                      | No       | If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, e.g. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
+| PASSWORD                  | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
+| ROLE                      | No       |                                                                               |
+| SCHEMA                    | No       |                                                                               |
+| USER                      | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
+| WAREHOUSE                 | No       |                                                                               |
+| CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 900 seconds |
+| AUTHENTICATOR             | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
+|VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
+|PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
+|PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key, if the key is encrypted.|
+|PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
+|TOKEN                      |Depends   |The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 
 <br />
 
-| Connection Property | Required | Comment                                                                       |
-|---------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT             | Yes      | Account should not include region or clound provider information. i.e. account should be XXX instead of XXX.us-east-1.|
-| DB                  | No       |                                                                               |
-| HOST                | No       | If no value specified, driver will use \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, i.e. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
-| PASSWORD            | Depends  | Ignored for external browser, required for other authentication methods.      |
-| ROLE                | No       |                                                                               |
-| SCHEMA              | No       |                                                                               |
-| USER                | Yes      | For okta and externalbrowser, this should be the login name for your idp.     |
-| WAREHOUSE           | No       |                                                                               |
-| CONNECTION_TIMEOUT  | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
-| AUTHENTICATOR       | No       | The method of authentication. Currently support snowflake(default), [native SSO okta](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only) and [externalbrowser](https://docs.snowflake.net/manuals/user-guide/admin-security-fed-auth-use.html#browser-based-sso).  |
-|VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when makeing connection. Default to be true. |
-
-<br />
-
-Sample code to open a connection to Snowflake:
+The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -131,6 +138,130 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+If you are using a different method for authentication, see the examples below:
+
+* **Key-pair authentication**
+
+  After setting up [key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth.html), you can specify the
+  private key for authentication in one of the following ways:
+
+  * Specify the file containing an unencrypted private key:
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+
+  * Specify the file containing an encrypted private key:
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    * `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
+
+  * Specify an unencrypted private key (read from a file):
+
+    ```cs
+    using (IDbConnection conn = new SnowflakeDbConnection())
+    {
+        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
+
+        conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
+
+        conn.Open();
+    
+        conn.Close();
+    }
+    ```
+
+    where:
+
+    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+
+* **OAuth**
+
+  After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), set `AUTHENTICATOR=oauth` and `TOKEN` to the
+  OAuth token in the connection string.
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
+
+      conn.Open();
+    
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{oauthTokenValue}` is the oauth token to use for authentication.
+
+* **Browser-based SSO**
+
+  In the connection string, set `AUTHENTICATOR=externalbrowser`, and set `USER` to the login name for your IdP.
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;authenticator=externalbrowser;user={login_name_for_IdP};db=testdb;schema=testschema";
+
+      conn.Open();
+
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{login_name_for_IdP}` is your login name for your IdP.
+
+
+* **Native SSO through Okta**
+
+  In the connection string, set `AUTHENTICATOR` to the
+  [URL of the endpoint for your Okta account](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#label-native-sso-okta),
+  and set `USER` to the login name for your IdP.
+
+  ```cs
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;authenticator={okta_url_endpoint};user={login_name_for_IdP};db=testdb;schema=testschema";
+
+      conn.Open();
+
+      conn.Close();
+  }
+  ```
+
+  where:
+
+  * `{okta_url_endpoint}` is the URL for the endpoint for your Okta account (e.g. `https://<okta_account_name>.okta.com`).
+  * `{login_name_for_IdP}` is your login name for your IdP.
+
 
 Run a Query and Read Data
 -------------------------
@@ -144,18 +275,24 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     IDbCommand cmd = conn.CreateCommand();
     cmd.CommandText = "select * from t";
     IDataReader reader = cmd.ExecuteReader();
-                
+
     while(reader.Read())
     {
         Console.WriteLine(reader.GetString(0));
     }
-    
+
     conn.Close();
 }
 ```
 
 Bind Parameter
 --------------
+
+This example shows how bound parameters are converted from C# data types to
+Snowflake data types. For example, if the data type of the Snowflake column
+is INTEGER, then you can bind C# data types Int32 or Int16.
+
+This example inserts 3 rows into a table with one column.
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -164,8 +301,13 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Open();
 
     IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?),(?),(?)";
-                  
+    cmd.CommandText = "create or replace table T(cola int)";
+    int count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
+    IDbCommand cmd = conn.CreateCommand();
+    cmd.CommandText = "insert into t values (?), (?), (?)";
+
     var p1 = cmd.CreateParameter();
     p1.ParameterName = "1";
     p1.Value = 10;
@@ -185,8 +327,12 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     cmd.Parameters.Add(p3);
 
     var count = cmd.ExecuteNonQuery();
-    Assert.AreEqual(3, count);             
-    
+    Assert.AreEqual(3, count);
+
+    cmd.CommandText = "drop table if exists T";
+    count = cmd.ExecuteNonQuery();
+    Assert.AreEqual(0, count);
+
     conn.Close();
 }
 ```
@@ -201,7 +347,7 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
   <configSections>
     <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
   </configSections>
-  
+
   <log4net>
     <appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
       <file value="snowflake_dotnet.log" />
@@ -225,14 +371,31 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
 
 Notice
 ----------------
-Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+1. CVE-2019-0820 -  
+This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used: 
 
-Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
+* v1.0 branch: 1.0 - 1.0.16 (exclusive)
+* v1.1 branch: 1.1 - 1.1.13 (exclusive)
+* v2.1 branch: 2.1 - 2.1.11 (exclusive)
+* v2.2 branch: 2.2 - 2.2.5  (exclusive)
 
-If you are using the .NET driver please take the following action:
-1. Upgrade to the latest version(v1.1.0) as soon as possible.
-2. Remove all “Debugging” options for any existing .NET drivers in use.
-3. Delete any logs collected thus far and make sure that all copies are deleted. 
-4. If you cannot upgrade for any reason, please ensure all debugging is disabled
-5. If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+	In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability. 
 
+2. Logging -  
+	Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+
+	Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
+
+	If you are using the .NET driver please take the following action:
+* Upgrade to the latest version(v1.1.0) as soon as possible.
+* Remove all “Debugging” options for any existing .NET drivers in use.
+* Delete any logs collected thus far and make sure that all copies are deleted. 
+* If you cannot upgrade for any reason, please ensure all debugging is disabled
+* If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+
+3. Global HTTP connection settings -  
+	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
+	Starting with v2.0.0, the driver will set these locally.  
+	
+	Note that the driver is now targeting .Net framework 4.7.2.  
+	When upgrading to v2.0.0, you might also need to run "Update-Package -reinstall" to update the dependencies.

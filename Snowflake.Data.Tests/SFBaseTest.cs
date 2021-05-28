@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -76,8 +76,8 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void SFTestSetup()
         {
-#if NET46
-            log4net.GlobalContext.Properties["framework"] = "net46";
+#if NETFRAMEWORK
+            log4net.GlobalContext.Properties["framework"] = "net472";
             log4net.Config.XmlConfigurator.Configure();
 
 #else
@@ -88,26 +88,14 @@ namespace Snowflake.Data.Tests
             String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            StreamReader reader;
-            if (cloud != null && cloud.Equals("GCP"))
-            {
-                reader = new StreamReader("parameters_gcp.json");
-            }
-            else
-            {
-                reader = new StreamReader("parameters.json");
-            }
+            StreamReader reader = new StreamReader("parameters.json");
 
             var testConfigString = reader.ReadToEnd();
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
-            // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
-            // find connection object
-            String connectionKey = cloud == null ? "testconnection" : cloud;
-
             TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
+            if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
             }
@@ -158,6 +146,33 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_URL", NullValueHandling = NullValueHandling.Ignore)]
         internal string OktaURL { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_JWT_USER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string jwtAuthUser { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PEM_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pemFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_P8_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string p8FilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pwdProtectedPrivateKeyFilePath { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKey { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string pwdProtectedPrivateKey { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_PWD", NullValueHandling = NullValueHandling.Ignore)]
+        internal string privateKeyFilePwd { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthToken { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string expOauthToken { get; set; }
 
         public TestConfig()
         {
