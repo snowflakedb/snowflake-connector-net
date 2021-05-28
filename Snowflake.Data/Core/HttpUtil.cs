@@ -58,8 +58,8 @@ namespace Snowflake.Data.Core
         {
             // Enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            // Verify no certificates have been revoked
-            ServicePointManager.CheckCertificateRevocationList = true;
+            // Disabled - Verify no certificates have been revoked
+            ServicePointManager.CheckCertificateRevocationList = false;
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
