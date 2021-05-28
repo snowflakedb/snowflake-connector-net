@@ -254,7 +254,7 @@ namespace Snowflake.Data.Core
                     requestMessage.RequestUri = updater.Update();
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
-                    Thread.Sleep(backOffInSec * 1000);
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken);
                     totalRetryTime += backOffInSec;
                     backOffInSec = backOffInSec >= maxDefaultBackoff ?
                             maxDefaultBackoff : backOffInSec * 2;
