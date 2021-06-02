@@ -130,15 +130,16 @@ namespace Snowflake.Data.Core
             //logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
             SFReusableChunk chunk = downloadContext.chunk;
 
-            S3DownloadRequest downloadRequest = new S3DownloadRequest()
-            {
-                Url = new UriBuilder(chunk.Url).Uri,
-                qrmk = downloadContext.qrmk,
-                // s3 download request timeout to one hour
-                RestTimeout = TimeSpan.FromHours(1),
-                HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-                chunkHeaders = downloadContext.chunkHeaders
-            };
+            S3DownloadRequest downloadRequest = 
+                new S3DownloadRequest(ResultSet.sfStatement.SfSession.InsecureMode)
+                {
+                    Url = new UriBuilder(chunk.Url).Uri,
+                    qrmk = downloadContext.qrmk,
+                    // s3 download request timeout to one hour
+                    RestTimeout = TimeSpan.FromHours(1),
+                    HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
+                    chunkHeaders = downloadContext.chunkHeaders
+                };
 
             using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
                            .ConfigureAwait(continueOnCapturedContext: false))

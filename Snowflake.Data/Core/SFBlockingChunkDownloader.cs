@@ -113,15 +113,16 @@ namespace Snowflake.Data.Core
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
-            S3DownloadRequest downloadRequest = new S3DownloadRequest()
-            {
-                Url = new UriBuilder(chunk.url).Uri,
-                qrmk = downloadContext.qrmk,
-                // s3 download request timeout to one hour
-                RestTimeout = TimeSpan.FromHours(1),
-                HttpTimeout = TimeSpan.FromSeconds(32),
-                chunkHeaders = downloadContext.chunkHeaders
-            };
+            S3DownloadRequest downloadRequest = 
+                new S3DownloadRequest(ResultSet.sfStatement.SfSession.InsecureMode)
+                {
+                    Url = new UriBuilder(chunk.url).Uri,
+                    qrmk = downloadContext.qrmk,
+                    // s3 download request timeout to one hour
+                    RestTimeout = TimeSpan.FromHours(1),
+                    HttpTimeout = TimeSpan.FromSeconds(32),
+                    chunkHeaders = downloadContext.chunkHeaders
+                };
 
 
             var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);

@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core
                 describeOnly = describeOnly,
             };
 
-            return new SFRestRequest
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Core
         private SFRestRequest BuildResultRequest(string resultPath)
         {
             var uri = SfSession.BuildUri(resultPath);
-            return new SFRestRequest()
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = uri,
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
@@ -282,7 +282,7 @@ namespace Snowflake.Data.Core
                     requestId = _requestId
                 };
 
-                return new SFRestRequest()
+                return new SFRestRequest(SfSession.InsecureMode)
                 {
                     Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),

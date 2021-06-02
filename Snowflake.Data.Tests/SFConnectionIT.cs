@@ -46,6 +46,53 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestCrlCheckSwitchConnection()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
@@ -145,7 +192,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com/oops;"
+                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com;"
                     + "connection_timeout=0;account=invalidaccount;user=snowman;password=test;";
 
                 conn.ConnectionString = invalidConnectionString;

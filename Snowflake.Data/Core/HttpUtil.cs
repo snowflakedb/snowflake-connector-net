@@ -17,7 +17,12 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
-        static private HttpClient httpClient = null;
+
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+
+        static private HttpClient HttpClient = null;
+
+        static private HttpClient HttpClientNoCrlCheck = null;
 
         static private CookieContainer cookieContainer = null;
 
@@ -42,34 +47,46 @@ namespace Snowflake.Data.Core
         }
         
 
-        static public HttpClient getHttpClient()
+        static public HttpClient getHttpClient(bool insecureMode)
         {
             lock (httpClientInitLock)
             {
+                HttpClient httpClient = insecureMode ? HttpClientNoCrlCheck : HttpClient;
                 if (httpClient == null)
                 {
-                    initHttpClient();
+                    httpClient = initHttpClient(!insecureMode);
+
+                    if (insecureMode)
+                    {
+                        HttpClientNoCrlCheck = httpClient;
+                    }
+                    else
+                    {
+                        HttpClient = httpClient;
+                    }
                 }
                 return httpClient;
             }
         }
 
-        static private void initHttpClient()
+        static private HttpClient initHttpClient(bool crlCheckEnabled)
         {
-
-           HttpClientHandler httpHandler = new HttpClientHandler()
+            logger.Debug("Creating new http client handler with CheckCertificateRevocationList : " + crlCheckEnabled);
+            HttpClientHandler httpHandler = new HttpClientHandler()
             {
                 // Verify no certificates have been revoked
-                CheckCertificateRevocationList = true,
+                CheckCertificateRevocationList = crlCheckEnabled,
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            };
+               CookieContainer = cookieContainer = new CookieContainer()
+           };
 
-            HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
+            var httpClient = new HttpClient(new RetryHandler(httpHandler));
             // HttpClient has a default timeout of 100 000 ms, we don't want to interfere with our
             // own connection and command timeout
-            HttpUtil.httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            return httpClient;
         }
 
         /// <summary>

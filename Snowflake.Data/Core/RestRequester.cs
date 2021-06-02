@@ -53,9 +53,7 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            var req = request.ToRequestMessage(HttpMethod.Post);
-
-            var response = await SendAsync(req, request.GetRestTimeout(), cancellationToken).ConfigureAwait(false);
+            var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false);
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -75,9 +73,7 @@ namespace Snowflake.Data.Core
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-
-            return SendAsync(message, request.GetRestTimeout(), cancellationToken);
+            return SendAsync(HttpMethod.Get, request, cancellationToken);
         }
 
         public HttpResponseMessage Get(IRestRequest request)
@@ -88,18 +84,22 @@ namespace Snowflake.Data.Core
             return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
         }
         
-        private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, 
-                                                          TimeSpan timeoutPerRestRequest,  
+        private async Task<HttpResponseMessage> SendAsync(HttpMethod method,
+                                                          IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
+            HttpRequestMessage message = request.ToRequestMessage(method);
+
             // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(timeoutPerRestRequest);
+            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout());
             CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
                 restRequestTimeout.Token);
 
             try
             {
-                var response = await HttpUtil.getHttpClient().SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
+                var response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                    .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                    .ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 return response;

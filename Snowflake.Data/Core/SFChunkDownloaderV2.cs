@@ -34,8 +34,11 @@ namespace Snowflake.Data.Core
         
         private Dictionary<string, string> chunkHeaders;
 
+        private bool InsecureMode { get; set; }
+
         public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken)
+            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
+            bool insecureMode)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
@@ -120,7 +123,7 @@ namespace Snowflake.Data.Core
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
-            S3DownloadRequest downloadRequest = new S3DownloadRequest()
+            S3DownloadRequest downloadRequest = new S3DownloadRequest(InsecureMode)
             {
                 Url = new UriBuilder(chunk.url).Uri,
                 qrmk = downloadContext.qrmk,

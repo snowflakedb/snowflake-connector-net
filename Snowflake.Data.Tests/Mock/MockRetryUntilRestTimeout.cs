@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.Mock
             {
                 // Http timeout of 1ms to force retries
                 request.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromMilliseconds(1);
-                var response = await HttpUtil.getHttpClient().SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
+                var response = await HttpUtil.getHttpClient(false).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 return response;

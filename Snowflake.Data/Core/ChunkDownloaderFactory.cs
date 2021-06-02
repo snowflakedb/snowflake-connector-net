@@ -31,7 +31,8 @@ namespace Snowflake.Data.Core
                         responseData.chunks,
                         responseData.qrmk,
                         responseData.chunkHeaders,
-                        cancellationToken);
+                        cancellationToken,
+                        resultSet.sfStatement.SfSession.InsecureMode);
                 default:
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                     responseData.chunks,
