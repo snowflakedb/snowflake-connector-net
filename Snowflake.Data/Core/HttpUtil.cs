@@ -46,7 +46,6 @@ namespace Snowflake.Data.Core
             }
         }
         
-
         static public HttpClient getHttpClient(bool insecureMode)
         {
             lock (httpClientInitLock)

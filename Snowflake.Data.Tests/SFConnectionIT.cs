@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com;"
+                string invalidConnectionString = "host=invalidaccount.snowflakecomputing.com/oops;"
                     + "connection_timeout=0;account=invalidaccount;user=snowman;password=test;";
 
                 conn.ConnectionString = invalidConnectionString;
