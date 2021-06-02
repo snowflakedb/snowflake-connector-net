@@ -139,22 +139,24 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = loginTimeOut5sec;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Stopwatch stopwatch = Stopwatch.StartNew();
                     conn.Open();
-                    stopwatch.Stop();
                     Assert.Fail();
-                    //Should timeout before the default timeout (120 sec) * 1000
-                    Assert.Less(stopwatch.ElapsedMilliseconds,102*1000);
-                    // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
+
                 }
                 catch (AggregateException e)
                 {
                     Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
+                stopwatch.Stop();
+
+                //Should timeout before the default timeout (120 sec) * 1000
+                Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                // Should timeout after the defined connection timeout
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
                 Assert.AreEqual(5, conn.ConnectionTimeout);
             }
         }
@@ -170,15 +172,10 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(120, conn.ConnectionTimeout);
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
                 try
-                {
-                    Stopwatch stopwatch = Stopwatch.StartNew();
-                    conn.Open();
-                    stopwatch.Stop();
-                    // Should timeout after the default timeout (120 sec)
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                    // But never more than 16 sec (max backoff) after the default timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120+16) * 1000);
+                {                    
+                    conn.Open();                    
                     Assert.Fail();
                 }
                 catch (AggregateException e)
@@ -186,6 +183,11 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
+                stopwatch.Stop();
+                // Should timeout after the default timeout (120 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                // But never more than 16 sec (max backoff) after the default timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
             }
         }
 
@@ -812,8 +814,6 @@ namespace Snowflake.Data.Tests
                 //Assert.AreEqual(120, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-                logger.Debug("TestNoLoginTimeout token " + connectionCancelToken.Token.GetHashCode());
-
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);                
 
                 // Sleep for 130 sec (more than the default connection timeout and the httpclient 
@@ -845,6 +845,76 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestAsyncLoginTimeout()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                int timeoutSec = 5;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
+                    timeoutSec);
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    Task connectTask =  conn.OpenAsync(connectionCancelToken.Token);
+                    connectTask.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                }
+                stopwatch.Stop();
+
+                // Should timeout after 5sec
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000);
+                // But never more than 1 sec (max backoff) after the default timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(5, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
+        public void TestAsyncDefaultLoginTimeout()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    connectTask.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+                stopwatch.Stop();
+
+                // Should timeout after the default timeout (120 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                // But never more than 16 sec (max backoff) after the default timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
         public void TestAsyncConnectionFailFast()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -861,7 +931,6 @@ namespace Snowflake.Data.Tests
                 try
                 {
                     connectTask = conn.OpenAsync(connectionCancelToken.Token);
-                
                     connectTask.Wait();
                     Assert.Fail();
                 }
