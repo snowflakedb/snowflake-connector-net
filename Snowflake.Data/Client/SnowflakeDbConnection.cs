@@ -95,10 +95,40 @@ namespace Snowflake.Data.Client
             if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
                 SfSession.close();
-                _connectionState = ConnectionState.Closed;
             }
 
             _connectionState = ConnectionState.Closed;
+        }
+
+        public Task CloseAsync(CancellationToken cancellationToken)
+        {
+            logger.Debug("Close Connection.");
+            if (_connectionState != ConnectionState.Closed && SfSession != null)
+            {
+                return SfSession.CloseAsync(cancellationToken).ContinueWith(
+                    previousTask =>
+                    {
+                        if (previousTask.IsFaulted)
+                        {
+                            // Exception from SfSession.CloseAsync
+                            logger.Error("Error closing the session", previousTask.Exception);
+                        }
+                        else if (previousTask.IsCanceled)
+                        {
+                            _connectionState = ConnectionState.Closed;
+                            logger.Debug("Session close canceled");
+                        }
+                        else
+                        {
+                            logger.Debug("Session closed successfully");                            
+                        }
+                        _connectionState = ConnectionState.Closed;                       
+                    }, cancellationToken);
+            }
+
+            // The session was not open, only change the state
+            _connectionState = ConnectionState.Closed;
+            return Task.CompletedTask;
         }
 
         public override void Open()
@@ -130,6 +160,7 @@ namespace Snowflake.Data.Client
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
+            logger.Debug("Open Connection.");
             registerConnectionCancellationCallback(cancellationToken);
             SetSession();
 
@@ -138,8 +169,8 @@ namespace Snowflake.Data.Client
                 {
                     if (previousTask.IsFaulted)
                     {
-                    // Exception from SfSession.OpenAsync
-                    Exception sfSessionEx = previousTask.Exception;
+                        // Exception from SfSession.OpenAsync
+                        Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx.InnerException);
                         throw new SnowflakeDbException(sfSessionEx.InnerException,
@@ -154,8 +185,8 @@ namespace Snowflake.Data.Client
                     else
                     {
                         logger.Debug("All good");
-                    // Only continue if the session was opened successfully
-                    OnSessionEstablished();
+                        // Only continue if the session was opened successfully
+                        OnSessionEstablished();
                     }
                 },
                 cancellationToken);
