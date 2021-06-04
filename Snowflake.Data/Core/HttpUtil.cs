@@ -223,7 +223,6 @@ namespace Snowflake.Data.Core
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                             childCts.CancelAfter(httpTimeout);
                         }
-
                         response = await base.SendAsync(requestMessage, childCts == null ? 
                             cancellationToken : childCts.Token).ConfigureAwait(false);
                     }
@@ -272,10 +271,11 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken);
                     totalRetryTime += backOffInSec;
+                    // Set next backoff time
                     backOffInSec = backOffInSec >= maxDefaultBackoff ?
                             maxDefaultBackoff : backOffInSec * 2;
 
-                    if (totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
@@ -293,10 +293,8 @@ namespace Snowflake.Data.Core
             private bool isRetryableHTTPCode(int statusCode)
             {
                 return (500 <= statusCode) && (statusCode < 600) ||
-                // Bad request
-                (statusCode == 400) ||
-                // Rate limit reached
-                (statusCode == 429) ||
+                // Forbidden
+                (statusCode == 403) ||
                 // Request timeout
                 (statusCode == 408);
             }

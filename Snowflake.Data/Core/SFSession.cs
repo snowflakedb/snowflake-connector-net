@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
-            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
+            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
             int timeoutInSec = recommendedMinTimeoutSec;
             try
             {

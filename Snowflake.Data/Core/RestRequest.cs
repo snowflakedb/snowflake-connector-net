@@ -28,8 +28,8 @@ namespace Snowflake.Data.Core
 
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
-        // The default Rest timeout. Set to 15min following back-end team suggestion. 
-        public static int DEFAULT_REST_RETRY_MINUTE_TIMEOUT = 15;
+        // The default Rest timeout. Set to 120 seconds. 
+        public static int DEFAULT_REST_RETRY_SECONDS_TIMEOUT = 120;
 
         internal Uri Url { get; set; }
 
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest(bool insecureMode) : base(insecureMode)
         {
-            RestTimeout = TimeSpan.FromMinutes(DEFAULT_REST_RETRY_MINUTE_TIMEOUT);
+            RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
 
             // default each http request timeout to 16 seconds
             HttpTimeout = TimeSpan.FromSeconds(16);
