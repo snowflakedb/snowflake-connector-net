@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "900")] //15min
+        [SFSessionPropertyAttr(required = false, defaultValue = "120")]
         CONNECTION_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,
@@ -48,6 +48,8 @@ namespace Snowflake.Data.Core
         PRIVATE_KEY,
         [SFSessionPropertyAttr(required = false)]
         TOKEN,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        INSECUREMODE,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -167,7 +169,7 @@ namespace Snowflake.Data.Core
                         }
                         else
                         {
-                            // An equal sign was not doubled or something else happended
+                            // An equal sign was not doubled or something else happened
                             // making the connection invalid
                             string invalidStringDetail =
                                 String.Format("Invalid key value pair {0}", keyVal);

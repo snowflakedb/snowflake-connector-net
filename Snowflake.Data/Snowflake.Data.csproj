@@ -15,7 +15,7 @@
     <Version>1.2.3</Version>
     <DebugType>Full</DebugType>
   </PropertyGroup>
-	
+
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="0.12.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />

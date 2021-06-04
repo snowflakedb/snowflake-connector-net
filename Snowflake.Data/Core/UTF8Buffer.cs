@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core
     public class UTF8Buffer
     {
         // Cache for maximum performance
-        static Encoding UTF8 = Encoding.UTF8;
+        public static Encoding UTF8 = Encoding.UTF8;
 
         public byte[] Buffer;
         public int offset;

@@ -54,6 +54,9 @@ namespace Snowflake.Data.Core.Authenticator
         // The session which created this authenticator.
         protected SFSession session;
 
+        // The client environment properties
+        protected LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+
         /// <summary>
         /// The abstract base for all authenticators.
         /// </summary>
@@ -62,6 +65,8 @@ namespace Snowflake.Data.Core.Authenticator
         {
             this.session = session;
             this.authName = authName;
+            // Update the value for insecureMode because it can be different for each session
+            ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
         }
 
         //// <see cref="IAuthenticator.AuthenticateAsync"/>
@@ -107,14 +112,12 @@ namespace Snowflake.Data.Core.Authenticator
                 accountName = session.properties[SFSessionProperty.ACCOUNT],
                 clientAppId = SFEnvironment.DriverName,
                 clientAppVersion = SFEnvironment.DriverVersion,
-                clientEnv = SFEnvironment.ClientEnv,
+                clientEnv = ClientEnv,
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
 
             SetSpecializedAuthenticatorData(ref data);
-
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
             return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
