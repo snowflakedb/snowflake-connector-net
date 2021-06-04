@@ -141,5 +141,51 @@ namespace Snowflake.Data.Core
 
             session.UpdateSessionParameterMap(responseData.parameters);
         }
+        
+        internal override int CalculateUpdateCount()
+        {
+            try
+            {
+                long updateCount = 0;
+                if (!Next())
+                {
+                    return 0;
+                }
+                
+                switch (sfResultSetMetaData.statementType)
+                {
+                    case SFStatementType.INSERT:
+                    case SFStatementType.UPDATE:
+                    case SFStatementType.DELETE:
+                    case SFStatementType.MERGE:
+                    case SFStatementType.MULTI_INSERT:
+                        for (int i = 0; i < columnCount; i++)
+                        {
+                            updateCount += GetValue<long>(i);
+                        }
+                        break;
+                    case SFStatementType.COPY:
+                        var index = sfResultSetMetaData.getColumnIndexByName("rows_loaded");
+                        if (index >= 0) updateCount = GetValue<long>(index);
+                        break;
+                    case SFStatementType.SELECT:
+                        updateCount = -1;
+                        break;
+                    default:
+                        updateCount = 0;
+                        break;
+                }
+
+                if (updateCount > int.MaxValue)
+                    return -1;
+
+                return (int) updateCount;
+            }
+            finally
+            {
+                //Rollback Changes to cursor position.
+                _currentChunkRowIdx = -1;
+            }
+        }
     }
 }
