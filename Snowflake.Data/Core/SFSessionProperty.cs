@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "0")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "120")]
         CONNECTION_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,
@@ -48,6 +48,8 @@ namespace Snowflake.Data.Core
         PRIVATE_KEY,
         [SFSessionPropertyAttr(required = false)]
         TOKEN,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        INSECUREMODE,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -167,7 +169,7 @@ namespace Snowflake.Data.Core
                         }
                         else
                         {
-                            // An equal sign was not doubled or something else happended
+                            // An equal sign was not doubled or something else happened
                             // making the connection invalid
                             string invalidStringDetail =
                                 String.Format("Invalid key value pair {0}", keyVal);
@@ -200,9 +202,12 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
 
             // compose host value if not specified
-            if (!properties.ContainsKey(SFSessionProperty.HOST))
+            if (!properties.ContainsKey(SFSessionProperty.HOST) || 
+                (0 == properties[SFSessionProperty.HOST].Length))
             {
                 string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                // Remove in case it's here but empty
+                properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
                 logger.Info($"Compose host name: {hostName}");
             }
@@ -238,13 +243,17 @@ namespace Snowflake.Data.Core
         {
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
             {
-                var authenticatorDefined = 
+                var authenticatorDefined =
                     properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
                 // External browser, jwt and oauth don't require a password for authenticating
-                return !(authenticatorDefined && (authenticator == ExternalBrowserAuthenticator.AUTH_NAME ||
-                            authenticator == KeyPairAuthenticator.AUTH_NAME ||
-                            authenticator == OAuthAuthenticator.AUTH_NAME));
+                return !(authenticatorDefined &&
+                        (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME,
+                            StringComparison.OrdinalIgnoreCase) ||
+                        authenticator.Equals(KeyPairAuthenticator.AUTH_NAME,
+                            StringComparison.OrdinalIgnoreCase) ||
+                        authenticator.Equals(OAuthAuthenticator.AUTH_NAME,
+                        StringComparison.OrdinalIgnoreCase)));
             }
             else if (sessionProperty.Equals(SFSessionProperty.USER))
             {
@@ -252,7 +261,8 @@ namespace Snowflake.Data.Core
                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
                 // Oauth don't require a username for authenticating
-                return !(authenticatorDefined && (authenticator == OAuthAuthenticator.AUTH_NAME));
+                return !(authenticatorDefined && (
+                    authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase)));
             }
             else
             {

@@ -95,25 +95,27 @@ namespace Snowflake.Data.Core
                 describeOnly = describeOnly,
             };
 
-            return new SFRestRequest
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
                                 ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
                 jsonBody = postBody,
-                HttpTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
         private SFRestRequest BuildResultRequest(string resultPath)
         {
             var uri = SfSession.BuildUri(resultPath);
-            return new SFRestRequest()
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = uri,
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                HttpTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
@@ -199,9 +201,9 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
-                logger.Error("Query execution failed.", ex);
+                logger.Error("Query execution failed.");
                 throw;
             }
             finally
@@ -280,7 +282,7 @@ namespace Snowflake.Data.Core
                     requestId = _requestId
                 };
 
-                return new SFRestRequest()
+                return new SFRestRequest(SfSession.InsecureMode)
                 {
                     Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
@@ -303,10 +305,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException(
-                    "", response.code, response.message, "");
-                logger.Error("Query cancellation failed.", e);
-                throw e;
+                logger.Warn("Query cancellation failed.");
             }
         }
         

@@ -1,7 +1,8 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Data.Common;
 using System.Resources;
 using Snowflake.Data.Core;
@@ -52,6 +53,13 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(SFError error, params object[] args)
+        {
+            this.errorMessage = string.Format(rm.GetString(error.ToString()), args);
+            this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        }
+
+        public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
+            : base(string.Format(rm.GetString(error.ToString()), args), innerException)
         {
             this.errorMessage = string.Format(rm.GetString(error.ToString()), args);
             this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;

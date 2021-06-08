@@ -76,8 +76,8 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void SFTestSetup()
         {
-#if NET46
-            log4net.GlobalContext.Properties["framework"] = "net46";
+#if NETFRAMEWORK
+            log4net.GlobalContext.Properties["framework"] = "net472";
             log4net.Config.XmlConfigurator.Configure();
 
 #else
@@ -94,12 +94,8 @@ namespace Snowflake.Data.Tests
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
 
-            // get key of connection json. Default to "testconnection". If snowflake_cloud_env is specified, use that value as key to
-            // find connection object
-            String connectionKey = cloud == null ? "testconnection" : cloud;
-
             TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue(connectionKey, out testConnectionConfig))
+            if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
             {
                 testConfig = testConnectionConfig;
             }
@@ -174,6 +170,9 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
         internal string oauthToken { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string expOauthToken { get; set; }
 
         public TestConfig()
         {

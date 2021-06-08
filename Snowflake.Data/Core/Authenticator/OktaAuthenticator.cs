@@ -136,7 +136,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private IdpTokenRestRequest BuildIdpTokenRestRequest(Uri tokenUrl)
         {
-            return new IdpTokenRestRequest()
+            return new IdpTokenRestRequest(base.session.InsecureMode)
             {
                 Url = tokenUrl,
                 RestTimeout = session.connectionTimeout,
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SAMLRestRequest BuildSAMLRestRequest(Uri ssoUrl, string onetimeToken)
         {
-            return new SAMLRestRequest()
+            return new SAMLRestRequest(base.session.InsecureMode)
             {
                 Url = ssoUrl,
                 RestTimeout = session.connectionTimeout,
@@ -227,6 +227,10 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal IdpTokenRequest JsonBody { get; set; }
 
+        internal IdpTokenRestRequest(bool insecureMode) : base(insecureMode)
+        {
+        }
+            
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             HttpRequestMessage message = newMessage(method, Url);
@@ -257,6 +261,11 @@ namespace Snowflake.Data.Core.Authenticator
     class SAMLRestRequest : BaseRestRequest, IRestRequest
     {
         internal string OnetimeToken { set; get; }
+
+        internal SAMLRestRequest(bool insecure) : base(insecure)
+        {
+        }
+
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             UriBuilder builder = new UriBuilder(Url);

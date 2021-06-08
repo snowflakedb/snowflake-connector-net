@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.2;net46</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.2;net472</TargetFrameworks>
     <RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Copyright>Copyright (c) 2012-2018 Snowflake Computing Inc. All rights reserved.</Copyright>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
 	
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
@@ -24,10 +25,17 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Net.Http.WebRequest" />
+  </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
+   <!-- <Reference Include="System.Net.Http.WebRequest" /> -->
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">

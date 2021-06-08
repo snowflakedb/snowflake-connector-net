@@ -156,7 +156,7 @@ namespace Snowflake.Data.Core.Authenticator
         private static void StartBrowser(string url)
         {
             // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
-#if NET46
+#if NETFRAMEWORK
             // .net standard would pass here
             Process.Start(url);
 #else

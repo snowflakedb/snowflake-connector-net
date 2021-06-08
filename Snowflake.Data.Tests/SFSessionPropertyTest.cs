@@ -42,10 +42,11 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.HOST, "testaccount.snowflakecomputing.com" },
                         { SFSessionProperty.AUTHENTICATOR, "snowflake" },
                         { SFSessionProperty.SCHEME, "https" },
-                        { SFSessionProperty.CONNECTION_TIMEOUT, "0" },
+                        { SFSessionProperty.CONNECTION_TIMEOUT, "120" },
                         { SFSessionProperty.PASSWORD, "123" },
                         { SFSessionProperty.PORT, "443" },
                         { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                        { SFSessionProperty.INSECUREMODE, "false" },
                     },
                 },
             };
