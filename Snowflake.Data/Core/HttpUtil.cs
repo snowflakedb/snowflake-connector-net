@@ -17,6 +17,8 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
+        static private readonly int _defaultConnectionLimit = 20;
+
         static private HttpClient httpClient = null;
 
         static private CookieContainer cookieContainer = null;
@@ -58,6 +60,12 @@ namespace Snowflake.Data.Core
         {
             // Enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            // Control how many simultaneous connections to each host are allowed
+            if (ServicePointManager.DefaultConnectionLimit < _defaultConnectionLimit)
+            {
+                ServicePointManager.DefaultConnectionLimit = _defaultConnectionLimit;
+            }
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -178,7 +186,6 @@ namespace Snowflake.Data.Core
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
-                p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
