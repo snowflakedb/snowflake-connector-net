@@ -20,7 +20,7 @@ on:
 
 env:
   DOTNET_CORE_VERSION: 2.0
-  DOTNET_LEGACY_VERSION: 4.6
+  DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -52,6 +52,8 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Clean-up before build
+        run: dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
       - name: Build Driver
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
 
@@ -65,11 +67,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Setup Nuget.exe
-      uses: warrenbuckley/Setup-Nuget@v1
+      uses: nuget/setup-nuget@v1
     - name: Restore packages
       run: nuget restore
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: Decrypt Azure Parameters
       shell: bash
       env:
@@ -87,7 +89,7 @@ jobs:
     strategy:
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0', 'net46']
+        dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
