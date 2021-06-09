@@ -12,6 +12,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Snowflake.Data.Core
 {
@@ -97,14 +98,19 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
-            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_MINUTE_TIMEOUT * 60;
+            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
             int timeoutInSec = recommendedMinTimeoutSec;
             try
             {
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
 
-                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);            
+                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+
+                bool insecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
+                // Set the CheckCertificateRevocationList properties based on the connection setting.
+                // !!! This changes the setting for all http connections globally
+                ServicePointManager.CheckCertificateRevocationList = !insecureMode;
             }
             catch (Exception e)
             {
@@ -174,7 +180,7 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             // Nothing to do if the session is not open
-            if (null != sessionToken) return;
+            if (null == sessionToken) return;
 
             // Send a close session request
             var queryParams = new Dictionary<string, string>();

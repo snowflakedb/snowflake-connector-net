@@ -17,6 +17,8 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
+        static private readonly int _defaultConnectionLimit = 20;
+
         static private HttpClient httpClient = null;
 
         static private CookieContainer cookieContainer = null;
@@ -58,8 +60,12 @@ namespace Snowflake.Data.Core
         {
             // Enforce tls v1.2
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            // Verify no certificates have been revoked
-            ServicePointManager.CheckCertificateRevocationList = true;
+
+            // Control how many simultaneous connections to each host are allowed
+            if (ServicePointManager.DefaultConnectionLimit < _defaultConnectionLimit)
+            {
+                ServicePointManager.DefaultConnectionLimit = _defaultConnectionLimit;
+            }
 
             HttpUtil.httpClient = new HttpClient(new RetryHandler(new HttpClientHandler(){
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -180,7 +186,6 @@ namespace Snowflake.Data.Core
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
-                p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
@@ -253,12 +258,13 @@ namespace Snowflake.Data.Core
                     requestMessage.RequestUri = updater.Update();
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
-                    Thread.Sleep(backOffInSec * 1000);
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken);
                     totalRetryTime += backOffInSec;
+                    // Set next backoff time
                     backOffInSec = backOffInSec >= maxDefaultBackoff ?
                             maxDefaultBackoff : backOffInSec * 2;
 
-                    if (totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
@@ -276,10 +282,8 @@ namespace Snowflake.Data.Core
             private bool isRetryableHTTPCode(int statusCode)
             {
                 return (500 <= statusCode) && (statusCode < 600) ||
-                // Bad request
-                (statusCode == 400) ||
-                // Rate limit reached
-                (statusCode == 429) ||
+                // Forbidden
+                (statusCode == 403) ||
                 // Request timeout
                 (statusCode == 408);
             }
