@@ -12,7 +12,7 @@
     <Product>Snowflake Connector for .NET</Product>
     <Authors>howryu, tchen</Authors>
     <Copyright>Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.</Copyright>
-    <Version>2.0.2</Version>
+    <Version>2.0.3</Version>
     <DebugType>Full</DebugType>
   </PropertyGroup>
   
@@ -50,7 +50,7 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <AssemblyVersion>2.0.3</AssemblyVersion>
   </PropertyGroup>
   
   <ItemGroup>
