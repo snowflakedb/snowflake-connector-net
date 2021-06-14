@@ -149,7 +149,18 @@ namespace Snowflake.Data.Core
                 externalCancellationToken);
             if (!_linkedCancellationTokenSouce.IsCancellationRequested)
             {
-                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
+                _linkedCancellationTokenSouce.Token.Register(() => 
+                {
+                    try
+                    {
+                        Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Prevent an unhandled exception from being thrown
+                        logger.Error("Unable to cancel query.", ex);
+                    }
+                });
             }
         }
 
