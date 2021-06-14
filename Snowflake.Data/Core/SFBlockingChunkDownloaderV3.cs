@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchSlot;
 
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester _RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -57,6 +57,7 @@ namespace Snowflake.Data.Core
             this.chunkHeaders = chunkHeaders;
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
+            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
@@ -141,7 +142,7 @@ namespace Snowflake.Data.Core
                     chunkHeaders = downloadContext.chunkHeaders
                 };
 
-            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
+            using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
                            .ConfigureAwait(continueOnCapturedContext: false))
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))

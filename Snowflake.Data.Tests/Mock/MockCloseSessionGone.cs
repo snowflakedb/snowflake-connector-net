@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.Mock
     using System.Threading.Tasks;
     using Snowflake.Data.Core;
 
-    class MockCloseSessionGone : IRestRequester
+    class MockCloseSessionGone : IMockRestRequester
     {
         static private readonly int SESSION_GONE = 390111;
 
@@ -67,6 +67,11 @@ namespace Snowflake.Data.Tests.Mock
                 success = false
             };
             return Task.FromResult<T>((T)(object)closeResponse);
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

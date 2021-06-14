@@ -33,7 +33,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchThreads;
 
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester _RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -50,6 +50,7 @@ namespace Snowflake.Data.Core
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
+            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
             this.prefetchThreads = GetPrefetchThreads(ResultSet);
             externalCancellationToken = cancellationToken;
 
@@ -125,7 +126,7 @@ namespace Snowflake.Data.Core
                 };
 
 
-            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
             Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.

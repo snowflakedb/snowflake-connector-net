@@ -30,19 +30,20 @@ namespace Snowflake.Data.Core
         HttpResponseMessage Get(IRestRequest request);
     }
 
+    internal interface IMockRestRequester : IRestRequester
+    {
+        void setHttpClient(HttpClient httpClient);
+    }
+
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
-        private static readonly RestRequester instance = new RestRequester();
+        protected HttpClient _HttpClient;
 
-        private RestRequester()
+        public RestRequester(HttpClient httpClient)
         {
-        }
-        
-        static internal RestRequester Instance
-        {
-            get { return instance; }
+            _HttpClient = httpClient;
         }
 
         public T Post<T>(IRestRequest request)
@@ -83,28 +84,35 @@ namespace Snowflake.Data.Core
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
         }
-        
+
         private async Task<HttpResponseMessage> SendAsync(HttpMethod method,
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
 
+            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken);
+        }
+
+        protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
+                                                              TimeSpan restTimeout, 
+                                                              CancellationToken externalCancellationToken)
+        {
             // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout());
+            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout);
             CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
                 restRequestTimeout.Token);
 
             try
             {
-                var response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                var response = await _HttpClient
                     .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                     .ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 return response;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
             }

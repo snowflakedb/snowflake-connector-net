@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core
         //TODO: parameterize prefetch slot
         private const int prefetchSlot = 5;
         
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester _RestRequester;
         
         private Dictionary<string, string> chunkHeaders;
 
@@ -38,11 +38,12 @@ namespace Snowflake.Data.Core
 
         public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
             Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
-            bool insecureMode)
+            IRestRequester restRequester)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
+            _RestRequester = restRequester;
             externalCancellationToken = cancellationToken;
 
             var idx = 0;
@@ -133,7 +134,7 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
             Stream stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
             if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))

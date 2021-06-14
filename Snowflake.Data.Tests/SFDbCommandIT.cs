@@ -309,7 +309,7 @@ namespace Snowflake.Data.Tests
                 catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(2003, e.ErrorCode);
-                    Assert.AreNotEqual("", e.queryId);
+                    Assert.AreNotEqual("", e.QueryId);
                 }
 
                 conn.Close();

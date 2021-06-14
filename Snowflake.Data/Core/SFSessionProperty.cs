@@ -50,6 +50,18 @@ namespace Snowflake.Data.Core
         TOKEN,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         INSECUREMODE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        USEPROXY,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYHOST,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYPORT,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYUSER,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYPASSWORD,
+        [SFSessionPropertyAttr(required = false)]
+        NONPROXYHOSTS,
     }
 
     class SFSessionPropertyAttr : Attribute
