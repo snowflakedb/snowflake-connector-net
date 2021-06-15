@@ -106,23 +106,25 @@ Note: If the keyword or value contains an equal sign (=), you must precede the e
 The following table lists all valid connection properties:
 <br />
 
-| Connection Property       | Required | Comment                                                                       |
-|---------------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT                   | Yes      | Account should not include region or cloud provider information. e.g. account should be XXX instead of XXX.us-east-1.|
-| DB                        | No       |                                                                               |
-| HOST                      | No       | If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, e.g. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
-| PASSWORD                  | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
-| ROLE                      | No       |                                                                               |
-| SCHEMA                    | No       |                                                                               |
-| USER                      | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
-| WAREHOUSE                 | No       |                                                                               |
-| CONNECTION_TIMEOUT        | No       | Total timeout in seconds when connecting to Snowflake. Default to 900 seconds |
-| AUTHENTICATOR             | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
-|VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
-|PRIVATE_KEY_FILE           |Depends   |The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
-|PRIVATE_KEY_PWD            |No        |The passphrase to use for decrypting the private key, if the key is encrypted.|
-|PRIVATE_KEY                |Depends   |The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
-|TOKEN                      |Depends   |The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
+| Connection Property        | Required | Comment                                                                       |
+|----------------------------|----------|-------------------------------------------------------------------------------|
+| ACCOUNT                    | Yes      | Account should not include region or cloud provider information. e.g. account should be XXX instead of XXX.us-east-1.|
+| DB                         | No       |                                                                               |
+| HOST                       | No       | If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, e.g. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
+| PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
+| ROLE                       | No       |                                                                               |
+| SCHEMA                     | No       |                                                                               |
+| USER                       | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
+| WAREHOUSE                  | No       |                                                                               |
+| CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| AUTHENTICATOR              | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
+| VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
+| PRIVATE_KEY_FILE           |Depends   | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
+| PRIVATE_KEY_PWD            |No        | The passphrase to use for decrypting the private key, if the key is encrypted.|
+| PRIVATE_KEY                |Depends   | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
+| TOKEN                      |Depends   | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
+| INSECUREMODE               |No   	    | Set to true to disable the certificate revocation list check. Default is false.|
+
 
 <br />
 

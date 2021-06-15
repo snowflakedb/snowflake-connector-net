@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpiredInQueryExec : IRestRequester
+    class MockRestSessionExpiredInQueryExec : IMockRestRequester
     {
         static private readonly int QUERY_IN_EXEC_CODE = 333333;
 
@@ -143,6 +143,11 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

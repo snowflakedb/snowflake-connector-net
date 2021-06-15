@@ -78,7 +78,7 @@ namespace Snowflake.Data.Client
 
         public override string ToString()
         {
-            return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}", 
+            return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}",
                 ErrorMessage, SqlState, VendorCode, QueryId);
         }
     }

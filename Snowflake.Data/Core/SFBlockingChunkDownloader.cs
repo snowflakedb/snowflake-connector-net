@@ -28,12 +28,12 @@ namespace Snowflake.Data.Core
         
         private int nextChunkToDownloadIndex;
         
-        // External cancellation token, used to stop download
+        // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
         private readonly int prefetchThreads;
 
-        private readonly IRestRequester RestRequester;
+        private readonly IRestRequester _RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -43,15 +43,15 @@ namespace Snowflake.Data.Core
             List<ExecResponseChunk>chunkInfos, string qrmk, 
             Dictionary<string, string> chunkHeaders, 
             CancellationToken cancellationToken,
-            SFBaseResultSet resultSet)
+            SFBaseResultSet ResultSet)
         {
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
-            this.ResultSet = resultSet;
-            this.prefetchThreads = GetPrefetchThreads(resultSet);
-            RestRequester = resultSet.sfStatement.SfSession.restRequester;
+            this.ResultSet = ResultSet;
+            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
+            this.prefetchThreads = GetPrefetchThreads(ResultSet);
             externalCancellationToken = cancellationToken;
 
             var idx = 0;
@@ -114,18 +114,19 @@ namespace Snowflake.Data.Core
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
-            S3DownloadRequest downloadRequest = new S3DownloadRequest()
-            {
-                Url = new UriBuilder(chunk.url).Uri,
-                qrmk = downloadContext.qrmk,
-                // s3 download request timeout to one hour
-                RestTimeout = TimeSpan.FromHours(1),
-                HttpTimeout = TimeSpan.FromSeconds(32),
-                chunkHeaders = downloadContext.chunkHeaders
-            };
+            S3DownloadRequest downloadRequest = 
+                new S3DownloadRequest()
+                {
+                    Url = new UriBuilder(chunk.url).Uri,
+                    qrmk = downloadContext.qrmk,
+                    // s3 download request timeout to one hour
+                    RestTimeout = TimeSpan.FromHours(1),
+                    HttpTimeout = TimeSpan.FromSeconds(32),
+                    chunkHeaders = downloadContext.chunkHeaders
+                };
 
 
-            var httpResponse = await RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
             Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.

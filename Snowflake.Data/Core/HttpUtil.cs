@@ -12,137 +12,159 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
+using Microsoft.Extensions.DependencyInjection;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Core
 {
-    class HttpUtil
+    public class HttpClientConfig
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-
-
-        // Pool of http clients per proxy settings
-        private static Dictionary<IWebProxy, HttpClient> httpClients = 
-            new Dictionary<IWebProxy, HttpClient>();
-
-        private static HttpClient noProxyHttpClient;
-
-        static private CookieContainer cookieContainer = null;
-
-        static private object httpClientInitLock = new object();
-
-        /// <summary>
-        /// Clear all the cookies for the given uri.
-        /// </summary>
-        /// <param name="uri">The URI to clear.</param>
-        static public void ClearCookies(Uri uri)
+        public HttpClientConfig(
+            bool crlCheckEnabled, 
+            string proxyHost,
+            string proxyPort,
+            string proxyUser,
+            string proxyPassword,
+            string noProxyList)
         {
-            if (cookieContainer == null)
-            {
-                return;
-            }
+            CrlCheckEnabled = crlCheckEnabled;
+            ProxyHost = proxyHost;
+            ProxyPort = proxyPort;
+            ProxyUser = proxyUser;
+            ProxyPassword = proxyPassword;
+            NoProxyList = noProxyList;
 
-            var cookies = cookieContainer.GetCookies(uri);
-            foreach (Cookie cookie in cookies)
+            ConfKey = string.Join(";", 
+                new string[] {
+                    crlCheckEnabled.ToString(),
+                    proxyHost,
+                    proxyPort,
+                    proxyUser,
+                    proxyPassword,
+                    noProxyList });
+        }
+
+        public readonly bool CrlCheckEnabled;
+        public readonly string ProxyHost;
+        public readonly string ProxyPort;
+        public readonly string ProxyUser;
+        public readonly string ProxyPassword;
+        public readonly string NoProxyList;
+
+        // Key used to identify the HttpClient with the configuration matching the settings
+        public readonly string ConfKey;
+    }
+
+    public sealed class HttpUtil
+    {
+
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+
+        private static readonly HttpUtil instance = new HttpUtil();
+
+        private HttpUtil() { }
+
+        static internal HttpUtil Instance
+        {
+            get { return instance; }
+        }
+
+        private readonly object httpClientProviderLock = new object();
+
+        private IServiceCollection _ServiceCollection = new ServiceCollection();
+
+        private HashSet<string> _HttpClients = new HashSet<string>();
+
+        private ServiceProvider _ServiceProvider = null;
+
+        internal HttpClient GetHttpClient(HttpClientConfig config)
+        {
+            lock (httpClientProviderLock)
             {
-                cookie.Expired = true;
+                logger.Debug($"Get Http client for {config.ConfKey}.");
+                RegisterNewHttpClientIfNecessary(config);
+                var myService = _ServiceProvider.GetRequiredService<IHttpClientFactory>();
+                HttpClient client = myService.CreateClient(config.ConfKey);
+                return client;
             }
         }
+
+
+        private void RegisterNewHttpClientIfNecessary(HttpClientConfig config)
+        {
+            string name = config.ConfKey;
+            if (!_HttpClients.Contains(name))
+            {
+                logger.Debug($"Http client for {name} not registered. Adding.");
+                _ServiceCollection.AddHttpClient(name, client => 
+                {
+                    // HttpClient has a default timeout of 100 000 ms, we don't want to interfere 
+                    // with our own connection and command timeout
+                    client.Timeout = Timeout.InfiniteTimeSpan;
+                }).ConfigurePrimaryHttpMessageHandler(()=> new RetryHandler(setupCustomHttpHandler(config)));
+
+               
+                // Dispose before re-affecting a new ServiceProvider
+                _ServiceProvider?.Dispose();
+                // Create a new service provider with the new HttpClient
+                _ServiceProvider = _ServiceCollection.BuildServiceProvider();
         
-        /// <summary>
-        /// Get the http client for the given proxy, or null if no proxy are used.
-        /// </summary>
-        /// <param name="proxy">The proxy to use or null for no proxy.</param>
-        /// <returns>The corresponding Httpclient instance.</returns>
-        static public HttpClient getHttpClient(IWebProxy proxy)
-        {
-            lock (httpClientInitLock)
-            {
-                if ( null == proxy)
-                {
-                    logger.Debug("noProxyHttpClient " + noProxyHttpClient);
-                    // Init noProxyHttpClient
-                    if (null == noProxyHttpClient) noProxyHttpClient = initHttpClient(null);
-                    return noProxyHttpClient;
-                }
-
-                if (!httpClients.TryGetValue(proxy, out HttpClient httpClient))
-                {
-                    //logger.Debug("Need a new HttpClient for this proxy.");
-                    // Need a new HttpClient for this proxy
-                    httpClient = initHttpClient(proxy);
-                    // Add to the pool
-                    httpClients.Add(proxy, httpClient);
-                }
-                return httpClient;
+                // Add the new client key to the list
+                _HttpClients.Add(name);
             }
         }
 
-        static private HttpClient initHttpClient(IWebProxy proxy)
+        private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
         {
-
-           HttpClientHandler httpHandler = new HttpClientHandler()
+            HttpClientHandler httpHandler = new HttpClientHandler()
             {
                 // Verify no certificates have been revoked
-                CheckCertificateRevocationList = true,
+                CheckCertificateRevocationList = config.CrlCheckEnabled,
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                CookieContainer = cookieContainer = new CookieContainer()
-           };
-
-            if (null != proxy) httpHandler.Proxy = proxy;
-            
-            HttpClient httpClient = new HttpClient(new RetryHandler(httpHandler));
-            // HttpClient has a default timeout of 100 000 ms, we don't want to interfere with our
-            // own connection and command timeout
-            httpClient.Timeout = Timeout.InfiniteTimeSpan;
-
-            return httpClient;
-        }
-
-        /// <summary>
-        /// IRule defines how the queryParams of a uri should be updated in each retry
-        /// </summary>
-        interface IRule
-        {
-            void apply(NameValueCollection queryParams);
-        }
-
-        /// <summary>
-        /// RetryCoundRule would update the retryCount parameter
-        /// </summary>
-        class RetryCountRule : IRule
-        {
-            int retryCount;
-
-            internal RetryCountRule()
+                UseCookies = false // Disable cookies
+            };
+            // Add a proxy if necessary
+            if (null != config.ProxyHost)
             {
-                retryCount = 1;
-            }
+                // Proxy needed
+                WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
 
-            void IRule.apply(NameValueCollection queryParams)
-            {
-                if (retryCount == 1)
+                // Add credential if provided
+                if (!String.IsNullOrEmpty(config.ProxyUser))
                 {
-                    queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
+                    ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
+                    proxy.Credentials = credentials;
                 }
-                else
-                {
-                    queryParams.Set(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
-                }
-                retryCount++;
-            }
-        }
 
-        /// <summary>
-        /// RequestUUIDRule would update the request_guid query with a new RequestGUID
-        /// </summary>
-        class RequestUUIDRule : IRule
-        {
-            void IRule.apply(NameValueCollection queryParams)
-            {
-                queryParams.Set(RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString());
+                // Add bypasslist if provided
+                if (!String.IsNullOrEmpty(config.NoProxyList))
+                {
+                    string[] bypassList = config.NoProxyList.Split(
+                        new char[] { '|' },
+                        StringSplitOptions.RemoveEmptyEntries);
+                    // Convert simplified syntax to standard regular expression syntax
+                    string entry = null;
+                    for (int i = 0; i < bypassList.Length; i++)
+                    {
+                        // Get the original entry
+                        entry = bypassList[i].Trim();
+                        // . -> [.] because . means any char 
+                        entry = entry.Replace(".", "[.]");
+                        // * -> .*  because * is a quantifier and need a char or group to apply to
+                        entry = entry.Replace("*", ".*");
+
+                        // Replace with the valid entry syntax
+                        bypassList[i] = entry;
+
+                    }
+                    proxy.BypassList = bypassList;
+                }
+
+                httpHandler.Proxy = proxy;
             }
+            return httpHandler;
         }
 
         /// <summary>
@@ -151,6 +173,52 @@ namespace Snowflake.Data.Core
         /// </summary>
         internal class UriUpdater
         {
+            /// <summary>
+            /// IRule defines how the queryParams of a uri should be updated in each retry
+            /// </summary>
+            interface IRule
+            {
+                void apply(NameValueCollection queryParams);
+            }
+
+            /// <summary>
+            /// RetryCoundRule would update the retryCount parameter
+            /// </summary>
+            class RetryCountRule : IRule
+            {
+                int retryCount;
+
+                internal RetryCountRule()
+                {
+                    retryCount = 1;
+                }
+
+                void IRule.apply(NameValueCollection queryParams)
+                {
+                    if (retryCount == 1)
+                    {
+                        queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
+                    }
+                    else
+                    {
+                        queryParams.Set(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
+                    }
+                    retryCount++;
+                }
+            }
+
+            /// <summary>
+            /// RequestUUIDRule would update the request_guid query with a new RequestGUID
+            /// </summary>
+            class RequestUUIDRule : IRule
+            {
+                void IRule.apply(NameValueCollection queryParams)
+                {
+                    queryParams.Set(RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString());
+                }
+            }
+
+
             UriBuilder uriBuilder;
             List<IRule> rules;
             internal UriUpdater(Uri uri)
@@ -185,19 +253,18 @@ namespace Snowflake.Data.Core
                 }
 
                 uriBuilder.Query = queryParams.ToString();
-                
+
                 return uriBuilder.Uri;
             }
         }
-
-        class RetryHandler : DelegatingHandler
+        private class RetryHandler : DelegatingHandler
         {
             static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
-            
+
             internal RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
             {
             }
-            
+
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
                 CancellationToken cancellationToken)
             {
@@ -231,20 +298,20 @@ namespace Snowflake.Data.Core
                     {
                         childCts = null;
 
-                        if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan)) {
+                        if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan))
+                        {
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                             childCts.CancelAfter(httpTimeout);
                         }
-
-                        response = await base.SendAsync(requestMessage, childCts == null ? 
+                        response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
                             logger.Debug("SF rest request timeout or explicit cancel called.");
-                            cancellationToken.ThrowIfCancellationRequested(); 
+                            cancellationToken.ThrowIfCancellationRequested();
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
@@ -260,10 +327,11 @@ namespace Snowflake.Data.Core
 
                     if (response != null)
                     {
-                        if (response.IsSuccessStatusCode) {
+                        if (response.IsSuccessStatusCode)
+                        {
                             return response;
                         }
-                        else 
+                        else
                         {
                             logger.Debug($"Failed Response: {response.ToString()}");
                             bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
@@ -274,7 +342,7 @@ namespace Snowflake.Data.Core
                             }
                         }
                     }
-                    else 
+                    else
                     {
                         logger.Info("Response returned was null.");
                     }
@@ -282,12 +350,13 @@ namespace Snowflake.Data.Core
                     requestMessage.RequestUri = updater.Update();
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
-                    Thread.Sleep(backOffInSec * 1000);
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken);
                     totalRetryTime += backOffInSec;
+                    // Set next backoff time
                     backOffInSec = backOffInSec >= maxDefaultBackoff ?
                             maxDefaultBackoff : backOffInSec * 2;
 
-                    if (totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
@@ -305,13 +374,13 @@ namespace Snowflake.Data.Core
             private bool isRetryableHTTPCode(int statusCode)
             {
                 return (500 <= statusCode) && (statusCode < 600) ||
-                // Bad request
-                (statusCode == 400) ||
-                // Rate limit reached
-                (statusCode == 429) ||
+                // Forbidden
+                (statusCode == 403) ||
                 // Request timeout
                 (statusCode == 408);
             }
         }
     }
 }
+    
+

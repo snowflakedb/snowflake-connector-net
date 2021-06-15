@@ -26,14 +26,16 @@ namespace Snowflake.Data.Core
 
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
-        // The default Rest timeout. Set to 15min following back-end team suggestion. 
-        public static int DEFAULT_REST_RETRY_MINUTE_TIMEOUT = 15;
+        // The default Rest timeout. Set to 120 seconds. 
+        public static int DEFAULT_REST_RETRY_SECONDS_TIMEOUT = 120;
 
         internal Uri Url { get; set; }
+
         /// <summary>
         /// Timeout of the overall rest request
         /// </summary>
         internal TimeSpan RestTimeout { get; set; }
+
         /// <summary>
         /// Timeout for every single HTTP request
         /// </summary>
@@ -66,7 +68,6 @@ namespace Snowflake.Data.Core
 
         private const string SSE_C_AES = "AES256";
 
-
         internal string qrmk { get; set; }
 
         internal Dictionary<string, string> chunkHeaders { get; set; }
@@ -98,12 +99,12 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
-        internal SFRestRequest()
+        internal SFRestRequest() : base()
         {
-            RestTimeout = TimeSpan.FromMinutes(DEFAULT_REST_RETRY_MINUTE_TIMEOUT);
+            RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
 
             // default each http request timeout to 16 seconds
-            HttpTimeout = TimeSpan.FromSeconds(16); 
+            HttpTimeout = TimeSpan.FromSeconds(16);
         }
 
         internal Object jsonBody { get; set;  }
@@ -244,10 +245,13 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_VERSION")]
         internal string netVersion { get; set; }
 
+        [JsonProperty(PropertyName = "INSECURE_MODE")]
+        internal string insecureMode { get; set; }
+
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3} }}", 
-                application, osVersion, netRuntime, netVersion);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}", 
+                application, osVersion, netRuntime, netVersion, insecureMode);
         }
     }
 
