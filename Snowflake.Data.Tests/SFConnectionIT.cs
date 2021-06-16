@@ -20,6 +20,48 @@ namespace Snowflake.Data.Tests
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
+
+        [Test]
+        public void testMulitpleConnectionInParallel()
+        {
+            Task[] tasks = new Task[450];
+            for (int i = 0; i < 450; i++)
+            {
+                tasks[i] = Task.Run(() =>
+                {
+                    using (IDbConnection conn = new SnowflakeDbConnection())
+                    {
+
+                        conn.ConnectionString = ConnectionString + ";CONNECTION_TIMEOUT=30;INSECUREMODE=false";
+                        Console.WriteLine($"{conn.ConnectionString}");
+
+                        try
+                        {
+                            conn.Open();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                            Console.WriteLine("--------------------------");
+                            Console.WriteLine(e.InnerException);
+                        }
+                    }
+                });
+            }
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch (AggregateException ae)
+            {
+                Console.WriteLine("One or more exceptions occurred: ");
+                foreach (var ex in ae.Flatten().InnerExceptions)
+                    Console.WriteLine("   {0}", ex.Message);
+
+            }
+
+        }
+
         [Test]
         public void TestBasicConnection()
         {
