@@ -108,7 +108,7 @@ namespace Snowflake.Data.Core
             if (_chunkDownloader != null)
             {
                 Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = Task.Run(async() => await _chunkDownloader.GetNextChunkAsync()).Result;
+                IResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {
                     resetChunkInfo(nextChunk);

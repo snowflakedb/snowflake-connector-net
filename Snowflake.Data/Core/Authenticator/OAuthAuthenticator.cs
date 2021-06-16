@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async public Task AuthenticateAsync(CancellationToken cancellationToken)
         {
-            await base.LoginAsync(cancellationToken);
+            await base.LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>

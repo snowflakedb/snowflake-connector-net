@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             // Override the http timeout and set to 1ms to force all http request to timeout and retry
             message.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromMilliseconds(1);
-            return await base.SendAsync(message, restTimeout, externalCancellationToken);
+            return await (base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false));
         }
     }
 }

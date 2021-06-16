@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Get<T>(IRestRequest request)
         {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)

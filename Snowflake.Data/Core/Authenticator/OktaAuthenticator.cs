@@ -73,7 +73,7 @@ namespace Snowflake.Data.Core.Authenticator
             VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
-            await base.LoginAsync(cancellationToken);  
+            await base.LoginAsync(cancellationToken).ConfigureAwait(false);  
         }
 
         void IAuthenticator.Authenticate()
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             var samlRawResponse = session.restRequester.Get(samlRestRequest);
-            samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+            samlRawHtmlString = Task.Run(async () => await (samlRawResponse.Content.ReadAsStringAsync()).ConfigureAwait(false)).Result;
 
             logger.Debug("step 5: verify postback url in SAML reponse");
             VerifyPostbackUrl();
