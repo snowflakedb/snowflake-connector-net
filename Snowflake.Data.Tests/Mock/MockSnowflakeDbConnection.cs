@@ -16,6 +16,19 @@ namespace Snowflake.Data.Tests.Mock
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
+        private IRestRequester _restRequester;
+
+        public MockSnowflakeDbConnection(IRestRequester requester)
+        {
+            _restRequester = requester;
+        }
+
+        public MockSnowflakeDbConnection()
+        {
+            // Default requester
+            _restRequester = new MockRetryUntilRestTimeoutRestRequester();
+        }
+
         public override void Open()
         {
             logger.Debug("Open Connection.");
@@ -68,8 +81,7 @@ namespace Snowflake.Data.Tests.Mock
 
         private void SetMockSession()
         {
-            var restRequester = new MockRetryUntilRestTimeoutRestRequester();
-            SfSession = new SFSession(ConnectionString, Password, restRequester);
+            SfSession = new SFSession(ConnectionString, Password, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 

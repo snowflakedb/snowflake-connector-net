@@ -103,32 +103,46 @@ namespace Snowflake.Data.Client
         public Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
-            if (_connectionState != ConnectionState.Closed && SfSession != null)
-            {
-                return SfSession.CloseAsync(cancellationToken).ContinueWith(
-                    previousTask =>
-                    {
-                        if (previousTask.IsFaulted)
-                        {
-                            // Exception from SfSession.CloseAsync
-                            logger.Error("Error closing the session", previousTask.Exception);
-                        }
-                        else if (previousTask.IsCanceled)
-                        {
-                            _connectionState = ConnectionState.Closed;
-                            logger.Debug("Session close canceled");
-                        }
-                        else
-                        {
-                            logger.Debug("Session closed successfully");                            
-                        }
-                        _connectionState = ConnectionState.Closed;                       
-                    }, cancellationToken);
-            }
+            TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
-            // The session was not open, only change the state
-            _connectionState = ConnectionState.Closed;
-            return Task.CompletedTask;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                taskCompletionSource.SetCanceled();
+            }
+            else
+            {
+                if (_connectionState != ConnectionState.Closed && SfSession != null)
+                {
+                    SfSession.CloseAsync(cancellationToken).ContinueWith(
+                        previousTask =>
+                        {
+                            if (previousTask.IsFaulted)
+                            {
+                                // Exception from SfSession.CloseAsync
+                                logger.Error("Error closing the session", previousTask.Exception);
+                                taskCompletionSource.SetException(previousTask.Exception.InnerException);
+                            }
+                            else if (previousTask.IsCanceled)
+                            {
+                                _connectionState = ConnectionState.Closed;
+                                logger.Debug("Session close canceled");
+                                taskCompletionSource.SetCanceled();
+                            }
+                            else
+                            {
+                                logger.Debug("Session closed successfully");
+                                taskCompletionSource.SetResult(null);
+                                _connectionState = ConnectionState.Closed;
+                            }
+                        }, cancellationToken);
+                }
+                else
+                {
+                    logger.Debug("Session not opened. Nothing to do.");
+                    taskCompletionSource.SetResult(null);
+                }
+            }
+            return taskCompletionSource.Task;
         }
 
         public override void Open()
