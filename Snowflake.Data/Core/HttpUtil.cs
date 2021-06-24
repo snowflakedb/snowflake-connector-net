@@ -17,7 +17,12 @@ namespace Snowflake.Data.Core
 {
     class HttpUtil
     {
-        static private HttpClient httpClient = null;
+
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+
+        static private HttpClient HttpClient = null;
+
+        static private HttpClient HttpClientNoCrlCheck = null;
 
         static private CookieContainer cookieContainer = null;
 
@@ -41,35 +46,46 @@ namespace Snowflake.Data.Core
             }
         }
         
-
-        static public HttpClient getHttpClient()
+        static public HttpClient getHttpClient(bool insecureMode)
         {
             lock (httpClientInitLock)
             {
+                HttpClient httpClient = insecureMode ? HttpClientNoCrlCheck : HttpClient;
                 if (httpClient == null)
                 {
-                    initHttpClient();
+                    httpClient = initHttpClient(!insecureMode);
+
+                    if (insecureMode)
+                    {
+                        HttpClientNoCrlCheck = httpClient;
+                    }
+                    else
+                    {
+                        HttpClient = httpClient;
+                    }
                 }
                 return httpClient;
             }
         }
 
-        static private void initHttpClient()
+        static private HttpClient initHttpClient(bool crlCheckEnabled)
         {
-
-           HttpClientHandler httpHandler = new HttpClientHandler()
+            logger.Debug("Creating new http client handler with CheckCertificateRevocationList : " + crlCheckEnabled);
+            HttpClientHandler httpHandler = new HttpClientHandler()
             {
                 // Verify no certificates have been revoked
-                CheckCertificateRevocationList = true,
+                CheckCertificateRevocationList = crlCheckEnabled,
                 // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            };
+               CookieContainer = cookieContainer = new CookieContainer()
+           };
 
-            HttpUtil.httpClient = new HttpClient(new RetryHandler(httpHandler));
+            var httpClient = new HttpClient(new RetryHandler(httpHandler));
             // HttpClient has a default timeout of 100 000 ms, we don't want to interfere with our
             // own connection and command timeout
-            HttpUtil.httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            httpClient.Timeout = Timeout.InfiniteTimeSpan;
+            return httpClient;
         }
 
         /// <summary>
@@ -207,7 +223,6 @@ namespace Snowflake.Data.Core
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                             childCts.CancelAfter(httpTimeout);
                         }
-
                         response = await base.SendAsync(requestMessage, childCts == null ? 
                             cancellationToken : childCts.Token).ConfigureAwait(false);
                     }
@@ -256,10 +271,11 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken);
                     totalRetryTime += backOffInSec;
+                    // Set next backoff time
                     backOffInSec = backOffInSec >= maxDefaultBackoff ?
                             maxDefaultBackoff : backOffInSec * 2;
 
-                    if (totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
@@ -277,10 +293,8 @@ namespace Snowflake.Data.Core
             private bool isRetryableHTTPCode(int statusCode)
             {
                 return (500 <= statusCode) && (statusCode < 600) ||
-                // Bad request
-                (statusCode == 400) ||
-                // Rate limit reached
-                (statusCode == 429) ||
+                // Forbidden
+                (statusCode == 403) ||
                 // Request timeout
                 (statusCode == 408);
             }
