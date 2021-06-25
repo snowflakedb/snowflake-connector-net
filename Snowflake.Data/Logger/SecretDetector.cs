@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Log
@@ -21,6 +22,50 @@ namespace Snowflake.Data.Log
             public bool isMasked { get; set; }
             public string maskedText { get; set; }
             public string errStr { get; set; }
+        }
+
+        private static List<string> CUSTOM_PATTERNS_REGEX = new List<string>();
+        private static List<string> CUSTOM_PATTERNS_MASK = new List<string>();
+        private static int CUSTOM_PATTERNS_LENGTH;
+
+        public static void SetCustomPatterns(List<string> customRegex, List<string> customMask)
+        {
+            if (customRegex.Count == customMask.Count)
+            {
+                CUSTOM_PATTERNS_LENGTH = customRegex.Count;
+                for (int index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
+                {
+                    CUSTOM_PATTERNS_REGEX.Add(customRegex[index]);
+                    CUSTOM_PATTERNS_MASK.Add(customMask[index]);
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Regex count and mask count must be equal.");
+            }
+        }
+
+        public static void ClearCustomPatterns()
+        {
+            CUSTOM_PATTERNS_REGEX.Clear();
+            CUSTOM_PATTERNS_MASK.Clear();
+            CUSTOM_PATTERNS_LENGTH = 0;
+        }
+
+        private static string MaskCustomPatterns(string text)
+        {
+            string result;
+            for (int index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
+            {
+                result = Regex.Replace(text, CUSTOM_PATTERNS_REGEX[index], CUSTOM_PATTERNS_MASK[index],
+                                         RegexOptions.IgnoreCase);
+
+                if (result != text)
+                {
+                    return result;
+                }
+            }
+            return text;
         }
 
         private static readonly string AWS_KEY_PATTERN = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)\s*=\s*'([^']+)'";
@@ -92,7 +137,10 @@ namespace Snowflake.Data.Log
                                     MaskAWSTokens(
                                         MaskSASTokens(
                                             MaskAWSKeys(text)))))));
-
+                if (CUSTOM_PATTERNS_LENGTH > 0)
+                {
+                    result.maskedText = MaskCustomPatterns(result.maskedText);
+                }
                 if (result.maskedText != text)
                 {
                     result.isMasked = true;

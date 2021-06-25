@@ -7,6 +7,8 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Log;
     using Snowflake.Data.Tests.Mock;
+    using System;
+    using System.Collections.Generic;
 
     [TestFixture]
     class SecretDetectorTest : SFBaseTest
@@ -197,7 +199,7 @@ namespace Snowflake.Data.Tests
             mask = SecretDetector.MaskSecrets(falsePositiveToken);
             Assert.IsFalse(mask.isMasked);
             Assert.AreEqual(falsePositiveToken, mask.maskedText);
-            Assert.IsNull(mask.errStr);     
+            Assert.IsNull(mask.errStr);
         }
 
         [Test]
@@ -267,7 +269,7 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(
                 "token=****" +
                 " random giberish " +
-                "password:****", 
+                "password:****",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
 
@@ -316,7 +318,7 @@ namespace Snowflake.Data.Tests
 
             // multiple passwords
             testStringWithPrefix = "password=" + randomPwd +
-                " random giberish " +                
+                " random giberish " +
                 "password=" + randomPwd2 +
                 " random giberish " +
                 "password=" + randomPwd;
@@ -330,6 +332,103 @@ namespace Snowflake.Data.Tests
                 "password=****",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
+        }
+
+        [Test]
+        public void TestCustomPattern()
+        {
+            List<string> regex = new List<string>();
+            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
+            regex.Add(@"(testCustomPattern\s*:\s*""([0-9]{8,})"")");
+
+            List<string> masks = new List<string>();
+            masks.Add("maskCustomPattern1");
+            masks.Add("maskCustomPattern2");
+
+            SecretDetector.SetCustomPatterns(regex, masks);
+
+            // Mask custom pattern
+            string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(masks[0], mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            testString = "testCustomPattern: \"1234567890\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(masks[1], mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            // Mask password and custom pattern
+            testString = "password: abcdefghijklmnop testCustomPattern: \"abcdefghijklmnop\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual("password: **** " + masks[0], mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            testString = "password: abcdefghijklmnop testCustomPattern: \"1234567890\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual("password: **** " + masks[1], mask.maskedText);
+            Assert.IsNull(mask.errStr);
+        }
+
+        [Test]
+        public void TestCustomPatternClear()
+        {
+            List<string> regex = new List<string>();
+            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
+
+            List<string> masks = new List<string>();
+            masks.Add("maskCustomPattern1");
+
+            SecretDetector.SetCustomPatterns(regex, masks);
+
+            // Mask custom pattern
+            string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(masks[0], mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            // Clear custom patterns
+            SecretDetector.ClearCustomPatterns();
+            testString = "testCustomPattern: \"abcdefghijklmnop\"";
+            mask = SecretDetector.MaskSecrets(testString);
+            Assert.IsFalse(mask.isMasked);
+            Assert.AreEqual(testString, mask.maskedText);
+            Assert.IsNull(mask.errStr);
+        }
+
+        [Test]
+        public void TestCustomPatternUnequalCount()
+        {
+            List<string> regex = new List<string>();
+            List<string> masks = new List<string>();
+
+            // Masks count is greater than regex
+            masks.Add("maskCustomPattern1");
+            try
+            {
+                SecretDetector.SetCustomPatterns(regex, masks);
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("Regex count and mask count must be equal.", ex.Message);
+            }
+
+            // Regex count is greater than masks
+            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
+            regex.Add(@"(testCustomPattern\s*:\s*""([0-9]{8,})"")");
+            try
+            {
+                SecretDetector.SetCustomPatterns(regex, masks);
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("Regex count and mask count must be equal.", ex.Message);
+            }
         }
     }
 }
