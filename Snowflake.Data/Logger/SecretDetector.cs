@@ -28,11 +28,16 @@ namespace Snowflake.Data.Log
         private static List<string> CUSTOM_PATTERNS_MASK = new List<string>();
         private static int CUSTOM_PATTERNS_LENGTH;
 
-        public static void SetCustomPatterns(List<string> customRegex, List<string> customMask)
+        public static void SetCustomPatterns(string[] customRegex, string[] customMask)
         {
-            if (customRegex.Count == customMask.Count)
+            if (CUSTOM_PATTERNS_LENGTH != 0)
             {
-                CUSTOM_PATTERNS_LENGTH = customRegex.Count;
+                ClearCustomPatterns();
+            }
+
+            if (customRegex.Length == customMask.Length)
+            {
+                CUSTOM_PATTERNS_LENGTH = customRegex.Length;
                 for (int index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
                 {
                     CUSTOM_PATTERNS_REGEX.Add(customRegex[index]);

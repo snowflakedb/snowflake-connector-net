@@ -337,13 +337,16 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCustomPattern()
         {
-            List<string> regex = new List<string>();
-            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
-            regex.Add(@"(testCustomPattern\s*:\s*""([0-9]{8,})"")");
-
-            List<string> masks = new List<string>();
-            masks.Add("maskCustomPattern1");
-            masks.Add("maskCustomPattern2");
+            string[] regex = new string[2] 
+            {
+                @"(testCustomPattern\s*:\s*""([a-z]{8,})"")",
+                @"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
+            };
+            string[] masks = new string[2] 
+            {
+                "maskCustomPattern1",
+                "maskCustomPattern2"
+            };
 
             SecretDetector.SetCustomPatterns(regex, masks);
 
@@ -377,11 +380,8 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCustomPatternClear()
         {
-            List<string> regex = new List<string>();
-            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
-
-            List<string> masks = new List<string>();
-            masks.Add("maskCustomPattern1");
+            string[] regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
+            string[] masks = new string[1] { "maskCustomPattern1" };
 
             SecretDetector.SetCustomPatterns(regex, masks);
 
@@ -404,11 +404,10 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCustomPatternUnequalCount()
         {
-            List<string> regex = new List<string>();
-            List<string> masks = new List<string>();
+            string[] regex = new string[0];
+            string[] masks = new string[1] { "maskCustomPattern1" };
 
             // Masks count is greater than regex
-            masks.Add("maskCustomPattern1");
             try
             {
                 SecretDetector.SetCustomPatterns(regex, masks);
@@ -419,8 +418,11 @@ namespace Snowflake.Data.Tests
             }
 
             // Regex count is greater than masks
-            regex.Add(@"(testCustomPattern\s*:\s*""([a-z]{8,})"")");
-            regex.Add(@"(testCustomPattern\s*:\s*""([0-9]{8,})"")");
+            regex = new string[2] 
+            {
+                @"(testCustomPattern\s*:\s*""([0-9]{8,})"")",
+                @"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
+            };
             try
             {
                 SecretDetector.SetCustomPatterns(regex, masks);
