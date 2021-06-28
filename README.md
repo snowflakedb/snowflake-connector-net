@@ -108,9 +108,9 @@ The following table lists all valid connection properties:
 
 | Connection Property        | Required | Comment                                                                       |
 |----------------------------|----------|-------------------------------------------------------------------------------|
-| ACCOUNT                    | Yes      | Account should not include region or cloud provider information. e.g. account should be XXX instead of XXX.us-east-1.|
+| ACCOUNT                    | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	|
 | DB                         | No       |                                                                               |
-| HOST                       | No       | If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. However, if you are not in us-west deployment, or you want to use global url, HOST is required, e.g. XXX.us-east-1.snowflakecomputing.com, or XXX-jkabfvdjisoa778wqfgeruishafeuw89q.global.snowflakecomputing.com|
+| HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
 | PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
 | ROLE                       | No       |                                                                               |
 | SCHEMA                     | No       |                                                                               |
