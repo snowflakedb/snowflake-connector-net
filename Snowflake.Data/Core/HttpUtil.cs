@@ -234,12 +234,17 @@ namespace Snowflake.Data.Core
                         }
                     }
 
+                    if (childCts != null)
+                    {
+                        childCts.Dispose();
+                    }
+
                     if (response != null)
                     {
                         if (response.IsSuccessStatusCode) {
                             return response;
                         }
-                        else 
+                        else
                         {
                             logger.Debug($"Failed Response: {response.ToString()}");
                             bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
@@ -250,7 +255,7 @@ namespace Snowflake.Data.Core
                             }
                         }
                     }
-                    else 
+                    else
                     {
                         logger.Info("Response returned was null.");
                     }
