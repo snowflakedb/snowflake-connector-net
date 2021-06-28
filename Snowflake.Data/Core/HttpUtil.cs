@@ -266,6 +266,9 @@ namespace Snowflake.Data.Core
                         logger.Info("Response returned was null.");
                     }
 
+                    // Disposing of the response if not null now that we don't need it anymore
+                    response?.Dispose();
+
                     requestMessage.RequestUri = updater.Update();
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
