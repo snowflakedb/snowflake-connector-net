@@ -91,24 +91,26 @@ namespace Snowflake.Data.Core
             HttpRequestMessage message = request.ToRequestMessage(method);
 
             // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout());
-            CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-                restRequestTimeout.Token);
-
-            try
+            using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout()))
             {
-                var response = await HttpUtil.getHttpClient(request.GetInsecureMode())
-                    .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
-                    .ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
+                using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
+                    restRequestTimeout.Token))
+                {
+                    try
+                    {
+                        var response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                            .ConfigureAwait(false);
+                        response.EnsureSuccessStatusCode();
 
-                return response;
-            }
-            catch(Exception e)
-            {
-                throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                        return response;
+                    }
+                    catch(Exception e)
+                    {
+                        throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                    }
+                }
             }
         }
     }
-    
 }
