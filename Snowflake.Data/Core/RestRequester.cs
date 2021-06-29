@@ -93,28 +93,30 @@ namespace Snowflake.Data.Core
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
-
             // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout());
-            CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-                restRequestTimeout.Token);
-            HttpResponseMessage response = null;
-            try
+            using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout()))
             {
-                response = await HttpUtil.getHttpClient(request.GetInsecureMode())
-                    .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
-                    .ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
+                using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
+                    restRequestTimeout.Token))
+                {
+                    HttpResponseMessage response = null;
+                    try
+                    {
+                        response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                            .ConfigureAwait(false);
+                        response.EnsureSuccessStatusCode();
 
-                return response;
-            }
-            catch(Exception e)
-            {
-                // Disposing of the response if not null now that we don't need it anymore 
-                response?.Dispose();
-                throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                        return response;
+                    }
+                    catch(Exception e)
+                    {
+                        // Disposing of the response if not null now that we don't need it anymore 
+                        response?.Dispose();
+                        throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                    }
+                }
             }
         }
     }
-    
 }
