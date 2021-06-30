@@ -71,6 +71,40 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [TestCase("11:22:33.4455667")]
+        [TestCase("23:59:59.9999999")]
+        [TestCase("16:20:00.6666666")]
+        [TestCase("00:00:00.0000000")]
+        [TestCase("00:00:00")]
+        [TestCase("23:59:59.1")]
+        [TestCase("23:59:59.12")]
+        [TestCase("23:59:59.123")]
+        [TestCase("23:59:59.1234")]
+        [TestCase("23:59:59.12345")]
+        [TestCase("23:59:59.123456")]
+        [TestCase("23:59:59.1234567")]
+        [TestCase("23:59:59.12345678")]
+        [TestCase("23:59:59.123456789")]
+        public void TestConvertTimeSpan(string inputTimeStr)
+        {
+            // The expected result. Timespan precision only goes up to 7 digits
+            TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
+
+            // Generate the value as returned by the DB
+            TimeSpan val= TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
+            Console.WriteLine("val " + val.ToString());
+            var tickDiff = val.Ticks;
+            var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
+            inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
+    
+            // Run the conversion
+            var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItComesBackFromDatabase, SFDataType.TIME, typeof(TimeSpan));
+
+            // Verify the result
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]

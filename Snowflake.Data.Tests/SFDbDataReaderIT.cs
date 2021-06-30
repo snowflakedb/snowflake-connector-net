@@ -202,6 +202,144 @@ namespace Snowflake.Data.Tests
             testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
         }
 
+        [Test]
+        [TestCase("11:22:33.4455667")]
+        [TestCase("23:59:59.9999999")]
+        [TestCase("16:20:00.6666666")]
+        [TestCase("00:00:00.0000000")] 
+        [TestCase("00:00:00")]
+        [TestCase("23:59:59.1")]
+        [TestCase("23:59:59.12")]
+        [TestCase("23:59:59.123")]
+        [TestCase("23:59:59.1234")]
+        [TestCase("23:59:59.12345")]
+        [TestCase("23:59:59.123456")]
+        [TestCase("23:59:59.1234567")]
+        [TestCase("23:59:59.12345678")]
+        [TestCase("23:59:59.123456789")]
+        public void testGetTimeSpan(string inputTimeStr)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Insert data
+                int fractionalPartIndex = inputTimeStr.IndexOf('.');
+                var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"create or replace table testGetTimeSpan(cola TIME{ (precision > 0 ? string.Empty : $"({precision})")});";
+                int count = cmd.ExecuteNonQuery();
+
+                string insertCommand = $"insert into testGetTimeSpan values ('{inputTimeStr}')";
+                cmd.CommandText = insertCommand;
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "SELECT cola FROM testGetTimeSpan";
+                IDataReader reader = cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+
+                // For time, we getDateTime on the column and ignore date part
+                DateTime dateTimeTime = reader.GetDateTime(0);
+                TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
+                reader.Close();
+
+                // The expected result. Timespan precision only goes up to 7 digits
+                TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
+                // Verify the result
+                Assert.AreEqual(expected, timeSpanTime);
+                Assert.AreEqual(dateTimeTime.Hour, timeSpanTime.Hours);
+                Assert.AreEqual(dateTimeTime.Minute, timeSpanTime.Minutes);
+                Assert.AreEqual(dateTimeTime.Second, timeSpanTime.Seconds);
+                Assert.AreEqual(dateTimeTime.Millisecond, timeSpanTime.Milliseconds);
+
+                cmd.CommandText = "drop table if exists testGetTimeSpan";
+                count = cmd.ExecuteNonQuery();
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetTimeSpanError()
+        {
+            // Only Time data can be retrieved using GetTimeSpan, other type will fail
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Insert data
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace table testGetTimeSpanAllDatTypes(C1 NUMBER(38,0), C2 FLOAT, C3 VARCHAR(255), C4 BINARY(255), C5 BOOLEAN," +
+                    " C6 DATE, C7 TIMESTAMP_NTZ(9), C8 TIMESTAMP_LTZ(9), C9 TIMESTAMP_TZ(9), " +
+                    "C10 VARIANT, C11 OBJECT, C12 ARRAY, C13 VARCHAR(1), C14 TIME); ";
+                //Console.WriteLine(cmd.CommandText);
+                int count = cmd.ExecuteNonQuery();
+
+                string insertCommand = "insert into testGetTimeSpanAllDatTypes(C1, C10, C11, C12) select 1, "+
+                "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
+                 ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
+                 " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
+                cmd.CommandText = insertCommand;
+                //Console.WriteLine(insertCommand);
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                insertCommand = "update testGetTimeSpanAllDatTypes set C2 = 2.5, C3 = 'C3Val', C4 = TO_BINARY('C4'), C5 = true, C6 = '2021-01-01', " +
+                "C7 = '2017-01-01 12:00:00', C8 = '2017-01-01 12:00:00 +04:00', C9 = '2014-01-02 16:00:00 +10:00', C14 = '12:00:00' where C1 = 1";
+                cmd.CommandText = insertCommand;
+                //Console.WriteLine(insertCommand);
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = "SELECT * FROM testGetTimeSpanAllDatTypes";
+                IDataReader reader = cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+
+                // All types except TIME fail conversion when calling GetTimeSpan
+                for (int i = 0; i < 12; i++)
+                {
+                    try
+                    {
+                        
+                        ((SnowflakeDbDataReader)reader).GetTimeSpan(i);
+                        Assert.Fail("Data should not be converted to TIME");
+                    }
+                    catch (SnowflakeDbException e)
+                    {
+                        Assert.AreEqual(270003, e.ErrorCode); 
+                    }
+                }
+
+                // Null value
+                // Null value can not be converted to TimeSpan because it is a non-nullable type
+                
+                try
+                {
+                    ((SnowflakeDbDataReader)reader).GetTimeSpan(12);
+                    Assert.Fail("TimeSpan is not nullable");
+                }
+                catch (InvalidCastException e)
+                {
+                    
+                }
+
+                // Valid time column
+                TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
+
+                reader.Close();
+                
+                cmd.CommandText = "drop table if exists testGetTimeSpanAllDatTypes";
+                count = cmd.ExecuteNonQuery();
+
+                conn.Close();
+            }
+        }
+
         private void testGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
         {
             // Can't use DateTime object as test case, must parse.
