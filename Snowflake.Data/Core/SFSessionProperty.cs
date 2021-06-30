@@ -212,6 +212,12 @@ namespace Snowflake.Data.Core
                 logger.Info($"Compose host name: {hostName}");
             }
 
+            // Trim the account name to remove the region and cloud platform if any were provided
+            // because the login request data does not expect region and cloud information to be 
+            // passed on for account_name
+            properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
+            
+
             return properties;
         }
 
