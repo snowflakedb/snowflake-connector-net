@@ -34,6 +34,11 @@ namespace Snowflake.Data.Client
                     defaultValue);
         }
 
+        public SnowflakeDbConnection(string connectionString) : this()
+        {
+            ConnectionString = connectionString;
+        }
+
         public override string ConnectionString
         {
             get; set;

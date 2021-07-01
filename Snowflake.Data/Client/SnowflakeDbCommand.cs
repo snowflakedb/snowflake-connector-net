@@ -27,19 +27,20 @@ namespace Snowflake.Data.Client
 
         public SnowflakeDbCommand()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
+            logger.Debug("Constructing SnowflakeDbCommand class");
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
-        public SnowflakeDbCommand(SnowflakeDbConnection connection)
+        public SnowflakeDbCommand(SnowflakeDbConnection connection) : this()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
             this.connection = connection;
-            // by default, no query timeout
-            this.CommandTimeout = 0;
-            parameterCollection = new SnowflakeDbParameterCollection();
+        }
+
+        public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
+        {
+            this.CommandText = cmdText;
         }
 
         public override string CommandText
