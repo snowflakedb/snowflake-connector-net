@@ -219,7 +219,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            return (intPart * 1000 * 1000 * 1000 + decimalPart) / 100L;
+            return intPart * 10000000L + decimalPart / 100L;
 
         }
 

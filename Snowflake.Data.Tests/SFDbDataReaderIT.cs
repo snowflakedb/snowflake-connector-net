@@ -323,9 +323,9 @@ namespace Snowflake.Data.Tests
                     ((SnowflakeDbDataReader)reader).GetTimeSpan(12);
                     Assert.Fail("TimeSpan is not nullable");
                 }
-                catch (InvalidCastException e)
+                catch (InvalidCastException)
                 {
-                    
+                    // Expected, ignore it
                 }
 
                 // Valid time column
