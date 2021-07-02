@@ -71,8 +71,10 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-            var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
-            samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using (var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
+            { 
+                samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            }
 
             logger.Debug("step 5: verify postback url in SAML reponse");
             VerifyPostbackUrl();
@@ -110,8 +112,10 @@ namespace Snowflake.Data.Core.Authenticator
 
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-            var samlRawResponse = session.restRequester.Get(samlRestRequest);
-            samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+            using (var samlRawResponse = session.restRequester.Get(samlRestRequest))
+            {
+                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+            }
 
             logger.Debug("step 5: verify postback url in SAML reponse");
             VerifyPostbackUrl();
