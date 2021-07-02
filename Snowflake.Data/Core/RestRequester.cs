@@ -53,9 +53,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
+            using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
+            {
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json);
+            }
         }
 
         public T Get<T>(IRestRequest request)
@@ -66,9 +68,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
+            using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
+            { 
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json);
+            }
         }
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
@@ -87,16 +91,16 @@ namespace Snowflake.Data.Core
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
-
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout()))
             {
                 using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
                     restRequestTimeout.Token))
                 {
+                    HttpResponseMessage response = null;
                     try
                     {
-                        var response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                        response = await HttpUtil.getHttpClient(request.GetInsecureMode())
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
@@ -105,6 +109,8 @@ namespace Snowflake.Data.Core
                     }
                     catch(Exception e)
                     {
+                        // Disposing of the response if not null now that we don't need it anymore 
+                        response?.Dispose();
                         throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
                     }
                 }
