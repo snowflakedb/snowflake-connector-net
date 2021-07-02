@@ -158,6 +158,7 @@ namespace Snowflake.Data.Client
                     }
                     else
                     {
+                        logger.Debug("All good");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();
                     }
