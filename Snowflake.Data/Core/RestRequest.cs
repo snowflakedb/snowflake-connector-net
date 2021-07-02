@@ -44,7 +44,7 @@ namespace Snowflake.Data.Core
         internal TimeSpan HttpTimeout { get; set; }
 
         /// <summary>
-        /// Timeout for every single HTTP request
+        /// Set to true to disable the CheckCertificateRevocationList setting for the http client handler
         /// </summary>
         internal bool InsecureMode { get; set; }
 

@@ -40,6 +40,7 @@ namespace Snowflake.Data.Core
             Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
             bool insecureMode)
         {
+            InsecureMode = insecureMode;
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
