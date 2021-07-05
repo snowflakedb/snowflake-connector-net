@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
         
         // Merged cancellation token source for all cancellation signal. 
         // Cancel callback will be registered under token issued by this source.
-        private CancellationTokenSource _linkedCancellationTokenSouce;
+        private CancellationTokenSource _linkedCancellationTokenSource;
 
         internal SFStatement(SFSession session)
         {
@@ -116,6 +116,22 @@ namespace Snowflake.Data.Core
             };
         }
 
+        private void CleanUpCancellationTokenSources()
+        {
+            if (_linkedCancellationTokenSource != null)
+            {
+                // This should also take care of cleaning up the cancellation callback that was registered.
+                // https://github.com/microsoft/referencesource/blob/master/mscorlib/system/threading/CancellationTokenSource.cs#L552
+                _linkedCancellationTokenSource.Dispose();
+                _linkedCancellationTokenSource = null;
+            }
+            if (_timeoutTokenSource != null)
+            {
+                _timeoutTokenSource.Dispose();
+                _timeoutTokenSource = null;
+            }
+        }
+
         private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
             if (response.success)
@@ -142,11 +158,22 @@ namespace Snowflake.Data.Core
         private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
         {
             SetTimeout(timeout);
-            _linkedCancellationTokenSouce = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
+            _linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
                 externalCancellationToken);
-            if (!_linkedCancellationTokenSouce.IsCancellationRequested)
+            if (!_linkedCancellationTokenSource.IsCancellationRequested)
             {
-                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
+                _linkedCancellationTokenSource.Token.Register(() =>
+                {
+                    try
+                    {
+                        Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Prevent an unhandled exception from being thrown
+                        logger.Error("Unable to cancel query.", ex);
+                    }
+                });
             }
         }
 
@@ -205,6 +232,7 @@ namespace Snowflake.Data.Core
             }
             finally
             {
+                CleanUpCancellationTokenSources();
                 ClearQueryRequestId();
             }
         }
@@ -257,6 +285,7 @@ namespace Snowflake.Data.Core
             }
             finally
             {
+                CleanUpCancellationTokenSources();
                 ClearQueryRequestId();
             }
         }
@@ -287,12 +316,15 @@ namespace Snowflake.Data.Core
                 };
             }
         }
-        
+
         internal void Cancel()
         {
             SFRestRequest request = BuildCancelQueryRequest();
             if (request == null)
+            {
+                CleanUpCancellationTokenSources();
                 return;
+            }
 
             var response = _restRequester.Post<NullDataResponse>(request);
 
@@ -304,7 +336,7 @@ namespace Snowflake.Data.Core
             {
                 logger.Warn("Query cancellation failed.");
             }
+            CleanUpCancellationTokenSources();
         }
-        
     }
 }

@@ -54,9 +54,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
+            using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
+            {
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json);
+            }
         }
 
         public T Get<T>(IRestRequest request)
@@ -67,9 +69,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
+            using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
+            { 
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json);
+            }
         }
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
@@ -90,7 +94,6 @@ namespace Snowflake.Data.Core
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
-
             return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
         }
 
@@ -99,24 +102,28 @@ namespace Snowflake.Data.Core
                                                               CancellationToken externalCancellationToken)
         {
             // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout);
-            CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-                restRequestTimeout.Token);
-
-            try
+            using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
             {
-                var response = await _HttpClient
-                    .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
-                    .ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-
-                return response;
-            }
-            catch (Exception e)
-            {
-                throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
+                restRequestTimeout.Token))
+                {
+                    try
+                    {
+                        response = await _HttpClient
+                            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                            .ConfigureAwait(false);
+                        response.EnsureSuccessStatusCode();
+  
+                        return response;
+                    }
+                    catch (Exception e)
+                    {
+                        // Disposing of the response if not null now that we don't need it anymore 
+                        response?.Dispose();
+                        throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                    }
+                }
             }
         }
     }
-    
 }

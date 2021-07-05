@@ -38,6 +38,7 @@ namespace Snowflake.Data.Core
 			Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
             IRestRequester restRequester)
         {
+            InsecureMode = insecureMode;
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
@@ -132,18 +133,21 @@ namespace Snowflake.Data.Core
                 chunkHeaders = downloadContext.chunkHeaders
             };
 
-            var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
-            Stream stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
-
-            if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
+            Stream stream = null;
+            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+            using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
-                if (string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
-                {
-                    stream = new GZipStream(stream, CompressionMode.Decompress);
-                }
-            }
 
-            parseStreamIntoChunk(stream, chunk);
+                if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
+                {
+                    if (string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        stream = new GZipStream(stream, CompressionMode.Decompress);
+                    }
+                }
+
+                parseStreamIntoChunk(stream, chunk);
+            }
             
             chunk.downloadState = DownloadState.SUCCESS;
             logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex+1}");

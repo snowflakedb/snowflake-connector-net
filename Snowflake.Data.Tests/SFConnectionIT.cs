@@ -1344,6 +1344,71 @@ namespace Snowflake.Data.Tests
                 Assert.IsTrue(connectTask.IsFaulted);
             }
         }
+
+        [Test]
+        public void TestCloseAsync()
+        {
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+            // An application can call Close or CloseAsync more than one time. 
+            // No exception is generated.
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Task task = null;
+
+                // Close the connection. It's not opened yet, but it should not have any issue
+                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                // Open the connection
+                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                // Close the opened connection
+                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                // Close the connection again.
+                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+            }
+        }
+
+        [Test]
+        public void TestCloseAsyncFailure()
+        {
+            using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
+            {
+                conn.ConnectionString = ConnectionString;
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Task task = null;
+
+                // Open the connection
+                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                // Close the opened connection
+                task =  conn.CloseAsync(new CancellationTokenSource().Token);
+                try
+                { 
+                    task.Wait();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
+                        ((SnowflakeDbException)(e.InnerException)).ErrorCode);
+                }
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+            }
+        }
     }
 }
 
