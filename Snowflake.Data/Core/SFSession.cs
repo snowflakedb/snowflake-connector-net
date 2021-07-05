@@ -199,6 +199,30 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal async Task CloseAsync(CancellationToken cancellationToken)
+        {
+            // Nothing to do if the session is not open
+            if (null == sessionToken) return;
+
+            // Send a close session request
+            var queryParams = new Dictionary<string, string>();
+            queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
+            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+
+            SFRestRequest closeSessionRequest = new SFRestRequest(InsecureMode)
+            {
+                Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+            };
+
+            var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+            if (!response.success)
+            {
+                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+            }
+        }
+
         internal void renewSession()
         {
             RenewSessionRequest postBody = new RenewSessionRequest()
