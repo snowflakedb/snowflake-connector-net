@@ -80,7 +80,13 @@ namespace Snowflake.Data.Tests
             BasicMasking(@"secret_access_key='aaaaaaaa'", @"secret_access_key='****'");
 
             // aws_key_id with colon
-            BasicMasking(@"aws_secret_key:'aaaaaaaa'", @"aws_secret_key:'****'");
+            BasicMasking(@"aws_key_id:'aaaaaaaa'", @"aws_key_id:'****'");
+
+            // aws_key_id with single quote on key
+            BasicMasking(@"'aws_key_id':'aaaaaaaa'", @"'aws_key_id':'****'");
+
+            // aws_key_id with double quotes on key
+            BasicMasking(@"""aws_key_id"":'aaaaaaaa'", @"""aws_key_id"":'****'");
         }
 
         [Test]
