@@ -78,6 +78,9 @@ namespace Snowflake.Data.Tests
 
             // secret_access_key
             BasicMasking(@"secret_access_key='aaaaaaaa'", @"secret_access_key='****'");
+
+            // aws_key_id with colon
+            BasicMasking(@"aws_secret_key:'aaaaaaaa'", @"aws_secret_key:'****'");
         }
 
         [Test]
@@ -337,12 +340,12 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCustomPattern()
         {
-            string[] regex = new string[2] 
+            string[] regex = new string[2]
             {
                 @"(testCustomPattern\s*:\s*""([a-z]{8,})"")",
                 @"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
             };
-            string[] masks = new string[2] 
+            string[] masks = new string[2]
             {
                 "maskCustomPattern1",
                 "maskCustomPattern2"
@@ -418,7 +421,7 @@ namespace Snowflake.Data.Tests
             }
 
             // Regex count is greater than masks
-            regex = new string[2] 
+            regex = new string[2]
             {
                 @"(testCustomPattern\s*:\s*""([0-9]{8,})"")",
                 @"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
@@ -431,6 +434,34 @@ namespace Snowflake.Data.Tests
             {
                 Assert.AreEqual("Regex count and mask count must be equal.", ex.Message);
             }
+        }
+
+        [Test]
+        public void TestHttpResponse()
+        {
+            string randomHttpResponse =
+                "\"data\" : {" +
+                "\"masterToken\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+                "\"token\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+                "\"remMeValidityInSeconds\" : 0," +
+                "\"healthCheckInterval\" : 12," +
+                "\"newClientForUpgrade\" : null," +
+                "\"sessionId\" : 1234";
+
+            string randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
+            mask = SecretDetector.MaskSecrets(randomHttpResponseWithPrefix);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(
+                "Post response: " +
+                "\"data\" : {" +
+                "\"masterToken\" : \"****" +
+                "\"token\" : \"****" +
+                "\"remMeValidityInSeconds\" : 0," +
+                "\"healthCheckInterval\" : 12," +
+                "\"newClientForUpgrade\" : null," +
+                "\"sessionId\" : 1234",
+                mask.maskedText);
+            Assert.IsNull(mask.errStr);
         }
     }
 }
