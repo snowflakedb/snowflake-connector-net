@@ -253,7 +253,7 @@ namespace Snowflake.Data.Core
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-            SFRestRequest closeSessionRequest = new SFRestRequest(InsecureMode)
+            SFRestRequest closeSessionRequest = new SFRestRequest()
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)

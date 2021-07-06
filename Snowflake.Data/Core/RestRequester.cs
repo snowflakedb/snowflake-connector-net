@@ -107,6 +107,7 @@ namespace Snowflake.Data.Core
                 using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
                 restRequestTimeout.Token))
                 {
+                    HttpResponseMessage response = null;
                     try
                     {
                         response = await _HttpClient

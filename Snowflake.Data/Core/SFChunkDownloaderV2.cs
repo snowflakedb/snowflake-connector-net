@@ -38,7 +38,6 @@ namespace Snowflake.Data.Core
 			Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
             IRestRequester restRequester)
         {
-            InsecureMode = insecureMode;
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
@@ -134,7 +133,7 @@ namespace Snowflake.Data.Core
             };
 
             Stream stream = null;
-            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+            using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
             using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
 

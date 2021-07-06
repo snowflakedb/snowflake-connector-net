@@ -104,7 +104,7 @@ namespace Snowflake.Data.Core.Authenticator
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             using (var samlRawResponse = session.restRequester.Get(samlRestRequest))
             {
-                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
             }
 
             logger.Debug("step 5: verify postback url in SAML reponse");
