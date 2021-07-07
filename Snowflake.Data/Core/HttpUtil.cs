@@ -242,6 +242,7 @@ namespace Snowflake.Data.Core
                     if (response != null)
                     {
                         if (response.IsSuccessStatusCode) {
+                            logger.Debug($"Success Response: {response.ToString()}");
                             return response;
                         }
                         else
