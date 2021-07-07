@@ -160,9 +160,12 @@ namespace Snowflake.Data.Client
                 logger.Error("Unable to connect", e);
                 if (!(e.GetType() == typeof(SnowflakeDbException)))
                 {
-                    throw new SnowflakeDbException(e.InnerException,
-                                SFError.INTERNAL_ERROR,
-                                "Unable to connect");
+                    throw 
+                       new SnowflakeDbException(
+                           e,
+                           SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                           SFError.INTERNAL_ERROR,
+                           "Unable to connect. " + e.Message);
                 }
                 else
                 {
@@ -187,9 +190,11 @@ namespace Snowflake.Data.Client
                         Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx.InnerException);
-                        throw new SnowflakeDbException(sfSessionEx.InnerException,
-                            SFError.INTERNAL_ERROR,
-                            "Unable to connect");
+                        throw new SnowflakeDbException(
+                           sfSessionEx,
+                           SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                           SFError.INTERNAL_ERROR,
+                           "Unable to connect");
                     }
                     else if (previousTask.IsCanceled)
                     {

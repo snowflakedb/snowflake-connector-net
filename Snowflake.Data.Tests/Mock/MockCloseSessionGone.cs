@@ -10,13 +10,13 @@ namespace Snowflake.Data.Tests.Mock
     using System.Threading.Tasks;
     using Snowflake.Data.Core;
 
-    class MockCloseSessionGone : IRestRequester
+    class MockCloseSessionGone : IMockRestRequester
     {
         static private readonly int SESSION_GONE = 390111;
 
         public T Get<T>(IRestRequest request)
         {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
@@ -67,6 +67,11 @@ namespace Snowflake.Data.Tests.Mock
                 success = false
             };
             return Task.FromResult<T>((T)(object)closeResponse);
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

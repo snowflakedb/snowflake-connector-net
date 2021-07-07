@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpired : IRestRequester
+    class MockRestSessionExpired : IMockRestRequester
     {
         static private readonly String EXPIRED_SESSION_TOKEN="session_expired_token";
 
@@ -110,12 +110,12 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public T Get<T>(IRestRequest request)
         {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -138,6 +138,11 @@ namespace Snowflake.Data.Tests.Mock
             int start = queries.IndexOf("requestId=");
             start += 10;
             return queries.Substring(start, 36);
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

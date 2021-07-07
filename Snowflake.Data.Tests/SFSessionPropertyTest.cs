@@ -46,6 +46,7 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.PASSWORD, "123" },
                         { SFSessionProperty.PORT, "443" },
                         { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                        { SFSessionProperty.USEPROXY, "false" },
                         { SFSessionProperty.INSECUREMODE, "false" },
                     },
                 },

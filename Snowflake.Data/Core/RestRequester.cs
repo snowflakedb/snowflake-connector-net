@@ -30,25 +30,26 @@ namespace Snowflake.Data.Core
         HttpResponseMessage Get(IRestRequest request);
     }
 
+    internal interface IMockRestRequester : IRestRequester
+    {
+        void setHttpClient(HttpClient httpClient);
+    }
+
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
-        private static readonly RestRequester instance = new RestRequester();
+        protected HttpClient _HttpClient;
 
-        private RestRequester()
+        public RestRequester(HttpClient httpClient)
         {
-        }
-        
-        static internal RestRequester Instance
-        {
-            get { return instance; }
+            _HttpClient = httpClient;
         }
 
         public T Post<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await PostAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -64,7 +65,7 @@ namespace Snowflake.Data.Core
         public T Get<T>(IRestRequest request)
         {
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -90,31 +91,38 @@ namespace Snowflake.Data.Core
             logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
 
             //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
-        
+
         private async Task<HttpResponseMessage> SendAsync(HttpMethod method,
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
+            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
+        }
+
+        protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
+                                                              TimeSpan restTimeout, 
+                                                              CancellationToken externalCancellationToken)
+        {
             // merge multiple cancellation token
-            using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout()))
+            using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
             {
                 using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-                    restRequestTimeout.Token))
+                restRequestTimeout.Token))
                 {
                     HttpResponseMessage response = null;
                     try
                     {
-                        response = await HttpUtil.getHttpClient(request.GetInsecureMode())
+                        response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
-
+  
                         return response;
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         // Disposing of the response if not null now that we don't need it anymore 
                         response?.Dispose();

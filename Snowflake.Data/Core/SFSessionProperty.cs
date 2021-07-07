@@ -50,6 +50,19 @@ namespace Snowflake.Data.Core
         TOKEN,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         INSECUREMODE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        USEPROXY,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYHOST,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYPORT,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYUSER,
+        [SFSessionPropertyAttr(required = false)]
+        PROXYPASSWORD,
+        [SFSessionPropertyAttr(required = false)]
+        NONPROXYHOSTS,
+
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -69,7 +82,9 @@ namespace Snowflake.Data.Core
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
                 SFSessionProperty.TOKEN,
-                SFSessionProperty.PRIVATE_KEY_PWD};
+                SFSessionProperty.PRIVATE_KEY_PWD,
+                SFSessionProperty.PROXYPASSWORD,
+            };
 
         public override bool Equals(object obj)
         {
@@ -174,8 +189,9 @@ namespace Snowflake.Data.Core
                             string invalidStringDetail =
                                 String.Format("Invalid key value pair {0}", keyVal);
                             SnowflakeDbException e =
-                                new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
-                                new object[] { invalidStringDetail });
+                                new SnowflakeDbException(
+                                    SFError.INVALID_CONNECTION_STRING,
+                                    new object[] { invalidStringDetail });
                             logger.Error("Invalid string.", e);
                             throw e;
                         }
@@ -195,10 +211,42 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            bool useProxy = false;
+            if (properties.ContainsKey(SFSessionProperty.USEPROXY))
+            {
+                try
+                {
+                    useProxy = Boolean.Parse(properties[SFSessionProperty.USEPROXY]);
+                }
+                catch (Exception e)
+                {
+                    // The useProxy setting is not a valid boolean value
+                    logger.Error("Unable to connect", e);
+                    throw new SnowflakeDbException(e,
+                                SFError.INVALID_CONNECTION_STRING,
+                                e.Message);
+                }
+           }
+
+            // Based on which proxy settings have been provided, update the required settings list
+            if (useProxy)
+            {
+                // If useProxy is true, then proxyhost and proxy port are mandatory
+                SFSessionProperty.PROXYHOST.GetAttribute<SFSessionPropertyAttr>().required = true;
+                SFSessionProperty.PROXYPORT.GetAttribute<SFSessionPropertyAttr>().required = true;
+
+                // If a username is provided, then a password is required
+                if (properties.ContainsKey(SFSessionProperty.PROXYUSER))
+                {
+                    SFSessionProperty.PROXYPASSWORD.GetAttribute<SFSessionPropertyAttr>().required = true;
+                }
+            }
+
             if (password != null)
             {
                 properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
             }
+
             checkSessionProperties(properties);
 
             // compose host value if not specified
@@ -231,7 +279,7 @@ namespace Snowflake.Data.Core
                 {
                     SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY,
                         sessionProperty);
-                    logger.Error("Missing connetion property", e);
+                    logger.Error("Missing connection property", e);
                     throw e;
                 }
 

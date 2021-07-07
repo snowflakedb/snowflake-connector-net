@@ -12,6 +12,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace Snowflake.Data.Core
 {
@@ -27,7 +28,7 @@ namespace Snowflake.Data.Core
 
         internal string masterToken;
 
-        internal IRestRequester restRequester;
+        internal IRestRequester restRequester { get; private set; }
 
         private IAuthenticator authenticator;
 
@@ -43,6 +44,8 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
+        private HttpClient _HttpClient;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -57,7 +60,12 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException("", authnResponse.code, authnResponse.message, "");
+                SnowflakeDbException e = new SnowflakeDbException
+                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE, 
+                    authnResponse.code, 
+                    authnResponse.message,
+                    "");
+
                 logger.Error("Authentication failed", e);
                 throw e;
             }
@@ -87,15 +95,8 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString, SecureString password) : 
-            this(connectionString, password, RestRequester.Instance)
+        internal SFSession(String connectionString, SecureString password)
         {
-        }
-
-        internal SFSession(String connectionString, SecureString password, IRestRequester restRequester)
-        {
-
-            this.restRequester = restRequester;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
@@ -105,15 +106,49 @@ namespace Snowflake.Data.Core
             {
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
-
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
+                string proxyHost = null;
+                string proxyPort = null;
+                string noProxyHosts = null;
+                string proxyPwd = null;
+                string proxyUser = null;
+                if (Boolean.Parse(properties[SFSessionProperty.USEPROXY]))
+                {
+                    // Let's try to get the associated RestRequester
+                    properties.TryGetValue(SFSessionProperty.PROXYHOST, out proxyHost);
+                    properties.TryGetValue(SFSessionProperty.PROXYPORT, out proxyPort);
+                    properties.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out noProxyHosts);
+                    properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out proxyPwd);
+                    properties.TryGetValue(SFSessionProperty.PROXYUSER, out proxyUser);
+
+                    if (!String.IsNullOrEmpty(noProxyHosts))
+                    {
+                        // The list is url-encoded
+                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
+                        noProxyHosts = HttpUtility.UrlDecode(noProxyHosts);
+                    }
+                }
+
+                // HttpClient config based on the setting in the connection string
+                HttpClientConfig httpClientConfig = 
+                    new HttpClientConfig(
+                        !InsecureMode, 
+                        proxyHost, 
+                        proxyPort, 
+                        proxyUser, 
+                        proxyPwd, 
+                        noProxyHosts);
+
+                // Get the http client for the config
+                _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+                restRequester = new RestRequester(_HttpClient);
             }
             catch (Exception e)
             {
-                logger.Error(e.Message);
+                logger.Error("Unable to connect", e);
                 throw new SnowflakeDbException(e.InnerException,
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
             }
@@ -128,7 +163,15 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
             }
 
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;            
+        }
+
+        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
+        {
+            // Inject the HttpClient to use with the Mock requester
+            restRequester.setHttpClient(_HttpClient);
+            // Override the Rest requester with the mock for testing
+            this.restRequester = restRequester;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -186,7 +229,7 @@ namespace Snowflake.Data.Core
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-            SFRestRequest closeSessionRequest = new SFRestRequest(InsecureMode)
+            SFRestRequest closeSessionRequest = new SFRestRequest
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
@@ -210,7 +253,7 @@ namespace Snowflake.Data.Core
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-            SFRestRequest closeSessionRequest = new SFRestRequest(InsecureMode)
+            SFRestRequest closeSessionRequest = new SFRestRequest()
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
@@ -237,10 +280,9 @@ namespace Snowflake.Data.Core
                     { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                 };
 
-            SFRestRequest renewSessionRequest = new SFRestRequest(InsecureMode)
+            SFRestRequest renewSessionRequest = new SFRestRequest
             {
                 jsonBody = postBody,
-
                 Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 RestTimeout = Timeout.InfiniteTimeSpan
@@ -264,7 +306,7 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
         {
-            return new SFRestRequest(InsecureMode)
+            return new SFRestRequest()
             {
                 jsonBody = body,
                 Url = uri,

@@ -17,22 +17,25 @@ namespace Snowflake.Data.Client
     /// </summary>
     public sealed class SnowflakeDbException : DbException
     {
+        // Sql states not coming directly from the server.
+        internal static string CONNECTION_FAILURE_SSTATE = "08006";
+
         static private ResourceManager rm = new ResourceManager("Snowflake.Data.Core.ErrorMessages",
             typeof(SnowflakeDbException).Assembly);
 
-        private string sqlState;
+        public string SqlState { get; private set; }
 
-        private int vendorCode;
+        private int VendorCode;
 
-        private string errorMessage;
+        private string ErrorMessage;
 
-        public string queryId { get; }
+        public string QueryId { get; }
 
         public override string Message
         {
             get
             {
-                return errorMessage;
+                return ErrorMessage;
             }
         }
 
@@ -40,35 +43,43 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return vendorCode;
+                return VendorCode;
             }
         }
 
         public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
         {
-            this.sqlState = sqlState;
-            this.vendorCode = vendorCode;
-            this.errorMessage = errorMessage;
-            this.queryId = queryId;
+            this.SqlState = sqlState;
+            this.VendorCode = vendorCode;
+            this.ErrorMessage = errorMessage;
+            this.QueryId = queryId;
         }
 
         public SnowflakeDbException(SFError error, params object[] args)
         {
-            this.errorMessage = string.Format(rm.GetString(error.ToString()), args);
-            this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
+            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
         public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
             : base(string.Format(rm.GetString(error.ToString()), args), innerException)
         {
-            this.errorMessage = string.Format(rm.GetString(error.ToString()), args);
-            this.vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
+            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        }
+
+        public SnowflakeDbException(Exception innerException, string sqlState, SFError error, params object[] args)
+            : base(string.Format(rm.GetString(error.ToString()), args), innerException)
+        {
+            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
+            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            this.SqlState = sqlState;
         }
 
         public override string ToString()
         {
-            return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}", 
-                errorMessage, sqlState, vendorCode, queryId);
+            return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}",
+                ErrorMessage, SqlState, VendorCode, QueryId);
         }
     }
 }

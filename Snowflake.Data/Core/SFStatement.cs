@@ -39,18 +39,15 @@ namespace Snowflake.Data.Core
 
         private CancellationTokenSource _timeoutTokenSource;
         
-        // Merged cancellation token source for all canellation signal. 
+        // Merged cancellation token source for all cancellation signal. 
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSource;
 
-        internal SFStatement(SFSession session, IRestRequester rest)
+        internal SFStatement(SFSession session)
         {
             SfSession = session;
-            _restRequester = rest;
+            _restRequester = session.restRequester;
         }
-
-        internal SFStatement(SFSession session) : this(session, RestRequester.Instance)
-        { }
 
         private void AssignQueryRequestId()
         {
@@ -95,7 +92,7 @@ namespace Snowflake.Data.Core
                 describeOnly = describeOnly,
             };
 
-            return new SFRestRequest(SfSession.InsecureMode)
+            return new SFRestRequest
             {
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
@@ -110,7 +107,7 @@ namespace Snowflake.Data.Core
         private SFRestRequest BuildResultRequest(string resultPath)
         {
             var uri = SfSession.BuildUri(resultPath);
-            return new SFRestRequest(SfSession.InsecureMode)
+            return new SFRestRequest()
             {
                 Url = uri,
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
@@ -311,7 +308,7 @@ namespace Snowflake.Data.Core
                     requestId = _requestId
                 };
 
-                return new SFRestRequest(SfSession.InsecureMode)
+                return new SFRestRequest()
                 {
                     Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),

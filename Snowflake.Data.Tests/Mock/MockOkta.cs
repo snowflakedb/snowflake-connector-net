@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Tests.Mock
 {
 
-    class MockOktaRestRequester : IRestRequester
+    class MockOktaRestRequester : IMockRestRequester
     {
         public string TokenUrl { get; set; }
         public string SSOUrl { get; set; }
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
@@ -69,7 +69,12 @@ namespace Snowflake.Data.Tests.Mock
 
         public HttpResponseMessage Get(IRestRequest request)
         {
-            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

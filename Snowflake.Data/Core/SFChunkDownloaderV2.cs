@@ -30,20 +30,18 @@ namespace Snowflake.Data.Core
         //TODO: parameterize prefetch slot
         private const int prefetchSlot = 5;
         
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester _RestRequester;
         
         private Dictionary<string, string> chunkHeaders;
 
-        private bool InsecureMode { get; set; }
-
         public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
-            bool insecureMode)
+			Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
+            IRestRequester restRequester)
         {
-            InsecureMode = insecureMode;
             this.qrmk = qrmk;
             this.chunkHeaders = chunkHeaders;
             this.chunks = new List<SFResultChunk>();
+            _RestRequester = restRequester;
             externalCancellationToken = cancellationToken;
 
             var idx = 0;
@@ -124,7 +122,7 @@ namespace Snowflake.Data.Core
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
-            S3DownloadRequest downloadRequest = new S3DownloadRequest(InsecureMode)
+            S3DownloadRequest downloadRequest = new S3DownloadRequest()
             {
                 Url = new UriBuilder(chunk.url).Uri,
                 qrmk = downloadContext.qrmk,
@@ -135,7 +133,7 @@ namespace Snowflake.Data.Core
             };
 
             Stream stream = null;
-            using (var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+            using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
             using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
 

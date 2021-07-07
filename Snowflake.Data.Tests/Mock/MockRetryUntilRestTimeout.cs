@@ -13,72 +13,26 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Tests.Mock
 {
 
-    class MockRetryUntilRestTimeoutRestRequester : IRestRequester
+    class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
     {
-        public T Get<T>(IRestRequest request)
+        public MockRetryUntilRestTimeoutRestRequester() : base(null)
         {
-            //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            // Does nothing
         }
 
-        public HttpResponseMessage Get(IRestRequest request)
+        public void setHttpClient(HttpClient httpClient)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-
-            //Run synchronous in a new thread-pool task.
-            return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
+            base._HttpClient = httpClient;
         }
 
-        public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
+                                                              TimeSpan restTimeout,
+                                                              CancellationToken externalCancellationToken)
         {
-            HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-
-            return SendAsync(message, request.GetRestTimeout(), cancellationToken);
-        }
-
-        public T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
-        }
-
-        public async Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            var req = postRequest.ToRequestMessage(HttpMethod.Post);
-            var response = await SendAsync(req, postRequest.GetRestTimeout(), cancellationToken).ConfigureAwait(false);
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonConvert.DeserializeObject<T>(json);
-        }
-
-        private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-                                                          TimeSpan timeoutPerRestRequest,
-                                                          CancellationToken externalCancellationToken)
-        {
-            // merge multiple cancellation token
-            CancellationTokenSource restRequestTimeout = new CancellationTokenSource(timeoutPerRestRequest);
-            CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-                restRequestTimeout.Token);
-
-            try
-            {
-                // Http timeout of 1ms to force retries
-                request.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromMilliseconds(1);
-                var response = await HttpUtil.getHttpClient(false).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-
-                return response;
-            }
-            catch (Exception e)
-            {
-                throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
-            }
-
+            // Override the http timeout and set to 1ms to force all http request to timeout and retry
+            message.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromMilliseconds(1);
+            return await (base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false));
         }
     }
 }
+

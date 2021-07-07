@@ -33,7 +33,7 @@ namespace Snowflake.Data.Core
 
         private readonly int prefetchThreads;
 
-        private static IRestRequester restRequester = RestRequester.Instance;
+        private readonly IRestRequester _RestRequester;
 
         private Dictionary<string, string> chunkHeaders;
 
@@ -50,6 +50,7 @@ namespace Snowflake.Data.Core
             this.chunks = new List<SFResultChunk>();
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
+            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
             this.prefetchThreads = GetPrefetchThreads(ResultSet);
             externalCancellationToken = cancellationToken;
 
@@ -114,7 +115,7 @@ namespace Snowflake.Data.Core
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
             S3DownloadRequest downloadRequest = 
-                new S3DownloadRequest(ResultSet.sfStatement.SfSession.InsecureMode)
+                new S3DownloadRequest()
                 {
                     Url = new UriBuilder(chunk.url).Uri,
                     qrmk = downloadContext.qrmk,
@@ -125,8 +126,8 @@ namespace Snowflake.Data.Core
                 };
 
 
-            var httpResponse = await restRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
-            Stream stream = Task.Run(async() => await httpResponse.Content.ReadAsStreamAsync()).Result;
+            var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+            Stream stream = Task.Run(async() => await (httpResponse.Content.ReadAsStreamAsync()).ConfigureAwait(false)).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.
             if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))

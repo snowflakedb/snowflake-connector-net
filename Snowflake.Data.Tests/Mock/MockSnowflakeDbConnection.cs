@@ -16,9 +16,9 @@ namespace Snowflake.Data.Tests.Mock
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
-        private IRestRequester _restRequester;
+        private IMockRestRequester _restRequester;
 
-        public MockSnowflakeDbConnection(IRestRequester requester)
+        public MockSnowflakeDbConnection(IMockRestRequester requester)
         {
             _restRequester = requester;
         }

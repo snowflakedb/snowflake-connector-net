@@ -15,8 +15,6 @@ namespace Snowflake.Data.Core
     {
         HttpRequestMessage ToRequestMessage(HttpMethod method);
         TimeSpan GetRestTimeout();
-
-        bool GetInsecureMode();
     }
 
     /// <summary>
@@ -43,16 +41,6 @@ namespace Snowflake.Data.Core
         /// </summary>
         internal TimeSpan HttpTimeout { get; set; }
 
-        /// <summary>
-        /// Set to true to disable the CheckCertificateRevocationList setting for the http client handler
-        /// </summary>
-        internal bool InsecureMode { get; set; }
-
-        public BaseRestRequest(bool insecureMode)
-        {
-            InsecureMode = insecureMode;
-        }
-
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             throw new NotImplementedException();
@@ -70,11 +58,6 @@ namespace Snowflake.Data.Core
         {
             return RestTimeout;
         }
-
-        bool IRestRequest.GetInsecureMode()
-        {
-            return InsecureMode;
-        }
     }
 
     internal class S3DownloadRequest : BaseRestRequest, IRestRequest
@@ -88,10 +71,6 @@ namespace Snowflake.Data.Core
         internal string qrmk { get; set; }
 
         internal Dictionary<string, string> chunkHeaders { get; set; }
-
-        internal S3DownloadRequest(bool insecure) : base(insecure)
-        {
-        }
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
@@ -120,7 +99,7 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
-        internal SFRestRequest(bool insecureMode) : base(insecureMode)
+        internal SFRestRequest() : base()
         {
             RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
 

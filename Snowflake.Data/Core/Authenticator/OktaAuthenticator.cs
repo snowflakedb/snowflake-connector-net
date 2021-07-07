@@ -46,11 +46,6 @@ namespace Snowflake.Data.Core.Authenticator
         {
             logger.Info("Okta Authentication");
 
-            // Clear cookies before authenticating because when a cookie is present in the request,
-            // Okta will assume it is coming from a browser and perform a CSRF check.
-            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
-            HttpUtil.ClearCookies(oktaUrl);
-
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
             var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
@@ -80,17 +75,12 @@ namespace Snowflake.Data.Core.Authenticator
             VerifyPostbackUrl();
 
             logger.Debug("step 6: send SAML reponse to snowflake to login");
-            await base.LoginAsync(cancellationToken);  
+            await base.LoginAsync(cancellationToken).ConfigureAwait(false);  
         }
 
         void IAuthenticator.Authenticate()
         {
             logger.Info("Okta Authentication");
-
-            // Clear cookies before authenticating because when a cookie is present in the request,
-            // Okta will assume it is coming from a browser and perform a CSRF check.
-            // This will ensure that we are NOT including the ‘sid’ cookie with the request.
-            HttpUtil.ClearCookies(oktaUrl);
 
             logger.Debug("step 1: get sso and token url");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
@@ -114,7 +104,7 @@ namespace Snowflake.Data.Core.Authenticator
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
             using (var samlRawResponse = session.restRequester.Get(samlRestRequest))
             {
-                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync()).Result;
+                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
             }
 
             logger.Debug("step 5: verify postback url in SAML reponse");
@@ -140,7 +130,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private IdpTokenRestRequest BuildIdpTokenRestRequest(Uri tokenUrl)
         {
-            return new IdpTokenRestRequest(base.session.InsecureMode)
+            return new IdpTokenRestRequest()
             {
                 Url = tokenUrl,
                 RestTimeout = session.connectionTimeout,
@@ -155,7 +145,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SAMLRestRequest BuildSAMLRestRequest(Uri ssoUrl, string onetimeToken)
         {
-            return new SAMLRestRequest(base.session.InsecureMode)
+            return new SAMLRestRequest()
             {
                 Url = ssoUrl,
                 RestTimeout = session.connectionTimeout,
@@ -230,10 +220,6 @@ namespace Snowflake.Data.Core.Authenticator
         private static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
         internal IdpTokenRequest JsonBody { get; set; }
-
-        internal IdpTokenRestRequest(bool insecureMode) : base(insecureMode)
-        {
-        }
             
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
@@ -265,10 +251,6 @@ namespace Snowflake.Data.Core.Authenticator
     class SAMLRestRequest : BaseRestRequest, IRestRequest
     {
         internal string OnetimeToken { set; get; }
-
-        internal SAMLRestRequest(bool insecure) : base(insecure)
-        {
-        }
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {

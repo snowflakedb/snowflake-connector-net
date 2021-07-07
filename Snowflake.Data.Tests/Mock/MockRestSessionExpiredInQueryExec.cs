@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpiredInQueryExec : IRestRequester
+    class MockRestSessionExpiredInQueryExec : IMockRestRequester
     {
         static private readonly int QUERY_IN_EXEC_CODE = 333333;
 
@@ -70,12 +70,12 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Post<T>(IRestRequest postRequest)
         {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public T Get<T>(IRestRequest request)
         {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -143,6 +143,11 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
+        }
+
+        public void setHttpClient(HttpClient httpClient)
+        {
+            // Nothing to do
         }
     }
 }

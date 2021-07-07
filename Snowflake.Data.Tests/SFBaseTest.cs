@@ -174,6 +174,27 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
         internal string expOauthToken { get; set; }
 
+        [JsonProperty(PropertyName = "PROXY_HOST", NullValueHandling = NullValueHandling.Ignore)]
+        internal string proxyHost { get; set; }
+
+        [JsonProperty(PropertyName = "PROXY_PORT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string proxyPort { get; set; }
+
+        [JsonProperty(PropertyName = "AUTH_PROXY_HOST", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authProxyHost { get; set; }
+
+        [JsonProperty(PropertyName = "AUTH_PROXY_PORT", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authProxyPort { get; set; }
+
+        [JsonProperty(PropertyName = "AUTH_PROXY_USER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authProxyUser { get; set; }
+
+        [JsonProperty(PropertyName = "AUTH_PROXY_PWD", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authProxyPwd { get; set; }
+
+        [JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
+        internal string nonProxyHosts { get; set; }
+
         public TestConfig()
         {
             this.protocol = "https";
