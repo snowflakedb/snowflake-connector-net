@@ -167,6 +167,21 @@ namespace Snowflake.Data.Client
             return resultSet.GetValue<DateTime>(ordinal);
         }
 
+        /// <summary>
+        /// Retrieves the value of the specified column as a TimeSpan object.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column as a TimeSpan.</returns>
+        /// <exception cref="InvalidCastException">The specified cast is not valid.</exception>    
+        /// <remarks>
+        /// Call IsDBNull to check for null values before calling this method, because TimeSpan 
+        /// objects are not nullable.
+        /// </remarks>
+        public TimeSpan GetTimeSpan(int ordinal)
+        {
+            return resultSet.GetValue<TimeSpan>(ordinal);
+        }
+
         public override decimal GetDecimal(int ordinal)
         {
             return resultSet.GetValue<decimal>(ordinal);

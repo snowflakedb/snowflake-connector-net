@@ -64,6 +64,10 @@ namespace Snowflake.Data.Core
                 {
                     return ConvertToDateTime(srcVal, srcType);
                 }
+                else if (destType == typeof(TimeSpan))
+                {
+                    return ConvertToTimeSpan(srcVal, srcType);
+                }
                 else if (destType == typeof(DateTimeOffset))
                 {
                     return ConvertToDateTimeOffset(srcVal, srcType);
@@ -119,6 +123,20 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private static object ConvertToTimeSpan(UTF8Buffer srcVal, SFDataType srcType)
+        {
+            switch (srcType)
+            {
+                case SFDataType.TIME:
+                    // Convert fractional seconds since midnight to TimeSpan
+                    //  A single tick represents one hundred nanoseconds or one ten-millionth of a second. 
+                    // There are 10,000 ticks in a millisecond
+                    return TimeSpan.FromTicks(GetTicksFromSecondAndNanosecond(srcVal));
+                default:
+                    throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(TimeSpan));
+            }
+        }
+
         private static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
@@ -129,9 +147,7 @@ namespace Snowflake.Data.Core
 
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
-
-                    Tuple<long, long> secAndNsec = ExtractTimestamp(srcVal);
-                    var tickDiff = secAndNsec.Item1 * 10000000L + secAndNsec.Item2 / 100L;
+                    var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
                     return UnixEpoch.AddTicks(tickDiff);
 
                 default:
@@ -153,18 +169,14 @@ namespace Snowflake.Data.Core
                     else
                     {
                         spaceIndex -= srcVal.offset;
-                        Tuple<long, long> secAndNsecTZ = ExtractTimestamp(new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex));
-
+                        UTF8Buffer timeVal = new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex);
                         int offset = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset + spaceIndex + 1, srcVal.length - spaceIndex - 1);
                         TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
-                        return new DateTimeOffset(UnixEpoch.Ticks +
-                            (secAndNsecTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecTZ.Item2) / 100, TimeSpan.Zero).ToOffset(offSetTimespan);
+                        return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
                     }
-                case SFDataType.TIMESTAMP_LTZ:
-                    Tuple<long, long> secAndNsecLTZ = ExtractTimestamp(srcVal);
-                      
+                case SFDataType.TIMESTAMP_LTZ:                     
                     return new DateTimeOffset(UnixEpoch.Ticks +
-                        (secAndNsecLTZ.Item1 * 1000 * 1000 * 1000 + secAndNsecLTZ.Item2) / 100, TimeSpan.Zero).ToLocalTime(); 
+                        GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime(); 
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, 
@@ -184,30 +196,41 @@ namespace Snowflake.Data.Core
             100000000 
         };
 
-        private static Tuple<long, long> ExtractTimestamp(UTF8Buffer srcVal)
+        /// <summary>
+        /// Convert the time value with the format seconds.nanoseconds to a number of
+        /// Ticks. A single tick represents one hundred nanoseconds.
+        /// For example, "23:59:59.123456789" is represented by 86399.123456789 and is 
+        /// 863991234567 ticks (precision is maximum 7).
+        /// </summary>
+        /// <param name="srcVal">The source data returned by the server. For example '86399.123456789'</param>
+        /// <returns>The corresponding number of ticks for the given value.</returns>
+        private static long GetTicksFromSecondAndNanosecond(UTF8Buffer srcVal)
         {
+            var intPart = 0L;
+            var decimalPart = 0L;
             int dotIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)'.', srcVal.offset, srcVal.length);
             if (dotIndex == -1)
             {
-                return Tuple.Create(FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length), (long)0);
+                intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
             }
             else
             {
                 dotIndex -= srcVal.offset;
-                var intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, dotIndex);
+                intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, dotIndex);
                 var decimalPartLength = srcVal.length - dotIndex - 1;
-                var decimalPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset + dotIndex + 1, decimalPartLength);
+                decimalPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset + dotIndex + 1, decimalPartLength);
                 // If the decimal part contained less than nine characters, we must convert the value to nanoseconds by
                 // multiplying by 10^[precision difference].
                 if (decimalPartLength < 9 && decimalPartLength > 0)
                 {
                     decimalPart *= powersOf10[9 - decimalPartLength];
                 }
-
-                return Tuple.Create(intPart, decimalPart);                
             }
+
+            return intPart * 10000000L + decimalPart / 100L;
+
         }
-            
+
         internal static Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
         {
             SFDataType destType;
