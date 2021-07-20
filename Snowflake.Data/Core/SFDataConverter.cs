@@ -196,6 +196,14 @@ namespace Snowflake.Data.Core
             100000000 
         };
 
+        /// <summary>
+        /// Convert the time value with the format seconds.nanoseconds to a number of
+        /// Ticks. A single tick represents one hundred nanoseconds.
+        /// For example, "23:59:59.123456789" is represented by 86399.123456789 and is 
+        /// 863991234567 ticks (precision is maximum 7).
+        /// </summary>
+        /// <param name="srcVal">The source data returned by the server. For example '86399.123456789'</param>
+        /// <returns>The corresponding number of ticks for the given value.</returns>
         private static long GetTicksFromSecondAndNanosecond(UTF8Buffer srcVal)
         {
             var intPart = 0L;
