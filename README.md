@@ -125,10 +125,10 @@ The following table lists all valid connection properties:
 | TOKEN                      |Depends   | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 | INSECUREMODE               |No   	| Set to true to disable the certificate revocation list check. Default is false.|
 | USEPROXY                   | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYHOST                  | No       | The hostname of the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYPORT                  | No       | The port number of the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYHOST                  | Depends  | The hostname of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPORT                  | Depends  | The port number of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
 | PROXYUSER                  | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYPASSWORD              | No       | The password for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPASSWORD              | Depends  | The password for authenticating to the proxy server. <br/> <br/> If PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
 | NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
 
