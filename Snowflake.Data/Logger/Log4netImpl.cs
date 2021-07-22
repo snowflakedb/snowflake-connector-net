@@ -45,27 +45,32 @@ namespace Snowflake.Data.Log
 
         public void Debug(string msg, Exception ex = null)
         {
+            msg = SecretDetector.MaskSecrets(msg).maskedText;
             logger.Debug(msg, ex);
         }
 
         public void Info(string msg, Exception ex = null)
         {
+            msg = SecretDetector.MaskSecrets(msg).maskedText;
             logger.Info(msg, ex);
         }
 
         public void Warn(string msg, Exception ex = null)
         {
+            msg = SecretDetector.MaskSecrets(msg).maskedText;
             logger.Warn(msg, ex);
         }
 
 
         public void Error(string msg, Exception ex = null)
         {
+            msg = SecretDetector.MaskSecrets(msg).maskedText;
             logger.Error(msg, ex);
         }
 
         public void Fatal(string msg, Exception ex = null)
         {
+            msg = SecretDetector.MaskSecrets(msg).maskedText;
             logger.Fatal(msg, ex);
         }
     }

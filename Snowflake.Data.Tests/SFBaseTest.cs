@@ -89,7 +89,6 @@ namespace Snowflake.Data.Tests
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
             StreamReader reader = new StreamReader("parameters.json");
-
             var testConfigString = reader.ReadToEnd();
            
             Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
