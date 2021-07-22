@@ -129,7 +129,7 @@ The following table lists all valid connection properties:
 | PROXYPORT                  | No       | The port number of the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
 | PROXYUSER                  | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
 | PROXYPASSWORD              | No       | The password for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
-| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (`|`). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
+| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
 
 <br />
