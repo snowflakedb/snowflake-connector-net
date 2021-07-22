@@ -124,12 +124,12 @@ The following table lists all valid connection properties:
 | PRIVATE_KEY                |Depends   | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
 | TOKEN                      |Depends   | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
 | INSECUREMODE               |No   	| Set to true to disable the certificate revocation list check. Default is false.|
-| USEPROXY                   | No       | Set to true if you need to use a proxy server. The default value is false. |
-| PROXYHOST                  | No       | The hostname of the proxy server. |
-| PROXYPORT                  | No       | The port number of the proxy server. |
-| PROXYUSER                  | No       | The username for authenticating to the proxy server. |
-| PROXYPASSWORD              | No       | The password for authenticating to the proxy server. |
-| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a URL-escaped pipe symbol (`%7C`). |
+| USEPROXY                   | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYHOST                  | No       | The hostname of the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPORT                  | No       | The port number of the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYUSER                  | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPASSWORD              | No       | The password for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (`|`). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
 
 <br />
@@ -270,8 +270,9 @@ If you are using a different method for authentication, see the examples below:
   * `{okta_url_endpoint}` is the URL for the endpoint for your Okta account (e.g. `https://<okta_account_name>.okta.com`).
   * `{login_name_for_IdP}` is your login name for your IdP.
 
-The following example configures the driver to connect through the proxy server `myproxyserver` on port `8888`. The driver
-authenticates to the proxy server as the user `test` with the password `test`:
+In v2.0.4 and later releases, you can configure the driver to connect through a proxy server. The following example configures the
+driver to connect through the proxy server `myproxyserver` on port `8888`. The driver authenticates to the proxy server as the
+user `test` with the password `test`:
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -307,7 +308,14 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 ```
 
 Note that for a `TIME` column, the reader returns a `System.DateTime` value. If you need a `System.TimeSpan` column, call the
-`getTimeSpan` method in `SnowflakeDbDataReader`.
+`getTimeSpan` method in `SnowflakeDbDataReader`. This method was introduced in the v2.0.4 release.
+
+Note that because this method is not available in the generic `IDataReader` interface, you must cast the object as
+`SnowflakeDbDataReader` before calling the method. For example:
+
+```cs
+TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
+```
 
 Bind Parameter
 --------------
@@ -366,7 +374,17 @@ Close the Connection
 
 To close the connection, call the `Close` method of `SnowflakeDbConnection`.
 
-If you want to avoid blocking threads while the connection is closing, call the `CloseAsync` method instead.
+If you want to avoid blocking threads while the connection is closing, call the `CloseAsync` method instead, passing in a
+`CancellationToken`. This method was introduced in the v2.0.4 release.
+
+Note that because this method is not available in the generic `IDbConnection` interface, you must cast the object as
+`SnowflakeDbConnection` before calling the method. For example:
+
+```cs
+CancellationTokenSource cancellationTokenSource  = new CancellationTokenSource();
+// Close the connection
+((SnowflakeDbConnection)conn).CloseAsync(cancellationTokenSource.Token);
+```
 
 Logging
 -------
