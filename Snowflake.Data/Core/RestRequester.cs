@@ -100,7 +100,6 @@ namespace Snowflake.Data.Core
                                                               TimeSpan restTimeout, 
                                                               CancellationToken externalCancellationToken)
         {
-
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
             {
