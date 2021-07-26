@@ -113,7 +113,7 @@ namespace Snowflake.Data.Core
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
-                        logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
+                        logger.Debug($"Http method: {message.ToString()}");
 
                         return response;
                     }
