@@ -86,9 +86,6 @@ namespace Snowflake.Data.Core
 
         public HttpResponseMessage Get(IRestRequest request)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
-
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
