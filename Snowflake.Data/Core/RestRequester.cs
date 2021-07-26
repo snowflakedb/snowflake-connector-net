@@ -56,7 +56,6 @@ namespace Snowflake.Data.Core
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                logger.Debug($"Post response: {json}");
                 return JsonConvert.DeserializeObject<T>(json);
             }
         }
@@ -79,16 +78,11 @@ namespace Snowflake.Data.Core
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
             return SendAsync(HttpMethod.Get, request, cancellationToken);
         }
 
         public HttpResponseMessage Get(IRestRequest request)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
-
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await GetAsync(request, CancellationToken.None)).Result;
         }
@@ -98,6 +92,7 @@ namespace Snowflake.Data.Core
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
+            logger.Debug($"Http method: {message.ToString()}");
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(request.GetRestTimeout()))
             {
