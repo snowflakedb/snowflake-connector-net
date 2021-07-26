@@ -57,7 +57,6 @@ namespace Snowflake.Data.Core
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                logger.Debug($"Post response: {json}");
                 return JsonConvert.DeserializeObject<T>(json);
             }
         }
