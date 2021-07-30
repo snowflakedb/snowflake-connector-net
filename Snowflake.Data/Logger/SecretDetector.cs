@@ -78,7 +78,7 @@ namespace Snowflake.Data.Log
         private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=(\?P<secret>[a-z0-9%/+]{16,})";
         private static readonly string PRIVATE_KEY_PATTERN = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----";
         private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a - z0 - 9 /+=\\n]{10,})""";
-        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)([\'\""\s:=]+)([a-z0-9=/_\-\+]{8,})";
+        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)([\'\""\s:=]+)([a-z0-9=/_\-\+\]{8,})";
         private static readonly string PASSWORD_PATTERN = @"(password|pwd)([\'\""\s:=]+)([a-z0-9!\""#\$%&\\\'\(\)\*\+\,-\./:;<=>\?\@\[\]\^_`\{\|\}~]{8,})";
 
         private static string MaskAWSKeys(string text)

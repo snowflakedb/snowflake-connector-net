@@ -467,7 +467,7 @@ namespace Snowflake.Data.Tests
         {
             string randomHttpResponse =
                 "\"data\" : {" +
-                "\"masterToken\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+                "\"masterToken\" : \"ver:1-hint:92019676298218-ETMsDgAAAXrK7h+Y=" +
                 "\"token\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
                 "\"remMeValidityInSeconds\" : 0," +
                 "\"healthCheckInterval\" : 12," +
