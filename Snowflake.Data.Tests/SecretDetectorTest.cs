@@ -103,6 +103,22 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestAWSServerSide()
+        {
+            // amz encryption
+            BasicMasking(@"x-amz-server-side-encryption-customer-key:YtLf9S7iLprBMxSpP0Scm5MNgtsmK12hNd63wRpOGfI=",
+                @"x-amz-server-side-encryption-customer-key:....");
+
+            // amz encryption md5
+            BasicMasking(@"x-amz-server-side-encryption-customer-key-md5:5SBvdH9fHaWsORVu7auB/A==",
+                @"x-amz-server-side-encryption-customer-key-md5:....");
+
+            // amz encryption algorithm
+            BasicMasking(@"x-amz-server-side-encryption-customer-algorithm: ABC123",
+                @"x-amz-server-side-encryption-customer-algorithm:....");
+        }
+
+        [Test]
         public void TestSASTokens()
         {
             // sig
