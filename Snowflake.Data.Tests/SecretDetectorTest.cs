@@ -78,6 +78,7 @@ namespace Snowflake.Data.Tests
             // access_key_id
             BasicMasking(@"access_key_id='aaaaaaaa'", @"access_key_id='****'");
             BasicMasking(@"AccessKeyId='aaaaaaaa'", @"AccessKeyId='****'");
+            BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****");
 
             // secret_access_key
             BasicMasking(@"secret_access_key='aaaaaaaa'", @"secret_access_key='****'");

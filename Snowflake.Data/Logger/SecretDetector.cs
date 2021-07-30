@@ -72,18 +72,18 @@ namespace Snowflake.Data.Log
             }
             return text;
         }
-        private static readonly string AWS_KEY_PATTERN = @"('|"")?(aws(_)*key(_)*id|aws(_)*secret(_)*key|access(_)*key(_)*id|secret(_)*access(_)*key)('|"")?\s*(=|:)\s*'([^']+)'";
+        private static readonly string AWS_KEY_PATTERN = @"(aws(_)*key(_)*id|aws(_)*secret(_)*key|access(_)*key(_)*id|secret(_)*access(_)*key)('|"")?\s*(=|:)?\s*(')?([^']+)";
         private static readonly string AWS_TOKEN_PATTERN = @"(accessToken|tempToken|keySecret)\s*:\s*""([a-z0-9/+]{32,}={0,2})""";
         private static readonly string AWS_SERVER_SIDE_PATTERN = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9=/_\-\+\:\=])+";
         private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=(\?P<secret>[a-z0-9%/+]{16,})";
         private static readonly string PRIVATE_KEY_PATTERN = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----";
         private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a - z0 - 9 /+=\\n]{10,})""";
-        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)([\'\""\s:=]+)([a-z0-9=/_\-\+\]{8,})";
+        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)([\'\""\s:=]+)([a-z0-9=/_\-\+\:]{8,})";
         private static readonly string PASSWORD_PATTERN = @"(password|pwd)([\'\""\s:=]+)([a-z0-9!\""#\$%&\\\'\(\)\*\+\,-\./:;<=>\?\@\[\]\^_`\{\|\}~]{8,})";
 
         private static string MaskAWSKeys(string text)
         {
-            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$11$12'****'",
+            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$10$11$12****",
                                          RegexOptions.IgnoreCase);
         }
 
