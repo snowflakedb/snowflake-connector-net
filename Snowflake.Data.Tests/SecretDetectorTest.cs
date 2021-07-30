@@ -69,20 +69,15 @@ namespace Snowflake.Data.Tests
         {
             // aws_key_id
             BasicMasking(@"aws_key_id='aaaaaaaa'", @"aws_key_id='****'");
-            BasicMasking(@"AwsKeyId='aaaaaaaa'", @"AwsKeyId='****'");
 
             // aws_secret_key
             BasicMasking(@"aws_secret_key='aaaaaaaa'", @"aws_secret_key='****'");
-            BasicMasking(@"AwsSecretKey='aaaaaaaa'", @"AwsSecretKey='****'");
 
             // access_key_id
             BasicMasking(@"access_key_id='aaaaaaaa'", @"access_key_id='****'");
-            BasicMasking(@"AccessKeyId='aaaaaaaa'", @"AccessKeyId='****'");
-            BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****");
 
             // secret_access_key
             BasicMasking(@"secret_access_key='aaaaaaaa'", @"secret_access_key='****'");
-            BasicMasking(@"SecretAccessKey='aaaaaaaa'", @"SecretAccessKey='****'");
 
             // aws_key_id with colon
             BasicMasking(@"aws_key_id:'aaaaaaaa'", @"aws_key_id:'****'");
@@ -127,19 +122,19 @@ namespace Snowflake.Data.Tests
         public void TestSASTokens()
         {
             // sig
-            BasicMasking(@"sig=?P<secret>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"sig=****");
+            BasicMasking(@"sig=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"sig=****");
 
             // signature
-            BasicMasking(@"signature=?P<secret>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****");
+            BasicMasking(@"signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****");
 
             // AWSAccessKeyId
-            BasicMasking(@"AWSAccessKeyId=?P<secret>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"AWSAccessKeyId=****");
+            BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****");
 
             // password
-            BasicMasking(@"password=?P<secret>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"password=****");
+            BasicMasking(@"password=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"password=****");
 
             // passcode
-            BasicMasking(@"passcode=?P<secret>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"passcode=****");
+            BasicMasking(@"passcode=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"passcode=****");
         }
 
         [Test]
