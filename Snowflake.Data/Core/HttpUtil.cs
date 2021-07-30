@@ -242,12 +242,12 @@ namespace Snowflake.Data.Core
                     if (response != null)
                     {
                         if (response.IsSuccessStatusCode) {
-                            logger.Debug($"Success Response: {response.ToString()}");
+                            logger.Debug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             return response;
                         }
                         else
                         {
-                            logger.Debug($"Failed Response: {response.ToString()}");
+                            logger.Debug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
                             if (!isRetryable)
                             {
