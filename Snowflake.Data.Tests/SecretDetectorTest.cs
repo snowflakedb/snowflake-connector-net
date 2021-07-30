@@ -93,13 +93,13 @@ namespace Snowflake.Data.Tests
         public void TestAWSTokens()
         {
             // accessToken
-            BasicMasking(@"accessToken:""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"accessToken"":""XXXX""");
+            BasicMasking(@"accessToken"":""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"accessToken"":""XXXX""");
 
             // tempToken
-            BasicMasking(@"tempToken:""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"tempToken"":""XXXX""");
+            BasicMasking(@"tempToken"":""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"tempToken"":""XXXX""");
 
             // keySecret
-            BasicMasking(@"keySecret:""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"keySecret"":""XXXX""");
+            BasicMasking(@"keySecret"":""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"keySecret"":""XXXX""");
         }
 
         [Test]
