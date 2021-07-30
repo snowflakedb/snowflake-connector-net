@@ -69,15 +69,19 @@ namespace Snowflake.Data.Tests
         {
             // aws_key_id
             BasicMasking(@"aws_key_id='aaaaaaaa'", @"aws_key_id='****'");
+            BasicMasking(@"AwsKeyId='aaaaaaaa'", @"AwsKeyId='****'");
 
             // aws_secret_key
             BasicMasking(@"aws_secret_key='aaaaaaaa'", @"aws_secret_key='****'");
+            BasicMasking(@"AwsSecretKey='aaaaaaaa'", @"AwsSecretKey='****'");
 
             // access_key_id
             BasicMasking(@"access_key_id='aaaaaaaa'", @"access_key_id='****'");
+            BasicMasking(@"AccessKeyId='aaaaaaaa'", @"AccessKeyId='****'");
 
             // secret_access_key
             BasicMasking(@"secret_access_key='aaaaaaaa'", @"secret_access_key='****'");
+            BasicMasking(@"SecretAccessKey='aaaaaaaa'", @"SecretAccessKey='****'");
 
             // aws_key_id with colon
             BasicMasking(@"aws_key_id:'aaaaaaaa'", @"aws_key_id:'****'");

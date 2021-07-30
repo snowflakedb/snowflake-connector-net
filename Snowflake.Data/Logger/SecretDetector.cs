@@ -72,7 +72,7 @@ namespace Snowflake.Data.Log
             }
             return text;
         }
-        private static readonly string AWS_KEY_PATTERN = @"('|"")?(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?\s*(=|:)\s*'([^']+)'";
+        private static readonly string AWS_KEY_PATTERN = @"('|"")?(aws(_)*key(_)*id|aws(_)*secret(_)*key|access(_)*key(_)*id|secret(_)*access(_)*key)('|"")?\s*(=|:)\s*'([^']+)'";
         private static readonly string AWS_TOKEN_PATTERN = @"(accessToken|tempToken|keySecret)\s*:\s*""([a-z0-9/+]{32,}={0,2})""";
         private static readonly string AWS_SERVER_SIDE_PATTERN = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9=/_\-\+\:\=])+";
         private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=(\?P<secret>[a-z0-9%/+]{16,})";
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Log
 
         private static string MaskAWSKeys(string text)
         {
-            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$3$4'****'",
+            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$11$12'****'",
                                          RegexOptions.IgnoreCase);
         }
 
