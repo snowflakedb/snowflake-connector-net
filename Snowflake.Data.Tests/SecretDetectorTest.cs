@@ -87,6 +87,15 @@ namespace Snowflake.Data.Tests
 
             // aws_key_id with double quotes on key
             BasicMasking(@"""aws_key_id"":'aaaaaaaa'", @"""aws_key_id"":'****'");
+
+            //If attribute is enclose in simple or double quote
+            BasicMasking(@"'aws_key_id'='aaaaaaaa'", @"'aws_key_id'='****'");
+            BasicMasking(@"""aws_key_id""='aaaaaaaa'", @"""aws_key_id""='****'");
+
+            //aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:|=]\s*)'([^']+)'
+            // Delimiters before start of value to mask 
+            BasicMasking(@"aws_key_id:'aaaaaaaa'", @"aws_key_id:'****'");
+            BasicMasking(@"aws_key_id='aaaaaaaa'", @"aws_key_id='****'");
         }
 
         [Test]
@@ -100,6 +109,10 @@ namespace Snowflake.Data.Tests
 
             // keySecret
             BasicMasking(@"keySecret"":""aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa""", @"keySecret"":""XXXX""");
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"accessToken""  :  ""aB1aaaaaaaaaaZaaaaaaaaaaa9aaaaaaa=""", @"accessToken"":""XXXX""");
+            BasicMasking(@"accessToken""  :  ""aB1aaaaaaaaaaZaaaaaaaa56aaaaaaaaaa==""", @"accessToken"":""XXXX""");
         }
 
         [Test]
@@ -116,6 +129,10 @@ namespace Snowflake.Data.Tests
             // amz encryption algorithm
             BasicMasking(@"x-amz-server-side-encryption-customer-algorithm: ABC123",
                 @"x-amz-server-side-encryption-customer-algorithm:....");
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"x-amz-server-side-encryptionthis-and-that: Scm5M=d/6_p-r5+/:j=8",
+                @"x-amz-server-side-encryptionthis-and-that:....");
         }
 
         [Test]
@@ -135,12 +152,16 @@ namespace Snowflake.Data.Tests
 
             // passcode
             BasicMasking(@"passcode=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"passcode=****");
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"sig=abCaa09aaa%%aaaaaaaaaa/aaaaa+aaaaa", @"sig=****");
         }
 
         [Test]
         public void TestPrivateKey()
         {
-            BasicMasking("-----BEGIN PRIVATE KEY-----\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\n-----END PRIVATE KEY-----",
+            // Verify that all allowed characters are correctly supported
+            BasicMasking("-----BEGIN PRIVATE KEY-----\na0a==aaB/aa1aaaa\naaaaCaaa+aa95aaa\n-----END PRIVATE KEY-----",
                 "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----");
         }
 
@@ -148,6 +169,9 @@ namespace Snowflake.Data.Tests
         public void TestPrivateKeyData()
         {
             BasicMasking(@"""privateKeyData"": ""aaaaaaaaaa""", @"""privateKeyData"": ""XXXX""");
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"""privateKeyData"": ""a/b+c=d0"+ "\n" + "139\"", @"""privateKeyData"": ""XXXX""");
         }
 
         [Test]
@@ -158,16 +182,39 @@ namespace Snowflake.Data.Tests
 
             // assertion content
             BasicMasking(@"assertion content:aaaaaaaa", @"assertion content:****");
+
+            // Delimiters before start of value to mask 
+            BasicMasking(@"token""aaaaaaaa", @"token""****"); // "
+            BasicMasking(@"token'aaaaaaaa", @"token'****"); // '
+            BasicMasking(@"token=aaaaaaaa", @"token=****"); // =
+            BasicMasking(@"token aaaaaaaa", @"token ****"); // {space}
+            BasicMasking(@"token ="" 'aaaaaaaa", @"token ="" '****"); // Mix
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"Token:a=b/c_d-e+F:025", @"Token:****");
         }
 
         [Test]
         public void TestPassword()
         {
             // password
-            BasicMasking(@"password:aaaaaaaa", @"password:****");
+            BasicMasking(@"password:aaaaaaaa", @"password:****");                    
 
             // pwd
             BasicMasking(@"pwd:aaaaaaaa", @"pwd:****");
+
+            // passcode
+            BasicMasking(@"passcode:aaaaaaaa", @"passcode:****");
+
+            // Delimiters before start of value to mask 
+            BasicMasking(@"password""aaaaaaaa", @"password""****"); // "
+            BasicMasking(@"password'aaaaaaaa", @"password'****"); // '
+            BasicMasking(@"password=aaaaaaaa", @"password=****"); // =
+            BasicMasking(@"password aaaaaaaa", @"password ****"); // {space}
+            BasicMasking(@"password ="" 'aaaaaaaa", @"password ="" '****"); // Mix
+
+            // Verify that all allowed characters are correctly supported
+            BasicMasking(@"password:a!b""c#d$e%f&g'h(i)k*k+l,m;n<o=p>q?r@s[t]u^v_w`x{y|z}Az0123", @"password:****");
         }
 
         [Test]
@@ -211,6 +258,12 @@ namespace Snowflake.Data.Tests
             mask = SecretDetector.MaskSecrets(assertionStrWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(@"assertion content: ****", mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            string snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
+            mask = SecretDetector.MaskSecrets(snowFlakeAuthToken);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(@"Authorization: Snowflake Token=""****""", mask.maskedText);
             Assert.IsNull(mask.errStr);
         }
 

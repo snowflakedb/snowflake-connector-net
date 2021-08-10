@@ -72,7 +72,6 @@ namespace Snowflake.Data.Core
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
             { 
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                logger.Debug($"Get response: {json}");
                 return JsonConvert.DeserializeObject<T>(json);
             }
         }
@@ -109,12 +108,12 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
+                        logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
+
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
-                        logger.Debug($"Http method: {message.ToString()}");
-
                         return response;
                     }
                     catch (Exception e)
