@@ -37,7 +37,6 @@ namespace Snowflake.Data.Core
 
     internal class RestRequester : IRestRequester
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         protected HttpClient _HttpClient;
 
@@ -114,6 +113,7 @@ namespace Snowflake.Data.Core
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
+
                         return response;
                     }
                     catch (Exception e)
