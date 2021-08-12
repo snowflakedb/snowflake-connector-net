@@ -37,7 +37,8 @@ namespace Snowflake.Data.Core
 
     internal class RestRequester : IRestRequester
     {
-
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+        
         protected HttpClient _HttpClient;
 
         public RestRequester(HttpClient httpClient)
