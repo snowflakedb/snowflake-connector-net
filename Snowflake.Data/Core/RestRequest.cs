@@ -124,7 +124,7 @@ namespace Snowflake.Data.Core
             var message = newMessage(method, Url);
             if (method != HttpMethod.Get && jsonBody != null)
             {
-                var json = JsonConvert.SerializeObject(jsonBody);
+                var json = JsonConvert.SerializeObject(jsonBody, JsonUtils.JsonSettings);
                 //TODO: Check if we should use other encodings...
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }

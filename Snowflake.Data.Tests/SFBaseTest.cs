@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
 
     /*
      * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that 
@@ -88,11 +89,20 @@ namespace Snowflake.Data.Tests
             String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            StreamReader reader = new StreamReader("parameters.json");
+            StreamReader reader = new StreamReader("C:\\Users\\natachab\\Snowflake\\fromMasterToWorkOnTicket\\Snowflake.Data.Tests\\parameters.json");
 
             var testConfigString = reader.ReadToEnd();
-           
-            Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString);
+
+            // Local JSON settings to avoid using system wide settings which could be different 
+            // than the default ones
+            JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
+            {
+                ContractResolver = new DefaultContractResolver()
+                {
+                    NamingStrategy = new DefaultNamingStrategy()
+                }
+            };
+        Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, JsonSettings);
 
             TestConfig testConnectionConfig;
             if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
