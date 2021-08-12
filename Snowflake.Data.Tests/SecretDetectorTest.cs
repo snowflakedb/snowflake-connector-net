@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests
             // aws_key_id with double quotes on key
             BasicMasking(@"""aws_key_id"":'aaaaaaaa'", @"""aws_key_id"":'****'");
 
-            //If attribute is enclose in simple or double quote
+            //If attribute is enclose in single or double quote
             BasicMasking(@"'aws_key_id'='aaaaaaaa'", @"'aws_key_id'='****'");
             BasicMasking(@"""aws_key_id""='aaaaaaaa'", @"""aws_key_id""='****'");
 
