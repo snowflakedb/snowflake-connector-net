@@ -141,5 +141,28 @@ namespace Snowflake.Data.Core
 
             session.UpdateSessionParameterMap(responseData.parameters);
         }
+
+        /// <summary>
+        /// Move cursor back one row.
+        /// </summary>
+        /// <returns>True if it works, false otherwise.</returns>
+        internal override bool Rewind()
+        {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+
+            if (_currentChunkRowIdx >= 0)
+            {
+                _currentChunkRowIdx--;
+                if (_currentChunkRowIdx >= _currentChunkRowCount)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

@@ -23,6 +23,12 @@ namespace Snowflake.Data.Core
 
         internal abstract Task<bool> NextAsync();
 
+        /// <summary>
+        /// Move cursor back one row.
+        /// </summary>
+        /// <returns>True if it works, false otherwise.</returns>
+        internal abstract bool Rewind();
+
         protected abstract UTF8Buffer getObjectInternal(int columnIndex);
 
         protected SFBaseResultSet()
