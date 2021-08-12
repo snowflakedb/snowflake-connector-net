@@ -33,7 +33,6 @@ namespace Snowflake.Data.Core
 
                     break;
                 case SFStatementType.COPY:
-                    resultSet.Next();
                     var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
                     if (index >= 0)
                     {
