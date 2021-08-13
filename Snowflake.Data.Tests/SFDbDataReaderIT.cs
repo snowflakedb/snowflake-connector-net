@@ -1178,6 +1178,54 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestCopyCmdResultSet()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create or replace stage emptyStage";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "create or replace table testCopy (cola string)";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "copy into testCopy from @emptyStage";                
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    // Can read the first row
+                    Assert.AreEqual(true, rdr.Read());
+                }
+
+                // test rows_loaded exists
+                cmd.CommandText = "copy into @%testcopy from (select 'test_string')";
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    // Can read the first row
+                    Assert.AreEqual(true, rdr.Read());
+                }
+
+                cmd.CommandText = "copy into testcopy";
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    // Can read the first row
+                    Assert.AreEqual(true, rdr.Read());
+                }
+
+                // clean up
+                cmd.CommandText = "drop stage emptyStage";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "drop table testCopy";
+                cmd.ExecuteNonQuery();
+
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void TestRetrieveSemiStructuredData()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
