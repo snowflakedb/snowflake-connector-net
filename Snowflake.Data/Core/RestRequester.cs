@@ -32,12 +32,14 @@ namespace Snowflake.Data.Core
 
     internal class RestRequester : IRestRequester
     {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+
         private static readonly RestRequester instance = new RestRequester();
 
         private RestRequester()
         {
         }
-        
+
         static internal RestRequester Instance
         {
             get { return instance; }
@@ -100,6 +102,7 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
+		                logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
                         response = await HttpUtil.getHttpClient()
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
