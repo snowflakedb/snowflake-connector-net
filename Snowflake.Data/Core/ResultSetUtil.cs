@@ -33,9 +33,13 @@ namespace Snowflake.Data.Core
 
                     break;
                 case SFStatementType.COPY:
-                    resultSet.Next();
                     var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
-                    if (index >= 0) updateCount = resultSet.GetValue<long>(index);
+                    if (index >= 0)
+                    {
+                        resultSet.Next();
+                        updateCount = resultSet.GetValue<long>(index);
+                        resultSet.Rewind();
+                    }
                     break;
                 case SFStatementType.SELECT:
                     updateCount = -1;
