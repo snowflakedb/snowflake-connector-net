@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using Newtonsoft.Json;
