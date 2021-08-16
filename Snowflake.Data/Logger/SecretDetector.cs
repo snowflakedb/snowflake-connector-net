@@ -72,23 +72,40 @@ namespace Snowflake.Data.Log
             }
             return text;
         }
-        private static readonly string AWS_KEY_PATTERN = @"('|"")?(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?\s*(=|:)\s*'([^']+)'";
-        private static readonly string AWS_TOKEN_PATTERN = @"(accessToken|tempToken|keySecret)\s*:\s*""([a-z0-9/+]{32,}={0,2})""";
-        private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=(\?P<secret>[a-z0-9%/+]{16,})";
+
+        /*
+         * https://docs.microsoft.com/en-us/dotnet/standard/base-types/character-escapes-in-regular-expressions
+         * . $ ^ { [ ( | ) * + ? \
+         * The characters are special regular expression language elements. 
+         * To match them in a regular expression, they must be escaped or included in a positive character group.
+         * [ ] \ - ^
+         * The characters are special character group element.
+         * To match them in a character group, they must be escaped.
+         */
+        private static readonly string AWS_KEY_PATTERN = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'";
+        private static readonly string AWS_TOKEN_PATTERN = @"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""";
+        private static readonly string AWS_SERVER_SIDE_PATTERN = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+";
+        private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})";
         private static readonly string PRIVATE_KEY_PATTERN = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----";
-        private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a - z0 - 9 /+=\\n]{10,})""";
-        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)([\'\""\s:=]+)([a-z0-9=/_\-\+]{8,})";
-        private static readonly string PASSWORD_PATTERN = @"(password|pwd)([\'\""\s:=]+)([a-z0-9!\""#\$%&\\\'\(\)\*\+\,-\./:;<=>\?\@\[\]\^_`\{\|\}~]{8,})";
+        private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""";
+        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
+        private static readonly string PASSWORD_PATTERN = @"(password|passcode|pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
 
         private static string MaskAWSKeys(string text)
         {
-            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$3$4'****'",
+            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$3'****'",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskAWSTokens(string text)
         {
             return Regex.Replace(text, AWS_TOKEN_PATTERN, @"$1"":""XXXX""",
+                                         RegexOptions.IgnoreCase);
+        }
+
+        private static string MaskAWSServerSide(string text)
+        {
+            return Regex.Replace(text, AWS_SERVER_SIDE_PATTERN, @"$1:....",
                                          RegexOptions.IgnoreCase);
         }
 
@@ -140,7 +157,8 @@ namespace Snowflake.Data.Log
                                 MaskPrivateKey(
                                     MaskAWSTokens(
                                         MaskSASTokens(
-                                            MaskAWSKeys(text)))))));
+                                            MaskAWSKeys(
+                                                MaskAWSServerSide(text))))))));
                 if (CUSTOM_PATTERNS_LENGTH > 0)
                 {
                     result.maskedText = MaskCustomPatterns(result.maskedText);

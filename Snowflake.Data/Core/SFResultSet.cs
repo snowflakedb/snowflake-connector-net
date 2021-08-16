@@ -118,6 +118,29 @@ namespace Snowflake.Data.Core
            return false;
         }
 
+        /// <summary>
+        /// Move cursor back one row.
+        /// </summary>
+        /// <returns>True if it works, false otherwise.</returns>
+        internal override bool Rewind()
+        {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+
+            if (_currentChunkRowIdx >= 0)
+            {
+                _currentChunkRowIdx--;
+                if (_currentChunkRowIdx >= _currentChunkRowCount)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         protected override UTF8Buffer getObjectInternal(int columnIndex)
         {
             if (isClosed)
