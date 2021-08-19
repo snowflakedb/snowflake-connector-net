@@ -90,14 +90,14 @@ namespace Snowflake.Data.Core.Authenticator
         }
 
         /// <summary>
-        /// Specialized authenticator data to add to the login request. 
+        /// Specialized authenticator data to add to the login request.
         /// </summary>
         /// <param name="data">The login request data to update.</param>
         protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
 
         /// <summary>
         /// Builds a simple login request. Each authenticator will fill the Data part with their
-        /// specialized information. The common Data attributes are already filled (clientAppId, 
+        /// specialized information. The common Data attributes are already filled (clientAppId,
         /// ClienAppVersion...).
         /// </summary>
         /// <returns>A login request to send to the server.</returns>
@@ -181,9 +181,8 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
-            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com
-            else if ((type.EndsWith("okta.com") || type.EndsWith("oktapreview.com") )
-                     && type.StartsWith("https://"))
+            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
+            else if (type.Contains("okta") && type.StartsWith("https://"))
             {
                 return new OktaAuthenticator(session, type);
             }
