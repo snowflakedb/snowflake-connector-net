@@ -3,8 +3,8 @@
  */
 
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfert;
-using Snowflake.Data.Core.FileTransfert.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
 using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;

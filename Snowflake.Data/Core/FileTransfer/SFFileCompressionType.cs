@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Snowflake.Data.Core.FileTransfert
+namespace Snowflake.Data.Core.FileTransfer
 {
     internal class SFFileCompressionTypes
     {

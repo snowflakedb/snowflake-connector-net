@@ -245,6 +245,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal PutGetStageinfo stageInfo { get; set; }
 
+        [JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
+        internal PutGetEncryptionMaterial encryptionMaterial { get; set; }
+
         [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
         public string queryId { get; set; }
 
@@ -256,6 +259,9 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "locationType", NullValueHandling = NullValueHandling.Ignore)]
         internal string locationType { get; set; }
+
+        [JsonProperty(PropertyName = "location", NullValueHandling = NullValueHandling.Ignore)]
+        internal string location { get; set; }
 
         [JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
         internal string path { get; set; }

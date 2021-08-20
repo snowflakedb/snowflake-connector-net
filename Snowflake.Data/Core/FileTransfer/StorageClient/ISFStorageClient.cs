@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Snowflake.Data.Core.FileTransfert
+namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
     /// The interface for the storage clients. 

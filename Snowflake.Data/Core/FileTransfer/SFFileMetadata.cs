@@ -5,9 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static Snowflake.Data.Core.FileTransfert.SFFileCompressionTypes;
+using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
 
-namespace Snowflake.Data.Core.FileTransfert
+namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
     /// Metadata used by the remote storage client to upload or download a file/stream.
