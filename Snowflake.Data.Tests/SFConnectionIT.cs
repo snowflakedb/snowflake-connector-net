@@ -46,6 +46,53 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestApplicationName()
+        {
+            string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234"};
+            string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
+
+            // Valid names
+            foreach (string appName in validApplicationNames)
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString += $"application={appName}";
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                    conn.Close();
+                    Assert.AreEqual(ConnectionState.Closed, conn.State);
+                }
+            }
+
+            // Invalid names
+            foreach (string appName in invalidApplicationNames)
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString += $"application={appName}";
+                    try
+                    {
+                        conn.Open();
+                        logger.Debug("{appName}");
+                        Assert.Fail();
+
+                    }
+                    catch (SnowflakeDbException e)
+                    {
+                        // Expected
+                        logger.Debug("Failed opening connection ", e);
+                        Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    }
+
+                    Assert.AreEqual(ConnectionState.Closed, conn.State);
+                }
+            }
+        }
+
+        [Test]
         public void TestIncorrectUserOrPasswordBasicConnection()
         {
             using (var conn = new SnowflakeDbConnection())

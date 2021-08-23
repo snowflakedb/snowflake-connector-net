@@ -144,6 +144,9 @@
   <data name="INVALID_CONNECTION_STRING" xml:space="preserve">
     <value>Connection string is invalid: {0}</value>
   </data>
+  <data name="INVALID_CONNECTION_PARAMETER_VALUE" xml:space="preserve">
+    <value>Invalid parameter value {0} for {1}</value>
+  </data>  
   <data name="INVALID_DATA_CONVERSION" xml:space="preserve">
     <value>Failed to convert data {0} from type {1} to type {2}.</value>
   </data>

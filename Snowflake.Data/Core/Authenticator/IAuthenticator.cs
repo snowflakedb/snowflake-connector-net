@@ -67,6 +67,12 @@ namespace Snowflake.Data.Core.Authenticator
             this.authName = authName;
             // Update the value for insecureMode because it can be different for each session
             ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
+            if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
+            {
+                // If an application name has been specified in the connection setting, use it
+                // Otherwise, it will default to the running process name
+                ClientEnv.application = applicationName;
+            }
         }
 
         //// <see cref="IAuthenticator.AuthenticateAsync"/>
