@@ -69,6 +69,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270054)]
         UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM,
+
+        [SFErrorAttr(errorCode = 270055)]
+        INVALID_CONNECTION_PARAMETER_VALUE,
     }
 
     class SFErrorAttr : Attribute
