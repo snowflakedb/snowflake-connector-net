@@ -12,7 +12,6 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using Microsoft.Extensions.DependencyInjection;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Core
@@ -71,47 +70,36 @@ namespace Snowflake.Data.Core
 
         private readonly object httpClientProviderLock = new object();
 
-        private IServiceCollection _ServiceCollection = new ServiceCollection();
-
-        private HashSet<string> _HttpClients = new HashSet<string>();
-
-        private ServiceProvider _ServiceProvider = null;
+        private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
 
         internal HttpClient GetHttpClient(HttpClientConfig config)
         {
             lock (httpClientProviderLock)
             {
                 logger.Debug($"Get Http client for {config.ConfKey}.");
-                RegisterNewHttpClientIfNecessary(config);
-                var myService = _ServiceProvider.GetRequiredService<IHttpClientFactory>();
-                HttpClient client = myService.CreateClient(config.ConfKey);
-                return client;
+                return RegisterNewHttpClientIfNecessary(config);
             }
         }
 
 
-        private void RegisterNewHttpClientIfNecessary(HttpClientConfig config)
+        private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
         {
             string name = config.ConfKey;
-            if (!_HttpClients.Contains(name))
+            if (!_HttpClients.ContainsKey(name))
             {
                 logger.Debug($"Http client for {name} not registered. Adding.");
-                _ServiceCollection.AddHttpClient(name, client => 
-                {
-                    // HttpClient has a default timeout of 100 000 ms, we don't want to interfere 
-                    // with our own connection and command timeout
-                    client.Timeout = Timeout.InfiniteTimeSpan;
-                }).ConfigurePrimaryHttpMessageHandler(()=> new RetryHandler(setupCustomHttpHandler(config)));
 
-               
-                // Dispose before re-affecting a new ServiceProvider
-                _ServiceProvider?.Dispose();
-                // Create a new service provider with the new HttpClient
-                _ServiceProvider = _ServiceCollection.BuildServiceProvider();
-        
+                var httpClient = new HttpClient(
+                    new RetryHandler(setupCustomHttpHandler(config)))
+                    {
+                        Timeout = Timeout.InfiniteTimeSpan
+                    };
+
                 // Add the new client key to the list
-                _HttpClients.Add(name);
+                _HttpClients.Add(name, httpClient);
             }
+
+            return _HttpClients[name];
         }
 
         private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
