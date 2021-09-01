@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-
+        
         protected HttpClient _HttpClient;
 
         public RestRequester(HttpClient httpClient)
@@ -57,8 +57,7 @@ namespace Snowflake.Data.Core
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                logger.Debug($"Post response: {json}");
-                return JsonConvert.DeserializeObject<T>(json);
+                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
             }
         }
 
@@ -73,23 +72,17 @@ namespace Snowflake.Data.Core
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
             { 
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                logger.Debug($"Get response: {json}");
-                return JsonConvert.DeserializeObject<T>(json);
+                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
             }
         }
         
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
             return SendAsync(HttpMethod.Get, request, cancellationToken);
         }
 
         public HttpResponseMessage Get(IRestRequest request)
         {
-            HttpRequestMessage message = request.ToRequestMessage(HttpMethod.Get);
-            logger.Debug($"Http method: {message.ToString()}, http request message: {message.ToString()}");
-
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
@@ -115,11 +108,13 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
+                        logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
+
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
-  
+
                         return response;
                     }
                     catch (Exception e)

@@ -226,7 +226,7 @@ namespace Snowflake.Data.Core.Authenticator
             HttpRequestMessage message = newMessage(method, Url);
             message.Headers.Accept.Add(jsonHeader);
 
-            var json = JsonConvert.SerializeObject(JsonBody);
+            var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
             message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
             return message;

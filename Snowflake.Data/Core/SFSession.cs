@@ -13,12 +13,15 @@ using Snowflake.Data.Core.Authenticator;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
     class SFSession
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+
+        private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
         private const string SF_AUTHORIZATION_BASIC = "Basic";
 
@@ -98,6 +101,18 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString, SecureString password)
         {
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
+
+            // If there is an "application" setting, verify that it matches the expect pattern
+            properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
+            if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
+            {
+                throw new SnowflakeDbException(
+                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                    applicationNameSetting,
+                    SFSessionProperty.APPLICATION.ToString()
+                    );
+            }
 
             ParameterMap = new Dictionary<SFSessionParameter, object>();
             int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;

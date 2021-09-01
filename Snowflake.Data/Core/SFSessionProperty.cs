@@ -62,6 +62,8 @@ namespace Snowflake.Data.Core
         PROXYPASSWORD,
         [SFSessionPropertyAttr(required = false)]
         NONPROXYHOSTS,
+        [SFSessionPropertyAttr(required = false)]
+        APPLICATION,
 
     }
 
