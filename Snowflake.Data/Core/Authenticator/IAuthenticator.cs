@@ -187,9 +187,8 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
-            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com
-            else if ((type.EndsWith("okta.com") || type.EndsWith("oktapreview.com") )
-                     && type.StartsWith("https://"))
+            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
+            else if (type.Contains("okta") && type.StartsWith("https://"))
             {
                 return new OktaAuthenticator(session, type);
             }
