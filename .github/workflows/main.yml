@@ -151,6 +151,10 @@ jobs:
         run:  ls
       - name: ls-github
         run:  ls .github
+      - name: ls-github-workflows
+        run:  ls .github/workflows
+      - name: ls-github-workflows-parameters
+        run:  ls .github/workflows/parameters
       - name: Decrypt Parameters
         shell: bash
         env:
