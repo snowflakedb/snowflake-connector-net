@@ -134,7 +134,7 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0', 'net472']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
@@ -147,14 +147,10 @@ jobs:
           python-version: '3.x'
       - name: Before Test
         run: nuget install OpenCover -Version 4.6.519
-      - name: ls-linux
-        run:  ls
-      - name: ls-github
-        run:  ls .github
-      - name: ls-github-workflows
-        run:  ls .github/workflows
       - name: ls-github-workflows-parameters
         run:  ls .github/workflows/parameters
+      - name: ls-github-workflows-parameters-json
+        run:  ls .github/workflows/parameters/parameters_azure.json.gpg
       - name: Decrypt Parameters
         shell: bash
         env:
