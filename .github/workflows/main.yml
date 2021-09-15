@@ -149,10 +149,8 @@ jobs:
         run: nuget install OpenCover -Version 4.6.519
       - name: ls-linux
         run:  ls
-      - name: ls-linux-root
-        run:  ls /
-      - name: ls-linux-back
-        run:  ls ../
+      - name: ls-github
+        run:  ls .github
       - name: Decrypt Parameters
         shell: bash
         env:
