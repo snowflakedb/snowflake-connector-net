@@ -156,7 +156,7 @@ jobs:
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: ls-github-workflows-parameters
-        run:  
+        run: |
           cd Snowflake.Data.Tests
           ls ../OpenCover.4.6.519/tools/
       - name: Run Opencover
