@@ -147,10 +147,6 @@ jobs:
           python-version: '3.x'
       - name: Before Test
         run: nuget install OpenCover -Version 4.6.519
-      - name: ls-github-workflows-parameters
-        run:  ls .github/workflows/parameters
-      - name: ls-github-workflows-parameters-json
-        run:  ls .github/workflows/parameters/parameters_azure.json.gpg
       - name: Decrypt Parameters
         shell: bash
         env:
@@ -161,6 +157,8 @@ jobs:
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
+          ls .
+          ls ../
           ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
