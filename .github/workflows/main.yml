@@ -158,8 +158,12 @@ jobs:
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: ls-cwd
         run: ls .
+      - name: ls-tests
+        run: ls ./Snowflake.Data.Tests
       - name: Run minicover
         run: |
+          dotnet restore
+          dotnet build
           minicover instrument --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
