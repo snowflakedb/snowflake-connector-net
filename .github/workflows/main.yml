@@ -62,6 +62,7 @@ jobs:
     name: Build-Framework
     strategy:
       matrix:
+        runs-on: [windows-latest, ubuntu-latest]
         cloud_env: ['azure', 'gcp', 'aws']
     runs-on: ${{ matrix.runs-on }}
 
