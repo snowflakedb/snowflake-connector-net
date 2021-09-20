@@ -160,7 +160,7 @@ jobs:
         run: ls .
       - name: Run minicover
         run: |
-          minicover instrument --workdir ./ --assemblies Snowflake.Data.Tests/**/bin/**/*.dll --sources Snowflake.Data.Tests/**/*.cs
+          minicover instrument --workdir ./ --assemblies Snowflake.Data.Tests/**/bin/**/*.dll --tests Snowflake.Data.Tests/**/*.cs --sources Snowflake.Data/**/*.cs
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Upload Artifacts
