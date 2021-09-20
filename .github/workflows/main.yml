@@ -160,12 +160,9 @@ jobs:
         run: ls .
       - name: ls-mini
         run: ls minicover
-      - name: ls-mini-mini
-        run: ls minicover/minicover
-      - name: Run Opencover
+      - name: Run minicover
         run: |
-          cd Snowflake.Data.Tests
-          ../minicover/minicover -target:"/home/runner/.dotnet/dotnet" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+          dotnet minicover/minicover instrument --workdir ../ --assemblies Snowflake.Data.Tests/**/bin/**/*.dll --sources Snowflake.Data/**/*.cs
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Upload Artifacts
