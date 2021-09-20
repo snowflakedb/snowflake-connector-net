@@ -162,10 +162,12 @@ jobs:
         run: |
           minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
           minicover reset
-          dotnet test --no-build
-          minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
+      - name: Run tests
+        run: |
+          dotnet test --no-build
+          minicover uninstrument
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
