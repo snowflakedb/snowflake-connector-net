@@ -28,11 +28,12 @@ jobs:
   build-core:
     name: Build-Core
     # The type of runner that the job will run on
-    runs-on: windows-latest
     strategy:
       matrix:
+        runs-on: [windows-latest, ubuntu-latest]
         dotnet: ['2.2.402']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+    runs-on: ${{ matrix.runs-on }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -162,8 +163,6 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Run minicover
         run: |
-          dotnet restore
-          dotnet build
           minicover instrument --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
