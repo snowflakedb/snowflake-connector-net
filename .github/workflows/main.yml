@@ -159,7 +159,7 @@ jobs:
       - name: ls-cwd
         run: ls .
       - name: ls-mini
-        run: ls minicover
+        run: ls minicover/minicover
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
