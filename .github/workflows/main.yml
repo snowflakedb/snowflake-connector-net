@@ -148,7 +148,7 @@ jobs:
       - name: Before Test
         run: nuget install OpenCover -Version 4.6.519
       - name: Install minicover
-        run: nuget install MiniCover --local --version 3.4.1
+        run: nuget install MiniCover --version 3.4.1
       - name: Decrypt Parameters
         shell: bash
         env:
@@ -159,7 +159,7 @@ jobs:
       - name: ls-cwd
         run: ls .
       - name: ls-mini
-        run: ls minicover/
+        run: ls MiniCover.3.4.1/
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
