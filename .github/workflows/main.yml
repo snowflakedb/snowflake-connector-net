@@ -160,8 +160,10 @@ jobs:
         run: ls .
       - name: Run minicover
         run: |
-          minicover instrument --workdir ./ --assemblies Snowflake.Data.Tests/**/bin/**/*.dll --tests Snowflake.Data.Tests/**/*.cs exclude-tests 'Snowflake.Data.Tests/Mock/MockCloseSessionGone.cs' 
-          --sources Snowflake.Data/**/*.cs
+          minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
+          minicover reset
+          dotnet test --no-build
+          minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Upload Artifacts
