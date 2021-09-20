@@ -91,7 +91,7 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0', 'net472']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
