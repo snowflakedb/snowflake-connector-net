@@ -32,7 +32,7 @@ jobs:
       matrix:
         runs-on: [windows-latest, ubuntu-latest]
         dotnet: ['2.2.402']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['azure', 'gcp', 'aws']
     runs-on: ${{ matrix.runs-on }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -60,10 +60,10 @@ jobs:
 
   build-framework:
     name: Build-Framework
-    runs-on: windows-latest
     strategy:
       matrix:
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['azure', 'gcp', 'aws']
+    runs-on: ${{ matrix.runs-on }}
 
     steps:
     - uses: actions/checkout@v1
@@ -91,7 +91,7 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0', 'net472']
-        cloud_env: ['azure', 'gcp', 'aws']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
