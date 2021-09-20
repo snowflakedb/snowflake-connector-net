@@ -148,7 +148,7 @@ jobs:
       - name: Before Test
         run: nuget install OpenCover -Version 4.6.519
       - name: Install minicover
-        run: dotnet tool install minicover --global
+        run: nuget install MiniCover --local --version 3.4.1
       - name: Decrypt Parameters
         shell: bash
         env:
