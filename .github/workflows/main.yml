@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.402']
+        dotnet: ['2.2.207']
         cloud_env: ['azure', 'gcp', 'aws']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
