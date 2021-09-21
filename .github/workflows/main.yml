@@ -160,12 +160,16 @@ jobs:
         run: ls .
       - name: ls-tests
         run: ls ./Snowflake.Data.Tests
-      - name: Build Driver
+      - name: Architecture
+        run: uname -a
+      - name: Install dotnet 2.2.8
         run: |
-          curl -O https://download.visualstudio.microsoft.com/download/pr/18738093-b024-4353-96c2-4e1d2285a5e4/5e86ebbca79e71486aa2b18af0214ae9/dotnet-sdk-2.2.207-linux-arm64.tar.gz
-          mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-arm64.tar.gz -C $HOME/dotnet
+          curl -O https://download.visualstudio.microsoft.com/download/pr/022d9abf-35f0-4fd5-8d1c-86056df76e89/477f1ebb70f314054129a9f51e9ec8ec/dotnet-sdk-2.2.207-linux-x64.tar.gz
+          mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-x64.tar.gz -C $HOME/dotnet
           export DOTNET_ROOT=$HOME/dotnet
           export PATH=$PATH:$HOME/dotnet
+      - name: Build Driver
+        run: |
           dotnet build
       - name: Run minicover
         run: |
