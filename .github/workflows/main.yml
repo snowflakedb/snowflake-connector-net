@@ -162,8 +162,8 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
         run: |
-          sudo apt install dotnet-sdk-2.2
-          sudo apt install aspnetcore-runtime-2.2
+          sudo apt-get install dotnet-sdk-2.2
+          sudo apt-get install aspnetcore-runtime-2.2
           sudo apt update or refresh
           dotnet build
       - name: Run minicover
