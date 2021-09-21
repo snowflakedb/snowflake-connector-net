@@ -164,7 +164,7 @@ jobs:
         run: |
           dotnet --version
           dotnet --list-sdks
-      - name: Install dotnet 2.2.8
+      - name: Before installing dotnet
         run: |
           wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
           sudo dpkg -i libicu57_57.1-6+deb9u4_amd64.deb
@@ -173,6 +173,8 @@ jobs:
           sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main" > /etc/apt/sources.list.d/dotnetdev.list'
           sudo apt-get install apt-transport-https
           sudo apt-get update
+      - name: Install dotnet 3.1
+        run: |
           sudo apt-get install dotnet-runtime-deps-3.1
           sudo apt-get install dotnet-runtime-3.1
           sudo apt-get install aspnetcore-runtime-3.1
