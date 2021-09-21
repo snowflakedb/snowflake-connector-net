@@ -164,7 +164,7 @@ jobs:
         run: dotnet --version
       - name: Install dotnet 2.2.8
         run: |
-          dotnet-core-uninstall
+          sudo apt --installed list | grep "dotnet"
           curl -O https://download.visualstudio.microsoft.com/download/pr/fca1c415-b70c-4134-8844-ea947f410aad/901a86c12be90a67ec37cd0cc59d5070/dotnet-sdk-2.2.207-linux-arm.tar.gz
           mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-arm.tar.gz -C $HOME/dotnet
           export DOTNET_ROOT=$HOME/dotnet
