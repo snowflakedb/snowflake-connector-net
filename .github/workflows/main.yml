@@ -161,7 +161,9 @@ jobs:
       - name: ls-tests
         run: ls ./Snowflake.Data.Tests
       - name: Check dotnet version 1
-        run: dotnet --version
+        run: |
+          dotnet --version
+          dotnet --list-sdks
       - name: Install dotnet 2.2.8
         run: |
           wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
@@ -176,7 +178,9 @@ jobs:
           sudo apt-get install aspnetcore-runtime-3.1
           sudo apt-get install dotnet-sdk-3.1
       - name: Check dotnet version 2
-        run: dotnet --version
+        run: |
+          dotnet --version
+          dotnet --list-sdks
       - name: Build Driver
         run: |
           dotnet build
