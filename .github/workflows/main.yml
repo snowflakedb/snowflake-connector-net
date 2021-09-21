@@ -164,11 +164,17 @@ jobs:
         run: dotnet --version
       - name: Install dotnet 2.2.8
         run: |
-          sudo apt --installed list | grep "dotnet"
-          curl -O https://download.visualstudio.microsoft.com/download/pr/fca1c415-b70c-4134-8844-ea947f410aad/901a86c12be90a67ec37cd0cc59d5070/dotnet-sdk-2.2.207-linux-arm.tar.gz
-          mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-arm.tar.gz -C $HOME/dotnet
-          export DOTNET_ROOT=$HOME/dotnet
-          export PATH=$PATH:$HOME/dotnet
+          wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
+          sudo dpkg -i libicu57_57.1-6+deb9u4_amd64.deb
+          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+          sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main" > /etc/apt/sources.list.d/dotnetdev.list'
+          sudo apt-get install apt-transport-https
+          sudo apt-get update
+          sudo apt-get install dotnet-runtime-deps-3.1
+          sudo apt-get install dotnet-runtime-3.1
+          sudo apt-get install aspnetcore-runtime-3.1
+          sudo apt-get install dotnet-sdk-3.1
       - name: Check dotnet version 2
         run: dotnet --version
       - name: Build Driver
