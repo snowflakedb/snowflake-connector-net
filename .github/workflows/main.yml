@@ -164,6 +164,8 @@ jobs:
         run: |
           dotnet --version
           dotnet --list-sdks
+          dotnet --list-runtimes
+          dotnet --info
       - name: Before installing dotnet
         run: |
           wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
@@ -183,6 +185,8 @@ jobs:
         run: |
           dotnet --version
           dotnet --list-sdks
+          dotnet --list-runtimes
+          dotnet --info
       - name: Build Driver
         run: |
           dotnet build
