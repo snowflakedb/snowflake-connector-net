@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.207']
+        dotnet: ['2.2.402']
         cloud_env: ['azure', 'gcp', 'aws']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -140,7 +140,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.402
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -156,37 +156,6 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: ls-cwd
-        run: ls .
-      - name: ls-tests
-        run: ls ./Snowflake.Data.Tests
-      - name: Check dotnet version 1
-        run: |
-          dotnet --version
-          dotnet --list-sdks
-          dotnet --list-runtimes
-          dotnet --info
-      - name: Before installing dotnet
-        run: |
-          wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
-          sudo dpkg -i libicu57_57.1-6+deb9u4_amd64.deb
-          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-          sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main" > /etc/apt/sources.list.d/dotnetdev.list'
-          sudo apt-get install apt-transport-https
-          sudo apt-get update
-      - name: Install dotnet 3.1
-        run: |
-          sudo apt-get install dotnet-runtime-deps-3.1
-          sudo apt-get install dotnet-runtime-3.1
-          sudo apt-get install aspnetcore-runtime-3.1
-          sudo apt-get install dotnet-sdk-3.1
-      - name: Check dotnet version 2
-        run: |
-          dotnet --version
-          dotnet --list-sdks
-          dotnet --list-runtimes
-          dotnet --info
       - name: Build Driver
         run: |
           dotnet build
