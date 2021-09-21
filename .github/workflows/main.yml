@@ -162,6 +162,8 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
         run: |
+          wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
+          sudo dpkg -i libicu57_57.1-6+deb9u4_amd64.deb
           curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
           sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
           sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main" > /etc/apt/sources.list.d/dotnetdev.list'
