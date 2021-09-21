@@ -161,7 +161,7 @@ jobs:
       - name: ls-tests
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
-      - run: |
+        run: |
           dotnet build --runtime ubuntu-20.04
       - name: Run minicover
         run: |
