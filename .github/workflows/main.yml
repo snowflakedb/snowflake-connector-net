@@ -162,7 +162,7 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
         run: |
-          curl https://download.visualstudio.microsoft.com/download/pr/18738093-b024-4353-96c2-4e1d2285a5e4/5e86ebbca79e71486aa2b18af0214ae9/dotnet-sdk-2.2.207-linux-arm64.tar.gz
+          curl -O https://download.visualstudio.microsoft.com/download/pr/18738093-b024-4353-96c2-4e1d2285a5e4/5e86ebbca79e71486aa2b18af0214ae9/dotnet-sdk-2.2.207-linux-arm64.tar.gz
           mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-arm64.tar.gz -C $HOME/dotnet
           export DOTNET_ROOT=$HOME/dotnet
           export PATH=$PATH:$HOME/dotnet
