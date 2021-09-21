@@ -133,7 +133,7 @@ jobs:
     strategy:
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0']
+        dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
@@ -162,11 +162,7 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
       - run: |
-          sudo apt install gnupg ca-certificates
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-          echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-          sudo apt update
-          dotnet build
+          dotnet build --runtime ubuntu-20.04
       - name: Run minicover
         run: |
           minicover instrument --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
