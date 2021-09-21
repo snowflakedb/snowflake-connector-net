@@ -162,17 +162,10 @@ jobs:
         run: ls ./Snowflake.Data.Tests
       - name: Build Driver
         run: |
-          wget http://ftp.us.debian.org/debian/pool/main/i/icu/libicu57_57.1-6+deb9u4_amd64.deb
-          sudo dpkg -i libicu57_57.1-6+deb9u4_amd64.deb
-          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-          sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-bionic-prod bionic main" > /etc/apt/sources.list.d/dotnetdev.list'
-          sudo apt-get install apt-transport-https
-          sudo apt-get update
-          sudo apt-get install dotnet-runtime-deps-2.2
-          sudo apt-get install dotnet-runtime-2.2
-          sudo apt-get install aspnetcore-runtime-2.2
-          sudo apt-get install dotnet-sdk-2.2
+          curl -SL -o https://download.visualstudio.microsoft.com/download/pr/18738093-b024-4353-96c2-4e1d2285a5e4/5e86ebbca79e71486aa2b18af0214ae9/dotnet-sdk-2.2.207-linux-arm64.tar.gz
+          mkdir -p $HOME/dotnet && tar zxf dotnet-sdk-2.2.207-linux-arm64.tar.gz -C $HOME/dotnet
+          export DOTNET_ROOT=$HOME/dotnet
+          export PATH=$PATH:$HOME/dotnet
           dotnet build
       - name: Run minicover
         run: |
