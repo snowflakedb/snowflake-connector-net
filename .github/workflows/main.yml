@@ -145,10 +145,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-      - name: Before Test
-        run: nuget install OpenCover -Version 4.6.519
-      - name: Install minicover
-        run: dotnet tool install --global minicover
       - name: Decrypt Parameters
         shell: bash
         env:
@@ -158,18 +154,24 @@ jobs:
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: |
+          dotnet restore
           dotnet build
       - name: Run minicover
         run: |
-          minicover instrument --assemblies 'Snowflake.Data.Tests/**/bin/**/*.dll' --sources 'Snowflake.Data/**/*.cs' --exclude-sources 'Snowflake.Data/Client/SnowflakeDbCommandBuilder.cs' --tests 'Snowflake.Data.Tests/**/*.cs'
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Run tests
         run: |
-          minicover reset
+          dotnet minicover reset
           dotnet test --no-build
-          minicover uninstrument
-          minicover xmlreport -output Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          dotnet minicover uninstrument
+      - name: Generate report
+        run: |
+          dotnet minicover opencoverreport
+          mv opencovercoverage.xml ${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          cd ..
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
