@@ -159,6 +159,7 @@ jobs:
       - name: Run minicover
         run: |
           cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
