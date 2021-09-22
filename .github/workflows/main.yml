@@ -159,19 +159,14 @@ jobs:
       - name: Run minicover
         run: |
           cd Snowflake.Data.Tests
-          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
-        env:
-          snowflake_cloud_env: ${{ matrix.cloud_env }}
-      - name: Run tests
-        run: |
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
       - name: Generate report
         run: |
+          cd Snowflake.Data.Tests
           dotnet minicover opencoverreport
           mv opencovercoverage.xml ${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
-          cd ..
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
