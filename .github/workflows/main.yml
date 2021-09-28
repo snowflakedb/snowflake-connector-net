@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.402']
+        dotnet: ['2.2.207']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -92,10 +92,11 @@ jobs:
         dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
-      - name: Build Driver
-        run: |
-          dotnet build snowflake-connector-net.sln /p:DebugType=Full
-          msbuild snowflake-connector-net.sln -p:Configuration=Release
+      - uses: actions/checkout@main
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
