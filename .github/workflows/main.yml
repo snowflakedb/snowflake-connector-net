@@ -92,6 +92,15 @@ jobs:
         dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
+      - uses: actions/checkout@v1
+      - name: Setup Nuget.exe
+        uses: nuget/setup-nuget@v1
+      - name: Restore packages
+        run: nuget restore
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v1.0.2
+      - name: Build with MSBuild
+        run: msbuild snowflake-connector-net.sln -p:Configuration=Release
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
