@@ -94,8 +94,8 @@ jobs:
     steps:
       - name: Build Driver
         run: |
-          dotnet restore
-          dotnet build
+          dotnet build snowflake-connector-net.sln /p:DebugType=Full
+          msbuild snowflake-connector-net.sln -p:Configuration=Release
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
