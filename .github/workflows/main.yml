@@ -205,6 +205,11 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Before Test
+        run: nuget install OpenCover -Version 4.6.519
+      - name: ls root
+        run: |
+          ls .
       - name: Build Driver
         run: |
           dotnet restore
