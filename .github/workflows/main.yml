@@ -205,21 +205,10 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: Before Test
-        run: nuget install OpenCover -Version 4.6.519
-      - name: ls root
-        run: |
-          ls .
       - name: Build Driver
         run: |
           dotnet restore
           dotnet build
-      - name: Run Opencover
-        run: |
-          cd Snowflake.Data.Tests
-          ../OpenCover.4.6.519/tools/OpenCover.Console.exe -target: dotnet -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
-        env:
-          snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Run minicover
         run: |
           cd Snowflake.Data.Tests
