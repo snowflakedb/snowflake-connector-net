@@ -156,6 +156,12 @@ jobs:
         run: |
           dotnet restore
           dotnet build
+      - name: Run Opencover
+        run: |
+          cd Snowflake.Data.Tests
+          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target: dotnet -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+        env:
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
       - name: Run minicover
         run: |
           cd Snowflake.Data.Tests
