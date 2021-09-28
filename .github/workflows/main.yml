@@ -99,8 +99,6 @@ jobs:
         run: nuget restore
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
-      - name: Build with MSBuild
-        run: msbuild snowflake-connector-net.sln -p:Configuration=Release
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
@@ -119,6 +117,8 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build with MSBuild
+        run: msbuild snowflake-connector-net.sln -p:Configuration=Release
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
