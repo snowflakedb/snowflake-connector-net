@@ -45,6 +45,8 @@ namespace Snowflake.Data.Core
             sfResultSetMetaData = new SFResultSetMetaData(responseData);
 
             isClosed = false;
+            
+            queryId = responseData.queryId;
         }
 
         internal void resetChunkInfo(IResultChunk nextChunk)
