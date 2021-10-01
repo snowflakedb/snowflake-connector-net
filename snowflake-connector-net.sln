@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Snowflake.Data", "Snowflake
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Snowflake.Data.Tests", "Snowflake.Data.Tests\Snowflake.Data.Tests.csproj", "{97E793E8-62A4-4FF2-9406-F5277269EEC2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManualSmokeTestForQueryId", "ManualSmokeTestForQueryId\ManualSmokeTestForQueryId.csproj", "{0A1004FE-EAF8-4EBE-ABC0-D6ACEE698DD1}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -24,6 +26,10 @@ Global
 		{97E793E8-62A4-4FF2-9406-F5277269EEC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97E793E8-62A4-4FF2-9406-F5277269EEC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97E793E8-62A4-4FF2-9406-F5277269EEC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A1004FE-EAF8-4EBE-ABC0-D6ACEE698DD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A1004FE-EAF8-4EBE-ABC0-D6ACEE698DD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A1004FE-EAF8-4EBE-ABC0-D6ACEE698DD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A1004FE-EAF8-4EBE-ABC0-D6ACEE698DD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
