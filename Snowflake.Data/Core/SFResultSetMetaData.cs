@@ -243,6 +243,8 @@ namespace Snowflake.Data.Core
         MULTI_INSERT,
         [SFStatementTypeAttr(typeId = 0x3000 + 0x600)]
         COPY,
+        [SFStatementTypeAttr(typeId = 0x3000 + 0x700)]
+        COPY_UNLOAD,
 
         /// <remark>
         ///     System Command Language
