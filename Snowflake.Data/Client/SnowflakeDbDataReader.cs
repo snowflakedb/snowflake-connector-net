@@ -93,6 +93,11 @@ namespace Snowflake.Data.Client
             return this.SchemaTable;
         }
 
+        public string GetQueryId()
+        {
+            return resultSet.queryId;
+        }
+
         private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
         {
             var table = new DataTable("SchemaTable");

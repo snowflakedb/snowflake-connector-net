@@ -19,6 +19,8 @@ namespace Snowflake.Data.Core
 
         internal bool isClosed;
 
+        internal string queryId;
+
         internal abstract bool Next();
 
         internal abstract Task<bool> NextAsync();
