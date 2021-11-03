@@ -18,6 +18,8 @@ namespace Snowflake.Data.Core
         internal int columnCount;
 
         internal bool isClosed;
+        
+        internal string queryId;
 
         internal abstract bool Next();
 
