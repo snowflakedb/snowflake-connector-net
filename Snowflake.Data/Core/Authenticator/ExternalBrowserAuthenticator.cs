@@ -98,6 +98,7 @@ namespace Snowflake.Data.Core.Authenticator
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
+                httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
@@ -165,6 +166,14 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 url = url.Replace("&", "^&");
                 Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
             }
             else
             {
