@@ -83,7 +83,7 @@ jobs:
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
   test:
-    needs: [build-core, build-framework]
+    needs: [build-core]
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
