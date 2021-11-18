@@ -89,9 +89,11 @@ jobs:
           dotnet minicover uninstrument
       - name: Generate report
         run: |
+          ls
           cd Snowflake.Data.Tests
+          ls
           dotnet minicover opencoverreport
-          mv opencovercoverage.xml ${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          mv coverage.xml ${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
