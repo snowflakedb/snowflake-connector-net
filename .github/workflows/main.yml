@@ -90,8 +90,8 @@ jobs:
       - name: Generate report
         run: |
           cd Snowflake.Data.Tests
-          dotnet minicover xmlreport
           ls
+          dotnet minicover xmlreport
           mv coverage.xml ${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
