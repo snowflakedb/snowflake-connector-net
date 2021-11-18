@@ -8,6 +8,7 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using System.Data;
     using System;
+    using System.Runtime.InteropServices;
 
     [TestFixture]
     class SFDbAdaptorIT : SFBaseTest
@@ -25,9 +26,12 @@ namespace Snowflake.Data.Tests
                 adaptor.Fill(ds);
                 conn.Close();
             }
-            Console.WriteLine("col1: " + ds.Tables[0].Rows[0]["col1"]);
-            Assert.AreEqual(ds.Tables[0].Rows[0]["col1"], 1);
-            Assert.AreEqual(ds.Tables[0].Rows[0]["col2"], 2);
+
+            Assert.AreEqual(ds.Tables.Count, 1);
+            Assert.AreEqual(ds.Tables[0].TableName, "Table");
+            Assert.AreEqual(ds.Tables[0].Rows[0]["col1"].ToString(), "1");
+            Assert.AreEqual(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
+
         }
     }
 }
