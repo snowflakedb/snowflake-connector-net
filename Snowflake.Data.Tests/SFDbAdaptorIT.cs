@@ -26,8 +26,8 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
             Console.WriteLine("col1: " + ds.Tables[0].Rows[0]["col1"]);
-            Assert.AreEqual(ds.Tables[0].Rows[0]["col1"].ToString(), "1");
-            Assert.AreEqual(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
+            Assert.AreEqual(ds.Tables[0].Rows[0]["col1"], 1);
+            Assert.AreEqual(ds.Tables[0].Rows[0]["col2"], 2);
         }
     }
 }
