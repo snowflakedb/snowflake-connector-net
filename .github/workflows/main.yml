@@ -87,12 +87,6 @@ jobs:
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
-      - name: Generate report
-        run: |
-          cd Snowflake.Data.Tests
-          ls
-          dotnet minicover xmlreport
-          ls
 
   test-mac:
     needs: test-linux
@@ -132,9 +126,3 @@ jobs:
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
-      - name: Generate report
-        run: |
-          cd Snowflake.Data.Tests
-          ls
-          dotnet minicover xmlreport
-          ls
