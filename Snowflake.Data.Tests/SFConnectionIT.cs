@@ -14,6 +14,7 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Log;
     using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
+    using System.Runtime.InteropServices;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -400,8 +401,11 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
-                conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
-                Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
+                    Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+                }
 
                 conn.Close();
             }
