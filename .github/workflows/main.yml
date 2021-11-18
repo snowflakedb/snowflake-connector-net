@@ -87,6 +87,7 @@ jobs:
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
+      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0', 'net472']
@@ -127,10 +128,11 @@ jobs:
         run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
   test-linux:
-    needs: build-core
+    needs: test
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0']
@@ -180,10 +182,11 @@ jobs:
 
 
   test-mac:
-    needs: build-core
+    needs: test-linux
     name: Tests on MAC
     runs-on: macos-latest
     strategy:
+      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0']
