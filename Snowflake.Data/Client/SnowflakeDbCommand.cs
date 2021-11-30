@@ -25,6 +25,14 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        private string queryId;
+
+        public string GetQueryId()
+        {
+            return queryId;
+        }
+        public string QueryId { get { return queryId;} }
+
         public SnowflakeDbCommand()
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
@@ -157,6 +165,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteNonQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
+            queryId = resultSet.queryId;
             return resultSet.CalculateUpdateCount();
         }
 
@@ -167,6 +176,7 @@ namespace Snowflake.Data.Client
                 throw new TaskCanceledException();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+            queryId = resultSet.queryId;
             return resultSet.CalculateUpdateCount();
         }
 
@@ -174,7 +184,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteScalar, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
-
+            queryId = resultSet.queryId;
             if(resultSet.Next())
                 return resultSet.GetValue(0);
             else
@@ -188,9 +198,11 @@ namespace Snowflake.Data.Client
                 throw new TaskCanceledException();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-
-            if(await result.NextAsync().ConfigureAwait(false))
+            if (await result.NextAsync().ConfigureAwait(false))
+            {
+                queryId = result.queryId;
                 return result.GetValue(0);
+            }
             else
                 return DBNull.Value;
         }
@@ -209,6 +221,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
+            queryId = resultSet.queryId;
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
