@@ -31,7 +31,6 @@ namespace Snowflake.Data.Client
         {
             return queryId;
         }
-        public string QueryId { get { return queryId;} }
 
         public SnowflakeDbCommand()
         {
