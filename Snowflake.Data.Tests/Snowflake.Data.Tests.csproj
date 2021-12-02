@@ -9,7 +9,7 @@
     <Copyright>Copyright (c) 2012-2018 Snowflake Computing Inc. All rights reserved.</Copyright>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Snowflake.Data.dll.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>../Snowflake.Data.dll.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 	
   <ItemGroup>
