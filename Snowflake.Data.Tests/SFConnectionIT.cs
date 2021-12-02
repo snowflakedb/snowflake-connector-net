@@ -244,6 +244,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Ignore test on signed assembly")]
         public void TestDefaultLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())

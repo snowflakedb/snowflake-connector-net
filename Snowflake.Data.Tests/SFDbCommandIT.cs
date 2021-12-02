@@ -317,6 +317,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Ignore test on signed assembly")]
         public void TestCancelQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
