@@ -51,7 +51,6 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AssemblyVersion>2.0.8</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
-    <DelaySign>false</DelaySign>
     <AssemblyOriginatorKeyFile>Snowflake.Data.dll.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   
