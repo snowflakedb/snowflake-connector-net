@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 
 namespace Snowflake.Data.Core
 {
+    using System.Threading.Tasks;
     using Snowflake.Data.Client;
 
     class ChunkStreamingParser : IChunkParser
@@ -18,7 +19,7 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public void ParseChunk(IResultChunk chunk)
+        public async Task ParseChunk(IResultChunk chunk)
         {
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 namespace Snowflake.Data.Core
 {
     using Snowflake.Data.Client;
+    using System.Threading.Tasks;
 
     public class FastStreamWrapper
     {
@@ -29,7 +30,6 @@ namespace Snowflake.Data.Core
                 return buffer[next++];
             else
                 return ReadByteSlow();
-
         }
 
         private int ReadByteSlow()
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public void ParseChunk(IResultChunk chunk)
+        public async Task ParseChunk(IResultChunk chunk)
         {
             SFReusableChunk rc = (SFReusableChunk)chunk;
 
@@ -74,65 +74,67 @@ namespace Snowflake.Data.Core
             int c;
             var input = new FastStreamWrapper(stream);
             var ms = new FastMemoryStream();
-            while ((c = input.ReadByte()) >= 0)
+            await Task.Run(() =>
             {
-                if (!inString)
+                while ((c = input.ReadByte()) >= 0)
                 {
-                    // n means null
-                    // " quote means begin string
-                    // all else are ignored
-                    if (c == '"')
+                    if (!inString)
                     {
-                        inString = true;
-                    }
-                    else if (c == 'n')
-                    {
-                        rc.AddCell(null, 0);
-                    }
-                    // ignore anything else
-                }
-                else
-                {
-                    // Inside a string, look for end string
-                    // Anything else is saved in the buffer
-                    if (c == '"')
-                    {
-                        rc.AddCell(ms.GetBuffer(), ms.Length);
-                        ms.Clear();
-                        inString = false;
-                    }
-                    else if (c == '\\')
-                    {
-                        // Process next character
-                        c = input.ReadByte();
-                        switch (c)
+                        // n means null
+                        // " quote means begin string
+                        // all else are ignored
+                        if (c == '"')
                         {
-                            case 'n':
-                                c = '\n';
-                                break;
-                            case 'r':
-                                c = '\r';
-                                break;
-                            case 'b':
-                                c = '\b';
-                                break;
-                            case 't':
-                                c = '\t';
-                                break;
-                            case -1:
-                                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                            inString = true;
                         }
-                        ms.WriteByte((byte)c);
+                        else if (c == 'n')
+                        {
+                            rc.AddCell(null, 0);
+                        }
+                        // ignore anything else
                     }
                     else
                     {
-                        ms.WriteByte((byte)c);
+                        // Inside a string, look for end string
+                        // Anything else is saved in the buffer
+                        if (c == '"')
+                        {
+                            rc.AddCell(ms.GetBuffer(), ms.Length);
+                            ms.Clear();
+                            inString = false;
+                        }
+                        else if (c == '\\')
+                        {
+                            // Process next character
+                            c = input.ReadByte();
+                            switch (c)
+                            {
+                                case 'n':
+                                    c = '\n';
+                                    break;
+                                case 'r':
+                                    c = '\r';
+                                    break;
+                                case 'b':
+                                    c = '\b';
+                                    break;
+                                case 't':
+                                    c = '\t';
+                                    break;
+                                case -1:
+                                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                            }
+                            ms.WriteByte((byte)c);
+                        }
+                        else
+                        {
+                            ms.WriteByte((byte)c);
+                        }
                     }
                 }
-            }
-            if (inString)
-                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in string");
+                if (inString)
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in string");
+            });
         }
     }
-
 }
