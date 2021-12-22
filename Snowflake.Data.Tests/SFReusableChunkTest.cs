@@ -9,12 +9,13 @@ namespace Snowflake.Data.Tests
     using System.Text;
     using Snowflake.Data.Core;
     using Snowflake.Data.Client;
+    using System.Threading.Tasks;
 
     [TestFixture]
     class SFReusableChunkTest
     {
         [Test]
-        public void TestSimpleChunk()
+        public async Task TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
             byte[] bytes = Encoding.UTF8.GetBytes(data);
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(3);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
 
             Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestChunkWithNull()
+        public async Task TestChunkWithNull()
         {
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
             byte[] bytes = Encoding.UTF8.GetBytes(data);
@@ -59,7 +60,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(3);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
 
             Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -70,7 +71,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestChunkWithDate()
+        public async Task TestChunkWithDate()
         {
             string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
             byte[] bytes = Encoding.UTF8.GetBytes(data);
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(3);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
 
             Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(0, 1).SafeToString());
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestChunkWithEscape()
+        public async Task TestChunkWithEscape()
         {
             string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
             byte[] bytes = Encoding.UTF8.GetBytes(data);
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(3);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
 
             Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -126,7 +127,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestChunkWithLongString()
+        public async Task TestChunkWithLongString()
         {
             string longstring = new string('å', 10 * 1000 * 1000);
             string data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
@@ -144,7 +145,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(3);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
 
             Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -155,7 +156,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestParserError1()
+        public async Task TestParserError1()
         {
             // Unterminated escape sequence
             string data = "[ [\"åäö\\";
@@ -175,7 +176,7 @@ namespace Snowflake.Data.Tests
 
             try
             {
-                parser.ParseChunk(chunk);
+                await parser.ParseChunk(chunk);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -185,7 +186,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestParserError2()
+        public async Task TestParserError2()
         {
             // Unterminated string
             string data = "[ [\"åäö";
@@ -205,7 +206,7 @@ namespace Snowflake.Data.Tests
 
             try
             {
-                parser.ParseChunk(chunk);
+                await parser.ParseChunk(chunk);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -215,7 +216,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestParserWithTab()
+        public async Task TestParserWithTab()
         {
             // Unterminated string
             string data = "[[\"abc\t\"]]";
@@ -233,7 +234,7 @@ namespace Snowflake.Data.Tests
             SFReusableChunk chunk = new SFReusableChunk(1);
             chunk.Reset(chunkInfo, 0);
 
-            parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk);
             string val = chunk.ExtractCell(0, 0).SafeToString();
             Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0).SafeToString());
         }
