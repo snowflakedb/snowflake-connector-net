@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests
     class SFDbFactoryIT : SFBaseTest
     {
         [Test]
+        [Ignore("Ignore test on signed assembly")]
         public void TestSimpleDbFactory()
         {
 #if NETFRAMEWORK
