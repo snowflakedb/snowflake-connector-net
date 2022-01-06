@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.402']
+        dotnet: ['2.2.207']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -83,10 +83,11 @@ jobs:
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
   test:
-    needs: build-core
+    needs: [build-core, build-framework]
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
+      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0', 'net472']
@@ -96,7 +97,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.402
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -125,3 +126,81 @@ jobs:
         run: pip install codecov
       - name: Run Codecoverage
         run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+
+  test-linux:
+    needs: test
+    name: Tests on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        #dotnet: ['2.2.402']
+        dotnet: ['netcoreapp2.0']
+        cloud_env: ['azure', 'gcp', 'aws']
+    steps:
+      - uses: actions/checkout@main
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.2.207
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Decrypt Parameters
+        shell: bash
+        env:
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build Driver
+        run: |
+          dotnet restore
+          dotnet build
+      - name: Run minicover
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
+          dotnet minicover reset
+          dotnet test --no-build
+          dotnet minicover uninstrument
+
+  test-mac:
+    needs: test-linux
+    name: Tests on MAC
+    runs-on: macos-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        #dotnet: ['2.2.402']
+        dotnet: ['netcoreapp2.0']
+        cloud_env: ['azure', 'gcp', 'aws']
+    steps:
+      - uses: actions/checkout@main
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.2.207
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Decrypt Parameters
+        shell: bash
+        env:
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build Driver
+        run: |
+          dotnet restore
+          dotnet build
+      - name: Run minicover
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
+          dotnet minicover reset
+          dotnet test --no-build
+          dotnet minicover uninstrument
