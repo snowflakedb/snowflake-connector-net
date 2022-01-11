@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core
 
     static class SFDataConverter
     {
-        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
         // Method with the same signature as before the performance work
         // Used by unit tests only
