@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core
             return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take();
         }*/
 
-        public Task<IResultChunk> GetNextChunkAsync()
+        public async Task<IResultChunk> GetNextChunkAsync()
         {
             logger.Info($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
             if (nextChunkToConsumeIndex < chunkInfos.Count)
@@ -118,11 +118,11 @@ namespace Snowflake.Data.Core
                 }
 
                 nextChunkToConsumeIndex++;
-                return chunk;
+                return await chunk;
             }
             else
             {
-                return Task.FromResult<IResultChunk>(null);
+                return await Task.FromResult<IResultChunk>(null);
             }
         }
 
@@ -147,12 +147,11 @@ namespace Snowflake.Data.Core
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))
             {
-                ParseStreamIntoChunk(stream, chunk);
+                await ParseStreamIntoChunk(stream, chunk);
             }
             logger.Info($"Succeed downloading chunk #{chunk.chunkIndexToDownload}");
             return chunk;
         }
-
 
         /// <summary>
         ///     Content from s3 in format of 
@@ -163,10 +162,10 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="content"></param>
         /// <param name="resultChunk"></param>
-        private void ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
+        private async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
         {
             IChunkParser parser = new ReusableChunkParser(content);
-            parser.ParseChunk(resultChunk);
+            await parser.ParseChunk(resultChunk);
         }
     }
 
