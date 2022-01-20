@@ -41,6 +41,15 @@ namespace Snowflake.Data.Core
                         resultSet.Rewind();
                     }
                     break;
+                case SFStatementType.COPY_UNLOAD:
+                    var rowIndex = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_unloaded");
+                    if (rowIndex >= 0)
+                    {
+                        resultSet.Next();
+                        updateCount = resultSet.GetValue<long>(rowIndex);
+                        resultSet.Rewind();
+                    }
+                    break;
                 case SFStatementType.SELECT:
                     updateCount = -1;
                     break;

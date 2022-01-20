@@ -93,6 +93,11 @@ namespace Snowflake.Data.Client
             return this.SchemaTable;
         }
 
+        public string GetQueryId()
+        {
+            return resultSet.queryId;
+        }
+        
         private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
         {
             var table = new DataTable("SchemaTable");
@@ -272,12 +277,12 @@ namespace Snowflake.Data.Client
             return resultSet.Next();
         }
 
-        public override Task<bool> ReadAsync(CancellationToken cancellationToken)
+        public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
-            return resultSet.NextAsync();
+            return await resultSet.NextAsync();
         }
 
         public override void Close()

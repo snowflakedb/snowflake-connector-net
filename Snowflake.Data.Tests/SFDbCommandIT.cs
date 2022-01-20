@@ -533,5 +533,42 @@ namespace Snowflake.Data.Tests
                 }
             }
         }
+
+        [Test]
+        public void TestRowsAffectedUnload()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "create or replace table test_rows_affected_unload(c1 number)";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "insert into test_rows_affected_unload values(1), (2), (3), (4), (5), (6)";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "drop stage if exists my_unload_stage";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "create stage if not exists my_unload_stage";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "copy into @my_unload_stage/unload/ from test_rows_affected_unload;";
+                    int affected = command.ExecuteNonQuery();
+
+                    Assert.AreEqual(6, affected);
+
+                    command.CommandText = "drop stage if exists my_unload_stage";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "drop table if exists test_rows_affected_unload";
+                    command.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+        }
     }
 }
