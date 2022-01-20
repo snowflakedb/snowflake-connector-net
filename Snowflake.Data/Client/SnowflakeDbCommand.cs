@@ -153,6 +153,25 @@ namespace Snowflake.Data.Client
             sfStatement?.Cancel();
         }
 
+
+        public string ExecuteAsynchronousQuery()
+        {
+            logger.Debug($"ExecuteAsynchronousQuery, command: {CommandText}");
+            SFBaseResultSet resultSet = ExecuteInternal(asyncExec:true);
+            return resultSet.queryId;
+        }
+
+
+        public async Task<string> ExecuteAsynchronousQueryAsync(CancellationToken cancellationToken)
+        {
+            logger.Debug($"ExecuteAsynchronousQueryAsync, command: {CommandText}");
+            if (cancellationToken.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+            return resultSet.queryId;
+        }
+
         public override int ExecuteNonQuery()
         {
             logger.Debug($"ExecuteNonQuery, command: {CommandText}");
@@ -302,16 +321,18 @@ namespace Snowflake.Data.Client
             this.sfStatement = new SFStatement(session);
         }
 
-        private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
+        private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly
+                , asyncExec : asyncExec);
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false
+            , bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
         }
     }
 }

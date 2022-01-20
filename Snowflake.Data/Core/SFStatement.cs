@@ -70,7 +70,7 @@ namespace Snowflake.Data.Core
                 _requestId = null;
         }
 
-        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             AssignQueryRequestId();
 
@@ -90,6 +90,7 @@ namespace Snowflake.Data.Core
                 sqlText = sql,
                 parameterBindings = bindings,
                 describeOnly = describeOnly,
+                asyncExec = asyncExec,
             };
 
             return new SFRestRequest
@@ -182,11 +183,12 @@ namespace Snowflake.Data.Core
 
         private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
-        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
+        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly
+            , bool asyncExec,
                                                           CancellationToken cancellationToken)
         {
             registerQueryCancellationCallback(timeout, cancellationToken);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 QueryExecResponse response = null;
@@ -205,21 +207,24 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                var lastResultUrl = response.data?.getResultUrl;
-
-                while (RequestInProgress(response) || SessionExpired(response))
+                if (!asyncExec)
                 {
-                    var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+                    var lastResultUrl = response.data?.getResultUrl;
 
-                    if (SessionExpired(response))
+                    while (RequestInProgress(response) || SessionExpired(response))
                     {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        SfSession.renewSession();
-                    }
-                    else
-                    {
-                        lastResultUrl = response.data?.getResultUrl;
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            SfSession.renewSession();
+                        }
+                        else
+                        {
+                            lastResultUrl = response.data?.getResultUrl;
+                        }
                     }
                 }
 
@@ -237,10 +242,11 @@ namespace Snowflake.Data.Core
             }
         }
         
-        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly
+, bool asyncExec)
         {
             registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 QueryExecResponse response = null;
@@ -259,20 +265,23 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                var lastResultUrl = response.data?.getResultUrl;
-                while (RequestInProgress(response) || SessionExpired(response))
+                if (!asyncExec)
                 {
-                    var req = BuildResultRequest(lastResultUrl);
-                    response = _restRequester.Get<QueryExecResponse>(req);
+                    var lastResultUrl = response.data?.getResultUrl;
+                    while (RequestInProgress(response) || SessionExpired(response))
+                    {
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = _restRequester.Get<QueryExecResponse>(req);
 
-                    if (SessionExpired(response))
-                    {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        SfSession.renewSession();
-                    }
-                    else
-                    {
-                        lastResultUrl = response.data?.getResultUrl;
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            SfSession.renewSession();
+                        }
+                        else
+                        {
+                            lastResultUrl = response.data?.getResultUrl;
+                        }
                     }
                 }
 

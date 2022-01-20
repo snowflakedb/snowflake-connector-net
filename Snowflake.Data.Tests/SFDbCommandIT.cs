@@ -571,4 +571,29 @@ namespace Snowflake.Data.Tests
             }
         }
     }
-}
+
+    [TestFixture]
+    class SFDbCommandAsynchronous : SFBaseTest
+    {
+
+        [Test]
+        public void TestLongRunningQuery()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                conn.Open();
+
+                var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                var id = cmd.ExecuteAsynchronousQuery();
+
+                Assert.IsNotEmpty(id);
+
+                conn.Close();
+            }
+
+        }
+    }
+    }
