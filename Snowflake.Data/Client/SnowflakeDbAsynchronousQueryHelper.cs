@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Client
 {
+    /// <summary>
+    /// Methods to help perform asynchronous queries.
+    /// </summary>
     public static class SnowflakeDbAsynchronousQueryHelper
     {
         /// <summary>
@@ -48,7 +51,6 @@ namespace Snowflake.Data.Client
         //public static async Task<string> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn, 
         //    string queryId, CancellationToken cancellationToken)
         //{
-        //    return await cmd.StartAsynchronousQueryAsync(cancellationToken);
         //}
 
         /// <summary>
@@ -86,30 +88,5 @@ namespace Snowflake.Data.Client
             return (SnowflakeDbCommand)cmd;
 
         }
-
-        //public static object FetchAsynchronousResultAsScalar()
-        //{
-        //    logger.Debug($"FetchAsynchronousResultAsScalar, command: {CommandText}");
-        //    SFBaseResultSet resultSet = ExecuteInternal();
-
-        //    if (resultSet.Next())
-        //        return resultSet.GetValue(0);
-        //    else
-        //        return DBNull.Value;
-        //}
-
-        //public static async Task<object> FetchAsynchronousResultAsScalarAsync(CancellationToken cancellationToken)
-        //{
-        //    logger.Debug($"FetchAsynchronousResultAsScalarAsync, command: {CommandText}");
-        //    if (cancellationToken.IsCancellationRequested)
-        //        throw new TaskCanceledException();
-
-        //    var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-
-        //    if (await result.NextAsync().ConfigureAwait(false))
-        //        return result.GetValue(0);
-        //    else
-        //        return DBNull.Value;
-        //}
     }
 }
