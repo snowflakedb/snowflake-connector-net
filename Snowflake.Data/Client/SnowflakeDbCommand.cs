@@ -153,18 +153,25 @@ namespace Snowflake.Data.Client
             sfStatement?.Cancel();
         }
 
-
-        public string ExecuteAsynchronousQuery()
+        /// <summary>
+        /// Starts a query asynchronously.
+        /// </summary>
+        /// <returns>The query id.</returns>
+        public string StartAsynchronousQuery()
         {
-            logger.Debug($"ExecuteAsynchronousQuery, command: {CommandText}");
+            logger.Debug($"StartAsynchronousQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal(asyncExec:true);
             return resultSet.queryId;
         }
 
-
-        public async Task<string> ExecuteAsynchronousQueryAsync(CancellationToken cancellationToken)
+        /// <summary>
+        /// Starts a query asynchronously.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query id.</returns>
+        public async Task<string> StartAsynchronousQueryAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteAsynchronousQueryAsync, command: {CommandText}");
+            logger.Debug($"StartAsynchronousQueryAsync, command: {CommandText}");
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
