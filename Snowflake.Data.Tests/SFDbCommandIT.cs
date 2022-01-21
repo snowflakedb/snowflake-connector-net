@@ -579,17 +579,44 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestLongRunningQuery()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
 
                 conn.Open();
 
-                var cmd = (SnowflakeDbCommand)conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
-                var id = cmd.StartAsynchronousQuery();
+                string queryId;
+                using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                    queryId = cmd.StartAsynchronousQuery();
+                }
 
-                Assert.IsNotEmpty(id);
+                Assert.IsNotEmpty(queryId);
+
+                AsynchronousQueryStatus status;
+                do
+                {
+                    status = SnowflakeDbAsynchronousQueryHelper.GetAsynchronousQueryStatus(conn, queryId);
+                    if (status.IsQueryDone)
+                    {
+                        break;
+                    }
+
+                    Thread.Sleep(5000);
+                } while (true);
+
+
+                Assert.True(status.IsQuerySuccessful);
+
+                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateAsynchronousQueryResultsCommand(conn, queryId))
+                {
+                    using (IDataReader reader = cmd.ExecuteReader())
+                    {
+                        // only one result is returned
+                        Assert.IsTrue(reader.Read());
+                    }
+                }
 
                 conn.Close();
             }

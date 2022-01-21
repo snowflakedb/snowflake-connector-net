@@ -29,7 +29,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public static async Task<string> StartAsynchronousQueryAsync(SnowflakeDbCommand cmd, CancellationToken cancellationToken)
         {
-            return await cmd.StartAsynchronousQueryAsync(cancellationToken);
+            return await cmd.StartAsynchronousQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
         // https://docs.snowflake.com/en/sql-reference/functions/result_scan.html
@@ -43,15 +43,70 @@ namespace Snowflake.Data.Client
         // https://docs.snowflake.com/en/sql-reference/account-usage/query_history.html
         // Latency for the view may be up to 45 minutes.
 
-        //public static string GetAsynchronousQueryStatus(SnowflakeDbConnection conn, string queryId)
-        //{
-        //    return GetAsynchronousQueryStatusAsync(conn, queryId, CancellationToken.None).Result;
-        //}
+        /// <summary>
+        /// Use to get the status of a query to determine if you can fetch the result.
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="queryId"></param>
+        /// <returns></returns>
+        public static AsynchronousQueryStatus GetAsynchronousQueryStatus(SnowflakeDbConnection conn, string queryId)
+        {
+            return GetAsynchronousQueryStatusAsync(conn, queryId, CancellationToken.None).Result;
+        }
 
-        //public static async Task<string> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn, 
-        //    string queryId, CancellationToken cancellationToken)
-        //{
-        //}
+        /// <summary>
+        /// Use to get the status of a query to determine if you can fetch the result.
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static async Task<AsynchronousQueryStatus> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn,
+            string queryId, CancellationToken cancellationToken)
+        {
+            using (var cmd = conn.CreateCommand())
+            {
+
+                cmd.CommandType = System.Data.CommandType.Text;
+
+                // https://docs.snowflake.com/en/sql-reference/account-usage/query_history.html
+                // Execution status for the query: success, fail, incident.
+                // Statement end time (in the UTC time zone), or NULL if the statement is still running.
+                cmd.CommandText = "select EXECUTION_STATUS, END_TIME from SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY where query_id = ?;";
+
+                var p = (SnowflakeDbParameter)cmd.CreateParameter();
+                p.ParameterName = "1";
+                p.DbType = System.Data.DbType.String;
+                p.Value = queryId;
+                cmd.Parameters.Add(p);
+
+                using (var r = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (!r.Read())
+                    {
+                        // because QUERY_HISTORY view has such a long lag, a missing record might just mean that 
+                        // the query has not shown up yet in the view, so return status assuming that is the case.
+                        // if can find something more real time, should throw an exception when no record found.
+                        return new AsynchronousQueryStatus(false, false);
+                        // throw new Exception($"No status found for query '{queryId}'");
+                    }
+                    var status = (string)r["EXECUTION_STATUS"];
+                    var endTime = r["END_TIME"];
+                    bool isDone = true;
+                    if ((endTime == null) || (endTime == DBNull.Value))
+                    {
+                        isDone = false;
+                    }
+                    bool isSuccess = false;
+                    if (isDone)
+                    {
+                        isSuccess = string.Equals("success", status, StringComparison.OrdinalIgnoreCase);
+                    }
+                    return new AsynchronousQueryStatus(isDone, isSuccess);
+                }
+            }
+
+        }
 
         /// <summary>
         /// Can use the resulting <see cref="SnowflakeDbCommand"/> to fetch the results of the query.
@@ -81,7 +136,6 @@ namespace Snowflake.Data.Client
             //var p = (SnowflakeDbParameter)cmd.CreateParameter();
             //p.ParameterName = "1";
             //p.DbType = System.Data.DbType.String;
-            ////p.SFDataType = Core.SFDataType.TEXT;
             //p.Value = queryId;
             //cmd.Parameters.Add(p);
 
