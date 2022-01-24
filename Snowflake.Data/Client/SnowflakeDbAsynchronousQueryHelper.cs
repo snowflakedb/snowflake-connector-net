@@ -55,6 +55,11 @@ namespace Snowflake.Data.Client
         }
 
         /// <summary>
+        /// Use to determine which method to use to get query status.  Use as a toggle for testing different features.
+        /// </summary>
+        private static bool UseStatusFunction = false;
+
+        /// <summary>
         /// Use to get the status of a query to determine if you can fetch the result.
         /// </summary>
         /// <param name="conn"></param>
@@ -64,6 +69,64 @@ namespace Snowflake.Data.Client
         public static async Task<AsynchronousQueryStatus> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn,
             string queryId, CancellationToken cancellationToken)
         {
+            if (UseStatusFunction)
+            {
+                return await GetStatusUsingFunction(conn, queryId, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                return await GetStatusUsingView(conn, queryId, cancellationToken).ConfigureAwait(false);
+            }
+
+        }
+
+        private static async Task<AsynchronousQueryStatus> GetStatusUsingFunction(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        {
+            // this method has severe problems because of the query_history function.  This function has a limit to the number
+            // of rows it returns, so there is no guarantee that it will return the desired query, if the system has had
+            // a high number of queries run.  Also, this function is extremely slow.
+
+            using (var cmd = conn.CreateCommand())
+            {
+
+                cmd.CommandType = System.Data.CommandType.Text;
+
+                // https://docs.snowflake.com/en/sql-reference/functions/query_history.html
+                // RESULT_LIMIT defaults to 100, so need to set it to the max possible value
+                cmd.CommandText = "select top 1 EXECUTION_STATUS from table(information_schema.query_history(RESULT_LIMIT => 10000)) where query_id = ?;";
+
+                var p = (SnowflakeDbParameter)cmd.CreateParameter();
+                p.ParameterName = "1";
+                p.DbType = System.Data.DbType.String;
+                p.Value = queryId;
+                cmd.Parameters.Add(p);
+
+                using (var r = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (!r.Read())
+                    {
+                        throw new Exception($"No status found for query '{queryId}'");
+                    }
+                    var status = (string)r["EXECUTION_STATUS"];
+
+                    if (status.StartsWith("success", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new AsynchronousQueryStatus(true, true);
+                    }
+                    else if (status.StartsWith("failed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new AsynchronousQueryStatus(true, false);
+                    }
+                    else
+                    {
+                        return new AsynchronousQueryStatus(false, false);
+                    }
+                }
+            }
+        }
+
+        private static async Task<AsynchronousQueryStatus> GetStatusUsingView(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        {
             using (var cmd = conn.CreateCommand())
             {
 
@@ -72,7 +135,7 @@ namespace Snowflake.Data.Client
                 // https://docs.snowflake.com/en/sql-reference/account-usage/query_history.html
                 // Execution status for the query: success, fail, incident.
                 // Statement end time (in the UTC time zone), or NULL if the statement is still running.
-                cmd.CommandText = "select EXECUTION_STATUS, END_TIME from SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY where query_id = ?;";
+                cmd.CommandText = "select top 1 EXECUTION_STATUS, END_TIME from SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY where query_id = ?;";
 
                 var p = (SnowflakeDbParameter)cmd.CreateParameter();
                 p.ParameterName = "1";
@@ -105,7 +168,6 @@ namespace Snowflake.Data.Client
                     return new AsynchronousQueryStatus(isDone, isSuccess);
                 }
             }
-
         }
 
         /// <summary>

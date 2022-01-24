@@ -588,7 +588,7 @@ namespace Snowflake.Data.Tests
                 string queryId;
                 using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 15)) v order by 1";
                     queryId = cmd.StartAsynchronousQuery();
                 }
 
@@ -642,6 +642,8 @@ namespace Snowflake.Data.Tests
 
                     Assert.IsNotEmpty(queryId);
                 }
+
+                // because this query is so quick, we do not need to check the status before fetching the result
 
                 using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateAsynchronousQueryResultsCommand(conn, queryId))
                 {
