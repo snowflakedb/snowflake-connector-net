@@ -195,7 +195,29 @@ namespace Snowflake.Data.Client
         /// <param name="conn"></param>
         /// <param name="queryId"></param>
         /// <returns></returns>
-        public static SnowflakeDbCommand CreateAsynchronousQueryResultsCommand(SnowflakeDbConnection conn, string queryId)
+        public static SnowflakeDbCommand CreateQueryResultsCommand(SnowflakeDbConnection conn, string queryId)
+        {
+            var useLegacyRestApi = true;
+            if (useLegacyRestApi)
+            {
+                return CreateQueryResultsCommandForRestApi(conn, queryId);
+            }
+            else
+            {
+                return CreateQueryResultsCommandForResultScan(conn, queryId);
+            }
+
+        }
+
+        private static SnowflakeDbCommand CreateQueryResultsCommandForRestApi(SnowflakeDbConnection conn, string queryId)
+        {
+            var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.HandleAsyncResponse = true;
+            cmd.CommandText = queryId;
+            return cmd;
+        }
+
+        private static SnowflakeDbCommand CreateQueryResultsCommandForResultScan(SnowflakeDbConnection conn, string queryId)
         {
             var cmd = conn.CreateCommand();
 
@@ -221,7 +243,6 @@ namespace Snowflake.Data.Client
             //cmd.Parameters.Add(p);
 
             return (SnowflakeDbCommand)cmd;
-
         }
     }
 }

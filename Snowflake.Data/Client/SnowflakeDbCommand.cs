@@ -25,6 +25,11 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        /// <summary>
+        /// When true, will expect the CommandText to have the query id and will get a result from an existing query
+        /// </summary>
+        internal bool HandleAsyncResponse = false;
+
         public SnowflakeDbCommand()
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
@@ -331,15 +336,29 @@ namespace Snowflake.Data.Client
         private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly
-                , asyncExec : asyncExec);
+            if (HandleAsyncResponse)
+            {
+                return sfStatement.GetQueryResultAsync(CommandTimeout, CommandText, CancellationToken.None).Result;
+            }
+            else
+            {
+                return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly
+                    , asyncExec: asyncExec);
+            }
         }
 
         private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false
             , bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
+            if (HandleAsyncResponse)
+            {
+                return sfStatement.GetQueryResultAsync(CommandTimeout, CommandText, cancellationToken);
+            }
+            else
+            {
+                return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
+            }
         }
     }
 }

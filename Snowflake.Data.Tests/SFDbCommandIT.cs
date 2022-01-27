@@ -632,7 +632,7 @@ namespace Snowflake.Data.Tests
             using (var conn = StartSnowflakeConnection())
             {
 
-                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateAsynchronousQueryResultsCommand(conn, queryId))
+                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateQueryResultsCommand(conn, queryId))
                 {
                     using (IDataReader reader = cmd.ExecuteReader())
                     {
@@ -684,7 +684,7 @@ namespace Snowflake.Data.Tests
 
                 // because this query is so quick, we do not need to check the status before fetching the result
 
-                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateAsynchronousQueryResultsCommand(conn, queryId))
+                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateQueryResultsCommand(conn, queryId))
                 {
                     var val = cmd.ExecuteScalar();
 

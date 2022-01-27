@@ -236,6 +236,56 @@ namespace Snowflake.Data.Core
             return d;
         }
 
+        /// <summary>
+        /// Fetches the result of a query that has already been executed.
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        internal async Task<SFBaseResultSet> GetQueryResultAsync(int timeout, string queryId
+                                                  , CancellationToken cancellationToken)
+        {
+            registerQueryCancellationCallback(timeout, cancellationToken);
+            // rest api
+            var lastResultUrl = $"/queries/{queryId}/result";
+            try
+            {
+                QueryExecResponse response = null;
+
+                bool receivedFirstQueryResponse = false;
+
+                while (!receivedFirstQueryResponse || RequestInProgress(response) || SessionExpired(response))
+                {
+                    var req = BuildResultRequest(lastResultUrl);
+                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+                    receivedFirstQueryResponse = true;
+
+                    if (SessionExpired(response))
+                    {
+                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                        SfSession.renewSession();
+                    }
+                    else
+                    {
+                        lastResultUrl = response.data?.getResultUrl;
+                    }
+                }
+
+                return BuildResultSet(response, cancellationToken);
+            }
+            catch
+            {
+                logger.Error("Query execution failed.");
+                throw;
+            }
+            finally
+            {
+                CleanUpCancellationTokenSources();
+                ClearQueryRequestId();
+            }
+        }
+
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly
             , bool asyncExec,
                                                           CancellationToken cancellationToken)
