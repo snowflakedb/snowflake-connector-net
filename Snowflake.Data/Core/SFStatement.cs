@@ -183,12 +183,17 @@ namespace Snowflake.Data.Core
 
         private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
+        static string BuildQueryResultUrl(string queryId)
+        {
+            return $"/queries/{queryId}/result";
+        }
+
         internal async Task<SnowflakeQueryStatus> CheckQueryStatusAsync(int timeout, string queryId
                                                   , CancellationToken cancellationToken)
         {
             registerQueryCancellationCallback(timeout, cancellationToken);
             // rest api
-            var lastResultUrl = $"/queries/{queryId}/result";
+            var lastResultUrl = BuildQueryResultUrl(queryId);
             //// sql api
             //var lastResultUrl = $"/api/statements/{queryId}";
             try
@@ -248,7 +253,7 @@ namespace Snowflake.Data.Core
         {
             registerQueryCancellationCallback(timeout, cancellationToken);
             // rest api
-            var lastResultUrl = $"/queries/{queryId}/result";
+            var lastResultUrl = BuildQueryResultUrl(queryId);
             try
             {
                 QueryExecResponse response = null;
