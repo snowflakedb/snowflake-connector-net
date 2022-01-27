@@ -594,7 +594,10 @@ namespace Snowflake.Data.Tests
                 using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 15)) v order by 1";
-                    queryId = cmd.StartAsynchronousQuery();
+                    var status = cmd.StartAsynchronousQuery();
+                    Assert.False(status.IsQueryDone);
+                    Assert.False(status.IsQuerySuccessful);
+                    queryId = status.QueryId;
                 }
 
                 Assert.IsNotEmpty(queryId);
@@ -604,19 +607,24 @@ namespace Snowflake.Data.Tests
             using (var conn = StartSnowflakeConnection())
             {
 
-                AsynchronousQueryStatus status;
+                SnowflakeQueryStatus status;
                 do
                 {
-                    status = SnowflakeDbAsynchronousQueryHelper.GetAsynchronousQueryStatus(conn, queryId);
+                    status = SnowflakeDbAsynchronousQueryHelper.GetQueryStatus(conn, queryId);
                     if (status.IsQueryDone)
                     {
                         break;
+                    }
+                    else
+                    {
+                        Assert.False(status.IsQuerySuccessful);
                     }
 
                     Thread.Sleep(5000);
                 } while (true);
 
 
+                // once it finished, it should be successfull
                 Assert.True(status.IsQuerySuccessful);
             }
 
@@ -641,19 +649,33 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestSimpleCommand()
         {
+            string queryId;
+
             using (var conn = StartSnowflakeConnection())
             {
-                string queryId;
 
                 using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1";
 
-                    object val = cmd.ExecuteScalar();
-                    queryId = cmd.StartAsynchronousQuery();
+                    var status = cmd.StartAsynchronousQuery();
+                    // even a fast asynchronous call will not be done initially
+                    Assert.False(status.IsQueryDone);
+                    Assert.False(status.IsQuerySuccessful);
+                    queryId = status.QueryId;
 
                     Assert.IsNotEmpty(queryId);
                 }
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
+                SnowflakeQueryStatus status;
+                status = SnowflakeDbAsynchronousQueryHelper.GetQueryStatus(conn, queryId);
+                // since query is so fast, expect it to be done the first time we check the status
+                Assert.True(status.IsQueryDone);
+                Assert.True(status.IsQuerySuccessful);
             }
 
             // start a new connection to make sure works across sessions

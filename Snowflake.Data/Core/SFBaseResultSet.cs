@@ -25,6 +25,8 @@ namespace Snowflake.Data.Core
 
         internal abstract Task<bool> NextAsync();
 
+        internal readonly Client.SnowflakeQueryStatus queryStatus;
+
         protected abstract UTF8Buffer getObjectInternal(int columnIndex);
 
         /// <summary>
@@ -33,8 +35,9 @@ namespace Snowflake.Data.Core
         /// <returns>True if it works, false otherwise.</returns>
         internal abstract bool Rewind();
 
-        protected SFBaseResultSet()
+        protected SFBaseResultSet(Client.SnowflakeQueryStatus queryStatus)
         {
+            this.queryStatus = queryStatus;
         }
 
         internal T GetValue<T>(int columnIndex)

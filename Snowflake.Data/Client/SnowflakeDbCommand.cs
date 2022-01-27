@@ -157,11 +157,11 @@ namespace Snowflake.Data.Client
         /// Starts a query asynchronously.
         /// </summary>
         /// <returns>The query id.</returns>
-        public string StartAsynchronousQuery()
+        public SnowflakeQueryStatus StartAsynchronousQuery()
         {
             logger.Debug($"StartAsynchronousQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal(asyncExec:true);
-            return resultSet.queryId;
+            return resultSet.queryStatus;
         }
 
         /// <summary>
@@ -169,14 +169,14 @@ namespace Snowflake.Data.Client
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns>The query id.</returns>
-        public async Task<string> StartAsynchronousQueryAsync(CancellationToken cancellationToken)
+        public async Task<SnowflakeQueryStatus> StartAsynchronousQueryAsync(CancellationToken cancellationToken)
         {
             logger.Debug($"StartAsynchronousQueryAsync, command: {CommandText}");
             if (cancellationToken.IsCancellationRequested)
                 throw new TaskCanceledException();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
-            return resultSet.queryId;
+            return resultSet.queryStatus;
         }
 
         public override int ExecuteNonQuery()

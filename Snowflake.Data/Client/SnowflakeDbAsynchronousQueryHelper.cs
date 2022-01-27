@@ -17,7 +17,7 @@ namespace Snowflake.Data.Client
         /// </summary>
         /// <param name="cmd"></param>
         /// <returns>The query id.</returns>
-        public static string StartAsynchronousQuery(SnowflakeDbCommand cmd)
+        public static SnowflakeQueryStatus StartAsynchronousQuery(SnowflakeDbCommand cmd)
         {
             return cmd.StartAsynchronousQuery();
         }
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Client
         /// <param name="cmd"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>The query id.</returns>
-        public static async Task<string> StartAsynchronousQueryAsync(SnowflakeDbCommand cmd, CancellationToken cancellationToken)
+        public static async Task<SnowflakeQueryStatus> StartAsynchronousQueryAsync(SnowflakeDbCommand cmd, CancellationToken cancellationToken)
         {
             return await cmd.StartAsynchronousQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -50,9 +50,9 @@ namespace Snowflake.Data.Client
         /// <param name="conn"></param>
         /// <param name="queryId"></param>
         /// <returns></returns>
-        public static AsynchronousQueryStatus GetAsynchronousQueryStatus(SnowflakeDbConnection conn, string queryId)
+        public static SnowflakeQueryStatus GetQueryStatus(SnowflakeDbConnection conn, string queryId)
         {
-            return GetAsynchronousQueryStatusAsync(conn, queryId, CancellationToken.None).Result;
+            return GetQueryStatusAsync(conn, queryId, CancellationToken.None).Result;
         }
 
         /// <summary>
@@ -74,24 +74,24 @@ namespace Snowflake.Data.Client
         /// <param name="queryId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<AsynchronousQueryStatus> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn,
+        public static async Task<SnowflakeQueryStatus> GetQueryStatusAsync(SnowflakeDbConnection conn,
             string queryId, CancellationToken cancellationToken)
         {
             switch (StatusMode)
             {
                 case StatusModes.HistoryFunction:
-                    return await GetStatusUsingFunction(conn, queryId, cancellationToken).ConfigureAwait(false);
+                    return await GetStatusUsingFunctionAsync(conn, queryId, cancellationToken).ConfigureAwait(false);
                 case StatusModes.HistoryView:
-                    return await GetStatusUsingView(conn, queryId, cancellationToken).ConfigureAwait(false);
+                    return await GetStatusUsingViewAsync(conn, queryId, cancellationToken).ConfigureAwait(false);
                 case StatusModes.RestApi:
-                    return await GetStatusUsingRestApi(conn, queryId, cancellationToken).ConfigureAwait(false);
+                    return await GetStatusUsingRestApiAsync(conn, queryId, cancellationToken).ConfigureAwait(false);
                 default:
                     throw new Exception("Unexpected status mode");
             }
 
         }
 
-        private static async Task<AsynchronousQueryStatus> GetStatusUsingFunction(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        private static async Task<SnowflakeQueryStatus> GetStatusUsingFunctionAsync(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
         {
             // this method has severe problems because of the query_history function.  This function has a limit to the number
             // of rows it returns, so there is no guarantee that it will return the desired query, if the system has had
@@ -122,21 +122,21 @@ namespace Snowflake.Data.Client
 
                     if (status.StartsWith("success", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new AsynchronousQueryStatus(true, true);
+                        return new SnowflakeQueryStatus(queryId, true, true);
                     }
                     else if (status.StartsWith("failed", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new AsynchronousQueryStatus(true, false);
+                        return new SnowflakeQueryStatus(queryId, true, false);
                     }
                     else
                     {
-                        return new AsynchronousQueryStatus(false, false);
+                        return new SnowflakeQueryStatus(queryId, false, false);
                     }
                 }
             }
         }
 
-        private static async Task<AsynchronousQueryStatus> GetStatusUsingRestApi(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        private static async Task<SnowflakeQueryStatus> GetStatusUsingRestApiAsync(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
         {
 
             var sfStatement = new SFStatement(conn.SfSession);
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Client
             return r;
         }
 
-        private static async Task<AsynchronousQueryStatus> GetStatusUsingView(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        private static async Task<SnowflakeQueryStatus> GetStatusUsingViewAsync(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
         {
             using (var cmd = conn.CreateCommand())
             {
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Client
                         // because QUERY_HISTORY view has such a long lag, a missing record might just mean that 
                         // the query has not shown up yet in the view, so return status assuming that is the case.
                         // if can find something more real time, should throw an exception when no record found.
-                        return new AsynchronousQueryStatus(false, false);
+                        return new SnowflakeQueryStatus(queryId, false, false);
                         // throw new Exception($"No status found for query '{queryId}'");
                     }
                     var status = (string)r["EXECUTION_STATUS"];
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Client
                     {
                         isSuccess = string.Equals("success", status, StringComparison.OrdinalIgnoreCase);
                     }
-                    return new AsynchronousQueryStatus(isDone, isSuccess);
+                    return new SnowflakeQueryStatus(queryId, isDone, isSuccess);
                 }
             }
         }

@@ -137,7 +137,7 @@ namespace Snowflake.Data.Core
         {
             if (response.success)
             {
-                return new SFResultSet(response.data, this, cancellationToken);
+                return new SFResultSet(response, this, cancellationToken);
             }
 
             throw new SnowflakeDbException(response.data.sqlState,
@@ -178,12 +178,12 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private bool RequestInProgress(QueryExecResponse r) =>
+        private static bool RequestInProgress(QueryExecResponse r) =>
             r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
 
         private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
-        internal async Task<AsynchronousQueryStatus> CheckQueryStatusAsync(int timeout, string queryId
+        internal async Task<SnowflakeQueryStatus> CheckQueryStatusAsync(int timeout, string queryId
                                                   , CancellationToken cancellationToken)
         {
             registerQueryCancellationCallback(timeout, cancellationToken);
@@ -210,7 +210,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                var d = BuildQueryStatusFromQueryResponse(response);
                 SfSession.UpdateAsynchronousQueryStatus(queryId, d);
                 return d;
             }
@@ -226,10 +226,11 @@ namespace Snowflake.Data.Core
             }
         }
 
-        AsynchronousQueryStatus BuildAsynchronousQueryStatusFromQueryResponse(QueryExecResponse response)
+        internal static SnowflakeQueryStatus BuildQueryStatusFromQueryResponse(QueryExecResponse response)
         {
             var isDone = !RequestInProgress(response);
-            var d = new AsynchronousQueryStatus(isDone
+            var d = new SnowflakeQueryStatus(response.data.queryId
+                , isDone
                 // only consider to be successful if also done
                 , isDone && response.success);
             return d;
@@ -284,7 +285,7 @@ namespace Snowflake.Data.Core
                 {
                     // if this was an asynchronous query, need to track it with the session
                     result = BuildResultSet(response, cancellationToken);
-                    var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                    var d = BuildQueryStatusFromQueryResponse(response);
                     SfSession.AddAsynchronousQueryStatus(result.queryId, d);
                 }
 
@@ -349,7 +350,7 @@ namespace Snowflake.Data.Core
                 {
                     // if this was an asynchronous query, need to track it with the session
                     result = BuildResultSet(response, CancellationToken.None);
-                    var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                    var d = BuildQueryStatusFromQueryResponse(response);
                     SfSession.AddAsynchronousQueryStatus(result.queryId, d);
                 }
 

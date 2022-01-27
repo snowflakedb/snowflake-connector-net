@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Snowflake.Data.Client
 {
-    public struct AsynchronousQueryStatus
+    public class SnowflakeQueryStatus
+
     {
         /// <summary>
         /// When true, indicates that the query has finished for one reason or another, and there is no reason to wait further for
@@ -18,8 +19,15 @@ namespace Snowflake.Data.Client
         /// </summary>
         public bool IsQuerySuccessful { get; private set; }
 
-        public AsynchronousQueryStatus(bool isQueryDone, bool isQuerySuccessful)
+        /// <summary>
+        /// The id used to track the query in Snowflake.
+        /// </summary>
+        public string QueryId { get; private set; }
+
+
+        public SnowflakeQueryStatus(string queryId, bool isQueryDone, bool isQuerySuccessful)
         {
+            this.QueryId = queryId;
             this.IsQueryDone = isQueryDone;
             this.IsQuerySuccessful = isQuerySuccessful;
         }

@@ -237,14 +237,14 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// Tracks asynchronous queries that were started by the session
         /// </summary>
-        ConcurrentDictionary<string, AsynchronousQueryStatus> AsynchronousQueryStatuses = new ConcurrentDictionary<string, AsynchronousQueryStatus>();
+        ConcurrentDictionary<string, SnowflakeQueryStatus> AsynchronousQueryStatuses = new ConcurrentDictionary<string, SnowflakeQueryStatus>();
 
         /// <summary>
         /// Updates the status of asynchronous query associated with the session
         /// </summary>
         /// <param name="queryId"></param>
         /// <param name="status"></param>
-        internal void UpdateAsynchronousQueryStatus(string queryId, AsynchronousQueryStatus status)
+        internal void UpdateAsynchronousQueryStatus(string queryId, SnowflakeQueryStatus status)
         {
             if (AsynchronousQueryStatuses.ContainsKey(queryId))
             {
@@ -258,7 +258,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="queryId"></param>
         /// <param name="status"></param>
-        internal void AddAsynchronousQueryStatus(string queryId, AsynchronousQueryStatus status)
+        internal void AddAsynchronousQueryStatus(string queryId, SnowflakeQueryStatus status)
         {
             AsynchronousQueryStatuses[queryId] = status;
         }
