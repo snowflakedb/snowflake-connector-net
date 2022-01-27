@@ -189,8 +189,8 @@ namespace Snowflake.Data.Core
             registerQueryCancellationCallback(timeout, cancellationToken);
             // rest api
             var lastResultUrl = $"/queries/{queryId}/result";
-            // sql api
-            //var lastResultUrl = "/api/statements/{queryId}";
+            //// sql api
+            //var lastResultUrl = $"/api/statements/{queryId}";
             try
             {
                 QueryExecResponse response = null;
