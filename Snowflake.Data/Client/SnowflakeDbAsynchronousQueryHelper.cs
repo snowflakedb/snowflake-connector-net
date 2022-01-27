@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Snowflake.Data.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -57,7 +58,14 @@ namespace Snowflake.Data.Client
         /// <summary>
         /// Use to determine which method to use to get query status.  Use as a toggle for testing different features.
         /// </summary>
-        private static bool UseStatusFunction = false;
+        private static StatusModes StatusMode = StatusModes.RestApi;
+
+        private enum StatusModes
+        {
+            HistoryFunction,
+            HistoryView,
+            RestApi,
+        }
 
         /// <summary>
         /// Use to get the status of a query to determine if you can fetch the result.
@@ -69,13 +77,16 @@ namespace Snowflake.Data.Client
         public static async Task<AsynchronousQueryStatus> GetAsynchronousQueryStatusAsync(SnowflakeDbConnection conn,
             string queryId, CancellationToken cancellationToken)
         {
-            if (UseStatusFunction)
+            switch (StatusMode)
             {
-                return await GetStatusUsingFunction(conn, queryId, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                return await GetStatusUsingView(conn, queryId, cancellationToken).ConfigureAwait(false);
+                case StatusModes.HistoryFunction:
+                    return await GetStatusUsingFunction(conn, queryId, cancellationToken).ConfigureAwait(false);
+                case StatusModes.HistoryView:
+                    return await GetStatusUsingView(conn, queryId, cancellationToken).ConfigureAwait(false);
+                case StatusModes.RestApi:
+                    return await GetStatusUsingRestApi(conn, queryId, cancellationToken).ConfigureAwait(false);
+                default:
+                    throw new Exception("Unexpected status mode");
             }
 
         }
@@ -123,6 +134,14 @@ namespace Snowflake.Data.Client
                     }
                 }
             }
+        }
+
+        private static async Task<AsynchronousQueryStatus> GetStatusUsingRestApi(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)
+        {
+
+            var sfStatement = new SFStatement(conn.SfSession);
+            var r = await sfStatement.CheckQueryStatusAsync(0, queryId, cancellationToken).ConfigureAwait(false);
+            return r;
         }
 
         private static async Task<AsynchronousQueryStatus> GetStatusUsingView(SnowflakeDbConnection conn, string queryId, CancellationToken cancellationToken)

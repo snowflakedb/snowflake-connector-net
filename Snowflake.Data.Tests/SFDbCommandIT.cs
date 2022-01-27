@@ -575,17 +575,22 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFDbCommandAsynchronous : SFBaseTest
     {
+        SnowflakeDbConnection StartSnowflakeConnection()
+        {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+
+            conn.Open();
+
+            return conn;
+        }
 
         [Test]
         public void TestLongRunningQuery()
         {
-            using (var conn = new SnowflakeDbConnection())
+            string queryId;
+            using (var conn = StartSnowflakeConnection())
             {
-                conn.ConnectionString = ConnectionString;
-
-                conn.Open();
-
-                string queryId;
                 using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 15)) v order by 1";
@@ -593,6 +598,11 @@ namespace Snowflake.Data.Tests
                 }
 
                 Assert.IsNotEmpty(queryId);
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
 
                 AsynchronousQueryStatus status;
                 do
@@ -608,6 +618,11 @@ namespace Snowflake.Data.Tests
 
 
                 Assert.True(status.IsQuerySuccessful);
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
 
                 using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateAsynchronousQueryResultsCommand(conn, queryId))
                 {
@@ -626,13 +641,10 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestSimpleCommand()
         {
-            using (var conn = new SnowflakeDbConnection())
+            using (var conn = StartSnowflakeConnection())
             {
-                conn.ConnectionString = ConnectionString;
-
                 string queryId;
 
-                conn.Open();
                 using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1";
@@ -642,6 +654,11 @@ namespace Snowflake.Data.Tests
 
                     Assert.IsNotEmpty(queryId);
                 }
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
 
                 // because this query is so quick, we do not need to check the status before fetching the result
 

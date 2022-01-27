@@ -183,6 +183,58 @@ namespace Snowflake.Data.Core
 
         private bool SessionExpired(QueryExecResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
 
+        internal async Task<AsynchronousQueryStatus> CheckQueryStatusAsync(int timeout, string queryId
+                                                  , CancellationToken cancellationToken)
+        {
+            registerQueryCancellationCallback(timeout, cancellationToken);
+            // rest api
+            var lastResultUrl = $"/queries/{queryId}/result";
+            // sql api
+            //var lastResultUrl = "/api/statements/{queryId}";
+            try
+            {
+                QueryExecResponse response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    var req = BuildResultRequest(lastResultUrl);
+                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+                    if (SessionExpired(response))
+                    {
+                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                        SfSession.renewSession();
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                SfSession.UpdateAsynchronousQueryStatus(queryId, d);
+                return d;
+            }
+            catch
+            {
+                logger.Error("Query execution failed.");
+                throw;
+            }
+            finally
+            {
+                CleanUpCancellationTokenSources();
+                ClearQueryRequestId();
+            }
+        }
+
+        AsynchronousQueryStatus BuildAsynchronousQueryStatusFromQueryResponse(QueryExecResponse response)
+        {
+            var isDone = !RequestInProgress(response);
+            var d = new AsynchronousQueryStatus(isDone
+                // only consider to be successful if also done
+                , isDone && response.success);
+            return d;
+        }
+
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly
             , bool asyncExec,
                                                           CancellationToken cancellationToken)
@@ -207,6 +259,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
+                SFBaseResultSet result = null;
                 if (!asyncExec)
                 {
                     var lastResultUrl = response.data?.getResultUrl;
@@ -227,8 +280,15 @@ namespace Snowflake.Data.Core
                         }
                     }
                 }
+                else
+                {
+                    // if this was an asynchronous query, need to track it with the session
+                    result = BuildResultSet(response, cancellationToken);
+                    var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                    SfSession.AddAsynchronousQueryStatus(result.queryId, d);
+                }
 
-                return BuildResultSet(response, cancellationToken);
+                return result ?? BuildResultSet(response, cancellationToken);
             }
             catch
             {
@@ -265,6 +325,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
+                SFBaseResultSet result = null;
                 if (!asyncExec)
                 {
                     var lastResultUrl = response.data?.getResultUrl;
@@ -284,8 +345,15 @@ namespace Snowflake.Data.Core
                         }
                     }
                 }
+                else
+                {
+                    // if this was an asynchronous query, need to track it with the session
+                    result = BuildResultSet(response, CancellationToken.None);
+                    var d = BuildAsynchronousQueryStatusFromQueryResponse(response);
+                    SfSession.AddAsynchronousQueryStatus(result.queryId, d);
+                }
 
-                return BuildResultSet(response, CancellationToken.None);
+                return result ?? BuildResultSet(response, CancellationToken.None);
             }
             catch (Exception ex)
             {

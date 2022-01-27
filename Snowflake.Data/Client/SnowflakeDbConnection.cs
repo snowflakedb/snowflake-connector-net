@@ -92,7 +92,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Close Connection.");
 
-            if (_connectionState != ConnectionState.Closed && SfSession != null)
+            if (_connectionState != ConnectionState.Closed && SfSession != null && SfSession.isSafeToClose())
             {
                 SfSession.close();
             }
