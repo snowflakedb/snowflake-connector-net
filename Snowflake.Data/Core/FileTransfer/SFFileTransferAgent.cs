@@ -715,7 +715,7 @@ namespace Snowflake.Data.Core
                 else
                 {
                     // Upload the file using the local client SDK and the file metadata
-                    //SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
+                    SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
                 }
             }
             catch (Exception ex)
