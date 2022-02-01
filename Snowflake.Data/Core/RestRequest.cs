@@ -95,6 +95,7 @@ namespace Snowflake.Data.Core
     internal class SFRestRequest : BaseRestRequest, IRestRequest
     {
         private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
+        private static MediaTypeWithQualityHeaderValue applicationJson = new MediaTypeWithQualityHeaderValue("application/json");
 
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
@@ -112,7 +113,9 @@ namespace Snowflake.Data.Core
         internal String authorizationToken { get; set; }
 
         internal String serviceName { get; set; }
-        
+
+        internal bool isPutGet { get; set; }
+
         public override string ToString()
         {
             return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(), 
@@ -138,7 +141,15 @@ namespace Snowflake.Data.Core
             // add quote otherwise it would be reported as error format
             string osInfo = "(" + SFEnvironment.ClientEnv.osVersion + ")";
 
-            message.Headers.Accept.Add(applicationSnowflake);
+            if (isPutGet)
+            {
+                message.Headers.Accept.Add(applicationJson);
+            }
+            else
+            {
+                message.Headers.Accept.Add(applicationSnowflake);
+            }
+
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(osInfo));
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(

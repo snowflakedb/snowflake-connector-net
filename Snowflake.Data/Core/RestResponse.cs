@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Core
 {
@@ -29,6 +30,20 @@ namespace Snowflake.Data.Core
             }
 
         }
+    }
+
+    public interface IQueryExecResponseData
+    {
+        string queryId { get; }
+
+        string sqlState { get; }
+    }
+
+    internal class BaseQueryExecResponse<T> : BaseRestResponse
+    where T : IQueryExecResponseData
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal T data { get; set; }
     }
 
     class NullDataResponse : BaseRestResponse
@@ -240,5 +255,103 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "data")]
         internal object data { get; set; }
+    }
+
+    internal class PutGetExecResponse : BaseQueryExecResponse<PutGetResponseData>
+    {
+        // Defined for easy usage/access
+    }
+
+    internal class PutGetResponseData : IQueryExecResponseData
+    {
+        [JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
+        internal string command { get; set; }
+
+        [JsonProperty(PropertyName = "src_locations", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<string> src_locations { get; set; }
+
+        [JsonProperty(PropertyName = "parallel", NullValueHandling = NullValueHandling.Ignore)]
+        internal int parallel { get; set; }
+
+        [JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
+        internal int threshold { get; set; }
+
+        [JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool autoCompress { get; set; }
+
+        [JsonProperty(PropertyName = "overwrite", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool overwrite { get; set; }
+
+        [JsonProperty(PropertyName = "sourceCompression", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sourceCompression { get; set; }
+
+        [JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
+        internal PutGetStageInfo stageInfo { get; set; }
+
+        [JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
+        internal PutGetEncryptionMaterial encryptionMaterial { get; set; }
+
+        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        public string queryId { get; set; }
+
+        [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
+        public string sqlState { get; set; }
+
+        [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal string presignedUrl { get; set; }
+
+        [JsonProperty(PropertyName = "rowtype", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<ExecResponseRowType> rowType { get; set; }
+
+        [JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
+        internal string[,] rowSet { get; set; }
+
+        [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<NameValueParameter> parameters { get; set; }
+
+        [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 statementTypeId { get; set; }
+    }
+
+    internal class PutGetStageInfo
+    {
+        [JsonProperty(PropertyName = "locationType", NullValueHandling = NullValueHandling.Ignore)]
+        internal string locationType { get; set; }
+
+        [JsonProperty(PropertyName = "location", NullValueHandling = NullValueHandling.Ignore)]
+        internal string location { get; set; }
+
+        [JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
+        internal string path { get; set; }
+
+        [JsonProperty(PropertyName = "region", NullValueHandling = NullValueHandling.Ignore)]
+        internal string region { get; set; }
+
+        [JsonProperty(PropertyName = "storageAccount", NullValueHandling = NullValueHandling.Ignore)]
+        internal string storageAccount { get; set; }
+
+        [JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool isClientSideEncrypted { get; set; }
+
+        [JsonProperty(PropertyName = "creds", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<string, string> stageCredentials { get; set; }
+
+        [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal string presignedUrl { get; set; }
+
+        [JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
+        internal string endPoint { get; set; }
+    }
+
+    internal class PutGetEncryptionMaterial
+    {
+        [JsonProperty(PropertyName = "queryStageMasterKey", NullValueHandling = NullValueHandling.Ignore)]
+        internal string queryStageMasterKey { get; set; }
+
+        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        internal string queryId { get; set; }
+
+        [JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
+        internal long smkId { get; set; }
     }
 } 
