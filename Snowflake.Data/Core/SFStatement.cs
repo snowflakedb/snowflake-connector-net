@@ -269,7 +269,7 @@ namespace Snowflake.Data.Core
                     fileTransferAgent.execute();
 
                     // Get the results of the upload/download
-                    return fileTransferAgent.result();
+                    //return fileTransferAgent.result();
                 }
                 else
                 {

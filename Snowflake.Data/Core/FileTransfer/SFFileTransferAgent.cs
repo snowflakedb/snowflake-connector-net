@@ -184,54 +184,54 @@ namespace Snowflake.Data.Core
             }
         }
 
-        /// <summary>
-        /// Generate the result set based on the file metadata.
-        /// </summary>
-        /// <returns>The result set containing file status and info</returns>
-        public SFBaseResultSet result()
-        {
-            // Set the row count using the number of metadata in the result metas
-            TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
+        ///// <summary>
+        ///// Generate the result set based on the file metadata.
+        ///// </summary>
+        ///// <returns>The result set containing file status and info</returns>
+        //public SFBaseResultSet result()
+        //{
+        //    // Set the row count using the number of metadata in the result metas
+        //    TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
 
-            // For each file metadata, set the result set variables
-            for (int index = 0; index < ResultsMetas.Count; index++)
-            {
-                TransferMetadata.rowSet[index, 0] = ResultsMetas[index].srcFileName;
-                TransferMetadata.rowSet[index, 1] = ResultsMetas[index].destFileName;
-                TransferMetadata.rowSet[index, 2] = ResultsMetas[index].srcFileSize.ToString();
-                TransferMetadata.rowSet[index, 3] = ResultsMetas[index].destFileSize.ToString();
-                TransferMetadata.rowSet[index, 4] = ResultsMetas[index].resultStatus;
+        //    // For each file metadata, set the result set variables
+        //    for (int index = 0; index < ResultsMetas.Count; index++)
+        //    {
+        //        TransferMetadata.rowSet[index, 0] = ResultsMetas[index].srcFileName;
+        //        TransferMetadata.rowSet[index, 1] = ResultsMetas[index].destFileName;
+        //        TransferMetadata.rowSet[index, 2] = ResultsMetas[index].srcFileSize.ToString();
+        //        TransferMetadata.rowSet[index, 3] = ResultsMetas[index].destFileSize.ToString();
+        //        TransferMetadata.rowSet[index, 4] = ResultsMetas[index].resultStatus;
 
-                if (ResultsMetas[index].lastError != null)
-                {
-                    TransferMetadata.rowSet[index, 5] = ResultsMetas[index].lastError.ToString();
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, 5] = null;
-                }
+        //        if (ResultsMetas[index].lastError != null)
+        //        {
+        //            TransferMetadata.rowSet[index, 5] = ResultsMetas[index].lastError.ToString();
+        //        }
+        //        else
+        //        {
+        //            TransferMetadata.rowSet[index, 5] = null;
+        //        }
 
-                if (ResultsMetas[index].sourceCompression.Name != null)
-                {
-                    TransferMetadata.rowSet[index, 6] = ResultsMetas[index].sourceCompression.Name;
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, 6] = null;
-                }
+        //        if (ResultsMetas[index].sourceCompression.Name != null)
+        //        {
+        //            TransferMetadata.rowSet[index, 6] = ResultsMetas[index].sourceCompression.Name;
+        //        }
+        //        else
+        //        {
+        //            TransferMetadata.rowSet[index, 6] = null;
+        //        }
 
-                if (ResultsMetas[index].targetCompression.Name != null)
-                {
-                    TransferMetadata.rowSet[index, 7] = ResultsMetas[index].targetCompression.Name;
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, 7] = null;
-                }
-            }
+        //        if (ResultsMetas[index].targetCompression.Name != null)
+        //        {
+        //            TransferMetadata.rowSet[index, 7] = ResultsMetas[index].targetCompression.Name;
+        //        }
+        //        else
+        //        {
+        //            TransferMetadata.rowSet[index, 7] = null;
+        //        }
+        //    }
             
-            return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
-        }
+        //    return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
+        //}
 
         /// <summary>
         /// Upload files sequentially or in parallel.
@@ -715,7 +715,7 @@ namespace Snowflake.Data.Core
                 else
                 {
                     // Upload the file using the local client SDK and the file metadata
-                    SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
+                    //SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
                 }
             }
             catch (Exception ex)
