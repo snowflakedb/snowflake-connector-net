@@ -7,7 +7,10 @@ Snowflake Connector for .NET
 
 The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
 
-Library target is under .NET Framework 4.7.2 and .NET Standard 2.0.
+The Snowflake .NET connector supports the the following minimum .NET framework and libraries versions:
+- .NET Framework 4.7.2
+- .NET Framework 4.7.3
+- .NET Core2.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
