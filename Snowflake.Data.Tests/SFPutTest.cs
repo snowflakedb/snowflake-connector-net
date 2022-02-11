@@ -31,6 +31,10 @@ namespace Snowflake.Data.Tests
             string SCHEMA_NAME = testConfig.schema;
             const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
 
+            Console.WriteLine(testConfig.host);
+            Console.WriteLine(testConfig.database);
+            Console.WriteLine(testConfig.schema);
+
             const string UPLOADED = "UPLOADED";
 
             const string COL1 = "C1";
@@ -122,6 +126,6 @@ namespace Snowflake.Data.Tests
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
-        }        
+        }
     }
 }
