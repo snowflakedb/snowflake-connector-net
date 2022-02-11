@@ -33,11 +33,6 @@ namespace Snowflake.Data.Tests
 
             const string UPLOADED = "UPLOADED";
 
-            Console.WriteLine("host: " + testConfig.host);
-            Console.WriteLine("account: " + testConfig.account);
-            Console.WriteLine("db: " + testConfig.database);
-            Console.WriteLine("schema: " + testConfig.schema);
-
             const string COL1 = "C1";
             const string COL2 = "C2";
             const string COL3 = "C3";
