@@ -31,11 +31,12 @@ namespace Snowflake.Data.Tests
             string SCHEMA_NAME = testConfig.schema;
             const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
 
-            Console.WriteLine(testConfig.host);
-            Console.WriteLine(testConfig.database);
-            Console.WriteLine(testConfig.schema);
-
             const string UPLOADED = "UPLOADED";
+
+            Console.WriteLine("host: " + testConfig.host);
+            Console.WriteLine("account: " + testConfig.account);
+            Console.WriteLine("db: " + testConfig.database);
+            Console.WriteLine("schema: " + testConfig.schema);
 
             const string COL1 = "C1";
             const string COL2 = "C2";
