@@ -24,6 +24,11 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestBasicConnection()
         {
+            Console.WriteLine("host: " + testConfig.host);
+            Console.WriteLine("account: " + testConfig.account);
+            Console.WriteLine("db: " + testConfig.database);
+            Console.WriteLine("schema: " + testConfig.schema);
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
