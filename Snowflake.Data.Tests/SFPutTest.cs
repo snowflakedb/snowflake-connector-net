@@ -81,9 +81,6 @@ namespace Snowflake.Data.Tests
                     {
                         // Check file status
                         Assert.AreEqual(reader.GetString(4), UPLOADED);
-                        // Check source and destination compression type
-                        Assert.AreEqual(reader.GetString(6));
-                        Assert.AreEqual(reader.GetString(7));
                     }
 
                     // Copy into temp table
