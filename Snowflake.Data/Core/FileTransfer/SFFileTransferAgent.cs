@@ -696,6 +696,9 @@ namespace Snowflake.Data.Core
             // Create tmp folder to store compressed files
             fileMetadata.tmpDir = GetTemporaryDirectory();
 
+            Console.WriteLine("Source file path: " + fileMetadata.srcFilePath);
+            Console.WriteLine("Temp directory: " + fileMetadata.tmpDir);
+
             try
             {
                 // Compress the file if needed
@@ -703,6 +706,8 @@ namespace Snowflake.Data.Core
                 {
                     compressFileWithGzip(fileMetadata);                
                 }
+
+                Console.WriteLine("Real source file path: " + fileMetadata.srcFilePath);
 
                 // Calculate the digest
                 getDigestAndSizeForFile(fileMetadata);

@@ -19,13 +19,7 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
-        [TestCase("gzip")]
-        [TestCase("bzip2")]
-        [TestCase("brotli")]
-        [TestCase("deflate")]
-        [TestCase("raw_deflate")]
-        [TestCase("zstd")]
-        public void TestPutCommand(string compressionType)
+        public void TestPutCommand()
         {
             string DATABASE_NAME = testConfig.database;
             string SCHEMA_NAME = testConfig.schema;
@@ -65,6 +59,7 @@ namespace Snowflake.Data.Tests
                 File.WriteAllText(filePath, ROW_DATA);
 
                 string putQuery = $"PUT file://${filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                Console.WriteLine("Put Query: " + putQuery);
 
                 // Windows user contains a '~' in the path which causes an error
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
