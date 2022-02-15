@@ -58,6 +58,14 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal SFResultSetMetaData(PutResponseData putGetResponseData)
+        {
+            rowTypes = putGetResponseData.rowType;
+            columnCount = rowTypes.Count;
+            statementType = findStatementTypeById(putGetResponseData.statementTypeId);
+            columnTypes = InitColumnTypes();
+        }
+
         private List<Tuple<SFDataType, Type>> InitColumnTypes()
         {
             List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();

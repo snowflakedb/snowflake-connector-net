@@ -550,10 +550,7 @@ namespace Snowflake.Data.Tests
                     command.CommandText = "insert into test_rows_affected_unload values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = "drop stage if exists my_unload_stage";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "create stage if not exists my_unload_stage";
+                    command.CommandText = "create stage my_unload_stage";
                     command.ExecuteNonQuery();
 
                     command.CommandText = "copy into @my_unload_stage/unload/ from test_rows_affected_unload;";
