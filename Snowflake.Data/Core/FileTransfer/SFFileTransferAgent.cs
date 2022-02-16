@@ -156,6 +156,7 @@ namespace Snowflake.Data.Core
 
             // Initialize the list of actual files to upload
             List<string> expandedSrcLocations = new List<string>(); ;
+            Console.WriteLine(TransferMetadata.src_locations);
             foreach (string location in TransferMetadata.src_locations)
             {
                 expandedSrcLocations.AddRange(expandFileNames(location));

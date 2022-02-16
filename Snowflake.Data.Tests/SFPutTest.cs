@@ -16,10 +16,16 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFPutTest : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFPutTest>();
 
         [Test]
-        public void TestPutCommand()
+        [TestCase("gzip")]
+        [TestCase("bzip2")]
+        [TestCase("brotli")]
+        [TestCase("deflate")]
+        [TestCase("raw_deflate")]
+        [TestCase("zstd")]
+        public void TestPutCommand(string compressionType)
         {
             string DATABASE_NAME = testConfig.database;
             string SCHEMA_NAME = testConfig.schema;
@@ -54,7 +60,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 // Create a temp file with specified file extension
-                string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv";
+                string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv." + compressionType;
                 // Write row data to temp file
                 File.WriteAllText(filePath, ROW_DATA);
 
@@ -81,6 +87,9 @@ namespace Snowflake.Data.Tests
                     {
                         // Check file status
                         Assert.AreEqual(reader.GetString(4), UPLOADED);
+                        // Check source and destination compression type
+                        Assert.AreEqual(reader.GetString(6), compressionType);
+                        Assert.AreEqual(reader.GetString(7), compressionType);
                     }
 
                     // Copy into temp table
