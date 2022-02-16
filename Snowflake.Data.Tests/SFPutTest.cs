@@ -20,11 +20,11 @@ namespace Snowflake.Data.Tests
 
         [Test]
         [TestCase("gzip")]
-        //[TestCase("bzip2")]
-        //[TestCase("brotli")]
-        //[TestCase("deflate")]
-        //[TestCase("raw_deflate")]
-        //[TestCase("zstd")]
+        [TestCase("bzip2")]
+        [TestCase("brotli")]
+        [TestCase("deflate")]
+        [TestCase("raw_deflate")]
+        [TestCase("zstd")]
         public void TestPutCommand(string compressionType)
         {
             string DATABASE_NAME = testConfig.database;
