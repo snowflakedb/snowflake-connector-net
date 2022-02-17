@@ -446,7 +446,7 @@ namespace Snowflake.Data.Core
                 location = location.Replace("~", homePath);
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Console.WriteLine("Location 1: " + location);
                 location = Path.GetFullPath(location);
