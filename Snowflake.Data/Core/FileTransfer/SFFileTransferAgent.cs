@@ -94,7 +94,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// The transfer metadata. Applies to all files being transfered
         /// </summary>
-        private readonly PutResponseData TransferMetadata;
+        private readonly PutGetResponseData TransferMetadata;
 
         /// <summary>
         /// The path to the user home directory.
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Core
         public SFFileTransferAgent(
             string query,
             SFSession session,
-            PutResponseData responseData,
+            PutGetResponseData responseData,
             CancellationToken cancellationToken)
         {
             Query = query;
@@ -296,8 +296,8 @@ namespace Snowflake.Data.Core
             SFStatement sfStatement = new SFStatement(Session);
             sfStatement.isPutGetQuery = true;
 
-            PutExecResponse response =
-                sfStatement.ExecuteHelper<PutExecResponse, PutResponseData>(
+            PutGetExecResponse response =
+                sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
                     0,
                     queryWithSingleFile,
                     null,
@@ -635,8 +635,8 @@ namespace Snowflake.Data.Core
         {
             SFStatement sfStatement = new SFStatement(Session);
 
-            PutExecResponse response =
-                sfStatement.ExecuteHelper<PutExecResponse, PutResponseData>(
+            PutGetExecResponse response =
+                sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
                     0,
                     TransferMetadata.command,
                     null,
