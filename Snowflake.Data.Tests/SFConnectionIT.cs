@@ -262,14 +262,18 @@ namespace Snowflake.Data.Tests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
+                    if (e.InnerException is SnowflakeDbException)
+                    {
+                        Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                        stopwatch.Stop();
+                        // Should timeout after the default timeout (120 sec)
+                        Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                        // But never more than 16 sec (max backoff) after the default timeout
+                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                    }
                 }
-                stopwatch.Stop();
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
             }
         }
 
