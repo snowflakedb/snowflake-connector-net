@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -445,9 +446,12 @@ namespace Snowflake.Data.Core
                 location = location.Replace("~", homePath);
             }
 
-            Console.WriteLine("Location 1: " + location);
-            location = Path.GetFullPath(location);
-            Console.WriteLine("Location 2: " + location);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Console.WriteLine("Location 1: " + location);
+                location = Path.GetFullPath(location);
+                Console.WriteLine("Location 2: " + location);
+            }
 
             String fileName = Path.GetFileName(location);
             Console.WriteLine("Filename: " + fileName);
