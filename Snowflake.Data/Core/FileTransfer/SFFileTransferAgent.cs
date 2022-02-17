@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -93,7 +94,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// The transfer metadata. Applies to all files being transfered
         /// </summary>
-        private readonly PutGetResponseData TransferMetadata;
+        private readonly PutResponseData TransferMetadata;
 
         /// <summary>
         /// The path to the user home directory.
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Core
         public SFFileTransferAgent(
             string query,
             SFSession session,
-            PutGetResponseData responseData,
+            PutResponseData responseData,
             CancellationToken cancellationToken)
         {
             Query = query;
@@ -295,8 +296,8 @@ namespace Snowflake.Data.Core
             SFStatement sfStatement = new SFStatement(Session);
             sfStatement.isPutGetQuery = true;
 
-            PutGetExecResponse response =
-                sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+            PutExecResponse response =
+                sfStatement.ExecuteHelper<PutExecResponse, PutResponseData>(
                     0,
                     queryWithSingleFile,
                     null,
@@ -433,6 +434,7 @@ namespace Snowflake.Data.Core
         /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
         private List<string> expandFileNames(string location)
         {
+            Console.WriteLine("Expandlocation: " + location);
             // Replace ~ with the user home directory path
             if (location.Contains("~"))
             {
@@ -444,7 +446,17 @@ namespace Snowflake.Data.Core
                 location = location.Replace("~", homePath);
             }
 
-            location = Path.GetFullPath(location);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                location = Path.GetFullPath(location);
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                location = location.Substring(1);
+            }
+
             String fileName = Path.GetFileName(location);
             string directoryName = Path.GetDirectoryName(location);
 
@@ -623,8 +635,8 @@ namespace Snowflake.Data.Core
         {
             SFStatement sfStatement = new SFStatement(Session);
 
-            PutGetExecResponse response =
-                sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+            PutExecResponse response =
+                sfStatement.ExecuteHelper<PutExecResponse, PutResponseData>(
                     0,
                     TransferMetadata.command,
                     null,
