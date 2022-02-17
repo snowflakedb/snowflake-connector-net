@@ -445,9 +445,15 @@ namespace Snowflake.Data.Core
                 location = location.Replace("~", homePath);
             }
 
+            Console.WriteLine("Location 1: " + location);
             location = Path.GetFullPath(location);
+            Console.WriteLine("Location 2: " + location);
+
             String fileName = Path.GetFileName(location);
+            Console.WriteLine("Filename: " + fileName);
+
             string directoryName = Path.GetDirectoryName(location);
+            Console.WriteLine("Dirname: " + directoryName);
 
             List<string> filePaths = new List<string>();
             //filePaths.Add(""); //Start with an empty string to build upon
