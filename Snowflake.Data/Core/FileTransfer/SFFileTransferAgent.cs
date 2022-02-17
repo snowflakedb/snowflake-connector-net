@@ -453,6 +453,11 @@ namespace Snowflake.Data.Core
                 Console.WriteLine("Location 2: " + location);
             }
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                location = location.Substring(1);
+            }
+
             String fileName = Path.GetFileName(location);
             Console.WriteLine("Filename: " + fileName);
 
@@ -553,6 +558,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
+                Console.WriteLine("Attribute location: " + location);
                 // No wild card, just make sure it's a file
                 FileAttributes attr = File.GetAttributes(location);
                 if (!attr.HasFlag(FileAttributes.Directory))
