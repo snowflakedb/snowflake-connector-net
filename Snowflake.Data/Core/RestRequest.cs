@@ -265,6 +265,12 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "bindings")]
         internal Dictionary<string, BindingDTO> parameterBindings { get; set; }
+
+        /// <summary>
+        /// indicates whether query should be asynchronous
+        /// </summary>
+        [JsonProperty(PropertyName = "asyncExec")]
+        internal bool asyncExec { get; set; } = false;
     }
 
     class QueryCancelRequest

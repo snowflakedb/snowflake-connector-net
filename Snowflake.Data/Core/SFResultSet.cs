@@ -23,11 +23,16 @@ namespace Snowflake.Data.Core
 
         private IResultChunk _currentChunk;
 
-        public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        internal SFResultSet(QueryExecResponse response, SFStatement sfStatement, CancellationToken cancellationToken) 
+            : base(SFStatement.BuildQueryStatusFromQueryResponse(response))
         {
-            columnCount = responseData.rowType.Count;
+            QueryExecResponseData responseData = response.data;
+            // async result will not provide parameters, so need to set
+            responseData.parameters = responseData.parameters ?? new System.Collections.Generic.List<NameValueParameter>();
+
+            columnCount = responseData.rowType?.Count ?? 0;
             _currentChunkRowIdx = -1;
-            _currentChunkRowCount = responseData.rowSet.GetLength(0);
+            _currentChunkRowCount = responseData.rowSet?.GetLength(0) ?? 0;
            
             this.sfStatement = sfStatement;
             updateSessionStatus(responseData);

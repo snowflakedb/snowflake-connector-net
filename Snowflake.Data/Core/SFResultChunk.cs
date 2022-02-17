@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
         public SFResultChunk(string[,] rowSet)
         {
             this.rowSet = rowSet;
-            this.rowCount = rowSet.GetLength(0);
+            this.rowCount = rowSet?.GetLength(0) ?? 0;
             this.downloadState = DownloadState.NOT_STARTED;
         }
 

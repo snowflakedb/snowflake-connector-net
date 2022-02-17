@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace Snowflake.Data.Core
 {
@@ -162,7 +163,7 @@ namespace Snowflake.Data.Core
             catch (Exception e)
             {
                 logger.Error("Unable to connect", e);
-                throw new SnowflakeDbException(e.InnerException,
+                throw new SnowflakeDbException(e,
                             SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
@@ -231,6 +232,64 @@ namespace Snowflake.Data.Core
             }
 
             await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tracks asynchronous queries that were started by the session
+        /// </summary>
+        ConcurrentDictionary<string, SnowflakeQueryStatus> AsynchronousQueryStatuses = new ConcurrentDictionary<string, SnowflakeQueryStatus>();
+
+        /// <summary>
+        /// Updates the status of asynchronous query associated with the session
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="status"></param>
+        internal void UpdateAsynchronousQueryStatus(string queryId, SnowflakeQueryStatus status)
+        {
+            if (AsynchronousQueryStatuses.ContainsKey(queryId))
+            {
+                // only track the status if the query was previously associated with this session
+                AsynchronousQueryStatuses[queryId] = status;
+            }
+        }
+
+        /// <summary>
+        /// Associates an asynchronous query with the session
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="status"></param>
+        internal void AddAsynchronousQueryStatus(string queryId, SnowflakeQueryStatus status)
+        {
+            AsynchronousQueryStatuses[queryId] = status;
+        }
+
+
+        /// <summary>
+        /// Function that checks if the active session can be closed when the connection is closed. If
+        /// there are active asynchronous queries running, the session should stay open even if the
+        /// connection closes so that the queries can finish running.
+        /// </summary>
+        /// <returns>true if it is safe to close this session, false if not</returns>
+        internal bool isSafeToClose()
+        {
+            foreach (var item in AsynchronousQueryStatuses)
+            {
+                if (!item.Value.IsQueryDone)
+                {
+                    // since the last check of the query indicates it was not done, perform another check
+
+                    var sfStatement = new SFStatement(this);
+                    var status = sfStatement.CheckQueryStatusAsync(0, item.Key, CancellationToken.None).Result;
+                    if (!status.IsQueryDone)
+                    {
+                        // query is still not done, so it is not safe to close the session, or else
+                        // the asynchronous query will be cancelled
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         internal void close()

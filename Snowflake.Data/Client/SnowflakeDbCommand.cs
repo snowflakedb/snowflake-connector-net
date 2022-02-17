@@ -25,6 +25,11 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        /// <summary>
+        /// When true, will expect the CommandText to have the query id and will get a result from an existing query
+        /// </summary>
+        internal bool HandleAsyncResponse = false;
+
         public SnowflakeDbCommand()
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
@@ -151,6 +156,32 @@ namespace Snowflake.Data.Client
         {
             // doesn't throw exception when sfStatement is null
             sfStatement?.Cancel();
+        }
+
+        /// <summary>
+        /// Starts a query asynchronously.
+        /// </summary>
+        /// <returns>The query id.</returns>
+        public SnowflakeQueryStatus StartAsynchronousQuery()
+        {
+            logger.Debug($"StartAsynchronousQuery, command: {CommandText}");
+            SFBaseResultSet resultSet = ExecuteInternal(asyncExec:true);
+            return resultSet.queryStatus;
+        }
+
+        /// <summary>
+        /// Starts a query asynchronously.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query id.</returns>
+        public async Task<SnowflakeQueryStatus> StartAsynchronousQueryAsync(CancellationToken cancellationToken)
+        {
+            logger.Debug($"StartAsynchronousQueryAsync, command: {CommandText}");
+            if (cancellationToken.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+            return resultSet.queryStatus;
         }
 
         public override int ExecuteNonQuery()
@@ -302,16 +333,32 @@ namespace Snowflake.Data.Client
             this.sfStatement = new SFStatement(session);
         }
 
-        private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
+        private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+            if (HandleAsyncResponse)
+            {
+                return sfStatement.GetQueryResultAsync(CommandTimeout, CommandText, CancellationToken.None).Result;
+            }
+            else
+            {
+                return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly
+                    , asyncExec: asyncExec);
+            }
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false
+            , bool asyncExec = false)
         {
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+            if (HandleAsyncResponse)
+            {
+                return sfStatement.GetQueryResultAsync(CommandTimeout, CommandText, cancellationToken);
+            }
+            else
+            {
+                return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
+            }
         }
     }
 }

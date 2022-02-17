@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core
         internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
         {
             rowTypes = queryExecResponseData.rowType;
-            columnCount = rowTypes.Count;
+            columnCount = rowTypes?.Count ?? 0;
             statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
             

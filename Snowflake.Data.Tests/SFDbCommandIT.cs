@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests
 
     }
 
-    [TestFixture]    
+    [TestFixture]
     class SFDbCommandIT : SFBaseTest
     {
         [Test]
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests
                     cmd.CommandType = CommandType.StoredProcedure;
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270009, e.ErrorCode);
                 }
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests
                     cmd.UpdatedRowSource = UpdateRowSource.FirstReturnedRecord;
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270009, e.ErrorCode);
                 }
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests
                     cmd.Connection = null;
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270009, e.ErrorCode);
                 }
@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests
                     ((SnowflakeDbCommand)cmd).DesignTimeVisible = true;
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270009, e.ErrorCode);
                 }
@@ -212,7 +212,7 @@ namespace Snowflake.Data.Tests
         // Skip SimpleLargeResultSet test on GCP as it will fail
         // on row 8192 consistently on Appveyor.
         [IgnoreOnEnvIs("snowflake_cloud_env",
-                       new string[] {"GCP" })]
+                       new string[] { "GCP" })]
         public void TestSimpleLargeResultSet()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -334,7 +334,7 @@ namespace Snowflake.Data.Tests
                         cmd.ExecuteScalar();
                         Assert.Fail();
                     }
-                    catch(SnowflakeDbException e)
+                    catch (SnowflakeDbException e)
                     {
                         // 604 is error code from server meaning query has been canceled
                         if (604 != e.ErrorCode)
@@ -383,7 +383,7 @@ namespace Snowflake.Data.Tests
                 // timelimit = 17min
                 cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 1020)) v";
                 // timeout = 16min - Using a timeout > default Rest timeout of 15min
-                cmd.CommandTimeout = 16*60; 
+                cmd.CommandTimeout = 16 * 60;
 
                 try
                 {
@@ -396,7 +396,7 @@ namespace Snowflake.Data.Tests
                     Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 16 * 60 * 1000);
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     // 604 is error code from server meaning query has been canceled
                     Assert.AreEqual(e.ErrorCode, 604);
@@ -450,7 +450,7 @@ namespace Snowflake.Data.Tests
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
                 command.Transaction.Rollback();
-                
+
                 // no value will be in table since it has been rollbacked
                 command.CommandText = "select * from testtransaction";
                 reader = command.ExecuteReader();
@@ -475,7 +475,7 @@ namespace Snowflake.Data.Tests
 
             int[] expectedResult =
             {
-                0, 2, 1, 0 
+                0, 2, 1, 0
             };
 
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -487,7 +487,7 @@ namespace Snowflake.Data.Tests
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     int rowsAffected = -1;
-                    for (int i=0; i<testCommands.Length; i++)
+                    for (int i = 0; i < testCommands.Length; i++)
                     {
                         command.CommandText = testCommands[i];
                         rowsAffected = command.ExecuteNonQuery();
@@ -496,7 +496,7 @@ namespace Snowflake.Data.Tests
                     }
                 }
                 conn.Close();
-            }    
+            }
         }
 
         [Test]
@@ -521,11 +521,11 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCreateCommandBeforeOpeningConnection()
         {
-            using(var conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                
-                using(var command = conn.CreateCommand())
+
+                using (var command = conn.CreateCommand())
                 {
                     conn.Open();
                     command.CommandText = "select 1";
@@ -570,5 +570,131 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+    }
+
+    [TestFixture]
+    class SFDbCommandAsynchronous : SFBaseTest
+    {
+        SnowflakeDbConnection StartSnowflakeConnection()
+        {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+
+            conn.Open();
+
+            return conn;
+        }
+
+        [Test]
+        public void TestLongRunningQuery()
+        {
+            string queryId;
+            using (var conn = StartSnowflakeConnection())
+            {
+                using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 15)) v order by 1";
+                    var status = cmd.StartAsynchronousQuery();
+                    Assert.False(status.IsQueryDone);
+                    Assert.False(status.IsQuerySuccessful);
+                    queryId = status.QueryId;
+                }
+
+                Assert.IsNotEmpty(queryId);
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
+
+                SnowflakeQueryStatus status;
+                do
+                {
+                    status = SnowflakeDbAsynchronousQueryHelper.GetQueryStatus(conn, queryId);
+                    if (status.IsQueryDone)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Assert.False(status.IsQuerySuccessful);
+                    }
+
+                    Thread.Sleep(5000);
+                } while (true);
+
+
+                // once it finished, it should be successfull
+                Assert.True(status.IsQuerySuccessful);
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
+
+                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateQueryResultsCommand(conn, queryId))
+                {
+                    using (IDataReader reader = cmd.ExecuteReader())
+                    {
+                        // only one result is returned
+                        Assert.IsTrue(reader.Read());
+                    }
+                }
+
+                conn.Close();
+            }
+
+        }
+
+        [Test]
+        public void TestSimpleCommand()
+        {
+            string queryId;
+
+            using (var conn = StartSnowflakeConnection())
+            {
+
+                using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    cmd.CommandText = "select 1";
+
+                    var status = cmd.StartAsynchronousQuery();
+                    // even a fast asynchronous call will not be done initially
+                    Assert.False(status.IsQueryDone);
+                    Assert.False(status.IsQuerySuccessful);
+                    queryId = status.QueryId;
+
+                    Assert.IsNotEmpty(queryId);
+                }
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
+                SnowflakeQueryStatus status;
+                status = SnowflakeDbAsynchronousQueryHelper.GetQueryStatus(conn, queryId);
+                // since query is so fast, expect it to be done the first time we check the status
+                Assert.True(status.IsQueryDone);
+                Assert.True(status.IsQuerySuccessful);
+            }
+
+            // start a new connection to make sure works across sessions
+            using (var conn = StartSnowflakeConnection())
+            {
+
+                // because this query is so quick, we do not need to check the status before fetching the result
+
+                using (var cmd = SnowflakeDbAsynchronousQueryHelper.CreateQueryResultsCommand(conn, queryId))
+                {
+                    var val = cmd.ExecuteScalar();
+
+                    Assert.AreEqual(1L, (long)val);
+
+                }
+
+                conn.Close();
+            }
+        }
+
     }
 }
