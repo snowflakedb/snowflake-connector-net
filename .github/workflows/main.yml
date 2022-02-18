@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         dotnet: ['2.2.207']
-        cloud_env: ['AWS']
+        cloud_env: ['AWS', 'GCS', 'AZURE']
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -63,7 +63,7 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0']
-        cloud_env: ['aws']
+        cloud_env: ['aws', 'gcs', 'azure']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
