@@ -56,7 +56,7 @@ jobs:
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
 
   test-linux:
-    needs: test
+    needs: build-core
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
