@@ -123,7 +123,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Expand '~' and '~user' expressions
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                stageLocation = Path.GetFullPath(stageLocation);
+                Console.WriteLine("stageLocation before: " + stageLocation);
+                //stageLocation = Path.GetFullPath(stageLocation);
+                Console.WriteLine("stageLocation after: " + Path.GetFullPath(stageLocation));
             }
 
             string bucketName = stageLocation;
@@ -160,7 +162,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             Console.WriteLine("stage info location: " + stageInfo.location);
 
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-            Console.WriteLine("location bucket: " + location.bucket);
 
             // Get the client
             SFS3Client SFS3Client = (SFS3Client) fileMetadata.client;
