@@ -451,8 +451,8 @@ namespace Snowflake.Data.Core
             {
                 location = Path.GetFullPath(location);
             }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+                RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 location = location.Substring(1);
             }
