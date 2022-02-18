@@ -181,6 +181,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
+                Console.WriteLine("1 ex: " + ex.InnerException);
+                Console.WriteLine("1 msg: " + ex.InnerException.Message);
+
                 AmazonS3Exception err = (AmazonS3Exception) ex.InnerException;
                 if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
                 {
@@ -298,6 +301,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
+                Console.WriteLine("2 ex: " + ex.InnerException);
+                Console.WriteLine("2 msg: " + ex.InnerException.Message);
+
                 AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
                 if (err.ErrorCode == EXPIRED_TOKEN)
                 {

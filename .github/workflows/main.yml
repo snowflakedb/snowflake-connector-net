@@ -24,6 +24,8 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
   # This workflow contains a single job called "build"
   build-core:
     name: Build-Core
@@ -32,13 +34,11 @@ jobs:
     strategy:
       matrix:
         dotnet: ['2.2.207']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
-
+        cloud_env: ['AWS']
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
       #Setup .NET
       - uses: actions/checkout@main
       - name: Setup Dotnet
@@ -58,15 +58,14 @@ jobs:
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
 
   test-linux:
-    needs: [build-core]
+    needs: test
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['netcoreapp2.0']
-        cloud_env: ['gcp', 'azure', 'aws']
+        cloud_env: ['aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
