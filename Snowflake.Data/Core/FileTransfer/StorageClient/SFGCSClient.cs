@@ -47,7 +47,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The HTTP client to make requests.
         /// </summary>
-        private static readonly HttpClient HttpClient = new HttpClient();
+        private HttpClient HttpClient;
 
         /// <summary>
         /// GCS client with access token.
@@ -69,6 +69,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
+
+            HttpClient = new HttpClient();
         }
 
         /// <summary>
