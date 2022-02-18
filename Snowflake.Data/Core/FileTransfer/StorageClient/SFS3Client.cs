@@ -157,7 +157,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
         {
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            Console.WriteLine("stage info location: " + stageInfo.location);
+
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+            Console.WriteLine("location bucket: " + location.bucket);
 
             // Get the client
             SFS3Client SFS3Client = (SFS3Client) fileMetadata.client;
@@ -169,6 +172,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 BucketName = location.bucket,
                 Key = location.key + fileMetadata.destFileName
             };
+
+            Console.WriteLine("AWS bucket name: " + request.BucketName);
+            Console.WriteLine("AWS key name: " + request.Key);
 
             GetObjectResponse response = null;
             try
@@ -182,7 +188,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Console.WriteLine("1 ex: " + ex.InnerException);
-                Console.WriteLine("1 msg: " + ex.InnerException.Message);
 
                 AmazonS3Exception err = (AmazonS3Exception) ex.InnerException;
                 if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
@@ -302,7 +307,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Console.WriteLine("2 ex: " + ex.InnerException);
-                Console.WriteLine("2 msg: " + ex.InnerException.Message);
 
                 AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
                 if (err.ErrorCode == EXPIRED_TOKEN)
