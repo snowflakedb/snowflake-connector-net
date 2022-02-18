@@ -121,10 +121,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
         {
             // Expand '~' and '~user' expressions
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                stageLocation = Path.GetFullPath(stageLocation);
-            }
+            //if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            //{
+            //    stageLocation = Path.GetFullPath(stageLocation);
+            //}
 
             string bucketName = stageLocation;
             string s3path = "";
