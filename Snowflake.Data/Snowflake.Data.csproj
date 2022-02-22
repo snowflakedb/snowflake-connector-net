@@ -22,6 +22,10 @@
   </PropertyGroup>
 	
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="2.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+    <PackageReference Include="Azure.Storage.Common" Version="12.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="log4net" Version="2.0.12" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
