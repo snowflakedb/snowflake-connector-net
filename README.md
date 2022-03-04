@@ -21,7 +21,7 @@ Building the Package
 Prerequisites
 -------------
 
-This project is developed under Visual Studio 2017. All other versions of Visual Studio are not supported.
+This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
 Steps
 -----
