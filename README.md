@@ -109,6 +109,7 @@ The following table lists all valid connection properties:
 | Connection Property        | Required | Comment                                                                       |
 |----------------------------|----------|-------------------------------------------------------------------------------|
 | ACCOUNT                    | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	|
+| Application                | No       | Snowflake partner use only: Specifies the name of a partner application to connect. The name must match the following pattern:  ^[A-Za-z]([A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or _).   |
 | DB                         | No       |                                                                               |
 | HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
 | PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
