@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
 
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(ConnectionState.Open, conn.State);
 
                     conn.Close();
-                    Assert.AreEqual(ConnectionState.Closed, conn.State);
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
                 }
             }
 
@@ -1432,12 +1432,12 @@ namespace Snowflake.Data.Tests
                 // Close the opened connection
                 task = conn.CloseAsync(new CancellationTokenSource().Token);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the connection again.
                 task = conn.CloseAsync(new CancellationTokenSource().Token);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
             }
         }
 
