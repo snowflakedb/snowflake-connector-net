@@ -123,6 +123,9 @@ namespace Snowflake.Data.Core
                                     break;
                                 case -1:
                                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                                default:
+                                    ms.WriteByte((byte)'\\');
+                                    break;
                             }
                             ms.WriteByte((byte)c);
                         }
