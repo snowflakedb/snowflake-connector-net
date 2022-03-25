@@ -19,7 +19,7 @@ on:
         description: "Test scenario tags"
 
 env:
-  DOTNET_CORE_VERSION: 2.0
+  DOTNET_CORE_VERSION: 3.1
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.207']
+        dotnet: ['3.1.404']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -90,14 +90,14 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0', 'net472']
+        dotnet: ['netcoreapp3.1', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 3.1.x
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -135,14 +135,14 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0']
+        dotnet: ['netcoreapp3.1']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 3.1.x
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -174,14 +174,14 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0']
+        dotnet: ['netcoreapp3.1']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 3.1.x
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
