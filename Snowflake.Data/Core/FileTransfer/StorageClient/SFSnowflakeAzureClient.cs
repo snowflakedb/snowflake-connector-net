@@ -126,8 +126,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
             {
-                iv = encryptionData.WrappedContentKey["EncryptedKey"],
-                key = encryptionData["ContentEncryptionIV"],
+                iv = encryptionData["ContentEncryptionIV"],
+                key = encryptionData.WrappedContentKey["EncryptedKey"],
                 matDesc = response.Metadata["matdesc"]
             };
 
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                new Dictionary<string, string>();
             metadata.Add("encryptiondata", encryptionData);
             metadata.Add("matdesc", encryptionMetadata.matDesc);
-            metadata.Add("sfcdigest", fileMetadata.SHA256_DIGEST);
+            metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
@@ -210,6 +210,45 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+        }
+
+        /// <summary>
+        /// Download the file to the local location.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
+        /// <param name="maxConcurrency">Number of max concurrency.</param>
+        public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
+        {
+            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+
+            // Get the Azure client
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+
+            try
+            {
+                // Issue the GET request
+                var task = blobClient.DownloadToAsync(fullDstPath);
+                task.Wait();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Status: 401"))
+                {
+                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                }
+                else if (ex.Message.Contains("Status: 403") ||
+                    ex.Message.Contains("Status: 500") ||
+                    ex.Message.Contains("Status: 503"))
+                {
+                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                }
+                return;
+            }
+
+            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
     }
 }
