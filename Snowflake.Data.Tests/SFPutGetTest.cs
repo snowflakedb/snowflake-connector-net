@@ -14,10 +14,8 @@ namespace Snowflake.Data.Tests
     using System.Data.Common;
 
     [TestFixture]
-    class SFPutTest : SFBaseTest
+    class SFPutGetTest : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-
         [Test]
         [TestCase("gzip")]
         [TestCase("bzip2")]
@@ -32,6 +30,7 @@ namespace Snowflake.Data.Tests
             const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
 
             const string UPLOADED = "UPLOADED";
+            const string DOWNLOADED = "DOWNLOADED";
 
             const string COL1 = "C1";
             const string COL2 = "C2";
@@ -62,13 +61,19 @@ namespace Snowflake.Data.Tests
                 // Write row data to temp file
                 File.WriteAllText(filePath, ROW_DATA);
 
-                string putQuery = $"PUT file://${filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                Directory.CreateDirectory(tempDirectory);
+
+                // string putQuery = $"PUT file://${filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                string putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
                 // Windows user contains a '~' in the path which causes an error
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     string fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
                     putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                    // getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
                 }
 
                 using (DbCommand command = conn.CreateCommand())
@@ -106,6 +111,18 @@ namespace Snowflake.Data.Tests
                     // Check row count is correct
                     command.CommandText = $"SELECT COUNT(*) FROM {TEST_TEMP_TABLE_NAME}";
                     Assert.AreEqual(command.ExecuteScalar(), 4);
+
+                    // Download file
+                    command.CommandText = getQuery;
+                    reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        // Check file status
+                        Assert.AreEqual(reader.GetString(4), DOWNLOADED);
+                    }
+
+                    // Delete downloaded files
+                    Directory.Delete(tempDirectory, true);
 
                     // Remove files from staging
                     command.CommandText = removeFile;
