@@ -288,18 +288,18 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 Mapping .NET and Snowflake Data Types
 -------------------------------------
 
-The .NET drivers supports the following mappings from .NET to Snowflake data types.
+The .NET driver supports the following mappings from .NET to Snowflake data types.
 
 
-| .NET Framekwork (C#) Data Type | Data Type in Snowflake |
+| .NET Framekwork Data Type | Data Type in Snowflake |
 | ------------------------------ | ---------------------- |
-| `int`, `int32`                 | `NUMBER(38, 0)`        |
-| `double`                       | `NUMBER(38, <scale>)`  |
-| `float` | `REAL` |
+| `int`, `long`                 | `NUMBER(38, 0)`        |
+| `decimal`                       | `NUMBER(38, <scale>)`  |
+| `double` | `REAL` |
 | `string` | `TEXT` |
 | `bool` | `BOOLEAN` |
 | `byte` | `BINARY` |
-| `date` | `DATE` |
+| `datetime` | `DATE` |
 
 
 Run a Query and Read Data
