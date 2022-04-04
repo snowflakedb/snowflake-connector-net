@@ -294,7 +294,7 @@ The .NET drivers supports the following mappings from .NET to Snowflake data typ
 | .NET Framekwork (C#) Data Type | Data Type in Snowflake |
 | ------------------------------ | ---------------------- |
 | `int`, `int32`                 | `NUMBER(38, 0)`        |
-| `double`                       | `NUMBER(38, <scale>)`        |
+| `double`                       | `NUMBER(38, <scale>)`  |
 | `float` | `REAL` |
 | `string` | `TEXT` |
 | `bool` | `BOOLEAN` |
