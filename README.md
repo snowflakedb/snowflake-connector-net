@@ -285,6 +285,24 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Mapping .NET and Snowflake Data Types
+-------------------------------------
+
+The .NET drivers supports the following mappings from .NET to Snowflake data types.
+
+.. csv-table::
+    :header: ".NET Framekwork (C#) Data Type", "Data Type in Snowflake"
+    :delim: |
+
+    :code:`int`       | NUMBER(38, 0)
+    :code:`int32`     | NUMBER(38, 0)
+    :code:`double`    | NUMBER(38, <scale>)
+    :code:`float`     | REAL
+    :code:`string`    | TEXT
+    :code:`bool`      | BOOLEAN
+    :code:`byte`      | BINARY
+    :code:`date`      | DATE
+
 Run a Query and Read Data
 -------------------------
 
