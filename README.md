@@ -5,8 +5,6 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
-
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
 - .NET Framework 4.7.2
