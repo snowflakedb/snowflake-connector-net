@@ -732,7 +732,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Unhandled exception while uploading file.", ex);
+                Logger.Debug("Unhandled exception while uploading file.", ex);
                 throw;
             }
             finally
