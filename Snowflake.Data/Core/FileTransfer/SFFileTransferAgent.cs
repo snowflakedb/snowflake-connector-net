@@ -90,7 +90,7 @@ namespace Snowflake.Data.Core
         /// The type of transfer either UPLOAD or DOWNLOAD.
         /// </summary>
         private readonly CommandTypes CommandType;
-        
+
         /// <summary>
         /// The transfer metadata. Applies to all files being transfered
         /// </summary>
@@ -230,7 +230,7 @@ namespace Snowflake.Data.Core
                     TransferMetadata.rowSet[index, 7] = null;
                 }
             }
-            
+
             return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
         }
 
@@ -713,7 +713,7 @@ namespace Snowflake.Data.Core
                 // Compress the file if needed
                 if (fileMetadata.requireCompress)
                 {
-                    compressFileWithGzip(fileMetadata);                
+                    compressFileWithGzip(fileMetadata);
                 }
 
                 // Calculate the digest
@@ -732,7 +732,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Console.WriteLine("Unhandled exception while uploading file.", ex);
+                throw;
             }
             finally
             {

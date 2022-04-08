@@ -223,7 +223,7 @@ namespace Snowflake.Data.Client
             catch (Exception ex)
             {
                 logger.Error("The command failed to execute.", ex);
-                throw ex;
+                throw;
             }
         }
 
