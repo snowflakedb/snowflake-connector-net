@@ -49,6 +49,9 @@ namespace Snowflake.Data.Core
 
         private HttpClient _HttpClient;
 
+        private string arrayBindStage = null;
+        private int arrayBindStageThreshold = 0;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -340,6 +343,28 @@ namespace Snowflake.Data.Core
                     ParameterMap[parameterName] = parameter.value;
                 }
             }
+            string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+            this.arrayBindStageThreshold = Int32.Parse(val);
+        }
+
+        public string GetArrayBindStage()
+        {
+            return arrayBindStage;
+        }
+
+        public void SetArrayBindStage(string arrayBindStage)
+        {
+            this.arrayBindStage = string.Format("{0}.{1}.{2}", this.database, this.schema, arrayBindStage);
+        }
+
+        public int GetArrayBindStageThreshold()
+        {
+            return this.arrayBindStageThreshold;
+        }
+
+        public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
+        {
+            this.arrayBindStageThreshold = arrayBindStageThreshold;
         }
     }
 }

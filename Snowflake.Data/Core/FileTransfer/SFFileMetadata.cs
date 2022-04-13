@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
 
@@ -28,7 +29,7 @@ namespace Snowflake.Data.Core.FileTransfer
     {
         /// Original source file path (full path)
         public string srcFilePath { set; get; }
-        
+
         /// Original path or temp path when compression is enabled (full path)
         public string realSrcFilePath { set; get; }
 
@@ -52,7 +53,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
         /// Absolute path to the destination (including the filename. /tmp/small_test_file.csv.gz)
         public string destPath { set; get; }
-        
+
         /// Destination file size
         public long uploadSize { set; get; }
 
@@ -91,10 +92,10 @@ namespace Snowflake.Data.Core.FileTransfer
 
         /// The temporary directory to store files to upload/download.
         public string tmpDir { get; set; }
-        
+
         /// The temporary directory to store files to upload/download.
         public string SHA256_DIGEST { get; set; }
-        
+
         /// Storage client to use for uploading/downloading files.
         public ISFRemoteStorageClient client { get; set; }
 
@@ -103,5 +104,9 @@ namespace Snowflake.Data.Core.FileTransfer
 
         /// Last specified max concurrency to use.
         public int lastMaxConcurrency { get; set; }
+
+        public bool sourceFromStream { get; set; }
+
+        public MemoryStream memoryStream {get; set; }
     }
 }

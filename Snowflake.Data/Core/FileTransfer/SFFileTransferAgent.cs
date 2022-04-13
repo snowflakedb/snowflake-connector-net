@@ -131,6 +131,11 @@ namespace Snowflake.Data.Core
         /// </summary>
         private const string LOCAL_FS = "LOCAL_FS";
 
+        private const string STREAM_FILE_NAME = "stream";
+        private MemoryStream memoryStream = null;
+        private string streamDestFileName = null;
+        private string destStagePath = null;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -146,6 +151,25 @@ namespace Snowflake.Data.Core
             CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
             externalCancellationToken = cancellationToken;
         }
+        public SFFileTransferAgent(
+            string query,
+            SFSession session,
+            PutGetResponseData responseData,
+            ref MemoryStream inputStream,
+            string filename,
+            string stagePath,
+            CancellationToken cancellationToken)
+        {
+            Query = query;
+            Session = session;
+            TransferMetadata = responseData;
+            memoryStream = inputStream;
+            streamDestFileName = filename;
+            destStagePath = stagePath;
+            CommandType = CommandTypes.UPLOAD;
+            externalCancellationToken = cancellationToken;
+        }
+
 
         /// <summary>
         /// Execute the PUT/GET command.
@@ -710,14 +734,21 @@ namespace Snowflake.Data.Core
 
             try
             {
-                // Compress the file if needed
-                if (fileMetadata.requireCompress)
+                if (fileMetadata.sourceFromStream && fileMetadata.memoryStream != null)
                 {
-                    compressFileWithGzip(fileMetadata);                
+                    //do nothing
                 }
+                else
+                {
+                    // Compress the file if needed
+                    if (fileMetadata.requireCompress)
+                    {
+                        compressFileWithGzip(fileMetadata);
+                    }
 
-                // Calculate the digest
-                getDigestAndSizeForFile(fileMetadata);
+                    // Calculate the digest
+                    getDigestAndSizeForFile(fileMetadata);
+                }
 
                 if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                 {
@@ -774,6 +805,23 @@ namespace Snowflake.Data.Core
             {
                 return StorageClientType.REMOTE;
             }
+        }
+
+        public void ExecuteUploadStream()
+        {
+            SFFileMetadata fileMetadata = new SFFileMetadata();
+            fileMetadata.srcFileName = STREAM_FILE_NAME;
+            fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
+            fileMetadata.requireCompress = true;
+            fileMetadata.destFileName = fileMetadata.srcFileName + SFFileCompressionTypes.GZIP.FileExtension;
+            fileMetadata.sourceFromStream = true;
+            fileMetadata.memoryStream = memoryStream;
+            fileMetadata.stageInfo = TransferMetadata.stageInfo;
+
+            // Update the file metadata with GCS presigned URL
+            updateFileMetasWithPresignedUrl();
+            
+            UploadFilesInSequential(fileMetadata);
         }
     }
 }
