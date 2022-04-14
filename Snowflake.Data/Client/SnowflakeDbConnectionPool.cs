@@ -8,7 +8,7 @@ namespace Snowflake.Data.Client
 {
     class SnowflakeDbConnectionPool
     {
-        private static ConcurrentDictionary<Tuple<string, SecureString>, SnowflakeDbConnection> connectionPool;
+        private static ConcurrentDictionary<string, SnowflakeDbConnection> connectionPool;
         private static int minPoolSize;
         private static int maxPoolSize;
         private static int cleanupCounter;
@@ -19,7 +19,7 @@ namespace Snowflake.Data.Client
 
         private static void initConnectionPool()
         {
-            connectionPool = new ConcurrentDictionary<Tuple<string, SecureString>, SnowflakeDbConnection>();
+            connectionPool = new ConcurrentDictionary<string, SnowflakeDbConnection>();
             minPoolSize = MIN_POOL_SIZE;
             maxPoolSize = MAX_POOL_SIZE;
             cleanupCounter = CLEANUP_COUNTER;
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            List<Tuple<string, SecureString>> keys = new List<Tuple<string, SecureString>>(connectionPool.Keys);
+            List<string> keys = new List<string>(connectionPool.Keys);
             int curSize = keys.Count;
             foreach (var item in keys)
             {
@@ -51,15 +51,14 @@ namespace Snowflake.Data.Client
 
         internal static SnowflakeDbConnection getConnection(string connStr, SecureString pw)
         {
-            var connKey = Tuple.Create(connStr, pw);
             if (connectionPool == null)
             {
                 initConnectionPool();
             }
-            if (connectionPool.ContainsKey(connKey))
+            if (connectionPool.ContainsKey(connStr))
             {
                 SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(connKey, out conn);
+                connectionPool.TryGetValue(connStr, out conn);
                 return conn;
             }
             return null;
@@ -67,8 +66,7 @@ namespace Snowflake.Data.Client
 
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
-            var connKey = Tuple.Create(conn.ConnectionString, conn.Password);
-            if (connectionPool.ContainsKey(connKey))
+            if (connectionPool.ContainsKey(conn.ConnectionString))
             {
                 conn.isActive = true;
                 return false;
@@ -93,7 +91,7 @@ namespace Snowflake.Data.Client
             }
 
             conn.isActive = true;
-            connectionPool.TryAdd(connKey, conn);
+            connectionPool.TryAdd(conn.ConnectionString, conn);
             return true;
         }
 
@@ -104,7 +102,7 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            List<Tuple<string, SecureString>> keys = new List<Tuple<string, SecureString>>(connectionPool.Keys);
+            List<string> keys = new List<string>(connectionPool.Keys);
             foreach (var item in keys)
             {
                 SnowflakeDbConnection conn;
@@ -123,10 +121,9 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            var connKey = Tuple.Create(conn.ConnectionString, conn.Password);
-            if (connectionPool.ContainsKey(connKey))
+            if (connectionPool.ContainsKey(conn.ConnectionString))
             {
-                connectionPool.TryRemove(connKey, out conn);
+                connectionPool.TryRemove(conn.ConnectionString, out conn);
                 conn.isActive = false;
                 conn.CloseConnection();
                 conn.DisposeConnection(false);
