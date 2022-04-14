@@ -26,153 +26,34 @@ namespace Snowflake.Data.Client
 
         internal int _connectionTimeout;
 
-        private bool isActive = false;
+        internal bool isActive = false;
 
         private bool disposed = false;
 
-        /// <summary>
-        ///     Connection pool 
-        /// </summary>
-        private static ConcurrentDictionary<Tuple<string, SecureString>, SnowflakeDbConnection> connectionPool;
-        private static int minPoolSize;
-        private static int maxPoolSize;
-        private static int cleanupCounter;
-        private static int currentCounter;
-        private const int MIN_POOL_SIZE = 0;
-        private const int MAX_POOL_SIZE = 10;
-        private const int CLEANUP_COUNTER = 0;
-
-        private static void initConnectionPool()
-        {
-            connectionPool = new ConcurrentDictionary<Tuple<string, SecureString>, SnowflakeDbConnection>();
-            minPoolSize = MIN_POOL_SIZE;
-            maxPoolSize = MAX_POOL_SIZE;
-            cleanupCounter = CLEANUP_COUNTER;
-            currentCounter = 0;
-        }
-
-        private static void cleanNonActiveConnections()
-        {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
-            List<Tuple<string, SecureString>> keys = new List<Tuple<string, SecureString>>(connectionPool.Keys);
-            int curSize = keys.Count;
-            foreach (var item in keys)
-            {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(item, out conn);
-                if (!conn.isActive && curSize > minPoolSize)
-                {
-                    connectionPool.TryRemove(item, out conn);
-                    conn.CloseConnection();
-                    conn.Dispose(false);
-                    curSize--;
-                }
-            }
-        }
-
-        private static SnowflakeDbConnection getConnection(string connStr, SecureString pw)
-        {
-            var connKey = Tuple.Create(connStr, pw);
-            if (connectionPool == null)
-            {
-                initConnectionPool();
-            }
-            if (connectionPool.ContainsKey(connKey))
-            {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(connKey, out conn);
-                return conn;
-            }
-            return null;
-        }
-
-        private static bool addConnection(SnowflakeDbConnection conn)
-        {
-            var connKey = Tuple.Create(conn.ConnectionString, conn.Password);
-            if (connectionPool.ContainsKey(connKey))
-            {
-                conn.isActive = true;
-                return false;
-            }
-
-            if (connectionPool.Count >= maxPoolSize)
-            {
-                if (currentCounter > 0)
-                {
-                    currentCounter--;
-                    return false;
-                }
-                else
-                {
-                    currentCounter = cleanupCounter;
-                    cleanNonActiveConnections();
-                    if (connectionPool.Count >= maxPoolSize)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            conn.isActive = true;
-            connectionPool.TryAdd(connKey, conn);
-            return true;
-        }
-
+        
         public static void ClearAllPools()
         {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
-            List<Tuple<string, SecureString>> keys = new List<Tuple<string, SecureString>>(connectionPool.Keys);
-            foreach (var item in keys)
-            {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(item, out conn);
-                connectionPool.TryRemove(item, out conn);
-                conn.isActive = false;
-                conn.CloseConnection();
-                conn.Dispose(false);
-            }
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         public static bool ClearPool(SnowflakeDbConnection conn)
         {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
-            var connKey = Tuple.Create(conn.ConnectionString, conn.Password);
-            if (connectionPool.ContainsKey(connKey))
-            {
-                connectionPool.TryRemove(connKey, out conn);
-                conn.isActive = false;
-                conn.CloseConnection();
-                conn.Dispose(false);
-                return true;
-            }
-            return false;
+            return SnowflakeDbConnectionPool.ClearPool(conn);
         }
 
         public static void SetMinPoolSize(int size)
         {
-            minPoolSize = size;
+            SnowflakeDbConnectionPool.SetMinPoolSize(size);
         }
 
         public static void SetMaxPoolSize(int size)
         {
-            maxPoolSize = size;
+            SnowflakeDbConnectionPool.SetMaxPoolSize(size);
         }
 
         public static void SetCleanupCounter(int size)
         {
-            cleanupCounter = size;
+            SnowflakeDbConnectionPool.SetCleanupCounter(size);
         }
 
         public SnowflakeDbConnection()
@@ -249,7 +130,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        private void CloseConnection()
+        internal void CloseConnection()
         {
             logger.Debug("Close Connection.");
             if (_connectionState != ConnectionState.Closed && SfSession != null)
@@ -262,20 +143,20 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
-            SnowflakeDbConnection conn = getConnection(this.ConnectionString, this.Password);
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
                 conn.isActive = false;
             }
             else
             {
-                CloseConnection();
+                conn.CloseConnection();
             }
         }
 
         public Task CloseAsync(CancellationToken cancellationToken)
         {
-            SnowflakeDbConnection conn = getConnection(this.ConnectionString, this.Password);
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
                 conn.isActive = false;
@@ -283,7 +164,7 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                return CloseConnectionAsync(cancellationToken);
+                return conn.CloseConnectionAsync(cancellationToken);
             }
         }
 
@@ -334,12 +215,7 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
-            if(null == connectionPool)
-            {
-                initConnectionPool();
-            }
-            
-            SnowflakeDbConnection conn = getConnection(this.ConnectionString, this.Password);
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if(conn != null)
             {
                 conn.isActive = true;
@@ -348,7 +224,7 @@ namespace Snowflake.Data.Client
             else
             {
                 ConnectionOpen();
-                addConnection(this);
+                SnowflakeDbConnectionPool.addConnection(this);
             }
         }
 
@@ -385,11 +261,7 @@ namespace Snowflake.Data.Client
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-            SnowflakeDbConnection conn = getConnection(this.ConnectionString, this.Password);
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
                 conn.isActive = true;
@@ -433,7 +305,7 @@ namespace Snowflake.Data.Client
                         logger.Debug("All good");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();
-                        addConnection(this);
+                        SnowflakeDbConnectionPool.addConnection(this);
                     }
                 },
                 cancellationToken);
@@ -474,8 +346,12 @@ namespace Snowflake.Data.Client
 
         protected override void Dispose(bool disposing)
         {
-            var connKey = Tuple.Create(this.ConnectionString, this.Password);
-            if (connectionPool.ContainsKey(connKey))
+            DisposeConnection(disposing);
+        }
+
+        internal void DisposeConnection(bool disposing)
+        { 
+            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
             {
                 ClearPool(this);
             }
@@ -514,8 +390,7 @@ namespace Snowflake.Data.Client
 
         ~SnowflakeDbConnection()
         {
-            var connKey = Tuple.Create(this.ConnectionString, this.Password);
-            if (connectionPool.ContainsKey(connKey))
+            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
             {
                 this.isActive = false;
             }
