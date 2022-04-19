@@ -506,11 +506,6 @@ namespace Snowflake.Data.Core
             {
                 location = Path.GetFullPath(location);
             }
-            //else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-            //    RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            //{
-            //    location = location.Substring(1);
-            //}
 
             String fileName = Path.GetFileName(location);
             string directoryName = Path.GetDirectoryName(location);
