@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
                 
                 IDbCommand cmd = conn.CreateCommand();
-                /*
+                
                 cmd.CommandText = "create or replace table deltest (col string)";
                 int res = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, res);
@@ -39,14 +39,14 @@ namespace Snowflake.Data.Tests
                     IDataReader insertReader = cmd.ExecuteReader();
                     Assert.AreEqual(1, insertReader.RecordsAffected);
                 }
-                */
+                
                 string selectCommand = "select * from deltest";
                 cmd.CommandText = selectCommand;
                 cmd.CommandType = System.Data.CommandType.Text;
                 
                 var sb = new StringBuilder();
                 var count = 0;
-                using (var sw = new System.IO.StreamWriter(@"D:\Snowflake\Log\test.txt", true, Encoding.UTF8, 4096))
+                using (var sw = new System.IO.StreamWriter(@"test.txt", true, Encoding.UTF8, 4096))
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -77,9 +77,9 @@ namespace Snowflake.Data.Tests
                 }
                 Console.ReadLine();
 
-                //cmd.CommandText = "drop table if exists deltest";
-                //count = cmd.ExecuteNonQuery();
-                //Assert.AreEqual(0, count);
+                cmd.CommandText = "drop table if exists deltest";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
 
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                /*
+                
                 cmd.CommandText = "create or replace table deltest1 (col string)";
                 int res = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, res);
@@ -107,14 +107,14 @@ namespace Snowflake.Data.Tests
                     IDataReader insertReader = cmd.ExecuteReader();
                     Assert.AreEqual(1, insertReader.RecordsAffected);
                 }
-                */
+                
                 string selectCommand = "select * from deltest1";
                 cmd.CommandText = selectCommand;
                 cmd.CommandType = System.Data.CommandType.Text;
 
                 var sb = new StringBuilder();
                 var count = 0;
-                using (var sw = new System.IO.StreamWriter(@"D:\Snowflake\Log\test.txt", true, Encoding.UTF8, 4096))
+                using (var sw = new System.IO.StreamWriter(@"test.txt", true, Encoding.UTF8, 4096))
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -145,9 +145,9 @@ namespace Snowflake.Data.Tests
                 }
                 Console.ReadLine();
 
-                //cmd.CommandText = "drop table if exists deltest";
-                //count = cmd.ExecuteNonQuery();
-                //Assert.AreEqual(0, count);
+                cmd.CommandText = "drop table if exists deltest";
+                count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, count);
 
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
