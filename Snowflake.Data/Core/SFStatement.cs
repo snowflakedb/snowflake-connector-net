@@ -295,12 +295,11 @@ namespace Snowflake.Data.Core
                     int arrayBindingThreshold = Int32.Parse(val);
                     int numBinding = GetBindingCount(bindings);
 
-                    /*
+                    
                     if (0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
                         && !describeOnly)
                     {
-                    */
                         try
                         {
                             AssignQueryRequestId();
@@ -313,7 +312,7 @@ namespace Snowflake.Data.Core
                         {
                             logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
                         }
-                    //}
+                    }
 
                     registerQueryCancellationCallback(timeout, CancellationToken.None);
                     var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);

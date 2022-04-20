@@ -177,14 +177,16 @@ namespace Snowflake.Data.Core
                     long ntzLong = long.Parse(sValue);
                     TimeSpan ts = new TimeSpan(ntzLong/100);
                     DateTime dt = dateTime + ts;
-                    return dt.ToString();
+                    return dt.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
                     long tzLong = long.Parse(tstzString[0]);
-                    int tzInt = int.Parse(tstzString[1]);
+                    int tzInt = (int.Parse(tstzString[1]) - 1440) / 60;
                     TimeSpan tzts = new TimeSpan(tzLong/100);
                     DateTime tzdt = dateTime + tzts;
-                    return tzdt.ToString();
+                    TimeSpan tz = new TimeSpan(tzInt, 0, 0);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt, tz);
+                    return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
                     
             }
             return sValue;

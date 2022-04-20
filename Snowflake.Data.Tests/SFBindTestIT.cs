@@ -563,12 +563,10 @@ namespace Snowflake.Data.Tests
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ, colg TIMESTAMP_LTZ)";
-                    //cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ)";
                     int count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(0, count);
 
                     string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?, ?)";
-                    //string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -631,8 +629,8 @@ namespace Snowflake.Data.Tests
                     count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);
 
-                    //cmd.CommandText = "drop table if exists testPutArrayBind";
-                    //cmd.ExecuteNonQuery();
+                    cmd.CommandText = "drop table if exists testPutArrayBind";
+                    cmd.ExecuteNonQuery();
                 }
 
                 conn.Close();
