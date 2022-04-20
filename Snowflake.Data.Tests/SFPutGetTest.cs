@@ -96,7 +96,9 @@ namespace Snowflake.Data.Tests
 
                     string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
+                    Console.WriteLine("FILE PATH: " + filePath);
                     string fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
+                    Console.WriteLine("FILE NAME: " + fileName);
                     removeFileUser += fileName;
                     copyIntoUser += fileName;
 
