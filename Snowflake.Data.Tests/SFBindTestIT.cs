@@ -562,11 +562,13 @@ namespace Snowflake.Data.Tests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time)";
+                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ, colg TIMESTAMP_LTZ)";
+                    //cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ)";
                     int count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(0, count);
 
-                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?)";
+                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?, ?)";
+                    //string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -598,6 +600,33 @@ namespace Snowflake.Data.Tests
                     p4.DbType = DbType.Time;
                     p4.Value = new DateTime[] { time1, time2, time3 };
                     cmd.Parameters.Add(p4);
+
+                    DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    var p5 = cmd.CreateParameter();
+                    p5.ParameterName = "5";
+                    p5.DbType = DbType.DateTime2;
+                    p5.Value = new DateTime[] { ntz1, ntz2, ntz3 };
+                    cmd.Parameters.Add(p5);
+
+                    DateTimeOffset tz1 = DateTimeOffset.Now;
+                    DateTimeOffset tz2 = DateTimeOffset.UtcNow;
+                    DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
+                    var p6 = cmd.CreateParameter();
+                    p6.ParameterName = "6";
+                    p6.DbType = DbType.DateTimeOffset;
+                    p6.Value = new DateTimeOffset[] { tz1, tz2, tz3 };
+                    cmd.Parameters.Add(p6);
+
+                    DateTimeOffset ltz1 = DateTimeOffset.Now;
+                    DateTimeOffset ltz2 = DateTimeOffset.UtcNow;
+                    DateTimeOffset ltz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
+                    var p7 = cmd.CreateParameter();
+                    p7.ParameterName = "7";
+                    p7.DbType = DbType.DateTimeOffset;
+                    p7.Value = new DateTimeOffset[] { ltz1, ltz2, ltz3 };
+                    cmd.Parameters.Add(p7);
 
                     count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);

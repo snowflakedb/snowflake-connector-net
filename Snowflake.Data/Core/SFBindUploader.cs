@@ -155,24 +155,37 @@ namespace Snowflake.Data.Core
         {
             if (sValue == null)
                 return sValue;
+
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTimeOffset dateTimeOffset = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
             switch (sType)
             {
                 case "DATE":
                     long dateLong = long.Parse(sValue);
-                    DateTime dateTime1 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    DateTime date = dateTime1.AddMilliseconds(dateLong).ToLocalTime();
+                    DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
                     return date.ToShortDateString();
                 case "TIME":
                     long timeLong = long.Parse(sValue);
-                    DateTime dateTime2 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    DateTime time = dateTime2.AddMilliseconds(timeLong).ToLocalTime();
+                    DateTime time = dateTime.AddMilliseconds(timeLong).ToUniversalTime();
                     return time.ToLongTimeString();
                 case "TIMESTAMP_LTZ":
-                    return sValue;
+                    long ltzLong = long.Parse(sValue);
+                    TimeSpan ltzts = new TimeSpan(ltzLong / 100);
+                    DateTime ltzdt = dateTime + ltzts;
+                    return ltzdt.ToString();
                 case "TIMESTAMP_NTZ":
-                    return sValue;
+                    long ntzLong = long.Parse(sValue);
+                    TimeSpan ts = new TimeSpan(ntzLong/100);
+                    DateTime dt = dateTime + ts;
+                    return dt.ToString();
                 case "TIMESTAMP_TZ":
-                    return sValue;
+                    string[] tstzString = sValue.Split(' ');
+                    long tzLong = long.Parse(tstzString[0]);
+                    int tzInt = int.Parse(tstzString[1]);
+                    TimeSpan tzts = new TimeSpan(tzLong/100);
+                    DateTime tzdt = dateTime + tzts;
+                    return tzdt.ToString();
+                    
             }
             return sValue;
         }
