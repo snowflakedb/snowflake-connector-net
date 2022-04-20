@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests
                     string putQuery = "";
                     if (stageType == USER_STAGE)
                     {
-                        putQuery = $"PUT file:/{filePath} @~//";
+                        putQuery = $"PUT file:/{filePath} @~/";
                     }
                     else if (stageType == TABLE_STAGE)
                     {
@@ -121,10 +121,6 @@ namespace Snowflake.Data.Tests
                     else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
                         Console.WriteLine("USER PUT QUERY: " + putQuery);
-                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-                        Console.WriteLine("TABLE PUT QUERY: " + putQuery);
-                        putQuery = $"PUT file://{filePath} @~/";
-
                         Console.WriteLine("USER COPY INTO QUERY: " + copyIntoUser);
                         Console.WriteLine("TABLE COPY INTO QUERY: " + copyIntoTable);
                     }
