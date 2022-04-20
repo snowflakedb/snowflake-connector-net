@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests
                     string putQuery = "";
                     if (stageType == USER_STAGE)
                     {
-                        putQuery = $"PUT file:/{filePath} @~";
+                        putQuery = $"PUT file:/{filePath} @~//";
                     }
                     else if (stageType == TABLE_STAGE)
                     {
