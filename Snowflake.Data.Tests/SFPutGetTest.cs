@@ -34,6 +34,9 @@ namespace Snowflake.Data.Tests
             const string TABLE_STAGE = "TABLE_STAGE";
             const string NAMED_STAGE = "NAMED_STAGE";
 
+            const string FALSE_COMPRESS = "FALSE";
+            const string TRUE_COMPRESS = "TRUE";
+
             const string UPLOADED = "UPLOADED";
             const string DOWNLOADED = "DOWNLOADED";
 
@@ -56,7 +59,6 @@ namespace Snowflake.Data.Tests
 
             string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
             string copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-            string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
 
             string removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
             string removeFileUser = $"REMOVE @~/";
@@ -65,153 +67,171 @@ namespace Snowflake.Data.Tests
             string dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
 
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
+            string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
+
             foreach (string stageType in stageTypes)
             {
-                using (DbConnection conn = new SnowflakeDbConnection())
+                foreach (string autoCompressType in autoCompressTypes)
                 {
-                    conn.ConnectionString = ConnectionString;
-                    conn.Open();
-
-                    // Create a temp file with specified file extension
-                    string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv." + compressionType;
-                    // Write row data to temp file
-                    File.WriteAllText(filePath, ROW_DATA);
-
-                    string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                    Directory.CreateDirectory(tempDirectory);
-
-                    string putQuery = "";
-                    if (stageType == USER_STAGE)
+                    using (DbConnection conn = new SnowflakeDbConnection())
                     {
-                        putQuery = $"PUT file://{filePath} @~/";
-                    }
-                    else if (stageType == TABLE_STAGE)
-                    {
-                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-                    }
-                    else if (stageType == NAMED_STAGE)
-                    {
-                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-                    }
+                        conn.ConnectionString = ConnectionString;
+                        conn.Open();
 
-                    string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
+                        // Create a temp file with specified file extension
+                        string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv" +
+                            (autoCompressType == FALSE_COMPRESS ? "" : "." + compressionType);
+                        // Write row data to temp file
+                        File.WriteAllText(filePath, ROW_DATA);
 
-                    string fileName = "";
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
-                        removeFileUser += fileName;
-                        copyIntoUser += fileName;
-                    }
-                    else
-                    {
-                        fileName = filePath.Substring(filePath.LastIndexOf('/') + 1);
-                        removeFileUser += fileName;
-                        copyIntoUser += fileName;
-                    }
+                        string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                        Directory.CreateDirectory(tempDirectory);
 
-                    // Windows user contains a '~' in the path which causes an error
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
+                        string putQuery = "";
                         if (stageType == USER_STAGE)
                         {
-                            putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @~/";
+                            putQuery = $"PUT file://{filePath} @~/";
                         }
                         else if (stageType == TABLE_STAGE)
                         {
-                            putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                            putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
                         }
                         else if (stageType == NAMED_STAGE)
                         {
-                            putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                            putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
                         }
+
+                        string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
+
+                        string fileName = "";
+                        string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
+                            fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
+                            removeFileUser += fileName;
+                            copyIntoUser += fileName;
+                        }
+                        else
+                        {
+                            fileName = filePath.Substring(filePath.LastIndexOf('/') + 1);
+                            removeFileUser += fileName;
+                            copyIntoUser += fileName;
+                        }
+
+                        // Windows user contains a '~' in the path which causes an error
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        {
+                            if (stageType == USER_STAGE)
+                            {
+                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @~/";
+                            }
+                            else if (stageType == TABLE_STAGE)
+                            {
+                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                            }
+                            else if (stageType == NAMED_STAGE)
+                            {
+                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                            }
+                        }
+
+                        // Add PUT compress option
+                        putQuery += $" AUTO_COMPRESS={autoCompressType}";
+
+                        using (DbCommand command = conn.CreateCommand())
+                        {
+                            // Create temp table
+                            command.CommandText = createTable;
+                            command.ExecuteNonQuery();
+
+                            // Create temp stage
+                            command.CommandText = createStage;
+                            command.ExecuteNonQuery();
+
+                            // Upload file
+                            command.CommandText = putQuery;
+                            DbDataReader reader = command.ExecuteReader();
+                            while (reader.Read())
+                            {
+                                // Check file status
+                                Assert.AreEqual(reader.GetString(4), UPLOADED);
+                                // Check source and destination compression type
+                                if (autoCompressType == FALSE_COMPRESS)
+                                {
+                                    Assert.AreEqual(reader.GetString(6), "none");
+                                    Assert.AreEqual(reader.GetString(7), "none");
+                                }
+                                else
+                                {
+                                    Assert.AreEqual(reader.GetString(6), compressionType);
+                                    Assert.AreEqual(reader.GetString(7), compressionType);
+                                }
+                            }
+
+                            // Copy into temp table
+                            if (stageType == USER_STAGE)
+                            {
+                                command.CommandText = copyIntoUser;
+                            }
+                            else if (stageType == TABLE_STAGE)
+                            {
+                                command.CommandText = copyIntoTable;
+                            }
+                            else if (stageType == NAMED_STAGE)
+                            {
+                                command.CommandText = copyIntoStage;
+                            }
+                            command.ExecuteNonQuery();
+
+                            // Check contents are correct
+                            command.CommandText = $"SELECT * FROM {TEST_TEMP_TABLE_NAME}";
+                            reader = command.ExecuteReader();
+                            while (reader.Read())
+                            {
+                                Assert.AreEqual(reader.GetString(0), COL1_DATA);
+                                Assert.AreEqual(reader.GetString(1), COL2_DATA);
+                                Assert.AreEqual(reader.GetString(2), COL3_DATA);
+                            }
+
+                            // Check row count is correct
+                            command.CommandText = $"SELECT COUNT(*) FROM {TEST_TEMP_TABLE_NAME}";
+                            Assert.AreEqual(command.ExecuteScalar(), 4);
+
+                            // Download file
+                            command.CommandText = getQuery;
+                            reader = command.ExecuteReader();
+                            while (reader.Read())
+                            {
+                                // Check file status
+                                Assert.AreEqual(reader.GetString(4), DOWNLOADED);
+                            }
+
+                            // Delete downloaded files
+                            Directory.Delete(tempDirectory, true);
+
+                            // Remove files from staging
+                            command.CommandText = removeFile;
+                            command.ExecuteNonQuery();
+
+                            // Remove user file from staging
+                            command.CommandText = removeFileUser;
+                            command.ExecuteNonQuery();
+
+                            // Drop temp stage
+                            command.CommandText = dropStage;
+                            command.ExecuteNonQuery();
+
+                            // Drop temp table
+                            command.CommandText = dropTable;
+                            command.ExecuteNonQuery();
+                        }
+
+                        // Delete temp file
+                        File.Delete(filePath);
+
+                        conn.Close();
+                        Assert.AreEqual(ConnectionState.Closed, conn.State);
                     }
-
-                    using (DbCommand command = conn.CreateCommand())
-                    {
-                        // Create temp table
-                        command.CommandText = createTable;
-                        command.ExecuteNonQuery();
-
-                        // Create temp stage
-                        command.CommandText = createStage;
-                        command.ExecuteNonQuery();
-
-                        // Upload file
-                        command.CommandText = putQuery;
-                        DbDataReader reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            // Check file status
-                            Assert.AreEqual(reader.GetString(4), UPLOADED);
-                            // Check source and destination compression type
-                            Assert.AreEqual(reader.GetString(6), compressionType);
-                            Assert.AreEqual(reader.GetString(7), compressionType);
-                        }
-
-                        // Copy into temp table
-                        if (stageType == USER_STAGE)
-                        {
-                            command.CommandText = copyIntoUser;
-                        }
-                        else if (stageType == TABLE_STAGE)
-                        {
-                            command.CommandText = copyIntoTable;
-                        }
-                        else if (stageType == NAMED_STAGE)
-                        {
-                            command.CommandText = copyIntoStage;
-                        }
-                        command.ExecuteNonQuery();
-
-                        // Check contents are correct
-                        command.CommandText = $"SELECT * FROM {TEST_TEMP_TABLE_NAME}";
-                        reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            Assert.AreEqual(reader.GetString(0), COL1_DATA);
-                            Assert.AreEqual(reader.GetString(1), COL2_DATA);
-                            Assert.AreEqual(reader.GetString(2), COL3_DATA);
-                        }
-
-                        // Check row count is correct
-                        command.CommandText = $"SELECT COUNT(*) FROM {TEST_TEMP_TABLE_NAME}";
-                        Assert.AreEqual(command.ExecuteScalar(), 4);
-
-                        // Download file
-                        command.CommandText = getQuery;
-                        reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            // Check file status
-                            Assert.AreEqual(reader.GetString(4), DOWNLOADED);
-                        }
-
-                        // Delete downloaded files
-                        Directory.Delete(tempDirectory, true);
-
-                        // Remove files from staging
-                        command.CommandText = removeFile;
-                        command.ExecuteNonQuery();
-
-                        // Remove user file from staging
-                        command.CommandText = removeFileUser;
-                        command.ExecuteNonQuery();
-
-                        // Drop temp stage
-                        command.CommandText = dropStage;
-                        command.ExecuteNonQuery();
-
-                        // Drop temp table
-                        command.CommandText = dropTable;
-                        command.ExecuteNonQuery();
-                    }
-
-                    // Delete temp file
-                    File.Delete(filePath);
-
-                    conn.Close();
-                    Assert.AreEqual(ConnectionState.Closed, conn.State);
                 }
             }
         }
