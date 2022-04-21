@@ -96,11 +96,23 @@ namespace Snowflake.Data.Tests
 
                     string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
-                    Console.WriteLine("FILE PATH: " + filePath);
-                    string fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
-                    Console.WriteLine("FILE NAME: " + fileName);
-                    removeFileUser += fileName;
-                    copyIntoUser += fileName;
+                    string fileName = "";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        Console.WriteLine("FILE PATH: " + filePath);
+                        fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
+                        Console.WriteLine("FILE NAME: " + fileName);
+                        removeFileUser += fileName;
+                        copyIntoUser += fileName;
+                    }
+                    else
+                    {
+                        Console.WriteLine("FILE PATH: " + filePath);
+                        fileName = filePath.Substring(filePath.LastIndexOf('/') + 1);
+                        Console.WriteLine("FILE NAME: " + fileName);
+                        removeFileUser += fileName;
+                        copyIntoUser += fileName;
+                    }
 
                     // Windows user contains a '~' in the path which causes an error
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
