@@ -25,6 +25,10 @@ namespace Snowflake.Data.Tests
         [TestCase("zstd")]
         public void TestPutGetCommand(string compressionType)
         {
+            Console.WriteLine("TEST ACCOUNT: " + testConfig.account);
+            Console.WriteLine("TEST HOST: " + testConfig.host);
+            Console.WriteLine("TEST DB: " + testConfig.database);
+
             string DATABASE_NAME = testConfig.database;
             string SCHEMA_NAME = testConfig.schema;
             const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
@@ -88,8 +92,7 @@ namespace Snowflake.Data.Tests
                 string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
 
                 string putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-                createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_FULL})";
-                
+                createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_SSE})";                
 
                 string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
@@ -112,7 +115,7 @@ namespace Snowflake.Data.Tests
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-                    createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_FULL})";
+                    createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_SSE})";
                 }
 
                 // Add PUT compress option
