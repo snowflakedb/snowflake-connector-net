@@ -70,8 +70,8 @@ namespace Snowflake.Data.Tests
             string dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
 
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
-            string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
-            string[] encryptionTypes = { SNOWFLAKE_FULL, SNOWFLAKE_SSE };
+            string[] autoCompressTypes = { TRUE_COMPRESS, FALSE_COMPRESS };
+            string[] encryptionTypes = { SNOWFLAKE_SSE, SNOWFLAKE_FULL };
 
             foreach (string stageType in stageTypes)
             {
