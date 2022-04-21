@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests
 
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
             string[] autoCompressTypes = { TRUE_COMPRESS, FALSE_COMPRESS };
-            string[] encryptionTypes = { SNOWFLAKE_SSE, SNOWFLAKE_FULL };
+            string[] encryptionTypes = { SNOWFLAKE_FULL, SNOWFLAKE_SSE };
 
             foreach (string stageType in stageTypes)
             {
