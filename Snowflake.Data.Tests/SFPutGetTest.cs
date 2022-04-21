@@ -34,11 +34,11 @@ namespace Snowflake.Data.Tests
             const string TABLE_STAGE = "TABLE_STAGE";
             const string NAMED_STAGE = "NAMED_STAGE";
 
-            const string FALSE = "FALSE";
-            const string TRUE = "TRUE";
+            const string FALSE_COMPRESS = "FALSE";
+            const string TRUE_COMPRESS = "TRUE";
 
-            const string SNOWFLAKE_FULL = "SNOWFLAKE_FULL";
-            const string SNOWFLAKE_SSE = "SNOWFLAKE_SSE";
+            const string SNOWFLAKE_FULL = "'SNOWFLAKE_FULL'";
+            const string SNOWFLAKE_SSE = "'SNOWFLAKE_SSE'";
 
             const string UPLOADED = "UPLOADED";
             const string DOWNLOADED = "DOWNLOADED";
@@ -62,7 +62,6 @@ namespace Snowflake.Data.Tests
 
             string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
             string copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-            string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
 
             string removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
             string removeFileUser = $"REMOVE @~/";
@@ -71,7 +70,7 @@ namespace Snowflake.Data.Tests
             string dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
 
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
-            string[] autoCompressTypes = { FALSE, TRUE};
+            string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
             string[] encryptionTypes = { SNOWFLAKE_FULL, SNOWFLAKE_SSE };
 
             foreach (string stageType in stageTypes)
@@ -86,7 +85,8 @@ namespace Snowflake.Data.Tests
                             conn.Open();
 
                             // Create a temp file with specified file extension
-                            string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv." + compressionType;
+                            string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv" +
+                                (autoCompressType == FALSE_COMPRESS ? "" : "." + compressionType);
                             // Write row data to temp file
                             File.WriteAllText(filePath, ROW_DATA);
 
@@ -101,6 +101,7 @@ namespace Snowflake.Data.Tests
                             else if (stageType == TABLE_STAGE)
                             {
                                 putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                                //createStage += $" ENCRYPTION=(TYPE={encryptionType})";
                             }
                             else if (stageType == NAMED_STAGE)
                             {
@@ -110,6 +111,7 @@ namespace Snowflake.Data.Tests
                             string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
                             string fileName = "";
+                            string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
                             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                             {
                                 fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
@@ -140,9 +142,8 @@ namespace Snowflake.Data.Tests
                                 }
                             }
 
-                            // Add PUT compress and encryption option
-                            putQuery += $" AUTO_COMPRESS = {autoCompressType}";
-                            putQuery += $" ENCRYPTION = (TYPE = {encryptionType})";
+                            // Add PUT compress option
+                            putQuery += $" AUTO_COMPRESS={autoCompressType}";
 
                             using (DbCommand command = conn.CreateCommand())
                             {
@@ -162,8 +163,16 @@ namespace Snowflake.Data.Tests
                                     // Check file status
                                     Assert.AreEqual(reader.GetString(4), UPLOADED);
                                     // Check source and destination compression type
-                                    Assert.AreEqual(reader.GetString(6), compressionType);
-                                    Assert.AreEqual(reader.GetString(7), compressionType);
+                                    if (autoCompressType == FALSE_COMPRESS)
+                                    {
+                                        Assert.AreEqual(reader.GetString(6), "none");
+                                        Assert.AreEqual(reader.GetString(7), "none");
+                                    }
+                                    else
+                                    {
+                                        Assert.AreEqual(reader.GetString(6), compressionType);
+                                        Assert.AreEqual(reader.GetString(7), compressionType);
+                                    }
                                 }
 
                                 // Copy into temp table
@@ -230,8 +239,8 @@ namespace Snowflake.Data.Tests
                             conn.Close();
                             Assert.AreEqual(ConnectionState.Closed, conn.State);
                         }
-                    }                    
-                }                
+                    }
+                }
             }
         }
     }
