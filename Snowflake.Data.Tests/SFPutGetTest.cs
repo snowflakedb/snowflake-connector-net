@@ -101,11 +101,11 @@ namespace Snowflake.Data.Tests
                             else if (stageType == TABLE_STAGE)
                             {
                                 putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-                                createStage += $" ENCRYPTION=(TYPE={encryptionType})";
                             }
                             else if (stageType == NAMED_STAGE)
                             {
                                 putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                                createStage += $" ENCRYPTION=(TYPE={encryptionType})";
                             }
 
                             string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
@@ -139,6 +139,7 @@ namespace Snowflake.Data.Tests
                                 else if (stageType == NAMED_STAGE)
                                 {
                                     putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                                    createStage += $" ENCRYPTION=(TYPE={encryptionType})";
                                 }
                             }
 
