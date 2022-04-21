@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests
 
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
             string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
-            string[] encryptionTypes = { SNOWFLAKE_SSE, SNOWFLAKE_FULL };
+            string[] encryptionTypes = { SNOWFLAKE_FULL, SNOWFLAKE_SSE };
 
             foreach (string stageType in stageTypes)
             {
@@ -81,6 +81,10 @@ namespace Snowflake.Data.Tests
                     {
                         using (DbConnection conn = new SnowflakeDbConnection())
                         {
+                            Console.WriteLine("STAGE TYPE: " + stageType);
+                            Console.WriteLine("AUTOCOMPRESS TYPE: " + autoCompressType);
+                            Console.WriteLine("ENCRYPTION TYPE: " + encryptionType);
+
                             conn.ConnectionString = ConnectionString;
                             conn.Open();
 
@@ -154,10 +158,12 @@ namespace Snowflake.Data.Tests
 
                                 // Create temp stage
                                 command.CommandText = createStage;
+                                Console.WriteLine("STAGE QUERY: " + createStage);
                                 command.ExecuteNonQuery();
 
                                 // Upload file
                                 command.CommandText = putQuery;
+                                Console.WriteLine("PUT QUERY: " + putQuery);
                                 DbDataReader reader = command.ExecuteReader();
                                 while (reader.Read())
                                 {
@@ -189,6 +195,7 @@ namespace Snowflake.Data.Tests
                                 {
                                     command.CommandText = copyIntoStage;
                                 }
+                                Console.WriteLine("COPY INTO QUERY: " + command.CommandText);
                                 command.ExecuteNonQuery();
 
                                 // Check contents are correct
@@ -207,6 +214,7 @@ namespace Snowflake.Data.Tests
 
                                 // Download file
                                 command.CommandText = getQuery;
+                                Console.WriteLine("GET QUERY: " + getQuery);
                                 reader = command.ExecuteReader();
                                 while (reader.Read())
                                 {
