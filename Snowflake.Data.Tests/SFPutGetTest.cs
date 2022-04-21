@@ -96,9 +96,19 @@ namespace Snowflake.Data.Tests
 
                     string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
-                    string fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
-                    removeFileUser += fileName;
-                    copyIntoUser += fileName;
+                    string fileName = "";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
+                        removeFileUser += fileName;
+                        copyIntoUser += fileName;
+                    }
+                    else
+                    {
+                        fileName = filePath.Substring(filePath.LastIndexOf('/') + 1);
+                        removeFileUser += fileName;
+                        copyIntoUser += fileName;
+                    }
 
                     // Windows user contains a '~' in the path which causes an error
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -115,16 +125,6 @@ namespace Snowflake.Data.Tests
                         {
                             putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
                         }
-                    }
-                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    {
-                        Console.WriteLine("USER PUT QUERY: " + putQuery);
-                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-                        Console.WriteLine("TABLE PUT QUERY: " + putQuery);
-                        putQuery = $"PUT file://{filePath} @~/";
-
-                        Console.WriteLine("USER COPY INTO QUERY: " + copyIntoUser);
-                        Console.WriteLine("TABLE COPY INTO QUERY: " + copyIntoTable);
                     }
 
                     using (DbCommand command = conn.CreateCommand())
