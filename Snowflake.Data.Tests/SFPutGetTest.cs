@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests
                                     command.CommandText = copyIntoStage;
                                 }
                                 Console.WriteLine("STAGE TYPE: " + stageType);
-                                Console.WriteLine("COMPRESSION TYPE: " + compressionType);
+                                Console.WriteLine("AUTOCOMPRESS TYPE: " + autoCompressType);
                                 Console.WriteLine("ENCRYPTION TYPE: " + encryptionType);
 
                                 command.ExecuteNonQuery();
