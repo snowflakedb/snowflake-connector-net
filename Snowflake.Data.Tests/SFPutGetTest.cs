@@ -83,15 +83,15 @@ namespace Snowflake.Data.Tests
                     string putQuery = "";
                     if (stageType == USER_STAGE)
                     {
-                        putQuery = $"PUT file:/{filePath} @~/";
+                        putQuery = $"PUT file://{filePath} @~/";
                     }
                     else if (stageType == TABLE_STAGE)
                     {
-                        putQuery = $"PUT file:/{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
                     }
                     else if (stageType == NAMED_STAGE)
                     {
-                        putQuery = $"PUT file:/{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                        putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
                     }
 
                     string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
