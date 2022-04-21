@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests
                             else if (stageType == TABLE_STAGE)
                             {
                                 putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-                                //createStage += $" ENCRYPTION=(TYPE={encryptionType})";
+                                createStage += $" ENCRYPTION=(TYPE={encryptionType})";
                             }
                             else if (stageType == NAMED_STAGE)
                             {
