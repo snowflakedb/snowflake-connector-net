@@ -122,7 +122,6 @@ namespace Snowflake.Data.Tests
                     {
                         Console.WriteLine("USER PUT QUERY: " + putQuery);
                         Console.WriteLine("USER COPY INTO QUERY: " + copyIntoUser);
-                        Console.WriteLine("TABLE COPY INTO QUERY: " + copyIntoTable);
                     }
 
                     using (DbCommand command = conn.CreateCommand())

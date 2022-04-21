@@ -490,6 +490,7 @@ namespace Snowflake.Data.Core
         /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
         private List<string> expandFileNames(string location)
         {
+            Console.WriteLine("Location: " + location);
             // Replace ~ with the user home directory path
             if (location.Contains("~"))
             {
