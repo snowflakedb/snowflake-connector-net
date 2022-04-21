@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests
 
             string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
             string copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-            string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~";
+            string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
 
             string removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
             string removeFileUser = $"REMOVE @~/";
