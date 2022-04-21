@@ -58,7 +58,6 @@ namespace Snowflake.Data.Tests
             string createTable = $"create or replace table {TEST_TEMP_TABLE_NAME} ({COL1} STRING," +
             $"{COL2} STRING," +
             $"{COL3} STRING)";
-            string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
 
             string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
             string copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
@@ -96,6 +95,8 @@ namespace Snowflake.Data.Tests
 
                             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                             Directory.CreateDirectory(tempDirectory);
+
+                            string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
 
                             string putQuery = "";
                             if (stageType == USER_STAGE)
