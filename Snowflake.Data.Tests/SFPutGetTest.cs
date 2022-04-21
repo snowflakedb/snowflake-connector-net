@@ -87,8 +87,8 @@ namespace Snowflake.Data.Tests
 
                 string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
 
-                putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-                createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_FULL})";
+                string putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_SSE})";
                 
 
                 string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
-                    createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_FULL})";
+                    createStage += $" ENCRYPTION=(TYPE={SNOWFLAKE_SSE})";
                 }
 
                 // Add PUT compress option
