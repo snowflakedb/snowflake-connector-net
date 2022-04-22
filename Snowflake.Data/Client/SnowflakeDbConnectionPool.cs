@@ -9,6 +9,7 @@ namespace Snowflake.Data.Client
     class SnowflakeDbConnectionPool
     {
         private static ConcurrentDictionary<string, SnowflakeDbConnection> connectionPool;
+        private static readonly object _connectionPoolLock = new object();
         private static int minPoolSize;
         private static int maxPoolSize;
         private static int cleanupCounter;
@@ -19,11 +20,14 @@ namespace Snowflake.Data.Client
 
         private static void initConnectionPool()
         {
-            connectionPool = new ConcurrentDictionary<string, SnowflakeDbConnection>();
-            minPoolSize = MIN_POOL_SIZE;
-            maxPoolSize = MAX_POOL_SIZE;
-            cleanupCounter = CLEANUP_COUNTER;
-            currentCounter = 0;
+            lock (_connectionPoolLock)
+            {
+                connectionPool = new ConcurrentDictionary<string, SnowflakeDbConnection>();
+                minPoolSize = MIN_POOL_SIZE;
+                maxPoolSize = MAX_POOL_SIZE;
+                cleanupCounter = CLEANUP_COUNTER;
+                currentCounter = 0;
+            }
         }
 
         private static void cleanNonActiveConnections()
@@ -33,18 +37,21 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            List<string> keys = new List<string>(connectionPool.Keys);
-            int curSize = keys.Count;
-            foreach (var item in keys)
+            lock (_connectionPoolLock)
             {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(item, out conn);
-                if (!conn.isActive && curSize > minPoolSize)
+                List<string> keys = new List<string>(connectionPool.Keys);
+                int curSize = keys.Count;
+                foreach (var item in keys)
                 {
-                    connectionPool.TryRemove(item, out conn);
-                    conn.CloseConnection();
-                    conn.DisposeConnection(false);
-                    curSize--;
+                    SnowflakeDbConnection conn;
+                    connectionPool.TryGetValue(item, out conn);
+                    if (!conn.isActive && curSize > minPoolSize)
+                    {
+                        connectionPool.TryRemove(item, out conn);
+                        conn.CloseConnection();
+                        conn.DisposeConnection(false);
+                        curSize--;
+                    }
                 }
             }
         }
@@ -66,33 +73,36 @@ namespace Snowflake.Data.Client
 
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
-            if (connectionPool.ContainsKey(conn.ConnectionString))
+            lock (_connectionPoolLock)
             {
-                conn.isActive = true;
-                return false;
-            }
-
-            if (connectionPool.Count >= maxPoolSize)
-            {
-                if (currentCounter > 0)
+                if (connectionPool.ContainsKey(conn.ConnectionString))
                 {
-                    currentCounter--;
+                    conn.isActive = true;
                     return false;
                 }
-                else
+
+                if (connectionPool.Count >= maxPoolSize)
                 {
-                    currentCounter = cleanupCounter;
-                    cleanNonActiveConnections();
-                    if (connectionPool.Count >= maxPoolSize)
+                    if (currentCounter > 0)
                     {
+                        currentCounter--;
                         return false;
                     }
+                    else
+                    {
+                        currentCounter = cleanupCounter;
+                        cleanNonActiveConnections();
+                        if (connectionPool.Count >= maxPoolSize)
+                        {
+                            return false;
+                        }
+                    }
                 }
-            }
 
-            conn.isActive = true;
-            connectionPool.TryAdd(conn.ConnectionString, conn);
-            return true;
+                conn.isActive = true;
+                connectionPool.TryAdd(conn.ConnectionString, conn);
+                return true;
+            }
         }
 
         public static void ClearAllPools()
@@ -102,15 +112,18 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            List<string> keys = new List<string>(connectionPool.Keys);
-            foreach (var item in keys)
+            lock (_connectionPoolLock)
             {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(item, out conn);
-                connectionPool.TryRemove(item, out conn);
-                conn.isActive = false;
-                conn.CloseConnection();
-                conn.DisposeConnection(false);
+                List<string> keys = new List<string>(connectionPool.Keys);
+                foreach (var item in keys)
+                {
+                    SnowflakeDbConnection conn;
+                    connectionPool.TryGetValue(item, out conn);
+                    connectionPool.TryRemove(item, out conn);
+                    conn.isActive = false;
+                    conn.CloseConnection();
+                    conn.DisposeConnection(false);
+                }
             }
         }
 
@@ -121,13 +134,16 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
-            if (connectionPool.ContainsKey(conn.ConnectionString))
+            lock (_connectionPoolLock)
             {
-                connectionPool.TryRemove(conn.ConnectionString, out conn);
-                conn.isActive = false;
-                conn.CloseConnection();
-                conn.DisposeConnection(false);
-                return true;
+                if (connectionPool.ContainsKey(conn.ConnectionString))
+                {
+                    connectionPool.TryRemove(conn.ConnectionString, out conn);
+                    conn.isActive = false;
+                    conn.CloseConnection();
+                    conn.DisposeConnection(false);
+                    return true;
+                }
             }
             return false;
         }

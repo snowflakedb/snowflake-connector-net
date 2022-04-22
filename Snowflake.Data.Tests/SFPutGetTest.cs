@@ -230,7 +230,7 @@ namespace Snowflake.Data.Tests
                         File.Delete(filePath);
 
                         conn.Close();
-                        Assert.AreEqual(ConnectionState.Closed, conn.State);
+                        Assert.AreEqual(ConnectionState.Open, conn.State);
                     }
                 }
             }

@@ -192,11 +192,47 @@ namespace Snowflake.Data.Tests
             conn3.Close();
             conn4.Close();
 
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
             Assert.AreEqual(ConnectionState.Open, conn3.State);
-            Assert.AreEqual(ConnectionState.Closed, conn4.State);
+            Assert.AreEqual(ConnectionState.Open, conn4.State);
             SnowflakeDbConnection.ClearAllPools();
+        }
+
+        [Test]
+        public void TestConnectionPoolMultiThreading()
+        {
+            SnowflakeDbConnection.ClearAllPools();
+            Thread t1 = new Thread(ThreadProcess1);
+            Thread t2 = new Thread(ThreadProcess2);
+
+            t1.Start();
+            t2.Start();
+        }
+
+        static void ThreadProcess1()
+        {
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = "scheme=https;host=simbapartner.snowflakecomputing.com;port=443;account=simbapartner;role=SYSADMIN;db=TESTDB;schema=SEN;warehouse=SIMBA_WH_TEST;user=SEN;password=Sunshine4u4SEN;";
+            conn1.Open();
+            Thread.Sleep(1000);
+            conn1.Close();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            SnowflakeDbConnection.ClearAllPools();
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+        }
+
+        static void ThreadProcess2()
+        {
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = "scheme=https;host=simbapartner.snowflakecomputing.com;port=443;account=simbapartner;role=SYSADMIN;db=TESTDB;schema=SEN;warehouse=SIMBA_WH_TEST;user=SEN;password=Sunshine4u4SEN;";
+            conn1.Open();
+
+            Thread.Sleep(5000);
+            SFStatement statement = new SFStatement(conn1.SfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
         }
     }
 }

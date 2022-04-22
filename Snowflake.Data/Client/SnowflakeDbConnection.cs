@@ -150,7 +150,7 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                conn.CloseConnection();
+                CloseConnection();
             }
         }
 
