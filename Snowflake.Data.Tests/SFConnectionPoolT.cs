@@ -218,6 +218,7 @@ namespace Snowflake.Data.Tests
             Thread.Sleep(1000);
             conn1.Close();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Thread.Sleep(4000);
             SnowflakeDbConnection.ClearAllPools();
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
         }
