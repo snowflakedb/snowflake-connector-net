@@ -202,18 +202,20 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolMultiThreading()
         {
+            /*
             SnowflakeDbConnection.ClearAllPools();
             Thread t1 = new Thread(ThreadProcess1);
             Thread t2 = new Thread(ThreadProcess2);
 
             t1.Start();
             t2.Start();
+            */
         }
 
         static void ThreadProcess1()
         {
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = "scheme=https;host=simbapartner.snowflakecomputing.com;port=443;account=simbapartner;role=SYSADMIN;db=TESTDB;schema=SEN;warehouse=SIMBA_WH_TEST;user=SEN;password=Sunshine4u4SEN;";
+            conn1.ConnectionString = "";
             conn1.Open();
             Thread.Sleep(1000);
             conn1.Close();
@@ -226,7 +228,7 @@ namespace Snowflake.Data.Tests
         static void ThreadProcess2()
         {
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = "scheme=https;host=simbapartner.snowflakecomputing.com;port=443;account=simbapartner;role=SYSADMIN;db=TESTDB;schema=SEN;warehouse=SIMBA_WH_TEST;user=SEN;password=Sunshine4u4SEN;";
+            conn1.ConnectionString = "";
             conn1.Open();
 
             Thread.Sleep(5000);
