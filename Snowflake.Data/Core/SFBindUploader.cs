@@ -26,8 +26,6 @@ namespace Snowflake.Data.Core
 
         private static long inputStreamBufferSize = 1024 * 1024 * 100;
 
-        private Boolean closed = false;
-
         private int fileCount = 0;
 
         private SFSession session;
@@ -38,13 +36,10 @@ namespace Snowflake.Data.Core
 
         private string stagePath;
 
-        private string locationType;
-
         public SFBindUploader(SFSession session, string requestId)
         {
             this.session = session;
             this.requestId = requestId;
-            this.closed = false;
             this.stagePath = "@" + STAGE_NAME + "/" + requestId;
         }
 
@@ -91,7 +86,6 @@ namespace Snowflake.Data.Core
                     sb.Append(GetCSVData(types[j], (string)bindList[j][i]));
                 }
                 sb.Append('\n');
-                //dataRows.Add(Encoding.UTF8.GetBytes(sb.ToString()));
                 dataRows.Add(sb.ToString());
             }
 
@@ -211,7 +205,6 @@ namespace Snowflake.Data.Core
                         SFStatement statement = new SFStatement(session);
                         SFBaseResultSet resultSet = statement.Execute(0, createStageSQL, null, false);
                         session.SetArrayBindStage(STAGE_NAME);
-                        locationType = GetLocationType(statement.SfSession.properties[SFSessionProperty.ACCOUNT]);
                     }
                     catch (Exception e)
                     {
@@ -220,26 +213,6 @@ namespace Snowflake.Data.Core
                         throw e;
                     }
                 }
-            }
-        }
-
-        private string GetLocationType(string account)
-        {
-            if(account.Contains(ACCOUNT_GCP))
-            {
-                return FileTransfer.SFRemoteStorageUtil.S3_FS;
-            }
-            else if(account.Contains(ACCOUNT_AZURE))
-            {
-                return FileTransfer.SFRemoteStorageUtil.AZURE_FS;
-            }
-            else if(account.Contains(ACCOUNT_LOCAL))
-            {
-                return FileTransfer.SFRemoteStorageUtil.LOCAL_FS;
-            }
-            else
-            {
-                return FileTransfer.SFRemoteStorageUtil.S3_FS;
             }
         }
     }

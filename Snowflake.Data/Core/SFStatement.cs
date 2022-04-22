@@ -294,12 +294,11 @@ namespace Snowflake.Data.Core
                     String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                     int arrayBindingThreshold = Int32.Parse(val);
                     int numBinding = GetBindingCount(bindings);
-
                     
                     if (0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
                         && !describeOnly)
-                    {
+                    { 
                         try
                         {
                             AssignQueryRequestId();
@@ -566,6 +565,10 @@ namespace Snowflake.Data.Core
             }
             foreach (BindingDTO bindingDTO in binding.Values)
             {
+                if (bindingDTO.value == null)
+                {
+                    return false;
+                }
                 if (bindingDTO.value.GetType() != typeof(List<object>))
                 {
                     return false;
@@ -600,13 +603,6 @@ namespace Snowflake.Data.Core
                         new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
             fileTransferAgent.ExecuteUploadStream();
 
-            /*
-            // Start the file transfer
-            fileTransferAgent.execute();
-
-            // Get the results of the upload/download
-            return fileTransferAgent.result();
-            */
             return fileTransferAgent.result();
         }
     }

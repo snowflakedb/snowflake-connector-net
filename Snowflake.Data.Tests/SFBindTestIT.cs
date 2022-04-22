@@ -562,11 +562,11 @@ namespace Snowflake.Data.Tests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ, colg TIMESTAMP_LTZ)";
+                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
                     int count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(0, count);
 
-                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?, ?)";
+                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -616,15 +616,6 @@ namespace Snowflake.Data.Tests
                     p6.DbType = DbType.DateTimeOffset;
                     p6.Value = new DateTimeOffset[] { tz1, tz2, tz3 };
                     cmd.Parameters.Add(p6);
-
-                    DateTimeOffset ltz1 = DateTimeOffset.Now;
-                    DateTimeOffset ltz2 = DateTimeOffset.UtcNow;
-                    DateTimeOffset ltz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                    var p7 = cmd.CreateParameter();
-                    p7.ParameterName = "7";
-                    p7.DbType = DbType.DateTimeOffset;
-                    p7.Value = new DateTimeOffset[] { ltz1, ltz2, ltz3 };
-                    cmd.Parameters.Add(p7);
 
                     count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);
