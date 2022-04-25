@@ -202,20 +202,18 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolMultiThreading()
         {
-            /*
             SnowflakeDbConnection.ClearAllPools();
-            Thread t1 = new Thread(ThreadProcess1);
-            Thread t2 = new Thread(ThreadProcess2);
+            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
+            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString));
 
             t1.Start();
             t2.Start();
-            */
         }
 
-        static void ThreadProcess1()
+        static void ThreadProcess1(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = "";
+            conn1.ConnectionString = connstr;
             conn1.Open();
             Thread.Sleep(1000);
             conn1.Close();
@@ -225,10 +223,10 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
         }
 
-        static void ThreadProcess2()
+        static void ThreadProcess2(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = "";
+            conn1.ConnectionString = connstr;
             conn1.Open();
 
             Thread.Sleep(5000);
