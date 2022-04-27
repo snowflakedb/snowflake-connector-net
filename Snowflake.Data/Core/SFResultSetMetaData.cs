@@ -101,6 +101,12 @@ namespace Snowflake.Data.Core
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
+                    else if (String.Compare(rowType.name, targetColumnName, true ) == 0 )
+                    {
+                        logger.Info($"Found colun name {targetColumnName} under index {indexCounter}");
+                        columnNameToIndexCache[targetColumnName] = indexCounter;
+                        return indexCounter;
+                    }
                     indexCounter++; 
                 }
             }
