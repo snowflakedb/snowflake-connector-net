@@ -67,11 +67,6 @@ namespace Snowflake.Data.Core
         private static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
 
         /// <summary>
-        /// none keyword for no source compression.
-        /// </summary>
-        private static readonly string COMPRESSION_NONE = "none";
-
-        /// <summary>
         /// The Snowflake query
         /// </summary>
         private string Query;
