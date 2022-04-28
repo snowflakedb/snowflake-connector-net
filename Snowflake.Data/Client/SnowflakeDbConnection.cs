@@ -164,7 +164,7 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                return conn.CloseConnectionAsync(cancellationToken);
+                return this.CloseConnectionAsync(cancellationToken);
             }
         }
 
