@@ -1259,6 +1259,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
+                SnowflakeDbConnection.ClearAllPools();
                 // No timeout
                 int timeoutSec = 0;
                 string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0}",
@@ -1309,6 +1310,7 @@ namespace Snowflake.Data.Tests
             {
                 using (var conn = new MockSnowflakeDbConnection())
                 {
+                    SnowflakeDbConnection.ClearAllPools();
                     int timeoutSec = 5;
                     string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
                         timeoutSec);
@@ -1347,6 +1349,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
+                SnowflakeDbConnection.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
@@ -1380,6 +1383,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new SnowflakeDbConnection())
             {
+                SnowflakeDbConnection.ClearAllPools();
                 // Just a way to get a 404 on the login request and make sure there are no retry
                 string invalidConnectionString = "host=docs.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
