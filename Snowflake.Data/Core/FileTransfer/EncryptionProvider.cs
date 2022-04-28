@@ -213,8 +213,15 @@ namespace Snowflake.Data.Core.FileTransfer
             MemoryStream targetStream = new MemoryStream();
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
 
-            byte[] inFileBytes = File.ReadAllBytes(inFile);
-            cryptoStream.Write(inFileBytes, 0, inFileBytes.Length);
+            using(Stream inStream = File.OpenRead(inFile))
+            {
+                byte[] buffer = new byte[2048];
+                int bytesRead;
+                while((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    cryptoStream.Write(buffer, 0, bytesRead);
+                }
+            }
             cryptoStream.FlushFinalBlock();
 
             return targetStream.ToArray();
