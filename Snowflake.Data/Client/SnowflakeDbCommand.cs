@@ -163,8 +163,7 @@ namespace Snowflake.Data.Client
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
             return resultSet.CalculateUpdateCount();
@@ -184,8 +183,7 @@ namespace Snowflake.Data.Client
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
 
@@ -223,7 +221,7 @@ namespace Snowflake.Data.Client
             catch (Exception ex)
             {
                 logger.Error("The command failed to execute.", ex);
-                throw ex;
+                throw;
             }
         }
 

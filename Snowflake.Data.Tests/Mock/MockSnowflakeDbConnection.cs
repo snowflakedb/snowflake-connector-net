@@ -61,9 +61,9 @@ namespace Snowflake.Data.Tests.Mock
                     // Exception from SfSession.OpenAsync
                     Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx.InnerException);
+                        logger.Error("Unable to connect", sfSessionEx);
                         throw //sfSessionEx.InnerException;
-                        new SnowflakeDbException(sfSessionEx.InnerException, SFError.INTERNAL_ERROR, "Unable to connect");
+                        new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, "Unable to connect");
                     }
                     if (previousTask.IsCanceled)
                     {

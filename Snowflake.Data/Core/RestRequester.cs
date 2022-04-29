@@ -121,7 +121,12 @@ namespace Snowflake.Data.Core
                     {
                         // Disposing of the response if not null now that we don't need it anymore 
                         response?.Dispose();
-                        throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+                        if (restRequestTimeout.IsCancellationRequested)
+                        {
+                            throw new SnowflakeDbException(e, SFError.REQUEST_TIMEOUT);
+                        }
+
+                        throw;
                     }
                 }
             }
