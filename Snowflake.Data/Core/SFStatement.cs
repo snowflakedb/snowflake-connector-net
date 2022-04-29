@@ -291,8 +291,12 @@ namespace Snowflake.Data.Core
                 }
                 else
                 {
-                    String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
-                    int arrayBindingThreshold = Int32.Parse(val);
+                    int arrayBindingThreshold = 0;
+                    if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+                    {
+                        String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                        arrayBindingThreshold = Int32.Parse(val);
+                    }
                     int numBinding = GetBindingCount(bindings);
                     
                     if (0 < arrayBindingThreshold
