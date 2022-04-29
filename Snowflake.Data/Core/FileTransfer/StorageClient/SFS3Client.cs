@@ -314,5 +314,58 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.destFileSize = fileMetadata.uploadSize;
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
         }
+
+        /// <summary>
+        /// Download the file to the local location.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
+        /// <param name="maxConcurrency">Number of max concurrency.</param>
+        public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
+        {
+            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+
+            // Get the client
+            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
+            AmazonS3Client client = SFS3Client.S3Client;
+
+            // Create S3 GET request
+            GetObjectRequest getObjectRequest = new GetObjectRequest
+            {
+                BucketName = location.bucket,
+                Key = location.key + fileMetadata.destFileName,
+            };
+
+            try
+            {
+                // Issue the GET request
+                var task = client.GetObjectAsync(getObjectRequest);
+                task.Wait();
+
+                GetObjectResponse response = task.Result;
+                // Write to file
+                using (var fileStream = File.Create(fullDstPath))
+                {
+                    response.ResponseStream.CopyTo(fileStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
+                if (err.ErrorCode == EXPIRED_TOKEN)
+                {
+                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                }
+                else
+                {
+                    fileMetadata.lastError = err;
+                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                }
+                return;
+            }
+
+            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+        }
     }
 }
