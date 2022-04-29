@@ -66,6 +66,8 @@ namespace Snowflake.Data.Core
         APPLICATION,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLERETRY,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        FORCERETRYON404,
     }
 
     class SFSessionPropertyAttr : Attribute

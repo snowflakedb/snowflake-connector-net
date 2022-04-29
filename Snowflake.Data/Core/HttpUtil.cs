@@ -25,7 +25,8 @@ namespace Snowflake.Data.Core
             string proxyUser,
             string proxyPassword,
             string noProxyList,
-            bool disableRetry)
+            bool disableRetry,
+            bool forceRetryOn404)
         {
             CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
@@ -34,6 +35,7 @@ namespace Snowflake.Data.Core
             ProxyPassword = proxyPassword;
             NoProxyList = noProxyList;
             DisableRetry = disableRetry;
+            ForceRetryOn404 = forceRetryOn404;
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -43,7 +45,8 @@ namespace Snowflake.Data.Core
                     proxyUser,
                     proxyPassword,
                     noProxyList,
-                    disableRetry.ToString()});
+                    disableRetry.ToString(),
+                    forceRetryOn404.ToString()});
         }
 
         public readonly bool CrlCheckEnabled;
@@ -53,6 +56,7 @@ namespace Snowflake.Data.Core
         public readonly string ProxyPassword;
         public readonly string NoProxyList;
         public readonly bool DisableRetry;
+        public readonly bool ForceRetryOn404;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -94,7 +98,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Http client for {name} not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(setupCustomHttpHandler(config), config.DisableRetry))
+                    new RetryHandler(setupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -254,10 +258,12 @@ namespace Snowflake.Data.Core
             static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
 
             private bool disableRetry;
+            private bool forceRetryOn404;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
+                this.forceRetryOn404 = forceRetryOn404;
             }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
@@ -378,6 +384,8 @@ namespace Snowflake.Data.Core
             /// <returns>True if the request should be retried, false otherwise.</returns>
             private bool isRetryableHTTPCode(int statusCode)
             {
+                if (forceRetryOn404 && statusCode == 404)
+                    return true;
                 return (500 <= statusCode) && (statusCode < 600) ||
                 // Forbidden
                 (statusCode == 403) ||

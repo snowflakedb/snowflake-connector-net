@@ -124,6 +124,7 @@ namespace Snowflake.Data.Core
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
+                bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
                 string proxyHost = null;
                 string proxyPort = null;
                 string noProxyHosts = null;
@@ -155,7 +156,8 @@ namespace Snowflake.Data.Core
                         proxyUser,
                         proxyPwd,
                         noProxyHosts,
-                        disableRetry);
+                        disableRetry,
+                        forceRetryOn404);
 
                 // Get the http client for the config
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
