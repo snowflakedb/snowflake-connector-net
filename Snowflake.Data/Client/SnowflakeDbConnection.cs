@@ -26,7 +26,7 @@ namespace Snowflake.Data.Client
 
         internal int _connectionTimeout;
 
-        internal bool isActive = false;
+        internal int _refCount = 0;
 
         private bool disposed = false;
 
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Client
             this.SfSession = conn.SfSession;
             this._connectionState = conn._connectionState;
             this._connectionTimeout = conn._connectionTimeout;
-            this.isActive = conn.isActive;
+            this._refCount = conn._refCount;
             this.disposed = conn.disposed;
             this.ConnectionString = conn.ConnectionString;
             this.Password = conn.Password;
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Client
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
-                conn.isActive = false;
+                conn._refCount--;
             }
             else
             {
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Client
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
-                conn.isActive = false;
+                conn._refCount--;
                 return Task.CompletedTask;
             }
             else
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Client
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if(conn != null)
             {
-                conn.isActive = true;
+                conn._refCount++;
                 this.copy(conn);
             }
             else
@@ -234,6 +234,7 @@ namespace Snowflake.Data.Client
             SetSession();
             try
             {
+                _refCount++;
                 SfSession.Open();
             }
             catch (Exception e)
@@ -264,7 +265,6 @@ namespace Snowflake.Data.Client
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
-                conn.isActive = true;
                 this.copy(conn);
                 return Task.CompletedTask;
             }
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Client
         {
             if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
             {
-                this.isActive = false;
+                this._refCount--;
             }
             else
             {

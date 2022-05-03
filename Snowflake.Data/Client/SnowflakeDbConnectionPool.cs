@@ -45,7 +45,7 @@ namespace Snowflake.Data.Client
                 {
                     SnowflakeDbConnection conn;
                     connectionPool.TryGetValue(item, out conn);
-                    if (!conn.isActive && curSize > minPoolSize)
+                    if (conn._refCount <= 0 && curSize > minPoolSize)
                     {
                         connectionPool.TryRemove(item, out conn);
                         conn.CloseConnection();
@@ -75,9 +75,12 @@ namespace Snowflake.Data.Client
         {
             lock (_connectionPoolLock)
             {
-                if (connectionPool.ContainsKey(conn.ConnectionString))
+                SnowflakeDbConnection poolConn;
+                connectionPool.TryGetValue(conn.ConnectionString, out poolConn);
+
+                if (poolConn != null)
                 {
-                    conn.isActive = true;
+                    poolConn._refCount++;
                     return false;
                 }
 
@@ -99,7 +102,6 @@ namespace Snowflake.Data.Client
                     }
                 }
 
-                conn.isActive = true;
                 connectionPool.TryAdd(conn.ConnectionString, conn);
                 return true;
             }
@@ -120,7 +122,7 @@ namespace Snowflake.Data.Client
                     SnowflakeDbConnection conn;
                     connectionPool.TryGetValue(item, out conn);
                     connectionPool.TryRemove(item, out conn);
-                    conn.isActive = false;
+                    conn._refCount = 0;
                     conn.CloseConnection();
                     conn.DisposeConnection(false);
                 }
@@ -139,7 +141,7 @@ namespace Snowflake.Data.Client
                 if (connectionPool.ContainsKey(conn.ConnectionString))
                 {
                     connectionPool.TryRemove(conn.ConnectionString, out conn);
-                    conn.isActive = false;
+                    conn._refCount = 0;
                     conn.CloseConnection();
                     conn.DisposeConnection(false);
                     return true;
