@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
 using Snowflake.Data.Log;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Snowflake.Data.Client
 {
@@ -24,7 +26,35 @@ namespace Snowflake.Data.Client
 
         internal int _connectionTimeout;
 
+        internal int _refCount = 0;
+
         private bool disposed = false;
+
+        
+        public static void ClearAllPools()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        public static bool ClearPool(SnowflakeDbConnection conn)
+        {
+            return SnowflakeDbConnectionPool.ClearPool(conn);
+        }
+
+        public static void SetMinPoolSize(int size)
+        {
+            SnowflakeDbConnectionPool.SetMinPoolSize(size);
+        }
+
+        public static void SetMaxPoolSize(int size)
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(size);
+        }
+
+        public static void SetCleanupCounter(int size)
+        {
+            SnowflakeDbConnectionPool.SetCleanupCounter(size);
+        }
 
         public SnowflakeDbConnection()
         {
@@ -32,6 +62,18 @@ namespace Snowflake.Data.Client
             _connectionTimeout = 
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
+        }
+
+        private void copy(SnowflakeDbConnection conn)
+        {
+            this.logger = conn.logger;
+            this.SfSession = conn.SfSession;
+            this._connectionState = conn._connectionState;
+            this._connectionTimeout = conn._connectionTimeout;
+            this._refCount = conn._refCount;
+            this.disposed = conn.disposed;
+            this.ConnectionString = conn.ConnectionString;
+            this.Password = conn.Password;
         }
 
         public override string ConnectionString
@@ -88,10 +130,9 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override void Close()
+        internal void CloseConnection()
         {
             logger.Debug("Close Connection.");
-
             if (_connectionState != ConnectionState.Closed && SfSession != null)
             {
                 SfSession.close();
@@ -100,9 +141,36 @@ namespace Snowflake.Data.Client
             _connectionState = ConnectionState.Closed;
         }
 
+        public override void Close()
+        {
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
+            if (conn != null)
+            {
+                conn._refCount--;
+            }
+            else
+            {
+                CloseConnection();
+            }
+        }
+
         public Task CloseAsync(CancellationToken cancellationToken)
         {
-            logger.Debug("Close Connection.");
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
+            if (conn != null)
+            {
+                conn._refCount--;
+                return Task.CompletedTask;
+            }
+            else
+            {
+                return this.CloseConnectionAsync(cancellationToken);
+            }
+        }
+
+        private Task CloseConnectionAsync(CancellationToken cancellationToken)
+        {
+            logger.Debug("Close Connection Async.");
             TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
             if (cancellationToken.IsCancellationRequested)
@@ -147,10 +215,26 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
+            if(conn != null)
+            {
+                conn._refCount++;
+                this.copy(conn);
+            }
+            else
+            {
+                ConnectionOpen();
+                SnowflakeDbConnectionPool.addConnection(this);
+            }
+        }
+
+        private void ConnectionOpen()
+        {
             logger.Debug("Open Connection.");
             SetSession();
             try
             {
+                _refCount++;
                 SfSession.Open();
             }
             catch (Exception e)
@@ -160,7 +244,7 @@ namespace Snowflake.Data.Client
                 logger.Error("Unable to connect", e);
                 if (!(e.GetType() == typeof(SnowflakeDbException)))
                 {
-                    throw 
+                    throw
                        new SnowflakeDbException(
                            e,
                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
@@ -175,9 +259,24 @@ namespace Snowflake.Data.Client
             OnSessionEstablished();
         }
 
+
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            logger.Debug("Open Connection.");
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
+            if (conn != null)
+            {
+                this.copy(conn);
+                return Task.CompletedTask;
+            }
+            else
+            {
+                return OpenConnectionAsync(cancellationToken);
+            }
+        }
+
+        private Task OpenConnectionAsync(CancellationToken cancellationToken)
+        { 
+            logger.Debug("Open Connection Async.");
             registerConnectionCancellationCallback(cancellationToken);
             SetSession();
 
@@ -206,6 +305,7 @@ namespace Snowflake.Data.Client
                         logger.Debug("All good");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();
+                        SnowflakeDbConnectionPool.addConnection(this);
                     }
                 },
                 cancellationToken);
@@ -246,6 +346,16 @@ namespace Snowflake.Data.Client
 
         protected override void Dispose(bool disposing)
         {
+            DisposeConnection(disposing);
+        }
+
+        internal void DisposeConnection(bool disposing)
+        { 
+            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
+            {
+                ClearPool(this);
+            }
+
             if (disposed)
                 return;
 
@@ -280,7 +390,14 @@ namespace Snowflake.Data.Client
 
         ~SnowflakeDbConnection()
         {
-            Dispose(false);
-        }
+            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
+            {
+                this._refCount--;
+            }
+            else
+            {
+                Dispose(false);
+            }
+        }        
     }
 }
