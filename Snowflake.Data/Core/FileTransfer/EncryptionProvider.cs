@@ -222,14 +222,8 @@ namespace Snowflake.Data.Core.FileTransfer
 
             using(Stream inStream = File.OpenRead(inFile))
             {
-                byte[] buffer = new byte[2048];
-                int bytesRead;
-                while((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    cryptoStream.Write(buffer, 0, bytesRead);
-                }
+                inStream.CopyTo(cryptoStream);
             }
-            cryptoStream.FlushFinalBlock();
 
             return targetStream.ToArray();
         }
