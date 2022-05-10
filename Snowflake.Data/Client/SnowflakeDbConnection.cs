@@ -149,7 +149,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("SnowflakeDbConnection::Close.");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
-            if (conn != null)
+            if (conn != null && this.isPooling)
             {
                 conn._refCount--;
                 this.copy(conn);
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("SnowflakeDbConnection::CloseAsync.");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
-            if (conn != null)
+            if (conn != null && this.isPooling)
             {
                 conn._refCount--;
                 this.copy(conn);
@@ -373,7 +373,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("SnowflakeDbConnection::DisposeConnection");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
-            if ( conn != null)
+            if ( conn != null && this.isPooling)
             {
                 logger.Debug("SnowflakeDbConnection::DisposeConnection clear pool");
                 ClearPool(this);

@@ -152,6 +152,9 @@ namespace Snowflake.Data.Client
                 initConnectionPool();
             }
 
+            if (!conn.isPooling)
+                return false;
+
             lock (_connectionPoolLock)
             {
                 SnowflakeDbConnection poolConn;

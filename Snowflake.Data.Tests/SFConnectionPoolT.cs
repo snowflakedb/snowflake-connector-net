@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
-            Assert.AreEqual(true, conn1.isPooling);
+            Assert.AreEqual(false, conn1.isPooling);
             Assert.AreEqual(true, conn2.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }

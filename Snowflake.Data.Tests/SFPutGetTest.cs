@@ -25,6 +25,7 @@ namespace Snowflake.Data.Tests
         [TestCase("zstd")]
         public void TestPutGetCommand(string compressionType)
         {
+            SnowflakeDbConnection.ClearAllPools();
             string DATABASE_NAME = testConfig.database;
             string SCHEMA_NAME = testConfig.schema;
             const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
