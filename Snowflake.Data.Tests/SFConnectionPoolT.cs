@@ -30,7 +30,8 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             conn1.Close();
 
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(true, conn1.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }
 
@@ -50,8 +51,10 @@ namespace Snowflake.Data.Tests
             conn1.Close();
             conn2.Close();
 
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            Assert.AreEqual(ConnectionState.Open, conn2.State);
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn2.State);
+            Assert.AreEqual(true, conn1.isPooling);
+            Assert.AreEqual(true, conn2.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }
 
@@ -80,9 +83,12 @@ namespace Snowflake.Data.Tests
             conn2.Close();
             conn3.Close();
 
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            Assert.AreEqual(ConnectionState.Open, conn2.State);
-            Assert.AreEqual(ConnectionState.Closed, conn3.State); //out of the pool, so connection state is closed
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn2.State);
+            Assert.AreEqual(ConnectionState.Closed, conn3.State);
+            Assert.AreEqual(true, conn1.isPooling);
+            Assert.AreEqual(true, conn2.isPooling);
+            Assert.AreEqual(false, conn3.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }
 
@@ -114,9 +120,12 @@ namespace Snowflake.Data.Tests
             conn1.Close();
             conn3.Close();
 
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
-            Assert.AreEqual(ConnectionState.Open, conn3.State);
+            Assert.AreEqual(ConnectionState.Closed, conn3.State);
+            Assert.AreEqual(true, conn1.isPooling);
+            Assert.AreEqual(false, conn2.isPooling);
+            Assert.AreEqual(true, conn3.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }
 
@@ -147,14 +156,19 @@ namespace Snowflake.Data.Tests
             conn4.ConnectionString = ConnectionString + "  retryCount=3";
             conn4.Open();
             Assert.AreEqual(ConnectionState.Open, conn4.State);
+            
+            Assert.AreEqual(false, conn1.isPooling);
+            Assert.AreEqual(true, conn2.isPooling);
+            Assert.AreEqual(true, conn3.isPooling);
+            Assert.AreEqual(false, conn4.isPooling);
 
             conn2.Close();
             conn3.Close();
             conn4.Close();
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(ConnectionState.Open, conn2.State);
-            Assert.AreEqual(ConnectionState.Open, conn3.State);
+            Assert.AreEqual(ConnectionState.Closed, conn2.State);
+            Assert.AreEqual(ConnectionState.Closed, conn3.State);
             Assert.AreEqual(ConnectionState.Closed, conn4.State);
             SnowflakeDbConnection.ClearAllPools();
         }
@@ -194,8 +208,12 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
-            Assert.AreEqual(ConnectionState.Open, conn3.State);
-            Assert.AreEqual(ConnectionState.Open, conn4.State);
+            Assert.AreEqual(ConnectionState.Closed, conn3.State);
+            Assert.AreEqual(ConnectionState.Closed, conn4.State);
+            Assert.AreEqual(false, conn1.isPooling);
+            Assert.AreEqual(false, conn2.isPooling);
+            Assert.AreEqual(true, conn3.isPooling);
+            Assert.AreEqual(true, conn4.isPooling);
             SnowflakeDbConnection.ClearAllPools();
         }
 

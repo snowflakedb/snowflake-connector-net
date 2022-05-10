@@ -24,6 +24,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
+                SnowflakeDbConnection.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);

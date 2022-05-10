@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.Collections.Concurrent;
 using System.Security;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
 {
     class SnowflakeDbConnectionPool
     {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+
         private static ConcurrentDictionary<string, SnowflakeDbConnection> connectionPool;
         private static readonly object _connectionPoolLock = new object();
         private static int minPoolSize;
@@ -20,6 +23,7 @@ namespace Snowflake.Data.Client
 
         private static void initConnectionPool()
         {
+            logger.Debug("SnowflakeDbConnectionPool::initConnectionPool");
             lock (_connectionPoolLock)
             {
                 connectionPool = new ConcurrentDictionary<string, SnowflakeDbConnection>();
@@ -32,6 +36,7 @@ namespace Snowflake.Data.Client
 
         private static void cleanNonActiveConnections()
         {
+            logger.Debug("SnowflakeDbConnectionPool::cleanNonActiveConnections");
             if (null == connectionPool)
             {
                 initConnectionPool();
@@ -48,6 +53,8 @@ namespace Snowflake.Data.Client
                     if (conn._refCount <= 0 && curSize > minPoolSize)
                     {
                         connectionPool.TryRemove(item, out conn);
+                        logger.Debug("SnowflakeDbConnectionPool::cleanNonActiveConnections try remove");
+                        conn.isPooling = false;
                         conn.CloseConnection();
                         conn.DisposeConnection(false);
                         curSize--;
@@ -58,6 +65,7 @@ namespace Snowflake.Data.Client
 
         internal static SnowflakeDbConnection getConnection(string connStr, SecureString pw)
         {
+            logger.Debug("SnowflakeDbConnectionPool::getConnection");
             if (connectionPool == null)
             {
                 initConnectionPool();
@@ -73,6 +81,7 @@ namespace Snowflake.Data.Client
 
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
+            logger.Debug("SnowflakeDbConnectionPool::addConnection");
             lock (_connectionPoolLock)
             {
                 SnowflakeDbConnection poolConn;
@@ -80,7 +89,6 @@ namespace Snowflake.Data.Client
 
                 if (poolConn != null)
                 {
-                    poolConn._refCount++;
                     return false;
                 }
 
@@ -103,12 +111,14 @@ namespace Snowflake.Data.Client
                 }
 
                 connectionPool.TryAdd(conn.ConnectionString, conn);
+                conn.isPooling = true;
                 return true;
             }
         }
 
         public static void ClearAllPools()
         {
+            logger.Debug("SnowflakeDbConnectionPool::ClearAllPools");
             if (null == connectionPool)
             {
                 initConnectionPool();
@@ -122,15 +132,21 @@ namespace Snowflake.Data.Client
                     SnowflakeDbConnection conn;
                     connectionPool.TryGetValue(item, out conn);
                     connectionPool.TryRemove(item, out conn);
-                    conn._refCount = 0;
-                    conn.CloseConnection();
-                    conn.DisposeConnection(false);
+                    conn.isPooling = false;
+                    logger.Debug("SnowflakeDbConnectionPool::ClearAllPools refcount=" + conn._refCount);
+                    if (conn._refCount <= 0)
+                    {
+                        conn._refCount = 0;
+                        conn.CloseConnection();
+                        conn.DisposeConnection(false);
+                    }
                 }
             }
         }
 
         public static bool ClearPool(SnowflakeDbConnection conn)
         {
+            logger.Debug("SnowflakeDbConnectionPool::ClearPool");
             if (null == connectionPool)
             {
                 initConnectionPool();
@@ -138,13 +154,20 @@ namespace Snowflake.Data.Client
 
             lock (_connectionPoolLock)
             {
-                if (connectionPool.ContainsKey(conn.ConnectionString))
+                SnowflakeDbConnection poolConn;
+                connectionPool.TryGetValue(conn.ConnectionString, out poolConn);
+                if (poolConn != null)
                 {
-                    connectionPool.TryRemove(conn.ConnectionString, out conn);
-                    conn._refCount = 0;
-                    conn.CloseConnection();
-                    conn.DisposeConnection(false);
-                    return true;
+                    logger.Debug("SnowflakeDbConnectionPool::ClearPool _refCount=" + conn._refCount);
+                    if (conn._refCount == 1)
+                    {
+                        connectionPool.TryRemove(conn.ConnectionString, out conn);
+                        conn.isPooling = false;
+                        conn._refCount = 0;
+                        conn.CloseConnection();
+                        conn.DisposeConnection(false);
+                        return true;
+                    }
                 }
             }
             return false;

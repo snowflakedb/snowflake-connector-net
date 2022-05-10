@@ -30,6 +30,8 @@ namespace Snowflake.Data.Client
 
         private bool disposed = false;
 
+        internal bool isPooling = false;
+
         
         public static void ClearAllPools()
         {
@@ -71,6 +73,7 @@ namespace Snowflake.Data.Client
             this._connectionState = conn._connectionState;
             this._connectionTimeout = conn._connectionTimeout;
             this._refCount = conn._refCount;
+            this.isPooling = conn.isPooling;
             this.disposed = conn.disposed;
             this.ConnectionString = conn.ConnectionString;
             this.Password = conn.Password;
@@ -132,8 +135,9 @@ namespace Snowflake.Data.Client
 
         internal void CloseConnection()
         {
-            logger.Debug("Close Connection.");
-            if (_connectionState != ConnectionState.Closed && SfSession != null)
+            logger.Debug("SnowflakeDbConnection::CloseConnection.");
+            logger.Debug("_connectionState=" + _connectionState);
+            if (SfSession != null)
             {
                 SfSession.close();
             }
@@ -143,10 +147,13 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
+            logger.Debug("SnowflakeDbConnection::Close.");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
                 conn._refCount--;
+                this.copy(conn);
+                _connectionState = ConnectionState.Closed;
             }
             else
             {
@@ -156,10 +163,13 @@ namespace Snowflake.Data.Client
 
         public Task CloseAsync(CancellationToken cancellationToken)
         {
+            logger.Debug("SnowflakeDbConnection::CloseAsync.");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
                 conn._refCount--;
+                this.copy(conn);
+                _connectionState = ConnectionState.Closed;
                 return Task.CompletedTask;
             }
             else
@@ -200,6 +210,7 @@ namespace Snowflake.Data.Client
                             {
                                 logger.Debug("Session closed successfully");
                                 taskCompletionSource.SetResult(null);
+                                _refCount--;
                                 _connectionState = ConnectionState.Closed;
                             }
                         }, cancellationToken);
@@ -215,11 +226,14 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
+            logger.Debug("SnowflakeDbConnection::Open.");
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if(conn != null)
             {
+                logger.Debug("SnowflakeDbConnection::Open from pool. " + conn._refCount);
                 conn._refCount++;
                 this.copy(conn);
+                OnSessionEstablished();
             }
             else
             {
@@ -230,16 +244,18 @@ namespace Snowflake.Data.Client
 
         private void ConnectionOpen()
         {
-            logger.Debug("Open Connection.");
+            logger.Debug("SnowflakeDbConnection::ConnectionOpen.");
             SetSession();
             try
             {
-                _refCount++;
                 SfSession.Open();
+                logger.Debug("SnowflakeDbConnection::ConnectionOpen. " + _refCount);
+                _refCount++;
             }
             catch (Exception e)
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
+                _refCount--;
                 _connectionState = ConnectionState.Closed;
                 logger.Error("Unable to connect", e);
                 if (!(e.GetType() == typeof(SnowflakeDbException)))
@@ -265,7 +281,9 @@ namespace Snowflake.Data.Client
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
             if (conn != null)
             {
+                conn._refCount++;
                 this.copy(conn);
+                OnSessionEstablished();
                 return Task.CompletedTask;
             }
             else
@@ -305,6 +323,7 @@ namespace Snowflake.Data.Client
                         logger.Debug("All good");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();
+                        _refCount++;
                         SnowflakeDbConnectionPool.addConnection(this);
                     }
                 },
@@ -346,14 +365,19 @@ namespace Snowflake.Data.Client
 
         protected override void Dispose(bool disposing)
         {
+            logger.Debug("SnowflakeDbConnection::Dispose");
             DisposeConnection(disposing);
         }
 
         internal void DisposeConnection(bool disposing)
-        { 
-            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
+        {
+            logger.Debug("SnowflakeDbConnection::DisposeConnection");
+            SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password);
+            if ( conn != null)
             {
+                logger.Debug("SnowflakeDbConnection::DisposeConnection clear pool");
                 ClearPool(this);
+                return;
             }
 
             if (disposed)
@@ -361,7 +385,7 @@ namespace Snowflake.Data.Client
 
             try
             {
-                this.Close();
+                this.CloseConnection();
             } 
             catch (Exception ex)
             {
@@ -390,14 +414,7 @@ namespace Snowflake.Data.Client
 
         ~SnowflakeDbConnection()
         {
-            if (SnowflakeDbConnectionPool.getConnection(this.ConnectionString, this.Password) != null)
-            {
-                this._refCount--;
-            }
-            else
-            {
-                Dispose(false);
-            }
+            Dispose(false);
         }        
     }
 }
