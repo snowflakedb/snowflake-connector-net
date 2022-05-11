@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core.FileTransfer
             // If encryption enabled, encrypt the file to be uploaded
             if (fileMetadata.encryptionMaterial != null)
             {
-                fileBytes = EncryptionProvider.CreateEncryptedBytes(
+                fileBytes = EncryptionProvider.EncryptFile(
                     fileMetadata.realSrcFilePath,
                     fileMetadata.encryptionMaterial,
                     encryptionMetadata);
@@ -214,6 +214,112 @@ namespace Snowflake.Data.Core.FileTransfer
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return;
+        }
+
+        /// <summary>
+        /// Download one file.
+        /// </summary>
+        /// <summary>
+        /// <param name="fileMetadata">The file metadata of the file to download</param>
+        internal static void DownloadOneFile(SFFileMetadata fileMetadata)
+        {
+            string fullDstPath = fileMetadata.localLocation;
+            fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
+
+            // Check local location exists
+            if (!Directory.Exists(fileMetadata.localLocation))
+            {
+                Directory.CreateDirectory(fileMetadata.localLocation);
+            }
+
+            ISFRemoteStorageClient client = fileMetadata.client;
+            FileHeader fileHeader = client.GetFileHeader(fileMetadata);
+
+            if (fileHeader != null)
+            {
+                fileMetadata.srcFileSize = fileHeader.contentLength;
+            }
+
+            int maxConcurrency = fileMetadata.parallel;
+            Exception lastErr = null;
+            int maxRetry = DEFAULT_MAX_RETRY;
+
+            for (int retry = 0; retry < maxRetry; retry++)
+            {
+                // Download the file
+                client.DownloadFile(fileMetadata, fullDstPath, maxConcurrency);
+
+                if (fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
+                {
+                    if (fileMetadata.encryptionMaterial != null)
+                    {
+                        /**
+                          * For storage utils that do not have the privilege of
+                          * getting the metadata early, both object and metadata
+                          * are downloaded at once.In which case, the file meta will
+                          * be updated with all the metadata that we need and
+                          * then we can call getFileHeader to get just that and also
+                          * preserve the idea of getting metadata in the first place.
+                          * One example of this is the utils that use presigned url
+                          * for upload / download and not the storage client library.
+                          **/
+                        if (fileMetadata.presignedUrl != null)
+                        {
+                            fileHeader = client.GetFileHeader(fileMetadata);
+                        }
+
+                        string tmpDstName = EncryptionProvider.DecryptFile(
+                          fullDstPath,
+                          fileMetadata.encryptionMaterial,
+                          fileHeader.encryptionMetadata
+                          );
+
+                        File.Delete(fullDstPath);
+
+                        // Copy decrypted tmp file to target destination path
+                        File.Copy(tmpDstName, fullDstPath);
+
+                        // Delete tmp file
+                        File.Delete(tmpDstName);
+                    }
+
+                    FileInfo fileInfo = new FileInfo(fullDstPath);
+                    fileMetadata.destFileSize = fileInfo.Length;
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+                    // Failed to download file, retrying with max concurrency
+                    maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
+                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
+                    fileMetadata.lastMaxConcurrency = maxConcurrency;
+
+                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                    System.Threading.Thread.Sleep(sleepingTime);
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+
+                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                    System.Threading.Thread.Sleep(sleepingTime);
+                }
+            }
+            if (lastErr != null)
+            {
+                throw lastErr;
+            }
+            else
+            {
+                var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
+                throw lastErr;
+            }
         }
     }
 }

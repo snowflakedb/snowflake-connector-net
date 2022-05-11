@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.FileTransfer;
 
@@ -267,6 +268,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
         internal string command { get; set; }
 
+        [JsonProperty(PropertyName = "localLocation", NullValueHandling = NullValueHandling.Ignore)]
+        internal string localLocation { get; set; }
+
         [JsonProperty(PropertyName = "src_locations", NullValueHandling = NullValueHandling.Ignore)]
         internal List<string> src_locations { get; set; }
 
@@ -289,7 +293,8 @@ namespace Snowflake.Data.Core
         internal PutGetStageInfo stageInfo { get; set; }
 
         [JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
-        internal PutGetEncryptionMaterial encryptionMaterial { get; set; }
+        [JsonConverter(typeof(SingleOrArrayConverter<PutGetEncryptionMaterial>))]
+        internal List<PutGetEncryptionMaterial> encryptionMaterial { get; set; }
 
         [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
         public string queryId { get; set; }
@@ -299,6 +304,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
         internal string presignedUrl { get; set; }
+
+        [JsonProperty(PropertyName = "presignedUrls", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<string> presignedUrls { get; set; }
 
         [JsonProperty(PropertyName = "rowtype", NullValueHandling = NullValueHandling.Ignore)]
         internal List<ExecResponseRowType> rowType { get; set; }
@@ -353,5 +361,35 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
         internal long smkId { get; set; }
+    }
+
+    // Retrieved from: https://stackoverflow.com/a/18997172
+    internal class SingleOrArrayConverter<T> : JsonConverter
+    {
+        public override bool CanConvert(Type objecType)
+        {
+            return (objecType == typeof(List<T>));
+        }
+
+        public override object ReadJson(JsonReader reader, Type objecType, object existingValue,
+            JsonSerializer serializer)
+        {
+            JToken token = JToken.Load(reader);
+            if (token.Type == JTokenType.Array)
+            {
+                return token.ToObject<List<T>>();
+            }
+            return new List<T> { token.ToObject<T>() };
+        }
+
+        public override bool CanWrite
+        {
+            get { return false; }
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
     }
 } 

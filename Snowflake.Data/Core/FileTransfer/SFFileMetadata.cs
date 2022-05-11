@@ -54,6 +54,9 @@ namespace Snowflake.Data.Core.FileTransfer
         /// Absolute path to the destination (including the filename. /tmp/small_test_file.csv.gz)
         public string destPath { set; get; }
 
+        /// Absolute path to the local location of the downloaded file
+        public string localLocation { set; get; }
+
         /// Destination file size
         public long uploadSize { set; get; }
 
@@ -92,9 +95,6 @@ namespace Snowflake.Data.Core.FileTransfer
 
         /// The temporary directory to store files to upload/download.
         public string tmpDir { get; set; }
-
-        /// The temporary directory to store files to upload/download.
-        public string SHA256_DIGEST { get; set; }
 
         /// Storage client to use for uploading/downloading files.
         public ISFRemoteStorageClient client { get; set; }

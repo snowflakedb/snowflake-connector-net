@@ -87,7 +87,7 @@ namespace Snowflake.Data.Core
         private readonly CommandTypes CommandType;
         
         /// <summary>
-        /// The transfer metadata. Applies to all files being transfered
+        /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
         private readonly PutGetResponseData TransferMetadata;
 
@@ -103,6 +103,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// List of metadata for small and large files.
         /// </summary>
+        private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
         private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
         private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
 
@@ -174,33 +175,57 @@ namespace Snowflake.Data.Core
             // Initialize the encryption metadata
             initEncryptionMaterial();
 
-            // Initialize the list of actual files to upload
-            List<string> expandedSrcLocations = new List<string>(); ;
-            foreach (string location in TransferMetadata.src_locations)
-            {
-                expandedSrcLocations.AddRange(expandFileNames(location));
-            }
-
-            // Initialize each file specific metadata (for example, file path, name and size) and 
-            // put it in1 of the 2 lists : Small files and large files based on a threshold 
-            // extracted from the command response
-            initFileMetadata(expandedSrcLocations);
-
             if (CommandTypes.UPLOAD == CommandType)
             {
+                // Initialize the list of actual files to upload
+                List<string> expandedSrcLocations = new List<string>();
+                foreach (string location in TransferMetadata.src_locations)
+                {
+                    expandedSrcLocations.AddRange(expandFileNames(location));
+                }
+
+                // Initialize each file specific metadata (for example, file path, name and size) and
+                // put it in1 of the 2 lists : Small files and large files based on a threshold
+                // extracted from the command response
+                initFileMetadata(expandedSrcLocations);
+
                 if (expandedSrcLocations.Count == 0)
                 {
                     throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
                 }
             }
+            else if (CommandTypes.DOWNLOAD == CommandType)
+            {
+                initFileMetadata(TransferMetadata.src_locations);
+
+                Directory.CreateDirectory(TransferMetadata.localLocation);
+            }
 
             // Update the file metadata with GCS presigned URL
-            updateFileMetasWithPresignedUrl();
+            updatePresignedUrl();
+
+            foreach (SFFileMetadata fileMetadata in FilesMetas)
+            {
+                // If the file is larger than the threshold, add it to the large files list
+                // Otherwise add it to the small files list
+                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                {
+                    LargeFilesMetas.Add(fileMetadata);
+                }
+                else
+                {
+                    SmallFilesMetas.Add(fileMetadata);
+                }
+            }
 
             // Check command type
             if (CommandTypes.UPLOAD == CommandType)
             {
                 upload();
+            }
+            else if (CommandTypes.DOWNLOAD == CommandType)
+            {
+                download();
             }
         }
 
@@ -258,7 +283,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         private void upload()
         {
-            //Start the upload tasks(for small files upload in parallel using the given parallelism 
+            //Start the upload tasks(for small files upload in parallel using the given parallelism
             //factor, for large file updload sequentially)
             //For each file, using the remote client
             if (0 < LargeFilesMetas.Count)
@@ -279,51 +304,71 @@ namespace Snowflake.Data.Core
             }
         }
 
+
         /// <summary>
-        /// For GCS client, obtain the presigned URL.
+        /// Download files sequentially or in parallel.
         /// </summary>
-        private void updateFileMetasWithPresignedUrl()
+        private void download()
         {
-            // Presigned url only applies to GCS
-            if (TransferMetadata.stageInfo.locationType == "GCS")
+            //Start the download tasks(for small files download in parallel using the given parallelism
+            //factor, for large file download sequentially)
+            //For each file, using the remote client
+            if (0 < LargeFilesMetas.Count)
             {
-                if (CommandTypes.UPLOAD == CommandType)
+                Logger.Debug("Start uploading large files");
+                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
                 {
-                    foreach (SFFileMetadata fileMetadata in SmallFilesMetas)
-                    {
-                        updatePresignedUrl(fileMetadata);
-                    }
-                    foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-                    {
-                        updatePresignedUrl(fileMetadata);
-                    }
+                    DownloadFilesInSequential(fileMetadata);
                 }
+                Logger.Debug("End uploading large files");
+            }
+            if (0 < SmallFilesMetas.Count)
+            {
+                Logger.Debug("Start uploading small files");
+                DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
+                Logger.Debug("End uploading small files");
             }
         }
 
         /// <summary>
         /// Get the presigned URL and update the file metadata.
         /// </summary>
-        /// <param name="fileMeta">The file metadata of the file to upload</param>
-        private void updatePresignedUrl(SFFileMetadata fileMeta)
+        private void updatePresignedUrl()
         {
-            string filePathToReplace = getFilePathFromPutCommand(Query);
-            string fileNameToReplaceWith = fileMeta.destFileName;
-            string queryWithSingleFile = Query;
-            queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+            // Presigned url only applies to GCS
+            if (TransferMetadata.stageInfo.locationType == "GCS")
+            {
+                if (CommandTypes.UPLOAD == CommandType)
+                {
+                    foreach (SFFileMetadata fileMeta in FilesMetas)
+                    {
+                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string fileNameToReplaceWith = fileMeta.destFileName;
+                        string queryWithSingleFile = Query;
+                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
-            SFStatement sfStatement = new SFStatement(Session);
-            sfStatement.isPutGetQuery = true;
+                        SFStatement sfStatement = new SFStatement(Session);
+                        sfStatement.isPutGetQuery = true;
 
-            PutGetExecResponse response =
-                sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                    0,
-                    queryWithSingleFile,
-                    null,
-                    false);
+                        PutGetExecResponse response =
+                            sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                                0,
+                                queryWithSingleFile,
+                                null,
+                                false);
 
-            fileMeta.stageInfo = response.data.stageInfo;
-            fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+                        fileMeta.stageInfo = response.data.stageInfo;
+                        fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+                    }                    
+                }
+                else if (CommandTypes.DOWNLOAD == CommandType)
+                {
+                    for (int index = 0; index < FilesMetas.Count; index++)
+                    {
+                        FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+                    }
+                }
+            }            
         }
 
         /// <summary>
@@ -348,7 +393,7 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial);
+                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
             }
         }
 
@@ -359,86 +404,97 @@ namespace Snowflake.Data.Core
         private void initFileMetadata(
             List<string> files)
         {
-            foreach (string file in files)
+            if (CommandTypes.UPLOAD == CommandType)
             {
-                FileInfo fileInfo = new FileInfo(file);
-
-                //  Retrieve / Compute the file actual compression type for each file in the list(most work is for auto - detect)
-                string fileName = fileInfo.Name;
-                SFFileCompressionTypes.SFFileCompressionType compressionType;
-
-                if (TransferMetadata.autoCompress &&
-                    TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+                foreach (string file in files)
                 {
-                    // Auto-detect source compression type
-                    // Will return NONE if no matching type is found
-                    compressionType = SFFileCompressionTypes.GuessCompressionType(file);
-                    Logger.Debug($"File compression detected as {compressionType.Name} for: {file}");
+                    FileInfo fileInfo = new FileInfo(file);
+
+                    //  Retrieve / Compute the file actual compression type for each file in the list(most work is for auto - detect)
+                    string fileName = fileInfo.Name;
+                    SFFileCompressionTypes.SFFileCompressionType compressionType;
+
+                    if (TransferMetadata.autoCompress &&
+                        TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+                    {
+                        // Auto-detect source compression type
+                        // Will return NONE if no matching type is found
+                        compressionType = SFFileCompressionTypes.GuessCompressionType(file);
+                        Logger.Debug($"File compression detected as {compressionType.Name} for: {file}");
+                    }
+                    else
+                    {
+                        // User defined source compression type
+                        compressionType =
+                            SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+                    }
+
+                    // Verify that the compression type is supported
+                    if (!compressionType.IsSupported)
+                    {
+                        //   SqlState.FEATURE_NOT_SUPPORTED = 0A000
+                        throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
+                    }
+
+                    SFFileMetadata fileMetadata = new SFFileMetadata()
+                    {
+                        srcFilePath = file,
+                        srcFileName = fileName,
+                        srcFileSize = fileInfo.Length,
+                        stageInfo = TransferMetadata.stageInfo,
+                        overwrite = TransferMetadata.overwrite,
+                        // Need to compress before sending only if autoCompress is On and the file is
+                        // not compressed yet
+                        requireCompress = (
+                            TransferMetadata.autoCompress &&
+                            (SFFileCompressionTypes.NONE.Equals(compressionType))),
+                        sourceCompression = compressionType,
+                        presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+                        // If the file is under the threshold, don't upload in chunks, set parallel to 1
+                        parallel = (fileInfo.Length > TransferMetadata.threshold) ?
+                            TransferMetadata.parallel : 1,
+                    };
+
+                    if (!fileMetadata.requireCompress)
+                    {
+                        // The file is already compressed
+                        fileMetadata.targetCompression = fileMetadata.sourceCompression;
+                        fileMetadata.destFileName = fileName;
+                    }
+                    else
+                    {
+                        // The file will need to be compressed using gzip
+                        fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
+                        fileMetadata.destFileName = fileName + SFFileCompressionTypes.GZIP.FileExtension;
+                    }
+
+                    if (EncryptionMaterials.Count > 0)
+                    {
+                        fileMetadata.encryptionMaterial = EncryptionMaterials[0];
+                    }
+
+                    FilesMetas.Add(fileMetadata);
                 }
-                else
+            }
+            else if (CommandTypes.DOWNLOAD == CommandType)
+            {
+                for (int index = 0; index < files.Count; index++)
                 {
-                    // User defined source compression type
-                    compressionType =
-                        SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+                    string file = files[index];
+                    SFFileMetadata fileMetadata = new SFFileMetadata()
+                    {
+                        srcFileName = file,
+                        destFileName = file,
+                        localLocation = TransferMetadata.localLocation,
+                        stageInfo = TransferMetadata.stageInfo,
+                        overwrite = TransferMetadata.overwrite,
+                        presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+                        parallel = TransferMetadata.parallel,
+                        encryptionMaterial = TransferMetadata.encryptionMaterial[index]
+                    };
+
+                    FilesMetas.Add(fileMetadata);
                 }
-
-                // Verify that the compression type is supported
-                if (!compressionType.IsSupported)
-                {
-                    //   SqlState.FEATURE_NOT_SUPPORTED = 0A000
-                    throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
-                }
-
-                SFFileMetadata fileMetadata = new SFFileMetadata()
-                {
-                    srcFilePath = file,
-                    srcFileName = fileName,
-                    srcFileSize = fileInfo.Length,
-                    stageInfo = TransferMetadata.stageInfo,
-                    overwrite = TransferMetadata.overwrite,
-                    // Need to compress before sending only if autoCompress is On and the file is 
-                    // not compressed yet
-                    requireCompress = (
-                        TransferMetadata.autoCompress &&
-                        (SFFileCompressionTypes.NONE.Equals(compressionType))),
-                    sourceCompression = compressionType,
-                    presignedUrl = TransferMetadata.stageInfo.presignedUrl,
-                    // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                    parallel = (fileInfo.Length > TransferMetadata.threshold) ?
-                        TransferMetadata.parallel : 1,
-                };
-
-
-                if (!fileMetadata.requireCompress)
-                {
-                    // The file is already compressed
-                    fileMetadata.targetCompression = fileMetadata.sourceCompression;
-                    fileMetadata.destFileName = fileName;
-                }
-                else
-                {
-                    // The file will need to be compressed using gzip
-                    fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
-                    fileMetadata.destFileName = fileName + SFFileCompressionTypes.GZIP.FileExtension;
-                }
-
-                if (EncryptionMaterials.Count > 0)
-                {
-                    fileMetadata.encryptionMaterial = EncryptionMaterials[0];
-                }
-
-                // If the file is larger than the threshold, add it to the large files list
-                // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
-                {
-                    LargeFilesMetas.Add(fileMetadata);
-                }
-                else
-                {
-                    SmallFilesMetas.Add(fileMetadata);
-                }
-
-
             }
         }
 
@@ -453,7 +509,6 @@ namespace Snowflake.Data.Core
         /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
         private List<string> expandFileNames(string location)
         {
-            Console.WriteLine("Expandlocation: " + location);
             // Replace ~ with the user home directory path
             if (location.Contains("~"))
             {
@@ -469,11 +524,6 @@ namespace Snowflake.Data.Core
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 location = Path.GetFullPath(location);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                location = location.Substring(1);
             }
 
             String fileName = Path.GetFileName(location);
@@ -640,7 +690,7 @@ namespace Snowflake.Data.Core
             {
                 using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
                 {
-                    fileMetadata.SHA256_DIGEST = Convert.ToBase64String(SHA256.ComputeHash(fileStream));
+                    fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileStream));
                     fileMetadata.uploadSize = fileStream.Length;
                 }
             }
@@ -682,7 +732,36 @@ namespace Snowflake.Data.Core
             }
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
-                updateFileMetasWithPresignedUrl();
+                updatePresignedUrl();
+            }
+
+            ResultsMetas.Add(resultMetadata);
+
+            if (INJECT_WAIT_IN_PUT > 0)
+            {
+                Thread.Sleep(INJECT_WAIT_IN_PUT);
+            }
+        }
+
+        /// <summary>
+        /// Download a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="fileMetadata">The metadata of the file to download.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private void DownloadFilesInSequential(
+            SFFileMetadata fileMetadata)
+        {
+            /// The storage client used to upload/download data from files or streams
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+            SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
+
+            if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+            {
+                fileMetadata.client = renewExpiredClient();
+            }
+            else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            {
+                updatePresignedUrl();
             }
 
             ResultsMetas.Add(resultMetadata);
@@ -707,6 +786,26 @@ namespace Snowflake.Data.Core
             foreach (SFFileMetadata fileMetadata in filesMetadata)
             {
                 listOfActions.Add(() => UploadFilesInSequential(fileMetadata));
+            }
+
+            var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+            Parallel.Invoke(options, listOfActions.ToArray());
+        }
+
+        /// <summary>
+        /// Download a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="filesMetadata">The list of files to download in parallel.</param>
+        /// <param name="parallel">The number of files to download in parallel.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private void DownloadFilesInParallel(
+            List<SFFileMetadata> filesMetadata,
+            int parallel)
+        {
+            var listOfActions = new List<Action>();
+            foreach (SFFileMetadata fileMetadata in filesMetadata)
+            {
+                listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
             }
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
@@ -765,7 +864,43 @@ namespace Snowflake.Data.Core
                 Directory.Delete(fileMetadata.tmpDir, true);
             }
 
+            return fileMetadata;
+        }
 
+
+        /// <summary>
+        /// Download a single file.
+        /// </summary>
+        /// <param name="storageClient">Storage client to download the file with.</param>
+        /// <param name="fileMetadata">The metadata of the file to download.</param>
+        /// <returns>The result outcome.</returns>
+        private SFFileMetadata DownloadSingleFile(
+            SFFileMetadata fileMetadata)
+        {
+            // Create tmp folder to store compressed files
+            fileMetadata.tmpDir = GetTemporaryDirectory();
+
+            try
+            {
+                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                {
+                    // Upload the file using the remote client SDK and the file metadata
+                    SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
+                }
+                else
+                {
+                    // Upload the file using the local client SDK and the file metadata
+                    SFLocalStorageUtil.DownloadOneFile(fileMetadata);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                Directory.Delete(fileMetadata.tmpDir, true);
+            }
 
             return fileMetadata;
         }

@@ -58,5 +58,10 @@ namespace Snowflake.Data.Core.FileTransfer
         /// Attempt upload of a file and retry if fails.
         /// </summary>
         void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
+
+        /// <summary>
+        /// Attempt download of a file and retry if fails.
+        /// </summary>
+        void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency);
     }
 }

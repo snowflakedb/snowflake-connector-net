@@ -5,8 +5,6 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
-
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
 - .NET Framework 4.7.2
@@ -291,6 +289,23 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+Mapping .NET and Snowflake Data Types
+-------------------------------------
+
+The .NET driver supports the following mappings from .NET to Snowflake data types.
+
+
+| .NET Framekwork Data Type | Data Type in Snowflake |
+| ------------------------------ | ---------------------- |
+| `int`, `long`                 | `NUMBER(38, 0)`        |
+| `decimal`                       | `NUMBER(38, <scale>)`  |
+| `double` | `REAL` |
+| `string` | `TEXT` |
+| `bool` | `BOOLEAN` |
+| `byte` | `BINARY` |
+| `datetime` | `DATE` |
+
 
 Run a Query and Read Data
 -------------------------
