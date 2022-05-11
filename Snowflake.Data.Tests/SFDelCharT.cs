@@ -32,13 +32,10 @@ namespace Snowflake.Data.Tests
                 int res = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, res);
 
-                for (int i = 0; i < 35000; i++)
-                {
-                    string insertCommand = "insert into deltest select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE" + i + "'))";
-                    cmd.CommandText = insertCommand;
-                    IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(1, insertReader.RecordsAffected);
-                }
+                string insertCommand = "insert into deltest(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => 35000)))";
+                cmd.CommandText = insertCommand;
+                IDataReader insertReader = cmd.ExecuteReader();
+                Assert.AreEqual(35000, insertReader.RecordsAffected);
                 
                 string selectCommand = "select * from deltest";
                 cmd.CommandText = selectCommand;
@@ -75,7 +72,6 @@ namespace Snowflake.Data.Tests
                     sw.Flush();
                     sb.Clear();
                 }
-                Console.ReadLine();
 
                 cmd.CommandText = "drop table if exists deltest";
                 count = cmd.ExecuteNonQuery();
@@ -100,13 +96,10 @@ namespace Snowflake.Data.Tests
                 int res = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, res);
 
-                for (int i = 0; i < 4000; i++)
-                {
-                    string insertCommand = "insert into deltest1 select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE" + i + "'))";
-                    cmd.CommandText = insertCommand;
-                    IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(1, insertReader.RecordsAffected);
-                }
+                string insertCommand = "insert into deltest1(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => 4000)))";
+                cmd.CommandText = insertCommand;
+                IDataReader insertReader = cmd.ExecuteReader();
+                Assert.AreEqual(4000, insertReader.RecordsAffected);
                 
                 string selectCommand = "select * from deltest1";
                 cmd.CommandText = selectCommand;
@@ -143,7 +136,6 @@ namespace Snowflake.Data.Tests
                     sw.Flush();
                     sb.Clear();
                 }
-                Console.ReadLine();
 
                 cmd.CommandText = "drop table if exists deltest";
                 count = cmd.ExecuteNonQuery();
