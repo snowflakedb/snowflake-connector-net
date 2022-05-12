@@ -97,6 +97,8 @@ namespace Snowflake.Data.Core
 
             public UTF8Buffer get(int index)
             {
+                if (index < 0)
+                    return null;
                 int length = lengths[getMetaBlock(index)]
                     [getMetaBlockIndex(index)];
                 if (length == NULL_VALUE)
