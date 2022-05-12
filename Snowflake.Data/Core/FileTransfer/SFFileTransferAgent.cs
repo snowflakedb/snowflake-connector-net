@@ -946,11 +946,7 @@ namespace Snowflake.Data.Core
             fileMetadata.destFileName = fileMetadata.srcFileName + SFFileCompressionTypes.GZIP.FileExtension;
             fileMetadata.sourceFromStream = true;
             fileMetadata.memoryStream = memoryStream;
-            fileMetadata.stageInfo = TransferMetadata.stageInfo;
-
-            // Update the file metadata with GCS presigned URL
-            updateFileMetasWithPresignedUrl();
-            
+            fileMetadata.stageInfo = TransferMetadata.stageInfo;          
             UploadFilesInSequential(fileMetadata);
         }
     }
