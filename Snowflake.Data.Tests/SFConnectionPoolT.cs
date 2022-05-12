@@ -38,6 +38,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestReuseConnectionPool()
         {
+            SnowflakeDbConnection.ClearAllPools();
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
             conn1.Open();
