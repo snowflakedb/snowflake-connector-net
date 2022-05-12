@@ -120,7 +120,7 @@ namespace Snowflake.Data.Client
                             {
                                 // Exception from SfSession.CloseAsync
                                 logger.Error("Error closing the session", previousTask.Exception);
-                                taskCompletionSource.SetException(previousTask.Exception.InnerException);
+                                taskCompletionSource.SetException(previousTask.Exception);
                             }
                             else if (previousTask.IsCanceled)
                             {
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Client
                         // Exception from SfSession.OpenAsync
                         Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx.InnerException);
+                        logger.Error("Unable to connect", sfSessionEx);
                         throw new SnowflakeDbException(
                            sfSessionEx,
                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,

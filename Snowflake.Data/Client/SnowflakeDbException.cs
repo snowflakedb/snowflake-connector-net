@@ -27,17 +27,7 @@ namespace Snowflake.Data.Client
 
         private int VendorCode;
 
-        private string ErrorMessage;
-
         public string QueryId { get; }
-
-        public override string Message
-        {
-            get
-            {
-                return ErrorMessage;
-            }
-        }
 
         public override int ErrorCode
         {
@@ -48,45 +38,57 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
+            : base(FormatExceptionMessage(errorMessage, vendorCode, sqlState, queryId))
         {
             this.SqlState = sqlState;
             this.VendorCode = vendorCode;
-            this.ErrorMessage = errorMessage;
             this.QueryId = queryId;
         }
 
         public SnowflakeDbException(SFError error, params object[] args)
+            : base(FormatExceptionMessage(error, args, string.Empty, string.Empty))
         {
-            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
             this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
         public SnowflakeDbException(string sqlState, SFError error, params object[] args)
+            : base(FormatExceptionMessage(error, args, sqlState, string.Empty))
         {
-            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
             this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             this.SqlState = sqlState;
         }
 
         public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
-            : base(string.Format(rm.GetString(error.ToString()), args), innerException)
+            : base(FormatExceptionMessage(error, args, string.Empty, string.Empty), innerException)
         {
-            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
             this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
         public SnowflakeDbException(Exception innerException, string sqlState, SFError error, params object[] args)
-            : base(string.Format(rm.GetString(error.ToString()), args), innerException)
+            : base(FormatExceptionMessage(error, args, sqlState, string.Empty), innerException)
         {
-            this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
             this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             this.SqlState = sqlState;
         }
 
-        public override string ToString()
+        static string FormatExceptionMessage(SFError error,
+            object[] args,
+            string sqlState,
+            string queryId)
+        {
+            return FormatExceptionMessage(string.Format(rm.GetString(error.ToString()), args)
+                , error.GetAttribute<SFErrorAttr>().errorCode
+                , sqlState
+                , queryId);
+        }
+
+        static string FormatExceptionMessage(string errorMessage,
+            int vendorCode,
+            string sqlState,
+            string queryId)
         {
             return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}",
-                ErrorMessage, SqlState, VendorCode, QueryId);
+                errorMessage, sqlState, vendorCode, queryId);
         }
     }
 }

@@ -138,8 +138,7 @@ namespace Snowflake.Data.Core.Authenticator
                         SFError.JWT_ERROR_READING_PK,
                         hasPkPath ? pkPath : "with value passed in connection string",
                         (pkContent == null) ? e.ToString() : "incorrect private key value or " +
-                        "private key format: use \"\\n\" for newlines and double the equals sign.",
-                        e);
+                        "private key format: use \"\\n\" for newlines and double the equals sign.");
                 }
             }
 
