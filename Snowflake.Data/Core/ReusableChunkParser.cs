@@ -3,6 +3,7 @@
  */
 
 using System.IO;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Snowflake.Data.Core
@@ -76,61 +77,76 @@ namespace Snowflake.Data.Core
             var ms = new FastMemoryStream();
             await Task.Run(() =>
             {
-                while ((c = input.ReadByte()) >= 0)
+            while ((c = input.ReadByte()) >= 0)
+            {
+                if (!inString)
                 {
-                    if (!inString)
+                    // n means null
+                    // " quote means begin string
+                    // all else are ignored
+                    if (c == '"')
                     {
-                        // n means null
-                        // " quote means begin string
-                        // all else are ignored
-                        if (c == '"')
-                        {
-                            inString = true;
-                        }
-                        else if (c == 'n')
-                        {
-                            rc.AddCell(null, 0);
-                        }
-                        // ignore anything else
+                        inString = true;
                     }
-                    else
+                    else if (c == 'n')
                     {
-                        // Inside a string, look for end string
-                        // Anything else is saved in the buffer
-                        if (c == '"')
+                        rc.AddCell(null, 0);
+                    }
+                    // ignore anything else
+                }
+                else
+                {
+                    // Inside a string, look for end string
+                    // Anything else is saved in the buffer
+                    if (c == '"')
+                    {
+                        rc.AddCell(ms.GetBuffer(), ms.Length);
+                        ms.Clear();
+                        inString = false;
+                    }
+                    else if (c == '\\')
+                    {
+                        bool skipC = false;
+                        // Process next character
+                        c = input.ReadByte();
+                        switch (c)
                         {
-                            rc.AddCell(ms.GetBuffer(), ms.Length);
-                            ms.Clear();
-                            inString = false;
-                        }
-                        else if (c == '\\')
-                        {
-                            // Process next character
-                            c = input.ReadByte();
-                            switch (c)
-                            {
-                                case 'n':
-                                    c = '\n';
-                                    break;
-                                case 'r':
-                                    c = '\r';
-                                    break;
-                                case 'b':
-                                    c = '\b';
-                                    break;
-                                case 't':
-                                    c = '\t';
-                                    break;
-                                case '\\':
-                                    c = '\\';
-                                    break;
-                                case -1:
-                                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
-                                default:
-                                    ms.WriteByte((byte)'\\');
-                                    break;
+                            case 'n':
+                                c = '\n';
+                                break;
+                            case 'r':
+                                c = '\r';
+                                break;
+                            case 'b':
+                                c = '\b';
+                                break;
+                            case 't':
+                                c = '\t';
+                                break;
+                            case 'u':
+                                skipC = true;
+                                StringBuilder byteStr = new StringBuilder("");
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    byteStr.Append((char)input.ReadByte());
+                                }
+                                int ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
+                                char asciiChar = (char)ascii;
+                                ms.WriteByte((byte)asciiChar);
+                                break;
+                            case '\\':
+                                c = '\\';
+                                break;
+                            case -1:
+                                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                            default:
+                                ms.WriteByte((byte)'\\');
+                                break;
                             }
-                            ms.WriteByte((byte)c);
+                            if (!skipC)
+                            {
+                                ms.WriteByte((byte)c);
+                            }
                         }
                         else
                         {

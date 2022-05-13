@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests
                     sb.Clear();
                 }
 
-                cmd.CommandText = "drop table if exists deltest";
+                cmd.CommandText = "drop table if exists deltest1";
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
