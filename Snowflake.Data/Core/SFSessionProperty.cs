@@ -18,19 +18,19 @@ namespace Snowflake.Data.Core
         ACCOUNT,
         [SFSessionPropertyAttr(required = false)]
         DB,
-        [SFSessionPropertyAttr(required = false)] 
+        [SFSessionPropertyAttr(required = false)]
         HOST,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = true)]
         PASSWORD,
-        [SFSessionPropertyAttr(required = false, defaultValue = "443")] 
+        [SFSessionPropertyAttr(required = false, defaultValue = "443")]
         PORT,
         [SFSessionPropertyAttr(required = false)]
         ROLE,
         [SFSessionPropertyAttr(required = false)]
         SCHEMA,
-        [SFSessionPropertyAttr(required = false, defaultValue = "https")] 
+        [SFSessionPropertyAttr(required = false, defaultValue = "https")]
         SCHEME,
-        [SFSessionPropertyAttr(required = true, defaultValue = "")] 
+        [SFSessionPropertyAttr(required = true, defaultValue = "")]
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
@@ -66,6 +66,10 @@ namespace Snowflake.Data.Core
         APPLICATION,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         FORCESTREAMPUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        DISABLERETRY,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        FORCERETRYON404,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -80,7 +84,7 @@ namespace Snowflake.Data.Core
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
         // Connection string properties to obfuscate in the log
-        static private List<SFSessionProperty> secretProps = 
+        static private List<SFSessionProperty> secretProps =
             new List<SFSessionProperty>{
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
@@ -134,7 +138,7 @@ namespace Snowflake.Data.Core
             foreach (string keyVal in propertyEntry)
             {
                 if (keyVal.Length > 0)
-                {                    
+                {
                     string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
                     if (tokens.Length != 2)
                     {
@@ -153,7 +157,7 @@ namespace Snowflake.Data.Core
                                 // No '=' found
                                 break;
                             }
-                            if ((currentIndex < (keyVal.Length - 1)) && 
+                            if ((currentIndex < (keyVal.Length - 1)) &&
                                 ('=' != keyVal[currentIndex + 1]))
                             {
                                 if (0 > singleEqualIndex)
@@ -175,14 +179,14 @@ namespace Snowflake.Data.Core
                                 currentIndex += 2;
                             }
                         }
-                        
+
                         if ((singleEqualIndex > 0) && (singleEqualIndex < keyVal.Length - 1))
                         {
                             // Split the key/value at the right index and deduplicate '=='
                             tokens = new string[2];
-                            tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==","=");
+                            tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==", "=");
                             tokens[1] = keyVal.Substring(
-                                singleEqualIndex + 1, 
+                                singleEqualIndex + 1,
                                 keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
                         }
                         else
@@ -229,7 +233,7 @@ namespace Snowflake.Data.Core
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
                 }
-           }
+            }
 
             // Based on which proxy settings have been provided, update the required settings list
             if (useProxy)
@@ -253,7 +257,7 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
 
             // compose host value if not specified
-            if (!properties.ContainsKey(SFSessionProperty.HOST) || 
+            if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
                 string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
@@ -267,7 +271,7 @@ namespace Snowflake.Data.Core
             // because the login request data does not expect region and cloud information to be 
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
-            
+
 
             return properties;
         }
