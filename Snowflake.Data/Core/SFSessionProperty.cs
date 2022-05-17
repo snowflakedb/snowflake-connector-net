@@ -64,7 +64,8 @@ namespace Snowflake.Data.Core
         NONPROXYHOSTS,
         [SFSessionPropertyAttr(required = false)]
         APPLICATION,
-
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        FORCESTREAMPUT,
     }
 
     class SFSessionPropertyAttr : Attribute

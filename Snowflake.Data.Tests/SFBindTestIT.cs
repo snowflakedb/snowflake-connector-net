@@ -557,7 +557,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "forcestreamput=true";
                 conn.Open();
 
                 using (IDbCommand cmd = conn.CreateCommand())
@@ -619,6 +619,10 @@ namespace Snowflake.Data.Tests
 
                     count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);
+
+                    cmd.CommandText = "SELECT * FROM testPutArrayBind";
+                    IDataReader reader = cmd.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
 
                     cmd.CommandText = "drop table if exists testPutArrayBind";
                     cmd.ExecuteNonQuery();

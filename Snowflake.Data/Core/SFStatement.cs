@@ -297,11 +297,12 @@ namespace Snowflake.Data.Core
                         String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                         arrayBindingThreshold = Int32.Parse(val);
                     }
+                    
                     int numBinding = GetBindingCount(bindings);
                     
-                    if (0 < arrayBindingThreshold
+                    if ((0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
-                        && !describeOnly)
+                        && !describeOnly) || SfSession.ForceStreamPut)
                     { 
                         try
                         {
