@@ -11,32 +11,27 @@ namespace Snowflake.Data.Client
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
-        private static ConcurrentDictionary<string, SnowflakeDbConnection> connectionPool;
+        private static List<SnowflakeDbConnection> connectionPool;
         private static readonly object _connectionPoolLock = new object();
-        private static int minPoolSize;
         private static int maxPoolSize;
-        private static int cleanupCounter;
-        private static int currentCounter;
-        private const int MIN_POOL_SIZE = 0;
+        private static long timeout;
         private const int MAX_POOL_SIZE = 10;
-        private const int CLEANUP_COUNTER = 0;
+        private const long TIMEOUT = 3600;
 
         private static void initConnectionPool()
         {
             logger.Debug("SnowflakeDbConnectionPool::initConnectionPool");
             lock (_connectionPoolLock)
             {
-                connectionPool = new ConcurrentDictionary<string, SnowflakeDbConnection>();
-                minPoolSize = MIN_POOL_SIZE;
+                connectionPool = new List<SnowflakeDbConnection>();
                 maxPoolSize = MAX_POOL_SIZE;
-                cleanupCounter = CLEANUP_COUNTER;
-                currentCounter = 0;
+                timeout = TIMEOUT;
             }
         }
 
-        private static void cleanNonActiveConnections()
+        private static void cleanExpiredConnections()
         {
-            logger.Debug("SnowflakeDbConnectionPool::cleanNonActiveConnections");
+            logger.Debug("SnowflakeDbConnectionPool::cleanExpiredConnections");
             if (null == connectionPool)
             {
                 initConnectionPool();
@@ -44,38 +39,42 @@ namespace Snowflake.Data.Client
 
             lock (_connectionPoolLock)
             {
-                List<string> keys = new List<string>(connectionPool.Keys);
-                int curSize = keys.Count;
-                foreach (var item in keys)
+                long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+
+                foreach (var item in connectionPool)
                 {
-                    SnowflakeDbConnection conn;
-                    connectionPool.TryGetValue(item, out conn);
-                    if (conn._refCount <= 0 && curSize > minPoolSize)
+                    if(item._poolTimeout <= timeNow)
                     {
-                        connectionPool.TryRemove(item, out conn);
-                        logger.Debug("SnowflakeDbConnectionPool::cleanNonActiveConnections try remove");
-                        conn.isPooling = false;
-                        conn.CloseConnection();
-                        conn.DisposeConnection(false);
-                        curSize--;
+                        connectionPool.Remove(item);
+                        if(item.SfSession != null)
+                        {
+                            item.SfSession.close();
+                        }
                     }
                 }
             }
         }
 
-        internal static SnowflakeDbConnection getConnection(string connStr, SecureString pw)
+        internal static SnowflakeDbConnection getConnection(string connStr)
         {
             logger.Debug("SnowflakeDbConnectionPool::getConnection");
             if (connectionPool == null)
             {
                 initConnectionPool();
             }
-            if (connectionPool.ContainsKey(connStr))
+            lock (_connectionPoolLock)
             {
-                SnowflakeDbConnection conn;
-                connectionPool.TryGetValue(connStr, out conn);
-                return conn;
+                for (int i = 0; i < connectionPool.Count; i++)
+                {
+                    if (connectionPool[i].ConnectionString.Equals(connStr))
+                    {
+                        SnowflakeDbConnection conn = connectionPool[i];
+                        connectionPool.RemoveAt(i);
+                        return conn;
+                    }
+                }
             }
+
             return null;
         }
 
@@ -84,36 +83,30 @@ namespace Snowflake.Data.Client
             logger.Debug("SnowflakeDbConnectionPool::addConnection");
             lock (_connectionPoolLock)
             {
-                SnowflakeDbConnection poolConn;
-                connectionPool.TryGetValue(conn.ConnectionString, out poolConn);
-
-                if (poolConn != null)
+                if (connectionPool == null)
                 {
-                    return false;
+                    initConnectionPool();
                 }
-
-                if (connectionPool.Count >= maxPoolSize)
+                if (connectionPool.Count < maxPoolSize)
                 {
-                    if (currentCounter > 0)
+                    long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    conn._poolTimeout = timeNow + timeout;
+                    connectionPool.Add(conn);
+                    return true;
+                }
+                else
+                {
+                    cleanExpiredConnections();
+                    if (connectionPool.Count < maxPoolSize)
                     {
-                        currentCounter--;
-                        return false;
-                    }
-                    else
-                    {
-                        currentCounter = cleanupCounter;
-                        cleanNonActiveConnections();
-                        if (connectionPool.Count >= maxPoolSize)
-                        {
-                            return false;
-                        }
+                        long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+                        conn._poolTimeout = timeNow + timeout;
+                        connectionPool.Add(conn);
+                        return true;
                     }
                 }
-
-                connectionPool.TryAdd(conn.ConnectionString, conn);
-                conn.isPooling = true;
-                return true;
             }
+            return false;
         }
 
         public static void ClearAllPools()
@@ -126,69 +119,31 @@ namespace Snowflake.Data.Client
 
             lock (_connectionPoolLock)
             {
-                List<string> keys = new List<string>(connectionPool.Keys);
-                foreach (var item in keys)
-                {
-                    SnowflakeDbConnection conn;
-                    connectionPool.TryGetValue(item, out conn);
-                    connectionPool.TryRemove(item, out conn);
-                    conn.isPooling = false;
-                    logger.Debug("SnowflakeDbConnectionPool::ClearAllPools refcount=" + conn._refCount);
-                    if (conn._refCount <= 0)
-                    {
-                        conn._refCount = 0;
-                        conn.CloseConnection();
-                        conn.DisposeConnection(false);
-                    }
-                }
+                connectionPool.Clear();
             }
-        }
-
-        public static bool ClearPool(SnowflakeDbConnection conn)
-        {
-            logger.Debug("SnowflakeDbConnectionPool::ClearPool");
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
-            if (!conn.isPooling)
-                return false;
-
-            lock (_connectionPoolLock)
-            {
-                SnowflakeDbConnection poolConn;
-                connectionPool.TryGetValue(conn.ConnectionString, out poolConn);
-                if (poolConn != null)
-                {
-                    logger.Debug("SnowflakeDbConnectionPool::ClearPool _refCount=" + conn._refCount);
-                    if (conn._refCount == 1)
-                    {
-                        connectionPool.TryRemove(conn.ConnectionString, out conn);
-                        conn.isPooling = false;
-                        conn._refCount = 0;
-                        conn.CloseConnection();
-                        conn.DisposeConnection(false);
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        public static void SetMinPoolSize(int size)
-        {
-            minPoolSize = size;
         }
 
         public static void SetMaxPoolSize(int size)
         {
+            if (null == connectionPool)
+            {
+                initConnectionPool();
+            }
             maxPoolSize = size;
         }
 
-        public static void SetCleanupCounter(int size)
+        public static void SetTimeout(long time)
         {
-            cleanupCounter = size;
+            if (null == connectionPool)
+            {
+                initConnectionPool();
+            }
+            timeout = time;
+        }
+
+        public static int GetCurrentPoolSize()
+        {
+            return connectionPool.Count;
         }
     }
 }

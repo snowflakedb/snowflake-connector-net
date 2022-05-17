@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnection.ClearAllPools();
+                SnowflakeDbConnectionPool.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
@@ -66,6 +66,7 @@ namespace Snowflake.Data.Tests
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
+                SnowflakeDbConnectionPool.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 conn.Open();
