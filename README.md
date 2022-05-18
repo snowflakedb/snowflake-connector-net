@@ -114,28 +114,28 @@ The following table lists all valid connection properties:
 |----------------------------|----------|-------------------------------------------------------------------------------|
 | ACCOUNT                    | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	|
 | APPLICATION                | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern:  ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).   |
-| AUTHENTICATOR              | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
-| CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
 | DB                         | No       |                                                                               |
-| DISABLERETRY               | No       | Disables the driver from automatically reconnecting when a connection fails or drops. Default: false. |
 | HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
-| INSECUREMODE               |No   	| Set to true to disable the certificate revocation list check. Default is false.|
-| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 | PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
-| PRIVATE_KEY                |Depends   | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
-| PRIVATE_KEY_FILE           |Depends   | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
-| PRIVATE_KEY_PWD            |No        | The passphrase to use for decrypting the private key, if the key is encrypted.|
-| PROXYHOST                  | Depends  | The hostname of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYPASSWORD              | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYPORT                  | Depends  | The port number of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
-| PROXYUSER                  | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
 | ROLE                       | No       |                                                                               |
 | SCHEMA                     | No       |                                                                               |
-| TOKEN                      |Depends   | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
-| USEPROXY                   | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4. |
 | USER                       | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
-| VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 | WAREHOUSE                  | No       |                                                                               |
+| CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| DISABLERETRY               | No       | Set this property to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. The default value is `false`. |
+| AUTHENTICATOR              | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
+| VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
+| PRIVATE_KEY_FILE           |Depends   | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
+| PRIVATE_KEY_PWD            |No        | The passphrase to use for decrypting the private key, if the key is encrypted.|
+| PRIVATE_KEY                |Depends   | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.|
+| TOKEN                      |Depends   | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.|
+| INSECUREMODE               |No   	| Set to true to disable the certificate revocation list check. Default is false.|
+| USEPROXY                   | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYHOST                  | Depends  | The hostname of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPORT                  | Depends  | The port number of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYUSER                  | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4. |
+| PROXYPASSWORD              | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
+| NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
 
 <br />
