@@ -49,6 +49,8 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.USEPROXY, "false" },
                         { SFSessionProperty.INSECUREMODE, "false" },
                         { SFSessionProperty.FORCESTREAMPUT, "false" },
+                        { SFSessionProperty.DISABLERETRY, "false" },
+                        { SFSessionProperty.FORCERETRYON404, "false" },
                     },
                 },
             };

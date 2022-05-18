@@ -69,8 +69,8 @@ namespace Snowflake.Data.Core
             else
             {
                 SnowflakeDbException e = new SnowflakeDbException
-                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE, 
-                    authnResponse.code, 
+                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                    authnResponse.code,
                     authnResponse.message,
                     "");
 
@@ -129,6 +129,8 @@ namespace Snowflake.Data.Core
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 ForceStreamPut = Boolean.Parse(properties[SFSessionProperty.FORCESTREAMPUT]);
+                bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
+                bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
                 string proxyHost = null;
                 string proxyPort = null;
                 string noProxyHosts = null;
@@ -152,14 +154,16 @@ namespace Snowflake.Data.Core
                 }
 
                 // HttpClient config based on the setting in the connection string
-                HttpClientConfig httpClientConfig = 
+                HttpClientConfig httpClientConfig =
                     new HttpClientConfig(
-                        !InsecureMode, 
-                        proxyHost, 
-                        proxyPort, 
-                        proxyUser, 
-                        proxyPwd, 
-                        noProxyHosts);
+                        !InsecureMode,
+                        proxyHost,
+                        proxyPort,
+                        proxyUser,
+                        proxyPwd,
+                        noProxyHosts,
+                        disableRetry,
+                        forceRetryOn404);
 
                 // Get the http client for the config
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
@@ -184,7 +188,7 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
             }
 
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;            
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
@@ -211,7 +215,7 @@ namespace Snowflake.Data.Core
 
                 uriBuilder.Query = queryString.ToString();
             }
-            
+
             return uriBuilder.Uri;
         }
 
@@ -313,12 +317,12 @@ namespace Snowflake.Data.Core
             var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
             if (!response.success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("", 
+                SnowflakeDbException e = new SnowflakeDbException("",
                     response.code, response.message, "");
                 logger.Error("Renew session failed", e);
                 throw e;
-            } 
-            else 
+            }
+            else
             {
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
@@ -335,7 +339,7 @@ namespace Snowflake.Data.Core
                 RestTimeout = connectionTimeout,
             };
         }
-        
+
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
