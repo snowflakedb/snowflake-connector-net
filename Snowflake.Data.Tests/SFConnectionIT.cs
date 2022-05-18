@@ -310,6 +310,31 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestEnableRetry()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string invalidConnectionString = "host=docs.microsoft.com;"
+                    + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
+                conn.ConnectionString = invalidConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        e.ErrorCode);
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
         public void TestValidateDefaultParameters()
         {
             string connectionString = String.Format("scheme={0};host={1};port={2};" +
