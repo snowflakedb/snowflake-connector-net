@@ -562,11 +562,13 @@ namespace Snowflake.Data.Tests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
+                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string)";
+                    //cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
                     int count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(0, count);
 
-                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?)";
+                    string insertCommand = "insert into testPutArrayBind values (?, ?)";
+                    //string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -580,7 +582,7 @@ namespace Snowflake.Data.Tests
                     p2.DbType = DbType.String;
                     p2.Value = new string[] { "str1", "str2", "str3" };
                     cmd.Parameters.Add(p2);
-
+                    /*
                     DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
@@ -616,7 +618,7 @@ namespace Snowflake.Data.Tests
                     p6.DbType = DbType.DateTimeOffset;
                     p6.Value = new DateTimeOffset[] { tz1, tz2, tz3 };
                     cmd.Parameters.Add(p6);
-
+                    */
                     count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);
 
