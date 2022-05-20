@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    int queryResult = 0;
+                    long queryResult = 0;
                     cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
                     Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
                     Task readCallback = execution.ContinueWith((t) =>
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests
                         using (DbDataReader reader = t.Result)
                         {
                             Assert.IsTrue(reader.Read());
-                            queryResult = reader.GetInt32(0);
+                            queryResult = reader.GetInt64(0);
                             Assert.IsFalse(reader.Read());
                         }
                     });
