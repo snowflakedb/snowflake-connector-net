@@ -300,9 +300,9 @@ namespace Snowflake.Data.Core
                     
                     int numBinding = GetBindingCount(bindings);
                     
-                    if ((0 < arrayBindingThreshold
+                    if (0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
-                        && !describeOnly) || SfSession.ForceStreamPut)
+                        && !describeOnly)
                     { 
                         try
                         {

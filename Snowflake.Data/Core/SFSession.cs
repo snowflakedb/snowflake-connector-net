@@ -47,8 +47,6 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
-        internal bool ForceStreamPut;
-
         private HttpClient _HttpClient;
 
         private string arrayBindStage = null;
@@ -128,7 +126,6 @@ namespace Snowflake.Data.Core
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
-                ForceStreamPut = Boolean.Parse(properties[SFSessionProperty.FORCESTREAMPUT]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
                 string proxyHost = null;

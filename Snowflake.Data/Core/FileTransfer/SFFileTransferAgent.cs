@@ -940,7 +940,7 @@ namespace Snowflake.Data.Core
         public void ExecuteUploadStream()
         {
             SFFileMetadata fileMetadata = new SFFileMetadata();
-            fileMetadata.srcFileName = STREAM_FILE_NAME;
+            fileMetadata.srcFileName = TransferMetadata.src_locations[0];
             fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
             fileMetadata.requireCompress = true;
             fileMetadata.destFileName = fileMetadata.srcFileName + SFFileCompressionTypes.GZIP.FileExtension;

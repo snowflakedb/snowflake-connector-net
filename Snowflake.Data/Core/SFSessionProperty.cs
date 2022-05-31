@@ -65,8 +65,6 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false)]
         APPLICATION,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        FORCESTREAMPUT,
-        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLERETRY,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         FORCERETRYON404,

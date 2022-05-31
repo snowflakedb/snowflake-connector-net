@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core
     class SFBindUploader
     {
         private const string STAGE_NAME = "SYSTEM$BIND";
-        private const string CREATE_STAGE_STMT = "CREATE TEMPORARY STAGE "
+        private const string CREATE_STAGE_STMT = "CREATE OR REPLACE TEMPORARY STAGE "
             + STAGE_NAME
             + " file_format=("
             + " type=csv"
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
         private const string ACCOUNT_AZURE = "azure";
         private const string ACCOUNT_LOCAL = "localhost";
 
-        private static long inputStreamBufferSize = 1024 * 1024 * 100;
+        private static long inputStreamBufferSize = 1024 * 1024 * 10;
 
         private int fileCount = 0;
 
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Core
             int startIndex = 0;
             int rowNum = 0;
             int curBytes = 0;
-            StringBuilder sBuffer = new StringBuilder();
+            
             while (rowNum < dataRows.Count)
             {
                 while(curBytes < inputStreamBufferSize && rowNum < dataRows.Count)
@@ -101,9 +101,11 @@ namespace Snowflake.Data.Core
                     rowNum++;
                 }
 
+                StringBuilder sBuffer = new StringBuilder();
                 MemoryStream ms = new MemoryStream();
                 StreamWriter tw = new StreamWriter(ms);
-                for(int i = startIndex; i < rowNum; i++)
+
+                for (int i = startIndex; i < rowNum; i++)
                 {
                     sBuffer.Append(dataRows[i]);
                 }
@@ -198,12 +200,8 @@ namespace Snowflake.Data.Core
                 {
                     try
                     {
-                        string createStageSQL = "CREATE TEMPORARY STAGE IF NOT EXISTS " +
-                            STAGE_NAME + " file_format=(" +
-                            " type=csv field_optionally_enclosed_by='\"')";
-
                         SFStatement statement = new SFStatement(session);
-                        SFBaseResultSet resultSet = statement.Execute(0, createStageSQL, null, false);
+                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false);
                         session.SetArrayBindStage(STAGE_NAME);
                     }
                     catch (Exception e)

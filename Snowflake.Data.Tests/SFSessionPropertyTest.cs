@@ -48,7 +48,6 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                         { SFSessionProperty.USEPROXY, "false" },
                         { SFSessionProperty.INSECUREMODE, "false" },
-                        { SFSessionProperty.FORCESTREAMPUT, "false" },
                         { SFSessionProperty.DISABLERETRY, "false" },
                         { SFSessionProperty.FORCERETRYON404, "false" },
                     },
