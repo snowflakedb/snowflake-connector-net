@@ -570,7 +570,7 @@ namespace Snowflake.Data.Tests
                     string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
-                    int total = 25000;
+                    int total = 250000;
 
                     List<int> arrint = new List<int>();
                     for (int i=0; i<total; i++)
@@ -665,14 +665,14 @@ namespace Snowflake.Data.Tests
                     cmd.Parameters.Add(p6);
                     
                     count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(75000, count);
+                    Assert.AreEqual(total * 3, count);
 
                     cmd.CommandText = "SELECT * FROM testPutArrayBind";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     
-                    cmd.CommandText = "drop table if exists testPutArrayBind";
-                    cmd.ExecuteNonQuery();
+                    //cmd.CommandText = "drop table if exists testPutArrayBind";
+                    //cmd.ExecuteNonQuery();
                     
                 }
 
