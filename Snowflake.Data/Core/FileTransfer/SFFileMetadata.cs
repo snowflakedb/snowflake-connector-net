@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
 
 namespace Snowflake.Data.Core.FileTransfer
@@ -103,5 +104,8 @@ namespace Snowflake.Data.Core.FileTransfer
 
         /// Last specified max concurrency to use.
         public int lastMaxConcurrency { get; set; }
+
+        /// The source stream for stream put
+        public MemoryStream putSrcStream { get; set; }
     }
 }

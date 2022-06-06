@@ -128,6 +128,19 @@ namespace Snowflake.Data.Core
         private const string LOCAL_FS = "LOCAL_FS";
 
         /// <summary>
+        /// input stream for stream put.
+        /// </summary>
+        private MemoryStream putStream = null;
+
+        /// <summary>
+        /// Set input stream for stream put.
+        /// </summary>
+        public void SetPutStream(MemoryStream inStream)
+        {
+            putStream = inStream;
+        }
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public SFFileTransferAgent(
@@ -155,9 +168,22 @@ namespace Snowflake.Data.Core
             {
                 // Initialize the list of actual files to upload
                 List<string> expandedSrcLocations = new List<string>();
-                foreach (string location in TransferMetadata.src_locations)
+
+                if (putStream != null)
                 {
-                    expandedSrcLocations.AddRange(expandFileNames(location));
+                    // stream put only support single file
+                    if (TransferMetadata.src_locations.Count != 1)
+                    {
+                        throw new ArgumentException("Invalid stream put.");
+                    }
+                    expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
+                }
+                else
+                {
+                    foreach (string location in TransferMetadata.src_locations)
+                    {
+                        expandedSrcLocations.AddRange(expandFileNames(location));
+                    }
                 }
 
                 // Initialize each file specific metadata (for example, file path, name and size) and
@@ -416,7 +442,8 @@ namespace Snowflake.Data.Core
                     {
                         srcFilePath = file,
                         srcFileName = fileName,
-                        srcFileSize = fileInfo.Length,
+                        srcFileSize = (putStream == null) ?
+                            fileInfo.Length : putStream.Length,
                         stageInfo = TransferMetadata.stageInfo,
                         overwrite = TransferMetadata.overwrite,
                         // Need to compress before sending only if autoCompress is On and the file is
@@ -427,8 +454,9 @@ namespace Snowflake.Data.Core
                         sourceCompression = compressionType,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                        parallel = (fileInfo.Length > TransferMetadata.threshold) ?
+                        parallel = (putStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
+                        putSrcStream = putStream,
                     };
 
                     if (!fileMetadata.requireCompress)
@@ -632,9 +660,24 @@ namespace Snowflake.Data.Core
         /// <param name="fileMetadata">The metadata for the file to compress.</param>
         private void compressFileWithGzip(SFFileMetadata fileMetadata)
         {
-            FileInfo fileToCompress = new FileInfo(fileMetadata.srcFilePath);
             fileMetadata.realSrcFilePath = Path.Combine(fileMetadata.tmpDir, fileMetadata.srcFileName + "_c.gz");
 
+            // compress in memory directly for stream put
+            if (fileMetadata.putSrcStream != null)
+            {
+                fileMetadata.putSrcStream.Position = 0;
+                MemoryStream compressedStream = new MemoryStream();
+                using (GZipStream compressionStream =
+                    new GZipStream(compressedStream, CompressionMode.Compress))
+                {
+                    fileMetadata.putSrcStream.CopyTo(compressionStream);
+                }
+
+                fileMetadata.putSrcStream = compressedStream;
+                return;
+            }
+
+            FileInfo fileToCompress = new FileInfo(fileMetadata.srcFilePath);
             using (FileStream originalFileStream = fileToCompress.OpenRead())
             {
                 if ((File.GetAttributes(fileToCompress.FullName) &
@@ -664,6 +707,14 @@ namespace Snowflake.Data.Core
         {
             using (SHA256 SHA256 = SHA256Managed.Create())
             {
+                if (fileMetadata.putSrcStream != null)
+                {
+                    fileMetadata.putSrcStream.Position = 0;
+                    fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileMetadata.putSrcStream));
+                    fileMetadata.uploadSize = fileMetadata.putSrcStream.Length;
+                    return;
+                }
+
                 using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
                 {
                     fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileStream));

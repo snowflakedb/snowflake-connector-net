@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.IO;
 using System.Web;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -46,6 +47,13 @@ namespace Snowflake.Data.Core
 
         // Flag indicating if the SQL query is a regular query or a PUT/GET query
         internal bool isPutGetQuery = false;
+
+        private MemoryStream putStream;
+
+        public void SetPutStream(MemoryStream inStream)
+        {
+            putStream = inStream;
+        }
 
         internal SFStatement(SFSession session)
         {
@@ -264,6 +272,11 @@ namespace Snowflake.Data.Core
 
                     SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
+
+                    if (putStream != null)
+                    {
+                        fileTransferAgent.SetPutStream(putStream);
+                    }
 
                     // Start the file transfer
                     fileTransferAgent.execute();

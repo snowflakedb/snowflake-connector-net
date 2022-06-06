@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.IO;
 using Snowflake.Data.Core;
 using System.Data.Common;
 using System.Data;
@@ -25,6 +26,12 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        private MemoryStream putStream;
+
+        public void SetPutStream(MemoryStream putSrcStream)
+        {
+            putStream = putSrcStream;
+        }
         public SnowflakeDbCommand()
         {
             logger.Debug("Constucting SnowflakeDbCommand class");
@@ -300,6 +307,10 @@ namespace Snowflake.Data.Client
                 throw new Exception("Can't execute command when connection has never been opened");
 
             this.sfStatement = new SFStatement(session);
+            if (putStream != null)
+            {
+                sfStatement.SetPutStream(putStream);
+            }
         }
 
         private SFBaseResultSet ExecuteInternal(bool describeOnly = false)

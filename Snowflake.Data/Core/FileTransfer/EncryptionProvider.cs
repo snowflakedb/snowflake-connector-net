@@ -34,12 +34,12 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Encrypt data and write to the outStream.
         /// </summary>
-        /// <param name="inFile">The data to write onto the stream.</param>
+        /// <param name="sourceData">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public byte[] EncryptFile(
-            string inFile,
+        static public byte[] EncryptDataFromStream(
+            Stream sourceData,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata)
         {
@@ -57,13 +57,13 @@ namespace Snowflake.Data.Core.FileTransfer
 
             // Byte[] to encrypt data into
             byte[] encryptedBytes = CreateEncryptedBytes(
-                inFile,
+                sourceData,
                 keyData,
                 ivData);
 
             // Encrypt file key
             byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
-            
+
             // Store encryption metadata information
             MaterialDescriptor matDesc = new MaterialDescriptor
             {
@@ -80,6 +80,24 @@ namespace Snowflake.Data.Core.FileTransfer
             encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
 
             return encryptedBytes;
+        }
+
+        /// <summary>
+        /// Encrypt data and write to the outStream.
+        /// </summary>
+        /// <param name="inFile">The data to write onto the stream.</param>
+        /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
+        /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <returns>The encrypted bytes of the file to upload.</returns>
+        static public byte[] EncryptFile(
+            string inFile,
+            PutGetEncryptionMaterial encryptionMaterial,
+            SFEncryptionMetadata encryptionMetadata)
+        {
+            using (Stream srcStream = File.OpenRead(inFile))
+            {
+                return EncryptDataFromStream(srcStream, encryptionMaterial, encryptionMetadata);
+            }
         }
 
         /// <summary>
@@ -106,16 +124,17 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Creates a new byte array containing the encrypted/decrypted data.
         /// </summary>
-        /// <param name="inFile">The path of the file to write onto the stream.</param>
+        /// <param name="sourceData">The data to write onto the stream.</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The encrypted bytes.</returns>
         static private byte[] CreateEncryptedBytes(
-            string inFile,
+            Stream inStream,
             byte[] key,
             byte[] iv)
         {
-            Aes aes = Aes.Create();            
+            inStream.Position = 0;
+            Aes aes = Aes.Create();
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
@@ -124,14 +143,11 @@ namespace Snowflake.Data.Core.FileTransfer
             MemoryStream targetStream = new MemoryStream();
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
 
-            using(Stream inStream = File.OpenRead(inFile))
+            byte[] buffer = new byte[1024000];
+            int bytesRead;
+            while ((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
             {
-                byte[] buffer = new byte[1024000];
-                int bytesRead;
-                while((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    cryptoStream.Write(buffer, 0, bytesRead);
-                }
+                cryptoStream.Write(buffer, 0, bytesRead);
             }
             cryptoStream.FlushFinalBlock();
 

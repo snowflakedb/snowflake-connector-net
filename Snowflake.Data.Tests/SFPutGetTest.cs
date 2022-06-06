@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests
                         // Add PUT compress option
                         putQuery += $" AUTO_COMPRESS={autoCompressType}";
 
-                        using (DbCommand command = conn.CreateCommand())
+                        using (SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand())
                         {
                             // Create temp table
                             command.CommandText = createTable;
@@ -150,6 +150,9 @@ namespace Snowflake.Data.Tests
 
                             // Upload file
                             command.CommandText = putQuery;
+                            byte[] fileData = File.ReadAllBytes(filePath);
+                            MemoryStream dataStream = new MemoryStream(fileData);
+                            command.SetPutStream(dataStream);
                             DbDataReader reader = command.ExecuteReader();
                             while (reader.Read())
                             {
