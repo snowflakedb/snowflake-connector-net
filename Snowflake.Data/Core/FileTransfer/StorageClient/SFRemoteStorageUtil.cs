@@ -87,22 +87,34 @@ namespace Snowflake.Data.Core.FileTransfer
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
 
             byte[] fileBytes;
-            if (fileMetadata.sourceFromStream && fileMetadata.memoryStream != null)
-            {
-                fileBytes = fileMetadata.memoryStream.ToArray();
-            }
-            else
-            {
-                fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
-            }
-
             // If encryption enabled, encrypt the file to be uploaded
             if (fileMetadata.encryptionMaterial != null)
             {
-                fileBytes = EncryptionProvider.EncryptFile(
-                    fileMetadata.realSrcFilePath,
-                    fileMetadata.encryptionMaterial,
-                    encryptionMetadata);
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = EncryptionProvider.EncryptStream(
+                       fileMetadata.memoryStream,
+                       fileMetadata.encryptionMaterial,
+                       encryptionMetadata);
+                }
+                else
+                {
+                    fileBytes = EncryptionProvider.EncryptFile(
+                        fileMetadata.realSrcFilePath,
+                        fileMetadata.encryptionMaterial,
+                        encryptionMetadata);
+                }
+            }
+            else
+            {
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = fileMetadata.memoryStream.ToArray();
+                }
+                else
+                {
+                    fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
+                }
             }
 
             int maxConcurrency = fileMetadata.parallel;

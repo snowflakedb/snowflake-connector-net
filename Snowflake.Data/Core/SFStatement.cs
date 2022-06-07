@@ -582,7 +582,7 @@ namespace Snowflake.Data.Core
             return true;
         }
 
-        internal void SetUploadStream(ref MemoryStream stream, string destFilename, string stagePath)
+        internal void SetUploadStream(MemoryStream stream, string destFilename, string stagePath)
         {
             _uploadStream = stream;
             _destFilename = destFilename;
@@ -591,9 +591,6 @@ namespace Snowflake.Data.Core
 
         internal SFBaseResultSet ExecuteTransfer(string sql)
         {
-            isPutGetQuery = true;
-
-
             isPutGetQuery = true;
             PutGetExecResponse response =
                 ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
@@ -606,7 +603,8 @@ namespace Snowflake.Data.Core
             
             SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
-            fileTransferAgent.ExecuteUploadStream();
+
+            fileTransferAgent.execute();
 
             return fileTransferAgent.result();
         }

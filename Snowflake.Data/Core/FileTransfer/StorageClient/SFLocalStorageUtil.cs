@@ -25,7 +25,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
             // Create reader stream
             Stream stream;
-            if (fileMetadata.sourceFromStream && fileMetadata.memoryStream != null)
+            if (fileMetadata.memoryStream != null)
             {
                 stream = fileMetadata.memoryStream;
             }
@@ -33,6 +33,7 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 stream = new MemoryStream(File.ReadAllBytes(fileMetadata.realSrcFilePath));
             }
+            stream.Position = 0;
 
             // Write stream to file
             using (var fileStream = File.Create(Path.Combine(fileMetadata.stageInfo.location, fileMetadata.destFileName)))

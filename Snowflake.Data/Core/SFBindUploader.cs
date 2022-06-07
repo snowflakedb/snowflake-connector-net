@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using Snowflake.Data.Log;
@@ -143,8 +144,9 @@ namespace Snowflake.Data.Core
             string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
 
             SFStatement statement = new SFStatement(session);
-            statement.SetUploadStream(ref stream, destFileName, stagePath);
+            statement.SetUploadStream(stream, destFileName, stagePath);
             statement.ExecuteTransfer(putStmt);
+            
         }
 
         private string GetCSVData(string sType, string sValue)
