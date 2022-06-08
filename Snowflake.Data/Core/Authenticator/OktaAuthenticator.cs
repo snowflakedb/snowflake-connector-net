@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core.Authenticator
             } catch (Exception e)
             {
                 logger.Error("Fail to extract SAML from html", e);
-                throw new SnowflakeDbException(SFError.IDP_SAML_POSTBACK_NOTFOUND);
+                throw new SnowflakeDbException(e, SFError.IDP_SAML_POSTBACK_NOTFOUND);
             }
 
             string sessionHost = session.properties[SFSessionProperty.HOST];

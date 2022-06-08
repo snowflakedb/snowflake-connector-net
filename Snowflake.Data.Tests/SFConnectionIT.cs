@@ -1490,7 +1490,7 @@ namespace Snowflake.Data.Tests
                 catch (AggregateException e)
                 {
                     Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
-                        ((SnowflakeDbException)(e.InnerException)).ErrorCode);
+                        ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
                 }
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }

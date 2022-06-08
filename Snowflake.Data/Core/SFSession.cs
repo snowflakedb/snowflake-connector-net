@@ -166,7 +166,7 @@ namespace Snowflake.Data.Core
             catch (Exception e)
             {
                 logger.Error("Unable to connect", e);
-                throw new SnowflakeDbException(e.InnerException,
+                throw new SnowflakeDbException(e,
                             SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
