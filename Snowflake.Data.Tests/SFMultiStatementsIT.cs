@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -290,7 +290,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests
                                       "remove @%t1;" +
                                       "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
                                       "call p1();" +
-                                      "use schema public";
+                                      "use role public";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())

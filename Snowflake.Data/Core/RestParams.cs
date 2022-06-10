@@ -55,14 +55,13 @@ namespace Snowflake.Data.Core
 #endif
             };
 
-            // Temporary change pretend as ODBC to enable multiple statements
-            // on server side. need to be removed when merge
-            DriverVersion = "2.25.2";
-            DriverName = "ODBC";
+            DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            DriverName = ".NET";
         }
 
-        internal static string DriverName { get; private set; }
-        internal static string DriverVersion { get; private set; }
+        //temporary change for pretend as ODBC
+        internal static string DriverName { get; set; }
+        internal static string DriverVersion { get; set; }
         internal static LoginRequestClientEnv ClientEnv { get; private set; }
     }
 }
