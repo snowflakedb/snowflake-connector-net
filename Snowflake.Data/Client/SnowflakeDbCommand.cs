@@ -157,7 +157,18 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteNonQuery, command: {CommandText}");
             SFBaseResultSet resultSet = ExecuteInternal();
-            return resultSet.CalculateUpdateCount();
+            int total = 0;
+            do
+            {
+                int count = resultSet.CalculateUpdateCount();
+                if (count > 0)
+                {
+                    total += count;
+                }
+            }
+            while (resultSet.NextResult());
+
+            return total;
         }
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
@@ -166,7 +177,18 @@ namespace Snowflake.Data.Client
             cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-            return resultSet.CalculateUpdateCount();
+            int total = 0;
+            do
+            {
+                int count = resultSet.CalculateUpdateCount();
+                if (count > 0)
+                {
+                    total += count;
+                }
+            }
+            while (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false));
+
+            return total;
         }
 
         public override object ExecuteScalar()

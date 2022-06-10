@@ -55,8 +55,10 @@ namespace Snowflake.Data.Core
 #endif
             };
 
-            DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            DriverName = ".NET";
+            // Temporary change pretend as ODBC to enable multiple statements
+            // on server side. need to be removed when merge
+            DriverVersion = "2.25.2";
+            DriverName = "ODBC";
         }
 
         internal static string DriverName { get; private set; }
