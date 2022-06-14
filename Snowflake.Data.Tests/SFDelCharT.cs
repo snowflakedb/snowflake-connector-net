@@ -19,6 +19,8 @@ namespace Snowflake.Data.Tests
     {
 
         [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "GCP" })]
         public void testDelChar()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -83,6 +85,8 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "GCP" })]
         public void testDelChar1()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
