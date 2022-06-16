@@ -147,6 +147,7 @@ namespace Snowflake.Data.Core
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))
             {
+                //TODO this shouldn't be required.
                 IEnumerable<string> encoding;
                 if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
                 {
