@@ -128,7 +128,7 @@ namespace Snowflake.Data.Core
 
         private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
         {
-            //logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
+            //logger.Info($"Start downloading chunk #{downloadContext.chunkIndex}");
             SFReusableChunk chunk = downloadContext.chunk;
 
             S3DownloadRequest downloadRequest = 
@@ -147,7 +147,23 @@ namespace Snowflake.Data.Core
             using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(continueOnCapturedContext: false))
             {
-                await ParseStreamIntoChunk(stream, chunk);
+                IEnumerable<string> encoding;
+                if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
+                {
+                    if (String.Compare(encoding.First(), "gzip", true) == 0)
+                    {
+                        Stream stream_gzip = new GZipStream(stream, CompressionMode.Decompress);
+                        await ParseStreamIntoChunk(stream_gzip, chunk);
+                    }
+                    else
+                    {
+                        await ParseStreamIntoChunk(stream, chunk);
+                    }
+                }
+                else
+                {
+                    await ParseStreamIntoChunk(stream, chunk);
+                }
             }
             logger.Info($"Succeed downloading chunk #{chunk.chunkIndexToDownload}");
             return chunk;

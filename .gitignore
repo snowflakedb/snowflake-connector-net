@@ -302,3 +302,5 @@ Snowflake.Data.Tests/parameters.json
 wss-*.config
 wss-unified-agent.jar
 whitesource/
+/testEnvironments.json
+/parameters.json
