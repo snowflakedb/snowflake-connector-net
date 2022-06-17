@@ -26,6 +26,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -1471,6 +1472,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
