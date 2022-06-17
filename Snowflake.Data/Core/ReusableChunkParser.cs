@@ -106,7 +106,6 @@ namespace Snowflake.Data.Core
                     }
                     else if (c == '\\')
                     {
-                        bool skipC = false;
                         // Process next character
                         c = input.ReadByte();
                         switch (c)
@@ -124,7 +123,6 @@ namespace Snowflake.Data.Core
                                 c = '\t';
                                 break;
                             case 'u':
-                                skipC = true;
                                 StringBuilder byteStr = new StringBuilder("");
                                 for (int i = 0; i < 4; i++)
                                 {
@@ -134,19 +132,10 @@ namespace Snowflake.Data.Core
                                 char asciiChar = (char)ascii;
                                 ms.WriteByte((byte)asciiChar);
                                 break;
-                            case '\\':
-                                c = '\\';
-                                break;
                             case -1:
                                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
-                            default:
-                                ms.WriteByte((byte)'\\');
-                                break;
                             }
-                            if (!skipC)
-                            {
-                                ms.WriteByte((byte)c);
-                            }
+                            ms.WriteByte((byte)c);
                         }
                         else
                         {
