@@ -6,7 +6,10 @@ using System;
 using System.Web;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,6 +49,14 @@ namespace Snowflake.Data.Core
 
         // Flag indicating if the SQL query is a regular query or a PUT/GET query
         internal bool isPutGetQuery = false;
+
+        MemoryStream _uploadStream = null;
+
+        string _destFilename = null;
+
+        string _stagePath = null;
+
+        string _bindStage = null;
 
         internal SFStatement(SFSession session)
         {
@@ -89,12 +100,19 @@ namespace Snowflake.Data.Core
 
             var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
 
-            QueryRequest postBody = new QueryRequest()
+            QueryRequest postBody = new QueryRequest();
+            postBody.sqlText = sql;
+            postBody.describeOnly = describeOnly;
+            if (_bindStage == null)
             {
-                sqlText = sql,
-                parameterBindings = bindings,
-                describeOnly = describeOnly,
-            };
+                postBody.parameterBindings = bindings;
+                postBody.bindStage = null;
+            }
+            else
+            {
+                postBody.parameterBindings = null;
+                postBody.bindStage = _bindStage;
+            }
 
             return new SFRestRequest
             {
@@ -273,6 +291,33 @@ namespace Snowflake.Data.Core
                 }
                 else
                 {
+                    int arrayBindingThreshold = 0;
+                    if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+                    {
+                        String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                        arrayBindingThreshold = Int32.Parse(val);
+                    }
+                    
+                    int numBinding = GetBindingCount(bindings);
+                    
+                    if (0 < arrayBindingThreshold
+                        && arrayBindingThreshold <= numBinding
+                        && !describeOnly)
+                    { 
+                        try
+                        {
+                            AssignQueryRequestId();
+                            SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                            uploader.Upload(bindings);
+                            _bindStage = uploader.getStagePath();
+                            ClearQueryRequestId();
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
+                        }
+                    }
+
                     registerQueryCancellationCallback(timeout, CancellationToken.None);
                     var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
                     QueryExecResponse response = null;
@@ -502,6 +547,66 @@ namespace Snowflake.Data.Core
             logger.Debug("Trimmed query : " + trimmedQuery);
 
             return trimmedQuery;
+        }
+
+        private static int GetBindingCount(Dictionary<string, BindingDTO> binding)
+        {
+            if (!IsArrayBind(binding))
+            {
+                return 0;
+            }
+            else
+            {
+                List<object> values = (List<object>)binding.Values.First().value;
+                return values.Count * binding.Count;
+            }
+        }
+
+        private static Boolean IsArrayBind(Dictionary<string, BindingDTO> binding)
+        {
+            if (binding == null || binding.Count == 0)
+            {
+                return false;
+            }
+            foreach (BindingDTO bindingDTO in binding.Values)
+            {
+                if (bindingDTO.value == null)
+                {
+                    return false;
+                }
+                if (bindingDTO.value.GetType() != typeof(List<object>))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        internal void SetUploadStream(MemoryStream stream, string destFilename, string stagePath)
+        {
+            _uploadStream = stream;
+            _destFilename = destFilename;
+            _stagePath = stagePath;
+        }
+
+        internal SFBaseResultSet ExecuteTransfer(string sql)
+        {
+            isPutGetQuery = true;
+            PutGetExecResponse response =
+                ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                     0,
+                     sql,
+                     null,
+                     false);
+
+            PutGetStageInfo stageInfo = new PutGetStageInfo();
+            
+            SFFileTransferAgent fileTransferAgent =
+                        new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
+
+            fileTransferAgent.execute();
+
+            return fileTransferAgent.result();
         }
     }
 }

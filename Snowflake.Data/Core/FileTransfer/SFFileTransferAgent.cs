@@ -127,6 +127,11 @@ namespace Snowflake.Data.Core
         /// </summary>
         private const string LOCAL_FS = "LOCAL_FS";
 
+        private const string STREAM_FILE_NAME = "stream";
+        private MemoryStream memoryStream = null;
+        private string streamDestFileName = null;
+        private string destStagePath = null;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -142,6 +147,25 @@ namespace Snowflake.Data.Core
             CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
             externalCancellationToken = cancellationToken;
         }
+        public SFFileTransferAgent(
+            string query,
+            SFSession session,
+            PutGetResponseData responseData,
+            ref MemoryStream inputStream,
+            string filename,
+            string stagePath,
+            CancellationToken cancellationToken)
+        {
+            Query = query;
+            Session = session;
+            TransferMetadata = responseData;
+            memoryStream = inputStream;
+            streamDestFileName = filename;
+            destStagePath = stagePath;
+            CommandType = CommandTypes.UPLOAD;
+            externalCancellationToken = cancellationToken;
+        }
+
 
         /// <summary>
         /// Execute the PUT/GET command.
@@ -155,9 +179,21 @@ namespace Snowflake.Data.Core
             {
                 // Initialize the list of actual files to upload
                 List<string> expandedSrcLocations = new List<string>();
-                foreach (string location in TransferMetadata.src_locations)
+                if (memoryStream != null)
                 {
-                    expandedSrcLocations.AddRange(expandFileNames(location));
+                    // stream put only support single file
+                    if (TransferMetadata.src_locations.Count != 1)
+                    {
+                        throw new ArgumentException("Invalid stream put.");
+                    }
+                    expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
+                }
+                else
+                {
+                    foreach (string location in TransferMetadata.src_locations)
+                    {
+                        expandedSrcLocations.AddRange(expandFileNames(location));
+                    }
                 }
 
                 // Initialize each file specific metadata (for example, file path, name and size) and
@@ -169,6 +205,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
                 }
+                
             }
             else if (CommandTypes.DOWNLOAD == CommandType)
             {
@@ -416,7 +453,7 @@ namespace Snowflake.Data.Core
                     {
                         srcFilePath = file,
                         srcFileName = fileName,
-                        srcFileSize = fileInfo.Length,
+                        srcFileSize = (memoryStream == null) ? fileInfo.Length : memoryStream.Length,
                         stageInfo = TransferMetadata.stageInfo,
                         overwrite = TransferMetadata.overwrite,
                         // Need to compress before sending only if autoCompress is On and the file is
@@ -427,8 +464,9 @@ namespace Snowflake.Data.Core
                         sourceCompression = compressionType,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                        parallel = (fileInfo.Length > TransferMetadata.threshold) ?
+                        parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
+                        memoryStream = memoryStream,
                     };
 
                     if (!fileMetadata.requireCompress)
@@ -664,10 +702,19 @@ namespace Snowflake.Data.Core
         {
             using (SHA256 SHA256 = SHA256Managed.Create())
             {
-                using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
+                if (fileMetadata.memoryStream != null)
                 {
-                    fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileStream));
-                    fileMetadata.uploadSize = fileStream.Length;
+                    fileMetadata.memoryStream.Position = 0;
+                    fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileMetadata.memoryStream));
+                    fileMetadata.uploadSize = memoryStream.Length;
+                }
+                else
+                {
+                    using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
+                    {
+                        fileMetadata.sha256Digest = Convert.ToBase64String(SHA256.ComputeHash(fileStream));
+                        fileMetadata.uploadSize = fileStream.Length;
+                    }
                 }
             }
         }
@@ -807,7 +854,7 @@ namespace Snowflake.Data.Core
                 // Compress the file if needed
                 if (fileMetadata.requireCompress)
                 {
-                    compressFileWithGzip(fileMetadata);                
+                    compressFileWithGzip(fileMetadata);
                 }
 
                 // Calculate the digest

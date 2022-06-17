@@ -26,10 +26,10 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Strings to indicate specific storage type. 
         /// </summary>
-        const string S3_FS = "S3";
-        const string AZURE_FS = "AZURE";
-        const string GCS_FS = "GCS";
-        const string LOCAL_FS = "LOCAL_FS";
+        public const string S3_FS = "S3";
+        public const string AZURE_FS = "AZURE";
+        public const string GCS_FS = "GCS";
+        public const string LOCAL_FS = "LOCAL_FS";
 
         /// <summary>
         /// Amount of concurrency to use by default. 
@@ -85,15 +85,36 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static void UploadOneFile(SFFileMetadata fileMetadata)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            byte[] fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
 
+            byte[] fileBytes;
             // If encryption enabled, encrypt the file to be uploaded
             if (fileMetadata.encryptionMaterial != null)
             {
-                fileBytes = EncryptionProvider.EncryptFile(
-                    fileMetadata.realSrcFilePath,
-                    fileMetadata.encryptionMaterial,
-                    encryptionMetadata);
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = EncryptionProvider.EncryptStream(
+                       fileMetadata.memoryStream,
+                       fileMetadata.encryptionMaterial,
+                       encryptionMetadata);
+                }
+                else
+                {
+                    fileBytes = EncryptionProvider.EncryptFile(
+                        fileMetadata.realSrcFilePath,
+                        fileMetadata.encryptionMaterial,
+                        encryptionMetadata);
+                }
+            }
+            else
+            {
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = fileMetadata.memoryStream.ToArray();
+                }
+                else
+                {
+                    fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
+                }
             }
 
             int maxConcurrency = fileMetadata.parallel;

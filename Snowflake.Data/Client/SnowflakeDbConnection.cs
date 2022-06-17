@@ -28,12 +28,17 @@ namespace Snowflake.Data.Client
 
         private bool disposed = false;
 
+        private static Mutex _arraybindingMutex = new Mutex();
+
+        private static Boolean _isArrayBindStageCreated;
+
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
             _connectionTimeout = 
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
+            _isArrayBindStageCreated = false;
         }
 
         private void copy(SnowflakeDbConnection conn)
@@ -247,6 +252,21 @@ namespace Snowflake.Data.Client
                     }
                 },
                 cancellationToken);
+        }
+
+        public Mutex GetArrayBindingMutex()
+        {
+            return _arraybindingMutex;
+        }
+
+        public bool IsArrayBindStageCreated()
+        {
+            return _isArrayBindStageCreated;
+        }
+
+        public void SetArrayBindStageCreated()
+        {
+            _isArrayBindStageCreated = true;
         }
 
         /// <summary>
