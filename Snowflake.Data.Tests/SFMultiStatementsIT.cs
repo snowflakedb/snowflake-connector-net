@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testMSArrayBind(cola integer, colb string);" +
+                    cmd.CommandText = "create or replace temporary table testMSArrayBind(cola integer, colb string);" +
                                       "insert into testMSArrayBind values (?, ?);" +
                                       "insert into testMSArrayBind values (?, ?), (?, ?);" +
                                       "select * from testMSArrayBind;" +
