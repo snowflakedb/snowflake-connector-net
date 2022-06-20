@@ -279,8 +279,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            cancellationToken.ThrowIfCancellationRequested();
 
             return await resultSet.NextAsync();
         }

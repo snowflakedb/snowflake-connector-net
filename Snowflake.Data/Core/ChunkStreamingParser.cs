@@ -21,6 +21,9 @@ namespace Snowflake.Data.Core
 
         public async Task ParseChunk(IResultChunk chunk)
         {
+            await Task.Run(() =>
+            {
+
             // parse results row by row
             using (StreamReader sr = new StreamReader(stream))
             using (JsonTextReader jr = new JsonTextReader(sr) { DateParseHandling = DateParseHandling.None })
@@ -59,9 +62,9 @@ namespace Snowflake.Data.Core
                             throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected token type: {jr.TokenType}");
                     }
                 }
-
                 ((SFResultChunk)chunk).rowSet = outputMatrix;
-            }
+                }
+            });
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Core
 {
@@ -46,6 +47,50 @@ namespace Snowflake.Data.Core
 
             isClosed = false;
             
+            queryId = responseData.queryId;
+        }
+
+        string[] PutGetResponseRowTypeInfo = {
+            "SourceFileName",
+            "DestinationFileName",
+            "SourceFileSize",
+            "DestinationFileSize",
+            "SourceCompressionType",
+            "DestinationCompressionType",
+            "ResultStatus",
+            "ErrorDetails"
+        };
+
+        public void initializePutGetRowType(List<ExecResponseRowType> rowType)
+        {
+            foreach (string name in PutGetResponseRowTypeInfo)
+            {
+                rowType.Add(new ExecResponseRowType()
+                {
+                    name = name,
+                    type = "text"
+                });
+            }
+        }
+
+        public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        {
+            responseData.rowType = new List<ExecResponseRowType>();
+            initializePutGetRowType(responseData.rowType);
+
+            columnCount = responseData.rowType.Count;
+            _currentChunkRowIdx = -1;
+            _currentChunkRowCount = responseData.rowSet.GetLength(0);
+
+            this.sfStatement = sfStatement;
+
+            _currentChunk = new SFResultChunk(responseData.rowSet);
+            responseData.rowSet = null;
+
+            sfResultSetMetaData = new SFResultSetMetaData(responseData);
+
+            isClosed = false;
+
             queryId = responseData.queryId;
         }
 
