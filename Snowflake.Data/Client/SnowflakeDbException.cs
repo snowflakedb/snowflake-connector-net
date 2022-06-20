@@ -52,7 +52,7 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(string sqlState, SFError error, params object[] args)
-            :base(FormatExceptionMessage(error, args, sqlState, string.Empty))
+            : base(FormatExceptionMessage(error, args, sqlState, string.Empty))
         {
             this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             this.SqlState = sqlState;
@@ -71,11 +71,10 @@ namespace Snowflake.Data.Client
             this.SqlState = sqlState;
         }
 
-        static string FormatExceptionMessage(SFError error
-            , object[] args
-            , string sqlState
-            , string queryId
-            )
+        static string FormatExceptionMessage(SFError error,
+            object[] args,
+            string sqlState,
+            string queryId)
         {
             return FormatExceptionMessage(string.Format(rm.GetString(error.ToString()), args)
                 , error.GetAttribute<SFErrorAttr>().errorCode
@@ -83,11 +82,10 @@ namespace Snowflake.Data.Client
                 , queryId);
         }
 
-        static string FormatExceptionMessage(string errorMessage
-            , int vendorCode
-    , string sqlState
-    , string queryId
-    )
+        static string FormatExceptionMessage(string errorMessage,
+            int vendorCode,
+            string sqlState,
+            string queryId)
         {
             return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}",
                 errorMessage, sqlState, vendorCode, queryId);

@@ -5,9 +5,11 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
+The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
-Library target is under .NET Framework 4.7.2 and .NET Standard 2.0.
+- .NET Framework 4.7.2
+- .NET Framework 4.7.3
+- .NET Core 2.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -17,7 +19,9 @@ Building the Package
 Prerequisites
 -------------
 
-This project is developed under Visual Studio 2017. All other versions of Visual Studio are not supported.
+The Snowflake .NET connector supports only Windows.
+
+This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
 Steps
 -----
@@ -109,6 +113,7 @@ The following table lists all valid connection properties:
 | Connection Property        | Required | Comment                                                                       |
 |----------------------------|----------|-------------------------------------------------------------------------------|
 | ACCOUNT                    | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	|
+| APPLICATION                | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern:  ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).   |
 | DB                         | No       |                                                                               |
 | HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
 | PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
@@ -117,6 +122,7 @@ The following table lists all valid connection properties:
 | USER                       | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
 | WAREHOUSE                  | No       |                                                                               |
 | CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| DISABLERETRY               | No       | Set this property to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. The default value is `false`. |
 | AUTHENTICATOR              | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
 | VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 | PRIVATE_KEY_FILE           |Depends   | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
@@ -284,6 +290,23 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+Mapping .NET and Snowflake Data Types
+-------------------------------------
+
+The .NET driver supports the following mappings from .NET to Snowflake data types.
+
+
+| .NET Framekwork Data Type | Data Type in Snowflake |
+| ------------------------------ | ---------------------- |
+| `int`, `long`                 | `NUMBER(38, 0)`        |
+| `decimal`                       | `NUMBER(38, <scale>)`  |
+| `double` | `REAL` |
+| `string` | `TEXT` |
+| `bool` | `BOOLEAN` |
+| `byte` | `BINARY` |
+| `datetime` | `DATE` |
+
 
 Run a Query and Read Data
 -------------------------

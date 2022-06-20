@@ -125,7 +125,6 @@ namespace Snowflake.Data.Core
                         {
                             throw new SnowflakeDbException(e, SFError.REQUEST_TIMEOUT);
                         }
-
                         throw;
                     }
                 }

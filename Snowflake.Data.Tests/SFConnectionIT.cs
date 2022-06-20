@@ -26,6 +26,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -266,14 +267,18 @@ namespace Snowflake.Data.Tests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
+                    if (e.InnerException is SnowflakeDbException)
+                    {
+                        Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                        stopwatch.Stop();
+                        // Should timeout after the default timeout (120 sec)
+                        Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                        // But never more than 16 sec (max backoff) after the default timeout
+                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                    }
                 }
-                stopwatch.Stop();
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
             }
         }
 
@@ -286,6 +291,31 @@ namespace Snowflake.Data.Tests
                 string invalidConnectionString = "host=docs.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
+                conn.ConnectionString = invalidConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        e.ErrorCode);
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
+        public void TestEnableRetry()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string invalidConnectionString = "host=docs.microsoft.com;"
+                    + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
                 conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
@@ -1442,6 +1472,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
@@ -1461,7 +1492,7 @@ namespace Snowflake.Data.Tests
                 catch (AggregateException e)
                 {
                     Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
-                        ((SnowflakeDbException)(e.InnerException)).ErrorCode);
+                        ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
                 }
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
