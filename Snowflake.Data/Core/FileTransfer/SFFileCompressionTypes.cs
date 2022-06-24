@@ -213,7 +213,23 @@ namespace Snowflake.Data.Core.FileTransfer
             }
 
             // Couldn't find a match, last fallback using the file name extension
-            return LookUpByName(new FileInfo(filePath).Extension);
+            return LookUpByFileExtension(new FileInfo(filePath).Extension);
+        }
+
+        public static SFFileCompressionType LookUpByFileExtension(string fileExtension)
+        {
+            if (!fileExtension.StartsWith("."))
+            {
+                fileExtension = "." + fileExtension;
+            }
+            foreach (SFFileCompressionType compType in compressionTypes)
+            {
+                if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return compType;
+                }
+            }
+            return NONE;
         }
 
         /// <summary>
