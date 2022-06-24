@@ -205,6 +205,10 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         return BROTLI;
                     }
+                    else 
+                    { 
+                        return compType;
+                    }
                 }
             }
 
