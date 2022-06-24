@@ -24,6 +24,17 @@ namespace Snowflake.Data.Core
 
         private IResultChunk _currentChunk;
 
+        public enum PutGetResponseRowTypeInfo {   
+            SourceFileName                    = 0,
+            DestinationFileName               = 1,
+            SourceFileSize                    = 2,
+            DestinationFileSize               = 3,
+            SourceCompressionType             = 4,
+            DestinationCompressionType        = 5,
+            ResultStatus                      = 6,
+            ErrorDetails                      = 7
+            }
+
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
             columnCount = responseData.rowType.Count;
@@ -50,24 +61,13 @@ namespace Snowflake.Data.Core
             queryId = responseData.queryId;
         }
 
-        string[] PutGetResponseRowTypeInfo = {
-            "SourceFileName",
-            "DestinationFileName",
-            "SourceFileSize",
-            "DestinationFileSize",
-            "SourceCompressionType",
-            "DestinationCompressionType",
-            "ResultStatus",
-            "ErrorDetails"
-        };
-
         public void initializePutGetRowType(List<ExecResponseRowType> rowType)
         {
-            foreach (string name in PutGetResponseRowTypeInfo)
+         foreach (PutGetResponseRowTypeInfo t in System.Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
             {
                 rowType.Add(new ExecResponseRowType()
                 {
-                    name = name,
+                    name = t.ToString(),
                     type = "text"
                 });
             }
