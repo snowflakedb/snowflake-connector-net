@@ -210,6 +210,8 @@ namespace Snowflake.Data.Core
         {
             // Trim the sql query and check if this is a PUT/GET command
             string trimmedSql = TrimSql(sql);
+            if (trimmedSql.StartsWith("PUT ", StringComparison.OrdinalIgnoreCase) || trimmedSql.StartsWith("GET ", StringComparison.OrdinalIgnoreCase))
+                throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
 
             registerQueryCancellationCallback(timeout, cancellationToken);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
