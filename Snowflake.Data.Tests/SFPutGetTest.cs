@@ -123,15 +123,15 @@ namespace Snowflake.Data.Tests
                         {
                             if (stageType == USER_STAGE)
                             {
-                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @~/";
+                                putQuery = $"PuT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @~/";
                             }
                             else if (stageType == TABLE_STAGE)
                             {
-                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                                putQuery = $"PuT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
                             }
                             else if (stageType == NAMED_STAGE)
                             {
-                                putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+                                putQuery = $"PuT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
                             }
                         }
 

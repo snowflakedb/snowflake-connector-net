@@ -270,7 +270,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-                if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
+                if (trimmedSql.StartsWith("PUT ", StringComparison.OrdinalIgnoreCase) || trimmedSql.StartsWith("GET ", StringComparison.OrdinalIgnoreCase)) 
                 {
                     isPutGetQuery = true;
                     PutGetExecResponse response =
