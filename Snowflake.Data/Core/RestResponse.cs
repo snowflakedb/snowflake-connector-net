@@ -214,6 +214,10 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "queryAbortAfterSecs", NullValueHandling = NullValueHandling.Ignore)]
         internal Int64 queryAbortAfterSecs { get; set; }
+
+        // multiple statements response data
+        [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
+        internal string resultIds { get; set; }
     }
 
     internal class ExecResponseRowType
