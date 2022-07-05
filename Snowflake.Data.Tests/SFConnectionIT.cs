@@ -249,6 +249,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestDefaultLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -1281,6 +1282,7 @@ namespace Snowflake.Data.Tests
 
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1369,6 +1371,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())

@@ -98,6 +98,7 @@ namespace Snowflake.Data.Tests
     {
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestLongRunningQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -118,6 +119,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestRowsAffectedOverflowInt()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -373,6 +375,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Temporarily skip test cases take long time for debugging")]
         public void TestQueryTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
