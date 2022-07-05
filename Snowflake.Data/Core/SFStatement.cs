@@ -29,10 +29,6 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-        private const string SF_QUERY_RESULT_PATH = "/queries/{0}/result";
-
-        private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
-
         private const int SF_SESSION_EXPIRED_CODE = 390112;
 
         private const int SF_QUERY_IN_PROGRESS = 333333;
@@ -104,33 +100,9 @@ namespace Snowflake.Data.Core
 
             var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
 
-            Dictionary<string, string> bodyParameters = null;
-            // Get MULTI_STATEMENT_COUNT from parameter bindings
-            if ((bindings != null) && (bindings.ContainsKey(SF_PARAM_MULTI_STATEMENT_COUNT)))
-            {
-                bodyParameters = new Dictionary<string, string>();
-                bodyParameters[SF_PARAM_MULTI_STATEMENT_COUNT] =
-                    bindings[SF_PARAM_MULTI_STATEMENT_COUNT].value.ToString();
-                // remove it from parameter bindings so it won't break
-                // parameter binding feature
-                bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
-            }
-
-            // Temporary change pretend as ODBC to enable multiple statements
-            // on server side. need to be removed when merge
-            if (SFEnvironment.DriverName == "ODBC")
-            {
-                if (bodyParameters == null)
-                {
-                    bodyParameters = new Dictionary<string, string>();
-                }
-                bodyParameters["ODBC_QUERY_RESULT_FORMAT"] = "JSON";
-            }
-
             QueryRequest postBody = new QueryRequest();
             postBody.sqlText = sql;
             postBody.describeOnly = describeOnly;
-			postBody.parameters = bodyParameters;
             if (_bindStage == null)
             {
                 postBody.parameterBindings = bindings;
@@ -167,12 +139,6 @@ namespace Snowflake.Data.Core
             };
         }
 
-        private SFRestRequest BuildResultRequestWithId(string resultId)
-        {
-            string resultPath = String.Format(SF_QUERY_RESULT_PATH, resultId);
-            return BuildResultRequest(resultPath);
-        }
-
         private void CleanUpCancellationTokenSources()
         {
             if (_linkedCancellationTokenSource != null)
@@ -193,10 +159,6 @@ namespace Snowflake.Data.Core
         {
             if (response.success)
             {
-                if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
-                {
-                    return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
-                }
                 return new SFResultSet(response.data, this, cancellationToken);
             }
 
@@ -404,22 +366,6 @@ namespace Snowflake.Data.Core
                 CleanUpCancellationTokenSources();
                 ClearQueryRequestId();
             }
-        }
-
-        internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
-        {
-            var req = BuildResultRequestWithId(resultId);
-            QueryExecResponse response = null;
-            response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken);
-            return BuildResultSet(response, cancellationToken);
-        }
-
-        internal SFBaseResultSet GetResultWithId(string resultId)
-        {
-            var req = BuildResultRequestWithId(resultId);
-            QueryExecResponse response = null;
-            response = _restRequester.Get<QueryExecResponse>(req);
-            return BuildResultSet(response, CancellationToken.None);
         }
 
         private SFRestRequest BuildCancelQueryRequest()

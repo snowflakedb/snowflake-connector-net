@@ -165,16 +165,6 @@ namespace Snowflake.Data.Core
            return false;
         }
 
-        internal override bool NextResult()
-        {
-            return false;
-        }
-
-        internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
-        {
-            return await Task.FromResult(false);
-        }
-
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
@@ -198,7 +188,7 @@ namespace Snowflake.Data.Core
             return false;
         }
 
-        internal override UTF8Buffer getObjectInternal(int columnIndex)
+        protected override UTF8Buffer getObjectInternal(int columnIndex)
         {
             if (isClosed)
             {

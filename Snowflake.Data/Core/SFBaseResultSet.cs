@@ -4,7 +4,6 @@
 
 using System;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
@@ -26,11 +25,7 @@ namespace Snowflake.Data.Core
 
         internal abstract Task<bool> NextAsync();
 
-        internal abstract bool NextResult();
-
-        internal abstract Task<bool> NextResultAsync(CancellationToken cancellationToken);
-
-        internal abstract UTF8Buffer getObjectInternal(int columnIndex);
+        protected abstract UTF8Buffer getObjectInternal(int columnIndex);
 
         /// <summary>
         /// Move cursor back one row.
