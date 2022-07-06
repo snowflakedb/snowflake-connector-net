@@ -135,8 +135,8 @@ namespace Snowflake.Data.Client
                             else
                             {
                                 logger.Debug("Session closed successfully");
-                                taskCompletionSource.SetResult(null);
                                 _connectionState = ConnectionState.Closed;
+                                taskCompletionSource.SetResult(null);
                             }
                         }, cancellationToken);
                 }
