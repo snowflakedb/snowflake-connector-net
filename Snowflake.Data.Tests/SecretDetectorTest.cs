@@ -30,6 +30,13 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("SecretDetectorStart")]
+        public void testSecretDetectorStart()
+        {
+            ;
+        }
+
+        [Test]
         public void TestNullString()
         {
             BasicMasking(null);
@@ -537,6 +544,12 @@ namespace Snowflake.Data.Tests
                 "\"sessionId\" : 1234",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
+        }
+        [Test]
+        [Ignore("SecretDetectorEnd")]
+        public void testSecretDetectorEnd()
+        {
+            ;
         }
     }
 }

@@ -12,6 +12,12 @@ namespace Snowflake.Data.Tests
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]
+        [Ignore("DbTransactionITStart")]
+        public void testDbTransactionITStart()
+        {
+            ;
+        }
+        [Test]
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {
@@ -46,6 +52,12 @@ namespace Snowflake.Data.Tests
                 command.ExecuteNonQuery();
                 conn.Close();
             }
+        }
+        [Test]
+        [Ignore("DbTransactionITEnd")]
+        public void testDbTransactionITEnd()
+        {
+            ;
         }
     }
 }

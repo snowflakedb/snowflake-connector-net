@@ -10,6 +10,12 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFSessionTest
     {
+        [Test]
+        [Ignore("SessionStart")]
+        public void testSessionStart()
+        {
+            ;
+        }
         // Mock test for session gone
         [Test]
         public void TestSessionGoneWhenClose()
@@ -18,6 +24,12 @@ namespace Snowflake.Data.Tests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             sfSession.close(); // no exception is raised.
+        }
+        [Test]
+        [Ignore("SessionEnd")]
+        public void testSessionEnd()
+        {
+            ;
         }
 
     }

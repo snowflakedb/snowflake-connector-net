@@ -21,6 +21,12 @@ namespace Snowflake.Data.Tests
         static private readonly Random rand = new Random();
 
         [Test]
+        [Ignore("MultiStatementsITStart")]
+        public void testMultiStatementsITStart()
+        {
+            ;
+        }
+        [Test]
         public void testSelectWithoutBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -468,6 +474,12 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+        }
+        [Test]
+        [Ignore("MultiStatementsITEnd")]
+        public void testMultiStatementsITEnd()
+        {
+            ;
         }
     }
 }

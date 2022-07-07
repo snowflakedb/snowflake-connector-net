@@ -12,6 +12,12 @@ namespace Snowflake.Data.Tests
     class SFUriUpdaterTest
     {
         [Test]
+        [Ignore("UriUpdaterStart")]
+        public void testUriUpdaterStart()
+        {
+            ;
+        }
+        [Test]
         public void TestRetryCount()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -62,6 +68,12 @@ namespace Snowflake.Data.Tests
             Assert.IsFalse(newUri.Query.Contains(initialGuid));
             Assert.AreEqual(newUri.ToString().Length, uri.ToString().Length);
             
+        }
+        [Test]
+        [Ignore("UriUpdaterEnd")]
+        public void testUriUpdaterEnd()
+        {
+            ;
         }
     }
 }

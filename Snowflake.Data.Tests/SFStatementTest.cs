@@ -15,6 +15,12 @@ namespace Snowflake.Data.Tests
     {
         // Mock test for session token renew
         [Test]
+        [Ignore("StatementStart")]
+        public void testStatementStart()
+        {
+            ;
+        }
+        [Test]
         public void TestSessionRenew()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
@@ -61,6 +67,12 @@ namespace Snowflake.Data.Tests
                 expectServiceName += "a";
                 Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
+        }
+        [Test]
+        [Ignore("StatementEnd")]
+        public void testStatementEnd()
+        {
+            ;
         }
     }
 }

@@ -15,6 +15,12 @@ namespace Snowflake.Data.Tests
     class SFDataConverterTest
     {
         [Test]
+        [Ignore("DataConverterStart")]
+        public void testDataConverterStart()
+        {
+            Thread.Sleep(2000);
+        }
+        [Test]
         public void TestConvertBindToSFValFinlandLocale()
         {
             Thread testThread = new Thread(() =>
@@ -311,6 +317,12 @@ namespace Snowflake.Data.Tests
         public void TestInvalidConversionInvalidDecimal(string s)
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+        }
+        [Test]
+        [Ignore("DataConverterEnd")]
+        public void testDataConverterEnd()
+        {
+            Thread.Sleep(2000);
         }
 
     }

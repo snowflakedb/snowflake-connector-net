@@ -21,6 +21,12 @@ namespace Snowflake.Data.Tests
         static private readonly Random rand = new Random();
 
         [Test]
+        [Ignore("DbDataReaderITStart")]
+        public void testDbDataReaderITStart()
+        {
+            ;
+        }
+        [Test]
         public void testRecordsAffected()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1315,6 +1321,12 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
+        }
+        [Test]
+        [Ignore("DbDataReaderITEnd")]
+        public void testDbDataReaderITEnd()
+        {
+            ;
         }
     }
 }

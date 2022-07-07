@@ -16,6 +16,12 @@ namespace Snowflake.Data.Tests
     class SFReusableChunkTest
     {
         [Test]
+        [Ignore("ReusableChunkStart")]
+        public void testReusableChunkStart()
+        {
+            ;
+        }
+        [Test]
         public async Task TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
@@ -354,6 +360,12 @@ select parse_json('{
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
+        }
+        [Test]
+        [Ignore("ReusableChunkEnd")]
+        public void testReusableChunkEnd()
+        {
+            ;
         }
     }
 }

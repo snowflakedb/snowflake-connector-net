@@ -20,6 +20,13 @@ namespace Snowflake.Data.Tests
     {
 
         [Test]
+        [Ignore("DbCommandITAsyncStart")]
+        public void testFDbCommandITAsyncStart()
+        {
+            ;
+        }
+
+        [Test]
         public void TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -572,6 +579,12 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
+        }
+        [Test]
+        [Ignore("DbCommandITAsyncEnd")]
+        public void testFDbCommandITAsyncEnd()
+        {
+            ;
         }
     }
 }

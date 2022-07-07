@@ -8,11 +8,18 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using System.Data;
     using System;
+    using System.Threading;
     using System.Runtime.InteropServices;
 
     [TestFixture]
     class SFDbAdaptorIT : SFBaseTest
     {
+        [Test]
+        [Ignore("DbAdaptorStart")]
+        public void testDbAdaptorStart()
+        {
+            Thread.Sleep(2000);
+        }
         [Test]
         public void TestSelectStatement()
         {
@@ -35,6 +42,12 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(ds.Tables[0].Rows[0]["col1"].ToString(), "1");
                 Assert.AreEqual(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
             }
+        }
+        [Test]
+        [Ignore("DbAdaptorEnd")]
+        public void testDbAdaptorEnd()
+        {
+            Thread.Sleep(2000);
         }
     }
 }

@@ -17,6 +17,12 @@ namespace Snowflake.Data.Tests
     class SFPutGetTest : SFBaseTest
     {
         [Test]
+        [Ignore("PutGetStart")]
+        public void testPutGetStart()
+        {
+            ;
+        }
+        [Test]
         [TestCase("gzip")]
         [TestCase("bzip2")]
         [TestCase("brotli")]
@@ -234,6 +240,12 @@ namespace Snowflake.Data.Tests
                     }
                 }
             }
+        }
+        [Test]
+        [Ignore("PutGetEnd")]
+        public void testPutGetEnd()
+        {
+            ;
         }
     }
 }

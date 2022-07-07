@@ -12,6 +12,12 @@ namespace Snowflake.Data.Tests
     class SFDbFactoryIT : SFBaseTest
     {
         [Test]
+        [Ignore("DbFactoryITStart")]
+        public void testDbFactoryITStart()
+        {
+            ;
+        }
+        [Test]
         public void TestSimpleDbFactory()
         {
 #if NETFRAMEWORK
@@ -34,6 +40,12 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(1, res);
 
             connection.Close();
+        }
+        [Test]
+        [Ignore("DbFactoryITEnd")]
+        public void testDbFactoryITEnd()
+        {
+            ;
         }
     }
 }

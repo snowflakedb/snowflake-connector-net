@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Threading;
 
 namespace Snowflake.Data.Tests
 {
@@ -17,6 +18,12 @@ namespace Snowflake.Data.Tests
     [TestFixture]    
     class SFBindTestIT : SFBaseTest
     {
+        [Test]
+        [Ignore("BindTestITStart")]
+        public void testBindTestITStart()
+        {
+            Thread.Sleep(2000);
+        }
         [Test]
         public void testArrayBind()
         {
@@ -725,5 +732,12 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+        [Test]
+        [Ignore("BindTestITEnd")]
+        public void testBindTestITEnd()
+        {
+            Thread.Sleep(2000);
+        }
+
     }
 }

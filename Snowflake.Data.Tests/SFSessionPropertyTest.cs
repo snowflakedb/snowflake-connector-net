@@ -28,6 +28,12 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("SessionPropertyStart")]
+        public void testSessionPropertyStart()
+        {
+            ;
+        }
+        [Test]
         public void TestValidConnectionString()
         {
             Testcase[] testcases = new Testcase[]
@@ -58,6 +64,12 @@ namespace Snowflake.Data.Tests
             {
                 testcase.TestValidCase();
             }
+        }
+        [Test]
+        [Ignore("SessionPropertyEnd")]
+        public void testSessionPropertyEnd()
+        {
+            ;
         }
     }
 }

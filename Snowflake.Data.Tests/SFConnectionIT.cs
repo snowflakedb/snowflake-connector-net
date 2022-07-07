@@ -22,6 +22,13 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
+        [Ignore("ConnectionITStart")]
+        public void testConnectonITStart()
+        {
+            Thread.Sleep(2000);
+        }
+
+        [Test]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1497,6 +1504,13 @@ namespace Snowflake.Data.Tests
                 }
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
+        }
+
+        [Test]
+        [Ignore("ConnectionITEnd")]
+        public void testConnectionITEnd()
+        {
+            Thread.Sleep(2000);
         }
     }
 }
