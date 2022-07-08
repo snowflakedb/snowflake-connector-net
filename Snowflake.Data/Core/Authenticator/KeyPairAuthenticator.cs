@@ -135,6 +135,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (Exception e)
                 {
                     throw new SnowflakeDbException(
+                        e,
                         SFError.JWT_ERROR_READING_PK,
                         hasPkPath ? pkPath : "with value passed in connection string",
                         (pkContent == null) ? e.ToString() : "incorrect private key value or " +
