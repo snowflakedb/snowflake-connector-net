@@ -4,15 +4,11 @@
 
 namespace Snowflake.Data.Tests
 {
-    using Snowflake.Data.Core;
     using NUnit.Framework;
     using System.Data;
     using Snowflake.Data.Client;
     using System.Data.Common;
 
-    /**
-     * Mock rest request test
-     */
     [TestFixture]
     class SFStatementTypeTest : SFBaseTest
     {
