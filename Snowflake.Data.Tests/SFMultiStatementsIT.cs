@@ -18,7 +18,12 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFMultiStatementsIT : SFBaseTest
     {
-        static private readonly Random rand = new Random();
+        [Test]
+        [Ignore("MultiStatementsIT")]
+        public void MultiStatementsITDone()
+        {
+            // Do nothing;
+        }
 
         [Test]
         public void testSelectWithoutBinding()

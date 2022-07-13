@@ -21,6 +21,13 @@ namespace Snowflake.Data.Tests
         static private readonly Random rand = new Random();
 
         [Test]
+        [Ignore("DbDataReaderIT")]
+        public void DbDataReaderITDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void testRecordsAffected()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

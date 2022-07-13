@@ -20,6 +20,13 @@ namespace Snowflake.Data.Tests
     {
 
         [Test]
+        [Ignore("DbCommandITAsync")]
+        public void DbCommandITAsyncDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -98,6 +105,13 @@ namespace Snowflake.Data.Tests
     {
 
         [Test]
+        [Ignore("DbCommandITSlow")]
+        public void DbCommandITSlowDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestLongRunningQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -148,6 +162,13 @@ namespace Snowflake.Data.Tests
     [TestFixture]    
     class SFDbCommandIT : SFBaseTest
     {
+        [Test]
+        [Ignore("DbCommandIT")]
+        public void DbCommandITDone()
+        {
+            // Do nothing;
+        }
+
         [Test]
         public void TestSimpleCommand()
         {

@@ -17,6 +17,13 @@ namespace Snowflake.Data.Tests
     class SFPutGetTest : SFBaseTest
     {
         [Test]
+        [Ignore("PutGetTest")]
+        public void PutGetTestDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         [TestCase("gzip")]
         [TestCase("bzip2")]
         [TestCase("brotli")]

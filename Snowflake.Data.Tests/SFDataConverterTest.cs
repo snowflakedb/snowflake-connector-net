@@ -15,6 +15,13 @@ namespace Snowflake.Data.Tests
     class SFDataConverterTest
     {
         [Test]
+        [Ignore("DataConverterTest")]
+        public void DataConverterTestDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestConvertBindToSFValFinlandLocale()
         {
             Thread testThread = new Thread(() =>

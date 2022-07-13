@@ -22,6 +22,13 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
 
         [Test]
+        [Ignore("ConnectionPoolT")]
+        public void ConnectionPoolTDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
