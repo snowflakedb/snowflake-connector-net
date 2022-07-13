@@ -38,6 +38,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Disable unstable test cases for now")]
         public void TestConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();

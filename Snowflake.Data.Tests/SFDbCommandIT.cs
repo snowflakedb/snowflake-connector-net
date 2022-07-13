@@ -118,6 +118,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("This test case takes too much time so run it manually")]
         public void TestRowsAffectedOverflowInt()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -373,6 +374,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("This test case takes too much time so run it manually")]
         public void TestQueryTimeout()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
