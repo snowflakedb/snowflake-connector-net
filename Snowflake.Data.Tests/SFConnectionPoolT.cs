@@ -24,6 +24,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestBasicConnectionPool()
         {
+            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             SnowflakeDbConnectionPool.ClearAllPools();
             
@@ -203,6 +204,7 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual("1", resultSet.GetString(0));
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(0);
+            SnowflakeDbConnectionPool.SetPooling(false);
         }
     }
 }

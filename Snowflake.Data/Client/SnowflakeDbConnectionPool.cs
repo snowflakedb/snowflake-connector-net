@@ -17,6 +17,7 @@ namespace Snowflake.Data.Client
         private static long timeout;
         private const int MAX_POOL_SIZE = 10;
         private const long TIMEOUT = 3600;
+        private static bool pooling = false;
 
         private static void initConnectionPool()
         {
@@ -58,6 +59,8 @@ namespace Snowflake.Data.Client
         internal static SnowflakeDbConnection getConnection(string connStr)
         {
             logger.Debug("SnowflakeDbConnectionPool::getConnection");
+            if (!pooling)
+                return null;
             if (connectionPool == null)
             {
                 initConnectionPool();
@@ -81,6 +84,8 @@ namespace Snowflake.Data.Client
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
             logger.Debug("SnowflakeDbConnectionPool::addConnection");
+            if (!pooling)
+                return false;
             lock (_connectionPoolLock)
             {
                 if (connectionPool == null)
@@ -144,6 +149,16 @@ namespace Snowflake.Data.Client
         public static int GetCurrentPoolSize()
         {
             return connectionPool.Count;
+        }
+
+        public static void SetPooling(bool isEnable)
+        {
+            pooling = isEnable;
+        }
+
+        public static bool GetPooling()
+        {
+            return pooling;
         }
     }
 }
