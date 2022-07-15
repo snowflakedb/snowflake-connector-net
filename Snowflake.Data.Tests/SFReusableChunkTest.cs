@@ -16,6 +16,13 @@ namespace Snowflake.Data.Tests
     class SFReusableChunkTest
     {
         [Test]
+        [Ignore("ReusableChunkTest")]
+        public void ReusableChunkTestDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public async Task TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
@@ -244,6 +251,13 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFReusableChunkTest2 : SFBaseTest
     {
+        [Test]
+        [Ignore("ReusableChunkTest2")]
+        public void ReusableChunkTest2Done()
+        {
+            // Do nothing;
+        }
+
         [Test]
         public void testDelCharPr431()
         {

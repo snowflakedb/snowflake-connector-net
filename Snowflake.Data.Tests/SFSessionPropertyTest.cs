@@ -28,6 +28,13 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("SessionPropertyTest")]
+        public void SessionPropertyTestDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestValidConnectionString()
         {
             Testcase[] testcases = new Testcase[]

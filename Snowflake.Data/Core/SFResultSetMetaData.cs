@@ -233,7 +233,10 @@ namespace Snowflake.Data.Core
 
         [SFStatementTypeAttr(typeId = 0x1000)]
         SELECT,
-        
+
+        [SFStatementTypeAttr(typeId = 0x2000)]
+        EXPLAIN,
+
         /// <remark>
         ///     Data Manipulation Language 
         /// </remark>
@@ -273,6 +276,8 @@ namespace Snowflake.Data.Core
         SHOW,
         [SFStatementTypeAttr(typeId = 0x4000 + 0x500)]
         DESCRIBE,
+        [SFStatementTypeAttr(typeId = 0x4000 + 0x700 + 0x01)]
+        LIST_FILES,
 
         /// <remark>
         ///     Transaction Command Language
@@ -285,6 +290,38 @@ namespace Snowflake.Data.Core
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x6000)]
         DDL,
+
+        /// <remark>
+        ///     Stage Operations
+        /// </remark>
+        [SFStatementTypeAttr(typeId = 0x7000)]
+        STAGE_FILE_OPERATIONS,
+        [SFStatementTypeAttr(typeId = 0x7000 + 0x100 + 0x01)]
+        GET_FILES,
+        [SFStatementTypeAttr(typeId = 0x7000 + 0x100 + 0x02)]
+        PUT_FILES,
+        [SFStatementTypeAttr(typeId = 0x7000 + 0x100 + 0x03)]
+        REMOVE_FILES,
+
+        /// <remark>
+        ///     Misc Query types
+        /// </remark>
+        [SFStatementTypeAttr(typeId = 0x8000)]
+        MISC_QUERY_TYPES,
+        [SFStatementTypeAttr(typeId = 0x8000 + 0x100 + 0x01)]
+        BEGIN,
+        [SFStatementTypeAttr(typeId = 0x8000 + 0x100 + 0x02)]
+        END,
+        [SFStatementTypeAttr(typeId = 0x8000 + 0x100 + 0x03)]
+        COMMIT,
+        [SFStatementTypeAttr(typeId = 0x8000 + 0x100 + 0x04)]
+        SET,
+
+        /// <remark>
+        ///     Procedure Call
+        /// </remark>
+        [SFStatementTypeAttr(typeId = 0x9000)]
+        CALL,
     }
 
     class SFStatementTypeAttr : Attribute

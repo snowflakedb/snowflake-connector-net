@@ -202,6 +202,17 @@ namespace Snowflake.Data.Core
                         }
                     }
 
+                    // temporary change to pretend as ODBC to enable multiple
+                    // statements on server side, needs to be removed when merge.
+                    if (tokens[0].ToLower() == "fakeodbc")
+                    {
+                        if (tokens[1].ToLower() == "true")
+                        {
+                            SFEnvironment.DriverName = "ODBC";
+                            SFEnvironment.DriverVersion = "2.25.2";
+                        }
+                        continue;
+                    }
                     try
                     {
                         SFSessionProperty p = (SFSessionProperty)Enum.Parse(
