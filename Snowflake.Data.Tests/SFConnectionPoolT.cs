@@ -135,6 +135,8 @@ namespace Snowflake.Data.Tests
         {
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
             conn1.Open();
@@ -205,6 +207,22 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(0);
             SnowflakeDbConnectionPool.SetPooling(false);
+        }
+
+        [Test]
+        public void TestConnectionPoolDisable()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetPooling(false);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
     }
 }
