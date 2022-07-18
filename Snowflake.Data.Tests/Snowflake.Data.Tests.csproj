@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.2;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netcoreapp2.2</TargetFrameworks>
-    <RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>
+    <TargetFrameworks>net6.0;net472</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
