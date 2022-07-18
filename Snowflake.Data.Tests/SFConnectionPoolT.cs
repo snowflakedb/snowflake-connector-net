@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
             SnowflakeDbConnectionPool.ClearAllPools();
             
             var conn1 = new SnowflakeDbConnection();
