@@ -19,7 +19,7 @@ on:
         description: "Test scenario tags"
 
 env:
-  DOTNET_CORE_VERSION: 2.0
+  DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['2.2.207']
+        dotnet: ['6.0.301']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -90,7 +90,7 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0', 'net472']
+        dotnet: [net6.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
@@ -135,7 +135,7 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0']
+        dotnet: ['net6.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
@@ -174,7 +174,7 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['netcoreapp2.0']
+        dotnet: ['net6.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
