@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <DotNetCliToolReference Include="MiniCover" Version="2.0.0-ci-*" />
+    <DotNetCliToolReference Include="MiniCover" Version="3.4.7-ci-*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +43,7 @@
    <!-- <Reference Include="System.Net.Http.WebRequest" /> -->
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
       <Version>6.2.3</Version>
     </PackageReference>
