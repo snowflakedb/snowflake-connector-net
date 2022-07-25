@@ -19,7 +19,7 @@ on:
         description: "Test scenario tags"
 
 env:
-  DOTNET_VERSION: 6.0
+  DOTNET_VERSION: 6.0.100
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['6.0.0']
+        dotnet: ['6.0.100']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -72,7 +72,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.0
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -112,7 +112,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.0
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
