@@ -17,9 +17,10 @@ on:
         required: true
       tags:
         description: "Test scenario tags"
+        required: false
 
 env:
-  DOTNET_VERSION: 6.0
+  DOTNET_VERSION: 6.0.100
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
