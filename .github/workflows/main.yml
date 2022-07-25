@@ -20,7 +20,7 @@ on:
         required: false
 
 env:
-  DOTNET_VERSION: 6.0.100
+  DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -45,7 +45,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: ${{ matrix.dotnet }}
+          dotnet-version: 6.0.100
       - name: Decrypt Parameters
         shell: bash
         env:
