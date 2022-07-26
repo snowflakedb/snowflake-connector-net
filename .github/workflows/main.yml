@@ -32,7 +32,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['6.0.0']
+        dotnet: ['6.0.100']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -45,7 +45,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.0
+          dotnet-version: 6.0.100
       - name: Decrypt Parameters
         shell: bash
         env:
@@ -73,7 +73,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.0
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -113,7 +113,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.0
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
