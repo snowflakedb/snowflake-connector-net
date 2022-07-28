@@ -87,7 +87,6 @@ jobs:
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: |
-          dotnet --list-sdks
           dotnet restore
           dotnet build
       - name: Run minicover
