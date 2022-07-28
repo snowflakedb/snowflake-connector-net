@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         dotnet: ['6.0.100']
-        cloud_env: ['AZURE']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -67,7 +67,7 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['net6.0']
-        cloud_env: ['azure']
+        cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
@@ -92,9 +92,48 @@ jobs:
       - name: Run minicover
         run: |
           dotnet tool install --global minicover
-          minicover --help
           cd Snowflake.Data.Tests
           minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
           minicover reset
           test --no-build
           minicover uninstrument
+
+  test-mac:
+    needs: test-linux
+    name: Tests on MAC
+    runs-on: macos-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        #dotnet: ['2.2.402']
+        dotnet: ['net6.0']
+        cloud_env: ['azure', 'gcp', 'aws']
+    steps:
+      - uses: actions/checkout@main
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.100
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Decrypt Parameters
+        shell: bash
+        env:
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build Driver
+        run: |
+          dotnet restore
+          dotnet build
+      - name: Run minicover
+        run: |
+          dotnet tool install --global minicover
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
+          dotnet minicover reset
+          dotnet test --no-build
+          dotnet minicover uninstrument
