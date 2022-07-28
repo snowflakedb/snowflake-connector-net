@@ -58,8 +58,53 @@ jobs:
       - name: Build Driver
         run: dotnet build snowflake-connector-net.sln /p:DebugType=Full
         
+  test:
+    needs: [build-core, build-framework]
+    name: Tests on Windows
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        #dotnet: ['2.2.402']
+        dotnet: ['net6.0', 'net472']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
+    steps:
+      - uses: actions/checkout@main
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.100
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Before Test
+        run: nuget install OpenCover -Version 4.6.519
+      - name: Decrypt Parameters
+        shell: bash
+        env:
+           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Run Opencover
+        run: |
+          cd Snowflake.Data.Tests
+          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+        env:
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+      - name: Install Codecov
+        run: pip install codecov
+      - name: Run Codecoverage
+        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+
   test-linux:
-    needs: [build-net]
+    needs: [test]
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
