@@ -91,6 +91,10 @@ jobs:
           dotnet build
       - name: Run minicover
         run: |
-          cd
           dotnet tool install --global minicover
-          dotnet minicover --help
+          minicover --help
+          cd Snowflake.Data.Tests
+          minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
+          minicover reset
+          test --no-build
+          minicover uninstrument
