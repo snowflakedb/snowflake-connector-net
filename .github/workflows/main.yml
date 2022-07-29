@@ -17,6 +17,7 @@ on:
         required: true
       tags:
         description: "Test scenario tags"
+        required: false
 
 env:
   DOTNET_VERSION: 6.0
@@ -25,13 +26,13 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build-core:
-    name: Build-Core
+  build-net:
+    name: Build-Net
     # The type of runner that the job will run on
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['6.0.301']
+        dotnet: ['6.0.100']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -83,7 +84,7 @@ jobs:
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
   test:
-    needs: [build-core, build-framework]
+    needs: [build-net, build-framework]
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
@@ -97,7 +98,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -142,7 +143,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -181,7 +182,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.2.207
+          dotnet-version: 6.0.100
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
