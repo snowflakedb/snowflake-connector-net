@@ -39,9 +39,9 @@
    <!-- <Reference Include="System.Net.Http.WebRequest" /> -->
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
-      <Version>6.2.3</Version>
+      <Version>7.2.5</Version>
     </PackageReference>
   </ItemGroup>
   
