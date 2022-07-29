@@ -93,7 +93,7 @@ jobs:
         run: |
           dotnet new tool-manifest
           dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
@@ -133,7 +133,7 @@ jobs:
         run: |
           dotnet new tool-manifest
           dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
