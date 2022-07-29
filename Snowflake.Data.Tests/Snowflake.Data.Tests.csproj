@@ -40,9 +40,8 @@
   
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
-      <Version>6.2.3</Version>
+      <Version>7.2.5</Version>
     </PackageReference>
-    <DotNetCliToolReference Include="MiniCover" Version="3.4.7-ci-*" />
   </ItemGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

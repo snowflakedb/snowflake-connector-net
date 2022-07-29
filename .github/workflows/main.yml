@@ -91,12 +91,13 @@ jobs:
           dotnet build
       - name: Run minicover
         run: |
-          dotnet tool install --global minicover
           cd Snowflake.Data.Tests
-          minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
-          minicover reset
-          test --no-build
-          minicover uninstrument
+          dotnet new tool-manifest
+          dotnet tool install --local MiniCover --version 3.4.7
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.**.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover reset
+          dotnet test --no-build
+          dotnet minicover uninstrument
 
   test-mac:
     needs: test-linux
@@ -131,9 +132,10 @@ jobs:
           dotnet build
       - name: Run minicover
         run: |
-          dotnet tool install --global minicover
           cd Snowflake.Data.Tests
-          minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
-          minicover reset
-          test --no-build
-          minicover uninstrument
+          dotnet new tool-manifest
+          dotnet tool install --local MiniCover --version 3.4.7
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.**.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover reset
+          dotnet test --no-build
+          dotnet minicover uninstrument
