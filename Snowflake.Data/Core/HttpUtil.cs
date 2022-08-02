@@ -341,7 +341,7 @@ namespace Snowflake.Data.Core
                         else
                         {
                             logger.Debug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
-                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
+                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
                             if (!isRetryable || disableRetry)
                             {
@@ -376,22 +376,22 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
 
-            /// <summary>
-            /// Check whether or not the error is retryable or not.
-            /// </summary>
-            /// <param name="statusCode">The http status code.</param>
-            /// <returns>True if the request should be retried, false otherwise.</returns>
-            private bool isRetryableHTTPCode(int statusCode)
-            {
-                if (forceRetryOn404 && statusCode == 404)
-                    return true;
-                return (500 <= statusCode) && (statusCode < 600) ||
-                // Forbidden
-                (statusCode == 403) ||
-                // Request timeout
-                (statusCode == 408);
-            }
+        /// <summary>
+        /// Check whether or not the error is retryable or not.
+        /// </summary>
+        /// <param name="statusCode">The http status code.</param>
+        /// <returns>True if the request should be retried, false otherwise.</returns>
+        static public bool isRetryableHTTPCode(int statusCode, bool forceRetryOn404)
+        {
+            if (forceRetryOn404 && statusCode == 404)
+                return true;
+            return (500 <= statusCode) && (statusCode < 600) ||
+            // Forbidden
+            (statusCode == 403) ||
+            // Request timeout
+            (statusCode == 408);
         }
     }
 }

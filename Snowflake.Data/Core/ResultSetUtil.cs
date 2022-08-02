@@ -63,5 +63,27 @@ namespace Snowflake.Data.Core
 
             return (int)updateCount;
         }
+
+        internal static bool HasResultSet(this SFBaseResultSet resultSet)
+        {
+            SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
+            SFStatementType statementType = metaData.statementType;
+
+            switch (statementType)
+            {
+                case SFStatementType.SELECT:
+                case SFStatementType.EXPLAIN:
+                case SFStatementType.SHOW:
+                case SFStatementType.DESCRIBE:
+                case SFStatementType.LIST_FILES:
+                case SFStatementType.GET_FILES:
+                case SFStatementType.PUT_FILES:
+                case SFStatementType.REMOVE_FILES:
+                case SFStatementType.CALL:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

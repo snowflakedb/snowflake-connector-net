@@ -12,6 +12,13 @@ namespace Snowflake.Data.Tests
     class SFDbFactoryIT : SFBaseTest
     {
         [Test]
+        [Ignore("DbFactoryIT")]
+        public void DbFactoryITDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestSimpleDbFactory()
         {
 #if NETFRAMEWORK
