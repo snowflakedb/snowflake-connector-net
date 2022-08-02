@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Concurrent;
 using System.Security;
 using Snowflake.Data.Log;
+using System.Linq;
 
 namespace Snowflake.Data.Client
 {
@@ -41,7 +42,7 @@ namespace Snowflake.Data.Client
             {
                 long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-                foreach (var item in connectionPool)
+                foreach (var item in connectionPool.ToList())
                 {
                     if(item._poolTimeout <= timeNow)
                     {
