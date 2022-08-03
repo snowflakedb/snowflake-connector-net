@@ -484,7 +484,8 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 	}
 
 	conn.Close();
-}```
+}
+```
 
 Close the Connection
 --------------------
