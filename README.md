@@ -448,6 +448,44 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Bind Array Variables
+--------------------
+
+The sample code creates a table with a single integer column and then uses array binding to populate the table with values 0 to 70000.
+
+```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+	conn.ConnectionString = ConnectionString;
+	conn.Open();
+
+	using (IDbCommand cmd = conn.CreateCommand())
+	{
+		cmd.CommandText = "create or replace table putArrayBind(colA integer)";
+		cmd.ExecuteNonQuery();
+
+		string insertCommand = "insert into putArrayBind values (?)";
+		cmd.CommandText = insertCommand;
+
+		int total = 70000;
+
+		List<int> arrint = new List<int>();
+		for (int i = 0; i < total; i++)
+		{
+			arrint.Add(i);
+		}
+		var p1 = cmd.CreateParameter();
+		p1.ParameterName = "1";
+		p1.DbType = DbType.Int16;
+		p1.Value = arrint.ToArray();
+		cmd.Parameters.Add(p1);
+
+		count = cmd.ExecuteNonQuery(); // count = 70000
+	}
+
+	conn.Close();
+}```
+
 Close the Connection
 --------------------
 
