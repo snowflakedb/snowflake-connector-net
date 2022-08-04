@@ -181,20 +181,23 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception) ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
+                if (ex.InnerException is AmazonS3Exception)
                 {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
+                    if (err.ErrorCode == EXPIRED_TOKEN)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    }
+                    else if (err.ErrorCode == NO_SUCH_KEY)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+                    }
+                    else
+                    {
+                        fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+                    }
+                    return null;
                 }
-                else if (err.ErrorCode == NO_SUCH_KEY)
-                {
-                    fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                }
-                else
-                {
-                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                }
-                return null;
             }
 
             // Update the result status of the file metadata
@@ -298,17 +301,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
+                if (ex.InnerException is AmazonS3Exception)
                 {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
+                    if (err.ErrorCode == EXPIRED_TOKEN)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    }
+                    else
+                    {
+                        fileMetadata.lastError = err;
+                        fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                    }
+                    return;
                 }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
-                return;
             }
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
@@ -352,17 +358,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
+                if (ex.InnerException is AmazonS3Exception)
                 {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
+                    if (err.ErrorCode == EXPIRED_TOKEN)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                    }
+                    else
+                    {
+                        fileMetadata.lastError = err;
+                        fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                    }
+                    return;
                 }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
-                return;
             }
 
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
