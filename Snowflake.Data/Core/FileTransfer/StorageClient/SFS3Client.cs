@@ -198,6 +198,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     }
                     return null;
                 }
+                throw ex;
             }
 
             // Update the result status of the file metadata
@@ -315,6 +316,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     }
                     return;
                 }
+                throw ex;
             }
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
@@ -372,6 +374,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     }
                     return;
                 }
+                throw ex;
             }
 
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
