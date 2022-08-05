@@ -133,6 +133,11 @@ namespace Snowflake.Data.Core
         private string destStagePath = null;
 
         /// <summary>
+        /// Placeholder threshold value.
+        /// </summary>
+        private long DATA_SIZE_THRESHOLD = 9223372036854775807;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public SFFileTransferAgent(
@@ -221,7 +226,7 @@ namespace Snowflake.Data.Core
             {
                 // If the file is larger than the threshold, add it to the large files list
                 // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                if (fileMetadata.srcFileSize > DATA_SIZE_THRESHOLD)
                 {
                     LargeFilesMetas.Add(fileMetadata);
                 }
@@ -464,7 +469,7 @@ namespace Snowflake.Data.Core
                         sourceCompression = compressionType,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                        parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
+                        parallel = (memoryStream == null) && (fileInfo.Length > DATA_SIZE_THRESHOLD) ?
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
                     };
