@@ -132,10 +132,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    WebException err = (WebException)ex;
-                    HttpWebResponse response = (HttpWebResponse)err.Response;
+                    HttpWebResponse response = (HttpWebResponse)ex.Response;
                     if (response.StatusCode == HttpStatusCode.Unauthorized ||
                         response.StatusCode == HttpStatusCode.Forbidden ||
                         response.StatusCode == HttpStatusCode.NotFound)
