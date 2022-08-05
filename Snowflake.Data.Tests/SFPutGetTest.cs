@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests
                                 Assert.AreEqual(reader.GetString(4), DOWNLOADED);
 
                                 // Check file contents
-                                using (var streamReader = new StreamReader($@"{tempDirectory}\{fileName}"))
+                                using (var streamReader = new StreamReader($@"{tempDirectory}/{fileName}"))
                                 {
                                     while (!streamReader.EndOfStream)
                                     {
