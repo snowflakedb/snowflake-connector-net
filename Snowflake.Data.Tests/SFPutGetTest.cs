@@ -214,6 +214,20 @@ namespace Snowflake.Data.Tests
                             {
                                 // Check file status
                                 Assert.AreEqual(reader.GetString(4), DOWNLOADED);
+
+                                // Check file contents
+                                using (var streamReader = new StreamReader($@"{tempDirectory}\{fileName}"))
+                                {
+                                    while (!streamReader.EndOfStream)
+                                    {
+                                        var line = streamReader.ReadLine();
+                                        var values = line.Split(',');
+
+                                        Assert.AreEqual(COL1_DATA, values[0]);
+                                        Assert.AreEqual(COL2_DATA, values[1]);
+                                        Assert.AreEqual(COL3_DATA, values[2]);
+                                    }
+                                }
                             }
 
                             // Delete downloaded files
