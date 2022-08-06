@@ -828,10 +828,14 @@ namespace Snowflake.Data.Core
             var listOfActions = new List<Action>();
             foreach (SFFileMetadata fileMetadata in filesMetadata)
             {
+                Console.WriteLine(fileMetadata.destFileName);
                 listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
+                Console.WriteLine(listOfActions[0].Target);
             }
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+            Console.WriteLine(options);
+            Console.WriteLine(listOfActions[0]);
             Parallel.Invoke(options, listOfActions.ToArray());
         }
 
@@ -895,6 +899,9 @@ namespace Snowflake.Data.Core
         {
             // Create tmp folder to store compressed files
             fileMetadata.tmpDir = GetTemporaryDirectory();
+
+            Console.WriteLine(fileMetadata);
+            Console.WriteLine(fileMetadata.tmpDir);
 
             try
             {
