@@ -85,6 +85,9 @@ namespace Snowflake.Data.Tests
                 {
                     using (DbConnection conn = new SnowflakeDbConnection())
                     {
+                        Console.WriteLine("stageType: " + stageType);
+                        Console.WriteLine("autoCompressType: " + autoCompressType);
+
                         conn.ConnectionString = ConnectionString;
                         conn.Open();
 
