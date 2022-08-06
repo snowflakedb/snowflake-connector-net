@@ -292,8 +292,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Console.WriteLine(response.StatusCode);
-                Console.WriteLine(response.ContentLength);
 
                 // Write to file
                 using (var fileStream = File.Create(fullDstPath))
