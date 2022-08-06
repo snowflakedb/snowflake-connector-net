@@ -209,6 +209,7 @@ namespace Snowflake.Data.Tests
 
                             // Download file
                             command.CommandText = getQuery;
+                            Console.WriteLine("1: " + getQuery);
                             reader = command.ExecuteReader();
                             while (reader.Read())
                             {

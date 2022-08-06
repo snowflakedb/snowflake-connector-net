@@ -85,7 +85,7 @@ namespace Snowflake.Data.Core
         /// The type of transfer either UPLOAD or DOWNLOAD.
         /// </summary>
         private readonly CommandTypes CommandType;
-
+        
         /// <summary>
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
                 }
-
+                
             }
             else if (CommandTypes.DOWNLOAD == CommandType)
             {
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Core
                     TransferMetadata.rowSet[index, 7] = null;
                 }
             }
-
+            
             return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
         }
 
@@ -372,7 +372,7 @@ namespace Snowflake.Data.Core
 
                         fileMeta.stageInfo = response.data.stageInfo;
                         fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }
+                    }                    
                 }
                 else if (CommandTypes.DOWNLOAD == CommandType)
                 {
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Core
                         FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                     }
                 }
-            }
+            }            
         }
 
         /// <summary>
@@ -826,14 +826,12 @@ namespace Snowflake.Data.Core
             int parallel)
         {
             var listOfActions = new List<Action>();
-            Console.WriteLine(filesMetadata.Count);
             foreach (SFFileMetadata fileMetadata in filesMetadata)
             {
                 listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
             }
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
-            Console.WriteLine(listOfActions.Count);
             Parallel.Invoke(options, listOfActions.ToArray());
         }
 
