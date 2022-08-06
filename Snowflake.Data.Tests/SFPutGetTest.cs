@@ -160,6 +160,7 @@ namespace Snowflake.Data.Tests
 
                             // Upload file
                             command.CommandText = putQuery;
+                            Console.WriteLine(putQuery);
                             DbDataReader reader = command.ExecuteReader();
                             while (reader.Read())
                             {
@@ -209,7 +210,7 @@ namespace Snowflake.Data.Tests
 
                             // Download file
                             command.CommandText = getQuery;
-                            Console.WriteLine("1: " + getQuery);
+                            Console.WriteLine(getQuery);
                             reader = command.ExecuteReader();
                             while (reader.Read())
                             {
