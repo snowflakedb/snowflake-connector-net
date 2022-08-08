@@ -46,6 +46,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
 
+        private string AccessToken;
+
         /// <summary>
         /// GCS client with access token.
         /// </summary>
@@ -58,6 +60,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 Logger.Debug("Constructing client using access token");
 
+                AccessToken = accessToken;
                 GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
             }
@@ -144,9 +147,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 try
                 {
                     // Issue a GET response
-                    HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer ${accessToken}");
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                    Console.WriteLine("AccessToken: " + AccessToken);
+                    request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
 
                     var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
                     var contentLength = response.Headers.GetValues("content-length");
