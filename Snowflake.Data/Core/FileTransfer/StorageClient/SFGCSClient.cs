@@ -303,7 +303,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Console.WriteLine("request: " + request);
                 Console.WriteLine("request.Method: " + request.Method);
                 Console.WriteLine("request.Host: " + request.Host);
-                Console.WriteLine("request.GetResponse() " + request.GetResponse());
 
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
@@ -344,6 +343,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
+                if (wex.Response != null)
+                {
+                    Console.WriteLine(new StreamReader(ex.Response.GetResponseStream()).ReadToEnd());
+                }
+
                 fileMetadata.lastError = ex;
 
                 HttpWebResponse response = (HttpWebResponse)ex.Response;

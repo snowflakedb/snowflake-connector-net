@@ -832,8 +832,6 @@ namespace Snowflake.Data.Core
             }
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
-            Console.WriteLine("options: " + options);
-            Console.WriteLine("listOfActions[0]: " + listOfActions[0]);
             Parallel.Invoke(options, listOfActions.ToArray());
         }
 
@@ -898,14 +896,10 @@ namespace Snowflake.Data.Core
             // Create tmp folder to store compressed files
             fileMetadata.tmpDir = GetTemporaryDirectory();
 
-            Console.WriteLine("fileMetadata.tmpDir: " + fileMetadata.tmpDir);
-
             try
             {
                 if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                 {
-                    Console.WriteLine("TransferMetadata.stageInfo: " + TransferMetadata.stageInfo);
-
                     // Upload the file using the remote client SDK and the file metadata
                     SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
                 }

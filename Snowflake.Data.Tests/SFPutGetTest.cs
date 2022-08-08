@@ -163,7 +163,6 @@ namespace Snowflake.Data.Tests
 
                             // Upload file
                             command.CommandText = putQuery;
-                            Console.WriteLine("putQuery: " + putQuery);
                             DbDataReader reader = command.ExecuteReader();
                             while (reader.Read())
                             {
