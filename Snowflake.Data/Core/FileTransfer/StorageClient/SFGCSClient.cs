@@ -32,6 +32,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
 
         /// <summary>
+        /// The GCS access token.
+        /// </summary>
+        private string AccessToken;
+
+        /// <summary>
         /// The attribute in the credential map containing the access token.
         /// </summary>
         private static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
@@ -45,8 +50,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// The storage client.
         /// </summary>
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
-
-        private string AccessToken;
 
         /// <summary>
         /// GCS client with access token.
@@ -128,7 +131,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                     {
-                        return null;
+                        var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
+                        var contentLength = response.Headers.GetValues("content-length");
+
+                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+
+                        return new FileHeader
+                        {
+                            digest = digest[0],
+                            contentLength = Convert.ToInt64(contentLength)
+                        };
                     }
                 }
                 catch (WebException ex)
@@ -151,10 +163,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 {
                     // Issue a GET response
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+                    request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
+
                     using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                     {
-                        request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
-
                         var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
                         var contentLength = response.Headers.GetValues("content-length");
 
@@ -162,10 +174,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                         return new FileHeader
                         {
-                            digest = digest.ToString(),
+                            digest = digest[0],
                             contentLength = Convert.ToInt64(contentLength)
                         };
-                    } 
+                    }
                 }
                 catch (WebException ex)
                 {
@@ -254,11 +266,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        fileMetadata.destFileSize = fileMetadata.uploadSize;
-                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-                    }
+                    fileMetadata.destFileSize = fileMetadata.uploadSize;
+                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
                 }
             }
             catch (WebException ex)
@@ -332,25 +341,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     fileMetadata.srcFileSize = (long)Convert.ToDouble(headers.Get(GCS_FILE_HEADER_CONTENT_LENGTH));
                 }
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                Console.WriteLine("ex: " + ex);
+                fileMetadata.lastError = ex;
 
-                WebException err = (WebException)ex;
-
-                fileMetadata.lastError = err;
-
-                HttpWebResponse response = (HttpWebResponse)err.Response;
-                Console.WriteLine("response.StatusCode: " + response.StatusCode);
-
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                 }
                 else if (response.StatusCode == HttpStatusCode.Forbidden ||
                     response.StatusCode == HttpStatusCode.InternalServerError ||
-                    response.StatusCode == HttpStatusCode.ServiceUnavailable ||
-                    response.StatusCode == HttpStatusCode.RequestTimeout)
+                    response.StatusCode == HttpStatusCode.ServiceUnavailable)
                 {
                     fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 }
