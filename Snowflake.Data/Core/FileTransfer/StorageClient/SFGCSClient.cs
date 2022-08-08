@@ -58,6 +58,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
             {
+                Console.WriteLine("accessToken: " + accessToken);
+
                 Logger.Debug("Constructing client using access token");
 
                 AccessToken = accessToken;
@@ -66,6 +68,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
+                Console.WriteLine("No accessToken");
+
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
@@ -125,6 +129,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue GET request to GCS file URL
                 try
                 {
+                    Console.WriteLine("1 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
+
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 }
@@ -146,6 +152,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
+                    Console.WriteLine("2 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
+
                     // Issue a GET response
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -287,6 +295,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             try
             {
+                Console.WriteLine("3 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
+
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();

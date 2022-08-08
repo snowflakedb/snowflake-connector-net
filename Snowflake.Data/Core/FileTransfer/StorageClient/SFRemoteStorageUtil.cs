@@ -237,6 +237,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             string fullDstPath = fileMetadata.localLocation;
             fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
+            Console.WriteLine("fullDstPath: " + fullDstPath);
 
             // Check local location exists
             if (!Directory.Exists(fileMetadata.localLocation))
@@ -245,6 +246,7 @@ namespace Snowflake.Data.Core.FileTransfer
             }
 
             ISFRemoteStorageClient client = fileMetadata.client;
+            Console.WriteLine("client: " + client);
             FileHeader fileHeader = client.GetFileHeader(fileMetadata);
 
             if (fileHeader != null)
@@ -258,6 +260,10 @@ namespace Snowflake.Data.Core.FileTransfer
 
             for (int retry = 0; retry < maxRetry; retry++)
             {
+                Console.WriteLine("fileMetadata: " + fileMetadata);
+                Console.WriteLine("fullDstPath: " + fullDstPath);
+                Console.WriteLine("maxConcurrency: " + maxConcurrency);
+
                 // Download the file
                 client.DownloadFile(fileMetadata, fullDstPath, maxConcurrency);
 
