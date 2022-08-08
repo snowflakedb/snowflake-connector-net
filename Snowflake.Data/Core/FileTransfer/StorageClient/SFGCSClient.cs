@@ -126,7 +126,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 try
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                    {
+                        return null;
+                    }
                 }
                 catch (WebException ex)
                 {
@@ -148,20 +151,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 {
                     // Issue a GET response
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                    request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
-
-                    var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                    var contentLength = response.Headers.GetValues("content-length");
-
-                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                    return new FileHeader
+                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                     {
-                        digest = digest.ToString(),
-                        contentLength = Convert.ToInt64(contentLength)
-                    };
+                        request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
+
+                        var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
+                        var contentLength = response.Headers.GetValues("content-length");
+
+                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+
+                        return new FileHeader
+                        {
+                            digest = digest.ToString(),
+                            contentLength = Convert.ToInt64(contentLength)
+                        };
+                    } 
                 }
                 catch (WebException ex)
                 {
@@ -248,7 +252,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 dataStream.Write(fileBytes, 0, fileBytes.Length);
                 dataStream.Close();
 
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        fileMetadata.destFileSize = fileMetadata.uploadSize;
+                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+                    }
+                }
             }
             catch (WebException ex)
             {
@@ -271,9 +282,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 return;
             }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
         }
 
         /// <summary>
@@ -288,39 +296,41 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
-                // Write to file
-                using (var fileStream = File.Create(fullDstPath))
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    using (var responseStream = response.GetResponseStream())
+                    // Write to file
+                    using (var fileStream = File.Create(fullDstPath))
                     {
-                        responseStream.CopyTo(fileStream);
-                        responseStream.Flush();
+                        using (var responseStream = response.GetResponseStream())
+                        {
+                            responseStream.CopyTo(fileStream);
+                            responseStream.Flush();
+                        }
                     }
-                }
 
-                WebHeaderCollection headers = response.Headers;
+                    WebHeaderCollection headers = response.Headers;
 
-                // Get header values
-                dynamic encryptionData = JsonConvert.DeserializeObject(headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP));
-                string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
+                    // Get header values
+                    dynamic encryptionData = JsonConvert.DeserializeObject(headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP));
+                    string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
 
-                // Get encryption metadata from encryption data header value
-                SFEncryptionMetadata encryptionMetadata = null;
-                if (encryptionData != null)
-                {
-                    encryptionMetadata = new SFEncryptionMetadata
+                    // Get encryption metadata from encryption data header value
+                    SFEncryptionMetadata encryptionMetadata = null;
+                    if (encryptionData != null)
                     {
-                        iv = encryptionData["ContentEncryptionIV"],
-                        key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                        matDesc = matDesc
-                    };
-                    fileMetadata.encryptionMetadata = encryptionMetadata;
-                }
+                        encryptionMetadata = new SFEncryptionMetadata
+                        {
+                            iv = encryptionData["ContentEncryptionIV"],
+                            key = encryptionData["WrappedContentKey"]["EncryptedKey"],
+                            matDesc = matDesc
+                        };
+                        fileMetadata.encryptionMetadata = encryptionMetadata;
+                    }
 
-                fileMetadata.sha256Digest = headers.Get(GCS_METADATA_SFC_DIGEST);
-                fileMetadata.srcFileSize = (long)Convert.ToDouble(headers.Get(GCS_FILE_HEADER_CONTENT_LENGTH));
+                    fileMetadata.sha256Digest = headers.Get(GCS_METADATA_SFC_DIGEST);
+                    fileMetadata.srcFileSize = (long)Convert.ToDouble(headers.Get(GCS_FILE_HEADER_CONTENT_LENGTH));
+                }
             }
             catch (Exception ex)
             {
