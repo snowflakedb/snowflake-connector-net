@@ -904,6 +904,8 @@ namespace Snowflake.Data.Core
             {
                 if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                 {
+                    Console.WriteLine("TransferMetadata.stageInfo: " + TransferMetadata.stageInfo);
+
                     // Upload the file using the remote client SDK and the file metadata
                     SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
                 }

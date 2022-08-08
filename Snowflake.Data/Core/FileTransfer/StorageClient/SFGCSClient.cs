@@ -47,11 +47,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
 
         /// <summary>
-        /// The HTTP client to make requests.
-        /// </summary>
-        private readonly HttpClient HttpClient;
-
-        /// <summary>
         /// GCS client with access token.
         /// </summary>
         /// <param name="stageInfo">The command stage info.</param>
@@ -71,8 +66,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
-
-            HttpClient = new HttpClient();
         }
 
         /// <summary>
@@ -292,6 +285,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                Console.WriteLine("response.StatusCode: " + response.StatusCode);
+                Console.WriteLine("response.GetResponseStream(): " + response.GetResponseStream());
 
                 // Write to file
                 using (var fileStream = File.Create(fullDstPath))
