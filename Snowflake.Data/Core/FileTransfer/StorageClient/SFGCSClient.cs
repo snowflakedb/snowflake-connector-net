@@ -139,7 +139,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         return new FileHeader
                         {
                             digest = digest[0],
-                            contentLength = Convert.ToInt64(contentLength)
+                            contentLength = Convert.ToInt64(contentLength[0])
                         };
                     }
                 }
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         return new FileHeader
                         {
                             digest = digest[0],
-                            contentLength = Convert.ToInt64(contentLength)
+                            contentLength = Convert.ToInt64(contentLength[0])
                         };
                     }
                 }
