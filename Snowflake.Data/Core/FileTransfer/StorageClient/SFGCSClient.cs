@@ -341,16 +341,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 fileMetadata.sha256Digest = headers.Get(GCS_METADATA_SFC_DIGEST);
                 fileMetadata.srcFileSize = (long)Convert.ToDouble(headers.Get(GCS_FILE_HEADER_CONTENT_LENGTH));
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
-                if (ex.Response != null)
-                {
-                    Console.WriteLine(new StreamReader(ex.Response.GetResponseStream()).ReadToEnd());
-                }
+                Console.WriteLine("ex: " + ex);
+                Console.WriteLine("ex.Message: " + ex.Message);
+                Console.WriteLine("ex.ToString(): " + ex.ToString());
+                Console.WriteLine("ex.InnerException: " + ex.InnerException);
 
-                fileMetadata.lastError = ex;
+                WebException err = (WebException)ex;
 
-                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.lastError = err;
+
+                HttpWebResponse response = (HttpWebResponse)err.Response;
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
