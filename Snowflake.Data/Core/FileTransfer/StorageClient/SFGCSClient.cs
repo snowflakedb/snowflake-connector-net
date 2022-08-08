@@ -343,7 +343,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                if (wex.Response != null)
+                if (ex.Response != null)
                 {
                     Console.WriteLine(new StreamReader(ex.Response.GetResponseStream()).ReadToEnd());
                 }
