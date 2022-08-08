@@ -288,7 +288,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                request.Timeout = 200000;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                 // Write to file
@@ -326,22 +325,22 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Console.WriteLine("ex: " + ex);
-                Console.WriteLine("ex.Message: " + ex.Message);
-                Console.WriteLine("ex.ToString(): " + ex.ToString());
-                Console.WriteLine("ex.InnerException: " + ex.InnerException);
 
                 WebException err = (WebException)ex;
 
                 fileMetadata.lastError = err;
 
                 HttpWebResponse response = (HttpWebResponse)err.Response;
+                Console.WriteLine("response.StatusCode: " + response.StatusCode);
+
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                 }
                 else if (response.StatusCode == HttpStatusCode.Forbidden ||
                     response.StatusCode == HttpStatusCode.InternalServerError ||
-                    response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    response.StatusCode == HttpStatusCode.ServiceUnavailable ||
+                    response.StatusCode == HttpStatusCode.RequestTimeout)
                 {
                     fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 }
