@@ -299,6 +299,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+
+                Console.WriteLine("request: " + request);
+                Console.WriteLine("request.Method: " + request.Method);
+                Console.WriteLine("request.Host: " + request.Host);
+                Console.WriteLine("request.GetResponse() " + request.GetResponse());
+
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                 Console.WriteLine("response.StatusCode: " + response.StatusCode);
