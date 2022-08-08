@@ -58,8 +58,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
             {
-                Console.WriteLine("accessToken: " + accessToken);
-
                 Logger.Debug("Constructing client using access token");
 
                 AccessToken = accessToken;
@@ -68,8 +66,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
-                Console.WriteLine("No accessToken");
-
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
@@ -129,8 +125,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue GET request to GCS file URL
                 try
                 {
-                    Console.WriteLine("1 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
-
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 }
@@ -152,13 +146,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
-                    Console.WriteLine("2 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
-
                     // Issue a GET response
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
-                    Console.WriteLine("AccessToken: " + AccessToken);
                     request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
 
                     var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
@@ -295,19 +286,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             try
             {
-                Console.WriteLine("3 fileMetadata.presignedUrl: " + fileMetadata.presignedUrl);
-
                 // Issue the GET request
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-
-                Console.WriteLine("request: " + request);
-                Console.WriteLine("request.Method: " + request.Method);
-                Console.WriteLine("request.Host: " + request.Host);
-
+                request.Timeout = 200000;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                Console.WriteLine("response.StatusCode: " + response.StatusCode);
-                Console.WriteLine("response.GetResponseStream(): " + response.GetResponseStream());
 
                 // Write to file
                 using (var fileStream = File.Create(fullDstPath))

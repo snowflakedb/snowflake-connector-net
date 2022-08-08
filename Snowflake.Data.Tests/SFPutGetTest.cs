@@ -85,9 +85,6 @@ namespace Snowflake.Data.Tests
                 {
                     using (DbConnection conn = new SnowflakeDbConnection())
                     {
-                        Console.WriteLine("stageType: " + stageType);
-                        Console.WriteLine("autoCompressType: " + autoCompressType);
-
                         conn.ConnectionString = ConnectionString;
                         conn.Open();
 
@@ -212,7 +209,6 @@ namespace Snowflake.Data.Tests
 
                             // Download file
                             command.CommandText = getQuery;
-                            Console.WriteLine("getQuery: " + getQuery);
                             reader = command.ExecuteReader();
                             while (reader.Read())
                             {
