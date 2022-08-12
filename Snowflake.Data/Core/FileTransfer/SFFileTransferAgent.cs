@@ -133,6 +133,11 @@ namespace Snowflake.Data.Core
         private string destStagePath = null;
 
         /// <summary>
+        /// Mutex for renewing expired client.
+        /// </summary>
+        private static Mutex RenewClientMutex = new Mutex();
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public SFFileTransferAgent(
@@ -725,6 +730,8 @@ namespace Snowflake.Data.Core
         /// <returns>The renewed storage client.</returns>
         private ISFRemoteStorageClient renewExpiredClient()
         {
+            RenewClientMutex.WaitOne();
+
             SFStatement sfStatement = new SFStatement(Session);
 
             PutGetExecResponse response =
@@ -733,6 +740,10 @@ namespace Snowflake.Data.Core
                     TransferMetadata.command,
                     null,
                     false);
+
+            TransferMetadata = response.data;
+
+            RenewClientMutex.ReleaseMutex();
 
             return SFRemoteStorageUtil.GetRemoteStorage(response.data);
         }
