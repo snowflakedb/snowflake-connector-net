@@ -764,7 +764,7 @@ namespace Snowflake.Data.Core
 
             RenewClientMutex.ReleaseMutex();
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data);
+            return SFRemoteStorageUtil.GetRemoteStorage(response.data, fileMetadata.proxyCredentials);
         }
 
         /// <summary>
@@ -776,7 +776,7 @@ namespace Snowflake.Data.Core
             SFFileMetadata fileMetadata)
         {
             /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, fileMetadata.proxyCredentials);
             SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
@@ -805,7 +805,7 @@ namespace Snowflake.Data.Core
             SFFileMetadata fileMetadata)
         {
             /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, fileMetadata.proxyCredentials);
             SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
