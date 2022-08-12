@@ -394,7 +394,7 @@ namespace Snowflake.Data.Core
             // Extract file path from PUT command:
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
             int startIndex = query.IndexOf("file://") + "file://".Length;
-            int endIndex = query.Substring(startIndex).IndexOf(' ');
+            int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
             string filePath = query.Substring(startIndex, endIndex);
             return filePath;
         }
