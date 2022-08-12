@@ -46,7 +46,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// </summary>
         /// <param name="stageInfo">The stage info used to create the client.</param>
         /// <returns>A new instance of the storage client.</returns>
-        internal static ISFRemoteStorageClient GetRemoteStorageType(PutGetResponseData response)
+        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response)
         {
             PutGetStageInfo stageInfo = response.stageInfo;
             string stageLocationType = stageInfo.locationType;
