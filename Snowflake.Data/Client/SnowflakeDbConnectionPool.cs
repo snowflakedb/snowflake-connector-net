@@ -4,10 +4,11 @@ using System.Text;
 using System.Collections.Concurrent;
 using System.Security;
 using Snowflake.Data.Log;
+using System.Linq;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbConnectionPool
+    public class SnowflakeDbConnectionPool
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Client
             {
                 long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-                foreach (var item in connectionPool)
+                foreach (var item in connectionPool.ToList())
                 {
                     if(item._poolTimeout <= timeNow)
                     {
