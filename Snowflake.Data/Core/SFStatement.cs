@@ -335,13 +335,13 @@ namespace Snowflake.Data.Core
                         String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                         arrayBindingThreshold = Int32.Parse(val);
                     }
-                    
+
                     int numBinding = GetBindingCount(bindings);
-                    
+
                     if (0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
                         && !describeOnly)
-                    { 
+                    {
                         try
                         {
                             AssignQueryRequestId();
@@ -356,41 +356,13 @@ namespace Snowflake.Data.Core
                         }
                     }
 
-                    registerQueryCancellationCallback(timeout, CancellationToken.None);
-                    var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
-                    QueryExecResponse response = null;
+                    QueryExecResponse response =
+                        ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly);
 
-                    bool receivedFirstQueryResponse = false;
-                    while (!receivedFirstQueryResponse)
-                    {
-                        response = _restRequester.Post<QueryExecResponse>(queryRequest);
-                        if (SessionExpired(response))
-                        {
-                            SfSession.renewSession();
-                            queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                        }
-                        else
-                        {
-                            receivedFirstQueryResponse = true;
-                        }
-                    }
-
-                    var lastResultUrl = response.data?.getResultUrl;
-                    while (RequestInProgress(response) || SessionExpired(response))
-                    {
-                        var req = BuildResultRequest(lastResultUrl);
-                        response = _restRequester.Get<QueryExecResponse>(req);
-
-                        if (SessionExpired(response))
-                        {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            SfSession.renewSession();
-                        }
-                        else
-                        {
-                            lastResultUrl = response.data?.getResultUrl;
-                        }
-                    }
                     return BuildResultSet(response, CancellationToken.None);
                 }
             }
