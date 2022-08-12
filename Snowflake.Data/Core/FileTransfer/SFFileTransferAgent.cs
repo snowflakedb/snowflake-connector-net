@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
-        private readonly PutGetResponseData TransferMetadata;
+        private PutGetResponseData TransferMetadata;
 
         /// <summary>
         /// The path to the user home directory.
