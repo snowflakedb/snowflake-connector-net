@@ -474,6 +474,9 @@ namespace Snowflake.Data.Core
                         memoryStream = memoryStream,
                     };
 
+                    /// The storage client used to upload data from files or streams
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+
                     if (!fileMetadata.requireCompress)
                     {
                         // The file is already compressed
@@ -511,6 +514,15 @@ namespace Snowflake.Data.Core
                         parallel = TransferMetadata.parallel,
                         encryptionMaterial = TransferMetadata.encryptionMaterial[index]
                     };
+
+                    /// The storage client used to download data from files or streams
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                    if (fileHeader != null)
+                    {
+                        fileMetadata.srcFileSize = fileHeader.contentLength;
+                    }
 
                     FilesMetas.Add(fileMetadata);
                 }
@@ -750,8 +762,6 @@ namespace Snowflake.Data.Core
         private void UploadFilesInSequential(
             SFFileMetadata fileMetadata)
         {
-            /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
             SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
@@ -779,8 +789,6 @@ namespace Snowflake.Data.Core
         private void DownloadFilesInSequential(
             SFFileMetadata fileMetadata)
         {
-            /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
             SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())

@@ -245,12 +245,6 @@ namespace Snowflake.Data.Core.FileTransfer
             }
 
             ISFRemoteStorageClient client = fileMetadata.client;
-            FileHeader fileHeader = client.GetFileHeader(fileMetadata);
-
-            if (fileHeader != null)
-            {
-                fileMetadata.srcFileSize = fileHeader.contentLength;
-            }
 
             int maxConcurrency = fileMetadata.parallel;
             Exception lastErr = null;
@@ -275,6 +269,7 @@ namespace Snowflake.Data.Core.FileTransfer
                           * One example of this is the utils that use presigned url
                           * for upload / download and not the storage client library.
                           **/
+                        FileHeader fileHeader = client.GetFileHeader(fileMetadata);
                         if (fileMetadata.presignedUrl != null)
                         {
                             fileHeader = client.GetFileHeader(fileMetadata);
