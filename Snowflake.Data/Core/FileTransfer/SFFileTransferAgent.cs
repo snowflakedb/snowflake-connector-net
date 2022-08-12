@@ -524,6 +524,7 @@ namespace Snowflake.Data.Core
                     if (fileHeader != null)
                     {
                         fileMetadata.srcFileSize = fileHeader.contentLength;
+                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
                     }
 
                     FilesMetas.Add(fileMetadata);
