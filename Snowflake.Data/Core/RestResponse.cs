@@ -282,7 +282,7 @@ namespace Snowflake.Data.Core
         internal int parallel { get; set; }
 
         [JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
-        internal int threshold { get; set; }
+        internal long threshold { get; set; }
 
         [JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
         internal bool autoCompress { get; set; }

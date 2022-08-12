@@ -149,6 +149,7 @@ namespace Snowflake.Data.Core
             Query = query;
             Session = session;
             TransferMetadata = responseData;
+            TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
             externalCancellationToken = cancellationToken;
         }
@@ -164,6 +165,7 @@ namespace Snowflake.Data.Core
             Query = query;
             Session = session;
             TransferMetadata = responseData;
+            TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             memoryStream = inputStream;
             streamDestFileName = filename;
             destStagePath = stagePath;
@@ -226,7 +228,7 @@ namespace Snowflake.Data.Core
             {
                 // If the file is larger than the threshold, add it to the large files list
                 // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > DATA_SIZE_THRESHOLD)
+                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
                 {
                     LargeFilesMetas.Add(fileMetadata);
                 }
@@ -469,7 +471,7 @@ namespace Snowflake.Data.Core
                         sourceCompression = compressionType,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                        parallel = (memoryStream == null) && (fileInfo.Length > DATA_SIZE_THRESHOLD) ?
+                        parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
                     };
