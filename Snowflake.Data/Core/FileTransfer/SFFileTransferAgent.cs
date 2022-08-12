@@ -472,6 +472,7 @@ namespace Snowflake.Data.Core
                         parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
+                        proxyCredentials = null
                     };
 
                     if (!fileMetadata.requireCompress)
@@ -490,6 +491,24 @@ namespace Snowflake.Data.Core
                     if (EncryptionMaterials.Count > 0)
                     {
                         fileMetadata.encryptionMaterial = EncryptionMaterials[0];
+                    }
+
+                    if (Session.properties.ContainsKey(SFSessionProperty.PROXYHOST))
+                    {
+                        string host, port, user, password;
+                        Session.properties.TryGetValue(SFSessionProperty.PROXYHOST, out host);
+                        Session.properties.TryGetValue(SFSessionProperty.PROXYPORT, out port);
+                        Session.properties.TryGetValue(SFSessionProperty.PROXYUSER, out user);
+                        Session.properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out password);
+
+
+                        fileMetadata.proxyCredentials = new ProxyCredentials()
+                        {
+                            ProxyHost = host,
+                            ProxyPort = Convert.ToInt32(port),
+                            ProxyUser = host,
+                            ProxyPassword = password
+                        };
                     }
 
                     FilesMetas.Add(fileMetadata);

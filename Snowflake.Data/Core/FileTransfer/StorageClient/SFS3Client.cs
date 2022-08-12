@@ -9,6 +9,7 @@ using Amazon.S3.Model;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -83,14 +84,31 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public SFS3Client(
             PutGetStageInfo stageInfo,
             int maxRetry,
-            int parallel)
+            int parallel,
+            ProxyCredentials proxyCredentials)
         {
             Logger.Debug("Setting up a new AWS client ");
 
             // Get the key id and secret key from the response
             stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
             stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out string awsSecretAccessKey);
-            AmazonS3Config clientConfig = new AmazonS3Config();
+
+            AmazonS3Config clientConfig;
+
+            if (proxyCredentials != null)
+            {
+                clientConfig = new AmazonS3Config()
+                {
+                    ProxyHost = proxyCredentials.ProxyHost,
+                    ProxyPort = proxyCredentials.ProxyPort,
+                    ProxyCredentials = new NetworkCredential(proxyCredentials.ProxyUser, proxyCredentials.ProxyPassword)
+                };
+            }
+            else
+            {
+                clientConfig = new AmazonS3Config();
+            }
+
             setCommonClientConfig(
                 clientConfig,
                 stageInfo.region,

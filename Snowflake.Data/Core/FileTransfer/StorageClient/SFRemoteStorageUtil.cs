@@ -46,7 +46,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// </summary>
         /// <param name="stageInfo">The stage info used to create the client.</param>
         /// <returns>A new instance of the storage client.</returns>
-        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response)
+        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response, ProxyCredentials proxyCredentials = null)
         {
             PutGetStageInfo stageInfo = response.stageInfo;
             string stageLocationType = stageInfo.locationType;
@@ -60,7 +60,8 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 return new SFS3Client(stageInfo,
                     DEFAULT_MAX_RETRY,
-                    response.parallel
+                    response.parallel,
+                    proxyCredentials
                     );
             }
             else if (stageLocationType == AZURE_FS)

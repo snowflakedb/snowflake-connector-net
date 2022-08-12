@@ -23,6 +23,17 @@ namespace Snowflake.Data.Core.FileTransfer
     }
 
     /// <summary>
+    /// The proxy credentials of the client.
+    /// </summary>
+    internal class ProxyCredentials
+    {
+        public string ProxyHost { get; set; }
+        public int ProxyPort { get; set; }
+        public string ProxyUser { get; set; }
+        public string ProxyPassword { get; set; }
+    }
+
+    /// <summary>
     /// Metadata used by the remote storage client to upload or download a file/stream.
     /// </summary>
     internal class SFFileMetadata
@@ -108,5 +119,8 @@ namespace Snowflake.Data.Core.FileTransfer
         public bool sourceFromStream { get; set; }
 
         public MemoryStream memoryStream {get; set; }
+
+        // Proxy credentials of the remote storage client.
+        public ProxyCredentials proxyCredentials { get; set; }
     }
 }
