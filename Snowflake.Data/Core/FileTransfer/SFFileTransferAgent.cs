@@ -747,7 +747,7 @@ namespace Snowflake.Data.Core
         /// Renew expired client.
         /// </summary>
         /// <returns>The renewed storage client.</returns>
-        private ISFRemoteStorageClient renewExpiredClient()
+        private ISFRemoteStorageClient renewExpiredClient(ProxyCredentials proxyCredentials)
         {
             RenewClientMutex.WaitOne();
 
@@ -764,7 +764,7 @@ namespace Snowflake.Data.Core
 
             RenewClientMutex.ReleaseMutex();
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data, fileMetadata.proxyCredentials);
+            return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials);
         }
 
         /// <summary>
@@ -781,7 +781,7 @@ namespace Snowflake.Data.Core
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
-                fileMetadata.client = renewExpiredClient();
+                fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
             }
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
@@ -810,7 +810,7 @@ namespace Snowflake.Data.Core
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
-                fileMetadata.client = renewExpiredClient();
+                fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
             }
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
