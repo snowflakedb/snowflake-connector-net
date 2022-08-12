@@ -308,7 +308,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-                if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
+                if (IsPutOrGetCommand(trimmedSql))
                 {
                     isPutGetQuery = true;
                     PutGetExecResponse response =
@@ -601,6 +601,17 @@ namespace Snowflake.Data.Core
             logger.Debug("Trimmed query : " + trimmedQuery);
 
             return trimmedQuery;
+        }
+
+        /// <summary>
+        /// Check if query is PUT or GET command.
+        /// </summary>
+        /// <param name="query">The sql query.</param>
+        /// <returns>The boolean value if the query is a PUT or GET command.</returns>
+        private bool IsPutOrGetCommand(string query)
+        {
+            return (query.Substring(0, 3).ToUpper() == "PUT") ||
+                (query.Substring(0, 3).ToUpper() == "GET");
         }
 
         private static int GetBindingCount(Dictionary<string, BindingDTO> binding)
