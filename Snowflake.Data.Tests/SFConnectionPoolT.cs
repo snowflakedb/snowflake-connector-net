@@ -65,6 +65,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolIsFull()
         {
+            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             var conn1 = new SnowflakeDbConnection();
