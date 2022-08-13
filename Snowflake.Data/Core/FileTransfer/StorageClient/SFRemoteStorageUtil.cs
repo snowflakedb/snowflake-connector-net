@@ -5,6 +5,8 @@
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -85,38 +87,8 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static void UploadOneFile(SFFileMetadata fileMetadata)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-
-            byte[] fileBytes;
-            // If encryption enabled, encrypt the file to be uploaded
-            if (fileMetadata.encryptionMaterial != null)
-            {
-                if (fileMetadata.memoryStream != null)
-                {
-                    fileBytes = EncryptionProvider.EncryptStream(
-                       fileMetadata.memoryStream,
-                       fileMetadata.encryptionMaterial,
-                       encryptionMetadata);
-                }
-                else
-                {
-                    fileBytes = EncryptionProvider.EncryptFile(
-                        fileMetadata.realSrcFilePath,
-                        fileMetadata.encryptionMaterial,
-                        encryptionMetadata);
-                }
-            }
-            else
-            {
-                if (fileMetadata.memoryStream != null)
-                {
-                    fileBytes = fileMetadata.memoryStream.ToArray();
-                }
-                else
-                {
-                    fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
-                }
-            }
-
+            byte[] fileBytes = GetFileBytes(fileMetadata, encryptionMetadata);
+            
             int maxConcurrency = fileMetadata.parallel;
             int maxRetry = DEFAULT_MAX_RETRY;
             Exception lastErr = null;
@@ -144,6 +116,83 @@ namespace Snowflake.Data.Core.FileTransfer
                 {
                     // Upload the file
                     client.UploadFile(fileMetadata, fileBytes, encryptionMetadata);
+                }
+
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+
+                    maxConcurrency = fileMetadata.parallel - Convert.ToInt32(retry * fileMetadata.parallel / maxRetry);
+                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
+                    fileMetadata.lastMaxConcurrency = maxConcurrency;
+
+                    // Failed to upload file, retrying
+                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+
+                    // Failed to upload file, retrying
+                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
+                }
+            }
+            if (lastErr != null)
+            {
+                throw lastErr;
+            }
+            else
+            {
+                string msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
+                throw new Exception(msg);
+            }
+        }
+
+        /// <summary>
+        /// Encrypt then upload one file.
+        /// </summary>
+        /// <summary>
+        /// <param name="fileMetadata">The file metadata of the file to upload</param>
+        internal static async Task UploadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+            byte[] fileBytes = GetFileBytes(fileMetadata, encryptionMetadata);
+
+            int maxConcurrency = fileMetadata.parallel;
+            int maxRetry = DEFAULT_MAX_RETRY;
+            Exception lastErr = null;
+
+            // Attempt to upload and retry if fails
+            for (int retry = 0; retry < maxRetry; retry++)
+            {
+                ISFRemoteStorageClient client = fileMetadata.client;
+
+                if (!fileMetadata.overwrite)
+                {
+                    // Get the file metadata
+                    FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                    if (fileHeader != null &&
+                        fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                    {
+                        // File already exists
+                        fileMetadata.destFileSize = 0;
+                        fileMetadata.resultStatus = ResultStatus.SKIPPED.ToString();
+                        return;
+                    }
+                }
+
+                if (fileMetadata.overwrite || fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
+                {
+                    // Upload the file
+                    await client.UploadFileAsync(fileMetadata, fileBytes, encryptionMetadata, cancellationToken).ConfigureAwait(false);
                 }
 
                 if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
@@ -214,6 +263,50 @@ namespace Snowflake.Data.Core.FileTransfer
                 }
                 // Break out of loop if file is successfully uploaded or already exists
                 if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() || 
+                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+                {
+                    breakFlag = true;
+                    break;
+                }
+            }
+            if (!breakFlag)
+            {
+                // Could not upload a file even after retry
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            return;
+        }
+
+        /// <summary>
+        /// Attempt upload of a file and retry if fails.
+        /// </summary>
+        /// <param name="fileMetadata">The file metadata of the file to upload</param>
+        internal static async Task UploadOneFileWithRetryAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            bool breakFlag = false;
+
+            for (int count = 0; count < 10; count++)
+            {
+                // Upload the file
+                await UploadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                {
+                    for (int count2 = 0; count2 < 10; count2++)
+                    {
+                        // Get the file metadata
+                        await fileMetadata.client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                        // Check result status if file already exists
+                        if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
+                        {
+                            // Wait 1 second
+                            System.Threading.Thread.Sleep(1000);
+                            continue;
+                        }
+                        break;
+                    }
+                }
+                // Break out of loop if file is successfully uploaded or already exists
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                     fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
                 {
                     breakFlag = true;
@@ -332,6 +425,147 @@ namespace Snowflake.Data.Core.FileTransfer
                 var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
                 throw lastErr;
             }
+        }
+
+        /// <summary>
+        /// Download one file.
+        /// </summary>
+        /// <summary>
+        /// <param name="fileMetadata">The file metadata of the file to download</param>
+        internal static async Task DownloadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            string fullDstPath = fileMetadata.localLocation;
+            fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
+
+            // Check local location exists
+            if (!Directory.Exists(fileMetadata.localLocation))
+            {
+                Directory.CreateDirectory(fileMetadata.localLocation);
+            }
+
+            ISFRemoteStorageClient client = fileMetadata.client;
+            FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+
+            if (fileHeader != null)
+            {
+                fileMetadata.srcFileSize = fileHeader.contentLength;
+            }
+
+            int maxConcurrency = fileMetadata.parallel;
+            Exception lastErr = null;
+            int maxRetry = DEFAULT_MAX_RETRY;
+
+            for (int retry = 0; retry < maxRetry; retry++)
+            {
+                // Download the file
+                await client.DownloadFileAsync(fileMetadata, fullDstPath, maxConcurrency, cancellationToken).ConfigureAwait(false);
+
+                if (fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
+                {
+                    if (fileMetadata.encryptionMaterial != null)
+                    {
+                        /**
+                          * For storage utils that do not have the privilege of
+                          * getting the metadata early, both object and metadata
+                          * are downloaded at once.In which case, the file meta will
+                          * be updated with all the metadata that we need and
+                          * then we can call getFileHeader to get just that and also
+                          * preserve the idea of getting metadata in the first place.
+                          * One example of this is the utils that use presigned url
+                          * for upload / download and not the storage client library.
+                          **/
+                        if (fileMetadata.presignedUrl != null)
+                        {
+                            fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        string tmpDstName = EncryptionProvider.DecryptFile(
+                          fullDstPath,
+                          fileMetadata.encryptionMaterial,
+                          fileHeader.encryptionMetadata
+                          );
+
+                        File.Delete(fullDstPath);
+
+                        // Copy decrypted tmp file to target destination path
+                        File.Copy(tmpDstName, fullDstPath);
+
+                        // Delete tmp file
+                        File.Delete(tmpDstName);
+                    }
+
+                    FileInfo fileInfo = new FileInfo(fullDstPath);
+                    fileMetadata.destFileSize = fileInfo.Length;
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+                    // Failed to download file, retrying with max concurrency
+                    maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
+                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
+                    fileMetadata.lastMaxConcurrency = maxConcurrency;
+
+                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                    System.Threading.Thread.Sleep(sleepingTime);
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+                {
+                    lastErr = fileMetadata.lastError;
+
+                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                    System.Threading.Thread.Sleep(sleepingTime);
+                }
+            }
+            if (lastErr != null)
+            {
+                throw lastErr;
+            }
+            else
+            {
+                var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
+                throw lastErr;
+            }
+        }
+
+        private static byte[] GetFileBytes(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+        {
+            byte[] fileBytes;
+            // If encryption enabled, encrypt the file to be uploaded
+            if (fileMetadata.encryptionMaterial != null)
+            {
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = EncryptionProvider.EncryptStream(
+                       fileMetadata.memoryStream,
+                       fileMetadata.encryptionMaterial,
+                       encryptionMetadata);
+                }
+                else
+                {
+                    fileBytes = EncryptionProvider.EncryptFile(
+                        fileMetadata.realSrcFilePath,
+                        fileMetadata.encryptionMaterial,
+                        encryptionMetadata);
+                }
+            }
+            else
+            {
+                if (fileMetadata.memoryStream != null)
+                {
+                    fileBytes = fileMetadata.memoryStream.ToArray();
+                }
+                else
+                {
+                    fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
+                }
+            }
+            return fileBytes;
         }
     }
 }

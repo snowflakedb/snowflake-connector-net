@@ -3,6 +3,8 @@
  */
 
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -53,15 +55,30 @@ namespace Snowflake.Data.Core.FileTransfer
         /// Encrypt then upload one file.
         /// </summary>
         FileHeader GetFileHeader(SFFileMetadata fileMetadata);
-        
+
+        /// <summary>
+        /// Encrypt then upload one file.
+        /// </summary>
+        Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken);
+
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
         void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
 
         /// <summary>
+        /// Attempt upload of a file and retry if fails.
+        /// </summary>
+        Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Attempt download of a file and retry if fails.
         /// </summary>
         void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency);
+
+        /// <summary>
+        /// Attempt download of a file and retry if fails.
+        /// </summary>
+        Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken);
     }
 }

@@ -326,6 +326,48 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal async Task renewSessionAsync(CancellationToken cancellationToken)
+        {
+            RenewSessionRequest postBody = new RenewSessionRequest()
+            {
+                oldSessionToken = this.sessionToken,
+                requestType = "RENEW"
+            };
+
+            var parameters = new Dictionary<string, string>
+                {
+                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                };
+
+            SFRestRequest renewSessionRequest = new SFRestRequest
+            {
+                jsonBody = postBody,
+                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
+                RestTimeout = Timeout.InfiniteTimeSpan
+            };
+
+            logger.Info("Renew the session.");
+            var response =
+                    await restRequester.PostAsync<RenewSessionResponse>(
+                        renewSessionRequest,
+                        cancellationToken
+                    ).ConfigureAwait(false);
+            if (!response.success)
+            {
+                SnowflakeDbException e = new SnowflakeDbException("",
+                    response.code, response.message, "");
+                logger.Error("Renew session failed", e);
+                throw e;
+            }
+            else
+            {
+                sessionToken = response.data.sessionToken;
+                masterToken = response.data.masterToken;
+            }
+        }
+
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
         {
             return new SFRestRequest()

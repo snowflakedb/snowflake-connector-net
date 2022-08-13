@@ -10,6 +10,8 @@ using System.IO;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -26,6 +28,31 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// The attribute in the credential map containing the shared access signature token.
         /// </summary>
         private static readonly string AZURE_SAS_TOKEN = "AZURE_SAS_TOKEN";
+
+        /// <summary>
+        /// The bad request error code.
+        /// </summary>
+        private static readonly string BAD_REQUEST_ERR = "400";
+
+        /// <summary>
+        /// The forbidden error code.
+        /// </summary>
+        private static readonly string FORBIDDEN_ERR = "403";
+
+        /// <summary>
+        /// The not found error code.
+        /// </summary>
+        private static readonly string NOT_FOUND_ERR = "404";
+
+        /// <summary>
+        /// The internal server error code.
+        /// </summary>
+        private static readonly string INTERNAL_SERVER_ERR = "500";
+
+        /// <summary>
+        /// The server unavailable error code.
+        /// </summary>
+        private static readonly string SERVER_UNAVAILABLE_ERR = "503";
 
         /// <summary>
         /// The logger.
@@ -106,18 +133,51 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains("Status: 400"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains("Status: 404"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                }
-                else
-                {
-                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                }
+                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                return null;
+            }
+
+            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+
+            dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
+            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+            {
+                iv = encryptionData["ContentEncryptionIV"],
+                key = encryptionData.WrappedContentKey["EncryptedKey"],
+                matDesc = response.Metadata["matdesc"]
+            };
+
+            return new FileHeader
+            {
+                digest = response.Metadata["sfcdigest"],
+                contentLength = response.ContentLength,
+                encryptionMetadata = encryptionMetadata
+            };
+        }
+
+        /// <summary>
+        /// Get the file header.
+        /// </summary>
+        /// <param name="fileMetadata">The Azure file metadata.</param>
+        /// <returns>The file header of the Azure file.</returns>
+        public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+
+            // Get the Azure client
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+
+            BlobProperties response;
+            try
+            {
+                // Issue the GET request
+                response = await blobClient.GetPropertiesAsync(null, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 return null;
             }
 
@@ -191,20 +251,67 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("Status: 400"))
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
+                return;
+            }
+
+            fileMetadata.destFileSize = fileMetadata.uploadSize;
+            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+        }
+
+        /// <summary>
+        /// Upload the file to the Azure location.
+        /// </summary>
+        /// <param name="fileMetadata">The Azure file metadata.</param>
+        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        {
+            // Create the JSON for the encryption data header
+            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            {
+                EncryptionMode = "FullBlob",
+                WrappedContentKey = new WrappedContentInfo
                 {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
-                }
-                else if (ex.Message.Contains("Status: 401"))
+                    KeyId = "symmKey1",
+                    EncryptedKey = encryptionMetadata.key,
+                    Algorithm = "AES_CBC_256"
+                },
+                EncryptionAgent = new EncryptionAgentInfo
                 {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else if (ex.Message.Contains("Status: 403") ||
-                    ex.Message.Contains("Status: 500") ||
-                    ex.Message.Contains("Status: 503"))
+                    Protocol = "1.0",
+                    EncryptionAlgorithm = "AES_CBC_256"
+                },
+                ContentEncryptionIV = encryptionMetadata.iv,
+                KeyWrappingMetadata = new KeyWrappingMetadataInfo
                 {
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                    EncryptionLibrary = "Java 5.3.0"
                 }
+            });
+
+            // Create the metadata to use for the header
+            IDictionary<string, string> metadata =
+               new Dictionary<string, string>();
+            metadata.Add("encryptiondata", encryptionData);
+            metadata.Add("matdesc", encryptionMetadata.matDesc);
+            metadata.Add("sfcdigest", fileMetadata.sha256Digest);
+
+            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+
+            // Get the Azure client
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+
+            try
+            {
+                // Issue the POST/PUT request
+                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                blobClient.SetMetadata(metadata);
+            }
+            catch (Exception ex)
+            {
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
                 return;
             }
 
@@ -235,20 +342,91 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("Status: 401"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else if (ex.Message.Contains("Status: 403") ||
-                    ex.Message.Contains("Status: 500") ||
-                    ex.Message.Contains("Status: 503"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
 
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+        }
+
+        /// <summary>
+        /// Download the file to the local location.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
+        /// <param name="maxConcurrency">Number of max concurrency.</param>
+        public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
+        {
+            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
+            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+
+            // Get the Azure client
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+
+            try
+            {
+                // Issue the GET request
+                await blobClient.DownloadToAsync(fullDstPath, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
+                return;
+            }
+
+            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+        }
+
+        private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        {
+            if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains(BAD_REQUEST_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+            }
+            else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains(NOT_FOUND_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+            }
+            else
+            {
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            return fileMetadata;
+        }
+        
+        private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        {
+            if (ex.Message.Contains(BAD_REQUEST_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
+            }
+            else if (ex.Message.Contains(NOT_FOUND_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+            }
+            else if (ex.Message.Contains(FORBIDDEN_ERR) ||
+                ex.Message.Contains(INTERNAL_SERVER_ERR) ||
+                ex.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+            }
+            return fileMetadata;
+        }
+
+        private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        {
+            if (ex.Message.Contains(NOT_FOUND_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+            }
+            else if (ex.Message.Contains(FORBIDDEN_ERR) ||
+                ex.Message.Contains(INTERNAL_SERVER_ERR) ||
+                ex.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            {
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+            }
+            return fileMetadata;
         }
     }
 }
