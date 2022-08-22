@@ -81,14 +81,14 @@ The build solution file builds the connector and tests binaries. Issue the follo
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
-dotnet test -f netcoreapp2.0
+dotnet test -f netcoreapp6.0
 ```
 
 
 Tests can also be run under code coverage:
 
 ```{r, engine='bash', code_block_name}
-OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle 
+OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp6.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp6.0_coverage.xml" -oldStyle 
 ```
 
 Visual Studio 2017
@@ -564,5 +564,4 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
 	Starting with v2.0.0, the driver will set these locally.  
 	
-	Note that the driver is now targeting .Net framework 4.7.2.  
-	When upgrading to v2.0.0, you might also need to run "Update-Package -reinstall" to update the dependencies.
+  Note that the driver is now targeting .NET 6.0. When upgrading to {release version that targets .NET 6.0}, you might also need to run “Update-Package -reinstall” to update the dependencies.
