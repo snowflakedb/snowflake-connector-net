@@ -17,22 +17,21 @@ on:
         required: true
       tags:
         description: "Test scenario tags"
-        required: false
 
 env:
-  DOTNET_VERSION: 6.0
+  DOTNET_CORE_VERSION: 2.0
   DOTNET_LEGACY_VERSION: 4.7.2
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build-net:
-    name: Build-Net
+  build-core:
+    name: Build-Core
     # The type of runner that the job will run on
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet: ['6.0.100']
+        dotnet: ['2.2.207']
         cloud_env: ['AZURE', 'GCP', 'AWS']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -84,21 +83,21 @@ jobs:
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
   test:
-    needs: [build-net, build-framework]
+    needs: [build-core, build-framework]
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['net6.0', 'net472']
+        dotnet: ['netcoreapp2.0', 'net472']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -136,14 +135,14 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['net6.0']
+        dotnet: ['netcoreapp2.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -161,9 +160,8 @@ jobs:
           dotnet build
       - name: Run minicover
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
@@ -176,14 +174,14 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['net6.0']
+        dotnet: ['netcoreapp2.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 2.2.207
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -201,9 +199,8 @@ jobs:
           dotnet build
       - name: Run minicover
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
+          cd Snowflake.Data.Tests
+          dotnet minicover instrument --assemblies './**/bin/**/*.dll' --sources '../Snowflake.Data/**/*.cs'
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument

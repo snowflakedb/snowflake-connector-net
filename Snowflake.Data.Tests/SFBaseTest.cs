@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests
             log4net.Config.XmlConfigurator.Configure();
 
 #else
-            log4net.GlobalContext.Properties["framework"] = "net6.0";
+            log4net.GlobalContext.Properties["framework"] = "netcoreapp2.0";
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif

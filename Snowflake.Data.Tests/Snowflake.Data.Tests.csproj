@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
-    <RuntimeFrameworkVersion>6.0.0</RuntimeFrameworkVersion>
+    <TargetFrameworks>netcoreapp2.2;net472</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netcoreapp2.2</TargetFrameworks>
+    <RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
@@ -10,6 +10,10 @@
     <Copyright>Copyright (c) 2012-2018 Snowflake Computing Inc. All rights reserved.</Copyright>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="MiniCover" Version="2.0.0-ci-*" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -40,9 +44,9 @@
    <!-- <Reference Include="System.Net.Http.WebRequest" /> -->
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
-      <Version>7.2.5</Version>
+      <Version>6.2.3</Version>
     </PackageReference>
   </ItemGroup>
   
