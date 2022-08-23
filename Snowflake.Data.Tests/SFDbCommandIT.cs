@@ -1266,11 +1266,33 @@ namespace Snowflake.Data.Tests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT COUNT(*) FROM DOUBLE_TABLE";
+                    cmd.CommandText = "create or replace table testScalarAsync(cola integer)";
+                    int count = cmd.ExecuteNonQuery();
+
+                    string insertCommand = "insert into testScalarAsync values (?)";
+                    cmd.CommandText = insertCommand;
+                    int total = 1000;
+
+                    List<int> arrint = new List<int>();
+                    for (int i = 0; i < total; i++)
+                    {
+                        arrint.Add(i);
+                    }
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.DbType = DbType.Int16;
+                    p1.Value = arrint.ToArray();
+                    cmd.Parameters.Add(p1);
+                    count = cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "SELECT COUNT(*) FROM testScalarAsync";
                     Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
 
                     task.Wait();
-                    Assert.AreEqual(46, task.Result);
+                    Assert.AreEqual(total, task.Result);
+
+                    cmd.CommandText = "drop table if exists testScalarAsync";
+                    cmd.ExecuteNonQuery();
                 }
                 conn.Close();
             }
