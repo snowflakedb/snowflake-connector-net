@@ -23,6 +23,14 @@ namespace Snowflake.Data.Tests
 
         [Test]
         [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        [Ignore("ConnectionPoolT")]
+        public void ConnectionPoolTDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
+
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
@@ -40,6 +48,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+
         [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPool()
         {

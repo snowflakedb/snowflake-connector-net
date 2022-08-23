@@ -59,8 +59,9 @@ namespace Snowflake.Data.Core
             DriverName = ".NET";
         }
 
-        internal static string DriverName { get; private set; }
-        internal static string DriverVersion { get; private set; }
+        //temporary change for pretend as ODBC
+        internal static string DriverName { get; set; }
+        internal static string DriverVersion { get; set; }
         internal static LoginRequestClientEnv ClientEnv { get; private set; }
     }
 }

@@ -14,6 +14,13 @@ namespace Snowflake.Data.Tests
     class SFDbAdaptorIT : SFBaseTest
     {
         [Test]
+        [Ignore("DbAdaptorIT")]
+        public void DbAdaptorITDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestSelectStatement()
         {
             DataSet ds = new DataSet("ds");

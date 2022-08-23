@@ -10,6 +10,13 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFSessionTest
     {
+        [Test]
+        [Ignore("SessionTest")]
+        public void SessionTestDone()
+        {
+            // Do nothing;
+        }
+
         // Mock test for session gone
         [Test]
         public void TestSessionGoneWhenClose()

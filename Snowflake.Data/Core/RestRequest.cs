@@ -279,6 +279,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "bindStage")]
         internal string bindStage { get; set; }
+
+        [JsonProperty(PropertyName = "parameters")]
+        internal Dictionary<string, string> parameters { get; set; }
     }
 
     class QueryCancelRequest

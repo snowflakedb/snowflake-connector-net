@@ -106,6 +106,7 @@ namespace Snowflake.Data.Core
                     }
                     else if (c == '\\')
                     {
+                        bool caseU = false;
                         // Process next character
                         c = input.ReadByte();
                         switch (c)
@@ -123,6 +124,7 @@ namespace Snowflake.Data.Core
                                 c = '\t';
                                 break;
                             case 'u':
+                                caseU = true;
                                 StringBuilder byteStr = new StringBuilder("");
                                 for (int i = 0; i < 4; i++)
                                 {
@@ -135,7 +137,12 @@ namespace Snowflake.Data.Core
                             case -1:
                                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
                             }
-                            ms.WriteByte((byte)c);
+                            // The 'u' case already writes to stream so skip to prevent re-writing
+                            // If not skipped, unicode characters are added an extra u (e.g "/u007f" becomes "/u007fu")
+                            if (!caseU)
+                            {
+                                ms.WriteByte((byte)c);
+                            }
                         }
                         else
                         {

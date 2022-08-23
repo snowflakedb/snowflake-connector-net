@@ -25,7 +25,9 @@ namespace Snowflake.Data.Client
 
         private bool isClosed;
 
-        private readonly DataTable SchemaTable;
+        private DataTable SchemaTable;
+
+        private int RecordsAffectedInternal;
 
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
@@ -33,7 +35,7 @@ namespace Snowflake.Data.Client
             this.resultSet = resultSet;
             this.isClosed = false;
             this.SchemaTable = PopulateSchemaTable(resultSet);
-            RecordsAffected = resultSet.CalculateUpdateCount();
+            RecordsAffectedInternal = resultSet.CalculateUpdateCount();
         }
 
         public override object this[string name]
@@ -72,9 +74,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                // return true for now since every query returned from server
-                // will have at least one row
-                return true;
+                return resultSet.HasResultSet();
             }
         }
 
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override int RecordsAffected { get; }
+        public override int RecordsAffected { get { return RecordsAffectedInternal; } }
 
         public override DataTable GetSchemaTable()
         {
@@ -269,6 +269,23 @@ namespace Snowflake.Data.Client
 
         public override bool NextResult()
         {
+            if (resultSet.NextResult())
+            {
+                this.SchemaTable = PopulateSchemaTable(resultSet);
+                RecordsAffectedInternal = resultSet.CalculateUpdateCount();
+                return true;
+            }
+            return false;
+        }
+
+        public override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        {
+            if (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false))
+            {
+                this.SchemaTable = PopulateSchemaTable(resultSet);
+                RecordsAffectedInternal = resultSet.CalculateUpdateCount();
+                return true;
+            }
             return false;
         }
 
