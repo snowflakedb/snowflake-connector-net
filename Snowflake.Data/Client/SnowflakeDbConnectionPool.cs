@@ -18,7 +18,7 @@ namespace Snowflake.Data.Client
         private static long timeout;
         private const int MAX_POOL_SIZE = 10;
         private const long TIMEOUT = 3600;
-        private static bool pooling = false;
+        private static bool pooling = true;
 
         private static void initConnectionPool()
         {
