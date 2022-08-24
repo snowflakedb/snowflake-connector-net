@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
@@ -47,7 +47,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-
         [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPool()
         {
@@ -111,10 +110,11 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
+            System.Threading.Thread.Sleep(3000); // wait for 3 seconds, in case other test still running.
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(10);
+            SnowflakeDbConnectionPool.SetPooling(true);
 
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
