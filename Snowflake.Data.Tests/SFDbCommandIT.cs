@@ -733,13 +733,13 @@ namespace Snowflake.Data.Tests
         {
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
             Thread t2 = new Thread(() => ThreadProcess2(ConnectionString));
-            Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
-            Thread t4 = new Thread(() => ThreadProcess4(ConnectionString));
+            //Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
+            //Thread t4 = new Thread(() => ThreadProcess4(ConnectionString));
 
             t1.Start();
             t2.Start();
-            t3.Start();
-            t4.Start();
+            //t3.Start();
+            //t4.Start();
         }
 
         static void ThreadProcess1(string connstr)
