@@ -69,11 +69,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private static readonly string AWS_TOKEN = "AWS_TOKEN";
 
         /// <summary>
-        /// The bad request error code.
-        /// </summary>
-        private static readonly string BAD_REQUEST_ERR = "400";
-
-        /// <summary>
         /// The logger.
         /// </summary>
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
@@ -524,7 +519,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
             AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-            if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == BAD_REQUEST_ERR)
+            if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == SFStorageClientUtil.BAD_REQUEST_ERR)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }

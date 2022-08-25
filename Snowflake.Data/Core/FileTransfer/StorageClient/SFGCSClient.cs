@@ -37,36 +37,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
 
         /// <summary>
-        /// The bad request error code.
-        /// </summary>
-        private static readonly string BAD_REQUEST_ERR = "400";
-
-        /// <summary>
-        /// The unauthorized error code.
-        /// </summary>
-        private static readonly string UNAUTHORIZED_ERR = "401";
-
-        /// <summary>
-        /// The forbidden error code.
-        /// </summary>
-        private static readonly string FORBIDDEN_ERR = "403";
-
-        /// <summary>
-        /// The not found error code.
-        /// </summary>
-        private static readonly string NOT_FOUND_ERR = "404";
-
-        /// <summary>
-        /// The internal server error code.
-        /// </summary>
-        private static readonly string INTERNAL_SERVER_ERR = "500";
-
-        /// <summary>
-        /// The server unavailable error code.
-        /// </summary>
-        private static readonly string SERVER_UNAVAILABLE_ERR = "503";
-
-        /// <summary>
         /// The logger.
         /// </summary>
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFGCSClient>();
@@ -164,9 +134,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 catch (Exception ex)
                 {
                     HttpRequestException err = (HttpRequestException)ex.InnerException;
-                    if (err.Message.Contains(UNAUTHORIZED_ERR) ||
-                        err.Message.Contains(FORBIDDEN_ERR) ||
-                        err.Message.Contains(NOT_FOUND_ERR))
+                    if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR) ||
+                        err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                        err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
                     {
                         fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
                         return new FileHeader();
@@ -232,9 +202,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 catch (Exception ex)
                 {
                     HttpRequestException err = (HttpRequestException)ex.InnerException;
-                    if (err.Message.Contains(UNAUTHORIZED_ERR) ||
-                        err.Message.Contains(FORBIDDEN_ERR) ||
-                        err.Message.Contains(NOT_FOUND_ERR))
+                    if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR) ||
+                        err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                        err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
                     {
                         fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
                         return new FileHeader();
@@ -538,17 +508,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // If file doesn't exist, GET request fails
             HttpRequestException err = (HttpRequestException)ex.InnerException;
             fileMetadata.lastError = err;
-            if (err.Message.Contains(UNAUTHORIZED_ERR))
+            if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Message.Contains(FORBIDDEN_ERR) ||
-                err.Message.Contains(INTERNAL_SERVER_ERR) ||
-                err.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            else if (err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
-            else if (err.Message.Contains(NOT_FOUND_ERR))
+            else if (err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -563,17 +533,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             HttpRequestException err = (HttpRequestException)ex.InnerException;
             fileMetadata.lastError = err;
-            if (err.Message.Contains(BAD_REQUEST_ERR) && GCS_ACCESS_TOKEN != null)
+            if (err.Message.Contains(SFStorageClientUtil.BAD_REQUEST_ERR) && GCS_ACCESS_TOKEN != null)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (err.Message.Contains(UNAUTHORIZED_ERR))
+            else if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Message.Contains(FORBIDDEN_ERR) ||
-                err.Message.Contains(INTERNAL_SERVER_ERR) ||
-                err.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            else if (err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
@@ -584,13 +554,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             HttpRequestException err = (HttpRequestException)ex.InnerException;
             fileMetadata.lastError = err;
-            if (err.Message.Contains(UNAUTHORIZED_ERR))
+            if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Message.Contains(FORBIDDEN_ERR) ||
-                err.Message.Contains(INTERNAL_SERVER_ERR) ||
-                err.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            else if (err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
+                err.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }

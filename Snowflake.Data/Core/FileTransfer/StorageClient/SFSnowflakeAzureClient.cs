@@ -30,31 +30,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private static readonly string AZURE_SAS_TOKEN = "AZURE_SAS_TOKEN";
 
         /// <summary>
-        /// The bad request error code.
-        /// </summary>
-        private static readonly string BAD_REQUEST_ERR = "400";
-
-        /// <summary>
-        /// The forbidden error code.
-        /// </summary>
-        private static readonly string FORBIDDEN_ERR = "403";
-
-        /// <summary>
-        /// The not found error code.
-        /// </summary>
-        private static readonly string NOT_FOUND_ERR = "404";
-
-        /// <summary>
-        /// The internal server error code.
-        /// </summary>
-        private static readonly string INTERNAL_SERVER_ERR = "500";
-
-        /// <summary>
-        /// The server unavailable error code.
-        /// </summary>
-        private static readonly string SERVER_UNAVAILABLE_ERR = "503";
-
-        /// <summary>
         /// The logger.
         /// </summary>
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
@@ -380,11 +355,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains(BAD_REQUEST_ERR))
+            if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains(SFStorageClientUtil.BAD_REQUEST_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains(NOT_FOUND_ERR))
+            else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -397,17 +372,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         
         private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(BAD_REQUEST_ERR))
+            if (ex.Message.Contains(SFStorageClientUtil.BAD_REQUEST_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (ex.Message.Contains(NOT_FOUND_ERR))
+            else if (ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(FORBIDDEN_ERR) ||
-                ex.Message.Contains(INTERNAL_SERVER_ERR) ||
-                ex.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            else if (ex.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                ex.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
+                ex.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
@@ -416,13 +391,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(NOT_FOUND_ERR))
+            if (ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(FORBIDDEN_ERR) ||
-                ex.Message.Contains(INTERNAL_SERVER_ERR) ||
-                ex.Message.Contains(SERVER_UNAVAILABLE_ERR))
+            else if (ex.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
+                ex.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
+                ex.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
