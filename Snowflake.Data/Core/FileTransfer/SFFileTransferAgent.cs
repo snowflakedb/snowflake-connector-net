@@ -777,18 +777,37 @@ namespace Snowflake.Data.Core
         {
             /// The storage client used to upload/download data from files or streams
             fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, fileMetadata.proxyCredentials);
-            SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
+            SFFileMetadata resultMetadata;
+            bool breakFlag = false;
 
-            if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+            for (int count = 0; count < 10; count++)
             {
-                fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
+                resultMetadata = UploadSingleFile(fileMetadata);
+
+                if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+                {
+                    fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
+                }
+                else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    updatePresignedUrl();
+                }
+
+                // Break out of loop if file is successfully uploaded or already exists
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+                {
+                    breakFlag = true;
+                    break;
+                }
             }
-            else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            if (!breakFlag)
             {
-                updatePresignedUrl();
+                // Could not upload a file even after retry
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
 
-            ResultsMetas.Add(resultMetadata);
+            ResultsMetas.Add(fileMetadata);
 
             if (INJECT_WAIT_IN_PUT > 0)
             {
