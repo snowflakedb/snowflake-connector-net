@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -295,7 +295,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -393,7 +393,7 @@ namespace Snowflake.Data.Tests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + ";fakeodbc=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
