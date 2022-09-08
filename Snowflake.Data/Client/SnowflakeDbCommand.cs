@@ -155,14 +155,14 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            logger.Debug($"ExecuteNonQuery, command: {CommandText}");
+            logger.Debug($"ExecuteNonQuery");
             SFBaseResultSet resultSet = ExecuteInternal();
             return resultSet.CalculateUpdateCount();
         }
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
+            logger.Debug($"ExecuteNonQueryAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
-            logger.Debug($"ExecuteScalar, command: {CommandText}");
+            logger.Debug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
             if(resultSet.Next())
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
+            logger.Debug($"ExecuteScalarAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -205,14 +205,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReader");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReaderAsync");
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);

@@ -207,7 +207,6 @@ namespace Snowflake.Data.Core
                         SFSessionProperty p = (SFSessionProperty)Enum.Parse(
                             typeof(SFSessionProperty), tokens[0].ToUpper());
                         properties.Add(p, tokens[1]);
-                        logger.Info($"Connection property: {p}, value: {(secretProps.Contains(p) ? "XXXXXXXX" : tokens[1])}");
                     }
                     catch (ArgumentException e)
                     {

@@ -84,7 +84,6 @@ namespace Snowflake.Data.Core
         {
             lock (httpClientProviderLock)
             {
-                logger.Debug($"Get Http client for {config.ConfKey}.");
                 return RegisterNewHttpClientIfNecessary(config);
             }
         }

@@ -544,8 +544,6 @@ namespace Snowflake.Data.Core
             while (idx < sqlQueryLen);
 
             var trimmedQuery = builder.ToString();
-            logger.Debug("Trimmed query : " + trimmedQuery);
-
             return trimmedQuery;
         }
 
