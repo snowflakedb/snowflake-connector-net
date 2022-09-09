@@ -180,6 +180,33 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectionPoolExpirationWorks()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+
+            conn1.Open();
+            conn1.Close();
+            SnowflakeDbConnectionPool.SetTimeout(-1);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = ConnectionString;
+            conn2.Open();
+            conn2.Close();
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = ConnectionString;
+            conn3.Open();
+            conn3.Close();
+
+
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
+
+        [Test]
         public void TestConnectionPoolMultiThreading()
         {
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
