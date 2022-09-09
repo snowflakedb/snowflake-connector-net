@@ -155,6 +155,7 @@ namespace Snowflake.Data.Client
         public static void SetPooling(bool isEnable)
         {
             pooling = isEnable;
+            ClearAllPools();
         }
 
         public static bool GetPooling()
