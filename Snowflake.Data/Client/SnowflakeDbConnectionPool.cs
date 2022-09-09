@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbConnectionPool
+    public class SnowflakeDbConnectionPool
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
