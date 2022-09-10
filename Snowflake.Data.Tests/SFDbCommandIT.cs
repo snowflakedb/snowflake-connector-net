@@ -601,22 +601,28 @@ namespace Snowflake.Data.Tests
         [Test]
         public void testPutArrayBindAsync()
         {
+            ArrayBindTest(ConnectionString, "testPutArrayBind", 250000);
+        }
+
+        static void ArrayBindTest(string connstr, string tableName, int size)
+        {
+        
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = connstr;
                 conn.Open();
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testPutArrayBind(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
+                    cmd.CommandText = "create or replace table "+ tableName + " (cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
                     int count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(0, count);
 
-                    string insertCommand = "insert into testPutArrayBind values (?, ?, ?, ?, ?, ?)";
+                    string insertCommand = "insert into " + tableName + " values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
-                    int total = 250000;
+                    int total = size;
 
                     List<int> arrint = new List<int>();
                     for (int i = 0; i < total; i++)
@@ -715,11 +721,11 @@ namespace Snowflake.Data.Tests
                     task.Wait();
                     Assert.AreEqual(total * 3, task.Result);
 
-                    cmd.CommandText = "SELECT * FROM testPutArrayBind";
+                    cmd.CommandText = "SELECT * FROM " + tableName;
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
-                    //cmd.CommandText = "drop table if exists testPutArrayBind";
+                    //cmd.CommandText = "drop table if exists " + tableName;
                     //cmd.ExecuteNonQuery();
 
                 }
@@ -744,515 +750,22 @@ namespace Snowflake.Data.Tests
 
         static void ThreadProcess1(string connstr)
         {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connstr;
-                conn.Open();
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create or replace table testPutArrayBind1(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
-
-                    string insertCommand = "insert into testPutArrayBind1 values (?, ?, ?, ?, ?, ?)";
-                    cmd.CommandText = insertCommand;
-
-                    int total = 250000;
-
-                    List<int> arrint = new List<int>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrint.Add(i * 10 + 1);
-                        arrint.Add(i * 10 + 2);
-                        arrint.Add(i * 10 + 3);
-                    }
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = arrint.ToArray();
-                    cmd.Parameters.Add(p1);
-
-                    List<string> arrstring = new List<string>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrstring.Add("str1");
-                        arrstring.Add("str2");
-                        arrstring.Add("str3\"test\"");
-                    }
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = arrstring.ToArray();
-                    cmd.Parameters.Add(p2);
-
-                    DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrDate = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrDate.Add(date1);
-                        arrDate.Add(date2);
-                        arrDate.Add(date3);
-                    }
-                    var p3 = cmd.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.Date;
-                    p3.Value = arrDate.ToArray();
-                    cmd.Parameters.Add(p3);
-
-                    DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrTime = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTime.Add(time1);
-                        arrTime.Add(time2);
-                        arrTime.Add(time3);
-                    }
-
-                    var p4 = cmd.CreateParameter();
-                    p4.ParameterName = "4";
-                    p4.DbType = DbType.Time;
-                    p4.Value = arrTime.ToArray();
-                    cmd.Parameters.Add(p4);
-
-                    DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    List<DateTime> arrNtz = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrNtz.Add(ntz1);
-                        arrNtz.Add(ntz2);
-                        arrNtz.Add(ntz3);
-                    }
-                    var p5 = cmd.CreateParameter();
-                    p5.ParameterName = "5";
-                    p5.DbType = DbType.DateTime2;
-                    p5.Value = arrNtz.ToArray();
-                    cmd.Parameters.Add(p5);
-
-                    DateTimeOffset tz1 = DateTimeOffset.Now;
-                    DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                    DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                    List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTz.Add(tz1);
-                        arrTz.Add(tz2);
-                        arrTz.Add(tz3);
-                    }
-
-                    var p6 = cmd.CreateParameter();
-                    p6.ParameterName = "6";
-                    p6.DbType = DbType.DateTimeOffset;
-                    p6.Value = arrTz.ToArray();
-                    cmd.Parameters.Add(p6);
-
-                    Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
-
-                    task.Wait();
-                    Assert.AreEqual(total * 3, task.Result);
-
-                    cmd.CommandText = "SELECT * FROM testPutArrayBind1";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists testPutArrayBind1";
-                    //cmd.ExecuteNonQuery();
-
-                }
-                conn.Close();
-            }
+            ArrayBindTest(connstr, "testPutArrayBind1", 250000);
         }
 
         static void ThreadProcess2(string connstr)
         {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connstr;
-                conn.Open();
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create or replace table testPutArrayBind2(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
-
-                    string insertCommand = "insert into testPutArrayBind2 values (?, ?, ?, ?, ?, ?)";
-                    cmd.CommandText = insertCommand;
-
-                    int total = 250000;
-
-                    List<int> arrint = new List<int>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrint.Add(i * 10 + 1);
-                        arrint.Add(i * 10 + 2);
-                        arrint.Add(i * 10 + 3);
-                    }
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = arrint.ToArray();
-                    cmd.Parameters.Add(p1);
-
-                    List<string> arrstring = new List<string>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrstring.Add("str1");
-                        arrstring.Add("str2");
-                        arrstring.Add("str3\"test\"");
-                    }
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = arrstring.ToArray();
-                    cmd.Parameters.Add(p2);
-
-                    DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrDate = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrDate.Add(date1);
-                        arrDate.Add(date2);
-                        arrDate.Add(date3);
-                    }
-                    var p3 = cmd.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.Date;
-                    p3.Value = arrDate.ToArray();
-                    cmd.Parameters.Add(p3);
-
-                    DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrTime = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTime.Add(time1);
-                        arrTime.Add(time2);
-                        arrTime.Add(time3);
-                    }
-
-                    var p4 = cmd.CreateParameter();
-                    p4.ParameterName = "4";
-                    p4.DbType = DbType.Time;
-                    p4.Value = arrTime.ToArray();
-                    cmd.Parameters.Add(p4);
-
-                    DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    List<DateTime> arrNtz = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrNtz.Add(ntz1);
-                        arrNtz.Add(ntz2);
-                        arrNtz.Add(ntz3);
-                    }
-                    var p5 = cmd.CreateParameter();
-                    p5.ParameterName = "5";
-                    p5.DbType = DbType.DateTime2;
-                    p5.Value = arrNtz.ToArray();
-                    cmd.Parameters.Add(p5);
-
-                    DateTimeOffset tz1 = DateTimeOffset.Now;
-                    DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                    DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                    List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTz.Add(tz1);
-                        arrTz.Add(tz2);
-                        arrTz.Add(tz3);
-                    }
-
-                    var p6 = cmd.CreateParameter();
-                    p6.ParameterName = "6";
-                    p6.DbType = DbType.DateTimeOffset;
-                    p6.Value = arrTz.ToArray();
-                    cmd.Parameters.Add(p6);
-
-                    Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
-
-                    task.Wait();
-                    Assert.AreEqual(total * 3, task.Result);
-
-                    cmd.CommandText = "SELECT * FROM testPutArrayBind2";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists testPutArrayBind2";
-                    //cmd.ExecuteNonQuery();
-
-                }
-                conn.Close();
-            }
-
+            ArrayBindTest(connstr, "testPutArrayBind2", 250000);
         }
 
         static void ThreadProcess3(string connstr)
         {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connstr;
-                conn.Open();
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create or replace table testPutArrayBind3(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
-
-                    string insertCommand = "insert into testPutArrayBind3 values (?, ?, ?, ?, ?, ?)";
-                    cmd.CommandText = insertCommand;
-
-                    int total = 1250000;
-
-                    List<int> arrint = new List<int>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrint.Add(i * 10 + 1);
-                        arrint.Add(i * 10 + 2);
-                        arrint.Add(i * 10 + 3);
-                    }
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = arrint.ToArray();
-                    cmd.Parameters.Add(p1);
-
-                    List<string> arrstring = new List<string>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrstring.Add("str1");
-                        arrstring.Add("str2");
-                        arrstring.Add("str3\"test\"");
-                    }
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = arrstring.ToArray();
-                    cmd.Parameters.Add(p2);
-
-                    DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrDate = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrDate.Add(date1);
-                        arrDate.Add(date2);
-                        arrDate.Add(date3);
-                    }
-                    var p3 = cmd.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.Date;
-                    p3.Value = arrDate.ToArray();
-                    cmd.Parameters.Add(p3);
-
-                    DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrTime = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTime.Add(time1);
-                        arrTime.Add(time2);
-                        arrTime.Add(time3);
-                    }
-
-                    var p4 = cmd.CreateParameter();
-                    p4.ParameterName = "4";
-                    p4.DbType = DbType.Time;
-                    p4.Value = arrTime.ToArray();
-                    cmd.Parameters.Add(p4);
-
-                    DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    List<DateTime> arrNtz = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrNtz.Add(ntz1);
-                        arrNtz.Add(ntz2);
-                        arrNtz.Add(ntz3);
-                    }
-                    var p5 = cmd.CreateParameter();
-                    p5.ParameterName = "5";
-                    p5.DbType = DbType.DateTime2;
-                    p5.Value = arrNtz.ToArray();
-                    cmd.Parameters.Add(p5);
-
-                    DateTimeOffset tz1 = DateTimeOffset.Now;
-                    DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                    DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                    List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTz.Add(tz1);
-                        arrTz.Add(tz2);
-                        arrTz.Add(tz3);
-                    }
-
-                    var p6 = cmd.CreateParameter();
-                    p6.ParameterName = "6";
-                    p6.DbType = DbType.DateTimeOffset;
-                    p6.Value = arrTz.ToArray();
-                    cmd.Parameters.Add(p6);
-
-                    Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
-
-                    task.Wait();
-                    Assert.AreEqual(total * 3, task.Result);
-
-                    cmd.CommandText = "SELECT * FROM testPutArrayBind3";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists testPutArrayBind1";
-                    //cmd.ExecuteNonQuery();
-
-                }
-                conn.Close();
-            }
+            ArrayBindTest(connstr, "testPutArrayBind3", 1250000);
         }
 
         static void ThreadProcess4(string connstr)
         {
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = connstr;
-                conn.Open();
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create or replace table testPutArrayBind4(cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
-
-                    string insertCommand = "insert into testPutArrayBind4 values (?, ?, ?, ?, ?, ?)";
-                    cmd.CommandText = insertCommand;
-
-                    int total = 2500000;
-
-                    List<int> arrint = new List<int>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrint.Add(i * 10 + 1);
-                        arrint.Add(i * 10 + 2);
-                        arrint.Add(i * 10 + 3);
-                    }
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = arrint.ToArray();
-                    cmd.Parameters.Add(p1);
-
-                    List<string> arrstring = new List<string>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrstring.Add("str1");
-                        arrstring.Add("str2");
-                        arrstring.Add("str3\"test\"");
-                    }
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = arrstring.ToArray();
-                    cmd.Parameters.Add(p2);
-
-                    DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrDate = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrDate.Add(date1);
-                        arrDate.Add(date2);
-                        arrDate.Add(date3);
-                    }
-                    var p3 = cmd.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.Date;
-                    p3.Value = arrDate.ToArray();
-                    cmd.Parameters.Add(p3);
-
-                    DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                    List<DateTime> arrTime = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTime.Add(time1);
-                        arrTime.Add(time2);
-                        arrTime.Add(time3);
-                    }
-
-                    var p4 = cmd.CreateParameter();
-                    p4.ParameterName = "4";
-                    p4.DbType = DbType.Time;
-                    p4.Value = arrTime.ToArray();
-                    cmd.Parameters.Add(p4);
-
-                    DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                    List<DateTime> arrNtz = new List<DateTime>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrNtz.Add(ntz1);
-                        arrNtz.Add(ntz2);
-                        arrNtz.Add(ntz3);
-                    }
-                    var p5 = cmd.CreateParameter();
-                    p5.ParameterName = "5";
-                    p5.DbType = DbType.DateTime2;
-                    p5.Value = arrNtz.ToArray();
-                    cmd.Parameters.Add(p5);
-
-                    DateTimeOffset tz1 = DateTimeOffset.Now;
-                    DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                    DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                    List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                    for (int i = 0; i < total; i++)
-                    {
-                        arrTz.Add(tz1);
-                        arrTz.Add(tz2);
-                        arrTz.Add(tz3);
-                    }
-
-                    var p6 = cmd.CreateParameter();
-                    p6.ParameterName = "6";
-                    p6.DbType = DbType.DateTimeOffset;
-                    p6.Value = arrTz.ToArray();
-                    cmd.Parameters.Add(p6);
-
-                    Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
-
-                    task.Wait();
-                    Assert.AreEqual(total * 3, task.Result);
-
-                    cmd.CommandText = "SELECT * FROM testPutArrayBind4";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists testPutArrayBind1";
-                    //cmd.ExecuteNonQuery();
-
-                }
-                conn.Close();
-            }
+            ArrayBindTest(connstr, "testPutArrayBind4", 2500000);
         }
 
         [Test]

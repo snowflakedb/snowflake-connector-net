@@ -446,7 +446,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             try
             {
-                // Issue the POST/PUT request
+                // Issue the POST/GET request
                 HttpResponseMessage response = await HttpClient.GetAsync(fileMetadata.presignedUrl).ConfigureAwait(false);
                 // Write to file
                 using (var fileStream = File.Create(fullDstPath))
