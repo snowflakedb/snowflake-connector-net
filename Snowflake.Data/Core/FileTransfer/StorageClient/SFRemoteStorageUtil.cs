@@ -82,7 +82,6 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Encrypt then upload one file.
         /// </summary>
-        /// <summary>
         /// <param name="fileMetadata">The file metadata of the file to upload</param>
         internal static void UploadOneFile(SFFileMetadata fileMetadata)
         {
@@ -118,32 +117,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     client.UploadFile(fileMetadata, fileBytes, encryptionMetadata);
                 }
 
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-                {
-                    return;
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    maxConcurrency = fileMetadata.parallel - Convert.ToInt32(retry * fileMetadata.parallel / maxRetry);
-                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-                    fileMetadata.lastMaxConcurrency = maxConcurrency;
-
-                    // Failed to upload file, retrying
-                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    // Failed to upload file, retrying
-                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
-                }
+                HandleUploadResult(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
             }
             if (lastErr != null)
             {
@@ -159,8 +133,8 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Encrypt then upload one file.
         /// </summary>
-        /// <summary>
         /// <param name="fileMetadata">The file metadata of the file to upload</param>
+        /// <param name="cancellationToken">The cancellation token</param>
         internal static async Task UploadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
@@ -195,32 +169,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     await client.UploadFileAsync(fileMetadata, fileBytes, encryptionMetadata, cancellationToken).ConfigureAwait(false);
                 }
 
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-                {
-                    return;
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    maxConcurrency = fileMetadata.parallel - Convert.ToInt32(retry * fileMetadata.parallel / maxRetry);
-                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-                    fileMetadata.lastMaxConcurrency = maxConcurrency;
-
-                    // Failed to upload file, retrying
-                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    // Failed to upload file, retrying
-                    double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-                    System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
-                }
+                HandleUploadResult(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
             }
             if (lastErr != null)
             {
@@ -230,6 +179,44 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 string msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
                 throw new Exception(msg);
+            }
+        }
+
+        /// <summary>
+        /// Handle upload result.
+        /// </summary>
+        /// <param name="fileMetadata">The file metadata of the file to upload.</param>
+        /// <param name="maxConcurrency">The max Concurrency value.</param>
+        /// <param name="lastErr">The Exception.</param>
+        /// <param name="retry">The number of retry</param>
+        /// <param name="maxRetry">The max retry</param>
+        private static void HandleUploadResult(ref SFFileMetadata fileMetadata, ref int maxConcurrency, ref Exception lastErr, int retry, int maxRetry)
+        {
+            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            {
+                return;
+            }
+            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+            {
+                lastErr = fileMetadata.lastError;
+
+                maxConcurrency = fileMetadata.parallel - Convert.ToInt32(retry * fileMetadata.parallel / maxRetry);
+                maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
+                fileMetadata.lastMaxConcurrency = maxConcurrency;
+
+                // Failed to upload file, retrying
+                double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+                System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
+            }
+            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+            {
+                lastErr = fileMetadata.lastError;
+
+                // Failed to upload file, retrying
+                double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+                System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
             }
         }
 
@@ -392,28 +379,9 @@ namespace Snowflake.Data.Core.FileTransfer
                     fileMetadata.destFileSize = fileInfo.Length;
                     return;
                 }
-                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                else
                 {
-                    return;
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-                    // Failed to download file, retrying with max concurrency
-                    maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
-                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-                    fileMetadata.lastMaxConcurrency = maxConcurrency;
-
-                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-                    System.Threading.Thread.Sleep(sleepingTime);
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-                    System.Threading.Thread.Sleep(sleepingTime);
+                    HandleDownloadFileErr(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
                 }
             }
             if (lastErr != null)
@@ -498,28 +466,9 @@ namespace Snowflake.Data.Core.FileTransfer
                     fileMetadata.destFileSize = fileInfo.Length;
                     return;
                 }
-                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                else
                 {
-                    return;
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-                    // Failed to download file, retrying with max concurrency
-                    maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
-                    maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-                    fileMetadata.lastMaxConcurrency = maxConcurrency;
-
-                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-                    System.Threading.Thread.Sleep(sleepingTime);
-                }
-                else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
-                {
-                    lastErr = fileMetadata.lastError;
-
-                    int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-                    System.Threading.Thread.Sleep(sleepingTime);
+                    HandleDownloadFileErr(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
                 }
             }
             if (lastErr != null)
@@ -530,6 +479,41 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
                 throw lastErr;
+            }
+        }
+
+        /// <summary>
+        /// Handle download result.
+        /// </summary>
+        /// <param name="fileMetadata">The file metadata of the file to download.</param>
+        /// <param name="maxConcurrency">The max Concurrency value.</param>
+        /// <param name="lastErr">The Exception.</param>
+        /// <param name="retry">The number of retry</param>
+        /// <param name="maxRetry">The max retry</param>
+        private static void HandleDownloadFileErr(ref SFFileMetadata fileMetadata, ref int maxConcurrency, ref Exception lastErr, int retry, int maxRetry)
+        {
+            if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            {
+                return;
+            }
+            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+            {
+                lastErr = fileMetadata.lastError;
+                // Failed to download file, retrying with max concurrency
+                maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
+                maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
+                fileMetadata.lastMaxConcurrency = maxConcurrency;
+
+                int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                System.Threading.Thread.Sleep(sleepingTime);
+            }
+            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+            {
+                lastErr = fileMetadata.lastError;
+
+                int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+                System.Threading.Thread.Sleep(sleepingTime);
             }
         }
 

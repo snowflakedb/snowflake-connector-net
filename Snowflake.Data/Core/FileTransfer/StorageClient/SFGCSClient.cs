@@ -261,38 +261,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
         {
-            // Create the encryption header value
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
-            {
-                EncryptionMode = "FullBlob",
-                WrappedContentKey = new WrappedContentInfo
-                {
-                    KeyId = "symmKey1",
-                    EncryptedKey = encryptionMetadata.key,
-                    Algorithm = "AES_CBC_256"
-                },
-                EncryptionAgent = new EncryptionAgentInfo
-                {
-                    Protocol = "1.0",
-                    EncryptionAlgorithm = "AES_CBC_256"
-                },
-                ContentEncryptionIV = encryptionMetadata.iv,
-                KeyWrappingMetadata = new KeyWrappingMetadataInfo
-                {
-                    EncryptionLibrary = "Java 5.3.0"
-                }
-            });
-
-            // Set the meta header values
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-sfc-digest", fileMetadata.sha256Digest);
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-encryptiondata", encryptionData);
-
-            // Convert file bytes to stream
-            StreamContent strm = new StreamContent(new MemoryStream(fileBytes));
-            // Set the stream content type
-            strm.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
+            StreamContent strm = GetUploadStream(fileMetadata, fileBytes, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
@@ -316,6 +285,31 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        {
+            StreamContent strm = GetUploadStream(fileMetadata, fileBytes, encryptionMetadata);
+            try
+            {
+                // Issue the POST/PUT request
+                HttpResponseMessage response = await HttpClient.PutAsync(fileMetadata.presignedUrl, strm, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
+                return;
+            }
+
+            fileMetadata.destFileSize = fileMetadata.uploadSize;
+            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+        }
+
+        /// <summary>
+        /// Get upload stream.
+        /// </summary>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        /// <returns>Stream content.</returns>
+        private StreamContent GetUploadStream(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the encryption header value
             string encryptionData = JsonConvert.SerializeObject(new EncryptionData
@@ -349,19 +343,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Set the stream content type
             strm.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-            try
-            {
-                // Issue the POST/PUT request
-                HttpResponseMessage response = await HttpClient.PutAsync(fileMetadata.presignedUrl, strm, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+            return strm;
         }
 
         /// <summary>
@@ -387,45 +369,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                     responseTask.Result.CopyTo(fileStream);
                 }
-
-                HttpResponseHeaders headers = response.Headers;
-                IEnumerable<string> values;
-
-                // Get header values
-                dynamic encryptionData = null;
-                if (headers.TryGetValues(GCS_METADATA_ENCRYPTIONDATAPROP, out values))
-                {
-                    encryptionData = JsonConvert.DeserializeObject(values.First());
-                }
-
-                string matDesc = null;
-                if (headers.TryGetValues(GCS_METADATA_MATDESC_KEY, out values))
-                {
-                    matDesc = values.First();
-                }
-
-                // Get encryption metadata from encryption data header value
-                SFEncryptionMetadata encryptionMetadata = null;
-                if (encryptionData != null)
-                {
-                    encryptionMetadata = new SFEncryptionMetadata
-                    {
-                        iv = encryptionData["ContentEncryptionIV"],
-                        key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                        matDesc = matDesc
-                    };
-                    fileMetadata.encryptionMetadata = encryptionMetadata;
-                }
-
-                if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out values))
-                {
-                    fileMetadata.sha256Digest = values.First();
-                }
-
-                if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out values))
-                {
-                    fileMetadata.srcFileSize = (long)Convert.ToDouble(values.First());
-                }
+                HandleDownloadResponse(response, fileMetadata);
             }
             catch (Exception ex)
             {
@@ -454,45 +398,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     var stream = await response.Content.ReadAsStreamAsync();
                     stream.CopyTo(fileStream);
                 }
-
-                HttpResponseHeaders headers = response.Headers;
-                IEnumerable<string> values;
-
-                // Get header values
-                dynamic encryptionData = null;
-                if (headers.TryGetValues(GCS_METADATA_ENCRYPTIONDATAPROP, out values))
-                {
-                    encryptionData = JsonConvert.DeserializeObject(values.First());
-                }
-
-                string matDesc = null;
-                if (headers.TryGetValues(GCS_METADATA_MATDESC_KEY, out values))
-                {
-                    matDesc = values.First();
-                }
-
-                // Get encryption metadata from encryption data header value
-                SFEncryptionMetadata encryptionMetadata = null;
-                if (encryptionData != null)
-                {
-                    encryptionMetadata = new SFEncryptionMetadata
-                    {
-                        iv = encryptionData["ContentEncryptionIV"],
-                        key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                        matDesc = matDesc
-                    };
-                    fileMetadata.encryptionMetadata = encryptionMetadata;
-                }
-
-                if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out values))
-                {
-                    fileMetadata.sha256Digest = values.First();
-                }
-
-                if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out values))
-                {
-                    fileMetadata.srcFileSize = (long)Convert.ToDouble(values.First());
-                }
+                HandleDownloadResponse(response, fileMetadata);
             }
             catch (Exception ex)
             {
@@ -503,6 +409,59 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
+        /// <summary>
+        /// Handle download http response.
+        /// </summary>
+        /// <param name="response">The HTTP response message.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        private void HandleDownloadResponse(HttpResponseMessage response, SFFileMetadata fileMetadata)
+        {
+            HttpResponseHeaders headers = response.Headers;
+            IEnumerable<string> values;
+
+            // Get header values
+            dynamic encryptionData = null;
+            if (headers.TryGetValues(GCS_METADATA_ENCRYPTIONDATAPROP, out values))
+            {
+                encryptionData = JsonConvert.DeserializeObject(values.First());
+            }
+
+            string matDesc = null;
+            if (headers.TryGetValues(GCS_METADATA_MATDESC_KEY, out values))
+            {
+                matDesc = values.First();
+            }
+
+            // Get encryption metadata from encryption data header value
+            SFEncryptionMetadata encryptionMetadata = null;
+            if (encryptionData != null)
+            {
+                encryptionMetadata = new SFEncryptionMetadata
+                {
+                    iv = encryptionData["ContentEncryptionIV"],
+                    key = encryptionData["WrappedContentKey"]["EncryptedKey"],
+                    matDesc = matDesc
+                };
+                fileMetadata.encryptionMetadata = encryptionMetadata;
+            }
+
+            if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out values))
+            {
+                fileMetadata.sha256Digest = values.First();
+            }
+
+            if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out values))
+            {
+                fileMetadata.srcFileSize = (long)Convert.ToDouble(values.First());
+            }
+        }
+
+        /// <summary>
+        /// Handle file header error.
+        /// </summary>
+        /// <param name="ex">The file header exception.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <returns>File Metadata</returns>
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
@@ -529,6 +488,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return fileMetadata;
         }
 
+        /// <summary>
+        /// Handle file upload error.
+        /// </summary>
+        /// <param name="ex">The file header exception.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <returns>File Metadata</returns>
         private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
             HttpRequestException err = (HttpRequestException)ex.InnerException;
@@ -550,6 +515,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return fileMetadata;
         }
 
+        /// <summary>
+        /// Handle file download error.
+        /// </summary>
+        /// <param name="ex">The file header exception.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <returns>File Metadata</returns>
         private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
             HttpRequestException err = (HttpRequestException)ex.InnerException;

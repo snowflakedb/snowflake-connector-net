@@ -112,22 +112,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 return null;
             }
 
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-            dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
-            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
-            {
-                iv = encryptionData["ContentEncryptionIV"],
-                key = encryptionData.WrappedContentKey["EncryptedKey"],
-                matDesc = response.Metadata["matdesc"]
-            };
-
-            return new FileHeader
-            {
-                digest = response.Metadata["sfcdigest"],
-                contentLength = response.ContentLength,
-                encryptionMetadata = encryptionMetadata
-            };
+            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
@@ -156,6 +141,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 return null;
             }
 
+            return HandleFileHeaderResponse(ref fileMetadata, response);
+        }
+
+        /// <summary>
+        /// Get the file header.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="response">The Amazon S3 response.</param>
+        /// <returns>The file header of the S3 file.</returns>
+        private FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
+        {
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
             dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
@@ -182,42 +178,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
         {
-            // Create the JSON for the encryption data header
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
-            {
-                EncryptionMode = "FullBlob",
-                WrappedContentKey = new WrappedContentInfo
-                {
-                    KeyId = "symmKey1",
-                    EncryptedKey = encryptionMetadata.key,
-                    Algorithm = "AES_CBC_256"
-                },
-                EncryptionAgent = new EncryptionAgentInfo
-                {
-                    Protocol = "1.0",
-                    EncryptionAlgorithm = "AES_CBC_256"
-                },
-                ContentEncryptionIV = encryptionMetadata.iv,
-                KeyWrappingMetadata = new KeyWrappingMetadataInfo
-                {
-                    EncryptionLibrary = "Java 5.3.0"
-                }
-            });
-
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
                new Dictionary<string, string>();
-            metadata.Add("encryptiondata", encryptionData);
-            metadata.Add("matdesc", encryptionMetadata.matDesc);
-            metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Get the Azure client
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
-
+            BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
@@ -242,6 +207,35 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
+            // Create the metadata to use for the header
+            IDictionary<string, string> metadata =
+               new Dictionary<string, string>();
+
+            BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
+            try
+            {
+                // Issue the POST/PUT request
+                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                blobClient.SetMetadata(metadata);
+            }
+            catch (Exception ex)
+            {
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
+                return;
+            }
+
+            fileMetadata.destFileSize = fileMetadata.uploadSize;
+            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+        }
+
+        /// <summary>
+        /// Get upload file blob client.
+        /// </summary>
+        /// <param name="metadata"> The header metadata</param>
+        /// <param name="fileMetadata">The Azure file metadata.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string>metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+        {
             // Create the JSON for the encryption data header
             string encryptionData = JsonConvert.SerializeObject(new EncryptionData
             {
@@ -265,8 +259,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             });
 
             // Create the metadata to use for the header
-            IDictionary<string, string> metadata =
-               new Dictionary<string, string>();
             metadata.Add("encryptiondata", encryptionData);
             metadata.Add("matdesc", encryptionMetadata.matDesc);
             metadata.Add("sfcdigest", fileMetadata.sha256Digest);
@@ -276,22 +268,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
-
-            try
-            {
-                // Issue the POST/PUT request
-                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
-                blobClient.SetMetadata(metadata);
-            }
-            catch (Exception ex)
-            {
-                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+            return containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
         }
 
         /// <summary>
