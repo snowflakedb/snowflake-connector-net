@@ -572,7 +572,7 @@ namespace Snowflake.Data.Core
             var trimmedQuery = builder.ToString();
             trimmedQuery = trimmedQuery.Trim();
             logger.Debug("Trimmed query : " + trimmedQuery);
-
+          
             return trimmedQuery;
         }
 

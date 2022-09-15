@@ -274,10 +274,11 @@ namespace Snowflake.Data.Tests
                 rowCount = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, rowCount);
 
-                string insertCommand = "insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => 35000)))";
+                int largeTableRowCount = 100000;
+                string insertCommand = $"insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(35000, insertReader.RecordsAffected);
+                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
                 string selectCommand = "select * from del_test";
                 cmd.CommandText = selectCommand;
@@ -290,13 +291,13 @@ namespace Snowflake.Data.Tests
                         var obj = new object[reader.FieldCount];
                         reader.GetValues(obj);
                         var val = obj[0] ?? System.String.Empty;
-                        if (!val.ToString().Contains("u007f"))
+                        if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
                         {
                             rowCount++;
                         }
                     }
                 }
-                Assert.AreEqual(35000, rowCount);
+                Assert.AreEqual(largeTableRowCount, rowCount);
 
                 cmd.CommandText = "drop table if exists del_test";
                 rowCount = cmd.ExecuteNonQuery();
