@@ -4,10 +4,11 @@ using System.Text;
 using System.Collections.Concurrent;
 using System.Security;
 using Snowflake.Data.Log;
+using System.Linq;
 
 namespace Snowflake.Data.Client
 {
-    class SnowflakeDbConnectionPool
+    public class SnowflakeDbConnectionPool
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
@@ -17,6 +18,7 @@ namespace Snowflake.Data.Client
         private static long timeout;
         private const int MAX_POOL_SIZE = 10;
         private const long TIMEOUT = 3600;
+        private static bool pooling = true;
 
         private static void initConnectionPool()
         {
@@ -41,7 +43,7 @@ namespace Snowflake.Data.Client
             {
                 long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-                foreach (var item in connectionPool)
+                foreach (var item in connectionPool.ToList())
                 {
                     if(item._poolTimeout <= timeNow)
                     {
@@ -58,6 +60,8 @@ namespace Snowflake.Data.Client
         internal static SnowflakeDbConnection getConnection(string connStr)
         {
             logger.Debug("SnowflakeDbConnectionPool::getConnection");
+            if (!pooling)
+                return null;
             if (connectionPool == null)
             {
                 initConnectionPool();
@@ -81,6 +85,8 @@ namespace Snowflake.Data.Client
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
             logger.Debug("SnowflakeDbConnectionPool::addConnection");
+            if (!pooling)
+                return false;
             lock (_connectionPoolLock)
             {
                 if (connectionPool == null)
@@ -144,6 +150,17 @@ namespace Snowflake.Data.Client
         public static int GetCurrentPoolSize()
         {
             return connectionPool.Count;
+        }
+
+        public static void SetPooling(bool isEnable)
+        {
+            pooling = isEnable;
+            ClearAllPools();
+        }
+
+        public static bool GetPooling()
+        {
+            return pooling;
         }
     }
 }
