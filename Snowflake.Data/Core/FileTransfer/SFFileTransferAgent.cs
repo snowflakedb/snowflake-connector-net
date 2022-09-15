@@ -133,9 +133,9 @@ namespace Snowflake.Data.Core
         private string destStagePath = null;
 
         /// <summary>
-        /// Placeholder threshold value.
+        /// Placeholder threshold value using max long value.
         /// </summary>
-        private long DATA_SIZE_THRESHOLD = 9223372036854775807;
+        private long DATA_SIZE_THRESHOLD = Int64.MaxValue;
 
         /// <summary>
         /// Constructor.
