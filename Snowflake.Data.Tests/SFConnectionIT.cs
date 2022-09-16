@@ -1364,9 +1364,10 @@ namespace Snowflake.Data.Tests
 
                     }
                     stopwatch.Stop();
+                    int detla = 10; //in case server time slower.
 
                     // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
                     // But never more than 1 sec (max backoff) after the default timeout
                     Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
 
@@ -1398,9 +1399,10 @@ namespace Snowflake.Data.Tests
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
+                int detla = 10; //in case server time slower.
 
                 // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
                 // But never more than 16 sec (max backoff) after the default timeout
                 Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
 
