@@ -4,6 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
@@ -51,52 +53,21 @@ namespace Snowflake.Data.Core
 
         public void Upload(Dictionary<string, BindingDTO> bindings)
         {
-            if(bindings == null)
+            if (bindings == null)
             {
                 return;
             }
-            
-            List<BindingDTO> arrbinds = bindings.Values.ToList();
-            List<List<object>> bindList = new List<List<object>>();
-            List<string> types = new List<string>(); // for the binding types
-            List<string> dataRows = new List<string>(); // for the converted data string 
-            int rowSize = ((List<object>)arrbinds[0].value).Count;
-            int paramSize = arrbinds.Count;
 
-            foreach(BindingDTO bind in arrbinds)
-            {
-                List<object> values = (List<object>)bind.value;
-                types.Add(bind.type);
-                if(values.Count != rowSize)
-                {
-                    //throw here different row size
-                }
-                bindList.Add(values);
-            }
-
-            for(int i=0; i<rowSize; i++)
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int j=0; j<paramSize; j++)
-                {
-                    if (j > 0)
-                    {
-                        sb.Append(',');
-                    }
-
-                    sb.Append(GetCSVData(types[j], (string)bindList[j][i]));
-                }
-                sb.Append('\n');
-                dataRows.Add(sb.ToString());
-            }
+            List<string> dataRows = new List<string>(); ;
+            CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
             int rowNum = 0;
             int curBytes = 0;
-            
+
             while (rowNum < dataRows.Count)
             {
-                while(curBytes < inputStreamBufferSize && rowNum < dataRows.Count)
+                while (curBytes < inputStreamBufferSize && rowNum < dataRows.Count)
                 {
                     curBytes += dataRows[rowNum].Length;
                     rowNum++;
@@ -120,11 +91,96 @@ namespace Snowflake.Data.Core
                     startIndex = rowNum;
                     curBytes = 0;
                 }
-                catch(IOException e)
+                catch (IOException e)
                 {
                     // failure using stream put
-                    throw new Exception("file stream upload error.");
+                    throw new Exception("file stream upload error." + e.ToString());
                 }
+            }
+        }
+
+        internal async Task UploadAsync(Dictionary<string, BindingDTO> bindings, CancellationToken cancellationToken)
+        {
+            if (bindings == null)
+            {
+                return;
+            }
+
+            List<string> dataRows = new List<string>(); ;
+            CreateDataRows(ref dataRows, bindings);
+
+            int startIndex = 0;
+            int rowNum = 0;
+            int curBytes = 0;
+
+            while (rowNum < dataRows.Count)
+            {
+                while (curBytes < inputStreamBufferSize && rowNum < dataRows.Count)
+                {
+                    curBytes += dataRows[rowNum].Length;
+                    rowNum++;
+                }
+
+                StringBuilder sBuffer = new StringBuilder();
+                MemoryStream ms = new MemoryStream();
+                StreamWriter tw = new StreamWriter(ms);
+
+                for (int i = startIndex; i < rowNum; i++)
+                {
+                    sBuffer.Append(dataRows[i]);
+                }
+                tw.Write(sBuffer.ToString());
+                tw.Flush();
+
+                try
+                {
+                    string fileName = (++fileCount).ToString();
+                    await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
+                    startIndex = rowNum;
+                    curBytes = 0;
+                }
+                catch (IOException e)
+                {
+                    // failure using stream put
+                    throw new Exception("file stream upload error." + e.ToString());
+                }
+            }
+        }
+
+        private void CreateDataRows(ref List<string> dataRows, Dictionary<string, BindingDTO> bindings)
+        {
+            List<BindingDTO> arrbinds = bindings.Values.ToList();
+            List<List<object>> bindList = new List<List<object>>();
+            List<string> types = new List<string>(); // for the binding types
+            dataRows = new List<string>(); // for the converted data string 
+            int rowSize = ((List<object>)arrbinds[0].value).Count;
+            int paramSize = arrbinds.Count;
+
+            foreach (BindingDTO bind in arrbinds)
+            {
+                List<object> values = (List<object>)bind.value;
+                types.Add(bind.type);
+                if (values.Count != rowSize)
+                {
+                    //throw here different row size
+                }
+                bindList.Add(values);
+            }
+
+            for (int i = 0; i < rowSize; i++)
+            {
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < paramSize; j++)
+                {
+                    if (j > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append(GetCSVData(types[j], (string)bindList[j][i]));
+                }
+                sb.Append('\n');
+                dataRows.Add(sb.ToString());
             }
         }
 
@@ -149,6 +205,25 @@ namespace Snowflake.Data.Core
             
         }
 
+        internal async Task UploadStreamAsync(MemoryStream stream, string destFileName, CancellationToken cancellationToken)
+        {
+            await CreateStageAsync(cancellationToken).ConfigureAwait(false);
+            string stageName = this.stagePath;
+            if (stageName == null)
+            {
+                throw new Exception("Stage name is null.");
+            }
+            if (destFileName == null)
+            {
+                throw new Exception("file name is null.");
+            }
+
+            string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
+
+            SFStatement statement = new SFStatement(session);
+            statement.SetUploadStream(stream, destFileName, stagePath);
+            await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
+        }
         private string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
@@ -158,6 +233,18 @@ namespace Snowflake.Data.Core
             DateTimeOffset dateTimeOffset = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
             switch (sType)
             {
+                case "TEXT":
+                    if (sValue == null)
+                        return "";
+                    if (sValue == "")
+                        return "\"\"";
+                    if (sValue.IndexOf('"') >= 0
+                        || sValue.IndexOf(',') >= 0
+                        || sValue.IndexOf('\\') >= 0
+                        || sValue.IndexOf('\n') >= 0
+                        || sValue.IndexOf('\t') >= 0)
+                        return '"' + sValue.Replace("\"", "\"\"") + '"';
+                    return sValue;
                 case "DATE":
                     long dateLong = long.Parse(sValue);
                     DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
@@ -212,6 +299,29 @@ namespace Snowflake.Data.Core
                         logger.Error("Failed to create temporary stage for array binds.", e);
                         throw e;
                     }
+                }
+            }
+        }
+
+        internal async Task CreateStageAsync(CancellationToken cancellationToken)
+        {
+            if (session.GetArrayBindStage() != null)
+            {
+                return;
+            }
+            if (session.GetArrayBindStage() == null)
+            {
+                try
+                {
+                    SFStatement statement = new SFStatement(session);
+                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, cancellationToken).ConfigureAwait(false);
+                    session.SetArrayBindStage(STAGE_NAME);
+                }
+                catch (Exception e)
+                {
+                    session.SetArrayBindStageThreshold(0);
+                    logger.Error("Failed to create temporary stage for array binds.", e);
+                    throw e;
                 }
             }
         }

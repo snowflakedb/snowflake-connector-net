@@ -728,7 +728,6 @@ namespace Snowflake.Data.Tests
                     cmd.ExecuteNonQuery();
 
                 }
-
                 conn.Close();
             }
         }
