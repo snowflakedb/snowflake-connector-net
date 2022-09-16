@@ -184,35 +184,7 @@ namespace Snowflake.Data.Core
 
             if (CommandTypes.UPLOAD == CommandType)
             {
-                // Initialize the list of actual files to upload
-                List<string> expandedSrcLocations = new List<string>();
-                if (memoryStream != null)
-                {
-                    // stream put only support single file
-                    if (TransferMetadata.src_locations.Count != 1)
-                    {
-                        throw new ArgumentException("Invalid stream put.");
-                    }
-                    expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
-                }
-                else
-                {
-                    foreach (string location in TransferMetadata.src_locations)
-                    {
-                        expandedSrcLocations.AddRange(expandFileNames(location));
-                    }
-                }
-
-                // Initialize each file specific metadata (for example, file path, name and size) and
-                // put it in1 of the 2 lists : Small files and large files based on a threshold
-                // extracted from the command response
-                initFileMetadata(expandedSrcLocations);
-
-                if (expandedSrcLocations.Count == 0)
-                {
-                    throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
-                }
-                
+                initFileMetadataForUpload();
             }
             else if (CommandTypes.DOWNLOAD == CommandType)
             {
@@ -246,6 +218,50 @@ namespace Snowflake.Data.Core
             else if (CommandTypes.DOWNLOAD == CommandType)
             {
                 download();
+            }
+        }
+
+        public async Task executeAsync(CancellationToken cancellationToken)
+        {
+            // Initialize the encryption metadata
+            initEncryptionMaterial();
+
+            if (CommandTypes.UPLOAD == CommandType)
+            {
+                initFileMetadataForUpload();
+            }
+            else if (CommandTypes.DOWNLOAD == CommandType)
+            {
+                initFileMetadata(TransferMetadata.src_locations);
+
+                Directory.CreateDirectory(TransferMetadata.localLocation);
+            }
+
+            // Update the file metadata with GCS presigned URL
+            await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+
+            foreach (SFFileMetadata fileMetadata in FilesMetas)
+            {
+                // If the file is larger than the threshold, add it to the large files list
+                // Otherwise add it to the small files list
+                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                {
+                    LargeFilesMetas.Add(fileMetadata);
+                }
+                else
+                {
+                    SmallFilesMetas.Add(fileMetadata);
+                }
+            }
+
+            // Check command type
+            if (CommandTypes.UPLOAD == CommandType)
+            {
+                await uploadAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else if (CommandTypes.DOWNLOAD == CommandType)
+            {
+                await downloadAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -324,6 +340,32 @@ namespace Snowflake.Data.Core
             }
         }
 
+        /// <summary>
+        /// Upload files sequentially or in parallel.
+        /// </summary>
+        private async Task uploadAsync(CancellationToken cancellationToken)
+        {
+            //Start the upload tasks(for small files upload in parallel using the given parallelism
+            //factor, for large file updload sequentially)
+            //For each file, using the remote client
+            if (0 < LargeFilesMetas.Count)
+            {
+                Logger.Debug("Start uploading large files");
+                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+                {
+                    await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                }
+                Logger.Debug("End uploading large files");
+            }
+
+            if (0 < SmallFilesMetas.Count)
+            {
+                Logger.Debug("Start uploading small files");
+                await UploadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
+                Logger.Debug("End uploading small files");
+            }
+        }
+
 
         /// <summary>
         /// Download files sequentially or in parallel.
@@ -346,6 +388,31 @@ namespace Snowflake.Data.Core
             {
                 Logger.Debug("Start uploading small files");
                 DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
+                Logger.Debug("End uploading small files");
+            }
+        }
+
+        /// <summary>
+        /// Download files sequentially or in parallel.
+        /// </summary>
+        private async Task downloadAsync(CancellationToken cancellationToken)
+        {
+            //Start the download tasks(for small files download in parallel using the given parallelism
+            //factor, for large file download sequentially)
+            //For each file, using the remote client
+            if (0 < LargeFilesMetas.Count)
+            {
+                Logger.Debug("Start uploading large files");
+                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+                {
+                    await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                }
+                Logger.Debug("End uploading large files");
+            }
+            if (0 < SmallFilesMetas.Count)
+            {
+                Logger.Debug("Start uploading small files");
+                await DownloadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
                 Logger.Debug("End uploading small files");
             }
         }
@@ -389,6 +456,48 @@ namespace Snowflake.Data.Core
                     }
                 }
             }            
+        }
+
+        /// <summary>
+        /// Get the presigned URL async method and update the file metadata.
+        /// </summary>
+        internal async Task updatePresignedUrlAsync(CancellationToken cancellationToken)
+        {
+            // Presigned url only applies to GCS
+            if (TransferMetadata.stageInfo.locationType == "GCS")
+            {
+                if (CommandTypes.UPLOAD == CommandType)
+                {
+                    foreach (SFFileMetadata fileMeta in FilesMetas)
+                    {
+                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string fileNameToReplaceWith = fileMeta.destFileName;
+                        string queryWithSingleFile = Query;
+                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+
+                        SFStatement sfStatement = new SFStatement(Session);
+                        sfStatement.isPutGetQuery = true;
+
+                        PutGetExecResponse response = await
+                            sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                                0,
+                                queryWithSingleFile,
+                                null,
+                                false,
+                                cancellationToken).ConfigureAwait(false);
+
+                        fileMeta.stageInfo = response.data.stageInfo;
+                        fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+                    }
+                }
+                else if (CommandTypes.DOWNLOAD == CommandType)
+                {
+                    for (int index = 0; index < FilesMetas.Count; index++)
+                    {
+                        FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -758,6 +867,25 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
+        /// Renew expired client.
+        /// </summary>
+        /// <returns>The renewed storage client.</returns>
+        private async Task<ISFRemoteStorageClient> renewExpiredClientAsync(CancellationToken cancellationToken)
+        {
+            SFStatement sfStatement = new SFStatement(Session);
+
+            PutGetExecResponse response = await
+                sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                    0,
+                    TransferMetadata.command,
+                    null,
+                    false,
+                    cancellationToken).ConfigureAwait(false);
+
+            return SFRemoteStorageUtil.GetRemoteStorageType(response.data);
+        }
+
+        /// <summary>
         /// Upload a list of files in parallel using the given parallelization factor.
         /// </summary>
         /// <param name="fileMetadata">The metadata of the file to upload.</param>
@@ -774,6 +902,35 @@ namespace Snowflake.Data.Core
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
                 updatePresignedUrl();
+            }
+
+            ResultsMetas.Add(resultMetadata);
+
+            if (INJECT_WAIT_IN_PUT > 0)
+            {
+                Thread.Sleep(INJECT_WAIT_IN_PUT);
+            }
+        }
+
+        /// <summary>
+        /// Upload a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="fileMetadata">The metadata of the file to upload.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private async Task UploadFilesInSequentialAsync(
+            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            /// The storage client used to upload/download data from files or streams
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+            SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+
+            if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+            {
+                fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            {
+                await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
             }
 
             ResultsMetas.Add(resultMetadata);
@@ -812,6 +969,35 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
+        /// Download a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="fileMetadata">The metadata of the file to download.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private async Task DownloadFilesInSequentialAsync(
+            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            /// The storage client used to upload/download data from files or streams
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+            SFFileMetadata resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+
+            if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+            {
+                fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            {
+                await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            ResultsMetas.Add(resultMetadata);
+
+            if (INJECT_WAIT_IN_PUT > 0)
+            {
+                Thread.Sleep(INJECT_WAIT_IN_PUT);
+            }
+        }
+
+        /// <summary>
         /// Upload a list of files in parallel using the given parallelization factor.
         /// </summary>
         /// <param name="filesMetadata">The list of files to upload in parallel.</param>
@@ -832,6 +1018,24 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
+        /// Upload a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="filesMetadata">The list of files to upload in parallel.</param>
+        /// <param name="parallel">The number of files to upload in parallel.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private async Task UploadFilesInParallelAsync(
+            List<SFFileMetadata> filesMetadata,
+            int parallel,
+            CancellationToken cancellationToken)
+        {
+            var listOfActions = new List<Action>();
+            foreach (SFFileMetadata fileMetadata in filesMetadata)
+            {
+                await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
         /// Download a list of files in parallel using the given parallelization factor.
         /// </summary>
         /// <param name="filesMetadata">The list of files to download in parallel.</param>
@@ -845,6 +1049,27 @@ namespace Snowflake.Data.Core
             foreach (SFFileMetadata fileMetadata in filesMetadata)
             {
                 listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
+            }
+
+            var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+            Parallel.Invoke(options, listOfActions.ToArray());
+        }
+
+        /// <summary>
+        /// Download a list of files in parallel using the given parallelization factor.
+        /// </summary>
+        /// <param name="filesMetadata">The list of files to download in parallel.</param>
+        /// <param name="parallel">The number of files to download in parallel.</param>
+        /// <returns>The result outcome for each file.</returns>
+        private async Task DownloadFilesInParallelAsync(
+            List<SFFileMetadata> filesMetadata,
+            int parallel,
+            CancellationToken cancellationToken)
+        {
+            var listOfActions = new List<Action>();
+            foreach (SFFileMetadata fileMetadata in filesMetadata)
+            {
+                await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
 
             var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
@@ -899,6 +1124,53 @@ namespace Snowflake.Data.Core
             return fileMetadata;
         }
 
+        /// <summary>
+        /// Upload a single file.
+        /// </summary>
+        /// <param name="storageClient">Storage client to upload the file with.</param>
+        /// <param name="fileMetadata">The metadata of the file to upload.</param>
+        /// <returns>The result outcome.</returns>
+        private async Task<SFFileMetadata> UploadSingleFileAsync(
+            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
+
+            // Create tmp folder to store compressed files
+            fileMetadata.tmpDir = GetTemporaryDirectory();
+
+            try
+            {
+                // Compress the file if needed
+                if (fileMetadata.requireCompress)
+                {
+                    compressFileWithGzip(fileMetadata);
+                }
+
+                // Calculate the digest
+                getDigestAndSizeForFile(fileMetadata);
+
+                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                {
+                    // Upload the file using the remote client SDK and the file metadata
+                    await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    // Upload the file using the local client SDK and the file metadata
+                    SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                Directory.Delete(fileMetadata.tmpDir, true);
+            }
+
+            return fileMetadata;
+        }
 
         /// <summary>
         /// Download a single file.
@@ -918,6 +1190,43 @@ namespace Snowflake.Data.Core
                 {
                     // Upload the file using the remote client SDK and the file metadata
                     SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
+                }
+                else
+                {
+                    // Upload the file using the local client SDK and the file metadata
+                    SFLocalStorageUtil.DownloadOneFile(fileMetadata);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                Directory.Delete(fileMetadata.tmpDir, true);
+            }
+
+            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Download a single file.
+        /// </summary>
+        /// <param name="storageClient">Storage client to download the file with.</param>
+        /// <param name="fileMetadata">The metadata of the file to download.</param>
+        /// <returns>The result outcome.</returns>
+        private async Task<SFFileMetadata> DownloadSingleFileAsync(
+            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        {
+            // Create tmp folder to store compressed files
+            fileMetadata.tmpDir = GetTemporaryDirectory();
+
+            try
+            {
+                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                {
+                    // Upload the file using the remote client SDK and the file metadata
+                    await SFRemoteStorageUtil.DownloadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -966,6 +1275,38 @@ namespace Snowflake.Data.Core
             else
             {
                 return StorageClientType.REMOTE;
+            }
+        }
+
+        private void initFileMetadataForUpload()
+        {
+            // Initialize the list of actual files to upload
+            List<string> expandedSrcLocations = new List<string>();
+            if (memoryStream != null)
+            {
+                // stream put only support single file
+                if (TransferMetadata.src_locations.Count != 1)
+                {
+                    throw new ArgumentException("Invalid stream put.");
+                }
+                expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
+            }
+            else
+            {
+                foreach (string location in TransferMetadata.src_locations)
+                {
+                    expandedSrcLocations.AddRange(expandFileNames(location));
+                }
+            }
+
+            // Initialize each file specific metadata (for example, file path, name and size) and
+            // put it in1 of the 2 lists : Small files and large files based on a threshold
+            // extracted from the command response
+            initFileMetadata(expandedSrcLocations);
+
+            if (expandedSrcLocations.Count == 0)
+            {
+                throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
             }
         }
     }

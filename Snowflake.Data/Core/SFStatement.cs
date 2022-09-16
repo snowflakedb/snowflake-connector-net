@@ -250,6 +250,34 @@ namespace Snowflake.Data.Core
             string trimmedSql = TrimSql(sql);
 
             registerQueryCancellationCallback(timeout, cancellationToken);
+            
+            int arrayBindingThreshold = 0;
+            if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+            {
+                String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                arrayBindingThreshold = Int32.Parse(val);
+            }
+
+            int numBinding = GetBindingCount(bindings);
+
+            if (0 < arrayBindingThreshold
+                        && arrayBindingThreshold <= numBinding
+                        && !describeOnly)
+            {
+                try
+                {
+                    AssignQueryRequestId();
+                    SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                    await uploader.UploadAsync(bindings, cancellationToken).ConfigureAwait(false);
+                    _bindStage = uploader.getStagePath();
+                    ClearQueryRequestId();
+                }
+                catch (Exception e)
+                {
+                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
+                }
+            }
+            
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
             try
             {
@@ -260,7 +288,7 @@ namespace Snowflake.Data.Core
                     response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
                     if (SessionExpired(response))
                     {
-                        SfSession.renewSession();
+                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                     }
                     else
@@ -279,7 +307,7 @@ namespace Snowflake.Data.Core
                     if (SessionExpired(response))
                     {
                         logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        SfSession.renewSession();
+                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
@@ -410,7 +438,7 @@ namespace Snowflake.Data.Core
         {
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
-            response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken);
+            response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
             return BuildResultSet(response, cancellationToken);
         }
 
@@ -552,6 +580,88 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
+        /// Execute Async a sql query and return the response.
+        /// </summary>
+        /// <param name="timeout">The query timeout.</param>
+        /// <param name="sql">The sql query.</param>
+        /// <param name="bindings">Parameter bindings or null if no parameters.</param>
+        /// <param name="describeOnly">Flag indicating if this will only return the metadata.</param>
+        /// <returns>The response data.</returns>
+        /// <exception>The http request fails or the response code is not succes</exception>
+        internal async Task<T> ExecuteAsyncHelper<T, U>(
+            int timeout,
+            string sql,
+            Dictionary<string, BindingDTO> bindings,
+            bool describeOnly,
+            CancellationToken cancellationToken
+            )
+            where T : BaseQueryExecResponse<U>
+            where U : IQueryExecResponseData
+        {
+            registerQueryCancellationCallback(timeout, CancellationToken.None);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            try
+            {
+                T response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
+                    if (SessionExpired(response))
+                    {
+                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                if (typeof(T) == typeof(QueryExecResponse))
+                {
+                    QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
+                    var lastResultUrl = queryResponse.data?.getResultUrl;
+                    while (RequestInProgress(response) || SessionExpired(response))
+                    {
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
+
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            lastResultUrl = queryResponse.data?.getResultUrl;
+                        }
+                    }
+                }
+
+                if (!response.success)
+                {
+                    throw new SnowflakeDbException(
+                        response.data.sqlState,
+                        response.code,
+                        response.message,
+                        response.data.queryId);
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+
+        /// <summary>
         /// Trim the query by removing spaces and comments at the beginning.
         /// </summary>
         /// <param name="originalSql">The original sql query.</param>
@@ -598,8 +708,6 @@ namespace Snowflake.Data.Core
             while (idx < sqlQueryLen);
 
             var trimmedQuery = builder.ToString();
-            logger.Debug("Trimmed query : " + trimmedQuery);
-
             return trimmedQuery;
         }
 
@@ -657,6 +765,27 @@ namespace Snowflake.Data.Core
             
             SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
+
+            fileTransferAgent.execute();
+
+            return fileTransferAgent.result();
+        }
+
+        internal async Task<SFBaseResultSet> ExecuteTransferAsync(string sql, CancellationToken cancellationToken)
+        {
+            isPutGetQuery = true;
+            PutGetExecResponse response =
+                await ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                     0,
+                     sql,
+                     null,
+                     false,
+                     cancellationToken).ConfigureAwait(false);
+
+            PutGetStageInfo stageInfo = new PutGetStageInfo();
+
+            SFFileTransferAgent fileTransferAgent =
+                        new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, cancellationToken);
 
             fileTransferAgent.execute();
 
