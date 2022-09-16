@@ -12,6 +12,7 @@ using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -21,9 +22,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
     /// </summary>
     class SFSnowflakeAzureClient : ISFRemoteStorageClient
     {
-        private const string EXPIRED_TOKEN = "ExpiredToken";
-        private const string NO_SUCH_KEY = "NoSuchKey";
-
         /// <summary>
         /// The attribute in the credential map containing the shared access signature token.
         /// </summary>
@@ -106,7 +104,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 response = blobClient.GetProperties();
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 return null;
@@ -135,7 +133,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 response = await blobClient.GetPropertiesAsync(null, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 return null;
@@ -189,7 +187,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 blobClient.Upload(new MemoryStream(fileBytes));
                 blobClient.SetMetadata(metadata);
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleUploadFileErr(ex, fileMetadata);
                 return;
@@ -218,7 +216,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
                 blobClient.SetMetadata(metadata);
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleUploadFileErr(ex, fileMetadata);
                 return;
@@ -292,7 +290,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 var task = blobClient.DownloadToAsync(fullDstPath);
                 task.Wait();
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
@@ -321,7 +319,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 await blobClient.DownloadToAsync(fullDstPath, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (RequestFailedException ex)
             {
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
@@ -330,13 +328,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
-        private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains(SFStorageClientUtil.BAD_REQUEST_ERR))
+            if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
+            else if (ex.Status == (int)HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -347,34 +345,34 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return fileMetadata;
         }
         
-        private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(SFStorageClientUtil.BAD_REQUEST_ERR))
+            if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
+            else if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
-                ex.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
-                ex.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
+            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
+                ex.Status == (int)HttpStatusCode.InternalServerError ||
+                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
             return fileMetadata;
         }
 
-        private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleDownloadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
+            if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
-                ex.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
-                ex.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
+            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
+                ex.Status == (int)HttpStatusCode.InternalServerError ||
+                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }

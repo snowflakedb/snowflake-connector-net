@@ -117,6 +117,13 @@ namespace Snowflake.Data.Core.FileTransfer
                     client.UploadFile(fileMetadata, fileBytes, encryptionMetadata);
                 }
 
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
+                
                 HandleUploadResult(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
             }
             if (lastErr != null)
@@ -169,6 +176,13 @@ namespace Snowflake.Data.Core.FileTransfer
                     await client.UploadFileAsync(fileMetadata, fileBytes, encryptionMetadata, cancellationToken).ConfigureAwait(false);
                 }
 
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
+                
                 HandleUploadResult(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
             }
             if (lastErr != null)
@@ -192,13 +206,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="maxRetry">The max retry</param>
         private static void HandleUploadResult(ref SFFileMetadata fileMetadata, ref int maxConcurrency, ref Exception lastErr, int retry, int maxRetry)
         {
-            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-            {
-                return;
-            }
-            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+            if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
             {
                 lastErr = fileMetadata.lastError;
 

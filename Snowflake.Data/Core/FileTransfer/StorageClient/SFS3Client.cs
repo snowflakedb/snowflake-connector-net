@@ -515,6 +515,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file metadata.</returns>
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
+
             AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
             if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == SFStorageClientUtil.BAD_REQUEST_ERR)
             {
