@@ -892,7 +892,7 @@ namespace Snowflake.Data.Core
                     false,
                     cancellationToken).ConfigureAwait(false);
 
-            return SFRemoteStorageUtil.GetRemoteStorageType(response.data);
+            return SFRemoteStorageUtil.GetRemoteStorage(response.data);
         }
 
         /// <summary>
@@ -952,7 +952,7 @@ namespace Snowflake.Data.Core
             SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
             SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
@@ -1010,7 +1010,7 @@ namespace Snowflake.Data.Core
             SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
             SFFileMetadata resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
