@@ -300,10 +300,10 @@ The Snowflake .NET driver provides the following functions for managing connecti
 | Function | Description |
 |----------|--------------|
 | SnowflakeDbConnectionPool.ClearAllPools() | Removes all connections from the connection pool. |
-| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. Set _n_=0 to disable the connection pool. |
+| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
 | SnowflakeDBConnection.SetTimeout(n) | Sets the number of seconds to keep an unresponsive connection in the connection pool.|
 | SnowflakeDbConnectionPool.GetCurrentPoolSize() | Returns the number of connections currently in the connection pool. |
-| SnowflakeDbConnectionPool.SetPooling() | Determines whether to enable (`true`) or disable (`false`) connecing pooling. |
+| SnowflakeDbConnectionPool.SetPooling() | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.|
 
 The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
 
