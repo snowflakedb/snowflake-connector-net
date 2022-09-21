@@ -928,8 +928,6 @@ namespace Snowflake.Data.Core
 
             for (int count = 0; count < 10; count++)
             {
-                resultMetadata = UploadSingleFile(fileMetadata);
-
                 if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
                 {
                     fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
