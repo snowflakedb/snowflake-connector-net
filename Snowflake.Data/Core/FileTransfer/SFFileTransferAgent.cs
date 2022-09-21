@@ -138,6 +138,11 @@ namespace Snowflake.Data.Core
         private static Mutex RenewClientMutex = new Mutex();
 
         /// <summary>
+        /// Placeholder threshold value using max long value.
+        /// </summary>
+        private long DATA_SIZE_THRESHOLD = Int64.MaxValue;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public SFFileTransferAgent(
@@ -149,6 +154,7 @@ namespace Snowflake.Data.Core
             Query = query;
             Session = session;
             TransferMetadata = responseData;
+            TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
             externalCancellationToken = cancellationToken;
         }
@@ -164,6 +170,7 @@ namespace Snowflake.Data.Core
             Query = query;
             Session = session;
             TransferMetadata = responseData;
+            TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             memoryStream = inputStream;
             streamDestFileName = filename;
             destStagePath = stagePath;
@@ -584,6 +591,9 @@ namespace Snowflake.Data.Core
                         proxyCredentials = null
                     };
 
+                    /// The storage client used to upload data from files or streams
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+
                     if (!fileMetadata.requireCompress)
                     {
                         // The file is already compressed
@@ -639,6 +649,16 @@ namespace Snowflake.Data.Core
                         parallel = TransferMetadata.parallel,
                         encryptionMaterial = TransferMetadata.encryptionMaterial[index]
                     };
+
+                    /// The storage client used to download data from files or streams
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
+                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                    if (fileHeader != null)
+                    {
+                        fileMetadata.srcFileSize = fileHeader.contentLength;
+                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                    }
 
                     FilesMetas.Add(fileMetadata);
                 }
@@ -903,9 +923,7 @@ namespace Snowflake.Data.Core
         private void UploadFilesInSequential(
             SFFileMetadata fileMetadata)
         {
-            /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, fileMetadata.proxyCredentials);
-            SFFileMetadata resultMetadata;
+            SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
             bool breakFlag = false;
 
             for (int count = 0; count < 10; count++)
@@ -951,20 +969,35 @@ namespace Snowflake.Data.Core
         private async Task UploadFilesInSequentialAsync(
             SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
-            /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
             SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            bool breakFlag = false;
 
-            if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+            for (int count = 0; count < 10; count++)
             {
-                fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+              if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+              {
+                  fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+              }
+              else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+              {
+                  await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+              }
+              
+              // Break out of loop if file is successfully uploaded or already exists
+              if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                  fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+              {
+                  breakFlag = true;
+                  break;
+              }
             }
-            else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+            if (!breakFlag)
             {
-                await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+                // Could not upload a file even after retry
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
 
-            ResultsMetas.Add(resultMetadata);
+            ResultsMetas.Add(fileMetadata);
 
             if (INJECT_WAIT_IN_PUT > 0)
             {
@@ -980,8 +1013,6 @@ namespace Snowflake.Data.Core
         private void DownloadFilesInSequential(
             SFFileMetadata fileMetadata)
         {
-            /// The storage client used to upload/download data from files or streams
-            fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, fileMetadata.proxyCredentials);
             SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
 
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
