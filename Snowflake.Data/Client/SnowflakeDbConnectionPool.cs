@@ -68,6 +68,7 @@ namespace Snowflake.Data.Client
             }
             lock (_connectionPoolLock)
             {
+                cleanExpiredConnections(); // clean up all expired connections first.
                 for (int i = 0; i < connectionPool.Count; i++)
                 {
                     if (connectionPool[i].ConnectionString.Equals(connStr))
