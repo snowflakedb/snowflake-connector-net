@@ -137,7 +137,6 @@ The following table lists all valid connection properties:
 | PROXYPASSWORD              | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
 | NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
-
 <br />
 
 The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
@@ -301,9 +300,10 @@ The Snowflake .NET driver provides the following functions for managing connecti
 | Function | Description |
 |----------|--------------|
 | SnowflakeDbConnectionPool.ClearAllPools() | Removes all connections from the connection pool. |
-| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. Set _n_=0 to disable the connection pool. |
+| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
 | SnowflakeDBConnection.SetTimeout(n) | Sets the number of seconds to keep an unresponsive connection in the connection pool.|
 | SnowflakeDbConnectionPool.GetCurrentPoolSize() | Returns the number of connections currently in the connection pool. |
+| SnowflakeDbConnectionPool.SetPooling() | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.|
 
 The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
 
