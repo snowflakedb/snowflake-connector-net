@@ -81,6 +81,7 @@ namespace Snowflake.Data.Client
                             {
                                 conn.SfSession.close();
                             }
+                            i--;
                         }
                         else
                         {
