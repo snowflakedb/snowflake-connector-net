@@ -68,14 +68,25 @@ namespace Snowflake.Data.Client
             }
             lock (_connectionPoolLock)
             {
-                cleanExpiredConnections(); // clean up all expired connections first.
                 for (int i = 0; i < connectionPool.Count; i++)
                 {
                     if (connectionPool[i].ConnectionString.Equals(connStr))
                     {
                         SnowflakeDbConnection conn = connectionPool[i];
                         connectionPool.RemoveAt(i);
-                        return conn;
+                        long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+                        if (conn._poolTimeout <= timeNow)
+                        {
+                            if (conn.SfSession != null)
+                            {
+                                conn.SfSession.close();
+                            }
+                            return null;
+                        }
+                        else
+                        {
+                            return conn;
+                        }
                     }
                 }
             }
