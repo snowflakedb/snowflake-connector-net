@@ -74,7 +74,19 @@ namespace Snowflake.Data.Client
                     {
                         SnowflakeDbConnection conn = connectionPool[i];
                         connectionPool.RemoveAt(i);
-                        return conn;
+                        long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+                        if (conn._poolTimeout <= timeNow)
+                        {
+                            if (conn.SfSession != null)
+                            {
+                                conn.SfSession.close();
+                            }
+                            i--;
+                        }
+                        else
+                        {
+                            return conn;
+                        }
                     }
                 }
             }
