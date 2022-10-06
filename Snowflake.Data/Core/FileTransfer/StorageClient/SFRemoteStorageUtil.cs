@@ -48,7 +48,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// </summary>
         /// <param name="stageInfo">The stage info used to create the client.</param>
         /// <returns>A new instance of the storage client.</returns>
-        internal static ISFRemoteStorageClient GetRemoteStorageType(PutGetResponseData response)
+        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response, ProxyCredentials proxyCredentials = null)
         {
             PutGetStageInfo stageInfo = response.stageInfo;
             string stageLocationType = stageInfo.locationType;
@@ -62,7 +62,8 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 return new SFS3Client(stageInfo,
                     DEFAULT_MAX_RETRY,
-                    response.parallel
+                    response.parallel,
+                    proxyCredentials
                     );
             }
             else if (stageLocationType == AZURE_FS)
@@ -234,40 +235,23 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="fileMetadata">The file metadata of the file to upload</param>
         internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
         {
-            bool breakFlag = false;
-
-            for (int count = 0; count < 10; count++)
+            // Upload the file
+            UploadOneFile(fileMetadata);
+            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
             {
-                // Upload the file
-                UploadOneFile(fileMetadata);
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                for (int count = 0; count < 10; count++)
                 {
-                    for (int count2 = 0; count2 < 10; count2++)
+                    // Get the file metadata
+                    fileMetadata.client.GetFileHeader(fileMetadata);
+                    // Check result status if file already exists
+                    if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                     {
-                        // Get the file metadata
-                        fileMetadata.client.GetFileHeader(fileMetadata);
-                        // Check result status if file already exists
-                        if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
-                        {
-                            // Wait 1 second
-                            System.Threading.Thread.Sleep(1000);
-                            continue;
-                        }
-                        break;
+                        // Wait 1 second
+                        System.Threading.Thread.Sleep(1000);
+                        continue;
                     }
-                }
-                // Break out of loop if file is successfully uploaded or already exists
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() || 
-                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
-                {
-                    breakFlag = true;
                     break;
                 }
-            }
-            if (!breakFlag)
-            {
-                // Could not upload a file even after retry
-                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return;
         }
