@@ -1280,6 +1280,60 @@ namespace Snowflake.Data.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key1=test\'password;key2=test\"password;key3=test==password";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar1()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key==word=value; key1=\"test;password\"; key2=\"test=password\"";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
     }
 
     [TestFixture]
