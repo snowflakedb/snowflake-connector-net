@@ -1280,6 +1280,56 @@ namespace Snowflake.Data.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void TestHeartBeat()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+
+            Thread.Sleep(TimeSpan.FromSeconds(3610)); // more than 4 hrs
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46 );
+            }
+
+            conn.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn.State);
+        }
+
+        [Test]
+        public void TestHeartBeatWithConnectionPool()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+            conn.Close();
+
+            Thread.Sleep(TimeSpan.FromSeconds(3620)); // more than 4 hrs
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn1.Open();
+
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46);
+            }
+
+            conn1.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
     }
 
     [TestFixture]

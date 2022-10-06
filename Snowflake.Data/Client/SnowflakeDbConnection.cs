@@ -110,11 +110,19 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Close Connection.");
             _connectionState = ConnectionState.Closed;
+            PostClose();
+        }
 
+        internal void PostClose()
+        {
             bool added = SnowflakeDbConnectionPool.addConnection(this);
-            if (!added && SfSession != null)
+            if (!added)
             {
-                SfSession.close();
+                stopHeartBeatForThisSession();
+                if (SfSession != null)
+                {
+                    SfSession.close();
+                }
             }
         }
 
@@ -134,6 +142,7 @@ namespace Snowflake.Data.Client
                 {
                     _connectionState = ConnectionState.Closed;
                     taskCompletionSource.SetResult(null);
+                    PostClose();
                 }
                 else
                 {
@@ -159,6 +168,7 @@ namespace Snowflake.Data.Client
                                 logger.Debug("Session closed successfully");
                                 taskCompletionSource.SetResult(null);
                                 _connectionState = ConnectionState.Closed;
+                                PostClose();
                             }
                         }, cancellationToken);
                     }
@@ -283,6 +293,7 @@ namespace Snowflake.Data.Client
         private void OnSessionEstablished()
         {
             _connectionState = ConnectionState.Open;
+            startHeartBeatForThisSession();
         }
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
@@ -334,6 +345,24 @@ namespace Snowflake.Data.Client
             {
                 externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
             }
+        }
+
+        internal void startHeartBeatForThisSession()
+        {
+            if(this.SfSession.GetEnableHeartBeat())
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.addConnection(this, this.SfSession.masterValidityInSeconds);
+            }
+        }
+        internal void stopHeartBeatForThisSession()
+        {
+            if (this.SfSession.GetEnableHeartBeat())
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.removeConnection(this);
+            }
+
         }
 
         ~SnowflakeDbConnection()
