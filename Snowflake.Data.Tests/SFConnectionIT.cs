@@ -1282,6 +1282,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
         {
             SnowflakeDbConnectionPool.SetPooling(false);
@@ -1301,6 +1302,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeatWithConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();

@@ -90,16 +90,17 @@ namespace Snowflake.Data.Core
             while (true)
             {
                 List<SnowflakeDbConnection> copyOfHeartBeatQueue = new List<SnowflakeDbConnection>();
-                lock (heartBeatLock)
-                {
-                    long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
-                    Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
+                
+                long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
+                Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
 
-                    if (isHeartBeatEnd)
-                    {
-                        return;
-                    }
-                    else
+                if (isHeartBeatEnd)
+                {
+                    return;
+                }
+                else
+                {
+                    lock (heartBeatLock)
                     {
                         copyOfHeartBeatQueue.AddRange(heartBeatConns);
                     }

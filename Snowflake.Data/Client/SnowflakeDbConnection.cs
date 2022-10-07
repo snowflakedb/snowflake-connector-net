@@ -351,6 +351,13 @@ namespace Snowflake.Data.Client
         {
             if(this.SfSession.GetEnableHeartBeat())
             {
+                string alterSessionCommand = $"alter session set CLIENT_SESSION_KEEP_ALIVE=true;";
+
+                using (IDbCommand cmd = this.CreateCommand())
+                {
+                    cmd.CommandText = alterSessionCommand;
+                    cmd.ExecuteNonQuery();
+                }
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
                 heartBeatBg.addConnection(this, this.SfSession.masterValidityInSeconds);
             }
