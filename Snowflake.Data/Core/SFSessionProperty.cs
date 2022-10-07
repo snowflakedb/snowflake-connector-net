@@ -132,8 +132,17 @@ namespace Snowflake.Data.Core
         {
             logger.Info("Start parsing connection string.");
             DbConnectionStringBuilder builder = new DbConnectionStringBuilder();
-            builder.ConnectionString = connectionString;
-
+            try
+            { 
+                builder.ConnectionString = connectionString;
+            }
+            catch (ArgumentException e)
+            {
+                logger.Warn($"ConnectionString: {connectionString}", e);
+                throw new SnowflakeDbException(e,
+                                SFError.INVALID_CONNECTION_STRING,
+                                e.Message);
+            }
             SFSessionProperties properties = new SFSessionProperties();
 
             string[] keys = new string[builder.Keys.Count];
@@ -143,9 +152,16 @@ namespace Snowflake.Data.Core
 
             for(int i=0; i<keys.Length; i++)
             {
-                SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                            typeof(SFSessionProperty), keys[i].ToUpper());
-                properties.Add(p, values[i]);
+                try
+                {
+                    SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), keys[i].ToUpper());
+                    properties.Add(p, values[i]);
+                }
+                catch (ArgumentException e)
+                {
+                    logger.Warn($"Property {keys[i]} not found ignored.", e);
+                }
             }
 
             bool useProxy = false;

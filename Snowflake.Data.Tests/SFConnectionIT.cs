@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests
                 // missing required connection property password
                 "ACCOUNT=testaccount;user=testuser",
                 // invalid account value
-                "ACCOUNT=A=C;USER=testuser;password=123",
+                "ACCOUNT=A=C;USER=testuser;password=123;key",
                 "complete_invalid_string",
             };
 
