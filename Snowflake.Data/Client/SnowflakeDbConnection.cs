@@ -118,7 +118,7 @@ namespace Snowflake.Data.Client
             bool added = SnowflakeDbConnectionPool.addConnection(this);
             if (!added)
             {
-                stopHeartBeatForThisSession();
+                SfSession.stopHeartBeatForThisSession();
                 if (SfSession != null)
                 {
                     SfSession.close();
@@ -293,7 +293,6 @@ namespace Snowflake.Data.Client
         private void OnSessionEstablished()
         {
             _connectionState = ConnectionState.Open;
-            startHeartBeatForThisSession();
         }
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
@@ -345,31 +344,6 @@ namespace Snowflake.Data.Client
             {
                 externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
             }
-        }
-
-        internal void startHeartBeatForThisSession()
-        {
-            if(this.SfSession.GetEnableHeartBeat())
-            {
-                string alterSessionCommand = $"alter session set CLIENT_SESSION_KEEP_ALIVE=true;";
-
-                using (IDbCommand cmd = this.CreateCommand())
-                {
-                    cmd.CommandText = alterSessionCommand;
-                    cmd.ExecuteNonQuery();
-                }
-                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                heartBeatBg.addConnection(this, this.SfSession.masterValidityInSeconds);
-            }
-        }
-        internal void stopHeartBeatForThisSession()
-        {
-            if (this.SfSession.GetEnableHeartBeat())
-            {
-                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                heartBeatBg.removeConnection(this);
-            }
-
         }
 
         ~SnowflakeDbConnection()

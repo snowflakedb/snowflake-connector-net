@@ -17,7 +17,7 @@ using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
-    class SFSession
+    public class SFSession
     {
         public const int SF_SESSION_EXPIRED_CODE = 390112;
 
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
-        internal bool enableHeartBeat;
+        internal bool isHeartBeatEnabled;
 
         private HttpClient _HttpClient;
 
@@ -133,7 +133,16 @@ namespace Snowflake.Data.Core
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
-                enableHeartBeat = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                if(keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+
                 string proxyHost = null;
                 string proxyPort = null;
                 string noProxyHosts = null;
@@ -383,6 +392,38 @@ namespace Snowflake.Data.Core
                 string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                 this.arrayBindStageThreshold = Int32.Parse(val);
             }
+            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
+            {
+                bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+                if(keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+            }
+        }
+
+        internal void startHeartBeatForThisSession()
+        {
+            if (!this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+                this.isHeartBeatEnabled = true;
+            }
+        }
+        internal void stopHeartBeatForThisSession()
+        {
+            if (this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.removeConnection(this);
+                this.isHeartBeatEnabled = false;
+            }
+
         }
 
         public string GetArrayBindStage()
@@ -403,11 +444,6 @@ namespace Snowflake.Data.Core
         public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
         {
             this.arrayBindStageThreshold = arrayBindStageThreshold;
-        }
-
-        public bool GetEnableHeartBeat()
-        {
-            return this.enableHeartBeat;
         }
 
         internal void heartbeat()

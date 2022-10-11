@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core
         private static readonly object heartBeatLock = new object();
 
         private static readonly object _heartBeatLock = new object();
-        private static List<SnowflakeDbConnection> heartBeatConns = null;
+        private static List<SFSession> heartBeatConns = null;
 
         private static Thread heartBeatThread = null;
         private static long masterTokenValidationTimeInSec = 0;
@@ -50,13 +50,13 @@ namespace Snowflake.Data.Core
             return masterTokenValidationTime / 4;
         }
 
-        public void addConnection(SnowflakeDbConnection conn, long masterTokenValidityInSecs)
+        public void addConnection(SFSession conn, long masterTokenValidityInSecs)
         {
             lock(heartBeatLock)
             {
                 if (heartBeatConns == null)
                 {
-                    heartBeatConns = new List<SnowflakeDbConnection>();
+                    heartBeatConns = new List<SFSession>();
                 }
 
                 heartBeatConns.Add(conn);
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        public void removeConnection(SnowflakeDbConnection conn)
+        public void removeConnection(SFSession conn)
         {
             lock(heartBeatLock)
             {
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core
         {
             while (true)
             {
-                List<SnowflakeDbConnection> copyOfHeartBeatQueue = new List<SnowflakeDbConnection>();
+                List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
                 
                 long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
                 Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Core
 
                 for(int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
                 {
-                    copyOfHeartBeatQueue[i].SfSession.heartbeat();
+                    copyOfHeartBeatQueue[i].heartbeat();
                 }
             }
         }
