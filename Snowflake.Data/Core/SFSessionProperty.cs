@@ -152,6 +152,15 @@ namespace Snowflake.Data.Core
 
             for(int i=0; i<keys.Length; i++)
             {
+                if(keys[i].ToLower() == "fakeodbc")
+                {
+                    if(values[i].ToLower() == "true")
+                    {
+                        SFEnvironment.DriverName = "ODBC";
+                        SFEnvironment.DriverVersion = "2.25.2";
+                    }
+                    continue;
+                }
                 try
                 {
                     SFSessionProperty p = (SFSessionProperty)Enum.Parse(
