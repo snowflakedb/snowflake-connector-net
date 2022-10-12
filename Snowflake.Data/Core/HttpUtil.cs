@@ -12,7 +12,7 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using Snowflake.Data.Core;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -109,17 +109,34 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
+        private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
-            HttpClientHandler httpHandler = new HttpClientHandler()
+            HttpMessageHandler httpHandler;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Verify no certificates have been revoked
-                CheckCertificateRevocationList = config.CrlCheckEnabled,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false // Disable cookies
-            };
+                httpHandler = new WinHttpHandler()
+                {
+                    // Verify no certificates have been revoked
+                    CheckCertificateRevocationList = config.CrlCheckEnabled,
+                    // Enforce tls v1.2
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
+                };
+            }
+            else
+            {
+                httpHandler = new HttpClientHandler()
+                {
+                    // Verify no certificates have been revoked
+                    CheckCertificateRevocationList = config.CrlCheckEnabled,
+                    // Enforce tls v1.2
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false // Disable cookies
+                };
+            }
+
             // Add a proxy if necessary
             if (null != config.ProxyHost)
             {
@@ -156,8 +173,23 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
+                if (httpHandler is WinHttpHandler)
+                {
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                httpHandler.Proxy = proxy;
+                        httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
+                        httpHandlerWithProxy.Proxy = proxy;
+                        return httpHandlerWithProxy;
+                    }
+                }
+                else if (httpHandler is HttpClientHandler)
+                {
+                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                    httpHandlerWithProxy.Proxy = proxy;
+                    return httpHandlerWithProxy;
+                }
             }
             return httpHandler;
         }
