@@ -86,7 +86,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal SessionInfo authResponseSessionInfo { get; set; }
 
-   }
+        [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
+        internal int masterValidityInSeconds { get; set; }
+    }
 
     internal class AuthenticatorResponseData
     {
