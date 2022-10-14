@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -156,6 +157,20 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static void StartBrowser(string url)
         {
+            string regexStr = @"^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
+            Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
+            if (m.Success)
+            {
+                logger.Error("Failed to start browser. Invalid url.");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
+            }
+
+            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            {
+                logger.Error("Failed to start browser. Invalid url.");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
+            }
+
             // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
 #if NETFRAMEWORK
             // .net standard would pass here
@@ -165,7 +180,7 @@ namespace Snowflake.Data.Core.Authenticator
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 url = url.Replace("&", "^&");
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { UseShellExecute = true });
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
