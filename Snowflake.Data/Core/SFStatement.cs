@@ -33,8 +33,6 @@ namespace Snowflake.Data.Core
 
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
 
-        private const int SF_SESSION_EXPIRED_CODE = 390112;
-
         private const int SF_QUERY_IN_PROGRESS = 333333;
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
@@ -241,7 +239,7 @@ namespace Snowflake.Data.Core
         private bool RequestInProgress(BaseRestResponse r) =>
             r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
 
-        private bool SessionExpired(BaseRestResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
+        private bool SessionExpired(BaseRestResponse r) => r.code == SFSession.SF_SESSION_EXPIRED_CODE;
 
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
                                                           CancellationToken cancellationToken)
@@ -336,7 +334,7 @@ namespace Snowflake.Data.Core
 
             try
             {
-                if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
+                if (IsPutOrGetCommand(trimmedSql))
                 {
                     isPutGetQuery = true;
                     PutGetExecResponse response =
@@ -363,13 +361,13 @@ namespace Snowflake.Data.Core
                         String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                         arrayBindingThreshold = Int32.Parse(val);
                     }
-                    
+
                     int numBinding = GetBindingCount(bindings);
-                    
+
                     if (0 < arrayBindingThreshold
                         && arrayBindingThreshold <= numBinding
                         && !describeOnly)
-                    { 
+                    {
                         try
                         {
                             AssignQueryRequestId();
@@ -384,41 +382,13 @@ namespace Snowflake.Data.Core
                         }
                     }
 
-                    registerQueryCancellationCallback(timeout, CancellationToken.None);
-                    var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
-                    QueryExecResponse response = null;
+                    QueryExecResponse response =
+                        ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly);
 
-                    bool receivedFirstQueryResponse = false;
-                    while (!receivedFirstQueryResponse)
-                    {
-                        response = _restRequester.Post<QueryExecResponse>(queryRequest);
-                        if (SessionExpired(response))
-                        {
-                            SfSession.renewSession();
-                            queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                        }
-                        else
-                        {
-                            receivedFirstQueryResponse = true;
-                        }
-                    }
-
-                    var lastResultUrl = response.data?.getResultUrl;
-                    while (RequestInProgress(response) || SessionExpired(response))
-                    {
-                        var req = BuildResultRequest(lastResultUrl);
-                        response = _restRequester.Get<QueryExecResponse>(req);
-
-                        if (SessionExpired(response))
-                        {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            SfSession.renewSession();
-                        }
-                        else
-                        {
-                            lastResultUrl = response.data?.getResultUrl;
-                        }
-                    }
                     return BuildResultSet(response, CancellationToken.None);
                 }
             }
@@ -708,7 +678,21 @@ namespace Snowflake.Data.Core
             while (idx < sqlQueryLen);
 
             var trimmedQuery = builder.ToString();
+            trimmedQuery = trimmedQuery.Trim();
+            logger.Debug("Trimmed query : " + trimmedQuery);
+          
             return trimmedQuery;
+        }
+
+        /// <summary>
+        /// Check if query is PUT or GET command.
+        /// </summary>
+        /// <param name="query">The sql query.</param>
+        /// <returns>The boolean value if the query is a PUT or GET command.</returns>
+        private bool IsPutOrGetCommand(string query)
+        {
+            return (query.Substring(0, 3).ToUpper() == "PUT") ||
+                (query.Substring(0, 3).ToUpper() == "GET");
         }
 
         private static int GetBindingCount(Dictionary<string, BindingDTO> binding)

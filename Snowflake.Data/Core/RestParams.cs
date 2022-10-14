@@ -36,6 +36,8 @@ namespace Snowflake.Data.Core
         internal const string SF_AUTHENTICATOR_REQUEST_PATH = SF_SESSION_PATH + "/authenticator-request";
 
         internal const string SF_QUERY_PATH = "/queries/v1/query-request";
+
+        internal const string SF_SESSION_HEARTBEAT_PATH = SF_SESSION_PATH + "/heartbeat";
     }
 
     internal class SFEnvironment

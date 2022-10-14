@@ -57,6 +57,7 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.INSECUREMODE, "false" },
                         { SFSessionProperty.DISABLERETRY, "false" },
                         { SFSessionProperty.FORCERETRYON404, "false" },
+                        { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     },
                 },
             };
