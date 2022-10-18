@@ -173,16 +173,13 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
-                if (httpHandler is WinHttpHandler)
+                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
+                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                        httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-                        httpHandlerWithProxy.Proxy = proxy;
-                        return httpHandlerWithProxy;
-                    }
+                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
+                    httpHandlerWithProxy.Proxy = proxy;
+                    return httpHandlerWithProxy;
                 }
                 else if (httpHandler is HttpClientHandler)
                 {
