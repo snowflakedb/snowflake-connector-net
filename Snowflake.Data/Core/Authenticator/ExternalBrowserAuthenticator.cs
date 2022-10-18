@@ -159,7 +159,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             string regexStr = @"^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
             Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (m.Success)
+            if (!m.Success)
             {
                 logger.Error("Failed to start browser. Invalid url.");
                 throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
