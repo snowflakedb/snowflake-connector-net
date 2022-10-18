@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static void StartBrowser(string url)
         {
-            string regexStr = @"^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
+            string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
             Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
             if (!m.Success)
             {
