@@ -168,6 +168,8 @@ namespace Snowflake.Data.Client
         }
 
 #if NETCOREAPP3_0_OR_GREATER
+        // CloseAsync was added to IDbConnection as part of .NET Standard 2.1, first supported by .NET Core 3.0.
+        // Adding an override for CloseAsync will prevent the need for casting to SnowflakeDbConnection to call CloseAsync(CancellationToken).
         public override async Task CloseAsync()
         {
             await CloseAsync(CancellationToken.None);
