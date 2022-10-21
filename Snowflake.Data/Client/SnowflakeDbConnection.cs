@@ -167,6 +167,13 @@ namespace Snowflake.Data.Client
             _connectionState = ConnectionState.Closed;
         }
 
+#if NETCOREAPP3_0_OR_GREATER
+        public override async Task CloseAsync()
+        {
+            await CloseAsync(CancellationToken.None);
+        }
+#endif
+
         public Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
