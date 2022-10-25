@@ -105,7 +105,7 @@ Create a Connection
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
-Note: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
+**Note**: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
 
 The following table lists all valid connection properties:
 <br />
@@ -116,7 +116,7 @@ The following table lists all valid connection properties:
 | APPLICATION                | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern:  ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).   |
 | DB                         | No       |                                                                               |
 | HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
-| PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
+| PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types. <br /> <br /> See [Using Special Characters in Connection Passwords](#sample-connection-strings) for examples of including special characters in connection strings.|
 | ROLE                       | No       |                                                                               |
 | SCHEMA                     | No       |                                                                               |
 | USER                       | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
@@ -151,6 +151,57 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+<a id="sample-connection-strings"></a>
+#### Using Special Characters in Connection Passwords
+
+The .NET connector now uses Microsoft [DbConnectionStringBuilder](https://learn.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring?view=dotnet-plat-ext-6.0#remarks) to following .NET specification for escaping characters in connection strings. 
+
+The following examples show how you can include different types of special characters in a connection string:
+
+- To include a single quote (') character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test'password;"
+  );
+  ```
+
+- To include a double quote (") character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test\"password;"
+  );
+  ```
+
+- To include a semicolon (;):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=\"test;password\";"
+  );
+  ```
+
+- To include an equal sign (=):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test=password;"
+  );
+  ```
+
+  Note that previously you needed to use a double equal sign (==) to escape the character, but it is no longer required.
+
+Foobar
 
 If you are using a different method for authentication, see the examples below:
 
