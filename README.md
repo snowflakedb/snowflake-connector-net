@@ -201,8 +201,6 @@ The following examples show how you can include different types of special chara
 
   Note that previously you needed to use a double equal sign (==) to escape the character, but it is no longer required.
 
-Foobar
-
 If you are using a different method for authentication, see the examples below:
 
 * **Key-pair authentication**
