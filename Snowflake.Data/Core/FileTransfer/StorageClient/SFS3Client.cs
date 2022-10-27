@@ -2,16 +2,17 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
-using Amazon.S3.Model;
 using Snowflake.Data.Log;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -30,23 +31,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             public string AMZ_IV { get; set; }
             public string AMZ_KEY { get; set; }
             public string AMZ_MATDESC { get; set; }
-
         }
 
         /// <summary>
         /// The metadata header keys.
         /// </summary>
         private const string AMZ_META_PREFIX = "x-amz-meta-";
-        private const string AMZ_IV = "x-amz-iv";
-        private const string AMZ_KEY = "x-amz-key";
-        private const string AMZ_MATDESC = "x-amz-matdesc";
-        private const string SFC_DIGEST = "sfc-digest";
-
-        /// <summary>
-        /// The status of the request.
-        /// </summary>
-        private const string EXPIRED_TOKEN = "ExpiredToken";
-        private const string NO_SUCH_KEY = "NoSuchKey";
+        private const string AMZ_IV = AMZ_META_PREFIX + "x-amz-iv";
+        private const string AMZ_KEY = AMZ_META_PREFIX + "x-amz-key";
+        private const string AMZ_MATDESC = AMZ_META_PREFIX + "x-amz-matdesc";
+        private const string SFC_DIGEST = AMZ_META_PREFIX + "sfc-digest";
 
         /// <summary>
         /// The application header type.
@@ -54,7 +48,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private const string HTTP_HEADER_VALUE_OCTET_STREAM = "application/octet-stream";
 
         /// <summary>
-        /// The attribute in the credential map containing the aws access key.
+        /// The attribute in the credential map containing the aws access key id.
         /// </summary>
         private static readonly string AWS_KEY_ID = "AWS_KEY_ID";
 
@@ -68,51 +62,47 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         private static readonly string AWS_TOKEN = "AWS_TOKEN";
 
+
+        /// <summary>
+        /// SHA256 hash of an empty request body
+        /// </summary>
+        public const string EMPTY_BODY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+        /// <summary>
+        /// Some common headers
+        /// </summary>
+        public const string HOST = "Host";
+        public const string AUTHORIZATION = "Authorization";
+        public const string CONTENT_TYPE = "content-type";
+        public const string CONTENT_LENGTH = "content-length";
+        public const string X_AMZ_SIGNEDHEADERS = "X-Amz-SignedHeaders";
+        public const string X_AMZ_DATE = "X-Amz-Date";
+        public const string X_AMZ_CONTENT_SHA256 = "X-Amz-Content-SHA256";
+        public const string X_AMZ_SECURITY_TOKEN = "X-Amz-Security-Token";
+
+        /// <summary>
+        /// Format strings for the date/time and date stamps required during signing
+        /// </summary>
+        public const string ISO8601BasicFormat = "yyyyMMddTHHmmssZ";
+        public const string DateStringFormat = "yyyyMMdd";
+
+        /// <summary>
+        /// The name of the keyed hash algorithm used in signing
+        /// </summary>
+        public const string ServiceName = "s3";
+        public const string Algorithm = "AWS4-HMAC-SHA256";
+
         /// <summary>
         /// The logger.
         /// </summary>
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
 
         /// <summary>
-        /// The underlying S3 client.
-        /// </summary>
-        private AmazonS3Client S3Client;
-
-        /// <summary>
         /// S3 client without client-side encryption.
         /// </summary>
-        /// <param name="stageInfo">The command stage info.</param>
-        public SFS3Client(
-            PutGetStageInfo stageInfo,
-            int maxRetry,
-            int parallel)
+        public SFS3Client()
         {
             Logger.Debug("Setting up a new AWS client ");
-
-            // Get the key id and secret key from the response
-            stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
-            stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out string awsSecretAccessKey);
-            AmazonS3Config clientConfig = new AmazonS3Config();
-            setCommonClientConfig(
-                clientConfig,
-                stageInfo.region,
-                stageInfo.endPoint,
-                maxRetry,
-                parallel);
-            
-            // Get the AWS token value and create the S3 client
-            if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out string awsSessionToken))
-            {
-                S3Client = new AmazonS3Client(
-                    awsAccessKeyId,
-                    awsSecretAccessKey,
-                    awsSessionToken,
-                    clientConfig);
-            }
-            else
-            {
-                S3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, clientConfig);
-            }
         }
 
         /// <summary>
@@ -136,7 +126,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
-                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1, 
+                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
                     stageLocation.Length - stageLocation.IndexOf('/') - 1);
                 if (s3path != null && !s3path.EndsWith("/"))
                 {
@@ -158,27 +148,46 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file header of the S3 file.</returns>
         public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
+            Uri uri = GetFileUri(fileMetadata);
 
-            GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
-            GetObjectResponse response = null;
+            // Use empty string hash for content
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, EMPTY_BODY_SHA256},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM}
+            };
+
+            string authorization = Sign(
+                fileMetadata.stageInfo, 
+                EMPTY_BODY_SHA256, 
+                "GET", 
+                uri, 
+                headers);
+
             try
             {
-                // Issue the GET request
-                var task = client.GetObjectAsync(request);
-                task.Wait();
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
 
-                response = task.Result;
+                BuildRequestHeaders(request, headers, "GET", authorization);
+
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                    //Update the result status of the file metadata
+                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+                    return HandleFileHeaderResponse(response);
+                }
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileHeaderErr(response.StatusCode).ToString();                
+
                 return null;
             }
-
-            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
@@ -189,115 +198,68 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file header of the S3 file.</returns>
         public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
+            Uri uri = GetFileUri(fileMetadata);
 
-            GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
+            // Use empty string hash for content
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, EMPTY_BODY_SHA256},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM}
+            };
 
-            GetObjectResponse response = null;
+            string authorization = Sign(
+                fileMetadata.stageInfo,
+                EMPTY_BODY_SHA256,
+                "GET",
+                uri,
+                headers);
+
             try
             {
-                // Issue the GET request
-                response = await client.GetObjectAsync(request, cancellationToken).ConfigureAwait(false);
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
+
+                BuildRequestHeaders(request, headers, "GET", authorization);
+
+                using (HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync())
+                {
+                    // Update the result status of the file metadata
+                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+                    return HandleFileHeaderResponse(response);
+                }
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileHeaderErr(response.StatusCode).ToString();
+
                 return null;
             }
-
-            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
         /// Get the file header.
         /// </summary>
-        /// <param name="client">The Amazon S3 client.</param>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <returns>The file header request.</returns>
-        private GetObjectRequest GetFileHeaderRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata)
-        {
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Create the S3 request object
-            GetObjectRequest request = new GetObjectRequest
-            {
-                BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName
-            };
-            return request;
-        }
-
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="response">The Amazon S3 response.</param>
         /// <returns>The file header of the S3 file.</returns>
-        private FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectResponse response)
+        private FileHeader HandleFileHeaderResponse(HttpWebResponse response)
         {
-            // Update the result status of the file metadata
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
             {
-                iv = response.Metadata[AMZ_IV],
-                key = response.Metadata[AMZ_KEY],
-                matDesc = response.Metadata[AMZ_MATDESC]
+                iv = response.Headers.GetValues(AMZ_IV)[0],
+                key = response.Headers.GetValues(AMZ_KEY)[0],
+                matDesc = response.Headers.GetValues(AMZ_MATDESC)[0]
             };
 
             return new FileHeader
             {
-                digest = response.Metadata[SFC_DIGEST],
-                contentLength = response.ContentLength,
+                digest = response.Headers.GetValues(SFC_DIGEST)[0],
+                contentLength = Convert.ToInt64(response.Headers.GetValues("Content-Length")[0]),
                 encryptionMetadata = encryptionMetadata
             };
-        }
-
-        /// <summary>
-        /// Set the client configuration common to both client with and without client-side 
-        /// encryption.
-        /// </summary>
-        /// <param name="clientConfig">The client config to update.</param>
-        /// <param name="region">The region if any.</param>
-        /// <param name="endpoint">The endpoint if any.</param>
-        private void setCommonClientConfig(
-        AmazonS3Config clientConfig,
-        string region,
-        string endpoint,
-        int maxRetry,
-        int parallel)
-        {
-            // Always return a regional URL
-            clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
-            if ((null != region) && (0 != region.Length))
-            {
-                RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                clientConfig.RegionEndpoint = regionEndpoint;
-            }
-
-            // If a specific endpoint is specified use this
-            if ((null != endpoint) && (0 != endpoint.Length))
-            {
-                clientConfig.ServiceURL = endpoint;
-            }
-
-            // The region information used to determine the endpoint for the service.
-            // RegionEndpoint and ServiceURL are mutually exclusive properties. 
-            // If both stageInfo.endPoint and stageInfo.region have a value, stageInfo.region takes
-            // precedence and ServiceUrl will be reset to null.
-            if ((null != region) && (0 != region.Length))
-            {
-                RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                clientConfig.RegionEndpoint = regionEndpoint;
-            }
-
-            // Unavailable for .net framework 4.6
-            //clientConfig.MaxConnectionsPerServer = parallel;
-            clientConfig.MaxErrorRetry = maxRetry;
-
         }
 
         /// <summary>
@@ -308,29 +270,50 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            Uri uri = GetFileUri(fileMetadata);
+
+            // Precompute hash of the body content
+            var fileContentHashString = HexEncode(Hash(fileBytes));
+
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, fileContentHashString},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM},
+                {CONTENT_LENGTH, fileBytes.Length.ToString()},
+                {AMZ_IV, encryptionMetadata.iv},
+                {AMZ_KEY, encryptionMetadata.key},
+                {AMZ_MATDESC, encryptionMetadata.matDesc},
+                {SFC_DIGEST, fileMetadata.sha256Digest},
+            };
+
+            string authorization = Sign(
+                fileMetadata.stageInfo,
+                fileContentHashString,
+                "PUT",
+                uri,
+                headers);
 
             try
             {
-                // Issue the POST/PUT request
-                var task = client.PutObjectAsync(putObjectRequest);
-                task.Wait();
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
+
+                BuildRequestHeaders(request, headers, "PUT", authorization);
+
+                Stream dataStream = request.GetRequestStream();
+                dataStream.Write(fileBytes, 0, fileBytes.Length);
+                dataStream.Close();
+
+                request.GetResponse();
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileLoadErr(response.StatusCode).ToString();
+
                 return;
             }
 
@@ -346,66 +329,55 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            Uri uri = GetFileUri(fileMetadata);
+
+            // Precompute hash of the body content
+            var fileContentHashString = HexEncode(Hash(fileBytes));
+
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, fileContentHashString},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM},
+                {CONTENT_LENGTH, fileBytes.Length.ToString()},
+                {AMZ_IV, encryptionMetadata.iv},
+                {AMZ_KEY, encryptionMetadata.key},
+                {AMZ_MATDESC, encryptionMetadata.matDesc},
+                {SFC_DIGEST, fileMetadata.sha256Digest},
+            };
+
+            string authorization = Sign(
+                fileMetadata.stageInfo,
+                fileContentHashString,
+                "PUT",
+                uri,
+                headers);
 
             try
             {
-                // Issue the POST/PUT request
-                await client.PutObjectAsync(putObjectRequest).ConfigureAwait(false);
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
+
+                BuildRequestHeaders(request, headers, "PUT", authorization);
+
+                Stream dataStream = request.GetRequestStream();
+                dataStream.Write(fileBytes, 0, fileBytes.Length);
+                dataStream.Close();
+
+                await request.GetResponseAsync();
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileLoadErr(response.StatusCode).ToString();
+
                 return;
             }
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-        }
-
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="client"> Amazon S3 client.</param>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        /// <returns>The Put Object request.</returns>
-        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
-        {
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Convert file bytes to memory stream
-            Stream stream = new MemoryStream(fileBytes);
-
-            // Create S3 PUT request
-            PutObjectRequest putObjectRequest = new PutObjectRequest
-            {
-                BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName,
-                InputStream = stream,
-                ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
-            };
-
-            // Populate the S3 Request Metadata
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
-
-            return putObjectRequest;
         }
 
         /// <summary>
@@ -416,39 +388,50 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            GetObjectRequest getObjectRequest = GetGetObjectRequest(ref client, fileMetadata);
+            Uri uri = GetFileUri(fileMetadata);
+
+            // for a simple GET, we have no body so supply the precomputed 'empty' hash
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, EMPTY_BODY_SHA256},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM}
+            };
+
+            string authorization = Sign(
+                fileMetadata.stageInfo,
+                EMPTY_BODY_SHA256,
+                "GET",
+                uri,
+                headers);
 
             try
             {
-                // Issue the GET request
-                var task = client.GetObjectAsync(getObjectRequest);
-                task.Wait();
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
 
-                GetObjectResponse response = task.Result;
+                BuildRequestHeaders(request, headers, "GET", authorization);                
+
                 // Write to file
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 using (var fileStream = File.Create(fullDstPath))
+                using (var responseStream = response.GetResponseStream())
                 {
-                    response.ResponseStream.CopyTo(fileStream);
-                }
+                    responseStream.CopyTo(fileStream);
+                    responseStream.Flush();
+                }                
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileLoadErr(response.StatusCode).ToString();
+
                 return;
             }
 
+            // Update the result status of the file metadata
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
@@ -460,76 +443,231 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            GetObjectRequest getObjectRequest = GetGetObjectRequest(ref client, fileMetadata);
+            Uri uri = GetFileUri(fileMetadata);
+
+            // for a simple GET, we have no body so supply the precomputed 'empty' hash
+            SortedDictionary<string, string> headers = new SortedDictionary<string, string>
+            {
+                {X_AMZ_CONTENT_SHA256, EMPTY_BODY_SHA256},
+                {X_AMZ_SECURITY_TOKEN, fileMetadata.stageInfo.stageCredentials[AWS_TOKEN]},
+                {CONTENT_TYPE, HTTP_HEADER_VALUE_OCTET_STREAM}
+            };
+
+            string authorization = Sign(
+                fileMetadata.stageInfo,
+                EMPTY_BODY_SHA256,
+                "GET",
+                uri,
+                headers);
 
             try
             {
-                // Issue the GET request
-                GetObjectResponse response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false);
+                // Send the request
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri.AbsoluteUri);
+
+                BuildRequestHeaders(request, headers, "GET", authorization);
 
                 // Write to file
+                using (HttpWebResponse response = (HttpWebResponse) await request.GetResponseAsync())
                 using (var fileStream = File.Create(fullDstPath))
-                {
-                    response.ResponseStream.CopyTo(fileStream);
+                using (var responseStream = response.GetResponseStream())
+                { 
+                    responseStream.CopyTo(fileStream);
+                    responseStream.Flush();                    
                 }
             }
-            catch (Exception ex)
+            catch (WebException ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata.lastError = ex;
+
+                HttpWebResponse response = (HttpWebResponse)ex.Response;
+                fileMetadata.resultStatus = HandleFileLoadErr(response.StatusCode).ToString();
+
                 return;
             }
 
+            // Update the result status of the file metadata
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
-        private GetObjectRequest GetGetObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata)
+        /// <summary>
+        /// Get the result status based on HTTP status code.
+        /// </summary>
+        /// <param name="statusCode">The HTTP error status code.</param>
+        /// <returns>The file's result status.</returns>
+        internal ResultStatus HandleFileHeaderErr(HttpStatusCode statusCode)
+        {
+            if (statusCode == HttpStatusCode.BadRequest)
+            {
+                return ResultStatus.RENEW_TOKEN;
+            }
+            else if (statusCode == HttpStatusCode.NotFound)
+            {
+                return ResultStatus.NOT_FOUND_FILE;
+            }
+            else
+            {
+                return ResultStatus.ERROR;
+            }
+        }
+
+        /// <summary>
+        /// Get the result status based on HTTP status code.
+        /// </summary>
+        /// <param name="statusCode">The HTTP error status code.</param>
+        /// <returns>The file's result status.</returns>
+        internal ResultStatus HandleFileLoadErr(HttpStatusCode statusCode)
+        {
+            if (statusCode == HttpStatusCode.BadRequest)
+            {
+                return ResultStatus.RENEW_TOKEN;
+            }
+            else
+            {
+                return ResultStatus.NEED_RETRY;
+            }
+        }
+
+        /// <summary>
+        /// Get the URI from the metadata stage info
+        /// </summary>
+        /// <param name="fileMetadata"></param>
+        /// <returns></returns>
+        private Uri GetFileUri(SFFileMetadata fileMetadata)
         {
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
 
-            // Create S3 GET request
-            return new GetObjectRequest
-            {
-                BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName,
-            };
+            string endpointUri = string.Format("https://{0}.s3-{1}.amazonaws.com/{2}",
+                                   location.bucket,
+                                   stageInfo.region,
+                                   location.key + fileMetadata.destFileName);
+
+            return new Uri(endpointUri);
         }
 
         /// <summary>
-        /// Handle file header error.
+        /// Build the headers for the request
         /// </summary>
-        /// <param name="ex">Exception from file header.</param>
-        /// <param name="fileMetadata">The file metadata.</param>
-        /// <returns>The file metadata.</returns>
-        private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        /// <param name="request"></param>
+        /// <param name="headers"></param>
+        /// <param name="method"></param>
+        /// <param name="authorization"></param>
+        private void BuildRequestHeaders(HttpWebRequest request, SortedDictionary<string, string> headers, string method, string authorization)
         {
+            request.Method = method;
+            request.Headers.Add(AUTHORIZATION, authorization);
 
-            AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-            if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == SFStorageClientUtil.BAD_REQUEST_ERR)
+            foreach (KeyValuePair<string, string> header in headers)
             {
-                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                if (header.Key == HOST)
+                {
+                    request.Host = headers[HOST];
+                }
+                else if (header.Key == CONTENT_TYPE)
+                {
+                    request.ContentType = headers[CONTENT_TYPE];
+                }
+                else if (header.Key == CONTENT_LENGTH)
+                {
+                    request.ContentLength = Convert.ToInt32(headers[CONTENT_LENGTH]);
+                }
+                else
+                {
+                    request.Headers.Add(header.Key, header.Value);
+                }
             }
-            else if (err.ErrorCode == NO_SUCH_KEY)
-            {
-                fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-            }
-            else
-            {
-                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-            }
-            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Sign the AWS request. Based off https://stackoverflow.com/q/56038177
+        /// </summary>
+        /// <param name="stageInfo"></param>
+        /// <param name="fileContentHashString"></param>
+        /// <param name="requestMethod"></param>
+        /// <param name="canonicalUri"></param>
+        /// <param name="headers"></param>
+        /// <returns>The signature for the AWS request</returns>
+        private string Sign(PutGetStageInfo stageInfo,
+            string fileContentHashString,
+            string requestMethod,
+            Uri canonicalUri,
+            SortedDictionary<string, string> headers)
+        {
+            // Get current time and convert to ISO8601 format
+            var requestDateTime = DateTime.UtcNow;
+            var dateTimeStamp = requestDateTime.ToString(ISO8601BasicFormat, CultureInfo.InvariantCulture);
+
+            // Update the headers with required 'x-amz-date' and 'host' values
+            headers.Add(X_AMZ_DATE, dateTimeStamp);
+            headers.Add("Host", canonicalUri.Host);
+
+            // Convert the headers to a multi-line string in "key:value" format and trim out white spaces
+            string canonicalHeaders = string.Join("\n", headers.Select(x => x.Key.ToLowerInvariant() + ":" + x.Value.Trim())) + "\n";
+
+            // Make a string containing all header keys
+            string signedHeaders = string.Join(";", headers.Select(x => x.Key.ToLowerInvariant()));
+
+            // Task 1: Create a Canonical Request For Signature Version 4
+            string canonicalRequest = requestMethod + "\n" + 
+                canonicalUri.AbsolutePath + "\n" + 
+                "\n" + // extra newline for query params
+                canonicalHeaders + "\n" +
+                signedHeaders + "\n" +
+                fileContentHashString;
+
+            string hashedCanonicalRequest = HexEncode(Hash(ToBytes(canonicalRequest)));
+
+            // Task 2: Create a String to Sign for Signature Version 4
+            var dateStamp = requestDateTime.ToString(DateStringFormat, CultureInfo.InvariantCulture);
+            var credentialScope = string.Format("{0}/{1}/{2}/aws4_request", dateStamp, stageInfo.region, ServiceName);
+
+            string stringToSign = Algorithm + "\n" + dateTimeStamp + "\n" + credentialScope + "\n" + hashedCanonicalRequest;
+
+            // Task 3: Calculate the signature for AWS Signature Version 4
+            byte[] signingKey = GetSignatureKey(stageInfo.stageCredentials[AWS_SECRET_KEY], dateStamp, stageInfo.region, ServiceName);
+            string signature = HexEncode(HmacSha256(stringToSign, signingKey));
+
+            // Task 4: Add the signature to the HTTP request
+            // Authorization: algorithm Credential=access key ID/credential scope, SignedHeaders=SignedHeaders, Signature=signature
+            string authorization = string.Format("{0} Credential={1}/{2}/{3}/{4}/aws4_request, SignedHeaders={5}, Signature={6}",
+            Algorithm, stageInfo.stageCredentials[AWS_KEY_ID], dateStamp, stageInfo.region, ServiceName, signedHeaders, signature);
+
+            return authorization;
+        }
+        /// <summary>
+        /// Get signature key using AWS algorithm
+        /// Based off https://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html#signature-v4-examples-dotnet
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="dateStamp"></param>
+        /// <param name="regionName"></param>
+        /// <param name="serviceName"></param>
+        /// <returns>The hash using HMACSHA256 algorithm</returns>
+        private byte[] GetSignatureKey(string key, string dateStamp, string regionName, string serviceName)
+        {
+            byte[] kDate = HmacSha256(dateStamp, ToBytes("AWS4" + key));
+            byte[] kRegion = HmacSha256(regionName, kDate);
+            byte[] kService = HmacSha256(serviceName, kRegion);
+            return HmacSha256("aws4_request", kService);
+        }
+
+        private byte[] ToBytes(string str)
+        {
+            return Encoding.UTF8.GetBytes(str.ToCharArray());
+        }
+
+        private string HexEncode(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();
+        }
+        private byte[] Hash(byte[] bytes)
+        {
+            return SHA256.Create().ComputeHash(bytes);
+        }
+        private byte[] HmacSha256(string data, byte[] key)
+        {
+            return new HMACSHA256(key).ComputeHash(ToBytes(data));
         }
     }
 }
