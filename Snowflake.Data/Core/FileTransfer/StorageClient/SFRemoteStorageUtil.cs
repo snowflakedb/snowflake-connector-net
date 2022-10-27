@@ -60,14 +60,11 @@ namespace Snowflake.Data.Core.FileTransfer
             }
             else if (stageLocationType == S3_FS)
             {
-                return new SFS3Client(stageInfo,
-                    DEFAULT_MAX_RETRY,
-                    response.parallel
-                    );
+                return new SFS3Client();
             }
             else if (stageLocationType == AZURE_FS)
             {
-                return new SFSnowflakeAzureClient(stageInfo);
+                return new SFSnowflakeAzureClient();
             }
             else if (stageLocationType == GCS_FS)
             {
