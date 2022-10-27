@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests
                 // missing required connection property password
                 "ACCOUNT=testaccount;user=testuser",
                 // invalid account value
-                "ACCOUNT=A=C;USER=testuser;password=123",
+                "ACCOUNT=A=C;USER=testuser;password=123;key",
                 "complete_invalid_string",
             };
 
@@ -1279,6 +1279,112 @@ namespace Snowflake.Data.Tests
             {
                 Assert.Fail();
             }
+        }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key1=test\'password;key2=test\"password;key3=test==password";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar1()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key==word=value; key1=\"test;password\"; key2=\"test=password\"";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+        
+        [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        public void TestHeartBeat()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+
+            Thread.Sleep(TimeSpan.FromSeconds(3610)); // more than 4 hrs
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46 );
+            }
+
+            conn.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn.State);
+        }
+
+        [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        public void TestHeartBeatWithConnectionPool()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+            conn.Close();
+
+            Thread.Sleep(TimeSpan.FromSeconds(3620)); // more than 4 hrs
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn1.Open();
+
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46);
+            }
+
+            conn1.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
     }
 

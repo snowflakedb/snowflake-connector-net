@@ -105,7 +105,7 @@ Create a Connection
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
-Note: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
+**Note**: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
 
 The following table lists all valid connection properties:
 <br />
@@ -139,6 +139,8 @@ The following table lists all valid connection properties:
 
 <br />
 
+### Password-based Authentication
+
 The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
 
 ```cs
@@ -151,6 +153,56 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+<a id="sample-connection-strings"></a>
+
+Beginning with version 2.0.18, the .NET connector uses Microsoft [DbConnectionStringBuilder](https://learn.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring?view=dotnet-plat-ext-6.0#remarks) to follow the .NET specification for escaping characters in connection strings. 
+
+The following examples show how you can include different types of special characters in a connection string:
+
+- To include a single quote (') character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test'password;"
+  );
+  ```
+
+- To include a double quote (") character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test\"password;"
+  );
+  ```
+
+- To include a semicolon (;):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=\"test;password\";"
+  );
+  ```
+
+- To include an equal sign (=):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test=password;"
+  );
+  ```
+
+  Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
+
+### Other Authentication Methods 
 
 If you are using a different method for authentication, see the examples below:
 
