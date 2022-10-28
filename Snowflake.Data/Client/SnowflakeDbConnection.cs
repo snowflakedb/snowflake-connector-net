@@ -47,7 +47,6 @@ namespace Snowflake.Data.Client
             this.SfSession = conn.SfSession;
             this._connectionState = conn._connectionState;
             this._connectionTimeout = conn._connectionTimeout;
-            this.disposed = conn.disposed;
             this.ConnectionString = conn.ConnectionString;
             this.Password = conn.Password;
         }
