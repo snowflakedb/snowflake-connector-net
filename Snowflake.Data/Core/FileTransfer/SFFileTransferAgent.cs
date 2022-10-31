@@ -282,37 +282,37 @@ namespace Snowflake.Data.Core
             // For each file metadata, set the result set variables
             for (int index = 0; index < ResultsMetas.Count; index++)
             {
-                TransferMetadata.rowSet[index, 0] = ResultsMetas[index].srcFileName;
-                TransferMetadata.rowSet[index, 1] = ResultsMetas[index].destFileName;
-                TransferMetadata.rowSet[index, 2] = ResultsMetas[index].srcFileSize.ToString();
-                TransferMetadata.rowSet[index, 3] = ResultsMetas[index].destFileSize.ToString();
-                TransferMetadata.rowSet[index, 4] = ResultsMetas[index].resultStatus;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName        ] = ResultsMetas[index].srcFileName;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName   ] = ResultsMetas[index].destFileName;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize        ] = ResultsMetas[index].srcFileSize.ToString();
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize   ] = ResultsMetas[index].destFileSize.ToString();
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType ] = ResultsMetas[index].resultStatus;
 
                 if (ResultsMetas[index].lastError != null)
                 {
-                    TransferMetadata.rowSet[index, 5] = ResultsMetas[index].lastError.ToString();
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = ResultsMetas[index].lastError.ToString();
                 }
                 else
                 {
-                    TransferMetadata.rowSet[index, 5] = null;
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
                 }
 
                 if (ResultsMetas[index].sourceCompression.Name != null)
                 {
-                    TransferMetadata.rowSet[index, 6] = ResultsMetas[index].sourceCompression.Name;
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = ResultsMetas[index].sourceCompression.Name;
                 }
                 else
                 {
-                    TransferMetadata.rowSet[index, 6] = null;
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = null;
                 }
 
                 if (ResultsMetas[index].targetCompression.Name != null)
                 {
-                    TransferMetadata.rowSet[index, 7] = ResultsMetas[index].targetCompression.Name;
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = ResultsMetas[index].targetCompression.Name;
                 }
                 else
                 {
-                    TransferMetadata.rowSet[index, 7] = null;
+                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = null;
                 }
             }
             
