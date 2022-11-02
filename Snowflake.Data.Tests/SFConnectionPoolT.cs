@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
-            System.Threading.Thread.Sleep(3000); // wait for 3 seconds, in case other test still running.
+            System.Threading.Thread.Sleep(10000); // wait for 10 seconds, in case other test still running.
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(10);

@@ -245,11 +245,12 @@ namespace Snowflake.Data.Tests
                             ((SnowflakeDbException)e.InnerException).ErrorCode);
                     }
                     stopwatch.Stop();
+                    int detla = 10; //in case server time slower.
 
                     //Should timeout before the default timeout (120 sec) * 1000
                     Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
                     // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - detla);
                     Assert.AreEqual(5, conn.ConnectionTimeout);
                 }
             }

@@ -114,17 +114,6 @@ namespace Snowflake.Data.Core
                 bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
             }
 
-            // Temporary change pretend as ODBC to enable multiple statements
-            // on server side. need to be removed when merge
-            if (SFEnvironment.DriverName == "ODBC")
-            {
-                if (bodyParameters == null)
-                {
-                    bodyParameters = new Dictionary<string, string>();
-                }
-                bodyParameters["ODBC_QUERY_RESULT_FORMAT"] = "JSON";
-            }
-
             QueryRequest postBody = new QueryRequest();
             postBody.sqlText = sql;
             postBody.describeOnly = describeOnly;
