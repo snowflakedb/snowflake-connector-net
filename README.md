@@ -478,18 +478,7 @@ The next section explains how to specify the number of statements in a batch.
 By default, the Snowflake database expects the driver to prepare and send a single statement for execution.
 
 You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
-the current session or account:
-
-- To specify the number for a given request, call
-  [SqlSetStmtAttr](https://docs.microsoft.com/en-us/sql/odbc/reference/syntax/sqlsetstmtattr-function?view=sql-server-ver15)
-  to set the `SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` attribute to the number of statements in the batch.
-
-  ```
-  // Specify that you want to execute a batch of 3 SQL statements
-  rc = SQLSetStmtAttr(hstmt, SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT, (SQLPOINTER)3, 0);
-  ```
-
-  If you want to use the setting for the current session or account (rather than specify the number for the request), set `SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` to ``-1``.
+the current session.
 
 - To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake
   [MULTI_STATEMENT_COUNT <label-parameters__multi_statement_count>](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
@@ -500,13 +489,7 @@ the current session or account:
     alter session set MULTI_STATEMENT_COUNT = 0;
     ```
 
-    or:
-
-    ```
-    alter account set MULTI_STATEMENT_COUNT = 0;
-    ```
-
-    By default, :code:`MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
+    By default, `MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
 
 ### Preparing a Batch of SQL Statements
 
