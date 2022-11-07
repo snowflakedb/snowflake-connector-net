@@ -449,6 +449,89 @@ Note that because this method is not available in the generic `IDataReader` inte
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
 
+Executing a Batch of SQL Statements (Multi-Statement Support)
+--------------------------------------------------------------
+
+With the .NET connector, you can send
+a [batch of SQL statements](https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/batches-of-sql-statements?view=sql-server-ver15)  (separated by semicolons)
+to be executed in a single request. For example:
+
+```cs
+IDbCommand cmd = conn.CreateCommand();
+                var param = cmd.CreateParameter();
+                param.ParameterName = "MULTI_STATEMENT_COUNT";
+                param.DbType = DbType.Int16;
+                param.Value = 3;
+                cmd.Parameters.Add(param);
+                cmd.CommandText = "select 1; select 2, 3; select 4, 5, 6";
+                IDataReader reader = cmd.ExecuteReader();
+```
+
+To send a batch of statements with the Snowflake .NET connector, you must specify the number of statements in the batch.
+The Snowflake database requires the exact number of statements in order to guard against
+[SQL injection](https://en.wikipedia.org/wiki/SQL_injection>) attacks. 
+
+The next section explains how to specify the number of statements in a batch. 
+
+### Specifying the Number of Statements in a Batch
+
+By default, the Snowflake database expects the driver to prepare and send a single statement for execution.
+
+You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
+the current session or account:
+
+- To specify the number for a given request, call
+  [SqlSetStmtAttr](https://docs.microsoft.com/en-us/sql/odbc/reference/syntax/sqlsetstmtattr-function?view=sql-server-ver15)
+  to set the :code:`SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` attribute to the number of statements in the batch.
+
+    .. code-block:: cpp
+
+        // Specify that you want to execute a batch of 3 SQL statements
+        rc = SQLSetStmtAttr(hstmt, SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT, (SQLPOINTER)3, 0);
+
+  If you want to use the setting for the current session or account (rather than specify the number for the request), set
+  :code:`SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` to ``-1``.
+
+- To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake
+  [MULTI_STATEMENT_COUNT <label-parameters__multi_statement_count>](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
+
+    Use:
+
+    .. code-block:: cpp
+
+        alter session set MULTI_STATEMENT_COUNT = 0;
+
+    or:
+
+    .. code-block:: cpp
+
+       alter account set MULTI_STATEMENT_COUNT = 0;
+
+    By default, :code:`MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
+
+### Preparing a Batch of SQL Statements
+
+The .NET connector supports the ability to prepare a batch of SQL statements (e.g. by calling the :code:`SQLPrepare` function). Note
+the following:
+
+- If the statements have
+  [parameters](https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/statement-parameters?view=sql-server-ver15),
+  calling the [SQLNumParams](https://docs.microsoft.com/en-us/sql/odbc/reference/syntax/sqlnumparams-function?view=sql-server-ver15)
+  function returns the total number of parameters in all the statements in the batch.
+
+- Column information about the result set (e.g. data returned by `SQLNumResultCols`, `SQLDescribeCol`, `SQLColAttribute` and
+  `SQLColAttributes`) is available when you call `SQLExecute` or `SQLExecDirect`.
+
+  Although some column information is available when you call `SQLPrepare`, the information might not be completely accurate, and
+  subsequent calls to `SQLExecute` or `SQLExecDirect` might provide more accurate information.
+
+### Limitations
+
+GET and PUT commands are not supported in batches of SQL statements. When you send a batch of SQL statements with GET and PUT
+comments to be executed, the GET and PUT commands are ignored, and no errors are reported.
+
+
+
 Bind Parameter
 --------------
 
