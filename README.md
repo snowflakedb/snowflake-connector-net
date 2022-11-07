@@ -484,13 +484,12 @@ the current session or account:
   [SqlSetStmtAttr](https://docs.microsoft.com/en-us/sql/odbc/reference/syntax/sqlsetstmtattr-function?view=sql-server-ver15)
   to set the `SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` attribute to the number of statements in the batch.
 
-```
-// Specify that you want to execute a batch of 3 SQL statements
-rc = SQLSetStmtAttr(hstmt, SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT, (SQLPOINTER)3, 0);
-```
+  ```
+  // Specify that you want to execute a batch of 3 SQL statements
+  rc = SQLSetStmtAttr(hstmt, SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT, (SQLPOINTER)3, 0);
+  ```
 
-  If you want to use the setting for the current session or account (rather than specify the number for the request), set
-  `SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` to ``-1``.
+  If you want to use the setting for the current session or account (rather than specify the number for the request), set `SQL_SF_STMT_ATTR_MULTI_STATEMENT_COUNT` to ``-1``.
 
 - To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake
   [MULTI_STATEMENT_COUNT <label-parameters__multi_statement_count>](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
