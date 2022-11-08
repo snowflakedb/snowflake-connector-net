@@ -482,9 +482,9 @@ the current session.
 
 To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
 
-    ```
-    alter session set MULTI_STATEMENT_COUNT = 0;
-    ```
+```
+alter session set MULTI_STATEMENT_COUNT = 0;
+```
 
 By default, `MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
 
