@@ -452,7 +452,7 @@ TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 Executing a Batch of SQL Statements (Multi-Statement Support)
 --------------------------------------------------------------
 
-With the .NET 2.0.18 and later connector, you can send
+With version 2.0.18 and later of the .NET connector, you can send
 a [batch of SQL statements](https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/batches-of-sql-statements?view=sql-server-ver15)  (separated by semicolons)
 to be executed in a single request. For example:
 
