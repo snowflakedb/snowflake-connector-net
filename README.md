@@ -480,7 +480,7 @@ By default, the Snowflake database expects a .NET connector application to prepa
 You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
 the current session.
 
-To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
+To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``, as follows.
 
 ```
 alter session set MULTI_STATEMENT_COUNT = 0;
