@@ -475,7 +475,7 @@ The next section explains how to specify the number of statements in a batch.
 
 ### Specifying the Number of Statements in a Batch
 
-By default, the Snowflake database expects the driver to prepare and send a single statement for execution.
+By default, the Snowflake database expects a .NET connector application to prepare and send a single statement for execution.
 
 You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
 the current session.
