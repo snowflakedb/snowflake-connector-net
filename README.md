@@ -452,7 +452,7 @@ TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 Executing a Batch of SQL Statements (Multi-Statement Support)
 --------------------------------------------------------------
 
-With the .NET connector, you can send
+With the .NET 2.0.18 and later connector, you can send
 a [batch of SQL statements](https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/batches-of-sql-statements?view=sql-server-ver15)  (separated by semicolons)
 to be executed in a single request. For example:
 
@@ -480,16 +480,13 @@ By default, the Snowflake database expects a .NET connector application to prepa
 You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
 the current session.
 
-To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake
-  [MULTI_STATEMENT_COUNT <label-parameters__multi_statement_count>](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
-
-    Use:
+To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``.
 
     ```
     alter session set MULTI_STATEMENT_COUNT = 0;
     ```
 
-    By default, `MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
+By default, `MULTI_STATEMENT_COUNT` is set to ``1``, which indicates that only one SQL statement can be executed.
 
 ### Preparing a Batch of SQL Statements
 
