@@ -1337,6 +1337,26 @@ namespace Snowflake.Data.Tests
         }
         
         [Test]
+        public void TestHeartBeatInitsCorrectly()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+                conn.Open();
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = $"SELECT 1;";
+                    Assert.AreEqual(1, command.ExecuteScalar());
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+        
+        [Test]
         [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
         {

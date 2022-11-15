@@ -72,6 +72,8 @@ namespace Snowflake.Data.Core
         FORCERETRYON404,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         CLIENT_SESSION_KEEP_ALIVE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "3600")]
+        CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -242,7 +244,7 @@ namespace Snowflake.Data.Core
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
-                    logger.Debug($"Sesssion property {sessionProperty} set to default value: {defaultVal}");
+                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
             }

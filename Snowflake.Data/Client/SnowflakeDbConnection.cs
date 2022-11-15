@@ -118,7 +118,7 @@ namespace Snowflake.Data.Client
             bool added = SnowflakeDbConnectionPool.addConnection(this);
             if (!added)
             {
-                SfSession.stopHeartBeatForThisSession();
+                SfSession.StopHeartBeatForThisSession();
                 if (SfSession != null)
                 {
                     SfSession.close();

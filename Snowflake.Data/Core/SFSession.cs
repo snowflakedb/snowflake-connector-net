@@ -134,13 +134,16 @@ namespace Snowflake.Data.Core
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
                 bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                int heartbeatFrequency = int.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY]);
+                ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = keepAlive;
+                ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY] = heartbeatFrequency;
                 if(keepAlive)
                 {
-                    startHeartBeatForThisSession();
+                    StartHeartBeatForThisSession(heartbeatFrequency);
                 }
                 else
                 {
-                    stopHeartBeatForThisSession();
+                    StopHeartBeatForThisSession();
                 }
 
                 string proxyHost = null;
@@ -395,32 +398,45 @@ namespace Snowflake.Data.Core
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
             {
                 bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+                var keepAliveHeartbeatFrequency = 3600;
+                if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY))
+                {
+                    keepAliveHeartbeatFrequency =
+                        Convert.ToInt32(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY]);
+                }
+                    
                 if(keepAlive)
                 {
-                    startHeartBeatForThisSession();
+                    StartHeartBeatForThisSession(keepAliveHeartbeatFrequency);
                 }
                 else
                 {
-                    stopHeartBeatForThisSession();
+                    StopHeartBeatForThisSession();
                 }
             }
         }
 
-        internal void startHeartBeatForThisSession()
+        private void StartHeartBeatForThisSession(int heartbeatFrequency)
         {
+            HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+
             if (!this.isHeartBeatEnabled)
             {
-                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+                heartBeatBg.AddConnection(this, heartbeatFrequency);
                 this.isHeartBeatEnabled = true;
             }
+            else
+            {
+                heartBeatBg.UpdateHeartbeatFrequency(heartbeatFrequency);
+            }
         }
-        internal void stopHeartBeatForThisSession()
+        
+        internal void StopHeartBeatForThisSession()
         {
             if (this.isHeartBeatEnabled)
             {
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                heartBeatBg.removeConnection(this);
+                heartBeatBg.RemoveConnection(this);
                 this.isHeartBeatEnabled = false;
             }
 
@@ -446,7 +462,7 @@ namespace Snowflake.Data.Core
             this.arrayBindStageThreshold = arrayBindStageThreshold;
         }
 
-        internal void heartbeat()
+        internal void Heartbeat()
         {
             logger.Debug("heartbeat");
 
