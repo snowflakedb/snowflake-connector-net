@@ -465,6 +465,10 @@ namespace Snowflake.Data.Core
         internal void Heartbeat()
         {
             logger.Debug("heartbeat");
+            
+            // If auth is not finalized yet, do not send a heartbeat
+            if(restRequester == null || string.IsNullOrEmpty(sessionToken))
+                return;
 
             bool retry = false;
             do
