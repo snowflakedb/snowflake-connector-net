@@ -97,7 +97,14 @@ namespace Snowflake.Data.Core
 
             foreach (var session in copyOfHeartBeatQueue)
             {
-                session.Heartbeat();
+                try
+                {
+                    session.Heartbeat();
+                }
+                catch (Exception)
+                {
+                    // Do not throw exceptions in this thread, as they will not be handled and cause application crash
+                }
             }
         }
     }
