@@ -57,7 +57,7 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <!--The version number to be send to server at run time-->
     <!--Always have three parts here and never add forth part-->
-    <AssemblyVersion>2.0.17</AssemblyVersion>
+    <AssemblyVersion>2.0.19</AssemblyVersion>
   </PropertyGroup>
   
   <ItemGroup>
