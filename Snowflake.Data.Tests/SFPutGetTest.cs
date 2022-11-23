@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Data.Common;
+    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFPutGetTest : SFBaseTest
@@ -79,6 +80,8 @@ namespace Snowflake.Data.Tests
             string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
             string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
 
+            string compressionTypeExtension = Core.FileTransfer.SFFileCompressionTypes.LookUpByName(compressionType).FileExtension;
+
             foreach (string stageType in stageTypes)
             {
                 foreach (string autoCompressType in autoCompressTypes)
@@ -90,7 +93,7 @@ namespace Snowflake.Data.Tests
 
                         // Create a temp file with specified file extension
                         string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv" +
-                            (autoCompressType == FALSE_COMPRESS ? "" : "." + compressionType);
+                            (autoCompressType == FALSE_COMPRESS ? "" : compressionTypeExtension);
                         // Write row data to temp file
                         File.WriteAllText(filePath, ROW_DATA);
 
@@ -164,17 +167,17 @@ namespace Snowflake.Data.Tests
                             while (reader.Read())
                             {
                                 // Check file status
-                                Assert.AreEqual(reader.GetString(4), UPLOADED);
+                                Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus), UPLOADED);
                                 // Check source and destination compression type
                                 if (autoCompressType == FALSE_COMPRESS)
                                 {
-                                    Assert.AreEqual(reader.GetString(6), "none");
-                                    Assert.AreEqual(reader.GetString(7), "none");
+                                    Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType), "none");
+                                    Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType), "none");
                                 }
                                 else
                                 {
-                                    Assert.AreEqual(reader.GetString(6), compressionType);
-                                    Assert.AreEqual(reader.GetString(7), compressionType);
+                                    Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType), compressionType);
+                                    Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType), compressionType);
                                 }
                             }
 
@@ -213,7 +216,7 @@ namespace Snowflake.Data.Tests
                             while (reader.Read())
                             {
                                 // Check file status
-                                Assert.AreEqual(reader.GetString(4), DOWNLOADED);
+                                Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus), DOWNLOADED);
 
                                 // Check file contents
                                 using (var streamReader = new StreamReader($@"{tempDirectory}/{fileName}"))
