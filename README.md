@@ -453,7 +453,7 @@ Executing a Batch of SQL Statements (Multi-Statement Support)
 --------------------------------------------------------------
 
 With version 2.0.18 and later of the .NET connector, you can send
-a [batch of SQL statements](https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/batches-of-sql-statements?view=sql-server-ver15)  (separated by semicolons)
+a batch of SQL statements (separated by semicolons)
 to be executed in a single request. For example:
 
 ```cs
@@ -480,7 +480,7 @@ By default, the Snowflake database expects a .NET connector application to prepa
 You can override this by specifying the number of statements in a batch for a given request or by enabling multiple statements for
 the current session.
 
-To enable multiple statements for the current session or account, alter the session or account, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``, as follows.
+To enable multiple statements for the current session, alter the session, and set the Snowflake [MULTI_STATEMENT_COUNT](https://docs.snowflake.com/en/sql-reference/parameters.html#label-parameters-multi-statement-count) parameter to ``0``, as follows.
 
 ```
 alter session set MULTI_STATEMENT_COUNT = 0;
