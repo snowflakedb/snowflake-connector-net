@@ -10,9 +10,12 @@ using System.Threading;
 using System.Collections.Generic;
 using Snowflake.Data.Log;
 using System.Collections.Specialized;
+using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Security.Authentication;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace Snowflake.Data.Core
 {
@@ -109,10 +112,13 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
+        private bool IsNetFramework() => Assembly.GetExecutingAssembly()
+                .GetCustomAttributes<TargetFrameworkAttribute>().Single().FrameworkName.StartsWith(".NETFramework");
+
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsNetFramework())
             {
                 httpHandler = new WinHttpHandler()
                 {
