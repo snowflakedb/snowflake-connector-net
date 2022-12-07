@@ -112,8 +112,14 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        private bool IsNetFramework() => Assembly.GetExecutingAssembly()
-                .GetCustomAttributes<TargetFrameworkAttribute>().Single().FrameworkName.StartsWith(".NETFramework");
+        private bool IsNetFramework()
+        {
+#if NETFRAMEWORK
+            return true;
+#else
+            return false;
+#endif
+        }
 
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
