@@ -1345,7 +1345,7 @@ namespace Snowflake.Data.Tests
             conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
             conn.Open();
 
-            Thread.Sleep(TimeSpan.FromSeconds(3610)); // more than 4 hrs
+            Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
@@ -1362,7 +1362,7 @@ namespace Snowflake.Data.Tests
         {
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
-            SnowflakeDbConnectionPool.SetTimeout(10);
+            SnowflakeDbConnectionPool.SetTimeout(14800);
             SnowflakeDbConnectionPool.SetPooling(true);
 
             var conn = new SnowflakeDbConnection();
@@ -1370,12 +1370,12 @@ namespace Snowflake.Data.Tests
             conn.Open();
             conn.Close();
 
-            Thread.Sleep(TimeSpan.FromSeconds(3620)); // more than 4 hrs
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
             conn1.Open();
+            Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
 
             using (IDbCommand command = conn.CreateCommand())
             {
