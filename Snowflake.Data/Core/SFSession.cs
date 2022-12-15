@@ -412,7 +412,11 @@ namespace Snowflake.Data.Core
             {
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
                 if (this.masterValidityInSeconds == 0)
-                    this.masterValidityInSeconds = 14400;
+                {
+                    //In case server doesnot provide the default timeout
+                    var DEFAULT_TIMEOUT_IN_SECOND = 14400;
+                    this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
+                }
                 heartBeatBg.addConnection(this, this.masterValidityInSeconds);
                 this.isHeartBeatEnabled = true;
             }
