@@ -665,6 +665,11 @@ namespace Snowflake.Data.Core
                     }
                 }
 
+                if (idx >= sqlQueryBuf.Length)
+                {
+                    // have already moved past array length, so can stop looking at characters
+                    break;
+                }
                 builder.Append(sqlQueryBuf[idx]);
                 idx++;
             }

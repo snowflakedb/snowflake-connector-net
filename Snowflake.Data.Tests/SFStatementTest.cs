@@ -49,6 +49,39 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual("1", resultSet.GetString(0));
         }
 
+        /// <summary>
+        /// Running a query involves the SFStatement.TrimSql method.  There was a bug in the method that resulted in
+        /// an unexpeced exception.  This test will ensure the condition is tested for block comments.
+        /// </summary>
+        [Test]
+        public void TestTrimSqlBlockComment()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        /// <summary>
+        /// Running a query involves the SFStatement.TrimSql method.  There was a bug in the method that resulted in
+        /// an unexpeced exception.  This test will ensure the condition is tested for line comments.
+        /// </summary>
+        [Test]
+        public void TestTrimSqlLineComment()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+
         // Mock test for Service Name
         // The Mock requester would take in the X-Snowflake-Service header in the request
         // and append a character 'a' at the end, send back as SERVICE_NAME parameter
