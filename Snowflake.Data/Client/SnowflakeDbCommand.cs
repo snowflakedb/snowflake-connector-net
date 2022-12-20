@@ -155,24 +155,59 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            logger.Debug($"ExecuteNonQuery, command: {CommandText}");
+            logger.Debug($"ExecuteNonQuery");
             SFBaseResultSet resultSet = ExecuteInternal();
-            return resultSet.CalculateUpdateCount();
+            long total = 0;
+            do
+            {
+                if (resultSet.HasResultSet()) continue;
+                int count = resultSet.CalculateUpdateCount();
+                if (count < 0)
+                {
+                    // exceeded max int, return -1
+                    return -1;
+                }
+                total += count;
+                if (total > int.MaxValue)
+                {
+                    return -1;
+                }
+            }
+            while (resultSet.NextResult());
+
+            return (int)total;
         }
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            logger.Debug($"ExecuteNonQueryAsync");
+            cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-            return resultSet.CalculateUpdateCount();
+            long total = 0;
+            do
+            {
+                if (resultSet.HasResultSet()) continue;
+                int count = resultSet.CalculateUpdateCount();
+                if (count < 0)
+                {
+                    // exceeded max int, return -1
+                    return -1;
+                }
+                total += count;
+                if (total > int.MaxValue)
+                {
+                    return -1;
+                }
+            }
+            while (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false));
+
+            return (int)total;
         }
 
         public override object ExecuteScalar()
         {
-            logger.Debug($"ExecuteScalar, command: {CommandText}");
+            logger.Debug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
             if(resultSet.Next())
@@ -183,9 +218,8 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            logger.Debug($"ExecuteScalarAsync");
+            cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
 
@@ -207,14 +241,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReader");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReaderAsync");
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -223,7 +257,7 @@ namespace Snowflake.Data.Client
             catch (Exception ex)
             {
                 logger.Error("The command failed to execute.", ex);
-                throw ex;
+                throw;
             }
         }
 

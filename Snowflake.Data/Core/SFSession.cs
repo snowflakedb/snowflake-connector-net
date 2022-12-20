@@ -17,8 +17,10 @@ using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
-    class SFSession
+    public class SFSession
     {
+        public const int SF_SESSION_EXPIRED_CODE = 390112;
+
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
@@ -47,7 +49,13 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
+        internal bool isHeartBeatEnabled;
+
         private HttpClient _HttpClient;
+
+        private string arrayBindStage = null;
+        private int arrayBindStageThreshold = 0;
+        internal int masterValidityInSeconds = 0;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -58,14 +66,14 @@ namespace Snowflake.Data.Core
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
                 serverVersion = authnResponse.data.serverVersion;
-
+                masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
             }
             else
             {
                 SnowflakeDbException e = new SnowflakeDbException
-                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE, 
-                    authnResponse.code, 
+                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                    authnResponse.code,
                     authnResponse.message,
                     "");
 
@@ -123,6 +131,18 @@ namespace Snowflake.Data.Core
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
+                bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
+                bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
+                bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                if(keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+
                 string proxyHost = null;
                 string proxyPort = null;
                 string noProxyHosts = null;
@@ -146,14 +166,16 @@ namespace Snowflake.Data.Core
                 }
 
                 // HttpClient config based on the setting in the connection string
-                HttpClientConfig httpClientConfig = 
+                HttpClientConfig httpClientConfig =
                     new HttpClientConfig(
-                        !InsecureMode, 
-                        proxyHost, 
-                        proxyPort, 
-                        proxyUser, 
-                        proxyPwd, 
-                        noProxyHosts);
+                        !InsecureMode,
+                        proxyHost,
+                        proxyPort,
+                        proxyUser,
+                        proxyPwd,
+                        noProxyHosts,
+                        disableRetry,
+                        forceRetryOn404);
 
                 // Get the http client for the config
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
@@ -178,7 +200,7 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
             }
 
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;            
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
@@ -205,7 +227,7 @@ namespace Snowflake.Data.Core
 
                 uriBuilder.Query = queryString.ToString();
             }
-            
+
             return uriBuilder.Uri;
         }
 
@@ -283,6 +305,46 @@ namespace Snowflake.Data.Core
 
         internal void renewSession()
         {
+            logger.Info("Renew the session.");
+            var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
+            if (!response.success)
+            {
+                SnowflakeDbException e = new SnowflakeDbException("",
+                    response.code, response.message, "");
+                logger.Error("Renew session failed", e);
+                throw e;
+            }
+            else
+            {
+                sessionToken = response.data.sessionToken;
+                masterToken = response.data.masterToken;
+            }
+        }
+
+        internal async Task renewSessionAsync(CancellationToken cancellationToken)
+        {
+            logger.Info("Renew the session.");
+            var response =
+                    await restRequester.PostAsync<RenewSessionResponse>(
+                        getRenewSessionRequest(),
+                        cancellationToken
+                    ).ConfigureAwait(false);
+            if (!response.success)
+            {
+                SnowflakeDbException e = new SnowflakeDbException("",
+                    response.code, response.message, "");
+                logger.Error("Renew session failed", e);
+                throw e;
+            }
+            else
+            {
+                sessionToken = response.data.sessionToken;
+                masterToken = response.data.masterToken;
+            }
+        }
+
+        internal SFRestRequest getRenewSessionRequest()
+        {
             RenewSessionRequest postBody = new RenewSessionRequest()
             {
                 oldSessionToken = this.sessionToken,
@@ -295,28 +357,13 @@ namespace Snowflake.Data.Core
                     { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                 };
 
-            SFRestRequest renewSessionRequest = new SFRestRequest
+            return new SFRestRequest
             {
                 jsonBody = postBody,
                 Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
                 RestTimeout = Timeout.InfiniteTimeSpan
             };
-
-            logger.Info("Renew the session.");
-            var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
-            if (!response.success)
-            {
-                SnowflakeDbException e = new SnowflakeDbException("", 
-                    response.code, response.message, "");
-                logger.Error("Renew session failed", e);
-                throw e;
-            } 
-            else 
-            {
-                sessionToken = response.data.sessionToken;
-                masterToken = response.data.masterToken;
-            }
         }
 
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
@@ -329,7 +376,7 @@ namespace Snowflake.Data.Core
                 RestTimeout = connectionTimeout,
             };
         }
-        
+
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
@@ -339,6 +386,124 @@ namespace Snowflake.Data.Core
                 {
                     ParameterMap[parameterName] = parameter.value;
                 }
+            }
+            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+            {
+                string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                this.arrayBindStageThreshold = Int32.Parse(val);
+            }
+            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
+            {
+                bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+                if(keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+            }
+        }
+
+        internal void startHeartBeatForThisSession()
+        {
+            if (!this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                if (this.masterValidityInSeconds == 0)
+                {
+                    //In case server doesnot provide the default timeout
+                    var DEFAULT_TIMEOUT_IN_SECOND = 14400;
+                    this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
+                }
+                heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+                this.isHeartBeatEnabled = true;
+            }
+        }
+        internal void stopHeartBeatForThisSession()
+        {
+            if (this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.removeConnection(this);
+                this.isHeartBeatEnabled = false;
+            }
+
+        }
+
+        public string GetArrayBindStage()
+        {
+            return arrayBindStage;
+        }
+
+        public void SetArrayBindStage(string arrayBindStage)
+        {
+            this.arrayBindStage = string.Format("{0}.{1}.{2}", this.database, this.schema, arrayBindStage);
+        }
+
+        public int GetArrayBindStageThreshold()
+        {
+            return this.arrayBindStageThreshold;
+        }
+
+        public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
+        {
+            this.arrayBindStageThreshold = arrayBindStageThreshold;
+        }
+
+        internal void heartbeat()
+        {
+            logger.Debug("heartbeat");
+
+            bool retry = false;
+            if (sessionToken != null)
+            {
+                do
+                {
+                    var parameters = new Dictionary<string, string>
+                        {
+                            { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                            { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                        };
+
+                    SFRestRequest heartBeatSessionRequest = new SFRestRequest
+                    {
+                        Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
+                        authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                        RestTimeout = Timeout.InfiniteTimeSpan
+                    };
+                    var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+
+                    logger.Debug("heartbeat response=" + response);
+                    if (response.success)
+                    {
+                        logger.Debug("SFSession::heartbeat success, session token did not expire.");
+                    }
+                    else
+                    {
+                        if (response.code == SF_SESSION_EXPIRED_CODE)
+                        {
+                            logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
+                            try
+                            {
+                                renewSession();
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error("renew session failed.", ex);
+                                throw;
+                            }
+                            retry = true;
+                            continue;
+                        }
+                        else
+                        {
+                            logger.Error("heartbeat failed.");
+                        }
+                    }
+                    retry = false;
+                } while (retry);
             }
         }
     }

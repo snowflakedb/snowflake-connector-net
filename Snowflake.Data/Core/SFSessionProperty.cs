@@ -9,6 +9,8 @@ using System.Security;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using System.Data.Common;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -18,19 +20,19 @@ namespace Snowflake.Data.Core
         ACCOUNT,
         [SFSessionPropertyAttr(required = false)]
         DB,
-        [SFSessionPropertyAttr(required = false)] 
+        [SFSessionPropertyAttr(required = false)]
         HOST,
-        [SFSessionPropertyAttr(required = true)] 
+        [SFSessionPropertyAttr(required = true)]
         PASSWORD,
-        [SFSessionPropertyAttr(required = false, defaultValue = "443")] 
+        [SFSessionPropertyAttr(required = false, defaultValue = "443")]
         PORT,
         [SFSessionPropertyAttr(required = false)]
         ROLE,
         [SFSessionPropertyAttr(required = false)]
         SCHEMA,
-        [SFSessionPropertyAttr(required = false, defaultValue = "https")] 
+        [SFSessionPropertyAttr(required = false, defaultValue = "https")]
         SCHEME,
-        [SFSessionPropertyAttr(required = true, defaultValue = "")] 
+        [SFSessionPropertyAttr(required = true, defaultValue = "")]
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
@@ -64,7 +66,12 @@ namespace Snowflake.Data.Core
         NONPROXYHOSTS,
         [SFSessionPropertyAttr(required = false)]
         APPLICATION,
-
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        DISABLERETRY,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        FORCERETRYON404,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        CLIENT_SESSION_KEEP_ALIVE,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -79,7 +86,7 @@ namespace Snowflake.Data.Core
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
         // Connection string properties to obfuscate in the log
-        static private List<SFSessionProperty> secretProps = 
+        static private List<SFSessionProperty> secretProps =
             new List<SFSessionProperty>{
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
@@ -126,90 +133,36 @@ namespace Snowflake.Data.Core
         internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
+            DbConnectionStringBuilder builder = new DbConnectionStringBuilder();
+            try
+            { 
+                builder.ConnectionString = connectionString;
+            }
+            catch (ArgumentException e)
+            {
+                logger.Warn($"ConnectionString: {connectionString}", e);
+                throw new SnowflakeDbException(e,
+                                SFError.INVALID_CONNECTION_STRING,
+                                e.Message);
+            }
             SFSessionProperties properties = new SFSessionProperties();
 
-            string[] propertyEntry = connectionString.Split(';');
+            string[] keys = new string[builder.Keys.Count];
+            string[] values = new string[builder.Values.Count];
+            builder.Keys.CopyTo(keys, 0);
+            builder.Values.CopyTo(values,0);
 
-            foreach (string keyVal in propertyEntry)
+            for(int i=0; i<keys.Length; i++)
             {
-                if (keyVal.Length > 0)
-                {                    
-                    string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    if (tokens.Length != 2)
-                    {
-                        // https://docs.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring
-                        // To include an equal sign (=) in a keyword or value, it must be preceded 
-                        // by another equal sign. For example, in the hypothetical connection 
-                        // string "key==word=value" :
-                        // the keyword is "key=word" and the value is "value".
-                        int currentIndex = 0;
-                        int singleEqualIndex = -1;
-                        while (currentIndex <= keyVal.Length)
-                        {
-                            currentIndex = keyVal.IndexOf("=", currentIndex);
-                            if (-1 == currentIndex)
-                            {
-                                // No '=' found
-                                break;
-                            }
-                            if ((currentIndex < (keyVal.Length - 1)) && 
-                                ('=' != keyVal[currentIndex + 1]))
-                            {
-                                if (0 > singleEqualIndex)
-                                {
-                                    // First single '=' encountered
-                                    singleEqualIndex = currentIndex;
-                                    currentIndex++;
-                                }
-                                else
-                                {
-                                    // Found another single '=' which is not allowed
-                                    singleEqualIndex = -1;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                // skip the doubled one
-                                currentIndex += 2;
-                            }
-                        }
-                        
-                        if ((singleEqualIndex > 0) && (singleEqualIndex < keyVal.Length - 1))
-                        {
-                            // Split the key/value at the right index and deduplicate '=='
-                            tokens = new string[2];
-                            tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==","=");
-                            tokens[1] = keyVal.Substring(
-                                singleEqualIndex + 1, 
-                                keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
-                        }
-                        else
-                        {
-                            // An equal sign was not doubled or something else happened
-                            // making the connection invalid
-                            string invalidStringDetail =
-                                String.Format("Invalid key value pair {0}", keyVal);
-                            SnowflakeDbException e =
-                                new SnowflakeDbException(
-                                    SFError.INVALID_CONNECTION_STRING,
-                                    new object[] { invalidStringDetail });
-                            logger.Error("Invalid string.", e);
-                            throw e;
-                        }
-                    }
-
-                    try
-                    {
-                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                            typeof(SFSessionProperty), tokens[0].ToUpper());
-                        properties.Add(p, tokens[1]);
-                        logger.Info($"Connection property: {p}, value: {(secretProps.Contains(p) ? "XXXXXXXX" : tokens[1])}");
-                    }
-                    catch (ArgumentException e)
-                    {
-                        logger.Warn($"Property {tokens[0]} not found ignored.", e);
-                    }
+                try
+                {
+                    SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), keys[i].ToUpper());
+                    properties.Add(p, values[i]);
+                }
+                catch (ArgumentException e)
+                {
+                    logger.Warn($"Property {keys[i]} not found ignored.", e);
                 }
             }
 
@@ -228,7 +181,7 @@ namespace Snowflake.Data.Core
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
                 }
-           }
+            }
 
             // Based on which proxy settings have been provided, update the required settings list
             if (useProxy)
@@ -252,7 +205,7 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
 
             // compose host value if not specified
-            if (!properties.ContainsKey(SFSessionProperty.HOST) || 
+            if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
                 string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
@@ -266,7 +219,7 @@ namespace Snowflake.Data.Core
             // because the login request data does not expect region and cloud information to be 
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
-            
+
 
             return properties;
         }

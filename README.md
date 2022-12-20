@@ -5,9 +5,11 @@ Snowflake Connector for .NET
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports most core functionality. Currently, the PUT and GET commands are not supported. All other query types are supported. 
+The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
-Library target is under .NET Framework 4.7.2 and .NET Standard 2.0.
+- .NET Framework 4.7.2
+- .NET Framework 4.7.3
+- .NET Core 6.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -17,7 +19,9 @@ Building the Package
 Prerequisites
 -------------
 
-This project is developed under Visual Studio 2017. All other versions of Visual Studio are not supported.
+The Snowflake .NET connector supports only Windows.
+
+This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
 Steps
 -----
@@ -77,14 +81,14 @@ The build solution file builds the connector and tests binaries. Issue the follo
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
-dotnet test -f netcoreapp2.0
+dotnet test -f netcoreapp6.0
 ```
 
 
 Tests can also be run under code coverage:
 
 ```{r, engine='bash', code_block_name}
-OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp2.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp2.0_coverage.xml" -oldStyle 
+OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp6.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp6.0_coverage.xml" -oldStyle 
 ```
 
 Visual Studio 2017
@@ -101,7 +105,7 @@ Create a Connection
 To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
-Note: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
+**Note**: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
 
 The following table lists all valid connection properties:
 <br />
@@ -109,6 +113,7 @@ The following table lists all valid connection properties:
 | Connection Property        | Required | Comment                                                                       |
 |----------------------------|----------|-------------------------------------------------------------------------------|
 | ACCOUNT                    | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	|
+| APPLICATION                | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern:  ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).   |
 | DB                         | No       |                                                                               |
 | HOST                       | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
 | PASSWORD                   | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.|
@@ -116,7 +121,9 @@ The following table lists all valid connection properties:
 | SCHEMA                     | No       |                                                                               |
 | USER                       | Yes      | If AUTHENTICATOR is set to `externalbrowser` or the URL for native SSO through Okta, set this to the login name for your identity provider (IdP).     |
 | WAREHOUSE                  | No       |                                                                               |
-| CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. Default to 120 seconds |
+| CONNECTION_TIMEOUT         | No       | Total timeout in seconds when connecting to Snowflake. The default is 120 seconds |
+| CLIENT_SESSION_KEEP_ALIVE  | No       | Whether to keep the current session active after a period of inactivity, or to force the user to login again. If the value is `true`, Snowflake keeps the session active indefinitely, even if there is no activity from the user. If the value is `false`, the user must log in again after four hours of inactivity. The default is `false`. Setting this value overrides the server session property for the current session.|
+| DISABLERETRY               | No       | Set this property to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. The default value is `false`. |
 | AUTHENTICATOR              | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN.
 | VALIDATE_DEFAULT_PARAMETERS| No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true. |
 | PRIVATE_KEY_FILE           |Depends   | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt|
@@ -131,8 +138,9 @@ The following table lists all valid connection properties:
 | PROXYPASSWORD              | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4. |
 | NONPROXYHOSTS              | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4. |
 
-
 <br />
+
+### Password-based Authentication
 
 The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
 
@@ -146,6 +154,56 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.Close();
 }
 ```
+
+<a id="sample-connection-strings"></a>
+
+Beginning with version 2.0.18, the .NET connector uses Microsoft [DbConnectionStringBuilder](https://learn.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring?view=dotnet-plat-ext-6.0#remarks) to follow the .NET specification for escaping characters in connection strings. 
+
+The following examples show how you can include different types of special characters in a connection string:
+
+- To include a single quote (') character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test'password;"
+  );
+  ```
+
+- To include a double quote (") character:
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test\"password;"
+  );
+  ```
+
+- To include a semicolon (;):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=\"test;password\";"
+  );
+  ```
+
+- To include an equal sign (=):
+
+  ``` cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "user=testuser; " +
+    "password=test=password;"
+  );
+  ```
+
+  Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
+
+### Other Authentication Methods 
 
 If you are using a different method for authentication, see the examples below:
 
@@ -285,6 +343,80 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Using Connection Pools
+----------------------
+
+Instead of creating a connection each time your client application needs to access Snowflake, you can define a cache of Snowflake connections that can be reused as needed. Connection pooling usually reduces the lag time to make a connection. However, it can slow down client failover to an alternative DNS when a DNS problem occurs.
+
+The Snowflake .NET driver provides the following functions for managing connection pools.
+
+| Function | Description |
+|----------|--------------|
+| SnowflakeDbConnectionPool.ClearAllPools() | Removes all connections from the connection pool. |
+| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
+| SnowflakeDBConnection.SetTimeout(n) | Sets the number of seconds to keep an unresponsive connection in the connection pool.|
+| SnowflakeDbConnectionPool.GetCurrentPoolSize() | Returns the number of connections currently in the connection pool. |
+| SnowflakeDbConnectionPool.SetPooling() | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.|
+
+The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
+
+```cs
+public void TestConnectionPoolClean()
+{
+  SnowflakeDbConnectionPool.ClearAllPools();
+  SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+  var conn1 = new SnowflakeDbConnection();
+  conn1.ConnectionString = ConnectionString;
+  conn1.Open();
+  Assert.AreEqual(ConnectionState.Open, conn1.State);
+
+  var conn2 = new SnowflakeDbConnection();
+  conn2.ConnectionString = ConnectionString + " retryCount=1";
+  conn2.Open();
+  Assert.AreEqual(ConnectionState.Open, conn2.State);
+  Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+  conn1.Close();
+  conn2.Close();
+  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+  var conn3 = new SnowflakeDbConnection();
+  conn3.ConnectionString = ConnectionString + "  retryCount=2";
+  conn3.Open();
+  Assert.AreEqual(ConnectionState.Open, conn3.State);
+
+  var conn4 = new SnowflakeDbConnection();
+  conn4.ConnectionString = ConnectionString + "  retryCount=3";
+  conn4.Open();
+  Assert.AreEqual(ConnectionState.Open, conn4.State);
+
+  conn3.Close();
+  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+  conn4.Close();
+  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+  Assert.AreEqual(ConnectionState.Closed, conn1.State);
+  Assert.AreEqual(ConnectionState.Closed, conn2.State);
+  Assert.AreEqual(ConnectionState.Closed, conn3.State);
+  Assert.AreEqual(ConnectionState.Closed, conn4.State);
+}
+```
+
+Mapping .NET and Snowflake Data Types
+-------------------------------------
+
+The .NET driver supports the following mappings from .NET to Snowflake data types.
+
+
+| .NET Framekwork Data Type | Data Type in Snowflake |
+| ------------------------------ | ---------------------- |
+| `int`, `long`                 | `NUMBER(38, 0)`        |
+| `decimal`                       | `NUMBER(38, <scale>)`  |
+| `double` | `REAL` |
+| `string` | `TEXT` |
+| `bool` | `BOOLEAN` |
+| `byte` | `BINARY` |
+| `datetime` | `DATE` |
+
+
 Run a Query and Read Data
 -------------------------
 
@@ -369,6 +501,45 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Bind Array Variables
+--------------------
+
+The sample code creates a table with a single integer column and then uses array binding to populate the table with values 0 to 70000.
+
+```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+	conn.ConnectionString = ConnectionString;
+	conn.Open();
+
+	using (IDbCommand cmd = conn.CreateCommand())
+	{
+		cmd.CommandText = "create or replace table putArrayBind(colA integer)";
+		cmd.ExecuteNonQuery();
+
+		string insertCommand = "insert into putArrayBind values (?)";
+		cmd.CommandText = insertCommand;
+
+		int total = 70000;
+
+		List<int> arrint = new List<int>();
+		for (int i = 0; i < total; i++)
+		{
+			arrint.Add(i);
+		}
+		var p1 = cmd.CreateParameter();
+		p1.ParameterName = "1";
+		p1.DbType = DbType.Int16;
+		p1.Value = arrint.ToArray();
+		cmd.Parameters.Add(p1);
+
+		count = cmd.ExecuteNonQuery(); // count = 70000
+	}
+
+	conn.Close();
+}
+```
+
 Close the Connection
 --------------------
 
@@ -446,5 +617,4 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
 	Starting with v2.0.0, the driver will set these locally.  
 	
-	Note that the driver is now targeting .Net framework 4.7.2.  
-	When upgrading to v2.0.0, you might also need to run "Update-Package -reinstall" to update the dependencies.
+  Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.

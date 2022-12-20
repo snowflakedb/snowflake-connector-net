@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Core
 {
@@ -46,6 +47,50 @@ namespace Snowflake.Data.Core
 
             isClosed = false;
             
+            queryId = responseData.queryId;
+        }
+
+        public enum PutGetResponseRowTypeInfo {   
+            SourceFileName                    = 0,
+            DestinationFileName               = 1,
+            SourceFileSize                    = 2,
+            DestinationFileSize               = 3,
+            SourceCompressionType             = 4,
+            DestinationCompressionType        = 5,
+            ResultStatus                      = 6,
+            ErrorDetails                      = 7
+            }
+
+        public void initializePutGetRowType(List<ExecResponseRowType> rowType)
+        {
+         foreach (PutGetResponseRowTypeInfo t in System.Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
+            {
+                rowType.Add(new ExecResponseRowType()
+                {
+                    name = t.ToString(),
+                    type = "text"
+                });
+            }
+        }
+
+        public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        {
+            responseData.rowType = new List<ExecResponseRowType>();
+            initializePutGetRowType(responseData.rowType);
+
+            columnCount = responseData.rowType.Count;
+            _currentChunkRowIdx = -1;
+            _currentChunkRowCount = responseData.rowSet.GetLength(0);
+
+            this.sfStatement = sfStatement;
+
+            _currentChunk = new SFResultChunk(responseData.rowSet);
+            responseData.rowSet = null;
+
+            sfResultSetMetaData = new SFResultSetMetaData(responseData);
+
+            isClosed = false;
+
             queryId = responseData.queryId;
         }
 
@@ -120,6 +165,16 @@ namespace Snowflake.Data.Core
            return false;
         }
 
+        internal override bool NextResult()
+        {
+            return false;
+        }
+
+        internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        {
+            return await Task.FromResult(false);
+        }
+
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
@@ -143,7 +198,7 @@ namespace Snowflake.Data.Core
             return false;
         }
 
-        protected override UTF8Buffer getObjectInternal(int columnIndex)
+        internal override UTF8Buffer getObjectInternal(int columnIndex)
         {
             if (isClosed)
             {

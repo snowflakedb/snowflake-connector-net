@@ -28,6 +28,13 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("SessionPropertyTest")]
+        public void SessionPropertyTestDone()
+        {
+            // Do nothing;
+        }
+
+        [Test]
         public void TestValidConnectionString()
         {
             Testcase[] testcases = new Testcase[]
@@ -48,6 +55,9 @@ namespace Snowflake.Data.Tests
                         { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                         { SFSessionProperty.USEPROXY, "false" },
                         { SFSessionProperty.INSECUREMODE, "false" },
+                        { SFSessionProperty.DISABLERETRY, "false" },
+                        { SFSessionProperty.FORCERETRYON404, "false" },
+                        { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     },
                 },
             };
