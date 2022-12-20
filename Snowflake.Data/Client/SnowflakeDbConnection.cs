@@ -52,6 +52,11 @@ namespace Snowflake.Data.Client
             this.Password = conn.Password;
         }
 
+        public SnowflakeDbConnection(string connectionString) : this()
+        {
+            ConnectionString = connectionString;
+        }
+
         public override string ConnectionString
         {
             get; set;
