@@ -26,28 +26,36 @@ namespace Snowflake.Data.Core
 
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
-            columnCount = responseData.rowType.Count;
-            _currentChunkRowIdx = -1;
-            _currentChunkRowCount = responseData.rowSet.GetLength(0);
-           
-            this.sfStatement = sfStatement;
-            updateSessionStatus(responseData);
-
-            if (responseData.chunks != null)
+            try
             {
-                // counting the first chunk
-                _totalChunkCount = responseData.chunks.Count;
-                _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
+                columnCount = responseData.rowType.Count;
+                _currentChunkRowIdx = -1;
+                _currentChunkRowCount = responseData.rowSet.GetLength(0);
+
+                this.sfStatement = sfStatement;
+                updateSessionStatus(responseData);
+
+                if (responseData.chunks != null)
+                {
+                    // counting the first chunk
+                    _totalChunkCount = responseData.chunks.Count;
+                    _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
+                }
+
+                _currentChunk = new SFResultChunk(responseData.rowSet);
+                responseData.rowSet = null;
+
+                sfResultSetMetaData = new SFResultSetMetaData(responseData);
+
+                isClosed = false;
+
+                queryId = responseData.queryId;
             }
-
-            _currentChunk = new SFResultChunk(responseData.rowSet);
-            responseData.rowSet = null;
-
-            sfResultSetMetaData = new SFResultSetMetaData(responseData);
-
-            isClosed = false;
-            
-            queryId = responseData.queryId;
+            catch(System.Exception ex)
+            {
+                Logger.Error("Result set error queryId="+responseData.queryId, ex);
+                throw;
+            }
         }
 
         public enum PutGetResponseRowTypeInfo {   
