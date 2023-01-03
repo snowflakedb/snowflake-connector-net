@@ -17,10 +17,6 @@
     <DebugType>Full</DebugType>
   </PropertyGroup>
   
-  <PropertyGroup Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(TargetFramework)', '^net\d'))">
-	<DefineConstants>NETFRAMEWORK</DefineConstants>
-  </PropertyGroup>
-	
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="2.5.0" />
