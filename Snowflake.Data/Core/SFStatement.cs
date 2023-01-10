@@ -325,6 +325,11 @@ namespace Snowflake.Data.Core
             // Trim the sql query and check if this is a PUT/GET command
             string trimmedSql = TrimSql(sql);
 
+            if(trimmedSql.Contains('?') && bindings == null)
+            {
+                throw new SnowflakeDbException(SFError.MISSING_BIND_PARAMETERS);
+            }
+
             try
             {
                 if (IsPutOrGetCommand(trimmedSql))

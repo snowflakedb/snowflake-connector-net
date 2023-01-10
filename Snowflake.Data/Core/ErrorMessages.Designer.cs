@@ -194,6 +194,15 @@ namespace Snowflake.Data.Core {
             }
         }
 
-        
+        /// <summary>
+        ///   Looks up a localized string.
+        /// </summary>
+        internal static string MISSING_BIND_PARAMETERS
+        {
+            get
+            {
+                return ResourceManager.GetString("MISSING_BIND_PARAMETERS", resourceCulture);
+            }
+        }
     }
 }

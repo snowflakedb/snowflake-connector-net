@@ -75,6 +75,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270056)]
         INVALID_BROWSER_URL,
+
+        [SFErrorAttr(errorCode = 270057)]
+        MISSING_BIND_PARAMETERS,
     }
 
     class SFErrorAttr : Attribute
