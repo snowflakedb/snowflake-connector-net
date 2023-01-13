@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 3: get idp onetime token");
             IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
             var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
-            string onetimeToken = idpResponse.CookieToken;
+            string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
 
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("step 3: get idp onetime token");
             IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
             var idpResponse =  session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
-            string onetimeToken = idpResponse.CookieToken;
+            string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
 
             logger.Debug("step 4: get SAML reponse from sso");
             var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
@@ -246,6 +246,8 @@ namespace Snowflake.Data.Core.Authenticator
     {
         [JsonProperty(PropertyName = "cookieToken")]
         internal String CookieToken { get; set; }
+        [JsonProperty(PropertyName = "sessionToken")]
+        internal String SessionToken { get; set; }
     }
 
     class SAMLRestRequest : BaseRestRequest, IRestRequest
