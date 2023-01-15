@@ -687,14 +687,13 @@ namespace Snowflake.Data.Core
                 location = location.Replace("~", homePath);
             }
 
+            string fileName = Path.GetFileName(location);
+            string directoryName = Path.GetDirectoryName(location);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                location = Path.GetFullPath(location);
+                location = directoryName + "\\" + fileName;
             }
-
-            String fileName = Path.GetFileName(location);
-            string directoryName = Path.GetDirectoryName(location);
 
             List<string> filePaths = new List<string>();
             //filePaths.Add(""); //Start with an empty string to build upon
