@@ -419,7 +419,9 @@ namespace Snowflake.Data.Core
             // Forbidden
             (statusCode == 403) ||
             // Request timeout
-            (statusCode == 408);
+            (statusCode == 408) ||
+            // Too many requests
+            (statusCode == 429);
         }
     }
 }
