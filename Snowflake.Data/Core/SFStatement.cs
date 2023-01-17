@@ -665,6 +665,12 @@ namespace Snowflake.Data.Core
                     }
                 }
 
+                // No more characters after the closing comment character, stop trimming the query
+                if (idx >= sqlQueryLen)
+                {
+                    break;
+                }
+
                 builder.Append(sqlQueryBuf[idx]);
                 idx++;
             }
