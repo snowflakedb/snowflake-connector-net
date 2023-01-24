@@ -533,19 +533,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErr(WebException ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
-            HttpRequestException err = (HttpRequestException)ex.InnerException;
-            fileMetadata.lastError = err;
-            if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR))
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
-                err.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
-                err.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
+            else if (response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.InternalServerError ||
+                response.StatusCode == HttpStatusCode.InternalServerError)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
-            else if (err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
+            else if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
