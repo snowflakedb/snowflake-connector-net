@@ -590,7 +590,7 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
 ```
 
 Getting the code coverage
-=====================
+----------------
 
 1. Go to .NET project directory
 
