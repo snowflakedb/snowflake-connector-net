@@ -85,7 +85,7 @@ namespace Snowflake.Data.Core
         /// The type of transfer either UPLOAD or DOWNLOAD.
         /// </summary>
         private readonly CommandTypes CommandType;
-        
+
         /// <summary>
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
@@ -315,7 +315,7 @@ namespace Snowflake.Data.Core
                     TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
                 }
             }
-            
+
             return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
         }
 
@@ -1174,7 +1174,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Debug("Unhandled exception while uploading file.", ex);
+                throw;
             }
             finally
             {
