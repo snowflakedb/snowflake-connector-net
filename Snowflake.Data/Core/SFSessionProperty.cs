@@ -72,6 +72,8 @@ namespace Snowflake.Data.Core
         FORCERETRYON404,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         CLIENT_SESSION_KEEP_ALIVE,
+        [SFSessionPropertyAttr(required = false)]
+        GCS_USE_DOWNSCOPED_CREDENTIAL,
     }
 
     class SFSessionPropertyAttr : Attribute
