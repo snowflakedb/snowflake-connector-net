@@ -69,5 +69,65 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
         }
+
+        /// <summary>
+        /// Ensure TrimSql stops reading the query when no more characters after a block comment
+        /// </summary>
+        [Test]
+        public void TestTrimSqlBlockComment()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        /// <summary>
+        /// Ensure TrimSql stops reading the query when no more characters after a multiline block comment
+        /// </summary>
+        [Test]
+        public void TestTrimSqlBlockCommentMultiline()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        /// <summary>
+        /// Ensure TrimSql stops reading the query when no more characters after a line comment
+        /// </summary>
+        [Test]
+        public void TestTrimSqlLineComment()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        /// <summary>
+        /// Ensure TrimSql stops reading the query when no more characters after a line comment with a closing newline
+        /// </summary>
+        [Test]
+        public void TestTrimSqlLineCommentWithClosingNewline()
+        {
+            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("1", resultSet.GetString(0));
+        }
     }
 }

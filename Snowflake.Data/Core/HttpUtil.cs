@@ -12,7 +12,7 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using Snowflake.Data.Core;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -84,7 +84,6 @@ namespace Snowflake.Data.Core
         {
             lock (httpClientProviderLock)
             {
-                logger.Debug($"Get Http client for {config.ConfKey}.");
                 return RegisterNewHttpClientIfNecessary(config);
             }
         }
@@ -110,17 +109,34 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
+        private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
-            HttpClientHandler httpHandler = new HttpClientHandler()
+            HttpMessageHandler httpHandler;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Verify no certificates have been revoked
-                CheckCertificateRevocationList = config.CrlCheckEnabled,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false // Disable cookies
-            };
+                httpHandler = new WinHttpHandler()
+                {
+                    // Verify no certificates have been revoked
+                    CheckCertificateRevocationList = config.CrlCheckEnabled,
+                    // Enforce tls v1.2
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
+                };
+            }
+            else
+            {
+                httpHandler = new HttpClientHandler()
+                {
+                    // Verify no certificates have been revoked
+                    CheckCertificateRevocationList = config.CrlCheckEnabled,
+                    // Enforce tls v1.2
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false // Disable cookies
+                };
+            }
+
             // Add a proxy if necessary
             if (null != config.ProxyHost)
             {
@@ -157,8 +173,20 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
+                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                httpHandler.Proxy = proxy;
+                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
+                    httpHandlerWithProxy.Proxy = proxy;
+                    return httpHandlerWithProxy;
+                }
+                else if (httpHandler is HttpClientHandler)
+                {
+                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                    httpHandlerWithProxy.Proxy = proxy;
+                    return httpHandlerWithProxy;
+                }
             }
             return httpHandler;
         }
@@ -341,7 +369,7 @@ namespace Snowflake.Data.Core
                         else
                         {
                             logger.Debug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
-                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
+                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
                             if (!isRetryable || disableRetry)
                             {
@@ -376,22 +404,24 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
 
-            /// <summary>
-            /// Check whether or not the error is retryable or not.
-            /// </summary>
-            /// <param name="statusCode">The http status code.</param>
-            /// <returns>True if the request should be retried, false otherwise.</returns>
-            private bool isRetryableHTTPCode(int statusCode)
-            {
-                if (forceRetryOn404 && statusCode == 404)
-                    return true;
-                return (500 <= statusCode) && (statusCode < 600) ||
-                // Forbidden
-                (statusCode == 403) ||
-                // Request timeout
-                (statusCode == 408);
-            }
+        /// <summary>
+        /// Check whether or not the error is retryable or not.
+        /// </summary>
+        /// <param name="statusCode">The http status code.</param>
+        /// <returns>True if the request should be retried, false otherwise.</returns>
+        static public bool isRetryableHTTPCode(int statusCode, bool forceRetryOn404)
+        {
+            if (forceRetryOn404 && statusCode == 404)
+                return true;
+            return (500 <= statusCode) && (statusCode < 600) ||
+            // Forbidden
+            (statusCode == 403) ||
+            // Request timeout
+            (statusCode == 408) ||
+            // Too many requests
+            (statusCode == 429);
         }
     }
 }

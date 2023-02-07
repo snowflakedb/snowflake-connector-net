@@ -9,6 +9,8 @@ using System.Security;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using System.Data.Common;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -68,6 +70,8 @@ namespace Snowflake.Data.Core
         DISABLERETRY,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         FORCERETRYON404,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        CLIENT_SESSION_KEEP_ALIVE,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -129,101 +133,36 @@ namespace Snowflake.Data.Core
         internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
+            DbConnectionStringBuilder builder = new DbConnectionStringBuilder();
+            try
+            { 
+                builder.ConnectionString = connectionString;
+            }
+            catch (ArgumentException e)
+            {
+                logger.Warn($"ConnectionString: {connectionString}", e);
+                throw new SnowflakeDbException(e,
+                                SFError.INVALID_CONNECTION_STRING,
+                                e.Message);
+            }
             SFSessionProperties properties = new SFSessionProperties();
 
-            string[] propertyEntry = connectionString.Split(';');
+            string[] keys = new string[builder.Keys.Count];
+            string[] values = new string[builder.Values.Count];
+            builder.Keys.CopyTo(keys, 0);
+            builder.Values.CopyTo(values,0);
 
-            foreach (string keyVal in propertyEntry)
+            for(int i=0; i<keys.Length; i++)
             {
-                if (keyVal.Length > 0)
+                try
                 {
-                    string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    if (tokens.Length != 2)
-                    {
-                        // https://docs.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring
-                        // To include an equal sign (=) in a keyword or value, it must be preceded 
-                        // by another equal sign. For example, in the hypothetical connection 
-                        // string "key==word=value" :
-                        // the keyword is "key=word" and the value is "value".
-                        int currentIndex = 0;
-                        int singleEqualIndex = -1;
-                        while (currentIndex <= keyVal.Length)
-                        {
-                            currentIndex = keyVal.IndexOf("=", currentIndex);
-                            if (-1 == currentIndex)
-                            {
-                                // No '=' found
-                                break;
-                            }
-                            if ((currentIndex < (keyVal.Length - 1)) &&
-                                ('=' != keyVal[currentIndex + 1]))
-                            {
-                                if (0 > singleEqualIndex)
-                                {
-                                    // First single '=' encountered
-                                    singleEqualIndex = currentIndex;
-                                    currentIndex++;
-                                }
-                                else
-                                {
-                                    // Found another single '=' which is not allowed
-                                    singleEqualIndex = -1;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                // skip the doubled one
-                                currentIndex += 2;
-                            }
-                        }
-
-                        if ((singleEqualIndex > 0) && (singleEqualIndex < keyVal.Length - 1))
-                        {
-                            // Split the key/value at the right index and deduplicate '=='
-                            tokens = new string[2];
-                            tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==", "=");
-                            tokens[1] = keyVal.Substring(
-                                singleEqualIndex + 1,
-                                keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
-                        }
-                        else
-                        {
-                            // An equal sign was not doubled or something else happened
-                            // making the connection invalid
-                            string invalidStringDetail =
-                                String.Format("Invalid key value pair {0}", keyVal);
-                            SnowflakeDbException e =
-                                new SnowflakeDbException(
-                                    SFError.INVALID_CONNECTION_STRING,
-                                    new object[] { invalidStringDetail });
-                            logger.Error("Invalid string.", e);
-                            throw e;
-                        }
-                    }
-
-                    // temporary change to pretend as ODBC to enable multiple
-                    // statements on server side, needs to be removed when merge.
-                    if (tokens[0].ToLower() == "fakeodbc")
-                    {
-                        if (tokens[1].ToLower() == "true")
-                        {
-                            SFEnvironment.DriverName = "ODBC";
-                            SFEnvironment.DriverVersion = "2.25.2";
-                        }
-                        continue;
-                    }
-                    try
-                    {
-                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                            typeof(SFSessionProperty), tokens[0].ToUpper());
-                        properties.Add(p, tokens[1]);
-                        logger.Info($"Connection property: {p}, value: {(secretProps.Contains(p) ? "XXXXXXXX" : tokens[1])}");
-                    }
-                    catch (ArgumentException e)
-                    {
-                        logger.Warn($"Property {tokens[0]} not found ignored.", e);
-                    }
+                    SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), keys[i].ToUpper());
+                    properties.Add(p, values[i]);
+                }
+                catch (ArgumentException e)
+                {
+                    logger.Warn($"Property {keys[i]} not found ignored.", e);
                 }
             }
 

@@ -22,16 +22,18 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
 
         [Test]
-        [Ignore("ConnectionPoolT")]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void ConnectionPoolTDone()
         {
             // Do nothing;
         }
 
         [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestBasicConnectionPool()
         {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
             SnowflakeDbConnectionPool.ClearAllPools();
             
             var conn1 = new SnowflakeDbConnection();
@@ -45,7 +47,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable unstable test cases for now")]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -70,9 +72,10 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable unstable test cases for now")]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolIsFull()
         {
+            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             var conn1 = new SnowflakeDbConnection();
@@ -105,6 +108,36 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectionPoolExpirationWorks()
+        {
+            System.Threading.Thread.Sleep(10000); // wait for 10 seconds, in case other test still running.
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+
+            conn1.Open();
+            conn1.Close();
+            SnowflakeDbConnectionPool.SetTimeout(-1);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = ConnectionString;
+            conn2.Open();
+            conn2.Close();
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = ConnectionString;
+            conn3.Open();
+            conn3.Close();
+
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            SnowflakeDbConnectionPool.SetPooling(false);
+        }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolClean()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -139,11 +172,13 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable unstable test cases for now")]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolFull()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
             conn1.Open();
@@ -180,6 +215,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolMultiThreading()
         {
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
@@ -213,6 +249,24 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual("1", resultSet.GetString(0));
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(0);
+            SnowflakeDbConnectionPool.SetPooling(false);
+        }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolDisable()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetPooling(false);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
     }
 }

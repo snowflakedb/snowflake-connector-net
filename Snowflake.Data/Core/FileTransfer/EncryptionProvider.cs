@@ -241,6 +241,7 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 inStream.CopyTo(cryptoStream);
             }
+            cryptoStream.FlushFinalBlock();
 
             return targetStream.ToArray();
         }

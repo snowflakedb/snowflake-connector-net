@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
+                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -245,11 +245,12 @@ namespace Snowflake.Data.Tests
                             ((SnowflakeDbException)e.InnerException).ErrorCode);
                     }
                     stopwatch.Stop();
+                    int detla = 10; //in case server time slower.
 
                     //Should timeout before the default timeout (120 sec) * 1000
                     Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
                     // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - detla);
                     Assert.AreEqual(5, conn.ConnectionTimeout);
                 }
             }
@@ -388,7 +389,7 @@ namespace Snowflake.Data.Tests
                 // missing required connection property password
                 "ACCOUNT=testaccount;user=testuser",
                 // invalid account value
-                "ACCOUNT=A=C;USER=testuser;password=123",
+                "ACCOUNT=A=C;USER=testuser;password=123;key",
                 "complete_invalid_string",
             };
 
@@ -1280,6 +1281,112 @@ namespace Snowflake.Data.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key1=test\'password;key2=test\"password;key3=test==password";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        public void TestEscapeChar1()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(false);
+                conn.ConnectionString = ConnectionString + "key==word=value; key1=\"test;password\"; key2=\"test=password\"";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Data source is empty string for now
+                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+                string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+                if (!string.Equals(serverVersion, "Dev"))
+                {
+                    string[] versionElements = serverVersion.Split('.');
+                    Assert.AreEqual(3, versionElements.Length);
+                }
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+        
+        [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        public void TestHeartBeat()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+
+            Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46 );
+            }
+
+            conn.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn.State);
+        }
+
+        [Test]
+        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        public void TestHeartBeatWithConnectionPool()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(14800);
+            SnowflakeDbConnectionPool.SetPooling(true);
+
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.Open();
+            conn.Close();
+
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn1.Open();
+            Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
+
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
+                Assert.AreEqual(command.ExecuteScalar(), 46);
+            }
+
+            conn1.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
     }
 
     [TestFixture]
@@ -1364,9 +1471,10 @@ namespace Snowflake.Data.Tests
 
                     }
                     stopwatch.Stop();
+                    int detla = 10; //in case server time slower.
 
                     // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
                     // But never more than 1 sec (max backoff) after the default timeout
                     Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
 
@@ -1398,9 +1506,10 @@ namespace Snowflake.Data.Tests
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
+                int detla = 10; //in case server time slower.
 
                 // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
                 // But never more than 16 sec (max backoff) after the default timeout
                 Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
 
@@ -1480,7 +1589,6 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
-                SnowflakeDbConnectionPool.SetMaxPoolSize(0);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;

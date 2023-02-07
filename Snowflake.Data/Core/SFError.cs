@@ -72,6 +72,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270055)]
         INVALID_CONNECTION_PARAMETER_VALUE,
+
+        [SFErrorAttr(errorCode = 270056)]
+        INVALID_BROWSER_URL,
     }
 
     class SFErrorAttr : Attribute

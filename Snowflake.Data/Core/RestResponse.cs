@@ -86,7 +86,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal SessionInfo authResponseSessionInfo { get; set; }
 
-   }
+        [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
+        internal int masterValidityInSeconds { get; set; }
+    }
 
     internal class AuthenticatorResponseData
     {
@@ -143,13 +145,12 @@ namespace Snowflake.Data.Core
         internal string value { get; set; }
     }
 
-    internal class QueryExecResponse : BaseRestResponse
+    internal class QueryExecResponse : BaseQueryExecResponse<QueryExecResponseData>
     {
-        [JsonProperty(PropertyName = "data")]
-        internal QueryExecResponseData data { get; set; }
+        // data property already defined in BaseQueryExecResponse
     }
 
-    internal class QueryExecResponseData
+    internal class QueryExecResponseData : IQueryExecResponseData
     {
         [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
         internal List<NameValueParameter> parameters { get; set; }
@@ -167,10 +168,10 @@ namespace Snowflake.Data.Core
         internal Int64 returned { get; set; }
 
         [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-        internal string queryId { get; set; }
+        public string queryId { get; set; }
 
         [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
-        internal string sqlState { get; set; }
+        public string sqlState { get; set; }
 
         [JsonProperty(PropertyName = "databaseProvider", NullValueHandling = NullValueHandling.Ignore)]
         internal string databaseProvider { get; set; }
@@ -282,7 +283,7 @@ namespace Snowflake.Data.Core
         internal int parallel { get; set; }
 
         [JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
-        internal int threshold { get; set; }
+        internal long threshold { get; set; }
 
         [JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
         internal bool autoCompress { get; set; }

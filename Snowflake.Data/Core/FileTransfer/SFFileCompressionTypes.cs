@@ -6,6 +6,7 @@ using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -108,31 +109,13 @@ namespace Snowflake.Data.Core.FileTransfer
             /// <returns></returns>
             public bool matchMagicNumber(byte[] header)
             {
-                bool isEquals = true;
-                if ((null != _magicNumbers) && (null != header))
-                {
-                    for (int i = 0; i < _magicNumbers.Length; i++)
-                    {
-                        if (header.Length >= _magicNumbers[i].Length)
-                        {
-                            for (int j = 0; j < _magicNumbers[i].Length; j++)
-                            {
-                                if (header[j] != _magicNumbers[i][j])
-                                {
-                                    isEquals = false;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            isEquals = false;
-                            break;
-                        }
-                    }
-                }
+                if (_magicNumbers != null && _magicNumbers.Length > 0)
+                    foreach (byte[] m in _magicNumbers)
+                        if (m != null && header != null && m.Length > 0 && header.Length > 0)
+                            if (new ReadOnlySpan<byte>(m).SequenceEqual(new ReadOnlySpan<byte>(header, 0, m.Length)))
+                                return true;
 
-                return isEquals;
+                return false;
             }
 
             internal string FileExtension { get; }
@@ -222,11 +205,31 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         return BROTLI;
                     }
+                    else 
+                    { 
+                        return compType;
+                    }
                 }
             }
 
             // Couldn't find a match, last fallback using the file name extension
-            return LookUpByName(new FileInfo(filePath).Extension);
+            return LookUpByFileExtension(new FileInfo(filePath).Extension);
+        }
+
+        public static SFFileCompressionType LookUpByFileExtension(string fileExtension)
+        {
+            if (!fileExtension.StartsWith("."))
+            {
+                fileExtension = "." + fileExtension;
+            }
+            foreach (SFFileCompressionType compType in compressionTypes)
+            {
+                if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return compType;
+                }
+            }
+            return NONE;
         }
 
         /// <summary>

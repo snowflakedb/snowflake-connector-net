@@ -27,19 +27,20 @@ namespace Snowflake.Data.Client
 
         public SnowflakeDbCommand()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
+            logger.Debug("Constructing SnowflakeDbCommand class");
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
-        public SnowflakeDbCommand(SnowflakeDbConnection connection)
+        public SnowflakeDbCommand(SnowflakeDbConnection connection) : this()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
             this.connection = connection;
-            // by default, no query timeout
-            this.CommandTimeout = 0;
-            parameterCollection = new SnowflakeDbParameterCollection();
+        }
+
+        public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
+        {
+            this.CommandText = cmdText;
         }
 
         public override string CommandText
@@ -155,7 +156,7 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            logger.Debug($"ExecuteNonQuery, command: {CommandText}");
+            logger.Debug($"ExecuteNonQuery");
             SFBaseResultSet resultSet = ExecuteInternal();
             long total = 0;
             do
@@ -180,7 +181,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
+            logger.Debug($"ExecuteNonQueryAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -207,7 +208,7 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
-            logger.Debug($"ExecuteScalar, command: {CommandText}");
+            logger.Debug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
             if(resultSet.Next())
@@ -218,7 +219,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
+            logger.Debug($"ExecuteScalarAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -241,14 +242,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReader");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
+            logger.Debug($"ExecuteDbDataReaderAsync");
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
