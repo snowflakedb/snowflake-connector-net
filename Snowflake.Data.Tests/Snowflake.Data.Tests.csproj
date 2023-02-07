@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netcoreapp3.1</TargetFrameworks>
-    <RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>
+    <TargetFrameworks>net6.0;net472</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
+    <RuntimeFrameworkVersion>6.0.0</RuntimeFrameworkVersion>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
@@ -12,15 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <DotNetCliToolReference Include="MiniCover" Version="2.0.0-ci-*" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <ProjectReference Include="..\Snowflake.Data\Snowflake.Data.csproj" />
   </ItemGroup>
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
@@ -43,9 +41,9 @@
    <!-- <Reference Include="System.Net.Http.WebRequest" /> -->
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
-      <Version>6.2.3</Version>
+      <Version>7.2.5</Version>
     </PackageReference>
   </ItemGroup>
   
