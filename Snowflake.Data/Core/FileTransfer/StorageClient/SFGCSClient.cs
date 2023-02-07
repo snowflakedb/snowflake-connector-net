@@ -160,9 +160,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
-                    // Issue a GET response
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
+                    // Issue a HEAD request
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                    request.Method = "HEAD";
+                    request.Headers.Add("Authorization", $"Bearer {AccessToken}");
 
                     using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                     {
@@ -243,9 +244,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
-                    // Issue a GET response
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    request.Headers.Add("Authorization", $"Bearer ${AccessToken}");
+                    // Issue a HEAD request
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                    request.Method = "HEAD";
+                    request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+
                     WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
                     HttpWebResponse response = (HttpWebResponse)webResponse;
                     
@@ -348,9 +351,19 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private HttpWebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+            HttpWebRequest request;
+            if (fileMetadata.presignedUrl != null)
+            {
+                request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+            }
+            else
+            {
+                request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
+            }
+
             request.Method = "PUT";
 
+            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
             request.Headers.Add("x-goog-meta-sfc-digest", fileMetadata.sha256Digest);
             request.Headers.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
             request.Headers.Add("x-goog-meta-encryptiondata", encryptionData);
@@ -400,7 +413,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+                HttpWebRequest request;
+                if (fileMetadata.presignedUrl != null)
+                {
+                    request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+                }
+                else
+                {
+                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
+                }
+                request.Headers.Add("Authorization", $"Bearer {AccessToken}");
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
@@ -436,7 +458,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+                HttpWebRequest request;
+                if (fileMetadata.presignedUrl != null)
+                {
+                    request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
+                }
+                else
+                {
+                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
+                }
+                request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+
                 WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
                 
                 using (HttpWebResponse response = (HttpWebResponse)webResponse)
@@ -501,19 +533,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErr(WebException ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
-            HttpRequestException err = (HttpRequestException)ex.InnerException;
-            fileMetadata.lastError = err;
-            if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR))
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
-                err.Message.Contains(SFStorageClientUtil.INTERNAL_SERVER_ERR) ||
-                err.Message.Contains(SFStorageClientUtil.SERVER_UNAVAILABLE_ERR))
+            else if (response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.InternalServerError ||
+                response.StatusCode == HttpStatusCode.InternalServerError)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
-            else if (err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
+            else if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
