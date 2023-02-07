@@ -262,5 +262,158 @@ namespace Snowflake.Data.Tests
                 }
             }
         }
+
+        // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
+        [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "AWS", "AZURE" })]
+        public void TestPutGetGcsDownscopedCredential()
+        {
+            string DATABASE_NAME = testConfig.database;
+            string SCHEMA_NAME = testConfig.schema;
+            const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
+            const string TEST_TEMP_STAGE_NAME = "TEST_TEMP_STAGE_NAME";
+
+            const string UPLOADED = "UPLOADED";
+            const string DOWNLOADED = "DOWNLOADED";
+
+            const string COL1 = "C1";
+            const string COL2 = "C2";
+            const string COL3 = "C3";
+            const string COL1_DATA = "FIRST";
+            const string COL2_DATA = "SECOND";
+            const string COL3_DATA = "THIRD";
+            const string ROW_DATA =
+              COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n" +
+              COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n" +
+              COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n" +
+              COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n";
+
+            string createTable = $"create or replace table {TEST_TEMP_TABLE_NAME} ({COL1} STRING," +
+            $"{COL2} STRING," +
+            $"{COL3} STRING)";
+            string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
+
+            string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
+
+            string removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+
+            string dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
+
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString
+                    + String.Format(
+                    ";GCS_USE_DOWNSCOPED_CREDENTIAL=true");
+                conn.Open();
+
+                // Create a temp file
+                string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv";
+                // Write row data to temp file
+                File.WriteAllText(filePath, ROW_DATA);
+
+                string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                Directory.CreateDirectory(tempDirectory);
+
+                string putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+
+                string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
+
+                string fileName = "";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
+                }
+                else
+                {
+                    fileName = filePath.Substring(filePath.LastIndexOf('/') + 1);
+                }
+
+                // Windows user contains a '~' in the path which causes an error
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    putQuery = $"PUT file://C:\\\\Users\\{Environment.UserName}\\AppData\\Local\\Temp\\{fileName} @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+                }
+                putQuery += " AUTO_COMPRESS=FALSE";
+
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    // Create temp table
+                    command.CommandText = createTable;
+                    command.ExecuteNonQuery();
+
+                    // Create temp stage
+                    command.CommandText = createStage;
+                    command.ExecuteNonQuery();
+
+                    // Upload file
+                    command.CommandText = putQuery;
+                    DbDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        // Check file status
+                        Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus), UPLOADED);
+                    }
+
+                    // Copy into temp table
+                    command.CommandText = copyIntoTable;
+                    command.ExecuteNonQuery();
+
+                    // Check contents are correct
+                    command.CommandText = $"SELECT * FROM {TEST_TEMP_TABLE_NAME}";
+                    reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        Assert.AreEqual(reader.GetString(0), COL1_DATA);
+                        Assert.AreEqual(reader.GetString(1), COL2_DATA);
+                        Assert.AreEqual(reader.GetString(2), COL3_DATA);
+                    }
+
+                    // Check row count is correct
+                    command.CommandText = $"SELECT COUNT(*) FROM {TEST_TEMP_TABLE_NAME}";
+                    Assert.AreEqual(command.ExecuteScalar(), 4);
+
+                    // Download file
+                    command.CommandText = getQuery;
+                    reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        // Check file status
+                        Assert.AreEqual(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus), DOWNLOADED);
+
+                        // Check file contents
+                        using (var streamReader = new StreamReader($@"{tempDirectory}/{fileName}"))
+                        {
+                            while (!streamReader.EndOfStream)
+                            {
+                                var line = streamReader.ReadLine();
+                                var values = line.Split(',');
+
+                                Assert.AreEqual(COL1_DATA, values[0]);
+                                Assert.AreEqual(COL2_DATA, values[1]);
+                                Assert.AreEqual(COL3_DATA, values[2]);
+                            }
+                        }
+                    }
+
+                    // Delete downloaded files
+                    Directory.Delete(tempDirectory, true);
+
+                    // Remove files from staging
+                    command.CommandText = removeFile;
+                    command.ExecuteNonQuery();
+
+                    // Drop temp table
+                    command.CommandText = dropTable;
+                    command.ExecuteNonQuery();
+                }
+
+                // Delete temp file
+                File.Delete(filePath);
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
     }
 }

@@ -810,5 +810,28 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+
+        [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "AWS", "AZURE" })]
+        public void testExecuteLargeQueryWithGcsDownscopedToken()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString
+                    + String.Format(
+                    ";GCS_USE_DOWNSCOPED_CREDENTIAL=true");
+                conn.Open();
+
+                int rowCount = 100000;
+
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = $"SELECT COUNT(*) FROM (select seq4() from table(generator(rowcount => {rowCount})))";
+                    Assert.AreEqual(rowCount, command.ExecuteScalar());
+                }
+                conn.Close();
+            }
+        }
     }
 }
