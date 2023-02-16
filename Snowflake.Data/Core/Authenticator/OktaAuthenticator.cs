@@ -121,6 +121,8 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 AccountName = session.properties[SFSessionProperty.ACCOUNT],
                 Authenticator = oktaUrl.ToString(),
+                DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+                DriverName = ".NET"
             };
 
             int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);

@@ -182,6 +182,12 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "BROWSER_MODE_REDIRECT_PORT", NullValueHandling = NullValueHandling.Ignore)]
         internal String BrowserModeRedirectPort { get; set; }
 
+        [JsonProperty(PropertyName = "CLIENT_APP_ID", NullValueHandling = NullValueHandling.Ignore)]
+        internal String DriverName { get; set; }
+
+        [JsonProperty(PropertyName = "CLIENT_APP_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal String DriverVersion { get; set; }
+
         public override string ToString()
         {
             return String.Format("AuthenticatorRequestData {{ACCOUNT_NANM: {0} }}",
