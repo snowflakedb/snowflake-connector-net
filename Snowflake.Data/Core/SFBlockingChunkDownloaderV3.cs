@@ -39,6 +39,8 @@ namespace Snowflake.Data.Core
 
         private readonly IRestRequester _RestRequester;
 
+        private readonly SFSessionProperties sessionProperies;
+
         private Dictionary<string, string> chunkHeaders;
 
         private readonly SFBaseResultSet ResultSet;
@@ -58,6 +60,7 @@ namespace Snowflake.Data.Core
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
             this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
+            this.sessionProperies = ResultSet.sfStatement.SfSession.properties;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
@@ -134,6 +137,9 @@ namespace Snowflake.Data.Core
             int retryCount = 0;
             int maxRetry = 3;
 
+            //this is used for test case
+            bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
+
             do
             {
                 int backOffInSec = 1;
@@ -159,6 +165,10 @@ namespace Snowflake.Data.Core
                     //TODO this shouldn't be required.
                     try
                     {
+                        if(forceParseError)
+                        {
+                            throw new Exception("json parsing error.");
+                        }
                         IEnumerable<string> encoding;
                         if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
                         {
@@ -179,6 +189,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
+                        forceParseError = false;
                         if (retryCount < maxRetry)
                         {
                             retry = true;
