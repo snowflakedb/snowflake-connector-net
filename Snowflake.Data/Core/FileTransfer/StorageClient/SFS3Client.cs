@@ -299,6 +299,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // If a specific endpoint is specified use this
             if ((null != endpoint) && (0 != endpoint.Length))
             {
+                var start = endpoint.IndexOf('[');
+                var end = endpoint.IndexOf(']');
+                if(start > -1 && end > -1 && end > start)
+                {
+                    endpoint = endpoint.Substring(start + 1, end - start - 1);
+                }
                 clientConfig.ServiceURL = endpoint;
             }
 
