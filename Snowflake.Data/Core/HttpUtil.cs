@@ -10,12 +10,9 @@ using System.Threading;
 using System.Collections.Generic;
 using Snowflake.Data.Log;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Reflection;
 using System.Web;
 using System.Security.Authentication;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 namespace Snowflake.Data.Core
 {
@@ -67,17 +64,11 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
-
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
-
-        private static readonly HttpUtil instance = new HttpUtil();
 
         private HttpUtil() { }
 
-        static internal HttpUtil Instance
-        {
-            get { return instance; }
-        }
+        internal static HttpUtil Instance { get; } = new HttpUtil();
 
         private readonly object httpClientProviderLock = new object();
 
@@ -112,19 +103,10 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        private bool IsNetFramework()
-        {
-#if NETFRAMEWORK
-            return true;
-#else
-            return false;
-#endif
-        }
-
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsNetFramework())
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
             {
                 httpHandler = new WinHttpHandler()
                 {
