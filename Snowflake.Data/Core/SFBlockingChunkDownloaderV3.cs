@@ -39,6 +39,8 @@ namespace Snowflake.Data.Core
 
         private readonly IRestRequester _RestRequester;
 
+        private readonly SFSessionProperties sessionProperies;
+
         private Dictionary<string, string> chunkHeaders;
 
         private readonly SFBaseResultSet ResultSet;
@@ -58,6 +60,7 @@ namespace Snowflake.Data.Core
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
             this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
+            this.sessionProperies = ResultSet.sfStatement.SfSession.properties;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
             this.chunkInfos = chunkInfos;
             this.nextChunkToConsumeIndex = 0;
@@ -129,43 +132,79 @@ namespace Snowflake.Data.Core
         private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
         {
             //logger.Info($"Start downloading chunk #{downloadContext.chunkIndex}");
-            SFReusableChunk chunk = downloadContext.chunk;
+            SFReusableChunk chunk;
+            bool retry = false;
+            int retryCount = 0;
+            int maxRetry = 3;
 
-            S3DownloadRequest downloadRequest = 
-                new S3DownloadRequest()
-                {
-                    Url = new UriBuilder(chunk.Url).Uri,
-                    qrmk = downloadContext.qrmk,
-                    // s3 download request timeout to one hour
-                    RestTimeout = TimeSpan.FromHours(1),
-                    HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-                    chunkHeaders = downloadContext.chunkHeaders
-                };
+            //this is used for test case
+            bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
 
-            using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
-                           .ConfigureAwait(continueOnCapturedContext: false))
-            using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
-                .ConfigureAwait(continueOnCapturedContext: false))
+            do
             {
-                //TODO this shouldn't be required.
-                IEnumerable<string> encoding;
-                if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
+                int backOffInSec = 1;
+                retry = false;
+                chunk = downloadContext.chunk;
+
+                S3DownloadRequest downloadRequest =
+                    new S3DownloadRequest()
+                    {
+                        Url = new UriBuilder(chunk.Url).Uri,
+                        qrmk = downloadContext.qrmk,
+                        // s3 download request timeout to one hour
+                        RestTimeout = TimeSpan.FromHours(1),
+                        HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
+                        chunkHeaders = downloadContext.chunkHeaders
+                    };
+
+                using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
+                               .ConfigureAwait(continueOnCapturedContext: false))
+                using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
+                    .ConfigureAwait(continueOnCapturedContext: false))
                 {
-                    if (String.Compare(encoding.First(), "gzip", true) == 0)
+                    //TODO this shouldn't be required.
+                    try
                     {
-                        Stream stream_gzip = new GZipStream(stream, CompressionMode.Decompress);
-                        await ParseStreamIntoChunk(stream_gzip, chunk);
+                        if(forceParseError)
+                        {
+                            throw new Exception("json parsing error.");
+                        }
+                        IEnumerable<string> encoding;
+                        if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
+                        {
+                            if (String.Compare(encoding.First(), "gzip", true) == 0)
+                            {
+                                Stream stream_gzip = new GZipStream(stream, CompressionMode.Decompress);
+                                await ParseStreamIntoChunk(stream_gzip, chunk);
+                            }
+                            else
+                            {
+                                await ParseStreamIntoChunk(stream, chunk);
+                            }
+                        }
+                        else
+                        {
+                            await ParseStreamIntoChunk(stream, chunk);
+                        }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        await ParseStreamIntoChunk(stream, chunk);
+                        forceParseError = false;
+                        if (retryCount < maxRetry)
+                        {
+                            retry = true;
+                            await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
+                            ++retryCount;
+                            backOffInSec = backOffInSec * 2;
+                        }
+                        else
+                        {
+                            //parse error
+                            throw new Exception("parse stream to Chunk error. " + e);
+                        }
                     }
                 }
-                else
-                {
-                    await ParseStreamIntoChunk(stream, chunk);
-                }
-            }
+            } while (retry);
             logger.Info($"Succeed downloading chunk #{chunk.chunkIndexToDownload}");
             return chunk;
         }
