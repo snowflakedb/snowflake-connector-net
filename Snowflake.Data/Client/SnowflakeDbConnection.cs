@@ -114,8 +114,11 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            _connectionState = ConnectionState.Closed;
-            PostClose();
+            if (_connectionState != ConnectionState.Closed)
+            {
+                _connectionState = ConnectionState.Closed;
+                PostClose();
+            }
         }
 
         internal void PostClose()
