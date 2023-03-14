@@ -268,6 +268,30 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolWithDispose()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            SnowflakeDbConnectionPool.ClearAllPools();
+             
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = "";
+            try
+            {
+                conn1.Open();
+            }
+            catch (SnowflakeDbException ex)
+            {
+                Console.WriteLine($"connection failed:"+ex);
+                conn1.Close();
+            }
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
     }
 }
 
