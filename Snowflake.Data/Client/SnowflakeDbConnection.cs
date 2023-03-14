@@ -145,40 +145,37 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                bool added = SnowflakeDbConnectionPool.addConnection(this);
-                if (added)
+                if (_connectionState != ConnectionState.Closed)
                 {
                     _connectionState = ConnectionState.Closed;
                     taskCompletionSource.SetResult(null);
-                    PostClose();
-                }
-                else
-                {
-                    if (_connectionState != ConnectionState.Closed && SfSession != null)
+                    bool added = SnowflakeDbConnectionPool.addConnection(this);
+                    if (!added)
                     {
-                        SfSession.CloseAsync(cancellationToken).ContinueWith(
-                        previousTask =>
+                        if (SfSession != null)
                         {
-                            if (previousTask.IsFaulted)
+                            SfSession.stopHeartBeatForThisSession();
+                            SfSession.CloseAsync(cancellationToken).ContinueWith(
+                            previousTask =>
                             {
-                                // Exception from SfSession.CloseAsync
-                                logger.Error("Error closing the session", previousTask.Exception);
-                                taskCompletionSource.SetException(previousTask.Exception);
-                            }
-                            else if (previousTask.IsCanceled)
-                            {
-                                _connectionState = ConnectionState.Closed;
-                                logger.Debug("Session close canceled");
-                                taskCompletionSource.SetCanceled();
-                            }
-                            else
-                            {
-                                logger.Debug("Session closed successfully");
-                                taskCompletionSource.SetResult(null);
-                                _connectionState = ConnectionState.Closed;
-                                PostClose();
-                            }
-                        }, cancellationToken);
+                                if (previousTask.IsFaulted)
+                                {
+                                    // Exception from SfSession.CloseAsync
+                                    logger.Error("Error closing the session", previousTask.Exception);
+                                    taskCompletionSource.SetException(previousTask.Exception);
+                                }
+                                else if (previousTask.IsCanceled)
+                                {
+                                    logger.Debug("Session close canceled");
+                                    taskCompletionSource.SetCanceled();
+                                }
+                                else
+                                {
+                                    logger.Debug("Session closed successfully");
+                                    taskCompletionSource.SetResult(null);
+                                }
+                            }, cancellationToken);
+                        }
                     }
                     else
                     {
