@@ -82,6 +82,7 @@ namespace Snowflake.Data.Core
                 {
                     if (retryCount < MAX_RETRY)
                     {
+                        logger.Debug($"PostAsync Exception, retry="+ retryCount);
                         retry = true;
                         await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                         ++retryCount;
@@ -130,6 +131,7 @@ namespace Snowflake.Data.Core
                 {
                     if (retryCount < MAX_RETRY)
                     {
+                        logger.Debug($"GetAsync Exception, retry=" + retryCount);
                         retry = true;
                         await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                         ++retryCount;
