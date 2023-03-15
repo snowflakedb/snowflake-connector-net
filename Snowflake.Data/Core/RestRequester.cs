@@ -28,6 +28,7 @@ namespace Snowflake.Data.Core
         Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken);
 
         HttpResponseMessage Get(IRestRequest request);
+
     }
 
     internal interface IMockRestRequester : IRestRequester
@@ -40,6 +41,7 @@ namespace Snowflake.Data.Core
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         protected HttpClient _HttpClient;
+        const int MAX_RETRY = 3;
 
         public RestRequester(HttpClient httpClient)
         {
@@ -56,15 +58,20 @@ namespace Snowflake.Data.Core
         {
             bool retry = false;
             int retryCount = 0;
-            int maxRetry = 3;
             var result = default(T);
-
+            
             do
             {
                 int backOffInSec = 1;
                 retry = false;
                 try
                 {
+                    //use it for testing only
+                    //bool forceParseError = true;
+                    //if (forceParseError)
+                    //{
+                    //    throw new Exception("json parsing error.");
+                    //}
                     using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
                     {
                         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -73,7 +80,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if (retryCount < maxRetry)
+                    if (retryCount < MAX_RETRY)
                     {
                         retry = true;
                         await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
@@ -99,7 +106,6 @@ namespace Snowflake.Data.Core
         {
             bool retry = false;
             int retryCount = 0;
-            int maxRetry = 3;
             var result = default(T);
 
             do
@@ -108,6 +114,12 @@ namespace Snowflake.Data.Core
                 retry = false;
                 try
                 {
+                    //use it for testing only
+                    //bool forceParseError = true;
+                    //if (forceParseError)
+                    //{
+                    //    throw new Exception("json parsing error.");
+                    //}
                     using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
                     {
                         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -116,7 +128,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if (retryCount < maxRetry)
+                    if (retryCount < MAX_RETRY)
                     {
                         retry = true;
                         await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
