@@ -166,7 +166,7 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                logger.Debug("Session not opened. Nothing to do.");
+                logger.Debug("Session still open and inside the connection pool. Nothing to do.");
                 task.SetResult(null);
             }
         }

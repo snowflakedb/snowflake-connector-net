@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
 
         [Test]
-        //[Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolWithAsync()
         {
             using (var conn = new MockSnowflakeDbConnection())
