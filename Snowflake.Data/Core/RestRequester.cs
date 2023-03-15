@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-        
+
         protected HttpClient _HttpClient;
 
         public RestRequester(HttpClient httpClient)
@@ -54,11 +54,39 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
+            bool retry = false;
+            int retryCount = 0;
+            int maxRetry = 3;
+            var result = default(T);
+
+            do
             {
-                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
-            }
+                int backOffInSec = 1;
+                retry = false;
+                try
+                {
+                    using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
+                    {
+                        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        result = JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (retryCount < maxRetry)
+                    {
+                        retry = true;
+                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
+                        ++retryCount;
+                        backOffInSec = backOffInSec * 2;
+                    }
+                    else
+                    {
+                        throw new Exception("parse post response error: " + e);
+                    }
+                }
+            } while (retry);
+            return result;
         }
 
         public T Get<T>(IRestRequest request)
@@ -69,13 +97,41 @@ namespace Snowflake.Data.Core
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
-            { 
-                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
-            }
+            bool retry = false;
+            int retryCount = 0;
+            int maxRetry = 3;
+            var result = default(T);
+
+            do
+            {
+                int backOffInSec = 1;
+                retry = false;
+                try
+                {
+                    using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
+                    {
+                        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        result = JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (retryCount < maxRetry)
+                    {
+                        retry = true;
+                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
+                        ++retryCount;
+                        backOffInSec = backOffInSec * 2;
+                    }
+                    else
+                    {
+                        throw new Exception("parse post response error: " + e);
+                    }
+                }
+            } while (retry);
+            return result;
         }
-        
+
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             return SendAsync(HttpMethod.Get, request, cancellationToken);
@@ -96,7 +152,7 @@ namespace Snowflake.Data.Core
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
-                                                              TimeSpan restTimeout, 
+                                                              TimeSpan restTimeout,
                                                               CancellationToken externalCancellationToken)
         {
             // merge multiple cancellation token
