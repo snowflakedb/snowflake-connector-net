@@ -41,7 +41,6 @@ namespace Snowflake.Data.Core
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         protected HttpClient _HttpClient;
-        const int MAX_RETRY = 3;
 
         public RestRequester(HttpClient httpClient)
         {
@@ -80,7 +79,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if (retryCount < MAX_RETRY)
+                    if (retryCount < HttpUtil.MAX_RETRY)
                     {
                         logger.Debug($"PostAsync Exception, retry="+ retryCount);
                         retry = true;
@@ -129,7 +128,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if (retryCount < MAX_RETRY)
+                    if (retryCount < HttpUtil.MAX_RETRY)
                     {
                         logger.Debug($"GetAsync Exception, retry=" + retryCount);
                         retry = true;
