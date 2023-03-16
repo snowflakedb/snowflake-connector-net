@@ -33,55 +33,87 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Creates an encryption stream
         /// </summary>
-        /// <param name="stream"></param>
+        /// <param name="stream">The stream to read or write to containing encrypted data</param>
+        /// <param name="mode">The crypto mode to use</param>
         /// <param name="encryptionMaterial"></param>
         /// <param name="encryptionMetadata"></param>
         /// <param name="leaveOpen"></param>
         public EncryptionStream(
             Stream stream,
+            CryptMode mode,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            bool leaveOpen = false)
+            bool leaveOpen)
         {
             this.leaveOpen = leaveOpen;
-            this.Mode = CryptMode.Encrypt;
+            this.Mode = mode;
 
-            byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
-            int masterKeySize = decodedMasterKey.Length;
-            Logger.Debug($"Master key size : {masterKeySize}");
-
-            // Generate file key
-
-            byte[] ivData = new byte[blockSize];
-            byte[] keyData = new byte[blockSize];
-            Randomizer.GetBytes(ivData);
-            Randomizer.GetBytes(keyData);
-
-            byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
-
-            // Store encryption metadata information
-            MaterialDescriptor matDesc = new MaterialDescriptor
+            if (mode == CryptMode.Encrypt)
             {
-                smkId = encryptionMaterial.smkId.ToString(),
-                queryId = encryptionMaterial.queryId,
-                keySize = (masterKeySize * 8).ToString()
-            };
+                byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+                int masterKeySize = decodedMasterKey.Length;
+                Logger.Debug($"Master key size : {masterKeySize}");
 
-            string ivBase64 = Convert.ToBase64String(ivData);
-            string keyBase64 = Convert.ToBase64String(encryptedFileKey);
+                // Generate file key
 
-            encryptionMetadata.iv = ivBase64;
-            encryptionMetadata.key = keyBase64;
-            encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
+                byte[] ivData = new byte[blockSize];
+                byte[] keyData = new byte[blockSize];
+                Randomizer.GetBytes(ivData);
+                Randomizer.GetBytes(keyData);
 
-            using (Aes aes = Aes.Create())
+                byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
+
+                // Store encryption metadata information
+                MaterialDescriptor matDesc = new MaterialDescriptor
+                {
+                    smkId = encryptionMaterial.smkId.ToString(),
+                    queryId = encryptionMaterial.queryId,
+                    keySize = (masterKeySize * 8).ToString()
+                };
+
+                string ivBase64 = Convert.ToBase64String(ivData);
+                string keyBase64 = Convert.ToBase64String(encryptedFileKey);
+
+                encryptionMetadata.iv = ivBase64;
+                encryptionMetadata.key = keyBase64;
+                encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
+
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = keyData;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+                    aes.IV = ivData;
+
+                    this.targetStream = new CryptoStream(stream, aes.CreateEncryptor(), CryptoStreamMode.Write, leaveOpen: this.leaveOpen);
+                }
+            }
+            else
             {
-                aes.Key = keyData;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-                aes.IV = ivData;
+                // Get key and iv from metadata
+                string keyBase64 = encryptionMetadata.key;
+                string ivBase64 = encryptionMetadata.iv;
 
-                this.targetStream = new CryptoStream(stream, aes.CreateEncryptor(), CryptoStreamMode.Write, leaveOpen: this.leaveOpen);
+                // Get decoded key from base64 encoded value
+                byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+
+                // Get key bytes and iv bytes from base64 encoded value
+                byte[] keyBytes = Convert.FromBase64String(keyBase64);
+                byte[] ivBytes = Convert.FromBase64String(ivBase64);
+
+                // Create decipher with file key, iv bytes, and AES CBC
+                byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
+
+                // Create key decipher with decoded key and AES ECB
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = decryptedFileKey;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+                    aes.IV = ivBytes;
+
+                    this.targetStream = new CryptoStream(stream, aes.CreateDecryptor(), CryptoStreamMode.Write, leaveOpen: leaveOpen);
+                }
             }
         }
 
@@ -143,17 +175,43 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <returns>The encrypted key.</returns>
         static private byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
-            Aes aes = Aes.Create();
-            aes.Key = masterKey;
-            aes.Mode = CipherMode.ECB;
-            aes.Padding = PaddingMode.PKCS7;
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = masterKey;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
 
-            MemoryStream cipherStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-            cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-            cryptoStream.FlushFinalBlock();
+                MemoryStream cipherStream = new MemoryStream();
+                CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
+                cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+                cryptoStream.FlushFinalBlock();
 
-            return cipherStream.ToArray();
+                return cipherStream.ToArray();
+            }
+        }
+
+
+        /// <summary>
+        /// Decrypt the newly generated file key using the master key.
+        /// </summary>
+        /// <param name="masterKey">The key to use for encryption.</param>
+        /// <param name="unencryptedFileKey">The file key to encrypt.</param>
+        /// <returns>The encrypted key.</returns>
+        static private byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = masterKey;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
+
+                MemoryStream cipherStream = new MemoryStream();
+                CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
+                cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+                cryptoStream.FlushFinalBlock();
+
+                return cipherStream.ToArray();
+            }
         }
     }
 }

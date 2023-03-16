@@ -1,7 +1,5 @@
 ﻿using System.IO;
-using System;
 using Snowflake.Data.Log;
-using System.Security.Cryptography;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -56,10 +54,8 @@ namespace Snowflake.Data.Core.FileTransfer
             SFEncryptionMetadata encryptionMetadata,
             bool leaveOpen)
         {
-            return new EncryptionStream(stream, encryptionMaterial, encryptionMetadata, leaveOpen);
+            return new EncryptionStream(stream, EncryptionStream.CryptMode.Encrypt, encryptionMaterial, encryptionMetadata, leaveOpen);
         }
-
-
 
         /// <summary>
         /// Decrypt data and write to the outStream.
@@ -73,83 +69,18 @@ namespace Snowflake.Data.Core.FileTransfer
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata)
         {
-            // Get key and iv from metadata
-            string keyBase64 = encryptionMetadata.key;
-            string ivBase64 = encryptionMetadata.iv;
-
-            // Get decoded key from base64 encoded value
-            byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
-
-            // Get key bytes and iv bytes from base64 encoded value
-            byte[] keyBytes = Convert.FromBase64String(keyBase64);
-            byte[] ivBytes = Convert.FromBase64String(ivBase64);
-
             // Create temp file
             string tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
 
-            // Create decipher with file key, iv bytes, and AES CBC
-            byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
-
-            // Create key decipher with decoded key and AES ECB
-            byte[] decryptedBytes = CreateDecryptedBytes(
-                inFile,
-                decryptedFileKey,
-                ivBytes);
-
-            File.WriteAllBytes(tempFileName, decryptedBytes);
+            using (var writeStream = new EncryptionStream(File.Create(tempFileName), EncryptionStream.CryptMode.Decrypt, encryptionMaterial, encryptionMetadata, false))
+            {
+                using (var readStream = File.OpenRead(inFile))
+                {
+                    readStream.CopyTo(writeStream);
+                }
+            }
 
             return tempFileName;
-        }
-
-        /// <summary>
-        /// Decrypt the newly generated file key using the master key.
-        /// </summary>
-        /// <param name="masterKey">The key to use for encryption.</param>
-        /// <param name="unencryptedFileKey">The file key to encrypt.</param>
-        /// <returns>The encrypted key.</returns>
-        static private byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
-        {
-            Aes aes = Aes.Create();
-            aes.Key = masterKey;
-            aes.Mode = CipherMode.ECB;
-            aes.Padding = PaddingMode.PKCS7;
-
-            MemoryStream cipherStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-            cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-            cryptoStream.FlushFinalBlock();
-
-            return cipherStream.ToArray();
-        }
-
-        /// <summary>
-        /// Creates a new byte array containing the decrypted data.
-        /// </summary>
-        /// <param name="inFile">The path of the file to write onto the stream.</param>
-        /// <param name="key">The encryption key.</param>
-        /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
-        /// <returns>The encrypted bytes.</returns>
-        static private byte[] CreateDecryptedBytes(
-            string inFile,
-            byte[] key,
-            byte[] iv)
-        {
-            Aes aes = Aes.Create();
-            aes.Key = key;
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.IV = iv;
-
-            MemoryStream targetStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-
-            using(Stream inStream = File.OpenRead(inFile))
-            {
-                inStream.CopyTo(cryptoStream);
-            }
-            cryptoStream.FlushFinalBlock();
-
-            return targetStream.ToArray();
         }
     }
 }
