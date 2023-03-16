@@ -26,6 +26,7 @@ namespace Snowflake.Data.Tests
         public void ConnectionITDone()
         {
             // Do nothing;
+
         }
 
         [Test]
