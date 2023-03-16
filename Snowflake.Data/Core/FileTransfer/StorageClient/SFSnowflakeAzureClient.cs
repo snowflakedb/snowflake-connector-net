@@ -172,9 +172,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the Azure location.
         /// </summary>
         /// <param name="fileMetadata">The Azure file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="sourceStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        public void UploadFile(SFFileMetadata fileMetadata, Stream sourceStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the POST/PUT request
-                blobClient.Upload(new MemoryStream(fileBytes));
+                blobClient.Upload(sourceStream);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -201,9 +201,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the Azure location.
         /// </summary>
         /// <param name="fileMetadata">The Azure file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="sourceStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream sourceStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
@@ -213,7 +213,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the POST/PUT request
-                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                await blobClient.UploadAsync(sourceStream, cancellationToken);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)

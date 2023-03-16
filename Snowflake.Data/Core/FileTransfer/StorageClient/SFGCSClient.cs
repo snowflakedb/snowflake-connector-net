@@ -288,9 +288,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the GCS location.
         /// </summary>
         /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="sourceStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        public void UploadFile(SFFileMetadata fileMetadata, Stream sourceStream, SFEncryptionMetadata encryptionMetadata)
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
             try
@@ -298,8 +298,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
 
                 Stream dataStream = request.GetRequestStream();
-                dataStream.Write(fileBytes, 0, fileBytes.Length);
+                sourceStream.CopyTo(dataStream);
                 dataStream.Close();
+                sourceStream.Close();
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
@@ -318,9 +319,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the GCS location.
         /// </summary>
         /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="sourceStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream sourceStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
             try
@@ -328,8 +329,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
 
                 Stream dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
-                dataStream.Write(fileBytes, 0, fileBytes.Length);
+                await sourceStream.CopyToAsync(dataStream, 81920, cancellationToken).ConfigureAwait(false);
                 dataStream.Close();
+                sourceStream.Close();
 
                 WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
                 using (HttpWebResponse response = (HttpWebResponse)webResponse)

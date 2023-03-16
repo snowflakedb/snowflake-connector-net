@@ -87,7 +87,6 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static void UploadOneFile(SFFileMetadata fileMetadata)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            byte[] fileBytes = GetFileBytes(fileMetadata, encryptionMetadata);
             
             int maxConcurrency = fileMetadata.parallel;
             int maxRetry = DEFAULT_MAX_RETRY;
@@ -115,7 +114,20 @@ namespace Snowflake.Data.Core.FileTransfer
                 if (fileMetadata.overwrite || fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                 {
                     // Upload the file
-                    client.UploadFile(fileMetadata, fileBytes, encryptionMetadata);
+                    bool closeStream;
+                    var stream = GetFileBytes(fileMetadata, encryptionMetadata, out closeStream);
+
+                    try
+                    {
+                        client.UploadFile(fileMetadata, stream, encryptionMetadata);
+                    }
+                    finally
+                    {
+                        if (closeStream)
+                        {
+                            stream.Close();
+                        }
+                    }
                 }
 
                 if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
@@ -146,7 +158,6 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static async Task UploadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            byte[] fileBytes = GetFileBytes(fileMetadata, encryptionMetadata);
 
             int maxConcurrency = fileMetadata.parallel;
             int maxRetry = DEFAULT_MAX_RETRY;
@@ -174,7 +185,19 @@ namespace Snowflake.Data.Core.FileTransfer
                 if (fileMetadata.overwrite || fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                 {
                     // Upload the file
-                    await client.UploadFileAsync(fileMetadata, fileBytes, encryptionMetadata, cancellationToken).ConfigureAwait(false);
+                    bool closeStream;
+                    var stream = GetFileBytes(fileMetadata, encryptionMetadata, out closeStream);
+                    try
+                    {
+                        await client.UploadFileAsync(fileMetadata, stream, encryptionMetadata, cancellationToken).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        if (closeStream)
+                        {
+                            stream.Close();
+                        }
+                    }
                 }
 
                 if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
@@ -506,21 +529,25 @@ namespace Snowflake.Data.Core.FileTransfer
             }
         }
 
-        private static byte[] GetFileBytes(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+        private static Stream GetFileBytes(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, out bool closeStream)
         {
-            byte[] fileBytes;
+            Stream fileBytes;
             // If encryption enabled, encrypt the file to be uploaded
             if (fileMetadata.encryptionMaterial != null)
             {
                 if (fileMetadata.memoryStream != null)
                 {
+                    fileMetadata.memoryStream.Position = 0;
+                    closeStream = true;
                     fileBytes = EncryptionProvider.EncryptStream(
                        fileMetadata.memoryStream,
                        fileMetadata.encryptionMaterial,
-                       encryptionMetadata);
+                       encryptionMetadata,
+                       true);
                 }
                 else
                 {
+                    closeStream = true;
                     fileBytes = EncryptionProvider.EncryptFile(
                         fileMetadata.realSrcFilePath,
                         fileMetadata.encryptionMaterial,
@@ -531,11 +558,13 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 if (fileMetadata.memoryStream != null)
                 {
-                    fileBytes = fileMetadata.memoryStream.ToArray();
+                    closeStream = false;
+                    fileBytes = fileMetadata.memoryStream;
                 }
                 else
                 {
-                    fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
+                    closeStream = true;
+                    fileBytes = File.OpenRead(fileMetadata.realSrcFilePath);
                 }
             }
             return fileBytes;
