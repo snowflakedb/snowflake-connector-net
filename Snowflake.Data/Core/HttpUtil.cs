@@ -64,6 +64,7 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
+        static internal readonly int MAX_RETRY = 3;
 
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 

@@ -135,7 +135,6 @@ namespace Snowflake.Data.Core
             SFReusableChunk chunk;
             bool retry = false;
             int retryCount = 0;
-            int maxRetry = 3;
 
             //this is used for test case
             bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
@@ -190,7 +189,7 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         forceParseError = false;
-                        if (retryCount < maxRetry)
+                        if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
