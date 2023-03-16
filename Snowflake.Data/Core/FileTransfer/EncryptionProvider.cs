@@ -21,11 +21,6 @@ namespace Snowflake.Data.Core.FileTransfer
     class EncryptionProvider
     {
         /// <summary>
-        /// The logger.
-        /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
-
-        /// <summary>
         /// Encrypt data and write to the outStream.
         /// </summary>
         /// <param name="inFile">The data to write onto the stream.</param>

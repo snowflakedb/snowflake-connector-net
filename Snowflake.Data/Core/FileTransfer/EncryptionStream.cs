@@ -112,7 +112,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     aes.Padding = PaddingMode.PKCS7;
                     aes.IV = ivBytes;
 
-                    this.targetStream = new CryptoStream(stream, aes.CreateDecryptor(), CryptoStreamMode.Write, leaveOpen: leaveOpen);
+                    this.targetStream = new CryptoStream(stream, aes.CreateDecryptor(), CryptoStreamMode.Read, leaveOpen: leaveOpen);
                 }
             }
         }
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            return this.targetStream.Read(buffer, offset, count);
         }
 
         public override long Seek(long offset, SeekOrigin origin)
