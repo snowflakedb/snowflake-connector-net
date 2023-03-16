@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        throw new Exception("parse post response error: " + e);
+                        throw;
                     }
                 }
             } while (retry);
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        throw new Exception("parse post response error: " + e);
+                        throw;
                     }
                 }
             } while (retry);
