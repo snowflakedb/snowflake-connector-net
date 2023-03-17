@@ -114,59 +114,56 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
+            bool added = false;
             if (_connectionState != ConnectionState.Closed)
             {
+                added = SnowflakeDbConnectionPool.addConnection(this);
                 _connectionState = ConnectionState.Closed;
+            }
+
+            if(!added)
+            {
                 PostClose();
             }
         }
 
         internal void PostClose()
         {
-            bool added = SnowflakeDbConnectionPool.addConnection(this);
-            if (!added)
+            SfSession.stopHeartBeatForThisSession();
+            if (SfSession != null)
             {
-                SfSession.stopHeartBeatForThisSession();
-                if (SfSession != null)
-                {
-                    SfSession.close();
-                }
+                SfSession.close();
             }
         }
 
         internal void PostCloseAsync(TaskCompletionSource<object> task, CancellationToken cancellationToken)
         {
-            bool added = SnowflakeDbConnectionPool.addConnection(this);
-            if (!added)
+            if (SfSession != null)
             {
-                if (SfSession != null)
+                SfSession.stopHeartBeatForThisSession();
+                SfSession.CloseAsync(cancellationToken).ContinueWith(
+                previousTask =>
                 {
-                    SfSession.stopHeartBeatForThisSession();
-                    SfSession.CloseAsync(cancellationToken).ContinueWith(
-                    previousTask =>
+                    if (previousTask.IsFaulted)
                     {
-                        if (previousTask.IsFaulted)
-                        {
-                            // Exception from SfSession.CloseAsync
-                            logger.Error("Error closing the session", previousTask.Exception);
-                            task.SetException(previousTask.Exception);
-                        }
-                        else if (previousTask.IsCanceled)
-                        {
-                            logger.Debug("Session close canceled");
-                            task.SetCanceled();
-                        }
-                        else
-                        {
-                            logger.Debug("Session closed successfully");
-                            task.SetResult(null);
-                        }
-                    }, cancellationToken);
-                }
+                        // Exception from SfSession.CloseAsync
+                        logger.Error("Error closing the session", previousTask.Exception);
+                        task.SetException(previousTask.Exception);
+                    }
+                    else if (previousTask.IsCanceled)
+                    {
+                        logger.Debug("Session close canceled");
+                        task.SetCanceled();
+                    }
+                    else
+                    {
+                        logger.Debug("Session closed successfully");
+                        task.SetResult(null);
+                    }
+                }, cancellationToken);
             }
             else
             {
-                logger.Debug("Session still open and inside the connection pool. Nothing to do.");
                 task.SetResult(null);
             }
         }
@@ -182,9 +179,18 @@ namespace Snowflake.Data.Client
             }
             else
             {
+                bool added = false;
                 if (_connectionState != ConnectionState.Closed)
                 {
+                    added = SnowflakeDbConnectionPool.addConnection(this);
                     _connectionState = ConnectionState.Closed;
+                }
+                if (added)
+                {
+                    taskCompletionSource.SetResult(null);
+                }
+                else
+                {
                     PostCloseAsync(taskCompletionSource, cancellationToken);
                 }
             }
