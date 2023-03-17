@@ -129,9 +129,9 @@ namespace Snowflake.Data.Client
 
         internal void PostClose()
         {
-            SfSession.stopHeartBeatForThisSession();
             if (SfSession != null)
             {
+                SfSession.stopHeartBeatForThisSession();
                 SfSession.close();
             }
         }
@@ -158,6 +158,7 @@ namespace Snowflake.Data.Client
                     else
                     {
                         logger.Debug("Session closed successfully");
+                        _connectionState = ConnectionState.Closed;
                         task.SetResult(null);
                     }
                 }, cancellationToken);
@@ -183,10 +184,10 @@ namespace Snowflake.Data.Client
                 if (_connectionState != ConnectionState.Closed)
                 {
                     added = SnowflakeDbConnectionPool.addConnection(this);
-                    _connectionState = ConnectionState.Closed;
                 }
                 if (added)
                 {
+                    _connectionState = ConnectionState.Closed;
                     taskCompletionSource.SetResult(null);
                 }
                 else
