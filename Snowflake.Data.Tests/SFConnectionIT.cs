@@ -1473,10 +1473,10 @@ namespace Snowflake.Data.Tests
                     stopwatch.Stop();
                     int detla = 10; //in case server time slower.
 
-                    // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
+                    // Should timeout after 5sec + 3 retry 20 sec
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 20 * 1000 - detla);
                     // But never more than 1 sec (max backoff) after the default timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (24) * 1000);
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
                     Assert.AreEqual(5, conn.ConnectionTimeout);
@@ -1508,10 +1508,10 @@ namespace Snowflake.Data.Tests
                 stopwatch.Stop();
                 int detla = 10; //in case server time slower.
 
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
+                // Should timeout after the default timeout (120 sec + 3 retry 480 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 480 * 1000 - detla);
                 // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (480 + 16) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(120, conn.ConnectionTimeout);
@@ -1601,7 +1601,7 @@ namespace Snowflake.Data.Tests
                 // Close the opened connection
                 task =  conn.CloseAsync(new CancellationTokenSource().Token);
                 try
-                { 
+                {
                     task.Wait();
                     Assert.Fail();
                 }
