@@ -28,6 +28,8 @@ namespace Snowflake.Data.Client
 
         private bool disposed = false;
 
+        private bool pooled = false;
+
         private static Mutex _arraybindingMutex = new Mutex();
 
         private static Boolean _isArrayBindStageCreated;
@@ -114,14 +116,13 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            bool added = false;
             if (_connectionState != ConnectionState.Closed)
             {
-                added = SnowflakeDbConnectionPool.addConnection(this);
+                pooled = SnowflakeDbConnectionPool.addConnection(this);
                 _connectionState = ConnectionState.Closed;
             }
 
-            if(!added)
+            if(!pooled)
             {
                 PostClose();
             }
@@ -180,12 +181,11 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                bool added = false;
                 if (_connectionState != ConnectionState.Closed)
                 {
-                    added = SnowflakeDbConnectionPool.addConnection(this);
+                    pooled = SnowflakeDbConnectionPool.addConnection(this);
                 }
-                if (added)
+                if (pooled)
                 {
                     _connectionState = ConnectionState.Closed;
                     taskCompletionSource.SetResult(null);
