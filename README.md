@@ -252,7 +252,7 @@ If you are using a different method for authentication, see the examples below:
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
-        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
+        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile});
 
         conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
