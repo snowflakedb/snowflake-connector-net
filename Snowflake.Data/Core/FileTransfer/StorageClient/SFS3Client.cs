@@ -305,7 +305,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 {
                     endpoint = endpoint.Substring(start + 1, end - start - 1);
                 }
-                clientConfig.ServiceURL = endpoint;
+                clientConfig.ServiceURL = "https://" + endpoint;
             }
 
             // The region information used to determine the endpoint for the service.
