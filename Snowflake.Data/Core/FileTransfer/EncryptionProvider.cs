@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -49,7 +48,7 @@ namespace Snowflake.Data.Core.FileTransfer
             SFEncryptionMetadata encryptionMetadata,
             bool leaveOpen)
         {
-            return new EncryptionStream(stream, EncryptionStream.CryptMode.Encrypt, encryptionMaterial, encryptionMetadata, leaveOpen);
+            return EncryptionStream.Create(stream, EncryptionStream.CryptMode.Encrypt, encryptionMaterial, encryptionMetadata, leaveOpen);
         }
 
         /// <summary>
@@ -67,9 +66,9 @@ namespace Snowflake.Data.Core.FileTransfer
             // Create temp file
             string tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
 
-            using (var writeStream = new EncryptionStream(File.Create(tempFileName), EncryptionStream.CryptMode.Decrypt, encryptionMaterial, encryptionMetadata, false))
+            using (var readStream = EncryptionStream.Create(File.OpenRead(inFile), EncryptionStream.CryptMode.Decrypt, encryptionMaterial, encryptionMetadata, false))
             {
-                using (var readStream = File.OpenRead(inFile))
+                using (var writeStream = File.Create(tempFileName))
                 {
                     readStream.CopyTo(writeStream);
                 }
