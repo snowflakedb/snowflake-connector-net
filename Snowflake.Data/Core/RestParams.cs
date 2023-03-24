@@ -50,7 +50,7 @@ namespace Snowflake.Data.Core
                 osVersion = System.Environment.OSVersion.VersionString,
 #if NETFRAMEWORK
                 netRuntime = "NETFramework",
-                netVersion = "4.7.2",
+                netVersion = "4.7.1",
 #else
                 netRuntime = "NETCore",
                 netVersion ="2.0",

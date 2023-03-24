@@ -7,6 +7,7 @@ Snowflake Connector for .NET
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
+- .NET Framework 4.7.1
 - .NET Framework 4.7.2
 - .NET Framework 4.7.3
 - .NET Core 6.0
