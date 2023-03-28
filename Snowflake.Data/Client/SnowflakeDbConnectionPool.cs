@@ -20,6 +20,16 @@ namespace Snowflake.Data.Client
         private const long TIMEOUT = 3600;
         private static bool pooling = true;
 
+        SnowflakeDbConnectionPool()
+        {
+            initConnectionPool();
+        }
+
+        ~SnowflakeDbConnectionPool()
+        {
+            ClearAllPools();
+        }
+
         private static void initConnectionPool()
         {
             logger.Debug("SnowflakeDbConnectionPool::initConnectionPool");
@@ -137,6 +147,10 @@ namespace Snowflake.Data.Client
 
             lock (_connectionPoolLock)
             {
+                foreach(SnowflakeDbConnection conn in connectionPool)
+                {
+                    conn.PostClose();
+                }
                 connectionPool.Clear();
             }
         }
@@ -164,10 +178,16 @@ namespace Snowflake.Data.Client
             return connectionPool.Count;
         }
 
-        public static void SetPooling(bool isEnable)
+        public static bool SetPooling(bool isEnable)
         {
+            if (pooling == isEnable)
+                return false;
             pooling = isEnable;
-            ClearAllPools();
+            if (!pooling)
+            {
+                ClearAllPools();
+            }
+            return true;
         }
 
         public static bool GetPooling()
