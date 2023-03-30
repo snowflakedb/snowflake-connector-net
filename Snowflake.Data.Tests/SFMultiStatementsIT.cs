@@ -334,7 +334,7 @@ namespace Snowflake.Data.Tests
                     Assert.IsTrue(reader.NextResult());
                     Assert.IsTrue(reader.HasRows);
                     // server used to return query type of explain as select
-					// but now it could be a specific type of explain
+                    // but now it could be a specific type of explain
                     Assert.IsTrue((reader.RecordsAffected == 0) ||
                                   (reader.RecordsAffected == -1));
 
