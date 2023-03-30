@@ -259,6 +259,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "INSECURE_MODE")]
         internal string insecureMode { get; set; }
 
+        [JsonIgnore]
+        internal bool IsNetFramework => netRuntime.Contains("NETFramework");
+
         public override string ToString()
         {
             return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}", 

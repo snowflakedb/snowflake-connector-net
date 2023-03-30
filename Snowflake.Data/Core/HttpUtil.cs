@@ -67,14 +67,9 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_RETRY = 6;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
-        private static readonly HttpUtil instance = new HttpUtil();
-
         private HttpUtil() { }
 
-        static internal HttpUtil Instance
-        {
-            get { return instance; }
-        }
+        internal static HttpUtil Instance { get; } = new HttpUtil();
 
         private readonly object httpClientProviderLock = new object();
 
@@ -112,7 +107,7 @@ namespace Snowflake.Data.Core
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
             {
                 httpHandler = new WinHttpHandler()
                 {
