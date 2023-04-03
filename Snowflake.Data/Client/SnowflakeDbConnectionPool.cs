@@ -8,10 +8,10 @@ using System.Linq;
 
 namespace Snowflake.Data.Client
 {
-    sealed class ConnectionPool : IDisposable
+    sealed class ConnectionPoolSingleton : IDisposable
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
-        private static ConnectionPool instance = null;
+        private static ConnectionPoolSingleton instance = null;
         private static readonly object _connectionPoolLock = new object();
 
         private List<SnowflakeDbConnection> connectionPool;
@@ -21,11 +21,16 @@ namespace Snowflake.Data.Client
         private const long TIMEOUT = 3600;
         private bool pooling = true;
 
-        ConnectionPool()
+        ConnectionPoolSingleton()
         {
-
+            lock (_connectionPoolLock)
+            {
+                connectionPool = new List<SnowflakeDbConnection>();
+                maxPoolSize = MAX_POOL_SIZE;
+                timeout = TIMEOUT;
+            }
         }
-        ~ConnectionPool()
+        ~ConnectionPoolSingleton()
         {
             ClearAllPools();
         }
@@ -35,7 +40,7 @@ namespace Snowflake.Data.Client
             ClearAllPools();
         }
 
-        public static ConnectionPool Instance
+        public static ConnectionPoolSingleton Instance
         {
             get
             {
@@ -43,32 +48,16 @@ namespace Snowflake.Data.Client
                 {
                     if(instance == null)
                     {
-                        instance = new ConnectionPool();
+                        instance = new ConnectionPoolSingleton();
                     }
                     return instance;
                 }
             }
         }
 
-        private void initConnectionPool()
-        {
-            logger.Debug("ConnectionPool::initConnectionPool");
-            lock (_connectionPoolLock)
-            {
-                connectionPool = new List<SnowflakeDbConnection>();
-                maxPoolSize = MAX_POOL_SIZE;
-                timeout = TIMEOUT;
-            }
-        }
-
         private void cleanExpiredConnections()
         {
             logger.Debug("ConnectionPool::cleanExpiredConnections");
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
             lock (_connectionPoolLock)
             {
                 long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -92,10 +81,6 @@ namespace Snowflake.Data.Client
             logger.Debug("ConnectionPool::getConnection");
             if (!pooling)
                 return null;
-            if (connectionPool == null)
-            {
-                initConnectionPool();
-            }
             lock (_connectionPoolLock)
             {
                 for (int i = 0; i < connectionPool.Count; i++)
@@ -129,10 +114,6 @@ namespace Snowflake.Data.Client
                 return false;
             lock (_connectionPoolLock)
             {
-                if (connectionPool == null)
-                {
-                    initConnectionPool();
-                }
                 if (connectionPool.Count < maxPoolSize)
                 {
                     long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
@@ -158,11 +139,6 @@ namespace Snowflake.Data.Client
         internal void ClearAllPools()
         {
             logger.Debug("ConnectionPool::ClearAllPools");
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
-
             lock (_connectionPoolLock)
             {
                 foreach (SnowflakeDbConnection conn in connectionPool)
@@ -175,19 +151,11 @@ namespace Snowflake.Data.Client
 
         public void SetMaxPoolSize(int size)
         {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
             maxPoolSize = size;
         }
 
         public void SetTimeout(long time)
         {
-            if (null == connectionPool)
-            {
-                initConnectionPool();
-            }
             timeout = time;
         }
 
@@ -220,44 +188,44 @@ namespace Snowflake.Data.Client
         internal static SnowflakeDbConnection getConnection(string connStr)
         {
             logger.Debug("SnowflakeDbConnectionPool::getConnection");
-            return ConnectionPool.Instance.getConnection(connStr);
+            return ConnectionPoolSingleton.Instance.getConnection(connStr);
         }
 
         internal static bool addConnection(SnowflakeDbConnection conn)
         {
             logger.Debug("SnowflakeDbConnectionPool::addConnection");
-            return ConnectionPool.Instance.addConnection(conn);
+            return ConnectionPoolSingleton.Instance.addConnection(conn);
         }
 
         public static void ClearAllPools()
         {
             logger.Debug("SnowflakeDbConnectionPool::ClearAllPools");
-            ConnectionPool.Instance.ClearAllPools();
+            ConnectionPoolSingleton.Instance.ClearAllPools();
         }
 
         public static void SetMaxPoolSize(int size)
         {
-            ConnectionPool.Instance.SetMaxPoolSize(size);
+            ConnectionPoolSingleton.Instance.SetMaxPoolSize(size);
         }
 
         public static void SetTimeout(long time)
         {
-            ConnectionPool.Instance.SetTimeout(time);
+            ConnectionPoolSingleton.Instance.SetTimeout(time);
         }
 
         public static int GetCurrentPoolSize()
         {
-            return ConnectionPool.Instance.GetCurrentPoolSize();
+            return ConnectionPoolSingleton.Instance.GetCurrentPoolSize();
         }
 
         public static bool SetPooling(bool isEnable)
         {
-            return ConnectionPool.Instance.SetPooling(isEnable);
+            return ConnectionPoolSingleton.Instance.SetPooling(isEnable);
         }
 
         public static bool GetPooling()
         {
-            return ConnectionPool.Instance.GetPooling();
+            return ConnectionPoolSingleton.Instance.GetPooling();
         }
     }
 }

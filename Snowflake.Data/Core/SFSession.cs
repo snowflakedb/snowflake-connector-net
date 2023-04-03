@@ -272,6 +272,7 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
 
+            logger.Debug($"Send closeSessionRequest");
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
@@ -296,6 +297,7 @@ namespace Snowflake.Data.Core
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
             };
 
+            logger.Debug($"Send async closeSessionRequest");
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
