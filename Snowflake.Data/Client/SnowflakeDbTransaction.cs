@@ -83,7 +83,10 @@ namespace Snowflake.Data.Client
             if (connection != null && connection.IsOpen())
             {
                 // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
-                this.Rollback();
+                if (!((SnowflakeDbConnection)connection).GetCommitted())
+                {
+                    this.Rollback();
+                }
             }
             disposed = true;
 
