@@ -157,11 +157,6 @@ namespace Snowflake.Data.Client
         public override int ExecuteNonQuery()
         {
             logger.Debug($"ExecuteNonQuery");
-            if (SqlUtil.TrimSql(CommandText).ToUpper().Equals("COMMIT"))
-            {
-                ((SnowflakeDbConnection)connection).SetCommitted(true);
-            }
-
             SFBaseResultSet resultSet = ExecuteInternal();
             long total = 0;
             do
@@ -188,11 +183,6 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ExecuteNonQueryAsync");
             cancellationToken.ThrowIfCancellationRequested();
-
-            if(SqlUtil.TrimSql(CommandText).ToUpper().Equals("COMMIT"))
-            {
-                ((SnowflakeDbConnection)connection).SetCommitted(true);
-            }
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
             long total = 0;

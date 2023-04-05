@@ -26,8 +26,6 @@ namespace Snowflake.Data.Client
 
         internal long _poolTimeout;
 
-        private bool committed = false;
-
         private bool disposed = false;
 
         private bool pooled = false;
@@ -321,7 +319,6 @@ namespace Snowflake.Data.Client
             {
                 isolationLevel = IsolationLevel.ReadCommitted;
             }
-            committed = false;
 
             return new SnowflakeDbTransaction(isolationLevel, this);
         }
@@ -329,16 +326,6 @@ namespace Snowflake.Data.Client
         protected override DbCommand CreateDbCommand()
         {
             return new SnowflakeDbCommand(this);
-        }
-
-        public void SetCommitted(bool isCommited)
-        {
-            committed = isCommited;
-        }
-
-        public bool GetCommitted()
-        {
-            return committed;
         }
 
         protected override void Dispose(bool disposing)
