@@ -41,17 +41,29 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             var tempFileStream = new FileStream(tempFilename, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
-
-            using (var targetStream = mode == CryptMode.Encrypt
-                       ? CreateEncryptStream(stream, encryptionMaterial, encryptionMetadata, leaveOpen)
-                       : CreateDecryptStream(stream, encryptionMaterial, encryptionMetadata, leaveOpen))
+            var disposeTempFileStream = true;
+            try
             {
-                targetStream.CopyTo(tempFileStream);
+                using (var targetStream = mode == CryptMode.Encrypt
+                           ? CreateEncryptStream(stream, encryptionMaterial, encryptionMetadata, leaveOpen)
+                           : CreateDecryptStream(stream, encryptionMaterial, encryptionMetadata, leaveOpen))
+                {
+                    targetStream.CopyTo(tempFileStream);
+                }
+
+                tempFileStream.Position = 0;
+
+                disposeTempFileStream = false;
+
+                return tempFileStream;
             }
-
-            tempFileStream.Position = 0;
-
-            return tempFileStream;
+            finally
+            {
+                if (disposeTempFileStream)
+                {
+                    tempFileStream.Dispose();
+                }
+            }
         }
 
         static private Stream CreateDecryptStream(
