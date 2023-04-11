@@ -59,22 +59,28 @@ namespace Snowflake.Data.Client
         public override void Commit()
         {
             logger.Debug("Commit transaction.");
-            using (IDbCommand command = connection.CreateCommand())
+            if (!isCommittedOrRollbacked)
             {
-                isCommittedOrRollbacked = true;
-                command.CommandText = "COMMIT";
-                command.ExecuteNonQuery();
+                using (IDbCommand command = connection.CreateCommand())
+                {
+                    isCommittedOrRollbacked = true;
+                    command.CommandText = "COMMIT";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
         public override void Rollback()
         {
             logger.Debug("Rollback transaction.");
-            using (IDbCommand command = connection.CreateCommand())
+            if (!isCommittedOrRollbacked)
             {
-                isCommittedOrRollbacked = true;
-                command.CommandText = "ROLLBACK";
-                command.ExecuteNonQuery();
+                using (IDbCommand command = connection.CreateCommand())
+                {
+                    isCommittedOrRollbacked = true;
+                    command.CommandText = "ROLLBACK";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
@@ -82,7 +88,7 @@ namespace Snowflake.Data.Client
         {
             if (disposed)
                 return;
-
+            isCommittedOrRollbacked = true;
             // Rollback the uncommitted transaction when the connection is open
             if (connection != null && connection.IsOpen())
             {

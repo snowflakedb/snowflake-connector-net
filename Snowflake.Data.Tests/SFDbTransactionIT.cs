@@ -65,62 +65,94 @@ namespace Snowflake.Data.Tests
         {
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = ConnectionString;
-            //Task connectTask = conn.OpenAsync();
-            //connectTask.Wait();
             conn.Open();
 
-            DbCommand syncPrep = conn.CreateCommand();
-            syncPrep.CommandText = "create or replace table test_async(x timestamp, a integer)";
-            syncPrep.ExecuteNonQuery();
+            DbCommand command = conn.CreateCommand();
+            command.CommandText = "create or replace table testTransaction(x timestamp, a integer)";
+            command.ExecuteNonQuery();
             Console.WriteLine("Created table");
-
-            syncPrep.CommandText = "insert into test_async values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
-            Console.WriteLine("Inserted into table; num rows: " + syncPrep.ExecuteNonQuery());
 
             using (DbTransaction transaction = conn.BeginTransaction())
             {
-                try
-                {
-                    DbCommand command = conn.CreateCommand();
-                    command.Transaction = transaction;
-                    Console.WriteLine("Running ~60 updates");
-                    for (int i = 0; i < 30; i++)
-                    {
-                        command.CommandText = "UPDATE TEST_ASYNC SET x = current_timestamp(), a = 6 WHERE a = 3";
-                        command.ExecuteNonQuery();
-                        command.CommandText = "UPDATE TEST_ASYNC SET x = current_timestamp(), a = 3 WHERE a = 6";
-                        command.ExecuteNonQuery();
-                    }
+                IDbCommand t1c1 = conn.CreateCommand();
+                t1c1.Transaction = transaction;
+                t1c1.CommandText = "insert into testTransaction values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.ExecuteNonQuery();
+                t1c1.Transaction.Commit();
 
-                    Console.WriteLine("Launching a race between COMMIT and ROLLBACK");
-                    DbCommand asyncBlockTwo = conn.CreateCommand();
-                    asyncBlockTwo.Transaction = transaction;
-                    asyncBlockTwo.CommandText = "COMMIT";
-                    DbCommand asyncBlockThree = conn.CreateCommand();
-                    asyncBlockThree.Transaction = transaction;
-                    asyncBlockThree.CommandText = "ROLLBACK";
-                    Task<int> asyncBlockTwoTask = asyncBlockTwo.ExecuteNonQueryAsync();
-                    Task<int> asyncBlockThreeTask = asyncBlockThree.ExecuteNonQueryAsync();
+                IDbCommand t1c2 = conn.CreateCommand();
+                t1c2.Transaction = transaction;
+                t1c2.CommandText = "BEGIN";
+                t1c2.ExecuteNonQuery();
 
-                    asyncBlockTwoTask.Wait();
-                    asyncBlockThreeTask.Wait();
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    Console.WriteLine(ex);
-                }
+                IDbCommand t1c3 = conn.CreateCommand();
+                t1c3.Transaction = transaction;
+                t1c3.CommandText = "insert into testTransaction values (current_timestamp(), 4)";
+                t1c3.ExecuteNonQuery();
+                t1c3.Transaction.Rollback();
             }
 
-            Console.WriteLine("Checking table contents...");
-            DbCommand syncReader = conn.CreateCommand();
-            syncReader.CommandText = "select x, a from test_async";
-            DbDataReader reader = syncReader.ExecuteReader();
+            IDbCommand command1 = conn.CreateCommand();
+            command1.CommandText = "Select * from testTransaction";
+            IDataReader reader = command1.ExecuteReader();
+
+            int row = 0;
             while (reader.Read())
             {
-                Console.Write("Row (col a): " + reader.GetInt64(1) + " ");
-                Console.WriteLine("(col x): " + reader.GetDateTime(0));
+                var dataDate = reader.GetDateTime(0);
+                var dataInt = reader.GetInt32(1);
+                Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
+                row++;
             }
+            Assert.AreEqual(row, 4);
+
+            conn.Close();
+        }
+
+        [Test]
+        // Test SNOW-761136 unnecessary ROLLBACK 
+        public void TestTransactionRollbackOn2Transactions()
+        {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+
+            DbCommand command = conn.CreateCommand();
+            command.CommandText = "create or replace table testTransaction(x timestamp, a integer)";
+            command.ExecuteNonQuery();
+            Console.WriteLine("Created table");
+
+            using (DbTransaction transaction = conn.BeginTransaction())
+            {
+                IDbCommand t1c1 = conn.CreateCommand();
+                t1c1.Transaction = transaction;
+                t1c1.CommandText = "insert into testTransaction values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.ExecuteNonQuery();
+                t1c1.Transaction.Commit();
+            }
+
+            using (DbTransaction transaction2 = conn.BeginTransaction())
+            {
+                IDbCommand t2c2 = conn.CreateCommand();
+                t2c2.Transaction = transaction2;
+                t2c2.CommandText = "insert into testTransaction values (current_timestamp(), 4)";
+                t2c2.ExecuteNonQuery();
+                t2c2.Transaction.Rollback();
+            }
+
+            IDbCommand command1 = conn.CreateCommand();
+            command1.CommandText = "Select * from testTransaction";
+            IDataReader reader = command1.ExecuteReader();
+
+            int row = 0;
+            while (reader.Read())
+            {
+                var dataDate = reader.GetDateTime(0);
+                var dataInt = reader.GetInt32(1);
+                Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
+                row++;
+            }
+            Assert.AreEqual(row, 3);
 
             conn.Close();
         }
