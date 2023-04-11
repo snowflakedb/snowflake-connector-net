@@ -88,7 +88,6 @@ namespace Snowflake.Data.Client
         {
             if (disposed)
                 return;
-            isCommittedOrRollbacked = true;
             // Rollback the uncommitted transaction when the connection is open
             if (connection != null && connection.IsOpen())
             {
@@ -97,6 +96,7 @@ namespace Snowflake.Data.Client
                 {
                     this.Rollback();
                 }
+                isCommittedOrRollbacked = true;
             }
             disposed = true;
 
