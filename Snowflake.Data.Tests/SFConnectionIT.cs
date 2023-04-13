@@ -220,25 +220,16 @@ namespace Snowflake.Data.Tests
                         testConfig.user,
                         testConfig.password);
                 Assert.AreEqual(conn1.State, ConnectionState.Closed);
-                try
-                {
-                    conn1.Open();
-                    using (IDbCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = "SELECT count(*) FROM \"dlTest\".\"dlSchema\".test1";
-                        IDataReader reader = cmd.ExecuteReader();
-                        Assert.IsTrue(reader.Read());
-                        Assert.AreEqual(1, reader.GetInt32(0));
-                    }
-                    conn1.Close();
 
-                }
-                catch (SnowflakeDbException e)
+                conn1.Open();
+                using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    // Expected
-                    logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    cmd.CommandText = "SELECT count(*) FROM \"dlTest\".\"dlSchema\".test1";
+                    IDataReader reader = cmd.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual(1, reader.GetInt32(0));
                 }
+                conn1.Close();
 
                 Assert.AreEqual(ConnectionState.Closed, conn1.State); 
             }
@@ -274,23 +265,11 @@ namespace Snowflake.Data.Tests
                     "externalbrowser");
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                try
-                {
-                    conn.Open();
-                    Assert.Fail();
-
-                }
-                catch (SnowflakeDbException e)
-                {
-                    // Expected
-                    logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
-                }
-
+                conn.Open();
+                conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
-
 
         [Test]
         public void TestConnectViaSecureString()
