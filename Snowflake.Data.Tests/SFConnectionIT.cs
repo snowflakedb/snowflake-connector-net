@@ -225,7 +225,7 @@ namespace Snowflake.Data.Tests
                     conn1.Open();
                     using (IDbCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = "SELECT count(*) FROM testPutArrayBind";
+                        cmd.CommandText = "SELECT count(*) FROM \"dlTest\".\"dlSchema\".test1";
                         IDataReader reader = cmd.ExecuteReader();
                         Assert.IsTrue(reader.Read());
                         Assert.AreEqual(1, reader.GetInt32(0));
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests
             {
                 cmd.CommandText = "drop database \"dlTest\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database TESTDB";
+                cmd.CommandText = "use database "+ testConfig.database;
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
