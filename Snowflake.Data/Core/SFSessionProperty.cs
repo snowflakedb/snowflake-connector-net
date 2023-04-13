@@ -177,8 +177,8 @@ namespace Snowflake.Data.Core
                 if(keyVal.Length > 0)
                 {
                     string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    if(tokens[0].ToUpper() == "DB" || tokens[0].ToLower() == "SCHEMA" ||
-                        tokens[0].ToLower() == "WAREHOUSE" || tokens[0].ToLower() == "ROLE")
+                    if(tokens[0].ToUpper() == "DB" || tokens[0].ToUpper() == "SCHEMA" ||
+                        tokens[0].ToLower() == "WAREHOUSE" || tokens[0].ToUpper() == "ROLE")
                     {
                         if (tokens.Length == 2)
                         {

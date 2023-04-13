@@ -197,9 +197,13 @@ namespace Snowflake.Data.Tests
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "create schema \"dlSchema\"";
                 cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
                 cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
+                //cmd.CommandText = "create table test1 (col1 string, col2 int)";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
+                //cmd.CommandText = "insert into test1 Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
            
@@ -222,9 +226,9 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn1.State, ConnectionState.Closed);
 
                 conn1.Open();
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (IDbCommand cmd = conn1.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT count(*) FROM \"dlTest\".\"dlSchema\".test1";
+                    cmd.CommandText = "SELECT count(*) FROM test1";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(1, reader.GetInt32(0));
@@ -233,7 +237,7 @@ namespace Snowflake.Data.Tests
 
                 Assert.AreEqual(ConnectionState.Closed, conn1.State); 
             }
-
+            
             using (IDbCommand cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "drop database \"dlTest\"";
