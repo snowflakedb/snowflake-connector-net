@@ -1387,6 +1387,22 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
+
+        [Test]
+        public void TestKeepAlive()
+        {
+            var connCount = 10;
+            for (int i = 0; i < connCount; i++)
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+                    conn.Open();
+                }
+
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+        }
     }
 
     [TestFixture]

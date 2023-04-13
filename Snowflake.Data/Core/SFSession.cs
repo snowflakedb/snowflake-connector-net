@@ -129,19 +129,12 @@ namespace Snowflake.Data.Core
             {
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+                ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] =
+                    Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
-                bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
-                if(keepAlive)
-                {
-                    startHeartBeatForThisSession();
-                }
-                else
-                {
-                    stopHeartBeatForThisSession();
-                }
 
                 string proxyHost = null;
                 string proxyPort = null;
@@ -260,6 +253,8 @@ namespace Snowflake.Data.Core
             // Nothing to do if the session is not open
             if (null == sessionToken) return;
 
+            stopHeartBeatForThisSession();
+
             // Send a close session request
             var queryParams = new Dictionary<string, string>();
             queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
@@ -284,6 +279,8 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (null == sessionToken) return;
+
+            stopHeartBeatForThisSession();
 
             // Send a close session request
             var queryParams = new Dictionary<string, string>();
@@ -493,8 +490,11 @@ namespace Snowflake.Data.Core
                             }
                             catch (Exception ex)
                             {
+                                // Since we don't lock the heart beat queue when sending
+                                // the heart beat, it's possible that the session get
+                                // closed when sending renew request and caused exception
+                                // thrown from renewSession(), simply ignore that
                                 logger.Error("renew session failed.", ex);
-                                throw;
                             }
                             retry = true;
                             continue;

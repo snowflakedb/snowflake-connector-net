@@ -132,7 +132,6 @@ namespace Snowflake.Data.Client
         {
             if (SfSession != null)
             {
-                SfSession.stopHeartBeatForThisSession();
                 SfSession.close();
             }
         }
@@ -141,7 +140,6 @@ namespace Snowflake.Data.Client
         {
             if (SfSession != null)
             {
-                SfSession.stopHeartBeatForThisSession();
                 SfSession.CloseAsync(cancellationToken).ContinueWith(
                 previousTask =>
                 {
