@@ -340,10 +340,14 @@ namespace Snowflake.Data.Client
                 // Prevent an exception from being thrown when disposing of this object
                 logger.Error("Unable to close connection", ex);
             }
-            
-            disposed = true;
 
-            base.Dispose(disposing);
+            // only dispose the connection when it's not pooled
+            if (!pooled)
+            {
+                disposed = true;
+
+                base.Dispose(disposing);
+            }
         }
 
 
