@@ -19,7 +19,7 @@ namespace Snowflake.Data.Client
         private long timeout;
         private int MAX_POOL_SIZE = 10;
         private const long TIMEOUT = 3600;
-        private bool pooling = false;// temporarily desiable connection pooling
+        private bool pooling = true;
 
         ConnectionPoolSingleton()
         {
@@ -166,10 +166,6 @@ namespace Snowflake.Data.Client
 
         public bool SetPooling(bool isEnable)
         {
-            // temporarily disable connection pooling
-            // as it's buggy and needs refactoring.
-            return false;
-            /*
             if (pooling == isEnable)
                 return false;
             pooling = isEnable;
@@ -178,7 +174,6 @@ namespace Snowflake.Data.Client
                 ClearAllPools();
             }
             return true;
-            */
         }
 
         public bool GetPooling()
