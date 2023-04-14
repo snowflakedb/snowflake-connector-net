@@ -118,7 +118,7 @@ namespace Snowflake.Data.Client
                 return false;
             long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
             // Do not pool connection already expired
-            if (conn._poolTimeout <= timeNow)
+            if ((conn._poolTimeout != 0) && (conn._poolTimeout <= timeNow))
                 return false;
 
             lock (_connectionPoolLock)
