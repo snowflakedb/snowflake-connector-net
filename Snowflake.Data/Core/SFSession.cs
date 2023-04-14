@@ -391,12 +391,12 @@ namespace Snowflake.Data.Core
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
             {
-                string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
                 this.arrayBindStageThreshold = Int32.Parse(val);
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
             {
-                bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+                bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
                 if(keepAlive)
                 {
                     startHeartBeatForThisSession();
