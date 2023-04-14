@@ -24,7 +24,7 @@ namespace Snowflake.Data.Client
 
         internal int _connectionTimeout;
 
-        internal long _poolTimeout;
+        internal long _poolTimeout = 0;
 
         private bool disposed = false;
 
@@ -362,6 +362,13 @@ namespace Snowflake.Data.Client
             {
                 externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
             }
+        }
+
+        // Called by connection pooling when the connection is removed out of pool
+        // could be reused or destroyed when expire
+        internal void Unpool()
+        {
+            pooled = false;
         }
 
         ~SnowflakeDbConnection()

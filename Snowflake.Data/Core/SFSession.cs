@@ -276,6 +276,9 @@ namespace Snowflake.Data.Core
             {
                 logger.Debug($"Failed to delete session: {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
+
+            // Just in case the session won't be closed twice
+            sessionToken = null;
         }
 
         internal async Task CloseAsync(CancellationToken cancellationToken)
@@ -490,6 +493,8 @@ namespace Snowflake.Data.Core
                             try
                             {
                                 renewSession();
+                                retry = true;
+                                continue;
                             }
                             catch (Exception ex)
                             {
@@ -499,8 +504,6 @@ namespace Snowflake.Data.Core
                                 // thrown from renewSession(), simply ignore that
                                 logger.Error($"renew session (ID: {sessionId}) failed.", ex);
                             }
-                            retry = true;
-                            continue;
                         }
                         else
                         {
