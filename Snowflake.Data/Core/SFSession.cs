@@ -29,6 +29,8 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
+        internal string sessionId;
+
         internal string sessionToken;
 
         internal string masterToken;
@@ -61,6 +63,7 @@ namespace Snowflake.Data.Core
         {
             if (authnResponse.success)
             {
+                sessionId = authnResponse.data.sessionId;
                 sessionToken = authnResponse.data.token;
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
@@ -271,7 +274,7 @@ namespace Snowflake.Data.Core
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Debug($"Failed to delete session: {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
         }
 
@@ -298,7 +301,7 @@ namespace Snowflake.Data.Core
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
         }
 
@@ -309,8 +312,8 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, "");
-                logger.Error("Renew session failed", e);
+                    response.code, response.message, sessionId);
+                logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
             else
@@ -331,8 +334,8 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, "");
-                logger.Error("Renew session failed", e);
+                    response.code, response.message, sessionId);
+                logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
             else
@@ -483,7 +486,7 @@ namespace Snowflake.Data.Core
                     {
                         if (response.code == SF_SESSION_EXPIRED_CODE)
                         {
-                            logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
+                            logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                             try
                             {
                                 renewSession();
@@ -494,14 +497,14 @@ namespace Snowflake.Data.Core
                                 // the heart beat, it's possible that the session get
                                 // closed when sending renew request and caused exception
                                 // thrown from renewSession(), simply ignore that
-                                logger.Error("renew session failed.", ex);
+                                logger.Error($"renew session (ID: {sessionId}) failed.", ex);
                             }
                             retry = true;
                             continue;
                         }
                         else
                         {
-                            logger.Error("heartbeat failed.");
+                            logger.Error($"heartbeat failed for session ID: {sessionId}.");
                         }
                     }
                     retry = false;
