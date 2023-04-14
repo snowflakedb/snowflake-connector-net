@@ -191,19 +191,19 @@ namespace Snowflake.Data.Tests
             conn.Open();
             using (IDbCommand cmd = conn.CreateCommand())
             {
-                cmd.CommandText = "create database \"dlTest\"";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database \"dlTest\"";
-                cmd.ExecuteNonQuery();
+                //cmd.CommandText = "create database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
+                //cmd.CommandText = "use database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
                 cmd.CommandText = "create schema \"dlSchema\"";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "use schema \"dlSchema\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
-                //cmd.CommandText = "create table test1 (col1 string, col2 int)";
+                //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
+                cmd.CommandText = "create table test1 (col1 string, col2 int)";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
-                //cmd.CommandText = "insert into test1 Values ('test 1', 1);";
+                //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
+                cmd.CommandText = "insert into test1 Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
            
@@ -216,8 +216,8 @@ namespace Snowflake.Data.Tests
                         testConfig.port,
                         testConfig.account,
                         testConfig.role,
-                        "\"dlTest\"",
-                        //testConfig.database,
+                        //"\"dlTest\"",
+                        testConfig.database,
                         "\"dlSchema\"",
                         //testConfig.schema,
                         testConfig.warehouse,
@@ -240,7 +240,8 @@ namespace Snowflake.Data.Tests
             
             using (IDbCommand cmd = conn.CreateCommand())
             {
-                cmd.CommandText = "drop database \"dlTest\"";
+                //cmd.CommandText = "drop database \"dlTest\"";
+                cmd.CommandText = "drop schema \"dlSchema\"";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "use database "+ testConfig.database;
                 cmd.ExecuteNonQuery();
