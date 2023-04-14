@@ -71,6 +71,7 @@ namespace Snowflake.Data.Core
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+                logger.Debug($"Session opened: {sessionId}");
             }
             else
             {
@@ -277,6 +278,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Failed to delete session: {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
 
+            logger.Debug($"Session closed: {sessionId}");
             // Just in case the session won't be closed twice
             sessionToken = null;
         }
@@ -306,6 +308,10 @@ namespace Snowflake.Data.Core
             {
                 logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
+
+            logger.Debug($"Session closed: {sessionId}");
+            // Just in case the session won't be closed twice
+            sessionToken = null;
         }
 
         internal void renewSession()
