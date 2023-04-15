@@ -184,6 +184,99 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectString()
+        {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            using (IDbCommand cmd = conn.CreateCommand())
+            {
+                //cmd.CommandText = "create database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
+                //cmd.CommandText = "use database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
+                cmd.CommandText = "create schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
+                cmd.CommandText = "create table test1 (col1 string, col2 int)";
+                cmd.ExecuteNonQuery();
+                //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
+                cmd.CommandText = "insert into test1 Values ('test 1', 1);";
+                cmd.ExecuteNonQuery();
+            }
+           
+            using (var conn1 = new SnowflakeDbConnection())
+            {
+                conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+                    "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                        testConfig.protocol,
+                        testConfig.host,
+                        testConfig.port,
+                        testConfig.account,
+                        testConfig.role,
+                        //"\"dlTest\"",
+                        testConfig.database,
+                        "\"dlSchema\"",
+                        //testConfig.schema,
+                        testConfig.warehouse,
+                        testConfig.user,
+                        testConfig.password);
+                Assert.AreEqual(conn1.State, ConnectionState.Closed);
+
+                conn1.Open();
+                using (IDbCommand cmd = conn1.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT count(*) FROM test1";
+                    IDataReader reader = cmd.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual(1, reader.GetInt32(0));
+                }
+                conn1.Close();
+
+                Assert.AreEqual(ConnectionState.Closed, conn1.State); 
+            }
+            
+            using (IDbCommand cmd = conn.CreateCommand())
+            {
+                //cmd.CommandText = "drop database \"dlTest\"";
+                cmd.CommandText = "drop schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use database "+ testConfig.database;
+                cmd.ExecuteNonQuery();
+            }
+            conn.Close();
+        }
+
+        [Test]
+        [Ignore("TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
+        public void TestConnectStringWithUserPwd()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+            "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};authenticator={10};",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.role,
+                    testConfig.database,
+                    testConfig.schema,
+                    testConfig.warehouse,
+                    "",
+                    "",
+                    "externalbrowser");
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                conn.Open();
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
