@@ -24,7 +24,7 @@ namespace Snowflake.Data.Client
 
         internal int _connectionTimeout;
 
-        internal long _poolTimeout;
+        internal long _poolTimeout = 0;
 
         private bool disposed = false;
 
@@ -132,7 +132,6 @@ namespace Snowflake.Data.Client
         {
             if (SfSession != null)
             {
-                SfSession.stopHeartBeatForThisSession();
                 SfSession.close();
             }
         }
@@ -141,7 +140,6 @@ namespace Snowflake.Data.Client
         {
             if (SfSession != null)
             {
-                SfSession.stopHeartBeatForThisSession();
                 SfSession.CloseAsync(cancellationToken).ContinueWith(
                 previousTask =>
                 {
@@ -342,10 +340,14 @@ namespace Snowflake.Data.Client
                 // Prevent an exception from being thrown when disposing of this object
                 logger.Error("Unable to close connection", ex);
             }
-            
-            disposed = true;
 
-            base.Dispose(disposing);
+            // only dispose the connection when it's not pooled
+            if (!pooled)
+            {
+                disposed = true;
+
+                base.Dispose(disposing);
+            }
         }
 
 
@@ -360,6 +362,13 @@ namespace Snowflake.Data.Client
             {
                 externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
             }
+        }
+
+        // Called by connection pooling when the connection is removed out of pool
+        // could be reused or destroyed when expire
+        internal void Unpool()
+        {
+            pooled = false;
         }
 
         ~SnowflakeDbConnection()

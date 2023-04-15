@@ -1387,6 +1387,40 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
+
+        [Test]
+        public void TestKeepAlive()
+        {
+            // create 100 connections, one per second
+            var connCount = 100;
+            // pooled connectin expire in 5 seconds so after 5 seconds,
+            // one connection per second will be closed
+            SnowflakeDbConnectionPool.SetTimeout(5);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(20);
+            // heart beat interval is validity/4 so send out per 5 seconds
+            HeartBeatBackground.setValidity(20);
+            try
+            {
+                for (int i = 0; i < connCount; i++)
+                {
+                    using (var conn = new SnowflakeDbConnection())
+                    {
+                        conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+                        conn.Open();
+                    }
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    // roughly should only have 5 sessions in pool stay alive
+                    // check for 10 in case of bad timing, also much less than the
+                    // pool max size to ensure it's unpooled because of expire
+                    Assert.Less(HeartBeatBackground.getQueueLength(), 10);
+                }
+            }
+            catch
+            {
+                // fail the test case if any exception is thrown
+                Assert.Fail();
+            }
+        }
     }
 
     [TestFixture]
