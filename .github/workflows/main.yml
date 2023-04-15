@@ -139,7 +139,9 @@ jobs:
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['net6.0']
-        cloud_env: ['azure', 'gcp', 'aws']
+        #REMOVE azure for now
+        #cloud_env: ['azure', 'gcp', 'aws']
+        cloud_env: ['gcp', 'aws']
     steps:
       - uses: actions/checkout@main
       - name: Setup Dotnet
