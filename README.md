@@ -500,7 +500,7 @@ using (DbCommand cmd = conn.CreateCommand())
 }
 ```
 
-You can also set the number of statements in a batch each time you execute a multi-statement query by setting MULTI_STATEMENT_COUNT as a parameter for the connection.execute function. The following example sets the number of statements to three for the batch and includes three SQL statements in the batch query:
+You can also set the number of statements in a batch each time you execute a multi-statement query by setting MULTI_STATEMENT_COUNT parameter to the number of statements in the batch. The following example sets the number of statements to three for the batch and includes three SQL statements in the batch query:
 
 ```cs
 using (DbCommand cmd = conn.CreateCommand())
