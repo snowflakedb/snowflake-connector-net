@@ -7,10 +7,9 @@ Snowflake Connector for .NET
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
-- .NET Framework 4.7.1
 - .NET Framework 4.7.2
 - .NET Framework 4.7.3
-- .NET 6.0
+- .NET Core 6.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -253,7 +252,7 @@ If you are using a different method for authentication, see the examples below:
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
-        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile});
+        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
 
         conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
@@ -450,6 +449,88 @@ Note that because this method is not available in the generic `IDataReader` inte
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
 
+Executing a Batch of SQL Statements (Multi-Statement Support)
+--------------------------------------------------------------
+
+With version 2.0.18 and later of the .NET connector, you can send
+a batch of SQL statements, separated by semicolons,
+to be executed in a single request.
+
+---
+**Note**
+
+By default, Snowflake returns an error for queries issued with multiple statements to protect against SQL injection attacks. The multiple statements feature makes your system more vulnerable to SQL injections, and so it should be used carefully. You can reduce the risk by using the MULTI_STATEMENT_COUNT parameter to specify the number of statements to be executed, which makes it more difficult to inject a statement by appending to it.
+
+---
+
+You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter lets you specify the exact number of statements the batch contains.
+
+For example, if you set MULTI_STATEMENT_COUNT=3, a batch statement must include precisely three statements. If you submit a batch statement with any other number of statements, the Node.js driver rejects the request. You can set MULTI_STATEMENT_COUNT=0 to allow batch queries to contain any number of statements. However, be aware that using this value reduces the protection against SQL injection attacks.
+
+You can set this parameter at the session level using the following command, or you can set the value separately each time you submit a query.
+
+```
+ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
+```
+
+By setting the value the session level, you do not need to set it when you execute each time you execute a batch statement. The following example sets the number of statements at the session level to three and then executes three SQL statements:
+
+```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+	conn.ConnectionString = ConnectionString;
+	conn.Open();
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 3;";
+	cmd.ExecuteNonQuery();
+	conn.Close();
+}
+
+using (DbCommand cmd = conn.CreateCommand())
+{
+    cmd.CommandText = "CREATE OR REPLACE TABLE test(n int); INSERT INTO test values(1), (2); SELECT * FROM test ORDER BY n";
+    DbDataReader reader = cmd.ExecuteReader();
+    do
+    {
+        if (reader.HasRow)
+        {
+            while (reader.Read())
+            {
+                // read data
+            }
+        }
+    }
+    while (reader.NextResult());
+}
+```
+
+You can also set the number of statements in a batch each time you execute a multi-statement query by setting MULTI_STATEMENT_COUNT parameter to the number of statements in the batch. The following example sets the number of statements to three for the batch and includes three SQL statements in the batch query:
+
+```cs
+using (DbCommand cmd = conn.CreateCommand())
+{
+    // Set statement count
+    var stmtCountParam = cmd.CreateParameter();
+    stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
+    stmtCountParam.DbType = DbType.Int16;
+    stmtCountParam.Value = 3;
+    cmd.Parameters.Add(stmtCountParam);
+    cmd.CommandText = "CREATE OR REPLACE TABLE test(n int); INSERT INTO test values(1), (2); SELECT * FROM test ORDER BY n;
+    DbDataReader reader = cmd.ExecuteReader();
+    do
+    {
+        if (reader.HasRow)
+        {
+            while (reader.Read())
+            {
+                // read data
+            }
+        }
+    }
+    while (reader.NextResult());
+}
+```
+
 Bind Parameter
 --------------
 
@@ -590,71 +671,6 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
   </log4net>
 ```
 
-Getting the code coverage
-----------------
-
-1. Go to .NET project directory
-
-2. Clean the directory
-```
-dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
-```
-
-3. Create parameters.json containing connection info for AWS, AZURE, or GCP account and place inside the Snowflake.Data.Tests folder
-
-4. Build the project for .NET6
-```
-dotnet build snowflake-connector-net.sln /p:DebugType=Full
-```
-
-5. Run OpenCover on the .NET6 build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_AWS_coverage.xml" -oldStyle
-```
-
-6. Build the project for .NET Framework
-```
-msbuild snowflake-connector-net.sln -p:Configuration=Release
-```
-
-7. Run OpenCover on the .NET Framework build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_AWS_coverage.xml" -oldStyle
-```
-
-<br />
-Repeat steps 3, 5, and 7 for the other cloud providers. <br />
-Note: no need to rebuild the connector again. <br /><br />
-
-For Azure:<br />
-
-3. Create parameters.json containing connection info for AZURE account and place inside the Snowflake.Data.Tests folder
-
-5. Run OpenCover on the .NET6 build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_AZURE_coverage.xml" -oldStyle
-```
-
-7. Run OpenCover on the .NET Framework build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_AZURE_coverage.xml" -oldStyle
-```
-
-<br />
-For GCP:<br />
-
-3. Create parameters.json containing connection info for GCP account and place inside the Snowflake.Data.Tests folder
-
-5. Run OpenCover on the .NET6 build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_GCP_coverage.xml" -oldStyle
-```
-
-7. Run OpenCover on the .NET Framework build
-```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_GCP_coverage.xml" -oldStyle
-```
-
 Notice
 ----------------
 1. CVE-2019-0820 -  
@@ -673,11 +689,11 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 	Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
 
 	If you are using the .NET driver please take the following action:
-* Upgrade to the latest version(v1.1.0) as soon as possible.
-* Remove all “Debugging” options for any existing .NET drivers in use.
-* Delete any logs collected thus far and make sure that all copies are deleted. 
-* If you cannot upgrade for any reason, please ensure all debugging is disabled
-* If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+    * Upgrade to the latest version(v1.1.0) as soon as possible.
+    * Remove all “Debugging” options for any existing .NET drivers in use.
+    * Delete any logs collected thus far and make sure that all copies are deleted. 
+    * If you cannot upgrade for any reason, please ensure all debugging is disabled
+    * If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
 
 3. Global HTTP connection settings -  
 	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
