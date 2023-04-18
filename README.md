@@ -464,17 +464,20 @@ By default, Snowflake returns an error for queries issued with multiple statemen
 
 ---
 
-You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter lets you specify the exact number of statements the batch contains.
+You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter lets you enable or disable support for executing a batch of statements:
 
-For example, if you set MULTI_STATEMENT_COUNT=3, a batch statement must include precisely three statements. If you submit a batch statement with any other number of statements, the Node.js driver rejects the request. You can set MULTI_STATEMENT_COUNT=0 to allow batch queries to contain any number of statements. However, be aware that using this value reduces the protection against SQL injection attacks.
-
-You can set this parameter at the session level using the following command, or you can set the value separately each time you submit a query.
+You can set this parameter at the session level using the following command:
 
 ```
 ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
 ```
 
-By setting the value the session level, you do not need to set it when you execute each time you execute a batch statement. The following example sets the number of statements at the session level to three and then executes three SQL statements:
+where _n_ is:
+
+- 0: Enable multiple SQL statements in a query string.
+- 1: Allow only one SQL statement in a query string (default).
+
+The following example enables batch statements by setting the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. 
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -482,32 +485,11 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 	conn.ConnectionString = ConnectionString;
 	conn.Open();
 	IDbCommand cmd = conn.CreateCommand();
-	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 3;";
+	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 0;";
 	cmd.ExecuteNonQuery();
 	conn.Close();
 }
 
-using (DbCommand cmd = conn.CreateCommand())
-{
-    cmd.CommandText = "CREATE OR REPLACE TABLE test(n int); INSERT INTO test values(1), (2); SELECT * FROM test ORDER BY n";
-    DbDataReader reader = cmd.ExecuteReader();
-    do
-    {
-        if (reader.HasRow)
-        {
-            while (reader.Read())
-            {
-                // read data
-            }
-        }
-    }
-    while (reader.NextResult());
-}
-```
-
-You can also set the number of statements in a batch each time you execute a multi-statement query by setting MULTI_STATEMENT_COUNT parameter to the number of statements in the batch. The following example sets the number of statements to three for the batch and includes three SQL statements in the batch query:
-
-```cs
 using (DbCommand cmd = conn.CreateCommand())
 {
     // Set statement count
