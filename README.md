@@ -470,7 +470,7 @@ For example, if you set MULTI_STATEMENT_COUNT=3, a batch statement must include 
 You can set this parameter at the session level using the following command, or you can set the value separately each time you submit a query.
 
 ```
-alter session set MULTI_STATEMENT_COUNT = <n>;
+ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
 ```
 
 By setting the value the session level, you do not need to set it when you execute each time you execute a batch statement. The following example sets the number of statements at the session level to three and then executes three SQL statements:
