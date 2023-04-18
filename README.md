@@ -525,7 +525,7 @@ using (DbCommand cmd = conn.CreateCommand())
     }
     while (reader.NextResult());
 }
-
+```
 
 Bind Parameter
 --------------
