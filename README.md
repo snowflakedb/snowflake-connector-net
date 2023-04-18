@@ -463,7 +463,7 @@ By default, Snowflake returns an error for queries issued with multiple statemen
 
 ---
 
-You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter specifies the exact number of statements the batch contains.
+You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter lets you specify the exact number of statements the batch contains.
 
 For example, if you set MULTI_STATEMENT_COUNT=3, a batch statement must include precisely three statements. If you submit a batch statement with any other number of statements, the Node.js driver rejects the request. You can set MULTI_STATEMENT_COUNT=0 to allow batch queries to contain any number of statements. However, be aware that using this value reduces the protection against SQL injection attacks.
 
@@ -476,14 +476,18 @@ ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
 By setting the value the session level, you do not need to set it when you execute each time you execute a batch statement. The following example sets the number of statements at the session level to three and then executes three SQL statements:
 
 ```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+	conn.ConnectionString = ConnectionString;
+	conn.Open();
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 3;";
+	cmd.ExecuteNonQuery();
+	conn.Close();
+}
+
 using (DbCommand cmd = conn.CreateCommand())
 {
-    // Set statement count
-    var stmtCountParam = cmd.CreateParameter();
-    stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
-    stmtCountParam.DbType = DbType.Int16;
-    stmtCountParam.Value = 0;
-    cmd.Parameters.Add(stmtCountParam);
     cmd.CommandText = "CREATE OR REPLACE TABLE test(n int); INSERT INTO test values(1), (2); SELECT * FROM test ORDER BY n";
     DbDataReader reader = cmd.ExecuteReader();
     do
