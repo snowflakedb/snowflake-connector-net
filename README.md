@@ -469,16 +469,16 @@ You can execute multiple statements as a batch in the same way you execute queri
 You can set this parameter at the session level using the following command:
 
 ```
-ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
+ALTER SESSION SET MULTI_STATEMENT_COUNT = <0/1>;
 ```
 
-where _n_ is:
+where:
 
-- 0: Enable an unspecified number of SQL statements in a query. 
+- **0**: Enable an unspecified number of SQL statements in a query. 
 
     Using this value allows batch queries to contain any number of SQL statements without needing to specify the MULTI_STATEMENT_COUNT statement parameter. However, be aware that using this value reduces the protection against SQL injection attacks.
 
-- 1: Allow one SQL statement or a specified number of statement in a query string (default).
+- **1**: Allow one SQL statement or a specified number of statement in a query string (default).
 
     You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included when the query string contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request. You can, however, omit this parameter if you send a single statement.
 
