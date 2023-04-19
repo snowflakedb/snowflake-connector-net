@@ -474,10 +474,15 @@ ALTER SESSION SET MULTI_STATEMENT_COUNT = <n>;
 
 where _n_ is:
 
-- 0: Enable multiple SQL statements in a query string.
-- 1: Allow only one SQL statement in a query string (default).
+- 0: Enable an unspecified number of SQL statements in a query. 
 
-The following example enables batch statements by setting the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. 
+      **Note**: Using this value allows batch queries to contain any number of SQL statements. However, be aware that using this value reduces the protection against SQL injection attacks.
+
+- 1: Allow one SQL statement or a specified number of statement in a query string (default).
+
+      You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included in the batch that contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request.
+
+The following example sets the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. The query string, `cmd.CommandText` , then contains three statements.
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -485,7 +490,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 	conn.ConnectionString = ConnectionString;
 	conn.Open();
 	IDbCommand cmd = conn.CreateCommand();
-	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 0;";
+	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 1;";
 	cmd.ExecuteNonQuery();
 	conn.Close();
 }
@@ -513,6 +518,8 @@ using (DbCommand cmd = conn.CreateCommand())
     while (reader.NextResult());
 }
 ```
+
+
 
 Bind Parameter
 --------------
