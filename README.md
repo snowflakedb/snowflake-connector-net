@@ -464,7 +464,7 @@ By default, Snowflake returns an error for queries issued with multiple statemen
 
 ---
 
-You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel. The MULTI_STATEMENT_COUNT parameter lets you enable or disable support for executing a batch of statements:
+You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel.
 
 You can set this parameter at the session level using the following command:
 
@@ -476,11 +476,11 @@ where _n_ is:
 
 - 0: Enable an unspecified number of SQL statements in a query. 
 
-      **Note**: Using this value allows batch queries to contain any number of SQL statements. However, be aware that using this value reduces the protection against SQL injection attacks.
+    **Note**: Using this value allows batch queries to contain any number of SQL statements. However, be aware that using this value reduces the protection against SQL injection attacks.
 
 - 1: Allow one SQL statement or a specified number of statement in a query string (default).
 
-      You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included in the batch that contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request.
+    You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included in the batch that contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request.
 
 The following example sets the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. The query string, `cmd.CommandText` , then contains three statements.
 
