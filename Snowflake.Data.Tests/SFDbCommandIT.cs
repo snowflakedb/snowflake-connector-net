@@ -599,7 +599,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
+        //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
             ArrayBindTest(ConnectionString, "testPutArrayBind", 250000);
@@ -730,7 +730,7 @@ namespace Snowflake.Data.Tests
                     //cmd.ExecuteNonQuery();
 
                 }
-
+                System.Threading.Thread.Sleep(2000); // wait for 2 seconds, in case other test still running.
                 conn.Close();
             }
         }
