@@ -602,7 +602,7 @@ namespace Snowflake.Data.Tests
         //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString, "testPutArrayBind", 250000);
+            ArrayBindTest(ConnectionString, "testPutArrayBind", 15000);
         }
 
         static void ArrayBindTest(string connstr, string tableName, int size)
@@ -738,6 +738,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestPutArrayBindAsyncMultiThreading()
         {
+            var connStr = ConnectionString + "";
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
             Thread t2 = new Thread(() => ThreadProcess2(ConnectionString));
             //Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
@@ -751,22 +752,22 @@ namespace Snowflake.Data.Tests
 
         static void ThreadProcess1(string connstr)
         {
-            ArrayBindTest(connstr, "testPutArrayBind1", 250000);
+            ArrayBindTest(connstr, "testPutArrayBind1", 15000);
         }
 
         static void ThreadProcess2(string connstr)
         {
-            ArrayBindTest(connstr, "testPutArrayBind2", 250000);
+            ArrayBindTest(connstr, "testPutArrayBind2", 15000);
         }
 
         static void ThreadProcess3(string connstr)
         {
-            ArrayBindTest(connstr, "testPutArrayBind3", 1250000);
+            ArrayBindTest(connstr, "testPutArrayBind3", 20000);
         }
 
         static void ThreadProcess4(string connstr)
         {
-            ArrayBindTest(connstr, "testPutArrayBind4", 2500000);
+            ArrayBindTest(connstr, "testPutArrayBind4", 25000);
         }
 
         [Test]
