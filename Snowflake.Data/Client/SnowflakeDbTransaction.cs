@@ -19,6 +19,7 @@ namespace Snowflake.Data.Client
         private SnowflakeDbConnection connection;
 
         private bool disposed = false;
+        private bool isCommittedOrRollbacked = false;
 
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
@@ -33,6 +34,7 @@ namespace Snowflake.Data.Client
 
             using (IDbCommand command = connection.CreateCommand())
             {
+                isCommittedOrRollbacked = false;
                 command.CommandText = "BEGIN";
                 command.ExecuteNonQuery();
             }
@@ -57,20 +59,28 @@ namespace Snowflake.Data.Client
         public override void Commit()
         {
             logger.Debug("Commit transaction.");
-            using (IDbCommand command = connection.CreateCommand())
+            if (!isCommittedOrRollbacked)
             {
-                command.CommandText = "COMMIT";
-                command.ExecuteNonQuery();
+                using (IDbCommand command = connection.CreateCommand())
+                {
+                    isCommittedOrRollbacked = true;
+                    command.CommandText = "COMMIT";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
         public override void Rollback()
         {
             logger.Debug("Rollback transaction.");
-            using (IDbCommand command = connection.CreateCommand())
+            if (!isCommittedOrRollbacked)
             {
-                command.CommandText = "ROLLBACK";
-                command.ExecuteNonQuery();
+                using (IDbCommand command = connection.CreateCommand())
+                {
+                    isCommittedOrRollbacked = true;
+                    command.CommandText = "ROLLBACK";
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
@@ -78,12 +88,15 @@ namespace Snowflake.Data.Client
         {
             if (disposed)
                 return;
-
             // Rollback the uncommitted transaction when the connection is open
             if (connection != null && connection.IsOpen())
             {
                 // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
-                this.Rollback();
+                if (!isCommittedOrRollbacked)
+                {
+                    this.Rollback();
+                }
+                isCommittedOrRollbacked = true;
             }
             disposed = true;
 

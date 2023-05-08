@@ -7,9 +7,10 @@ Snowflake Connector for .NET
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
+- .NET Framework 4.7.1
 - .NET Framework 4.7.2
 - .NET Framework 4.7.3
-- .NET Core 6.0
+- .NET 6.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -252,7 +253,7 @@ If you are using a different method for authentication, see the examples below:
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
-        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
+        string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile});
 
         conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
@@ -448,6 +449,77 @@ Note that because this method is not available in the generic `IDataReader` inte
 ```cs
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
+
+Executing a Batch of SQL Statements (Multi-Statement Support)
+--------------------------------------------------------------
+
+With version 2.0.18 and later of the .NET connector, you can send
+a batch of SQL statements, separated by semicolons,
+to be executed in a single request.
+
+---
+**Note**
+
+By default, Snowflake returns an error for queries issued with multiple statements to protect against SQL injection attacks. The multiple statements feature makes your system more vulnerable to SQL injections, and so it should be used carefully. You can reduce the risk by using the MULTI_STATEMENT_COUNT parameter to specify the number of statements to be executed, which makes it more difficult to inject a statement by appending to it.
+
+---
+
+You can execute multiple statements as a batch in the same way you execute queries with single statements, except that the query string contains multiple statements separated by semicolons. Note that multiple statements execute sequentially, not in parallel.
+
+You can set this parameter at the session level using the following command:
+
+```
+ALTER SESSION SET MULTI_STATEMENT_COUNT = <0/1>;
+```
+
+where:
+
+- **0**: Enables an unspecified number of SQL statements in a query. 
+
+    Using this value allows batch queries to contain any number of SQL statements without needing to specify the MULTI_STATEMENT_COUNT statement parameter. However, be aware that using this value reduces the protection against SQL injection attacks.
+
+- **1**: Allows one SQL statement or a specified number of statement in a query string (default).
+
+    You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included when the query string contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request. You can, however, omit this parameter if you send a single statement.
+
+The following example sets the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. The query string, `cmd.CommandText` , then contains the three statements to execute.
+
+```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+	conn.ConnectionString = ConnectionString;
+	conn.Open();
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 1;";
+	cmd.ExecuteNonQuery();
+	conn.Close();
+}
+
+using (DbCommand cmd = conn.CreateCommand())
+{
+    // Set statement count
+    var stmtCountParam = cmd.CreateParameter();
+    stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
+    stmtCountParam.DbType = DbType.Int16;
+    stmtCountParam.Value = 3;
+    cmd.Parameters.Add(stmtCountParam);
+    cmd.CommandText = "CREATE OR REPLACE TABLE test(n int); INSERT INTO test values(1), (2); SELECT * FROM test ORDER BY n;
+    DbDataReader reader = cmd.ExecuteReader();
+    do
+    {
+        if (reader.HasRow)
+        {
+            while (reader.Read())
+            {
+                // read data
+            }
+        }
+    }
+    while (reader.NextResult());
+}
+```
+
+
 
 Bind Parameter
 --------------
@@ -659,10 +731,10 @@ Notice
 1. CVE-2019-0820 -  
 This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used: 
 
-* v1.0 branch: 1.0 - 1.0.16 (exclusive)
-* v1.1 branch: 1.1 - 1.1.13 (exclusive)
-* v2.1 branch: 2.1 - 2.1.11 (exclusive)
-* v2.2 branch: 2.2 - 2.2.5  (exclusive)
+    * v1.0 branch: 1.0 - 1.0.16 (exclusive)
+    * v1.1 branch: 1.1 - 1.1.13 (exclusive)
+    * v2.1 branch: 2.1 - 2.1.11 (exclusive)
+    * v2.2 branch: 2.2 - 2.2.5  (exclusive)
 
 	In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability. 
 
@@ -672,11 +744,11 @@ This CVE has been reported in systems.text.regularexpressions.dll which is used 
 	Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
 
 	If you are using the .NET driver please take the following action:
-* Upgrade to the latest version(v1.1.0) as soon as possible.
-* Remove all “Debugging” options for any existing .NET drivers in use.
-* Delete any logs collected thus far and make sure that all copies are deleted. 
-* If you cannot upgrade for any reason, please ensure all debugging is disabled
-* If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+    * Upgrade to the latest version(v1.1.0) as soon as possible.
+    * Remove all “Debugging” options for any existing .NET drivers in use.
+    * Delete any logs collected thus far and make sure that all copies are deleted. 
+    * If you cannot upgrade for any reason, please ensure all debugging is disabled
+    * If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
 
 3. Global HTTP connection settings -  
 	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  

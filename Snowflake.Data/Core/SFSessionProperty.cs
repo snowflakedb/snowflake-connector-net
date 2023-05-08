@@ -170,6 +170,35 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            //handle DbConnectionStringBuilder missing cases
+            string[] propertyEntry = connectionString.Split(';');
+            foreach(string keyVal in propertyEntry)
+            {
+                if(keyVal.Length > 0)
+                {
+                    string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
+                    if(tokens[0].ToUpper() == "DB" || tokens[0].ToUpper() == "SCHEMA" ||
+                        tokens[0].ToLower() == "WAREHOUSE" || tokens[0].ToUpper() == "ROLE")
+                    {
+                        if (tokens.Length == 2)
+                        {
+                            SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), tokens[0].ToUpper());
+                            properties[p]= tokens[1];
+                        }
+                    }
+                    if(tokens[0].ToUpper() == "USER" || tokens[0].ToUpper() == "PASSWORD")
+                    {
+                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), tokens[0].ToUpper());
+                        if (!properties.ContainsKey(p))
+                        {
+                            properties.Add(p, "");
+                        }
+                    }
+                }
+            }
+
             bool useProxy = false;
             if (properties.ContainsKey(SFSessionProperty.USEPROXY))
             {

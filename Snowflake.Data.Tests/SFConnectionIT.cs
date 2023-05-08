@@ -184,6 +184,99 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectString()
+        {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            using (IDbCommand cmd = conn.CreateCommand())
+            {
+                //cmd.CommandText = "create database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
+                //cmd.CommandText = "use database \"dlTest\"";
+                //cmd.ExecuteNonQuery();
+                cmd.CommandText = "create schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
+                cmd.CommandText = "create table test1 (col1 string, col2 int)";
+                cmd.ExecuteNonQuery();
+                //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
+                cmd.CommandText = "insert into test1 Values ('test 1', 1);";
+                cmd.ExecuteNonQuery();
+            }
+           
+            using (var conn1 = new SnowflakeDbConnection())
+            {
+                conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+                    "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                        testConfig.protocol,
+                        testConfig.host,
+                        testConfig.port,
+                        testConfig.account,
+                        testConfig.role,
+                        //"\"dlTest\"",
+                        testConfig.database,
+                        "\"dlSchema\"",
+                        //testConfig.schema,
+                        testConfig.warehouse,
+                        testConfig.user,
+                        testConfig.password);
+                Assert.AreEqual(conn1.State, ConnectionState.Closed);
+
+                conn1.Open();
+                using (IDbCommand cmd = conn1.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT count(*) FROM test1";
+                    IDataReader reader = cmd.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual(1, reader.GetInt32(0));
+                }
+                conn1.Close();
+
+                Assert.AreEqual(ConnectionState.Closed, conn1.State); 
+            }
+            
+            using (IDbCommand cmd = conn.CreateCommand())
+            {
+                //cmd.CommandText = "drop database \"dlTest\"";
+                cmd.CommandText = "drop schema \"dlSchema\"";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use database "+ testConfig.database;
+                cmd.ExecuteNonQuery();
+            }
+            conn.Close();
+        }
+
+        [Test]
+        [Ignore("TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
+        public void TestConnectStringWithUserPwd()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+            "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};authenticator={10};",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.role,
+                    testConfig.database,
+                    testConfig.schema,
+                    testConfig.warehouse,
+                    "",
+                    "",
+                    "externalbrowser");
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                conn.Open();
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
@@ -1387,6 +1480,40 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
+
+        [Test]
+        public void TestKeepAlive()
+        {
+            // create 100 connections, one per second
+            var connCount = 100;
+            // pooled connectin expire in 5 seconds so after 5 seconds,
+            // one connection per second will be closed
+            SnowflakeDbConnectionPool.SetTimeout(5);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(20);
+            // heart beat interval is validity/4 so send out per 5 seconds
+            HeartBeatBackground.setValidity(20);
+            try
+            {
+                for (int i = 0; i < connCount; i++)
+                {
+                    using (var conn = new SnowflakeDbConnection())
+                    {
+                        conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+                        conn.Open();
+                    }
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    // roughly should only have 5 sessions in pool stay alive
+                    // check for 10 in case of bad timing, also much less than the
+                    // pool max size to ensure it's unpooled because of expire
+                    Assert.Less(HeartBeatBackground.getQueueLength(), 10);
+                }
+            }
+            catch
+            {
+                // fail the test case if any exception is thrown
+                Assert.Fail();
+            }
+        }
     }
 
     [TestFixture]
@@ -1473,10 +1600,10 @@ namespace Snowflake.Data.Tests
                     stopwatch.Stop();
                     int detla = 10; //in case server time slower.
 
-                    // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
+                    // Should timeout after 5sec + 3 retry 20 sec
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 35 * 1000 - detla);
                     // But never more than 1 sec (max backoff) after the default timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (66) * 1000);
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
                     Assert.AreEqual(5, conn.ConnectionTimeout);
@@ -1508,10 +1635,10 @@ namespace Snowflake.Data.Tests
                 stopwatch.Stop();
                 int detla = 10; //in case server time slower.
 
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
+                // Should timeout after the default timeout (120 sec + 6 retry 840 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 840 * 1000 - detla);
                 // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (840 + 16) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(120, conn.ConnectionTimeout);
@@ -1589,6 +1716,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
+                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
@@ -1601,7 +1729,7 @@ namespace Snowflake.Data.Tests
                 // Close the opened connection
                 task =  conn.CloseAsync(new CancellationTokenSource().Token);
                 try
-                { 
+                {
                     task.Wait();
                     Assert.Fail();
                 }

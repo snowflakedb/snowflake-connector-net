@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
             SnowflakeDbConnectionPool.ClearAllPools();
-            
+
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
             conn1.Open();
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests
             conn2.Open();
             Assert.AreEqual(ConnectionState.Open, conn2.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            
+
             conn2.Close();
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Tests
             conn4.ConnectionString = ConnectionString + "  retryCount=3";
             conn4.Open();
             Assert.AreEqual(ConnectionState.Open, conn4.State);
-            
+
             conn3.Close();
             Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             conn4.Close();
@@ -267,6 +267,93 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolWithDispose()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            SnowflakeDbConnectionPool.ClearAllPools();
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = "";
+            try
+            {
+                conn1.Open();
+            }
+            catch (SnowflakeDbException ex)
+            {
+                Console.WriteLine($"connection failed:" + ex);
+                conn1.Close();
+            }
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolTurnOff()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            SnowflakeDbConnectionPool.ClearAllPools();
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+            SnowflakeDbConnectionPool.SetPooling(false);
+            //Put a breakpoint at SFSession close function, after connection pool is off, it will send close session request.
+        }
+    }
+
+    [TestFixture]
+    class SFConnectionPoolITAsync : SFBaseTestAsync
+    {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolWithAsync()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                SnowflakeDbConnectionPool.SetPooling(true);
+                SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+                SnowflakeDbConnectionPool.ClearAllPools();
+
+                int timeoutSec = 0;
+                string infiniteLoginTimeOut = String.Format("" + ";connection_timeout={0}",
+                    timeoutSec);
+
+                conn.ConnectionString = infiniteLoginTimeOut;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+                try
+                {
+                    Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                }
+                catch (SnowflakeDbException ex)
+                {
+                    Console.WriteLine($"connection failed:" + ex);
+                    conn.CloseAsync(connectionCancelToken.Token);
+                }
+
+                Thread.Sleep(10 * 1000);
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            }
         }
     }
 }

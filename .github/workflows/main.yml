@@ -21,7 +21,7 @@ on:
 
 env:
   DOTNET_VERSION: 6.0
-  DOTNET_LEGACY_VERSION: 4.7.2
+  DOTNET_LEGACY_VERSION: 4.7.1
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -123,10 +123,12 @@ jobs:
         with:
           name: code-coverage-report
           path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
-      - name: Install Codecov
-        run: pip install codecov
-      - name: Run Codecoverage
-        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+#disable Code coverage for now as codecov is deprecated
+#https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
+#      - name: Install Codecov
+#        run: pip install codecov
+#      - name: Run Codecoverage
+#        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
   test-linux:
     needs: test
