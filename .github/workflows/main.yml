@@ -91,7 +91,7 @@ jobs:
       max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
-        dotnet: ['net6.0', 'net472']
+        dotnet: ['net6.0', 'net472', 'net471']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@main
