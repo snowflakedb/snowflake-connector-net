@@ -96,12 +96,13 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Session token is empty: {request.getSid()}");
             }
             HttpRequestMessage message = request.ToRequestMessage(method);
-            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
+            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid()).ConfigureAwait(false);
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
                                                               TimeSpan restTimeout, 
-                                                              CancellationToken externalCancellationToken)
+                                                              CancellationToken externalCancellationToken,
+                                                              string sid="")
         {
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
@@ -112,11 +113,19 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
-                        logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
+                        logger.Debug($"Executing:{sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
 
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            logger.Debug($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                        }
+                        else
+                        {
+                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
+                        }
                         response.EnsureSuccessStatusCode();
 
                         return response;
