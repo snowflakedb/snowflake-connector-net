@@ -91,6 +91,10 @@ namespace Snowflake.Data.Core
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
+            if (request.isTokenEmpty())
+            {
+                logger.Debug($"Session token is empty: {request.getSid()}");
+            }
             HttpRequestMessage message = request.ToRequestMessage(method);
             return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
         }

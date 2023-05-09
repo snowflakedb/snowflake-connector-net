@@ -31,6 +31,8 @@ namespace Snowflake.Data.Core
 
         internal string masterToken;
 
+        internal string sessionId;
+
         internal IRestRequester restRequester { get; private set; }
 
         private IAuthenticator authenticator;
@@ -57,12 +59,17 @@ namespace Snowflake.Data.Core
             if (authnResponse.success)
             {
                 sessionToken = authnResponse.data.token;
+                sessionId = authnResponse.data.sessionId;
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
                 serverVersion = authnResponse.data.serverVersion;
-
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+                logger.Debug($"Session opened: {sessionId}");
+                if (string.IsNullOrWhiteSpace(sessionToken))
+                {
+                    logger.Debug($"Session token is empty: {sessionId}");
+                }
             }
             else
             {
@@ -254,7 +261,8 @@ namespace Snowflake.Data.Core
             SFRestRequest closeSessionRequest = new SFRestRequest
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                sid = sessionId
             };
 
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
@@ -262,6 +270,8 @@ namespace Snowflake.Data.Core
             {
                 logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
             }
+            logger.Debug($"Session closed: {sessionId}");
+
         }
 
         internal async Task CloseAsync(CancellationToken cancellationToken)
@@ -278,7 +288,8 @@ namespace Snowflake.Data.Core
             SFRestRequest closeSessionRequest = new SFRestRequest()
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                sid = sessionId
             };
 
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
@@ -286,6 +297,7 @@ namespace Snowflake.Data.Core
             {
                 logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
             }
+            logger.Debug($"Session closed: {sessionId}");
         }
 
         internal void renewSession()
@@ -322,6 +334,10 @@ namespace Snowflake.Data.Core
             else
             {
                 sessionToken = response.data.sessionToken;
+                if (string.IsNullOrWhiteSpace(sessionToken))
+                {
+                    logger.Debug($"Session token is empty: {sessionId}");
+                }
                 masterToken = response.data.masterToken;
             }
         }
@@ -364,6 +380,10 @@ namespace Snowflake.Data.Core
             else
             {
                 sessionToken = response.data.sessionToken;
+                if (string.IsNullOrWhiteSpace(sessionToken))
+                {
+                    logger.Debug($"Session token is empty: {sessionId}");
+                }
                 masterToken = response.data.masterToken;
             }
         }

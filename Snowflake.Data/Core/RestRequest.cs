@@ -15,6 +15,8 @@ namespace Snowflake.Data.Core
     {
         HttpRequestMessage ToRequestMessage(HttpMethod method);
         TimeSpan GetRestTimeout();
+        string getSid();
+        bool isTokenEmpty();
     }
 
     /// <summary>
@@ -41,9 +43,16 @@ namespace Snowflake.Data.Core
         /// </summary>
         internal TimeSpan HttpTimeout { get; set; }
 
+        internal String sid { get; set; }
+
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             throw new NotImplementedException();
+        }
+
+        bool IRestRequest.isTokenEmpty()
+        {
+            return false;
         }
 
         protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
@@ -57,6 +66,11 @@ namespace Snowflake.Data.Core
         TimeSpan IRestRequest.GetRestTimeout()
         {
             return RestTimeout;
+        }
+
+        string IRestRequest.getSid()
+        {
+            return sid;
         }
     }
 
@@ -157,6 +171,12 @@ namespace Snowflake.Data.Core
                 SFEnvironment.ClientEnv.netVersion));
 
             return message;
+        }
+
+        bool IRestRequest.isTokenEmpty()
+        {
+            // 18 is the length of Snowflake Token=""
+            return authorizationToken.Length <= 20;
         }
     }
 

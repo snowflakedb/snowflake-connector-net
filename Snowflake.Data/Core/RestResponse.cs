@@ -71,6 +71,9 @@ namespace Snowflake.Data.Core
 
     internal class LoginResponseData
     {
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionId { get; set; }
+
         [JsonProperty(PropertyName = "token", NullValueHandling = NullValueHandling.Ignore)]
         internal string token { get; set; }
 
