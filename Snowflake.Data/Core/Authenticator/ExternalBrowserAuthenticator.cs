@@ -49,7 +49,6 @@ namespace Snowflake.Data.Core.Authenticator
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
-                
                 httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
                 httpListener.Start();
 
