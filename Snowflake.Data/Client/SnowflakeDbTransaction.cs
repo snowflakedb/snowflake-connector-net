@@ -7,12 +7,17 @@ using System.Data;
 using System.Data.Common;
 using Snowflake.Data.Core;
 using Snowflake.Data.Log;
+using Snowflake.Data.Util;
 
 namespace Snowflake.Data.Client
 {
-    public class SnowflakeDbTransaction : DbTransaction
+    public class SnowflakeDbTransaction : DbTransaction, ISnowflakeResource
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+
+        public event SnowflakeResourceEventHandler Disposed;
+
+        public string ResourceID { get; } = Guid.NewGuid().ToString();
 
         private IsolationLevel isolationLevel;
 
@@ -31,6 +36,7 @@ namespace Snowflake.Data.Client
 
             this.isolationLevel = isolationLevel;
             this.connection = connection;
+            this.connection.transactions.Add(this); // Consider the case where "BEGIN" was successful but reception of the response packet failed.
 
             using (IDbCommand command = connection.CreateCommand())
             {
@@ -98,6 +104,10 @@ namespace Snowflake.Data.Client
                 }
                 isCommittedOrRollbacked = true;
             }
+
+            // Notify to references.
+            this.Disposed(this, EventArgs.Empty);
+
             disposed = true;
 
             base.Dispose(disposing);

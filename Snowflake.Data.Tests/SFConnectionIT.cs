@@ -412,6 +412,68 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestConnectionWithZombieTransaction()
+        {
+            var beforePooling = SnowflakeDbConnectionPool.GetPooling();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "BEGIN";
+                        cmd.ExecuteNonQuery();
+                    }
+                    conn.Close();
+
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                        Assert.IsTrue(DBNull.Value == cmd.ExecuteScalar());
+                    }
+                }
+            }
+            finally
+            {
+                SnowflakeDbConnectionPool.SetPooling(beforePooling);
+            }
+        }
+
+        [Test]
+        public void TestConnectionCloseWithUncompleteTransactions()
+        {
+            var beforePooling = SnowflakeDbConnectionPool.GetPooling();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();                    
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        conn.Close();
+                    }
+
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                        Assert.IsTrue(DBNull.Value == cmd.ExecuteScalar());
+                    }
+                }
+            }
+            finally
+            {
+                SnowflakeDbConnectionPool.SetPooling(beforePooling);
+            }
+        }
+
+        [Test]
         public void TestEnableRetry()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1677,6 +1739,38 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public async Task TestAsyncConnectionWithZombieTransaction()
+        {
+            var beforePooling = SnowflakeDbConnectionPool.GetPooling();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    await conn.OpenAsync();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "BEGIN";
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                    await conn.CloseAsync(default);
+
+                    await conn.OpenAsync(default);
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                        Assert.IsTrue(DBNull.Value == await cmd.ExecuteScalarAsync());
+                    }
+                }
+            }
+            finally
+            {
+                SnowflakeDbConnectionPool.SetPooling(beforePooling);
+            }
+        }
+
+        [Test]
         public void TestCloseAsync()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -1741,6 +1835,37 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
         }
+
+        [Test]
+        public async Task TestCloseAsyncWithUncompleteTransactions()
+        {
+            var beforePooling = SnowflakeDbConnectionPool.GetPooling();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    await conn.OpenAsync();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        await conn.CloseAsync(default);
+                    }
+
+                    await conn.OpenAsync(default);
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                        Assert.IsTrue(DBNull.Value == await cmd.ExecuteScalarAsync(default));
+                    }
+                }
+            }
+            finally
+            {
+                SnowflakeDbConnectionPool.SetPooling(beforePooling);
+            }
+        }
+
     }
 }
 

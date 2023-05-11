@@ -10,13 +10,18 @@ using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
 using Snowflake.Data.Log;
+using Snowflake.Data.Util;
 
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
+        private const string COMMAND_QUERY_CURRENT_TRANSACTION = "SELECT CURRENT_TRANSACTION()";
+
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+
+        internal SnowflakeResourceReferences transactions = new SnowflakeResourceReferences("transactions-" + Guid.NewGuid().ToString());
 
         internal SFSession SfSession { get; set; } 
 
@@ -116,16 +121,26 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if (_connectionState != ConnectionState.Closed)
+
+            if (_connectionState == ConnectionState.Closed)
             {
-                pooled = SnowflakeDbConnectionPool.addConnection(this);
-                _connectionState = ConnectionState.Closed;
+                return;
             }
 
-            if(!pooled)
+            // Dirty connection should not be added to the pool.
+            if (!this.transactions.DisposeAllSilently())
+            {
+                PostClose();
+                _connectionState = ConnectionState.Closed;
+                return;
+            }
+
+            pooled = SnowflakeDbConnectionPool.addConnection(this);
+            if (!pooled)
             {
                 PostClose();
             }
+            _connectionState = ConnectionState.Closed;
         }
 
         internal void PostClose()
@@ -171,6 +186,12 @@ namespace Snowflake.Data.Client
         public Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
+
+            if (_connectionState == ConnectionState.Closed)
+            {
+                return Task.CompletedTask;
+            }
+
             TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
             if (cancellationToken.IsCancellationRequested)
@@ -179,10 +200,14 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if (_connectionState != ConnectionState.Closed)
+                // Dirty connection should not be added to the pool.
+                if (!this.transactions.DisposeAllSilently())
                 {
-                    pooled = SnowflakeDbConnectionPool.addConnection(this);
+                    PostCloseAsync(taskCompletionSource, cancellationToken);
+                    return taskCompletionSource.Task;
                 }
+
+                pooled = SnowflakeDbConnectionPool.addConnection(this);
                 if (pooled)
                 {
                     _connectionState = ConnectionState.Closed;
@@ -199,56 +224,81 @@ namespace Snowflake.Data.Client
         public override void Open()
         {
             logger.Debug("Open Connection.");
+
+            this.transactions.DisposeAll();
+
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString);
             if (conn != null)
             {
                 this.copy(conn);
+
+                if (this.GetCurrentTransactionId() != null)
+                {
+                    logger.Warn("Zombie transaction detected. Retry connection.");
+                    SfSession.close();
+                    Open();
+                    return;
+                }
+
+                OnSessionEstablished();
+                return;
             }
-            else
+
+            SetSession();
+            try
             {
-                SetSession();
-                try
+                SfSession.Open();
+            }
+            catch (Exception e)
+            {
+                // Otherwise when Dispose() is called, the close request would timeout.
+                _connectionState = ConnectionState.Closed;
+                logger.Error("Unable to connect", e);
+                if (!(e.GetType() == typeof(SnowflakeDbException)))
                 {
-                    SfSession.Open();
+                    throw
+                        new SnowflakeDbException(
+                            e,
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                            SFError.INTERNAL_ERROR,
+                            "Unable to connect. " + e.Message);
                 }
-                catch (Exception e)
+                else
                 {
-                    // Otherwise when Dispose() is called, the close request would timeout.
-                    _connectionState = ConnectionState.Closed;
-                    logger.Error("Unable to connect", e);
-                    if (!(e.GetType() == typeof(SnowflakeDbException)))
-                    {
-                        throw
-                           new SnowflakeDbException(
-                               e,
-                               SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                               SFError.INTERNAL_ERROR,
-                               "Unable to connect. " + e.Message);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
             }
+
             OnSessionEstablished();
         }
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
+            // Reset connection resources
+            this.transactions.DisposeAll();
+
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString);
             if (conn != null)
             {
                 this.copy(conn);
+
+                if (await this.GetCurrentTransactionIdAsync().ConfigureAwait(false) != null)
+                {
+                    logger.Warn("Zombie transaction detected. Retry connection.");
+                    await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+                    await OpenAsync(cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
                 OnSessionEstablished();
-                return Task.CompletedTask;
+                return;
             }
 
             logger.Debug("Open Connection.");
             registerConnectionCancellationCallback(cancellationToken);
             SetSession();
 
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(
+            await SfSession.OpenAsync(cancellationToken).ContinueWith(
                 previousTask =>
                 {
                     if (previousTask.IsFaulted)
@@ -275,7 +325,42 @@ namespace Snowflake.Data.Client
                         OnSessionEstablished();
                     }
                 },
-                cancellationToken);
+                cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        internal string GetCurrentTransactionId()
+        {
+            using (var cmd = this.CreateCommand())
+            {
+                cmd.CommandText = COMMAND_QUERY_CURRENT_TRANSACTION;
+                var value = cmd.ExecuteScalar();
+                if (value == DBNull.Value)
+                {
+                    return null;
+                }
+                else
+                {
+                    return (string)value;
+                }
+            }
+        }
+
+        internal async ValueTask<string> GetCurrentTransactionIdAsync(CancellationToken cancellationToken = default)
+        {
+            using (var cmd = this.CreateCommand())
+            {
+                cmd.CommandText = COMMAND_QUERY_CURRENT_TRANSACTION;
+                var value = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                if (value == DBNull.Value)
+                {
+                    return null;
+                }
+                else
+                {
+                    return (string)value;
+                }
+            }
         }
 
         public Mutex GetArrayBindingMutex()
