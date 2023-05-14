@@ -63,7 +63,7 @@ namespace Snowflake.Data.Core
                 if(heartBeatThread == null)
                 {
                     masterTokenValidationTimeInSec = masterTokenValidityInSecs;
-                    heartBeatThread = new Thread(heartBeatAll);
+                    heartBeatThread = new Thread(heartBeatAll) { IsBackground = true };
                     heartBeatThread.Start();
                 }
                 else
