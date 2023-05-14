@@ -68,10 +68,12 @@ namespace Snowflake.Data.Client
                     if (item._poolTimeout <= timeNow)
                     {
                         connectionPool.Remove(item);
-                        if (item.SfSession != null)
-                        {
-                            item.SfSession.close();
-                        }
+                        item.Unpool();
+                        // This will call SnowflakeDBConnection.Close()
+                        // Since the state of a pooled connection should be
+                        // Closed, also the poolTimeout is expired as well,
+                        // it won't be pooled again and will be destroyed
+                        item.Dispose();
                     }
                 }
             }
@@ -90,13 +92,15 @@ namespace Snowflake.Data.Client
                     {
                         SnowflakeDbConnection conn = connectionPool[i];
                         connectionPool.RemoveAt(i);
+                        conn.Unpool();
                         long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
                         if (conn._poolTimeout <= timeNow)
                         {
-                            if (conn.SfSession != null)
-                            {
-                                conn.SfSession.close();
-                            }
+                            // This will call SnowflakeDBConnection.Close()
+                            // Since the state of a pooled connection should be
+                            // Closed, also the poolTimeout is expired as well,
+                            // it won't be pooled again and will be destroyed
+                            conn.Dispose();
                             i--;
                         }
                         else
@@ -114,28 +118,31 @@ namespace Snowflake.Data.Client
             logger.Debug("ConnectionPool::addConnection");
             if (!pooling)
                 return false;
+            long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+            // Do not pool connection already expired
+            if ((conn._poolTimeout != 0) && (conn._poolTimeout <= timeNow))
+                return false;
+
             lock (_connectionPoolLock)
             {
-                if (connectionPool.Count < maxPoolSize)
-                {
-                    long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
-                    conn._poolTimeout = timeNow + timeout;
-                    connectionPool.Add(conn);
-                    return true;
-                }
-                else
+                if (connectionPool.Count >= maxPoolSize)
                 {
                     cleanExpiredConnections();
-                    if (connectionPool.Count < maxPoolSize)
-                    {
-                        long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        conn._poolTimeout = timeNow + timeout;
-                        connectionPool.Add(conn);
-                        return true;
-                    }
                 }
+                if (connectionPool.Count >= maxPoolSize)
+                {
+                    // pool is full
+                    return false;
+                }
+
+                // only setup pool timeout at the first time
+                if (conn._poolTimeout == 0)
+                {
+                    conn._poolTimeout = timeNow + timeout;
+                }
+                connectionPool.Add(conn);
+                return true;
             }
-            return false;
         }
 
         internal void ClearAllPools()
@@ -145,7 +152,12 @@ namespace Snowflake.Data.Client
             {
                 foreach (SnowflakeDbConnection conn in connectionPool)
                 {
-                    conn.PostClose();
+                    // It's better to always call Dispose to destroy
+                    // the connection as that should release all resources
+                    // It won't trigger pooling as a pooled connection always
+                    // closed.
+                    conn.Unpool();
+                    conn.Dispose();
                 }
                 connectionPool.Clear();
             }

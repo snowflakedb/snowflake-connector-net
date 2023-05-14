@@ -137,19 +137,12 @@ namespace Snowflake.Data.Core
             {
                 ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
                     Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+                ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] =
+                    Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
                 timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
-                bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
-                if (keepAlive)
-                {
-                    startHeartBeatForThisSession();
-                }
-                else
-                {
-                    stopHeartBeatForThisSession();
-                }
 
                 string proxyHost = null;
                 string proxyPort = null;
@@ -268,6 +261,8 @@ namespace Snowflake.Data.Core
             // Nothing to do if the session is not open
             if (null == sessionToken) return;
 
+            stopHeartBeatForThisSession();
+
             // Send a close session request
             var queryParams = new Dictionary<string, string>();
             queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
@@ -285,9 +280,11 @@ namespace Snowflake.Data.Core
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
             logger.Debug($"Session closed: {sessionId}");
+            // Just in case the session won't be closed twice
+            sessionToken = null;
 
         }
 
@@ -295,6 +292,8 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (null == sessionToken) return;
+
+            stopHeartBeatForThisSession();
 
             // Send a close session request
             var queryParams = new Dictionary<string, string>();
@@ -313,9 +312,11 @@ namespace Snowflake.Data.Core
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
-                logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
             logger.Debug($"Session closed: {sessionId}");
+            // Just in case the session won't be closed twice
+            sessionToken = null;
         }
 
         internal void renewSession()
@@ -325,8 +326,8 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, "");
-                logger.Error("Renew session failed", e);
+                    response.code, response.message, sessionId);
+                logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
             else
@@ -347,8 +348,8 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, "");
-                logger.Error("Renew session failed", e);
+                    response.code, response.message, sessionId);
+                logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
             else
@@ -403,13 +404,13 @@ namespace Snowflake.Data.Core
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
             {
-                string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
                 this.arrayBindStageThreshold = Int32.Parse(val);
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
             {
-                bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
-                if(keepAlive)
+                bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
+                if (keepAlive)
                 {
                     startHeartBeatForThisSession();
                 }
@@ -498,22 +499,25 @@ namespace Snowflake.Data.Core
                     {
                         if (response.code == SF_SESSION_EXPIRED_CODE)
                         {
-                            logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
+                            logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                             try
                             {
                                 renewSession();
+                                retry = true;
+                                continue;
                             }
                             catch (Exception ex)
                             {
-                                logger.Error("renew session failed.", ex);
-                                throw;
+                                // Since we don't lock the heart beat queue when sending
+                                // the heart beat, it's possible that the session get
+                                // closed when sending renew request and caused exception
+                                // thrown from renewSession(), simply ignore that
+                                logger.Error($"renew session (ID: {sessionId}) failed.", ex);
                             }
-                            retry = true;
-                            continue;
                         }
                         else
                         {
-                            logger.Error("heartbeat failed.");
+                            logger.Error($"heartbeat failed for session ID: {sessionId}.");
                         }
                     }
                     retry = false;
