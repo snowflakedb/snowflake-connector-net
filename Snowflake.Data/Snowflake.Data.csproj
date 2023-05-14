@@ -54,7 +54,7 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <AssemblyVersion>2.0.10</AssemblyVersion>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
   </PropertyGroup>
   
   <ItemGroup>
