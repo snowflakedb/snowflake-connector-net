@@ -281,6 +281,7 @@ namespace Snowflake.Data.Core
                 sid = sessionId
             };
 
+            logger.Debug($"Send closeSessionRequest");
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
@@ -308,6 +309,7 @@ namespace Snowflake.Data.Core
                 sid = sessionId
             };
 
+            logger.Debug($"Send async closeSessionRequest");
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {

@@ -292,6 +292,28 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
+
+        [Test]
+        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        public void TestConnectionPoolTurnOff()
+        {
+            SnowflakeDbConnectionPool.SetPooling(false);
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            SnowflakeDbConnectionPool.ClearAllPools();
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+            SnowflakeDbConnectionPool.SetPooling(false);
+            //Put a breakpoint at SFSession close function, after connection pool is off, it will send close session request.
+        }
     }
 
     [TestFixture]
