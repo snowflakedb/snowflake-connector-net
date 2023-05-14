@@ -423,6 +423,12 @@ namespace Snowflake.Data.Core
             if (!this.isHeartBeatEnabled)
             {
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                if (this.masterValidityInSeconds == 0)
+                {
+                    //In case server doesnot provide the default timeout
+                    var DEFAULT_TIMEOUT_IN_SECOND = 14400;
+                    this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
+                }
                 heartBeatBg.addConnection(this, this.masterValidityInSeconds);
                 this.isHeartBeatEnabled = true;
             }
@@ -463,51 +469,54 @@ namespace Snowflake.Data.Core
             logger.Debug("heartbeat");
 
             bool retry = false;
-            do
+            if (sessionToken != null)
             {
-                var parameters = new Dictionary<string, string>
+                do
+                {
+                    var parameters = new Dictionary<string, string>
+                        {
+                            { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                            { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                        };
+
+                    SFRestRequest heartBeatSessionRequest = new SFRestRequest
                     {
-                        { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
-                        { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                        Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
+                        authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                        RestTimeout = Timeout.InfiniteTimeSpan
                     };
+                    var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
 
-                SFRestRequest heartBeatSessionRequest = new SFRestRequest
-                {
-                    Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
-                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
-                    RestTimeout = Timeout.InfiniteTimeSpan
-                };
-                var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
-
-                logger.Debug("heartbeat response=" + response);
-                if (response.success)
-                {
-                    logger.Debug("SFSession::heartbeat success, session token did not expire.");
-                }
-                else
-                {
-                    if (response.code == SF_SESSION_EXPIRED_CODE)
+                    logger.Debug("heartbeat response=" + response);
+                    if (response.success)
                     {
-                        logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
-                        try
-                        {
-                            renewSession();
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error("renew session failed.", ex);
-                            throw;
-                        }
-                        retry = true;
-                        continue;
+                        logger.Debug("SFSession::heartbeat success, session token did not expire.");
                     }
                     else
                     {
-                        logger.Error("heartbeat failed.");
+                        if (response.code == SF_SESSION_EXPIRED_CODE)
+                        {
+                            logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
+                            try
+                            {
+                                renewSession();
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error("renew session failed.", ex);
+                                throw;
+                            }
+                            retry = true;
+                            continue;
+                        }
+                        else
+                        {
+                            logger.Error("heartbeat failed.");
+                        }
                     }
-                }
-                retry = false;
-            } while (retry);
+                    retry = false;
+                } while (retry);
+            }
         }
     }
 }
