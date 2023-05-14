@@ -112,9 +112,20 @@ namespace Snowflake.Data.Client
             _connectionState = ConnectionState.Closed;
 
             bool added = SnowflakeDbConnectionPool.addConnection(this);
-            if (!added && SfSession != null)
+            PostClose();
+        }
+
+        internal void PostClose()
+        {
+            bool added = SnowflakeDbConnectionPool.addConnection(this);
+            if (!added)
             {
                 SfSession.close();
+                SfSession.stopHeartBeatForThisSession();
+                if (SfSession != null)
+                {
+                    SfSession.close();
+                }
             }
         }
 
@@ -134,6 +145,7 @@ namespace Snowflake.Data.Client
                 {
                     _connectionState = ConnectionState.Closed;
                     taskCompletionSource.SetResult(null);
+                    PostClose();
                 }
                 else
                 {
@@ -159,6 +171,7 @@ namespace Snowflake.Data.Client
                                 logger.Debug("Session closed successfully");
                                 taskCompletionSource.SetResult(null);
                                 _connectionState = ConnectionState.Closed;
+                                PostClose();
                             }
                         }, cancellationToken);
                     }

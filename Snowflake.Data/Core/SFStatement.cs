@@ -33,8 +33,6 @@ namespace Snowflake.Data.Core
 
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
 
-        private const int SF_SESSION_EXPIRED_CODE = 390112;
-
         private const int SF_QUERY_IN_PROGRESS = 333333;
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
@@ -243,7 +241,7 @@ namespace Snowflake.Data.Core
         private bool RequestInProgress(BaseRestResponse r) =>
             r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
 
-        private bool SessionExpired(BaseRestResponse r) => r.code == SF_SESSION_EXPIRED_CODE;
+        private bool SessionExpired(BaseRestResponse r) => r.code == SFSession.SF_SESSION_EXPIRED_CODE;
 
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
                                                           CancellationToken cancellationToken)

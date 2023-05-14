@@ -17,8 +17,10 @@ using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
-    class SFSession
+    public class SFSession
     {
+        public const int SF_SESSION_EXPIRED_CODE = 390112;
+
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
@@ -49,10 +51,13 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
+        internal bool isHeartBeatEnabled;
+
         private HttpClient _HttpClient;
 
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
+        internal int masterValidityInSeconds = 0;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -64,6 +69,7 @@ namespace Snowflake.Data.Core
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
                 serverVersion = authnResponse.data.serverVersion;
+                masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
                 logger.Debug($"Session opened: {sessionId}");
                 if (string.IsNullOrWhiteSpace(sessionToken))
@@ -135,6 +141,16 @@ namespace Snowflake.Data.Core
                 InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
                 bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
                 bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
+                bool keepAlive = Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                if (keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+
                 string proxyHost = null;
                 string proxyPort = null;
                 string noProxyHosts = null;
@@ -302,28 +318,8 @@ namespace Snowflake.Data.Core
 
         internal void renewSession()
         {
-            RenewSessionRequest postBody = new RenewSessionRequest()
-            {
-                oldSessionToken = this.sessionToken,
-                requestType = "RENEW"
-            };
-
-            var parameters = new Dictionary<string, string>
-                {
-                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
-                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
-                };
-
-            SFRestRequest renewSessionRequest = new SFRestRequest
-            {
-                jsonBody = postBody,
-                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                RestTimeout = Timeout.InfiniteTimeSpan
-            };
-
             logger.Info("Renew the session.");
-            var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
+            var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
@@ -334,40 +330,16 @@ namespace Snowflake.Data.Core
             else
             {
                 sessionToken = response.data.sessionToken;
-                if (string.IsNullOrWhiteSpace(sessionToken))
-                {
-                    logger.Debug($"Session token is empty: {sessionId}");
-                }
                 masterToken = response.data.masterToken;
             }
         }
 
         internal async Task renewSessionAsync(CancellationToken cancellationToken)
         {
-            RenewSessionRequest postBody = new RenewSessionRequest()
-            {
-                oldSessionToken = this.sessionToken,
-                requestType = "RENEW"
-            };
-
-            var parameters = new Dictionary<string, string>
-                {
-                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
-                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
-                };
-
-            SFRestRequest renewSessionRequest = new SFRestRequest
-            {
-                jsonBody = postBody,
-                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                RestTimeout = Timeout.InfiniteTimeSpan
-            };
-
             logger.Info("Renew the session.");
             var response =
                     await restRequester.PostAsync<RenewSessionResponse>(
-                        renewSessionRequest,
+                        getRenewSessionRequest(),
                         cancellationToken
                     ).ConfigureAwait(false);
             if (!response.success)
@@ -380,12 +352,30 @@ namespace Snowflake.Data.Core
             else
             {
                 sessionToken = response.data.sessionToken;
-                if (string.IsNullOrWhiteSpace(sessionToken))
-                {
-                    logger.Debug($"Session token is empty: {sessionId}");
-                }
                 masterToken = response.data.masterToken;
             }
+        }
+
+        internal SFRestRequest getRenewSessionRequest()
+        {
+            RenewSessionRequest postBody = new RenewSessionRequest()
+            {
+                oldSessionToken = this.sessionToken,
+                requestType = "RENEW"
+            };
+            var parameters = new Dictionary<string, string>
+                {
+                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                };
+
+            return new SFRestRequest
+            {
+                jsonBody = postBody,
+                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
+                RestTimeout = Timeout.InfiniteTimeSpan
+            };
         }
 
         internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
@@ -414,6 +404,38 @@ namespace Snowflake.Data.Core
                 string val = (string)ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
                 this.arrayBindStageThreshold = Int32.Parse(val);
             }
+            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
+            {
+                bool keepAlive = Boolean.Parse((string)ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+                if(keepAlive)
+                {
+                    startHeartBeatForThisSession();
+                }
+                else
+                {
+                    stopHeartBeatForThisSession();
+                }
+            }
+        }
+
+        internal void startHeartBeatForThisSession()
+        {
+            if (!this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+                this.isHeartBeatEnabled = true;
+            }
+        }
+        internal void stopHeartBeatForThisSession()
+        {
+            if (this.isHeartBeatEnabled)
+            {
+                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+                heartBeatBg.removeConnection(this);
+                this.isHeartBeatEnabled = false;
+            }
+
         }
 
         public string GetArrayBindStage()
@@ -434,6 +456,58 @@ namespace Snowflake.Data.Core
         public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
         {
             this.arrayBindStageThreshold = arrayBindStageThreshold;
+        }
+
+        internal void heartbeat()
+        {
+            logger.Debug("heartbeat");
+
+            bool retry = false;
+            do
+            {
+                var parameters = new Dictionary<string, string>
+                    {
+                        { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                        { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+                    };
+
+                SFRestRequest heartBeatSessionRequest = new SFRestRequest
+                {
+                    Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
+                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                    RestTimeout = Timeout.InfiniteTimeSpan
+                };
+                var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+
+                logger.Debug("heartbeat response=" + response);
+                if (response.success)
+                {
+                    logger.Debug("SFSession::heartbeat success, session token did not expire.");
+                }
+                else
+                {
+                    if (response.code == SF_SESSION_EXPIRED_CODE)
+                    {
+                        logger.Debug("SFSession::heartbeat session token expired and retry heartbeat");
+                        try
+                        {
+                            renewSession();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error("renew session failed.", ex);
+                            throw;
+                        }
+                        retry = true;
+                        continue;
+                    }
+                    else
+                    {
+                        logger.Error("heartbeat failed.");
+                    }
+                }
+                retry = false;
+            } while (retry);
         }
     }
 }
