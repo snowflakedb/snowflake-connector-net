@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests
         public void SFTestSetup()
         {
 #if NETFRAMEWORK
-            log4net.GlobalContext.Properties["framework"] = "net472";
+            log4net.GlobalContext.Properties["framework"] = "net471";
             log4net.Config.XmlConfigurator.Configure();
 
 #else
