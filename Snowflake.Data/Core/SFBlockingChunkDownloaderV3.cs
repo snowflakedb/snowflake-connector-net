@@ -153,7 +153,8 @@ namespace Snowflake.Data.Core
                         // s3 download request timeout to one hour
                         RestTimeout = TimeSpan.FromHours(1),
                         HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-                        chunkHeaders = downloadContext.chunkHeaders
+                        chunkHeaders = downloadContext.chunkHeaders,
+                        sid = ResultSet.sfStatement.SfSession.sessionId
                     };
 
                 using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
