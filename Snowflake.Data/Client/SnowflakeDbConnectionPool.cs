@@ -105,6 +105,7 @@ namespace Snowflake.Data.Client
                         }
                         else
                         {
+                            logger.Debug($"reuse pooled connection with sid {conn.SfSession.sessionId}");
                             return conn;
                         }
                     }
@@ -140,6 +141,7 @@ namespace Snowflake.Data.Client
                 {
                     conn._poolTimeout = timeNow + timeout;
                 }
+                logger.Debug($"pool connection with sid {conn.SfSession.sessionId}");
                 connectionPool.Add(conn);
                 return true;
             }
