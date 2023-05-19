@@ -355,7 +355,54 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             }
         }
+
+        [Test]
+        public void TestConnectionPoolWithInvalidOpenAsync()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            // make the connection string unique so it won't pick up connection
+            // pooled by other test cases.
+            string connStr = ConnectionString + ";application=conn_pool_test_invalid_openasync";
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = connStr;
+                // call openAsync but do not wait and destroy it direct
+                // so the session is initialized with empty token
+                connection.OpenAsync();
+            }
+
+            // use the same connection string to make a new connection
+            // to ensure the invalid connection made previously is not pooled
+            using (var connection1 = new SnowflakeDbConnection())
+            {
+                connection1.ConnectionString = connStr;
+                // this will not open a new session but get the invalid connection from pool
+                connection1.Open();
+                // Now run query with connection1
+                var command = connection1.CreateCommand();
+                command.CommandText = "select 1, 2, 3";
+
+                try
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                // Process each column as appropriate
+                                object obj = reader.GetFieldValue<object>(i);
+                            }
+                        }
+                    }
+                }
+                catch (SnowflakeDbException ex)
+                {
+                    // fail the test case if anything wrong.
+                    Assert.Fail();
+                }
+            }
+        }
     }
 }
-
-        

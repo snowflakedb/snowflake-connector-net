@@ -27,7 +27,8 @@ namespace Snowflake.Data.Tests.Mock
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
                                                               TimeSpan restTimeout,
-                                                              CancellationToken externalCancellationToken)
+                                                              CancellationToken externalCancellationToken,
+                                                              string sid = "")
         {
             // Override the http timeout and set to 1ms to force all http request to timeout and retry
             message.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromMilliseconds(1);

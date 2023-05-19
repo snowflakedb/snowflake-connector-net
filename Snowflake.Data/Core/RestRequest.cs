@@ -15,6 +15,7 @@ namespace Snowflake.Data.Core
     {
         HttpRequestMessage ToRequestMessage(HttpMethod method);
         TimeSpan GetRestTimeout();
+        string getSid();
     }
 
     /// <summary>
@@ -35,6 +36,8 @@ namespace Snowflake.Data.Core
         /// Timeout of the overall rest request
         /// </summary>
         internal TimeSpan RestTimeout { get; set; }
+
+        internal String sid { get; set; }
 
         /// <summary>
         /// Timeout for every single HTTP request
@@ -57,6 +60,11 @@ namespace Snowflake.Data.Core
         TimeSpan IRestRequest.GetRestTimeout()
         {
             return RestTimeout;
+        }
+
+        string IRestRequest.getSid()
+        {
+            return sid;
         }
     }
 

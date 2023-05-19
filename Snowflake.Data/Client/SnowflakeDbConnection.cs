@@ -116,7 +116,8 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if (_connectionState != ConnectionState.Closed)
+            if ((_connectionState != ConnectionState.Closed) &&
+                !(String.IsNullOrEmpty(SfSession.sessionToken)))
             {
                 pooled = SnowflakeDbConnectionPool.addConnection(this);
                 _connectionState = ConnectionState.Closed;
@@ -179,7 +180,8 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if (_connectionState != ConnectionState.Closed)
+                if ((_connectionState != ConnectionState.Closed) &&
+                    !(String.IsNullOrEmpty(SfSession.sessionToken)))
                 {
                     pooled = SnowflakeDbConnectionPool.addConnection(this);
                 }
@@ -199,9 +201,15 @@ namespace Snowflake.Data.Client
         public override void Open()
         {
             logger.Debug("Open Connection.");
+            if (_connectionState != ConnectionState.Closed)
+            {
+                logger.Debug($"Open with a connection already opened: {_connectionState}");
+                return;
+            }
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString);
             if (conn != null)
             {
+                logger.Debug($"Connection open with pooled session: {conn.SfSession.sessionId}");
                 this.copy(conn);
             }
             else
@@ -236,9 +244,15 @@ namespace Snowflake.Data.Client
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
+            if (_connectionState != ConnectionState.Closed)
+            {
+                logger.Debug($"Open with a connection already opened: {_connectionState}");
+                return Task.CompletedTask;
+            }
             SnowflakeDbConnection conn = SnowflakeDbConnectionPool.getConnection(this.ConnectionString);
             if (conn != null)
             {
+                logger.Debug($"Connection open with pooled session: {conn.SfSession.sessionId}");
                 this.copy(conn);
                 OnSessionEstablished();
                 return Task.CompletedTask;
