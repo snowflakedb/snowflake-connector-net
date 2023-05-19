@@ -20,8 +20,6 @@ Building the Package
 Prerequisites
 -------------
 
-The Snowflake .NET connector supports only Windows.
-
 This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
 Steps
