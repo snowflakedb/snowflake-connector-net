@@ -17,10 +17,10 @@ Please refer to the Notice section below for information about safe usage of the
 Building the Package
 ====================
 
+You can build Snowflake .NET connector applications for Window, Macintosh, and Linux operating systems. For information about supported operating system versions, refer to the [Client Versions and Support Policy](https://docs.snowflake.com/release-notes/requirements).
+
 Prerequisites
 -------------
-
-The Snowflake .NET connector supports only Windows.
 
 This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
