@@ -302,6 +302,7 @@ namespace Snowflake.Data.Tests
                 {
                     cmd.CommandText = "select 1;" +
                                       "create or replace temporary table t1(c1 varchar);" +
+                                      "alter session set force_using_external_explain = true;" +
                                       "explain using tabular select * from t1;" +
                                       "show parameters;" +
                                       "insert into t1 values ('str1');" +
@@ -316,7 +317,7 @@ namespace Snowflake.Data.Tests
                     var stmtCountParam = cmd.CreateParameter();
                     stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
                     stmtCountParam.DbType = DbType.Int16;
-                    stmtCountParam.Value = 11;
+                    stmtCountParam.Value = 12;
                     cmd.Parameters.Add(stmtCountParam);
 
                     DbDataReader reader = cmd.ExecuteReader();
@@ -326,6 +327,11 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(-1, reader.RecordsAffected);
 
                     // result of create
+                    Assert.IsTrue(reader.NextResult());
+                    Assert.IsFalse(reader.HasRows);
+                    Assert.AreEqual(0, reader.RecordsAffected);
+
+                    // result of alter
                     Assert.IsTrue(reader.NextResult());
                     Assert.IsFalse(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
