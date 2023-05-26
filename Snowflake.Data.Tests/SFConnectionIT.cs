@@ -1285,7 +1285,7 @@ namespace Snowflake.Data.Tests
                 = ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    "*.foo.com %7C" + testConfig.account + ".snowflakecomputing.com|localhost");
+                    "*.foo.com %7C" + testConfig.account + ".snowflakecomputing.com|" + testConfig.host);
                 conn.Open();
                 // Because testConfig.host is in the bypass list, the proxy should not be used
             }
@@ -1635,7 +1635,7 @@ namespace Snowflake.Data.Tests
                 stopwatch.Stop();
                 int detla = 10; //in case server time slower.
 
-                // Should timeout after the default timeout (120 sec + 6 retry 840 sec)
+                // Should timeout after the default timeout (120 sec * 6 retries = 840 sec)
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 840 * 1000 - detla);
                 // But never more than 16 sec (max backoff) after the default timeout
                 Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (840 + 16) * 1000);
