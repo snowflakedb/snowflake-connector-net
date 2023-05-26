@@ -605,7 +605,7 @@ namespace Snowflake.Data.Tests
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
                 string testChars = "TEST_GET_CHARS";
                 double testDouble = 1.2345678;
-                string insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble.ToString(CultureInfo.InvariantCulture)})";
+                string insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble.ToString()})";
                 cmd.CommandText = insertCommand;
                 
                 var p1 = cmd.CreateParameter();
@@ -750,7 +750,7 @@ namespace Snowflake.Data.Tests
                 string testChars = "TEST_GET_CHARS";
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
                 double testDouble = 1.2345678;
-                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString(CultureInfo.InvariantCulture)})";
+                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
 
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
@@ -897,7 +897,7 @@ namespace Snowflake.Data.Tests
                 string testChars = "TEST_GET_CHARS";
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
                 double testDouble = 1.2345678;
-                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString(CultureInfo.InvariantCulture)})";
+                cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
 
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
@@ -938,7 +938,7 @@ namespace Snowflake.Data.Tests
 
                 using (var stream = reader.GetStream(2))
                 {
-                    byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString(CultureInfo.InvariantCulture));
+                    byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
                     byte[] buf = new byte[col3ToBytes.Length];
                     stream.Read(buf, 0, col3ToBytes.Length);
                     Assert.IsTrue(-1 == stream.ReadByte()); // No more data

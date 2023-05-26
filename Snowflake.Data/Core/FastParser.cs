@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace Snowflake.Data.Core
@@ -91,7 +90,7 @@ namespace Snowflake.Data.Core
                 // is better to not to find out during the call to FastParseInt64.
                 // Fallback to regular decimal constructor from string instead.
                 if (len > 19)
-                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len), CultureInfo.InvariantCulture);
+                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len));
 
                 try
                 {
@@ -101,7 +100,7 @@ namespace Snowflake.Data.Core
                 catch (OverflowException)
                 {
                     // Fallback to regular decimal constructor from string instead.
-                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len), CultureInfo.InvariantCulture);
+                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len));
                 }
             }
             else
@@ -118,7 +117,7 @@ namespace Snowflake.Data.Core
                 catch (OverflowException)
                 {
                     // Fallback to regular decimal constructor from string instead.
-                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len), CultureInfo.InvariantCulture);
+                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len));
                 }
 
                 bool isMinus = false;

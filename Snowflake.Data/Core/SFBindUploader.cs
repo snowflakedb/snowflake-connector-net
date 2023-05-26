@@ -247,12 +247,12 @@ namespace Snowflake.Data.Core
                     return sValue;
                 case "DATE":
                     long dateLong = long.Parse(sValue);
-                    DateTime date = dateTime.AddMilliseconds(dateLong);
-                    return date.ToString("yyyy-MM-dd");
+                    DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
+                    return date.ToShortDateString();
                 case "TIME":
                     long timeLong = long.Parse(sValue);
-                    DateTime time = dateTime.AddMilliseconds(timeLong);
-                    return time.ToString("HH:mm:ss.fffffff");
+                    DateTime time = dateTime.AddMilliseconds(timeLong).ToUniversalTime();
+                    return time.ToLongTimeString();
                 case "TIMESTAMP_LTZ":
                     long ltzLong = long.Parse(sValue);
                     TimeSpan ltzts = new TimeSpan(ltzLong / 100);
