@@ -144,7 +144,7 @@ namespace Snowflake.Data.Core
             }
             catch (ArgumentException e)
             {
-                logger.Warn($"ConnectionString: {connectionString}", e);
+                logger.Warn("Invalid connectionString", e);
                 throw new SnowflakeDbException(e,
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);

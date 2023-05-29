@@ -89,7 +89,7 @@ namespace Snowflake.Data.Log
         private static readonly string PRIVATE_KEY_PATTERN = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----";
         private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""";
         private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
-        private static readonly string PASSWORD_PATTERN = @"(password|passcode|pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
+        private static readonly string PASSWORD_PATTERN = @"(password|passcode|pwd|proxypassword)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
 
         private static string MaskAWSKeys(string text)
         {
