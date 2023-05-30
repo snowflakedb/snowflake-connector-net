@@ -183,6 +183,16 @@ namespace Snowflake.Data.Core
             return await Task.FromResult(false);
         }
 
+        internal override bool HasRows()
+        {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+
+            return _currentChunkRowCount > 0;
+        }
+
         /// <summary>
         /// Move cursor back one row.
         /// </summary>

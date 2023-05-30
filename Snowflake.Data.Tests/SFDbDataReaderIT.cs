@@ -1323,5 +1323,59 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
+        
+        [Test]
+        public void TestHasRows()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                DbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select 1 where 1=2";
+                
+                DbDataReader reader = cmd.ExecuteReader();
+                Assert.IsFalse(reader.HasRows);
+                reader.Close();
+
+                cmd.CommandText = "select 1;" +
+                                  "select 1 where 1=2;" +
+                                  "select 1;" + 
+                                  "select 1 where 1=2;";
+                
+                DbParameter param = cmd.CreateParameter();
+                param.ParameterName = "MULTI_STATEMENT_COUNT";
+                param.DbType = DbType.Int16;
+                param.Value = 4;
+                cmd.Parameters.Add(param);
+                
+                reader = cmd.ExecuteReader();
+                
+                // select 1
+                Assert.IsTrue(reader.HasRows);
+                reader.Read();
+                Assert.IsTrue(reader.HasRows);
+                reader.NextResult();
+
+                // select 1 where 1=2
+                Assert.IsFalse(reader.HasRows);
+                reader.NextResult();
+                
+                // select 1
+                Assert.IsTrue(reader.HasRows);
+                reader.Read();
+                Assert.IsTrue(reader.HasRows);
+                reader.NextResult();
+
+                // select 1 where 1=2
+                Assert.IsFalse(reader.HasRows);
+                reader.NextResult();
+                Assert.IsFalse(reader.HasRows);
+                
+                reader.Close();
+                conn.Close();
+            }
+        }
     }
 }

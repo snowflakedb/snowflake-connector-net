@@ -30,6 +30,8 @@ namespace Snowflake.Data.Core
 
         internal abstract Task<bool> NextResultAsync(CancellationToken cancellationToken);
 
+        internal abstract bool HasRows();
+
         internal abstract UTF8Buffer getObjectInternal(int columnIndex);
 
         /// <summary>

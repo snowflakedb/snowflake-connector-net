@@ -88,6 +88,16 @@ namespace Snowflake.Data.Core
             return (curResultSet != null);
         }
 
+        internal override bool HasRows()
+        {
+            if (curResultSet == null)
+            {
+                return false;
+            }
+            
+            return curResultSet.HasRows();
+        }
+        
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
