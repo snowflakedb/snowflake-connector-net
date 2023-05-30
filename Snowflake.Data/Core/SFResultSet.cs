@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core
         {
             if (isClosed)
             {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+                return false;
             }
 
             return _currentChunkRowCount > 0 || _totalChunkCount > 0;
