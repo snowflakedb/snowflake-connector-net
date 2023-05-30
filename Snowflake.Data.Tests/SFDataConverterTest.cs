@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Text;
 
 namespace Snowflake.Data.Tests
 {
@@ -19,6 +20,17 @@ namespace Snowflake.Data.Tests
         public void DataConverterTestDone()
         {
             // Do nothing;
+        }
+
+        // Method with the same signature as before the performance work
+        // Used by unit tests only
+        private UTF8Buffer ConvertToUTF8Buffer(string srcVal)
+        {
+            // Create an UTF8Buffer with an offset to get better testing
+            byte[] b1 = Encoding.UTF8.GetBytes(srcVal);
+            byte[] b2 = new byte[b1.Length + 100];
+            Array.Copy(b1, 0, b2, 100, b1.Length);
+            return new UTF8Buffer(b2, 100, b1.Length);
         }
 
         [Test]
@@ -48,7 +60,7 @@ namespace Snowflake.Data.Tests
         [TestCase("anything else", false)]
         public void TestConvertBoolean(string inputBooleanString, bool expected)
         {
-            var actual = SFDataConverter.ConvertToCSharpVal(inputBooleanString, SFDataType.BOOLEAN, typeof(bool));
+            var actual = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputBooleanString), SFDataType.BOOLEAN, typeof(bool));
             Assert.AreEqual(expected, actual);
         }
 
@@ -73,7 +85,7 @@ namespace Snowflake.Data.Tests
             var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var tickDiff = inputTime.Ticks - unixEpoch.Ticks;
             var inputStringAsItWasFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
-            var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItWasFromDatabase), SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
             Assert.AreEqual(inputTime, result);
         }
 
@@ -105,7 +117,7 @@ namespace Snowflake.Data.Tests
             inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
     
             // Run the conversion
-            var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItComesBackFromDatabase, SFDataType.TIME, typeof(TimeSpan));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItComesBackFromDatabase), SFDataType.TIME, typeof(TimeSpan));
 
             // Verify the result
             Assert.AreEqual(expected, result);
@@ -156,7 +168,7 @@ namespace Snowflake.Data.Tests
         [TestCase("999999999999999999")]
         public void TestConvertToInt64(string s)
         {
-            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64));
+            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
             Int64 expected = Convert.ToInt64(s);
             Assert.AreEqual(expected, actual);
         }
@@ -168,7 +180,7 @@ namespace Snowflake.Data.Tests
         [TestCase("0")]
         public void TestConvertToInt32(string s)
         {
-            Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32));
+            Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32));
             Int32 expected = Convert.ToInt32(s);
             Assert.AreEqual(expected, actual);
         }
@@ -180,7 +192,7 @@ namespace Snowflake.Data.Tests
         [TestCase("0")]
         public void TestConvertToInt16(string s)
         {
-            Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16));
+            Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16));
             Int16 expected = Convert.ToInt16(s);
             Assert.AreEqual(expected, actual);
         }
@@ -190,7 +202,7 @@ namespace Snowflake.Data.Tests
         [TestCase("0")]
         public void TestConvertToByte(string s)
         {
-            byte actual = (byte)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte));
+            byte actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte));
             byte expected = Convert.ToByte(s);
             Assert.AreEqual(expected, actual);
         }
@@ -200,7 +212,7 @@ namespace Snowflake.Data.Tests
         [TestCase("-1")]
         public void TestOverflowByte(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
         [Test]
@@ -208,7 +220,7 @@ namespace Snowflake.Data.Tests
         [TestCase("-32769")]
         public void TestOverflowInt16(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
         }
 
         [Test]
@@ -216,7 +228,7 @@ namespace Snowflake.Data.Tests
         [TestCase("-2147483649")]
         public void TestOverflowInt32(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
         }
 
         [Test]
@@ -224,7 +236,7 @@ namespace Snowflake.Data.Tests
         [TestCase("-9223372036854775809")]
         public void TestOverflowInt64(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
         }
 
         [Test]
@@ -242,7 +254,7 @@ namespace Snowflake.Data.Tests
         [TestCase("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
         public void TestConvertToDecimal(string s)
         {
-            decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
+            decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal));
             decimal expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
 
             Assert.AreEqual(expected, actual);
@@ -254,7 +266,7 @@ namespace Snowflake.Data.Tests
         [TestCase("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
         public void TestOverflowDecimal(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
         [Test]
@@ -271,12 +283,12 @@ namespace Snowflake.Data.Tests
         [TestCase("NaN")]
         public void TestConvertToFloat(string s)
         {
-            double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double));
+            double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double));
             double expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
 
             Assert.AreEqual(actualDouble, expectedDoulbe);
 
-            float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float));
+            float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(float));
             float expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
 
             Assert.AreEqual(expectedFloat, actualFloat);
@@ -294,18 +306,18 @@ namespace Snowflake.Data.Tests
         [TestCase("NaN")]
         public void TestInvalidConversionInvalidInt(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
         [Test]
         [TestCase("thisIsNotAValidValue")]
         public void TestInvalidConversionInvalidFloat(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(float)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double)));
         }
 
         [Test]
@@ -317,7 +329,7 @@ namespace Snowflake.Data.Tests
         [TestCase("NaN")]
         public void TestInvalidConversionInvalidDecimal(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
     }
