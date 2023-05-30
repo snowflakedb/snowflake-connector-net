@@ -190,7 +190,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
             }
 
-            return _currentChunkRowCount > 0;
+            return _currentChunkRowCount > 0 || _totalChunkCount > 0;
         }
 
         /// <summary>

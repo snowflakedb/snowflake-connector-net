@@ -355,12 +355,12 @@ namespace Snowflake.Data.Tests
 
                     // result of list
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.IsFalse(reader.HasRows); // no files staged for table t1
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     // result of remove
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.IsFalse(reader.HasRows); // no files staged for table t1
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     // result of create
