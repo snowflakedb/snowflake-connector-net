@@ -59,6 +59,9 @@ namespace Snowflake.Data.Core
         private int arrayBindStageThreshold = 0;
         internal int masterValidityInSeconds = 0;
 
+        internal long startTime = 0;
+        internal string connStr = null;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -72,6 +75,7 @@ namespace Snowflake.Data.Core
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
                 logger.Debug($"Session opened: {sessionId}");
+                startTime = DateTimeOffset.Now.ToUnixTimeSeconds();
             }
             else
             {
@@ -112,6 +116,7 @@ namespace Snowflake.Data.Core
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(String connectionString, SecureString password)
         {
+            connStr = connectionString;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
             // If there is an "application" setting, verify that it matches the expect pattern
