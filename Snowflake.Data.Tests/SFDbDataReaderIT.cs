@@ -1338,7 +1338,19 @@ namespace Snowflake.Data.Tests
                 DbDataReader reader = cmd.ExecuteReader();
                 Assert.IsFalse(reader.HasRows);
                 reader.Close();
+                conn.Close();
+            }
+        }
+        
+        [Test]
+        public void TestHasRowsMultiStatement()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
 
+                DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
                                   "select 1 where 1=2;" +
                                   "select 1;" + 
@@ -1350,8 +1362,8 @@ namespace Snowflake.Data.Tests
                 param.Value = 4;
                 cmd.Parameters.Add(param);
                 
-                reader = cmd.ExecuteReader();
-                
+                DbDataReader reader = cmd.ExecuteReader();
+
                 // select 1
                 Assert.IsTrue(reader.HasRows);
                 reader.Read();
