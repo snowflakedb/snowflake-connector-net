@@ -219,7 +219,10 @@ namespace Snowflake.Data.Tests
             conn3.Open();
             conn3.Close();
 
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            // The pooling timeout should apply to all connections being pooled,
+            // not just the connections created after the new setting,
+            // so expected result should be 0
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             SnowflakeDbConnectionPool.SetPooling(false);
         }
 
