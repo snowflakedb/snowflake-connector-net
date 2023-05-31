@@ -72,6 +72,8 @@ namespace Snowflake.Data.Tests
                 });
             }
             Task.WaitAll(threads);
+            // set pooling timeout back to default to avoid impact on other test cases
+            SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
         // thead to execute query with new connection in a loop
@@ -533,6 +535,9 @@ namespace Snowflake.Data.Tests
             // break connection pooling
             tasks[taskNum] = InvalidConnectionTaskAsync(connectionString);
             Task.WaitAll(tasks);
+
+            // set pooling timeout back to default to avoid impact on other test cases
+            SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
         // task to execute query with new connection in a loop
