@@ -151,7 +151,7 @@ namespace Snowflake.Data.Client
                                 {
                                     // Exception from SfSession.CloseAsync
                                     logger.Error("Error closing the session", previousTask.Exception);
-                                    taskCompletionSource.SetException(previousTask.Exception.InnerException);
+                                    taskCompletionSource.SetException(previousTask.Exception);
                                 }
                                 else if (previousTask.IsCanceled)
                                 {
