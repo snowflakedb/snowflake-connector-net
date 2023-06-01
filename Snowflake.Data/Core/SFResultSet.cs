@@ -183,6 +183,16 @@ namespace Snowflake.Data.Core
             return await Task.FromResult(false);
         }
 
+        internal override bool HasRows()
+        {
+            if (isClosed)
+            {
+                return false;
+            }
+
+            return _currentChunkRowCount > 0 || _totalChunkCount > 0;
+        }
+
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
