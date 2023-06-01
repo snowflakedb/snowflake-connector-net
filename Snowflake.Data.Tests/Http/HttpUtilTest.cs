@@ -36,5 +36,27 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(expectedIsRetryable, actualIsRetryable);
         }
+        
+        [Test]
+        public void ShouldCreateHttpClient()
+        {
+            // given
+            var config = new HttpClientConfig(
+                    crlCheckEnabled: TestDataGenarator.NextBool(),
+                    proxyHost: TestDataGenarator.NextAlphaNumeric(),
+                    proxyPort: TestDataGenarator.NextDigitsString(4),
+                    proxyUser: TestDataGenarator.NextAlphaNumeric(),
+                    proxyPassword: TestDataGenarator.NextAlphaNumeric(),
+                    noProxyList: TestDataGenarator.NextAlphaNumeric(),
+                    disableRetry: TestDataGenarator.NextBool(),
+                    forceRetryOn404: TestDataGenarator.NextBool()
+                );
+            
+            // when
+            var client = HttpUtil.Instance.GetHttpClient(config);
+            
+            // then
+            Assert.IsNotNull(client);
+        }
     }
 }

@@ -11,8 +11,6 @@ using System.Collections.Generic;
 using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
-using System.Security.Authentication;
-using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -64,8 +62,10 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
-        static internal readonly int MAX_RETRY = 6;
+        internal static readonly int MAX_RETRY = 6;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+        private static readonly HttpMessageHandlerFactory handlerFactory = new HttpMessageHandlerFactoryProvider()
+            .createHttpMessageHandlerFactory();
 
         private HttpUtil() { }
 
@@ -82,8 +82,7 @@ namespace Snowflake.Data.Core
                 return RegisterNewHttpClientIfNecessary(config);
             }
         }
-
-
+        
         private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
         {
             string name = config.ConfKey;
@@ -106,84 +105,7 @@ namespace Snowflake.Data.Core
 
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
-            HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
-            {
-                httpHandler = new WinHttpHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
-                };
-            }
-            else
-            {
-                httpHandler = new HttpClientHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false // Disable cookies
-                };
-            }
-
-            // Add a proxy if necessary
-            if (null != config.ProxyHost)
-            {
-                // Proxy needed
-                WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
-
-                // Add credential if provided
-                if (!String.IsNullOrEmpty(config.ProxyUser))
-                {
-                    ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
-                    proxy.Credentials = credentials;
-                }
-
-                // Add bypasslist if provided
-                if (!String.IsNullOrEmpty(config.NoProxyList))
-                {
-                    string[] bypassList = config.NoProxyList.Split(
-                        new char[] { '|' },
-                        StringSplitOptions.RemoveEmptyEntries);
-                    // Convert simplified syntax to standard regular expression syntax
-                    string entry = null;
-                    for (int i = 0; i < bypassList.Length; i++)
-                    {
-                        // Get the original entry
-                        entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char 
-                        entry = entry.Replace(".", "[.]");
-                        // * -> .*  because * is a quantifier and need a char or group to apply to
-                        entry = entry.Replace("*", ".*");
-
-                        // Replace with the valid entry syntax
-                        bypassList[i] = entry;
-
-                    }
-                    proxy.BypassList = bypassList;
-                }
-                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
-
-                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
-                else if (httpHandler is HttpClientHandler)
-                {
-                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
-            }
-            return httpHandler;
+            return handlerFactory.Create(config);
         }
 
         /// <summary>
