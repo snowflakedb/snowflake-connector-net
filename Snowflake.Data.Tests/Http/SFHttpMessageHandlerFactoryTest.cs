@@ -5,59 +5,60 @@
 using System.Net.Http;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests;
-    
 using NUnit.Framework;
 
-[TestFixture]
-public class SFHttpMessageHandlerFactoryTest
+namespace Snowflake.Data.Tests
 {
-    
-    [Test]
-    public void ShouldCreateHttpMessageHandlerWithoutProxyTest()
+    [TestFixture]
+    public class SFHttpMessageHandlerFactoryTest
     {
-        // given
-        var config = new HttpClientConfig(
-            crlCheckEnabled: true,
-            proxyHost: null,
-            proxyPort: null,
-            proxyUser: null,
-            proxyPassword: null,
-            noProxyList: null,
-            disableRetry: false,
-            forceRetryOn404: false
-        );
-        var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
-    
-        // when
-        var handler = (HttpClientHandler) handlerFactory.Create(config);
-        
-        // then
-        Assert.NotNull(handler);
-        Assert.Null(handlerFactory.ExtractWebProxy(handler));
-    }
 
-    [Test]
-    public void ShouldCreateHttpMessageHandlerWithProxyTest()
-    {
-        // given
-        var config = new HttpClientConfig(
-            crlCheckEnabled: true,
-            proxyHost: "proxy.host.com",
-            proxyPort: "1234",
-            proxyUser: "user",
-            proxyPassword: "password",
-            noProxyList: null,
-            disableRetry: false,
-            forceRetryOn404: false
-        );
-        var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
-        
-        // when
-        var handler = (HttpClientHandler) handlerFactory.Create(config);
-        
-        // then
-        Assert.NotNull(handler);
-        Assert.NotNull(handlerFactory.ExtractWebProxy(handler));
+        [Test]
+        public void ShouldCreateHttpMessageHandlerWithoutProxyTest()
+        {
+            // given
+            var config = new HttpClientConfig(
+                crlCheckEnabled: true,
+                proxyHost: null,
+                proxyPort: null,
+                proxyUser: null,
+                proxyPassword: null,
+                noProxyList: null,
+                disableRetry: false,
+                forceRetryOn404: false
+            );
+            var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
+
+            // when
+            var handler = (HttpClientHandler)handlerFactory.Create(config);
+
+            // then
+            Assert.NotNull(handler);
+            Assert.Null(handlerFactory.ExtractWebProxy(handler));
+        }
+
+        [Test]
+        public void ShouldCreateHttpMessageHandlerWithProxyTest()
+        {
+            // given
+            var config = new HttpClientConfig(
+                crlCheckEnabled: true,
+                proxyHost: "proxy.host.com",
+                proxyPort: "1234",
+                proxyUser: "user",
+                proxyPassword: "password",
+                noProxyList: null,
+                disableRetry: false,
+                forceRetryOn404: false
+            );
+            var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
+
+            // when
+            var handler = (HttpClientHandler)handlerFactory.Create(config);
+
+            // then
+            Assert.NotNull(handler);
+            Assert.NotNull(handlerFactory.ExtractWebProxy(handler));
+        }
     }
 }

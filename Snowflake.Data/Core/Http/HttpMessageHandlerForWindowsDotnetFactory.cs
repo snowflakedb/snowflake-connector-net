@@ -6,33 +6,36 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
 
-namespace Snowflake.Data.Core;
-
-internal class HttpMessageHandlerForWindowsDotnetFactory: HttpMessageHandlerFactory
+namespace Snowflake.Data.Core
 {
-    protected override HttpMessageHandler CreateHandlerWithoutProxy(HttpClientConfig config)
+
+    internal class HttpMessageHandlerForWindowsDotnetFactory : HttpMessageHandlerFactory
     {
-        return new WinHttpHandler()
+        protected override HttpMessageHandler CreateHandlerWithoutProxy(HttpClientConfig config)
         {
-            // Verify no certificates have been revoked
-            CheckCertificateRevocationList = config.CrlCheckEnabled,
-            // Enforce tls v1.2
-            SslProtocols = SslProtocols.Tls12,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            CookieUsePolicy = CookieUsePolicy.IgnoreCookies
-        };
-    }
+            return new WinHttpHandler()
+            {
+                // Verify no certificates have been revoked
+                CheckCertificateRevocationList = config.CrlCheckEnabled,
+                // Enforce tls v1.2
+                SslProtocols = SslProtocols.Tls12,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                CookieUsePolicy = CookieUsePolicy.IgnoreCookies
+            };
+        }
 
-    protected override HttpMessageHandler AttachProxyToHandler(HttpMessageHandler httpMessageHandler, WebProxy proxy)
-    {
-        WinHttpHandler httpHandlerWithProxy = (WinHttpHandler) httpMessageHandler;
-        httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-        httpHandlerWithProxy.Proxy = proxy;
-        return httpHandlerWithProxy;
-    }
+        protected override HttpMessageHandler AttachProxyToHandler(HttpMessageHandler httpMessageHandler,
+            WebProxy proxy)
+        {
+            WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpMessageHandler;
+            httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
+            httpHandlerWithProxy.Proxy = proxy;
+            return httpHandlerWithProxy;
+        }
 
-    public override IWebProxy ExtractWebProxy(HttpMessageHandler httpMessageHandler)
-    {
-        return ((WinHttpHandler) httpMessageHandler).Proxy;
+        public override IWebProxy ExtractWebProxy(HttpMessageHandler httpMessageHandler)
+        {
+            return ((WinHttpHandler)httpMessageHandler).Proxy;
+        }
     }
 }

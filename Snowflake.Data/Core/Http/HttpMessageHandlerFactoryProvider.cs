@@ -4,21 +4,24 @@
 
 using System.Runtime.InteropServices;
 
-namespace Snowflake.Data.Core;
-
-public class HttpMessageHandlerFactoryProvider
+namespace Snowflake.Data.Core
 {
-    internal HttpMessageHandlerFactory createHttpMessageHandlerFactory()
-    {
-        if (IsRunningOnWindowsDotnet())
-        {
-            return new HttpMessageHandlerForWindowsDotnetFactory();
-        }
-        return new HttpMessageHandlerForOtherFactory();
-    }
 
-    internal bool IsRunningOnWindowsDotnet()
+    public class HttpMessageHandlerFactoryProvider
     {
-        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework;
+        internal HttpMessageHandlerFactory createHttpMessageHandlerFactory()
+        {
+            if (IsRunningOnWindowsDotnet())
+            {
+                return new HttpMessageHandlerForWindowsDotnetFactory();
+            }
+
+            return new HttpMessageHandlerForOtherFactory();
+        }
+
+        internal bool IsRunningOnWindowsDotnet()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework;
+        }
     }
 }

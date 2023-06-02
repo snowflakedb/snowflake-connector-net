@@ -5,51 +5,56 @@
 using System;
 using System.Linq;
 
-namespace Snowflake.Data.Tests;
-
-public class TestDataGenarator
+namespace Snowflake.Data.Tests
 {
-    private static Random random = new Random();
-    private static string lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
-    private static string uppercaseChars = lowercaseChars.ToUpper();
-    private static string nonZeroDigits = "123456789"; 
-    private static string digitChars = "0" + nonZeroDigits;
-    private static string letterChars = lowercaseChars + uppercaseChars;
-    private static string alphanumericChars = letterChars + digitChars;
 
-    
-    public static bool NextBool()
+    public class TestDataGenarator
     {
-        return random.Next(0, 1) == 1;
-    }
+        private static Random random = new Random();
+        private static string lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+        private static string uppercaseChars = lowercaseChars.ToUpper();
+        private static string nonZeroDigits = "123456789";
+        private static string digitChars = "0" + nonZeroDigits;
+        private static string letterChars = lowercaseChars + uppercaseChars;
+        private static string alphanumericChars = letterChars + digitChars;
+        
+        public static bool NextBool()
+        {
+            return random.Next(0, 1) == 1;
+        }
 
-    public static string NextAlphaNumeric()
-    {
-        return NextLetter() +
-               Enumerable.Repeat(alphanumericChars, random.Next(5, 12))
-                   .Select(NextChar)
-                   .Aggregate((s1, s2) => s1 + s2);
-    }
+        public static string NextAlphaNumeric()
+        {
+            return NextLetter() +
+                   Enumerable.Repeat(alphanumericChars, random.Next(5, 12))
+                       .Select(NextChar)
+                       .Aggregate((s1, s2) => s1 + s2);
+        }
 
-    public static string NextDigitsString(int length)
-    {
-        return NextNonZeroDigitString() + Enumerable.Repeat(digitChars, length - 1)
-            .Select(NextChar)
-            .Aggregate((s1, s2) => s1 + s2);
-    }
+        public static string NextDigitsString(int length)
+        {
+            if (length == 1)
+            {
+                return NextNonZeroDigitString();
+            } 
+            return NextNonZeroDigitString() + Enumerable.Repeat(digitChars, length - 1)
+                .Select(NextChar)
+                .Aggregate((s1, s2) => s1 + s2);
+        }
 
-    public static string NextNonZeroDigitString()
-    {
-        return NextChar(nonZeroDigits);
-    }
-    
-    private static string NextLetter()
-    {
-        return NextChar(letterChars);
-    }
+        public static string NextNonZeroDigitString()
+        {
+            return NextChar(nonZeroDigits);
+        }
 
-    private static string NextChar(string chars)
-    {
-        return chars[random.Next(chars.Length)].ToString();
+        private static string NextLetter()
+        {
+            return NextChar(letterChars);
+        }
+
+        private static string NextChar(string chars)
+        {
+            return chars[random.Next(chars.Length)].ToString();
+        }
     }
 }
