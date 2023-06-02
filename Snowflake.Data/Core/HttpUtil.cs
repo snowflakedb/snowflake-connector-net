@@ -123,15 +123,29 @@ namespace Snowflake.Data.Core
             else
 */
             {
-                httpHandler = new HttpClientHandler()
+                try
                 {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false // Disable cookies
-                };
+                    httpHandler = new HttpClientHandler()
+                    {
+                        // Verify no certificates have been revoked
+                        CheckCertificateRevocationList = config.CrlCheckEnabled,
+                        // Enforce tls v1.2
+                        SslProtocols = SslProtocols.Tls12,
+                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                        UseCookies = false // Disable cookies
+                    };
+                }
+                // special logic for .NET framework 4.7.1 that
+                // CheckCertificateRevocationList and SslProtocols are not supported
+                catch (PlatformNotSupportedException)
+                {
+                    httpHandler = new HttpClientHandler()
+                    {
+                        // Enforce tls v1.2
+                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                        UseCookies = false // Disable cookies
+                    };
+                }
             }
 
             // Add a proxy if necessary
