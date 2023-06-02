@@ -107,6 +107,7 @@ namespace Snowflake.Data.Core
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
+/*
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
             {
                 httpHandler = new WinHttpHandler()
@@ -120,6 +121,7 @@ namespace Snowflake.Data.Core
                 };
             }
             else
+*/
             {
                 httpHandler = new HttpClientHandler()
                 {
@@ -168,6 +170,7 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
+/*
                 if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
@@ -177,6 +180,7 @@ namespace Snowflake.Data.Core
                     return httpHandlerWithProxy;
                 }
                 else if (httpHandler is HttpClientHandler)
+*/
                 {
                     HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
                     httpHandlerWithProxy.Proxy = proxy;
