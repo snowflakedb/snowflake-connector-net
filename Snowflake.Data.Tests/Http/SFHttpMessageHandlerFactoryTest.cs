@@ -2,7 +2,6 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Net.Http;
 using Snowflake.Data.Core;
 
 using NUnit.Framework;
@@ -30,7 +29,7 @@ namespace Snowflake.Data.Tests
             var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
 
             // when
-            var handler = (HttpClientHandler)handlerFactory.Create(config);
+            var handler = handlerFactory.Create(config);
 
             // then
             Assert.NotNull(handler);
@@ -54,7 +53,7 @@ namespace Snowflake.Data.Tests
             var handlerFactory = new HttpMessageHandlerFactoryProvider().createHttpMessageHandlerFactory();
 
             // when
-            var handler = (HttpClientHandler)handlerFactory.Create(config);
+            var handler = handlerFactory.Create(config);
 
             // then
             Assert.NotNull(handler);

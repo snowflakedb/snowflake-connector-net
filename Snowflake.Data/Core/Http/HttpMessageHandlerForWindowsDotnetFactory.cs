@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core
         protected override HttpMessageHandler AttachProxyToHandler(HttpMessageHandler httpMessageHandler,
             WebProxy proxy)
         {
-            WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpMessageHandler;
+            WinHttpHandler httpHandlerWithProxy = (WinHttpHandler) httpMessageHandler;
             httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
             httpHandlerWithProxy.Proxy = proxy;
             return httpHandlerWithProxy;
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core
 
         public override IWebProxy ExtractWebProxy(HttpMessageHandler httpMessageHandler)
         {
-            return ((WinHttpHandler)httpMessageHandler).Proxy;
+            return ((WinHttpHandler) httpMessageHandler).Proxy;
         }
     }
 }
