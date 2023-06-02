@@ -205,7 +205,10 @@ namespace Snowflake.Data.Tests
         public void TestPassword()
         {
             // password
-            BasicMasking(@"password:aaaaaaaa", @"password:****");                    
+            BasicMasking(@"password:aaaaaaaa", @"password:****");
+
+            // proxypassword
+            BasicMasking(@"proxypassword:aaaaaaaa", @"proxypassword:****");
 
             // pwd
             BasicMasking(@"pwd:aaaaaaaa", @"pwd:****");

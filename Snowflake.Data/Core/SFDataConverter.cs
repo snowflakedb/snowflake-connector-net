@@ -3,13 +3,9 @@
  */
 
 using System;
-using System.ComponentModel;
-using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Text;
-using System.Threading;
-using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
@@ -23,18 +19,6 @@ namespace Snowflake.Data.Core
     static class SFDataConverter
     {
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
-
-        // Method with the same signature as before the performance work
-        // Used by unit tests only
-        internal static object ConvertToCSharpVal(string srcVal, SFDataType srcType, Type destType)
-        {
-            // Create an UTF8Buffer with an offset to get better testing
-            byte[] b1 = Encoding.UTF8.GetBytes(srcVal);
-            byte[] b2 = new byte[b1.Length + 100];
-            Array.Copy(b1, 0, b2, 100, b1.Length);
-            var v = new UTF8Buffer(b2, 100, b1.Length);
-            return ConvertToCSharpVal(v, srcType, destType);
-        }
 
         internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType)
         {

@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core
             string name = config.ConfKey;
             if (!_HttpClients.ContainsKey(name))
             {
-                logger.Debug($"Http client for {name} not registered. Adding.");
+                logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
                     new RetryHandler(setupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404))

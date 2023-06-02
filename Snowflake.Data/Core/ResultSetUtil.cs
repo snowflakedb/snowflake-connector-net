@@ -66,6 +66,8 @@ namespace Snowflake.Data.Core
 
         internal static bool HasResultSet(this SFBaseResultSet resultSet)
         {
+            if (resultSet.isClosed) return false;
+
             SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
             SFStatementType statementType = metaData.statementType;
 
