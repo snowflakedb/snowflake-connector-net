@@ -181,10 +181,6 @@ namespace Snowflake.Data.Core
                         {
                             await ParseStreamIntoChunk(stream, chunk);
                         }
-                        if (forceParseError)
-                        {
-                            throw new Exception("json parsing error.");
-                        }
                     }
                     catch (Exception e)
                     {
