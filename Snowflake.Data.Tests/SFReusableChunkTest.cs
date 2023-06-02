@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -311,9 +313,12 @@ namespace Snowflake.Data.Tests
         [Test]
         public void testParseJson()
         {
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+            ChunkParserFactory.Instance = new TestChunkParserFactory(1);
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "; FORCEPARSEERROR = true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -369,14 +374,18 @@ select parse_json('{
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
+            ChunkParserFactory.Instance = previous;
         }
 
         [Test]
         public void testChunkRetry()
         {
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+            ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY - 1);
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "FORCEPARSEERROR=true";
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -419,7 +428,91 @@ select parse_json('{
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
+
+            ChunkParserFactory.Instance = previous;
         }
 
+        [Test]
+        public void testExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        {            
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+            ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY + 1);
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                int rowCount = 0;
+
+                string createCommand = "create or replace table del_test (col string)";
+                cmd.CommandText = createCommand;
+                rowCount = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, rowCount);
+
+                int largeTableRowCount = 100000;
+                string insertCommand = $"insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                cmd.CommandText = insertCommand; 
+                IDataReader insertReader = cmd.ExecuteReader();
+                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
+
+                string selectCommand = "select * from del_test";
+                cmd.CommandText = selectCommand;
+
+                rowCount = 0;
+                Assert.Throws<AggregateException>(() =>
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var obj = new object[reader.FieldCount];
+                            reader.GetValues(obj);
+                            var val = obj[0] ?? System.String.Empty;
+                            if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                            {
+                                rowCount++;
+                            }
+                        }
+                    }
+                });
+                Assert.AreNotEqual(largeTableRowCount, rowCount);
+
+                cmd.CommandText = "drop table if exists del_test";
+                rowCount = cmd.ExecuteNonQuery();
+                Assert.AreEqual(0, rowCount);
+
+                conn.Close();
+            }
+            ChunkParserFactory.Instance = previous;
+        }
+
+        class TestChunkParserFactory : IChunkParserFactory
+        {
+            private int _exceptionsThrown;
+            private readonly int _expectedExceptionsNumber;
+                
+            public TestChunkParserFactory(int exceptionsToThrow)
+            {
+                _expectedExceptionsNumber = exceptionsToThrow;
+                _exceptionsThrown = 0;
+            }
+            
+            public IChunkParser GetParser(Stream stream)
+            {
+                if (++_exceptionsThrown <= _expectedExceptionsNumber)
+                    return new ThrowingReusableChunkParser();
+
+                return new ReusableChunkParser(stream);
+            }
+        }
+
+        class ThrowingReusableChunkParser : IChunkParser
+        {
+            public Task ParseChunk(IResultChunk chunk)
+            { 
+                throw new Exception("json parsing error.");
+            }
+        }
     }
 }

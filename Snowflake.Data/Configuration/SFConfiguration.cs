@@ -16,12 +16,15 @@ namespace Snowflake.Data.Configuration
         public Boolean UseV2ChunkDownloader;
 
         public int ChunkDownloaderVersion;
-
+        
+        public int ChunkParserVersion;
+        
         private SFConfiguration()
         {
-            UseV2JsonParser = true;
+            UseV2JsonParser = false;
             UseV2ChunkDownloader = false;
             ChunkDownloaderVersion = 3;
+            ChunkParserVersion = 3;
         }
 
         private readonly static SFConfiguration Config = new SFConfiguration();
@@ -29,6 +32,16 @@ namespace Snowflake.Data.Configuration
         public static SFConfiguration Instance()
         {
             return Config;
+        }
+
+        public int GetChunkParserVersion()
+        {
+            return UseV2JsonParser ? 2 : ChunkParserVersion;
+        }
+
+        public int GetChunkDownloaderVersion()
+        {
+            return UseV2ChunkDownloader ? 2 : ChunkDownloaderVersion;
         }
     }
 }

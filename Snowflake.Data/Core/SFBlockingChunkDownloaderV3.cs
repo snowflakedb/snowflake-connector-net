@@ -136,10 +136,7 @@ namespace Snowflake.Data.Core
             int backOffInSec = 1;
             bool retry = false;
             int retryCount = 0;
-
-            //this is used for test case
-            bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
-
+            
             do
             {
                 retry = false;
@@ -191,7 +188,6 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        forceParseError = false;
                         if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
@@ -235,7 +231,7 @@ namespace Snowflake.Data.Core
         /// <param name="resultChunk"></param>
         private async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
         {
-            IChunkParser parser = new ReusableChunkParser(content);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(content);
             await parser.ParseChunk(resultChunk);
         }
     }

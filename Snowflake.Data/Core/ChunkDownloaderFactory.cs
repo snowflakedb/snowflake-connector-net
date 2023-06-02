@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Threading;
 using Snowflake.Data.Configuration;
 
@@ -13,19 +14,15 @@ namespace Snowflake.Data.Core
                                                      SFBaseResultSet resultSet,
                                                      CancellationToken cancellationToken)
         {
-            int ChunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            if (SFConfiguration.Instance().UseV2ChunkDownloader)
-                ChunkDownloaderVersion = 2;
-
-            switch (ChunkDownloaderVersion)
+            switch (SFConfiguration.Instance().GetChunkDownloaderVersion())
             {
                 case 1:
                     return new SFBlockingChunkDownloader(responseData.rowType.Count,
-                    responseData.chunks,
-                    responseData.qrmk,
-                    responseData.chunkHeaders,
-                    cancellationToken,
-                    resultSet);
+                        responseData.chunks,
+                        responseData.qrmk,
+                        responseData.chunkHeaders,
+                        cancellationToken,
+                        resultSet);
                 case 2:
                     return new SFChunkDownloaderV2(responseData.rowType.Count,
                         responseData.chunks,
@@ -33,13 +30,15 @@ namespace Snowflake.Data.Core
                         responseData.chunkHeaders,
                         cancellationToken,
                         resultSet.sfStatement.SfSession.restRequester);
-                default:
+                case 3:
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
-                    responseData.chunks,
-                    responseData.qrmk,
-                    responseData.chunkHeaders,
-                    cancellationToken,
-                    resultSet);
+                        responseData.chunks,
+                        responseData.qrmk,
+                        responseData.chunkHeaders,
+                        cancellationToken,
+                        resultSet);
+                default:
+                    throw new Exception("Unsupported Chunk Downloader version specified in the SFConfiguration");
             }
         }
     }
