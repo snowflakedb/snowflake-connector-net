@@ -18,6 +18,7 @@ namespace Snowflake.Data.Core
     /// <summary>
     ///     Downloader implementation that will be blocked if main thread consume falls behind
     /// </summary>
+    [Obsolete("SFBlockingChunkDownloader is deprecated", false)]
     class SFBlockingChunkDownloader : IChunkDownloader
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloader>();
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(concatStream);
             parser.ParseChunk(resultChunk);
         }
     }

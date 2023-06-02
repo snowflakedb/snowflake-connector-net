@@ -135,10 +135,7 @@ namespace Snowflake.Data.Core
             SFReusableChunk chunk;
             bool retry = false;
             int retryCount = 0;
-
-            //this is used for test case
-            bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
-
+            
             do
             {
                 int backOffInSec = 1;
@@ -165,10 +162,6 @@ namespace Snowflake.Data.Core
                     //TODO this shouldn't be required.
                     try
                     {
-                        if(forceParseError)
-                        {
-                            throw new Exception("json parsing error.");
-                        }
                         IEnumerable<string> encoding;
                         if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
                         {
@@ -189,7 +182,6 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        forceParseError = false;
                         if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
@@ -220,7 +212,7 @@ namespace Snowflake.Data.Core
         /// <param name="resultChunk"></param>
         private async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
         {
-            IChunkParser parser = new ReusableChunkParser(content);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(content);
             await parser.ParseChunk(resultChunk);
         }
     }
