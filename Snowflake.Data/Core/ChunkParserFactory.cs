@@ -17,9 +17,9 @@ namespace Snowflake.Data.Core
             switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
                 case 1:
-                    return new ChunkDeserializer(stream);
-                case 2:
                     return new ChunkStreamingParser(stream);
+                case 2:
+                    return new ChunkDeserializer(stream);
                 case 3:
                     return new ReusableChunkParser(stream);
                 default:
