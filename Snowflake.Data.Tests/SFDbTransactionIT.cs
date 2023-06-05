@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests
             conn.Open();
 
             DbCommand command = conn.CreateCommand();
-            command.CommandText = "create or replace table testTransaction(x timestamp, a integer)";
+            command.CommandText = "create or replace table testTransaction(x timestamp_ntz, a integer)";
             command.ExecuteNonQuery();
             Console.WriteLine("Created table");
 
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests
             conn.Open();
 
             DbCommand command = conn.CreateCommand();
-            command.CommandText = "create or replace table testTransaction(x timestamp, a integer)";
+            command.CommandText = "create or replace table testTransaction(x timestamp_ntz, a integer)";
             command.ExecuteNonQuery();
             Console.WriteLine("Created table");
 

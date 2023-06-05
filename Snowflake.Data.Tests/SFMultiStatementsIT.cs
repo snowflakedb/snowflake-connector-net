@@ -302,7 +302,7 @@ namespace Snowflake.Data.Tests
                 {
                     cmd.CommandText = "select 1;" +
                                       "create or replace temporary table t1(c1 varchar);" +
-                                      "explain using tabular select * from t1;" +
+                                      "explain using text select * from t1;" +
                                       "show parameters;" +
                                       "insert into t1 values ('str1');" +
                                       "desc table t1;" +
