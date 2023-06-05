@@ -21,7 +21,7 @@ namespace Snowflake.Data.Configuration
         
         private SFConfiguration()
         {
-            UseV2JsonParser = true;
+            UseV2JsonParser = false;
             UseV2ChunkDownloader = false;
             ChunkDownloaderVersion = 3;
             ChunkParserVersion = 3;

@@ -313,6 +313,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void testParseJson()
         {
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(1);
             
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -373,11 +374,13 @@ select parse_json('{
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
+            ChunkParserFactory.Instance = previous;
         }
 
         [Test]
         public void testChunkRetry()
-        {            
+        {
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY - 1);
 
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -425,13 +428,15 @@ select parse_json('{
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
+
+            ChunkParserFactory.Instance = previous;
         }
 
         [Test]
         public void testExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {            
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY + 1);
-
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
@@ -479,6 +484,7 @@ select parse_json('{
 
                 conn.Close();
             }
+            ChunkParserFactory.Instance = previous;
         }
 
         class TestChunkParserFactory : IChunkParserFactory
