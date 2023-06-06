@@ -116,7 +116,11 @@ namespace Snowflake.Data.Core
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
+                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies,
+                    // Skip timeouts given by WinHttpHandler, let the HttpClient.Timeout take precedence
+                    ReceiveHeadersTimeout = Timeout.InfiniteTimeSpan,
+                    ReceiveDataTimeout = Timeout.InfiniteTimeSpan,
+                    SendTimeout = Timeout.InfiniteTimeSpan
                 };
             }
             else

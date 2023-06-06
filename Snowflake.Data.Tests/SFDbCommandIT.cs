@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
+                cmd.CommandText = "select SYSTEM$WAIT(1, 'MINUTES')";
                 IDataReader reader = cmd.ExecuteReader();
                 // only one result is returned
                 Assert.IsTrue(reader.Read());
