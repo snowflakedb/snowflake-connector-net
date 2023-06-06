@@ -58,6 +58,9 @@ namespace Snowflake.Data.Core
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
         internal int masterValidityInSeconds = 0;
+        
+        internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
+            new SFSessionHttpClientProxyProperties.Extractor());
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -113,70 +116,17 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString, SecureString password)
         {
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
-
-            // If there is an "application" setting, verify that it matches the expect pattern
-            properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
-            if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
-            {
-                throw new SnowflakeDbException(
-                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                    applicationNameSetting,
-                    SFSessionProperty.APPLICATION.ToString()
-                    );
-            }
-
-            ParameterMap = new Dictionary<SFSessionParameter, object>();
-            int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
-            int timeoutInSec = recommendedMinTimeoutSec;
+            ValidateApplicationName(properties);
             try
             {
-                ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
-                    Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
-                ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] =
-                    Boolean.Parse(properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
-                timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-                InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
-                bool disableRetry = Boolean.Parse(properties[SFSessionProperty.DISABLERETRY]);
-                bool forceRetryOn404 = Boolean.Parse(properties[SFSessionProperty.FORCERETRYON404]);
-
-                string proxyHost = null;
-                string proxyPort = null;
-                string noProxyHosts = null;
-                string proxyPwd = null;
-                string proxyUser = null;
-                if (Boolean.Parse(properties[SFSessionProperty.USEPROXY]))
-                {
-                    // Let's try to get the associated RestRequester
-                    properties.TryGetValue(SFSessionProperty.PROXYHOST, out proxyHost);
-                    properties.TryGetValue(SFSessionProperty.PROXYPORT, out proxyPort);
-                    properties.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out noProxyHosts);
-                    properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out proxyPwd);
-                    properties.TryGetValue(SFSessionProperty.PROXYUSER, out proxyUser);
-
-                    if (!String.IsNullOrEmpty(noProxyHosts))
-                    {
-                        // The list is url-encoded
-                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
-                        noProxyHosts = HttpUtility.UrlDecode(noProxyHosts);
-                    }
-                }
-
-                // HttpClient config based on the setting in the connection string
-                HttpClientConfig httpClientConfig =
-                    new HttpClientConfig(
-                        !InsecureMode,
-                        proxyHost,
-                        proxyPort,
-                        proxyUser,
-                        proxyPwd,
-                        noProxyHosts,
-                        disableRetry,
-                        forceRetryOn404);
-
-                // Get the http client for the config
+                var extractedProperties = propertiesExtractor.ExtractProperties(properties);
+                var httpClientConfig = extractedProperties.BuildHttpClientConfig();
+                ParameterMap = extractedProperties.ToParameterMap();
+                InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
+                extractedProperties.WarnOnTimeout();
+                connectionTimeout = extractedProperties.TimeoutDuration();
             }
             catch (Exception e)
             {
@@ -186,18 +136,21 @@ namespace Snowflake.Data.Core
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to connect");
             }
+        }
 
-            if (timeoutInSec < recommendedMinTimeoutSec)
+        private void ValidateApplicationName(SFSessionProperties properties)
+        {
+            // If there is an "application" setting, verify that it matches the expect pattern
+            properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
+            if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
             {
-                logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
-                    $" {recommendedMinTimeoutSec}");
+                throw new SnowflakeDbException(
+                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                    applicationNameSetting,
+                    SFSessionProperty.APPLICATION.ToString()
+                );
             }
-            if (timeoutInSec < 0)
-            {
-                logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
-            }
-
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
