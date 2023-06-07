@@ -174,6 +174,10 @@ namespace Snowflake.Data.Core
                         {
                             await ParseStreamIntoChunk(stream, chunk);
                         }
+                        if (retryCount < 2)
+                        {
+                            throw new Exception("force retry on chunk");
+                        }
                     }
                     catch (Exception e)
                     {
@@ -181,6 +185,12 @@ namespace Snowflake.Data.Core
                         if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
+                            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+                            {
+                                rowCount = chunk.RowCount,
+                                url = chunk.Url
+                            };
+                            chunk.Reset(chunkInfo, chunk.chunkIndexToDownload);
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
                             ++retryCount;
                             backOffInSec = backOffInSec * 2;
