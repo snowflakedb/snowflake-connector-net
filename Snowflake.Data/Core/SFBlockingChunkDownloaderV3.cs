@@ -174,10 +174,12 @@ namespace Snowflake.Data.Core
                         {
                             await ParseStreamIntoChunk(stream, chunk);
                         }
+                        /* test code for debugging
                         if (retryCount < 2)
                         {
                             throw new Exception("force retry on chunk");
                         }
+                        */
                     }
                     catch (Exception e)
                     {
