@@ -94,12 +94,12 @@ namespace Snowflake.Data.Tests.Session
             var extractedProperties = extractor.ExtractProperties(properties);
 
             // then
-            Assert.AreEqual(extractedProperties.validateDefaultParameters, testCase.expectedProperties.validateDefaultParameters);
-            Assert.AreEqual(extractedProperties.clientSessionKeepAlive, testCase.expectedProperties.clientSessionKeepAlive);
-            Assert.AreEqual(extractedProperties.timeoutInSec, testCase.expectedProperties.timeoutInSec);
-            Assert.AreEqual(extractedProperties.insecureMode, testCase.expectedProperties.insecureMode);
-            Assert.AreEqual(extractedProperties.disableRetry, testCase.expectedProperties.disableRetry);
-            Assert.AreEqual(extractedProperties.forceRetryOn404, testCase.expectedProperties.forceRetryOn404);
+            Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
+            Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
+            Assert.AreEqual(testCase.expectedProperties.timeoutInSec, extractedProperties.timeoutInSec);
+            Assert.AreEqual(testCase.expectedProperties.insecureMode, extractedProperties.insecureMode);
+            Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
+            Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
             // TODO: after adding a mocking library verify that proxy parameters extracted 
         }
     

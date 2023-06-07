@@ -23,11 +23,11 @@ namespace Snowflake.Data.Tests.Session
             var proxyProperties = extractor.ExtractProperties(properties);
 
             // then
-            Assert.AreEqual(proxyProperties.proxyHost, testCase.expectedProperties.proxyHost);
-            Assert.AreEqual(proxyProperties.proxyPort, testCase.expectedProperties.proxyPort);
-            Assert.AreEqual(proxyProperties.nonProxyHosts, testCase.expectedProperties.nonProxyHosts);
-            Assert.AreEqual(proxyProperties.proxyPassword, testCase.expectedProperties.proxyPassword);
-            Assert.AreEqual(proxyProperties.proxyUser,testCase.expectedProperties.proxyUser);
+            Assert.AreEqual(testCase.expectedProperties.proxyHost, proxyProperties.proxyHost);
+            Assert.AreEqual(testCase.expectedProperties.proxyPort, proxyProperties.proxyPort);
+            Assert.AreEqual(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
+            Assert.AreEqual(testCase.expectedProperties.proxyPassword, proxyProperties.proxyPassword);
+            Assert.AreEqual(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
         }
 
         public static IEnumerable<ProxyPropertiesTestCase> ProxyPropertiesProvider()
