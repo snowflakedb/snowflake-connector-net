@@ -66,9 +66,9 @@ namespace Snowflake.Data.Core
 
         internal class Extractor : IExtractor
         {
-            private SFSessionHttpClientProxyProperties.Extractor proxyPropertiesExtractor;
+            private SFSessionHttpClientProxyProperties.IExtractor proxyPropertiesExtractor;
 
-            public Extractor(SFSessionHttpClientProxyProperties.Extractor proxyPropertiesExtractor)
+            public Extractor(SFSessionHttpClientProxyProperties.IExtractor proxyPropertiesExtractor)
             {
                 this.proxyPropertiesExtractor = proxyPropertiesExtractor;
             }

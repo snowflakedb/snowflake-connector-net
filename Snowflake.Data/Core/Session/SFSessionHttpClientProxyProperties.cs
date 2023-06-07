@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core
             SFSessionHttpClientProxyProperties ExtractProperties(SFSessionProperties propertiesDictionary);
         }
 
-        internal class Extractor : SFSessionHttpClientProxyProperties
+        internal class Extractor : IExtractor
         {
             public SFSessionHttpClientProxyProperties ExtractProperties(SFSessionProperties propertiesDictionary)
             {
