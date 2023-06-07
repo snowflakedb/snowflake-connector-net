@@ -64,6 +64,8 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
+        static internal readonly int MAX_RETRY = 6;
+        static internal readonly int MAX_BACKOFF = 16;
 
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
@@ -271,7 +273,6 @@ namespace Snowflake.Data.Core
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
                 int totalRetryTime = 0;
-                int maxDefaultBackoff = 16;
 
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
@@ -363,8 +364,8 @@ namespace Snowflake.Data.Core
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                     totalRetryTime += backOffInSec;
                     // Set next backoff time
-                    backOffInSec = backOffInSec >= maxDefaultBackoff ?
-                            maxDefaultBackoff : backOffInSec * 2;
+                    backOffInSec = backOffInSec >= MAX_BACKOFF ?
+                            MAX_BACKOFF : backOffInSec * 2;
 
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
