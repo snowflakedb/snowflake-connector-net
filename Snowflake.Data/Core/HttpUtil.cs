@@ -107,45 +107,28 @@ namespace Snowflake.Data.Core
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-/*
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
+            try
             {
-                httpHandler = new WinHttpHandler()
+                httpHandler = new HttpClientHandler()
                 {
                     // Verify no certificates have been revoked
                     CheckCertificateRevocationList = config.CrlCheckEnabled,
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
+                    UseCookies = false // Disable cookies
                 };
             }
-            else
-*/
+            // special logic for .NET framework 4.7.1 that
+            // CheckCertificateRevocationList and SslProtocols are not supported
+            catch (PlatformNotSupportedException)
             {
-                try
+                httpHandler = new HttpClientHandler()
                 {
-                    httpHandler = new HttpClientHandler()
-                    {
-                        // Verify no certificates have been revoked
-                        CheckCertificateRevocationList = config.CrlCheckEnabled,
-                        // Enforce tls v1.2
-                        SslProtocols = SslProtocols.Tls12,
-                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                        UseCookies = false // Disable cookies
-                    };
-                }
-                // special logic for .NET framework 4.7.1 that
-                // CheckCertificateRevocationList and SslProtocols are not supported
-                catch (PlatformNotSupportedException)
-                {
-                    httpHandler = new HttpClientHandler()
-                    {
-                        // Enforce tls v1.2
-                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                        UseCookies = false // Disable cookies
-                    };
-                }
+                    // Enforce tls v1.2
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false // Disable cookies
+                };
             }
 
             // Add a proxy if necessary
@@ -184,22 +167,10 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
-/*
-                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
-                else if (httpHandler is HttpClientHandler)
-*/
-                {
-                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
+                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                httpHandlerWithProxy.Proxy = proxy;
+                return httpHandlerWithProxy;
             }
             return httpHandler;
         }
