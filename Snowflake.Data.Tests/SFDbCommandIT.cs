@@ -288,11 +288,15 @@ namespace Snowflake.Data.Tests
             }
             SFConfiguration.Instance().UseV2JsonParser = true;
         }
+        */
 
         [Test]
         public void TestUseV2ChunkDownloader()
         {
-            SFConfiguration.Instance().UseV2ChunkDownloader = true;
+            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
+            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
+            SFConfiguration.Instance().ChunkParserVersion = 2;
+            SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -311,10 +315,9 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
-            SFConfiguration.Instance().UseV2ChunkDownloader = false;
+            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
+            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
-        */
-
 
         [Test]
         public void TestDataSourceError()
