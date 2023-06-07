@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core
 
         internal interface IExtractor
         {
-            public SFSessionHttpClientProperties ExtractProperties(SFSessionProperties propertiesDictionary);
+            SFSessionHttpClientProperties ExtractProperties(SFSessionProperties propertiesDictionary);
         }
 
         internal class Extractor : IExtractor
