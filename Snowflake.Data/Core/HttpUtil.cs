@@ -125,7 +125,6 @@ namespace Snowflake.Data.Core
             {
                 httpHandler = new HttpClientHandler()
                 {
-                    // Enforce tls v1.2
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false // Disable cookies
                 };
