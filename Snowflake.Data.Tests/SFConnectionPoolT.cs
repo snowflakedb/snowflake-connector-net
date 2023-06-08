@@ -15,6 +15,7 @@ namespace Snowflake.Data.Tests
     using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
+    using System.Data.Common;
 
     [TestFixture]
     class SFConnectionPoolT : SFBaseTest
@@ -22,10 +23,96 @@ namespace Snowflake.Data.Tests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
+        [Ignore("dummy test case for showing test progress.")]
         public void ConnectionPoolTDone()
         {
             // Do nothing;
+        }
+
+        [Test]
+        // test connection pooling with concurrent connection
+        public void TestConcurrentConnectionPooling()
+        {
+            // add test case name in connection string to make in unique for each test case
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPooling";
+            ConcurrentPoolingHelper(connStr, true);
+        }
+
+        [Test]
+        // test connection pooling with concurrent connection and no close
+        // call for connection. Connection is closed when Dispose() is called
+        // by framework.
+        public void TestConcurrentConnectionPoolingDispose()
+        {
+            // add test case name in connection string to make in unique for each test case
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose";
+            ConcurrentPoolingHelper(connStr, false);
+        }
+
+        static void ConcurrentPoolingHelper(string connectionString, bool closeConnection)
+        {
+            // thread number a bit larger than pool size so some connections
+            // would fail on pooling while some connections could success
+            const int threadNum = 12;
+            // set short pooling timeout to cover the case that connection expired
+            const int poolTimeout = 3;
+
+            // reset to default settings in case it changed by other test cases
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetTimeout(poolTimeout);
+
+            var threads = new Task[threadNum];
+            for (int i = 0; i < threadNum; i++)
+            {
+                threads[i] = Task.Factory.StartNew(() =>
+                {
+                    QueryExecutionThread(connectionString, closeConnection);
+                });
+            }
+            Task.WaitAll(threads);
+            // set pooling timeout back to default to avoid impact on other test cases
+            SnowflakeDbConnectionPool.SetTimeout(3600);
+        }
+
+        // thead to execute query with new connection in a loop
+        static void QueryExecutionThread(string connectionString, bool closeConnection)
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                using (DbConnection conn = new SnowflakeDbConnection(connectionString))
+                {
+                    conn.Open();
+                    using (DbCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "select 1, 2, 3";
+                        try
+                        {
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    for (int j = 0; j < reader.FieldCount; j++)
+                                    {
+                                        // Process each column as appropriate
+                                        object obj = reader.GetFieldValue<object>(j);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Assert.Fail("Caught unexpected exception: " + e);
+                        }
+                    }
+
+                    if (closeConnection)
+                    {
+                        conn.Close();
+                    }
+                };
+            }
         }
 
         [Test]
@@ -132,7 +219,10 @@ namespace Snowflake.Data.Tests
             conn3.Open();
             conn3.Close();
 
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            // The pooling timeout should apply to all connections being pooled,
+            // not just the connections created after the new setting,
+            // so expected result should be 0
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             SnowflakeDbConnectionPool.SetPooling(false);
         }
 
@@ -402,6 +492,110 @@ namespace Snowflake.Data.Tests
                     // fail the test case if anything wrong.
                     Assert.Fail();
                 }
+            }
+        }
+
+        [Test]
+        // test connection pooling with concurrent connection using async calls
+        public void TestConcurrentConnectionPoolingAsync()
+        {
+            // add test case name in connection string to make in unique for each test case
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
+            ConcurrentPoolingAsyncHelper(connStr, true);
+        }
+
+        [Test]
+        // test connection pooling with concurrent connection and using async calls no close
+        // call for connection. Connection is closed when Dispose() is called
+        // by framework.
+        public void TestConcurrentConnectionPoolingDisposeAsync()
+        {
+            // add test case name in connection string to make in unique for each test case
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
+            ConcurrentPoolingAsyncHelper(connStr, false);
+        }
+
+        static void ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection)
+        {
+            // task number a bit larger than pool size so some connections
+            // would fail on pooling while some connections could success
+            const int taskNum = 12;
+            // set short pooling timeout to cover the case that connection expired
+            const int poolTimeout = 3;
+
+            // reset to default settings in case it changed by other test cases
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.ClearAllPools();
+            SnowflakeDbConnectionPool.SetTimeout(poolTimeout);
+
+            var tasks = new Task[taskNum + 1];
+            for (int i = 0; i < taskNum; i++)
+            {
+                tasks[i] = QueryExecutionTaskAsync(connectionString, closeConnection);
+            }
+            // cover the case of invalid sessions to ensure that won't
+            // break connection pooling
+            tasks[taskNum] = InvalidConnectionTaskAsync(connectionString);
+            Task.WaitAll(tasks);
+
+            // set pooling timeout back to default to avoid impact on other test cases
+            SnowflakeDbConnectionPool.SetTimeout(3600);
+        }
+
+        // task to execute query with new connection in a loop
+        static async Task QueryExecutionTaskAsync(string connectionString, bool closeConnection)
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                using (var conn = new SnowflakeDbConnection(connectionString))
+                {
+                    await conn.OpenAsync();
+                    using (DbCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "select 1, 2, 3";
+                        try
+                        {
+                            using (DbDataReader reader = await cmd.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    for (int j = 0; j < reader.FieldCount; j++)
+                                    {
+                                        // Process each column as appropriate
+                                        object obj = await reader.GetFieldValueAsync<object>(j);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Assert.Fail("Caught unexpected exception: " + e);
+                        }
+                    }
+
+                    if (closeConnection)
+                    {
+                        await conn.CloseAsync(new CancellationTokenSource().Token);
+                    }
+                };
+            }
+        }
+
+        // task to generate invalid(not finish open) connections in a loop
+        static async Task InvalidConnectionTaskAsync(string connectionString)
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                using (var conn = new SnowflakeDbConnection(connectionString))
+                {
+                    // intentially not using await so the connection
+                    // will be disposed with invalid underlying session
+                    conn.OpenAsync();
+                };
+                // wait 100ms each time so the invalid sessions are generated
+                // roughly at the same speed as connections for query tasks
+                await Task.Delay(100);
             }
         }
     }
