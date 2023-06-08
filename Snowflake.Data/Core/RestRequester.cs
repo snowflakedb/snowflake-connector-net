@@ -55,45 +55,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            bool retry = false;
-            int retryCount = 0;
-            var result = default(T);
-            
-            do
+            using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
-                int backOffInSec = 1;
-                retry = false;
-                try
-                {
-                    //use it for testing only
-                    //bool forceParseError = true;
-                    //if (forceParseError)
-                    //{
-                    //    throw new Exception("json parsing error.");
-                    //}
-                    using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
-                    {
-                        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        result = JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
-                    }
-                }
-                catch (Exception e)
-                {
-                    if (retryCount < HttpUtil.MAX_RETRY)
-                    {
-                        logger.Debug($"PostAsync Exception, retry="+ retryCount);
-                        retry = true;
-                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
-                        ++retryCount;
-                        backOffInSec = backOffInSec * 2;
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-            } while (retry);
-            return result;
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+            }
         }
 
         public T Get<T>(IRestRequest request)
@@ -104,45 +70,11 @@ namespace Snowflake.Data.Core
 
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            bool retry = false;
-            int retryCount = 0;
-            var result = default(T);
-
-            do
+            using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
             {
-                int backOffInSec = 1;
-                retry = false;
-                try
-                {
-                    //use it for testing only
-                    //bool forceParseError = true;
-                    //if (forceParseError)
-                    //{
-                    //    throw new Exception("json parsing error.");
-                    //}
-                    using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
-                    {
-                        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        result = JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
-                    }
-                }
-                catch (Exception e)
-                {
-                    if (retryCount < HttpUtil.MAX_RETRY)
-                    {
-                        logger.Debug($"GetAsync Exception, retry=" + retryCount);
-                        retry = true;
-                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
-                        ++retryCount;
-                        backOffInSec = backOffInSec * 2;
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-            } while (retry);
-            return result;
+                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+            }
         }
 
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
