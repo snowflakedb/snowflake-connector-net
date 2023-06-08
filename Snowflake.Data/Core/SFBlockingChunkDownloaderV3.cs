@@ -161,7 +161,10 @@ namespace Snowflake.Data.Core
                 using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                     .ConfigureAwait(continueOnCapturedContext: false))
                 {
-                    //TODO this shouldn't be required.
+                    // retry on chunk downloading since the retry logic in HttpClient.RetryHandler
+                    // doesn't cover this. The GET request could be succeeded but network error
+                    // still could happen during reading chunk data from stream and that needs
+                    // retry as well.
                     try
                     {
                         IEnumerable<string> encoding;

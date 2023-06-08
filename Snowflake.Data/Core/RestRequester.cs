@@ -14,6 +14,7 @@ namespace Snowflake.Data.Core
 {
     /// <summary>
     /// The RestRequester is responsible to send out a rest request and receive response
+    /// No retry needed here since retry is made in HttpClient.RetryHandler (HttpUtil.cs)
     /// </summary>
     internal interface IRestRequester
     {
