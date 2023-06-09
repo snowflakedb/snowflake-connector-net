@@ -108,19 +108,7 @@ namespace Snowflake.Data.Core
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
-            {
-                httpHandler = new WinHttpHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
-                };
-            }
-            else
+            try
             {
                 httpHandler = new HttpClientHandler()
                 {
@@ -128,6 +116,16 @@ namespace Snowflake.Data.Core
                     CheckCertificateRevocationList = config.CrlCheckEnabled,
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false // Disable cookies
+                };
+            }
+            // special logic for .NET framework 4.7.1 that
+            // CheckCertificateRevocationList and SslProtocols are not supported
+            catch (PlatformNotSupportedException)
+            {
+                httpHandler = new HttpClientHandler()
+                {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false // Disable cookies
                 };
@@ -169,20 +167,10 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
-                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
-                else if (httpHandler is HttpClientHandler)
-                {
-                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
+                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                httpHandlerWithProxy.Proxy = proxy;
+                return httpHandlerWithProxy;
             }
             return httpHandler;
         }
