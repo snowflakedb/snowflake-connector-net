@@ -132,7 +132,8 @@ namespace Snowflake.Data.Core
         private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
         {
             //logger.Info($"Start downloading chunk #{downloadContext.chunkIndex}");
-            SFReusableChunk chunk;
+            SFReusableChunk chunk = downloadContext.chunk;
+            int backOffInSec = 1;
             bool retry = false;
             int retryCount = 0;
 
@@ -141,9 +142,7 @@ namespace Snowflake.Data.Core
 
             do
             {
-                int backOffInSec = 1;
                 retry = false;
-                chunk = downloadContext.chunk;
 
                 S3DownloadRequest downloadRequest =
                     new S3DownloadRequest()
@@ -162,13 +161,12 @@ namespace Snowflake.Data.Core
                 using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
                     .ConfigureAwait(continueOnCapturedContext: false))
                 {
-                    //TODO this shouldn't be required.
+                    // retry on chunk downloading since the retry logic in HttpClient.RetryHandler
+                    // doesn't cover this. The GET request could be succeeded but network error
+                    // still could happen during reading chunk data from stream and that needs
+                    // retry as well.
                     try
                     {
-                        if(forceParseError)
-                        {
-                            throw new Exception("json parsing error.");
-                        }
                         IEnumerable<string> encoding;
                         if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
                         {
@@ -186,6 +184,10 @@ namespace Snowflake.Data.Core
                         {
                             await ParseStreamIntoChunk(stream, chunk);
                         }
+                        if (forceParseError)
+                        {
+                            throw new Exception("json parsing error.");
+                        }
                     }
                     catch (Exception e)
                     {
@@ -193,9 +195,22 @@ namespace Snowflake.Data.Core
                         if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
+                            // reset the chunk before retry in case there could be garbage
+                            // data left from last attempt
+                            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+                            {
+                                rowCount = chunk.RowCount,
+                                url = chunk.Url
+                            };
+                            chunk.Reset(chunkInfo, chunk.chunkIndexToDownload);
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
                             ++retryCount;
+                            // Set next backoff time
                             backOffInSec = backOffInSec * 2;
+                            if (backOffInSec > HttpUtil.MAX_BACKOFF)
+                            {
+                                backOffInSec = HttpUtil.MAX_BACKOFF;
+                            }
                         }
                         else
                         {

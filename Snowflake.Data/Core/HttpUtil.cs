@@ -65,6 +65,7 @@ namespace Snowflake.Data.Core
     public sealed class HttpUtil
     {
         static internal readonly int MAX_RETRY = 6;
+        static internal readonly int MAX_BACKOFF = 16;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
         private HttpUtil() { }
@@ -107,19 +108,7 @@ namespace Snowflake.Data.Core
         private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && SFEnvironment.ClientEnv.IsNetFramework)
-            {
-                httpHandler = new WinHttpHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    CookieUsePolicy = CookieUsePolicy.IgnoreCookies
-                };
-            }
-            else
+            try
             {
                 httpHandler = new HttpClientHandler()
                 {
@@ -127,6 +116,16 @@ namespace Snowflake.Data.Core
                     CheckCertificateRevocationList = config.CrlCheckEnabled,
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false // Disable cookies
+                };
+            }
+            // special logic for .NET framework 4.7.1 that
+            // CheckCertificateRevocationList and SslProtocols are not supported
+            catch (PlatformNotSupportedException)
+            {
+                httpHandler = new HttpClientHandler()
+                {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false // Disable cookies
                 };
@@ -168,20 +167,10 @@ namespace Snowflake.Data.Core
                     }
                     proxy.BypassList = bypassList;
                 }
-                if (httpHandler is WinHttpHandler && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    WinHttpHandler httpHandlerWithProxy = (WinHttpHandler)httpHandler;
 
-                    httpHandlerWithProxy.WindowsProxyUsePolicy = WindowsProxyUsePolicy.UseCustomProxy;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
-                else if (httpHandler is HttpClientHandler)
-                {
-                    HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                    httpHandlerWithProxy.Proxy = proxy;
-                    return httpHandlerWithProxy;
-                }
+                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                httpHandlerWithProxy.Proxy = proxy;
+                return httpHandlerWithProxy;
             }
             return httpHandler;
         }
@@ -295,7 +284,6 @@ namespace Snowflake.Data.Core
                 HttpResponseMessage response = null;
                 int backOffInSec = 1;
                 int totalRetryTime = 0;
-                int maxDefaultBackoff = 16;
 
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
@@ -387,8 +375,8 @@ namespace Snowflake.Data.Core
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                     totalRetryTime += backOffInSec;
                     // Set next backoff time
-                    backOffInSec = backOffInSec >= maxDefaultBackoff ?
-                            maxDefaultBackoff : backOffInSec * 2;
+                    backOffInSec = backOffInSec >= MAX_BACKOFF ?
+                            MAX_BACKOFF : backOffInSec * 2;
 
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
