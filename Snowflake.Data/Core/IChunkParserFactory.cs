@@ -4,6 +4,6 @@ namespace Snowflake.Data.Core
 {
     internal interface IChunkParserFactory
     {
-        public IChunkParser GetParser(Stream stream);
+        IChunkParser GetParser(Stream stream);
     }
 }
