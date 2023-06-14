@@ -189,12 +189,7 @@ namespace Snowflake.Data.Core
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
-                            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-                            {
-                                rowCount = chunk.RowCount,
-                                url = chunk.Url
-                            };
-                            chunk.Reset(chunkInfo, chunk.chunkIndexToDownload);
+                            chunk.Reset(chunkInfos[chunk.chunkIndexToDownload], chunk.chunkIndexToDownload);
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
                             ++retryCount;
                             // Set next backoff time
