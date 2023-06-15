@@ -35,6 +35,11 @@ namespace Snowflake.Data.Core
             data.Reset(this.RowCount, this.ColCount, chunkInfo.uncompressedSize);
         }
 
+        internal void ResetForRetry()
+        {
+            data.ResetForRetry();
+        }
+        
         public int GetRowCount()
         {
             return RowCount;
@@ -93,6 +98,12 @@ namespace Snowflake.Data.Core
                 int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
                 this.blockCount = getBlock(bytesNeeded - 1) + 1;
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+            }
+
+            internal void ResetForRetry()
+            {
+                currentDatOffset = 0;
+                nextIndex = 0;
             }
 
             public UTF8Buffer get(int index)
