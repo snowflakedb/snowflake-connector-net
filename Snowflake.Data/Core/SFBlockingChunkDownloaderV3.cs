@@ -136,10 +136,7 @@ namespace Snowflake.Data.Core
             int backOffInSec = 1;
             bool retry = false;
             int retryCount = 0;
-
-            //this is used for test case
-            bool forceParseError = Boolean.Parse((string)sessionProperies[SFSessionProperty.FORCEPARSEERROR]);
-
+            
             do
             {
                 retry = false;
@@ -184,25 +181,15 @@ namespace Snowflake.Data.Core
                         {
                             await ParseStreamIntoChunk(stream, chunk);
                         }
-                        if (forceParseError)
-                        {
-                            throw new Exception("json parsing error.");
-                        }
                     }
                     catch (Exception e)
                     {
-                        forceParseError = false;
                         if (retryCount < HttpUtil.MAX_RETRY)
                         {
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
-                            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-                            {
-                                rowCount = chunk.RowCount,
-                                url = chunk.Url
-                            };
-                            chunk.Reset(chunkInfo, chunk.chunkIndexToDownload);
+                            chunk.ResetForRetry();
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
                             ++retryCount;
                             // Set next backoff time
@@ -235,7 +222,7 @@ namespace Snowflake.Data.Core
         /// <param name="resultChunk"></param>
         private async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
         {
-            IChunkParser parser = new ReusableChunkParser(content);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(content);
             await parser.ParseChunk(resultChunk);
         }
     }

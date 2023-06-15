@@ -263,11 +263,14 @@ namespace Snowflake.Data.Tests
 
         /*
          * Disabled to make sure that configuration changes does not cause problems with appveyor
-         * 
+         */
         [Test]
         public void TestUseV1ResultParser()
         {
-            SFConfiguration.Instance().UseV2JsonParser = false;
+            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
+            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
+            SFConfiguration.Instance().ChunkParserVersion = 1;
+            SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -286,13 +289,17 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
-            SFConfiguration.Instance().UseV2JsonParser = true;
+            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
+            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
         [Test]
         public void TestUseV2ChunkDownloader()
         {
-            SFConfiguration.Instance().UseV2ChunkDownloader = true;
+            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
+            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
+            SFConfiguration.Instance().ChunkParserVersion = 2;
+            SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -311,10 +318,9 @@ namespace Snowflake.Data.Tests
                 }
                 conn.Close();
             }
-            SFConfiguration.Instance().UseV2ChunkDownloader = false;
+            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
+            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
-        */
-
 
         [Test]
         public void TestDataSourceError()

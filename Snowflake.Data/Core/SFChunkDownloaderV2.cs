@@ -16,6 +16,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
+    [Obsolete("SFChunkDownloaderV2 is deprecated", false)]
     class SFChunkDownloaderV2 : IChunkDownloader
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloaderV2>();
@@ -171,7 +172,7 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(concatStream);
             parser.ParseChunk(resultChunk);
         }
     }
