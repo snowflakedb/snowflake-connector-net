@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests
     using System.Text;
     using System.Threading.Tasks;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class ChunkDeserializerTest
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();

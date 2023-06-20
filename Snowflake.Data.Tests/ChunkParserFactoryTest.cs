@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests
     using System.Text;
     using System.Threading;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class ChunkParserFactoryTest
     {
         bool UseV2JsonParserDefault = SFConfiguration.Instance().UseV2JsonParser;
