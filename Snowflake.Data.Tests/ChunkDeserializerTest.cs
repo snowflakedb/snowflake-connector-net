@@ -4,6 +4,7 @@
 
 namespace Snowflake.Data.Tests
 {
+    using Newtonsoft.Json;
     using NUnit.Framework;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
@@ -70,6 +71,36 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(2, chunk.rowSet.GetLength(0)); // Check row length
             Assert.AreEqual(0, chunk.rowSet.GetLength(1)); // Check col length
             Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0, 0).SafeToString());
+        }
+
+        [Test]
+        public void TestParsingNonJsonChunk()
+        {
+            // Create a sample data using non-JSON instead
+            string data = "[ \"1\", \"1.234\", \"abcde\" ]";
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+
+            SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
+
+            // Should throw an error when parsing non-JSONArray
+            Assert.ThrowsAsync<JsonSerializationException>(async () => await parser.ParseChunk(chunk));
+        }
+
+        [Test]
+        public void TestParsingNonJsonArrayChunk()
+        {
+            // Create a sample data using JSON objects instead
+            string data = "[ {\"1\", \"1.234\", \"abcde\"},  {\"2\", \"5.678\", \"fghi\"} ]";
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+
+            SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
+
+            // Should throw an error when parsing non-JSONArray
+            Assert.ThrowsAsync<JsonSerializationException>(async () => await parser.ParseChunk(chunk));
         }
 
         [Test]
