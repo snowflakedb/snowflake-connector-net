@@ -37,14 +37,19 @@ namespace Snowflake.Data.Tests
             // Do nothing;
         }
 
+        public IChunkParser getParser(string data)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            return ChunkParserFactory.Instance.GetParser(stream);
+        }
+
         [Test]
         public async Task TestParsingEmptyChunk()
         {
             // Create sample data for parser
             string data = "[ ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
@@ -60,9 +65,7 @@ namespace Snowflake.Data.Tests
         {
             // Create sample data for parser
             string data = "[ [],  [] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
@@ -78,9 +81,7 @@ namespace Snowflake.Data.Tests
         {
             // Create a sample data using non-JSON instead
             string data = "[ \"1\", \"1.234\", \"abcde\" ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
@@ -93,9 +94,7 @@ namespace Snowflake.Data.Tests
         {
             // Create a sample data using JSON objects instead
             string data = "[ {\"1\", \"1.234\", \"abcde\"},  {\"2\", \"5.678\", \"fghi\"} ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
@@ -108,9 +107,7 @@ namespace Snowflake.Data.Tests
         {
             // Create sample data for parser
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
@@ -129,9 +126,7 @@ namespace Snowflake.Data.Tests
         {
             // Create sample data that contain null values
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+            IChunkParser parser = getParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
