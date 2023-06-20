@@ -7,6 +7,7 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
+    using System;
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
@@ -33,6 +34,42 @@ namespace Snowflake.Data.Tests
         public void ChunkDeserializerTestDone()
         {
             // Do nothing;
+        }
+
+        [Test]
+        public async Task TestParsingEmptyChunk()
+        {
+            // Create sample data for parser
+            string data = "[ ]";
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+
+            SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
+
+            await parser.ParseChunk(chunk);
+
+            Assert.AreEqual(0, chunk.rowSet.GetLength(0)); // Check row length
+            Assert.AreEqual(0, chunk.rowSet.GetLength(1)); // Check col length
+            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0, 0).SafeToString());
+        }
+
+        [Test]
+        public async Task TestParsingEmptyArraysInChunk()
+        {
+            // Create sample data for parser
+            string data = "[ [],  [] ]";
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+
+            SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
+
+            await parser.ParseChunk(chunk);
+
+            Assert.AreEqual(2, chunk.rowSet.GetLength(0)); // Check row length
+            Assert.AreEqual(0, chunk.rowSet.GetLength(1)); // Check col length
+            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0, 0).SafeToString());
         }
 
         [Test]
