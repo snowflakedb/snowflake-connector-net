@@ -7,6 +7,7 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Security;
@@ -34,7 +35,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestGetParser([Values(false, true)] bool useV2JsonParser, [Values(1,2,3)] int chunkParserVersion)
+        public void TestGetParser([Values(false, true)] bool useV2JsonParser, [Values(1, 2, 3, 4)] int chunkParserVersion)
         {
             // Set configuration settings
             SFConfiguration.Instance().UseV2JsonParser = useV2JsonParser;
@@ -43,7 +44,19 @@ namespace Snowflake.Data.Tests
             // Get parser using sample stream
             byte[] bytes = Encoding.UTF8.GetBytes("test");
             Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(stream);
+
+            IChunkParser parser = null;
+
+            // GetParser() throws an error when ChunkParserVersion is not 1-3
+            if (chunkParserVersion == 4 && !useV2JsonParser)
+            {
+                Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(stream));
+                Assert.AreEqual("Unsupported Chunk Parser version specified in the SFConfiguration", ex.Message);
+            }
+            else
+            {
+                parser = ChunkParserFactory.Instance.GetParser(stream);
+            }
 
             // GetParser() returns ChunkDeserializer when UseV2JsonParser is true
             if (SFConfiguration.Instance().UseV2JsonParser)
