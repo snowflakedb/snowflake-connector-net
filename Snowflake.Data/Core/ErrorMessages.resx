@@ -180,4 +180,7 @@
   <data name="UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM" xml:space="preserve">
     <value>Snowflake type {0} is not supported for parameters.</value>
   </data>
+  <data name="BROWSER_RESPONSE_TIMEOUT" xml:space="preserve">
+    <value>Browser response timed out after {0} seconds.</value>
+  </data>
 </root>
