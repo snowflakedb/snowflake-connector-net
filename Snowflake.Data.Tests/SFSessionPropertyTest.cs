@@ -46,6 +46,7 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "60" }
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -69,7 +70,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.USEPROXY, "true" },
                     { SFSessionProperty.PROXYHOST, "proxy.com" },
                     { SFSessionProperty.PROXYPORT, "1234" },
-                    { SFSessionProperty.NONPROXYHOSTS, "localhost" }
+                    { SFSessionProperty.NONPROXYHOSTS, "localhost" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "60" }
                 },
                 ConnectionString =
                     "ACCOUNT=testaccount;USER=testuser;PASSWORD=123;useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -95,7 +97,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.USEPROXY, "false" },
                     { SFSessionProperty.PROXYHOST, "proxy.com" },
                     { SFSessionProperty.PROXYPORT, "1234" },
-                    { SFSessionProperty.NONPROXYHOSTS, "localhost" }
+                    { SFSessionProperty.NONPROXYHOSTS, "localhost" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "60" }
                 },
                 ConnectionString =
                     "ACCOUNT=testaccount;USER=testuser;PASSWORD=123;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
