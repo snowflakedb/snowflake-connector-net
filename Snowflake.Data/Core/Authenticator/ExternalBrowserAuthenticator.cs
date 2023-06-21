@@ -69,23 +69,15 @@ namespace Snowflake.Data.Core.Authenticator
                 StartBrowser(idpUrl);
 
                 logger.Debug("Get the redirect SAML request");
-                var context = await httpListener.GetContextAsync().ConfigureAwait(false);
-                var request = context.Request;
-                _samlResponseToken = ValidateAndExtractToken(request);
-                HttpListenerResponse response = context.Response;
-                try
+                _successEvent = new ManualResetEvent(false);
+                httpListener.BeginGetContext(GetContextCallback, httpListener);
+                var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+                if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    using (var output = response.OutputStream)
-                    {
-                        await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
-                    }
+                    logger.Debug("Browser response timeout");
+                    throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
-                catch
-                {
-                    // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("External browser response not sent out");
-                }
-
+                
                 httpListener.Stop();
             }
 
@@ -101,7 +93,6 @@ namespace Snowflake.Data.Core.Authenticator
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
-                httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
@@ -117,13 +108,14 @@ namespace Snowflake.Data.Core.Authenticator
 
                 logger.Debug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
-                var result = httpListener.BeginGetContext(GetContextCallback, httpListener);
+                httpListener.BeginGetContext(GetContextCallback, httpListener);
                 var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
                     logger.Debug("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
+                
                 httpListener.Stop();
             }
 
@@ -170,9 +162,9 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static HttpListener GetHttpListener(int port)
         {
-            string redirectURI = string.Format("http://{0}:{1}/", IPAddress.Loopback, port);
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add(redirectURI);
+            listener.Prefixes.Add($"http://{IPAddress.Loopback}:{port}/");
+            listener.Prefixes.Add($"http://localhost:{port}/");
             return listener;
         }
 

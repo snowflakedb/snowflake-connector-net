@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Data.Common;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -744,6 +746,31 @@ namespace Snowflake.Data.Tests
             }
         }
 
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAsync()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                Assert.AreEqual(ConnectionState.Connecting, conn.State);
+         
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                    task.Wait(CancellationToken.None);
+                    Assert.AreEqual("QA", task.Result);
+                }
+            }
+        }
+        
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithWrongUser()
