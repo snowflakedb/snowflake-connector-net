@@ -772,7 +772,7 @@ namespace Snowflake.Data.Tests
         }
         
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionTimeoutAfter10s()
         {
             // Do not log in by external browser - timeout after 10s should happen 
