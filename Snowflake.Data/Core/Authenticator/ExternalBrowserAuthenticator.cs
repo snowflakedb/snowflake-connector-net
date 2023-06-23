@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.Authenticator
                 var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    logger.Debug("Browser response timeout");
+                    logger.Warn("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
                 
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Core.Authenticator
                 var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    logger.Debug("Browser response timeout");
+                    logger.Warn("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
                 
