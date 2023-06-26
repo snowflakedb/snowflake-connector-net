@@ -116,7 +116,8 @@ namespace Snowflake.Data.Tests
             SFResultChunk chunk = new SFResultChunk(new string[2, 3]);
 
             // Should throw an error when parsing a JSON object
-            Assert.ThrowsAsync<SnowflakeDbException>(async () => await parser.ParseChunk(chunk));
+            Exception ex = Assert.ThrowsAsync<SnowflakeDbException>(async () => await parser.ParseChunk(chunk));
+            Assert.That(ex.Message, Does.Match(".*Error\\: Snowflake Internal Error\\: Unexpected token type: StartObject.*"));
         }
 
         [Test]
