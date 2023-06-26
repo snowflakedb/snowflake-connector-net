@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestParsingNonJsonArrayAndOneArray()
+        public void TestThrowingExceptionOnUsupportedNestedJsonArrays()
         {
             // Create a sample data using non-array data and an array
             string data = "[ \"1\", \"1.234\", \"abcde\", [\"2\", \"5.678\", \"fghi\"] ]";
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestParsingJsonObjectChunk()
+        public void TestThrowingExceptionForJsonObjectElementsInAnArray()
         {
             // Create a sample data using JSON objects instead
             string data = "[ {\"1\", \"1.234\", \"abcde\"},  {\"2\", \"5.678\", \"fghi\"} ]";
