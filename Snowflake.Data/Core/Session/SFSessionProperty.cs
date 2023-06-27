@@ -76,6 +76,8 @@ namespace Snowflake.Data.Core
         GCS_USE_DOWNSCOPED_CREDENTIAL,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         FORCEPARSEERROR,
+        [SFSessionPropertyAttr(required = false, defaultValue = "120")]
+        BROWSER_RESPONSE_TIMEOUT,
     }
 
     class SFSessionPropertyAttr : Attribute

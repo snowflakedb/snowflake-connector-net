@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Data.Common;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -729,6 +731,7 @@ namespace Snowflake.Data.Tests
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUser()
         {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
@@ -742,6 +745,62 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual("QA", command.ExecuteScalar().ToString());
                 }
             }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAsync()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                    task.Wait(CancellationToken.None);
+                    Assert.AreEqual("QA", task.Result);
+                }
+            }
+        }
+        
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionTimeoutAfter10s()
+        {
+            // Do not log in by external browser - timeout after 10s should happen 
+            int waitSeconds = 10;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            Assert.Throws<SnowflakeDbException>(() =>
+                {
+                    using (IDbConnection conn = new SnowflakeDbConnection())
+                    {
+                        conn.ConnectionString
+                            = ConnectionStringWithoutAuth
+                              + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
+                        conn.Open();
+                        Assert.AreEqual(ConnectionState.Open, conn.State);
+                        using (IDbCommand command = conn.CreateCommand())
+                        {
+                            command.CommandText = "SELECT CURRENT_USER()";
+                            Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                        }
+                    }
+                }
+            );
+            stopwatch.Stop();
+
+            // timeout after specified number of seconds
+            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, waitSeconds * 1000);
+            // and not later than 5s after expected time 
+            Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
         }
 
         [Test]

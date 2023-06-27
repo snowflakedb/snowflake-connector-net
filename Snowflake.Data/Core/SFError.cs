@@ -75,6 +75,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270056)]
         INVALID_BROWSER_URL,
+
+        [SFErrorAttr(errorCode = 270057)]
+        BROWSER_RESPONSE_TIMEOUT,
     }
 
     class SFErrorAttr : Attribute

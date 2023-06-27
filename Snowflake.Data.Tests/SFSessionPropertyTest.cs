@@ -26,19 +26,33 @@ namespace Snowflake.Data.Tests
         
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
+            string defAccount = "testaccount";
+            string defUser = "testuser";
+            string defHost = "testaccount.snowflakecomputing.com";
+            string defAuthenticator = "snowflake";
+            string defScheme = "https";
+            string defConnectionTimeout = "120";
+            string defBrowserResponseTime = "120";
+            string defPassword = "123";
+            string defPort = "443";
+
+            string defProxyHost = "proxy.com";
+            string defProxyPort = "1234";
+            string defNonProxyHosts = "localhost";
+            
             var simpleTestCase = new TestCase()
             {
-                ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=123;",
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};",
                 ExpectedProperties = new SFSessionProperties()
                 {
-                    { SFSessionProperty.ACCOUNT, "testaccount" },
-                    { SFSessionProperty.USER, "testuser" },
-                    { SFSessionProperty.HOST, "testaccount.snowflakecomputing.com" },
-                    { SFSessionProperty.AUTHENTICATOR, "snowflake" },
-                    { SFSessionProperty.SCHEME, "https" },
-                    { SFSessionProperty.CONNECTION_TIMEOUT, "120" },
-                    { SFSessionProperty.PASSWORD, "123" },
-                    { SFSessionProperty.PORT, "443" },
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
                     { SFSessionProperty.INSECUREMODE, "false" },
@@ -46,20 +60,44 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
                 }
             };
+            var testCaseWithBrowserResponseTimeout = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};BROWSER_RESPONSE_TIMEOUT=180",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "180" }
+                }
+            };   
             var testCaseWithProxySettings = new TestCase()
             {
                 ExpectedProperties = new SFSessionProperties()
                 {
-                    { SFSessionProperty.ACCOUNT, "testaccount" },
-                    { SFSessionProperty.USER, "testuser" },
-                    { SFSessionProperty.HOST, "testaccount.snowflakecomputing.com" },
-                    { SFSessionProperty.AUTHENTICATOR, "snowflake" },
-                    { SFSessionProperty.SCHEME, "https" },
-                    { SFSessionProperty.CONNECTION_TIMEOUT, "120" },
-                    { SFSessionProperty.PASSWORD, "123" },
-                    { SFSessionProperty.PORT, "443" },
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
@@ -67,25 +105,26 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.USEPROXY, "true" },
-                    { SFSessionProperty.PROXYHOST, "proxy.com" },
-                    { SFSessionProperty.PROXYPORT, "1234" },
-                    { SFSessionProperty.NONPROXYHOSTS, "localhost" }
+                    { SFSessionProperty.PROXYHOST, defProxyHost },
+                    { SFSessionProperty.PROXYPORT, defProxyPort },
+                    { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
                 },
                 ConnectionString =
-                    "ACCOUNT=testaccount;USER=testuser;PASSWORD=123;useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
+                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
             };
             var testCaseThatDefaultForUseProxyIsFalse = new TestCase()
             {
                 ExpectedProperties = new SFSessionProperties()
                 {
-                    { SFSessionProperty.ACCOUNT, "testaccount" },
-                    { SFSessionProperty.USER, "testuser" },
-                    { SFSessionProperty.HOST, "testaccount.snowflakecomputing.com" },
-                    { SFSessionProperty.AUTHENTICATOR, "snowflake" },
-                    { SFSessionProperty.SCHEME, "https" },
-                    { SFSessionProperty.CONNECTION_TIMEOUT, "120" },
-                    { SFSessionProperty.PASSWORD, "123" },
-                    { SFSessionProperty.PORT, "443" },
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
@@ -93,16 +132,18 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.PROXYHOST, "proxy.com" },
-                    { SFSessionProperty.PROXYPORT, "1234" },
-                    { SFSessionProperty.NONPROXYHOSTS, "localhost" }
+                    { SFSessionProperty.PROXYHOST, defProxyHost },
+                    { SFSessionProperty.PROXYPORT, defProxyPort },
+                    { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
                 },
                 ConnectionString =
-                    "ACCOUNT=testaccount;USER=testuser;PASSWORD=123;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
+                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
             };            
             return new TestCase[]
             {
                 simpleTestCase,
+                testCaseWithBrowserResponseTimeout,
                 testCaseWithProxySettings,
                 testCaseThatDefaultForUseProxyIsFalse
             };
