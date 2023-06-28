@@ -25,6 +25,7 @@ namespace Snowflake.Data.Core
         {
             this.rowSet = rowSet;
             this.rowCount = rowSet.GetLength(0);
+            this.colCount = rowSet.GetLength(1);
             this.downloadState = DownloadState.NOT_STARTED;
         }
 
