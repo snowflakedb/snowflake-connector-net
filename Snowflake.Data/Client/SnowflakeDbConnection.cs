@@ -61,10 +61,15 @@ namespace Snowflake.Data.Client
 
         public bool IsOpen()
         {
-            return _connectionState == ConnectionState.Open;
+            return _connectionState == ConnectionState.Open && SfSession != null;
         }
 
-        public override string Database => _connectionState == ConnectionState.Open ? SfSession.database : string.Empty;
+        private bool IsNonClosedWithSession()
+        {
+            return _connectionState != ConnectionState.Closed && SfSession != null;
+        }
+
+        public override string Database => IsOpen() ? SfSession.database : string.Empty;
 
         public override int ConnectionTimeout => this._connectionTimeout;
 
@@ -86,10 +91,46 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override string ServerVersion => _connectionState == ConnectionState.Open ? SfSession.serverVersion : "";
+        public override string ServerVersion => IsOpen() ? SfSession.serverVersion : "";
 
         public override ConnectionState State => _connectionState;
 
+        private object? GetTransactionId()
+        {
+            if (!IsOpen())
+            {
+                return DBNull.Value;
+            }
+            using (IDbCommand command = CreateDbCommand())
+            {
+                command.CommandText = "SELECT CURRENT_TRANSACTION()";
+                return command.ExecuteScalar(); // TODO: what if exc
+            }
+        }
+
+        public bool HasTransactionInProgress() => GetTransactionId() != DBNull.Value;
+        
+        private bool TerminateTransaction(object? transactionInProgressId)
+        {
+            if (transactionInProgressId == DBNull.Value)
+                return false;
+            try
+            {
+                using (IDbCommand command = CreateDbCommand())
+                {
+                    command.CommandText = "ROLLBACK";
+                    command.ExecuteNonQuery(); 
+                    logger.Warn("Rolled back transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId);
+                    return true;
+                }
+            }
+            catch (SnowflakeDbException exception)
+            {
+                logger.Error("Unable to rollback transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId + ", exception: " + exception.Message);
+                return false;
+            }
+        }
+        
         public override void ChangeDatabase(string databaseName)
         {
             logger.Debug($"ChangeDatabase to:{databaseName}");
@@ -106,10 +147,16 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if ((_connectionState != ConnectionState.Closed) &&
-                (SfSession != null))
+            if (IsNonClosedWithSession())
             {
-                if (SnowflakeDbConnectionPool.addSession(SfSession))
+                var transactionInProgress = GetTransactionId();
+                if (transactionInProgress != DBNull.Value)
+                {
+                    if (TerminateTransaction(transactionInProgress))
+                        transactionInProgress = DBNull.Value;
+                }
+                
+                if (transactionInProgress == DBNull.Value && SnowflakeDbConnectionPool.addSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -134,9 +181,16 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if ((_connectionState != ConnectionState.Closed) && SfSession != null)
+                if (IsNonClosedWithSession())
                 {
-                    if (SnowflakeDbConnectionPool.addSession(SfSession))
+                    var transactionInProgress = GetTransactionId();
+                    if (transactionInProgress != DBNull.Value)
+                    {
+                        if (TerminateTransaction(transactionInProgress))
+                            transactionInProgress = DBNull.Value;
+                    }
+
+                    if (transactionInProgress != DBNull.Value && SnowflakeDbConnectionPool.addSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;

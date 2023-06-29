@@ -12,12 +12,11 @@ namespace Snowflake.Data.Tests
     using System.Threading.Tasks;
     using System.Threading;
     using Snowflake.Data.Log;
-    using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
-    using System.Runtime.InteropServices;
     using System.Data.Common;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
+    [Apartment(ApartmentState.STA)]
     class SFConnectionPoolT : SFBaseTest
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
@@ -502,6 +501,90 @@ namespace Snowflake.Data.Tests
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
             ConcurrentPoolingAsyncHelper(connStr, true);
+        }
+
+        [Test]
+        public void TestRollbackTransactionOnPooledWhenExceptionOccurred()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+
+            object firstOpenedSession = null;
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = ConnectionString;
+                connection.Open();
+                firstOpenedSession = connection.SfSession.sessionId;
+                connection.BeginTransaction();
+                Assert.Throws<SnowflakeDbException>(() =>
+                {
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "invalid command will throw";
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }
+
+            using (var connectionWithSessionReused = new SnowflakeDbConnection())
+            {
+                connectionWithSessionReused.ConnectionString = ConnectionString;
+                connectionWithSessionReused.Open();
+                Assert.AreEqual(firstOpenedSession, connectionWithSessionReused.SfSession.sessionId);
+                using (var cmd = connectionWithSessionReused.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                    Assert.AreEqual(DBNull.Value, cmd.ExecuteScalar());
+                    Assert.AreEqual(false, connectionWithSessionReused.HasTransactionInProgress());
+                }
+                connectionWithSessionReused.Close();
+            }
+        }
+
+        [Test]
+        public void TestRollbackTransactionOnPooledWhenConnectionClose()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            
+            conn.Open();
+            IDbCommand command = conn.CreateCommand();
+            object firstOpenedSession = conn.SfSession.sessionId;
+            command.CommandText = "BEGIN TRANSACTION ";
+            command.ExecuteNonQuery();
+            conn.Close();
+            
+            conn.Open();
+            Assert.AreEqual(firstOpenedSession, conn.SfSession.sessionId);
+            command.CommandText = "SELECT CURRENT_TRANSACTION()";
+            Assert.AreEqual(DBNull.Value, command.ExecuteScalar());
+            Assert.AreEqual(false, conn.HasTransactionInProgress());
+            conn.Close();
+        }
+
+        [Test]
+        public void TestFailureOfTransactionRollbackOnConnectionClosePreventsAddingToPool()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            // TODO: mock method SnowflakeDbConnection.TerminateTransaction to throw exc
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            conn.BeginTransaction();
+            Assert.Throws<SnowflakeDbException>(() =>
+                {
+                    using (IDbCommand command = conn.CreateCommand())
+                    {
+                        command.CommandText = "invalid sql";
+                        command.ExecuteNonQuery();
+                    }
+                });
+            conn.Close();
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
 
         [Test]
