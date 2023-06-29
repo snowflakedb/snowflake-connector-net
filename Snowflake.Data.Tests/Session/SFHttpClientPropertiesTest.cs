@@ -3,6 +3,7 @@
  */
 
 using System.Collections.Generic;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 
@@ -87,8 +88,13 @@ namespace Snowflake.Data.Tests.Session
         public void ShouldExtractProperties(PropertiesTestCase testCase)
         {
             // given
-            var extractor = new SFSessionHttpClientProperties.Extractor(new SFSessionHttpClientProxyProperties.Extractor());
+            var proxyExtractorMock = new Moq.Mock<SFSessionHttpClientProxyProperties.IExtractor>();
+            var extractor = new SFSessionHttpClientProperties.Extractor(proxyExtractorMock.Object);
             var properties = SFSessionProperties.parseConnectionString(testCase.conectionString, null);
+            var proxyProperties = new SFSessionHttpClientProxyProperties();
+            proxyExtractorMock
+                .Setup(e => e.ExtractProperties(properties))
+                .Returns(proxyProperties);
 
             // when
             var extractedProperties = extractor.ExtractProperties(properties);
@@ -100,7 +106,8 @@ namespace Snowflake.Data.Tests.Session
             Assert.AreEqual(testCase.expectedProperties.insecureMode, extractedProperties.insecureMode);
             Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
             Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
-            // TODO: after adding a mocking library verify that proxy parameters extracted 
+            Assert.AreEqual(proxyProperties, extractedProperties.proxyProperties);
+            proxyExtractorMock.Verify(e => e.ExtractProperties(properties), Times.Once);
         }
     
         public static IEnumerable<PropertiesTestCase> PropertiesProvider()
