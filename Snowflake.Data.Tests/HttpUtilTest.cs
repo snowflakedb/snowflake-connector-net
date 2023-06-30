@@ -2,6 +2,8 @@
  * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Net.Http;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -35,6 +37,52 @@ namespace Snowflake.Data.Tests
             bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
             Assert.AreEqual(expectedIsRetryable, actualIsRetryable);
+        }
+
+        [Test]
+        public void ShouldCreateHttpClientHandlerWithProxy()
+        {
+            // given
+            var config = new HttpClientConfig(
+                true,
+                "snowflake.com",
+                "123",
+                "Bartek",
+                "proxyPassword",
+                "localhost", 
+                false,
+                false
+            );
+            
+            // when
+            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
+            
+            // then
+            Assert.IsTrue(handler.UseProxy);
+            Assert.IsNotNull(handler.Proxy);
+        }
+
+        [Test]
+        public void ShouldCreateHttpClientHandlerWithoutProxy()
+        {
+            // given
+            var config = new HttpClientConfig(
+                true,
+                null,
+                null,
+                null,
+                null,
+                null, 
+                false,
+                false
+            );
+            
+            // when
+            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
+            
+            // then
+            Assert.IsFalse(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
         }
     }
 }

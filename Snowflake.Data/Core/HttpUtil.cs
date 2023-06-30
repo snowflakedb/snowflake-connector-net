@@ -93,7 +93,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(setupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404))
+                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -105,7 +105,7 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        private HttpMessageHandler setupCustomHttpHandler(HttpClientConfig config)
+        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config)
         {
             HttpMessageHandler httpHandler;
             try
@@ -117,7 +117,8 @@ namespace Snowflake.Data.Core
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false // Disable cookies
+                    UseCookies = false, // Disable cookies
+                    UseProxy = false
                 };
             }
             // special logic for .NET framework 4.7.1 that
@@ -127,7 +128,8 @@ namespace Snowflake.Data.Core
                 httpHandler = new HttpClientHandler()
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false // Disable cookies
+                    UseCookies = false, // Disable cookies
+                    UseProxy = false
                 };
             }
 
@@ -169,6 +171,7 @@ namespace Snowflake.Data.Core
                 }
 
                 HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                httpHandlerWithProxy.UseProxy = true;
                 httpHandlerWithProxy.Proxy = proxy;
                 return httpHandlerWithProxy;
             }
