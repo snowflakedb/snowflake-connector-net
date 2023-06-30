@@ -116,7 +116,7 @@ namespace Snowflake.Data.Client
                 return false;
             try
             {
-                using (IDbCommand command = CreateDbCommand())
+                using (IDbCommand command = CreateCommand())
                 {
                     command.CommandText = "ROLLBACK";
                     command.ExecuteNonQuery(); 

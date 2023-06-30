@@ -14,6 +14,7 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Log;
     using Snowflake.Data.Tests.Mock;
     using System.Data.Common;
+    using Moq;
 
     [TestFixture, NonParallelizable]
     [Apartment(ApartmentState.STA)]
@@ -570,8 +571,19 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            // TODO: mock method SnowflakeDbConnection.TerminateTransaction to throw exc
-            var conn = new SnowflakeDbConnection();
+            var connSpy = new Mock<SnowflakeDbConnection>().As<IDbConnection>();
+            connSpy.CallBase = true;
+            Mock<IDbCommand> mockDbCommand = new Mock<IDbCommand>();
+            mockDbCommand.SetupSequence(it => it.ExecuteNonQuery())
+                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "syntax error"))
+                .Throws(new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY, "error on transaction rollback"));
+            connSpy.SetupSequence(it => it.CreateCommand())
+                .CallBase() // BEGIN TRANS
+                .Returns(mockDbCommand.Object) // INVALID SQL
+                .CallBase() // for conn.Close() => GET TRANS ID
+                .Returns(mockDbCommand.Object); // for conn.Close() => ROLLBACK
+
+            var conn = connSpy.Object;
             conn.ConnectionString = ConnectionString;
             conn.Open();
             conn.BeginTransaction();
@@ -579,12 +591,13 @@ namespace Snowflake.Data.Tests
                 {
                     using (IDbCommand command = conn.CreateCommand())
                     {
-                        command.CommandText = "invalid sql";
+                        command.CommandText = "INVALID SQL";
                         command.ExecuteNonQuery();
                     }
                 });
             conn.Close();
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }
 
         [Test]
