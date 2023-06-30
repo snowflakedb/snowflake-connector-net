@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests
                 true,
                 "snowflake.com",
                 "123",
-                "Bartek",
+                "testUser",
                 "proxyPassword",
                 "localhost", 
                 false,
