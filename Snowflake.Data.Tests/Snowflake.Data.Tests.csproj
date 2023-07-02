@@ -44,7 +44,7 @@
   
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.PowerShell.Commands.Utility">
-      <Version>7.2.5</Version>
+      <Version>7.2.12</Version>
     </PackageReference>
   </ItemGroup>
   
