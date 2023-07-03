@@ -22,6 +22,14 @@ namespace Snowflake.Data.Client
 
         internal ConnectionState _connectionState;
 
+        private DbProviderFactory _snowflakeDbFactory = new SnowflakeDbFactory();
+
+        internal DbProviderFactory ProviderFactory
+        {
+            get => _snowflakeDbFactory;
+            set => _snowflakeDbFactory = value;
+        }
+        
         internal int _connectionTimeout;
 
         private bool disposed = false;
@@ -101,10 +109,10 @@ namespace Snowflake.Data.Client
             {
                 return DBNull.Value;
             }
-            using (IDbCommand command = CreateDbCommand())
+            using (IDbCommand command = CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_TRANSACTION()";
-                return command.ExecuteScalar(); // TODO: what if exc
+                return command.ExecuteScalar(); 
             }
         }
 
@@ -137,7 +145,7 @@ namespace Snowflake.Data.Client
 
             string alterDbCommand = $"use database {databaseName}";
 
-            using (IDbCommand cmd = this.CreateCommand())
+            using (IDbCommand cmd = CreateCommand())
             {
                 cmd.CommandText = alterDbCommand;
                 cmd.ExecuteNonQuery();
@@ -368,7 +376,9 @@ namespace Snowflake.Data.Client
 
         protected override DbCommand CreateDbCommand()
         {
-            return new SnowflakeDbCommand(this);
+            var command = ProviderFactory.CreateCommand();
+            command.Connection = this;
+            return command;
         }
 
         protected override void Dispose(bool disposing)

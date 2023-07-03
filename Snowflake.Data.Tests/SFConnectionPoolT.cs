@@ -563,6 +563,20 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(DBNull.Value, command.ExecuteScalar());
             Assert.AreEqual(false, conn.HasTransactionInProgress());
             conn.Close();
+            
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should return connection to the pool");
+        }
+
+        private class TestSnowflakeDbFactory : DbProviderFactory 
+        {
+            public override SnowflakeDbCommand CreateCommand()
+            {
+                var commandThrowingExcOnlyForRollback = new Mock<SnowflakeDbCommand>().As<IDbCommand>();
+                commandThrowingExcOnlyForRollback.CallBase = true;
+                commandThrowingExcOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
+                    .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
+                return (SnowflakeDbCommand)commandThrowingExcOnlyForRollback.Object;
+            }
         }
 
         [Test]
@@ -571,32 +585,14 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            var connSpy = new Mock<SnowflakeDbConnection>().As<IDbConnection>();
-            connSpy.CallBase = true;
-            Mock<IDbCommand> mockDbCommand = new Mock<IDbCommand>();
-            mockDbCommand.SetupSequence(it => it.ExecuteNonQuery())
-                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "syntax error"))
-                .Throws(new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY, "error on transaction rollback"));
-            connSpy.SetupSequence(it => it.CreateCommand())
-                .CallBase() // BEGIN TRANS
-                .Returns(mockDbCommand.Object) // INVALID SQL
-                .CallBase() // for conn.Close() => GET TRANS ID
-                .Returns(mockDbCommand.Object); // for conn.Close() => ROLLBACK
-
-            var conn = connSpy.Object;
+            
+            var conn = new SnowflakeDbConnection();
+            conn.ProviderFactory = new TestSnowflakeDbFactory();
             conn.ConnectionString = ConnectionString;
             conn.Open();
             conn.BeginTransaction();
-            Assert.Throws<SnowflakeDbException>(() =>
-                {
-                    using (IDbCommand command = conn.CreateCommand())
-                    {
-                        command.CommandText = "INVALID SQL";
-                        command.ExecuteNonQuery();
-                    }
-                });
-            conn.Close();
-            
+            conn.Close(); // without Rollback or Commit; during internal Rollback exception will be thrown
+
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }
 
