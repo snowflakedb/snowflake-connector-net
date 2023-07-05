@@ -22,13 +22,7 @@ namespace Snowflake.Data.Client
 
         internal ConnectionState _connectionState;
 
-        private DbProviderFactory _snowflakeDbFactory = new SnowflakeDbFactory();
-
-        internal DbProviderFactory ProviderFactory
-        {
-            get => _snowflakeDbFactory;
-            set => _snowflakeDbFactory = value;
-        }
+        protected virtual DbProviderFactory? DbProviderFactory => new SnowflakeDbFactory();
         
         internal int _connectionTimeout;
 
@@ -99,46 +93,48 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override string ServerVersion => IsOpen() ? SfSession.serverVersion : "";
+        public override string ServerVersion => IsOpen() ? SfSession.serverVersion : String.Empty;
 
         public override ConnectionState State => _connectionState;
 
-        private object? GetTransactionId()
+        private string GetTransactionId()
         {
             if (!IsOpen())
-            {
-                return DBNull.Value;
-            }
+                return null;
             using (IDbCommand command = CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_TRANSACTION()";
-                return command.ExecuteScalar(); 
+                var result = command.ExecuteScalar();
+                return result == null || result == DBNull.Value ? null : result.ToString();
             }
         }
 
-        public bool HasTransactionInProgress() => GetTransactionId() != DBNull.Value;
+        internal bool HasActiveTransaction() => GetTransactionId() != null;
         
-        private bool TerminateTransaction(object? transactionInProgressId)
+        private bool TerminateTransactionForDirtyConnectionReturningToPool()
         {
-            if (transactionInProgressId == DBNull.Value)
-                return false;
+            var transactionInProgressId = GetTransactionId();
+            if (transactionInProgressId == null)
+                return true; 
             try
             {
                 using (IDbCommand command = CreateCommand())
                 {
                     command.CommandText = "ROLLBACK";
                     command.ExecuteNonQuery(); 
-                    logger.Warn("Rolled back transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId);
-                    return true;
+                    // warning to indicate that driver was asked to close a connection with active transaction
+                    logger.Warn("Closing connection: rolled back transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId);
+                    return true; 
                 }
             }
             catch (SnowflakeDbException exception)
             {
-                logger.Error("Unable to rollback transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId + ", exception: " + exception.Message);
-                return false;
+                // error to indicate a problem with rolling back an active transaction and inability to return dirty connection to the pool 
+                logger.Error("Closing connection: unable to rollback transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId + ", exception: " + exception.Message);
+                return false; // connection won't be pooled
             }
         }
-        
+
         public override void ChangeDatabase(string databaseName)
         {
             logger.Debug($"ChangeDatabase to:{databaseName}");
@@ -157,14 +153,9 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var transactionInProgress = GetTransactionId();
-                if (transactionInProgress != DBNull.Value)
-                {
-                    if (TerminateTransaction(transactionInProgress))
-                        transactionInProgress = DBNull.Value;
-                }
+                var noActiveTransaction = TerminateTransactionForDirtyConnectionReturningToPool();
                 
-                if (transactionInProgress == DBNull.Value && SnowflakeDbConnectionPool.addSession(SfSession))
+                if (noActiveTransaction && SnowflakeDbConnectionPool.addSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -191,14 +182,9 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var transactionInProgress = GetTransactionId();
-                    if (transactionInProgress != DBNull.Value)
-                    {
-                        if (TerminateTransaction(transactionInProgress))
-                            transactionInProgress = DBNull.Value;
-                    }
+                    var noActiveTransaction = TerminateTransactionForDirtyConnectionReturningToPool();
 
-                    if (transactionInProgress != DBNull.Value && SnowflakeDbConnectionPool.addSession(SfSession))
+                    if (noActiveTransaction && SnowflakeDbConnectionPool.addSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
@@ -376,7 +362,7 @@ namespace Snowflake.Data.Client
 
         protected override DbCommand CreateDbCommand()
         {
-            var command = ProviderFactory.CreateCommand();
+            var command = DbProviderFactory.CreateCommand();
             command.Connection = this;
             return command;
         }
