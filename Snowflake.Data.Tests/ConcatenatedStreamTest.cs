@@ -82,21 +82,25 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestPosition()
+        public void TestGetPosition()
         {
             try
             {
-                concatStream.Position = 1;
+                _ = concatStream.Position;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
                 Assert.IsTrue(ex is NotImplementedException);
             }
+        }
 
+        [Test]
+        public void TestSetPosition()
+        {
             try
             {
-                _ = concatStream.Position;
+                concatStream.Position = 1;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
