@@ -172,8 +172,18 @@ namespace Snowflake.Data.Tests
         {
             byte[] buffer = new byte[3];
 
-            // An OutOfRangeException is thrown when 4 bytes is read from a buffer of size 3
-            Assert.Throws<ArgumentOutOfRangeException>(() => concatStream.Read(buffer, 0, 4));
+            try
+            {
+                // An ArgumentException is thrown when 4 bytes is read from a buffer of size 3
+                concatStream.Read(buffer, 0, 4);
+                Assert.Fail("An ArgumentException should've been thrown");
+            }
+            catch (Exception ex)
+            {
+                // NET 4.7.1 throws an ArgumentException
+                // NET 4.7.2 throws an ArgumentOutOfRangeException
+                Assert.IsTrue(ex is ArgumentException);
+            }
         }
     }
 }
