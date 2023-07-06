@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                long l = concatStream.Length;
+                _ = concatStream.Length;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests
 
             try
             {
-                long l = concatStream.Position;
+                _ = concatStream.Position;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
