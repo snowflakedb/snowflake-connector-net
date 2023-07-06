@@ -15,44 +15,47 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Tests.Mock;
     using System.Data.Common;
     using Moq;
-
     
-    readonly struct PoolConfig {
-        public bool Pooling { get; }
-        public long Timeout { get; }
-        public int MaxPoolSize { get; }
+    class PoolConfig {
+        private readonly bool _pooling;
+        private readonly long _timeout;
+        private readonly int _maxPoolSize;
 
-        public PoolConfig(int maxPoolSize, long timeout, bool poolingEnabled)
+        public PoolConfig()
         {
-            MaxPoolSize = maxPoolSize;
-            Timeout = timeout;
-            Pooling = poolingEnabled;
+            _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
+            _timeout = SnowflakeDbConnectionPool.GetTimeout();
+            _pooling = SnowflakeDbConnectionPool.GetPooling();
+        }
+
+        public void Reset()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
+            SnowflakeDbConnectionPool.SetTimeout(_timeout);
+            SnowflakeDbConnectionPool.SetPooling(_pooling);
         }
     }
     
     [TestFixture, NonParallelizable]
-    // [Apartment(ApartmentState.STA)]
     class SFConnectionPoolT : SFBaseTest
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
-        private PoolConfig previousPoolConfig;
+        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
 
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig = new PoolConfig(SnowflakeDbConnectionPool.GetMaxPoolSize(), 
-                SnowflakeDbConnectionPool.GetTimeout(), 
-                SnowflakeDbConnectionPool.GetPooling());
+            previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [TearDown]
         public void AfterTest()
         {
-            SnowflakeDbConnectionPool.SetPooling(previousPoolConfig.Pooling);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(previousPoolConfig.MaxPoolSize);
-            SnowflakeDbConnectionPool.SetTimeout(previousPoolConfig.Timeout);
+            previousPoolConfig.Reset();
         }
+
         [Test]
         [Ignore("dummy test case for showing test progress.")]
         public void ConnectionPoolTDone()
@@ -153,8 +156,7 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
             SnowflakeDbConnectionPool.ClearAllPools();
 
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             conn1.Close();
@@ -167,8 +169,7 @@ namespace Snowflake.Data.Tests
         public void TestConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             conn1.Close();
@@ -432,23 +433,20 @@ namespace Snowflake.Data.Tests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private PoolConfig previousPoolConfig;
+        private static readonly PoolConfig previousPoolConfig = new();
 
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig = new PoolConfig(SnowflakeDbConnectionPool.GetMaxPoolSize(), 
-                SnowflakeDbConnectionPool.GetTimeout(), 
-                SnowflakeDbConnectionPool.GetPooling());
+            previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [TearDown]
         public void AfterTest()
         {
-            SnowflakeDbConnectionPool.SetPooling(previousPoolConfig.Pooling);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(previousPoolConfig.MaxPoolSize);
-            SnowflakeDbConnectionPool.SetTimeout(previousPoolConfig.Timeout);
+            previousPoolConfig.Reset();
         }
 
         [Test]
@@ -584,6 +582,7 @@ namespace Snowflake.Data.Tests
         public void TestRollbackTransactionOnPooledWhenConnectionClose()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
 
             string firstOpenedSessionId = null;
             using (var connection1 = new SnowflakeDbConnection())
@@ -598,6 +597,7 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(true, connection1.HasActiveTransaction());
                 }
             }
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
 
             using (var connection2 = new SnowflakeDbConnection())
             {
@@ -611,7 +611,6 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(false, connection2.HasActiveTransaction());
                 }
             }
-
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
         }
 
@@ -742,19 +741,6 @@ namespace Snowflake.Data.Tests
                 commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
                     .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
                 return (SnowflakeDbCommand)commandThrowingExceptionOnlyForRollback.Object;
-            }
-        }
-
-        private readonly struct PoolConfig {
-            public bool Pooling { get; }
-            public long Timeout { get; }
-            public int MaxPoolSize { get; }
-
-            public PoolConfig(int maxPoolSize, long timeout, bool poolingEnabled)
-            {
-                MaxPoolSize = maxPoolSize;
-                Timeout = timeout;
-                Pooling = poolingEnabled;
             }
         }
     }
