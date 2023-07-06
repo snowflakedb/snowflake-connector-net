@@ -59,6 +59,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 concatStream.Flush();
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -72,6 +73,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 long l = concatStream.Length;
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -85,6 +87,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 concatStream.Position = 1;
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -94,6 +97,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 long l = concatStream.Position;
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -107,6 +111,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 concatStream.Seek(1, new SeekOrigin());
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -120,6 +125,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 concatStream.SetLength(1);
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
@@ -133,6 +139,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 concatStream.Write(null, 0, 0);
+                Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
             {
