@@ -10,12 +10,14 @@ namespace Snowflake.Data.Core
     // Optimized for maximum speed when adding one byte at a time to short buffers
     public class FastMemoryStream
     {
+        public const int DEFAULT_BUFFER_SIZE = 256;
+
         byte[] _buffer;
         int _size;
 
         public FastMemoryStream()
         {
-            _buffer = new byte[256];
+            _buffer = new byte[DEFAULT_BUFFER_SIZE];
             _size = 0;
         }
 

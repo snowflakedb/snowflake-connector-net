@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests
         {
             // FastMemoryStream defaults to size of 0 and buffer of size 256
             Assert.AreEqual(0, fastMemoryStream.Length);
-            Assert.AreEqual(256, fastMemoryStream.GetBuffer().Length);
+            Assert.AreEqual(FastMemoryStream.DEFAULT_BUFFER_SIZE, fastMemoryStream.GetBuffer().Length);
         }
 
         [Test]
