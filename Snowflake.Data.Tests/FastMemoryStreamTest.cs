@@ -53,8 +53,18 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestClear()
         {
+            int bufferLength = fastMemoryStream.GetBuffer().Length;
+            for (int i = 0; i < bufferLength; i++)
+            {
+                fastMemoryStream.WriteByte(1);
+            }
+
+            // Size should be equal to the buffer length
+            Assert.AreEqual(bufferLength, fastMemoryStream.Length);
+            // Clear() resets the size
             fastMemoryStream.Clear();
-            Assert.AreEqual(new byte[256], fastMemoryStream.GetBuffer());
+            // Size should be back to 0
+            Assert.AreEqual(0, fastMemoryStream.Length);
         }
 
         [Test]
