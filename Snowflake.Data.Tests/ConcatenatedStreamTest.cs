@@ -166,5 +166,14 @@ namespace Snowflake.Data.Tests
             Assert.AreEqual(2, concatStream.Read(buffer, 0, 2)); // Read 2 bytes
             Assert.AreEqual(3, concatStream.Read(buffer, 0, 3)); // Read 3 bytes
         }
+
+        [Test]
+        public void TestReadMoreBytesThanBufferSize()
+        {
+            byte[] buffer = new byte[3];
+
+            // An OutOfRangeException is thrown when 4 bytes is read from a buffer of size 3
+            Assert.Throws<ArgumentOutOfRangeException>(() => concatStream.Read(buffer, 0, 4));
+        }
     }
 }
