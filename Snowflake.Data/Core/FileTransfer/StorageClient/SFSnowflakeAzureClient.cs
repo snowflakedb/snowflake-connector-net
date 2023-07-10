@@ -282,7 +282,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             try
             {
