@@ -37,6 +37,14 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
+        private enum TransactionRollbackStatus
+        {
+            Undefined,
+            NotNeeded,
+            Success,
+            Failure
+        }
+
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
@@ -111,11 +119,11 @@ namespace Snowflake.Data.Client
 
         internal bool HasActiveTransaction() => GetTransactionId() != null;
         
-        private bool TerminateTransactionForDirtyConnectionReturningToPool()
+        private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
             var transactionInProgressId = GetTransactionId();
             if (transactionInProgressId == null)
-                return true; 
+                return TransactionRollbackStatus.NotNeeded; 
             try
             {
                 using (IDbCommand command = CreateCommand())
@@ -124,14 +132,14 @@ namespace Snowflake.Data.Client
                     command.ExecuteNonQuery(); 
                     // warning to indicate that driver was asked to close a connection with active transaction
                     logger.Warn("Closing connection: rolled back transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId);
-                    return true; 
+                    return TransactionRollbackStatus.Success; 
                 }
             }
             catch (SnowflakeDbException exception)
             {
                 // error to indicate a problem with rolling back an active transaction and inability to return dirty connection to the pool 
                 logger.Error("Closing connection: unable to rollback transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId + ", exception: " + exception.Message);
-                return false; // connection won't be pooled
+                return TransactionRollbackStatus.Failure; // connection won't be pooled
             }
         }
 
@@ -153,9 +161,9 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var noActiveTransaction = TerminateTransactionForDirtyConnectionReturningToPool();
+                var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
-                if (noActiveTransaction && SnowflakeDbConnectionPool.addSession(SfSession))
+                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -182,9 +190,9 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var noActiveTransaction = TerminateTransactionForDirtyConnectionReturningToPool();
+                    var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
-                    if (noActiveTransaction && SnowflakeDbConnectionPool.addSession(SfSession))
+                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
@@ -225,6 +233,13 @@ namespace Snowflake.Data.Client
             return taskCompletionSource.Task;
         }
 
+        private bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+        {
+            return SnowflakeDbConnectionPool.GetPooling() &&
+                   (transactionRollbackStatus == TransactionRollbackStatus.Success ||
+                    transactionRollbackStatus == TransactionRollbackStatus.NotNeeded);
+        }
+        
         public override void Open()
         {
             logger.Debug("Open Connection.");
