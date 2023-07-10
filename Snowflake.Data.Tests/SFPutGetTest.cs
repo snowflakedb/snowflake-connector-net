@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests
                     // ** 1. PUT - upload file from local directory to the stage
                     // ********************************************************************
                     
-                    // Prepare PUT query - Windows user contains a '~' in the path which causes an error
+                    // Prepare PUT query
                     string putQuery = $"PUT file://{inputFilePath} {internalStage} AUTO_COMPRESS=" + (autoCompress ? "TRUE" : "FALSE");
 
                     // Upload file
@@ -176,14 +176,14 @@ namespace Snowflake.Data.Tests
                     {
                         Assert.AreEqual(compressionType, 
                             reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual( compressionType,
+                        Assert.AreEqual(compressionType,
                             reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                     }
                     else
                     {
-                        Assert.AreEqual("none",
+                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
                             reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual("none",
+                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
                             reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                     }
 
