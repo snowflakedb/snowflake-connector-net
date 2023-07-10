@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class ConcatenatedStreamTest
     {
-        Stream concatStream;
+        Stream _concatStream;
 
         [SetUp]
         public void BeforeTest()
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests
             Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes(data));
             Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes(data));
 
-            concatStream = new ConcatenatedStream(new Stream[3] { openBracket, stream, closeBracket });
+            _concatStream = new ConcatenatedStream(new Stream[3] { openBracket, stream, closeBracket });
         }
 
         [Test]
@@ -38,19 +38,19 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestCanRead()
         {
-            Assert.IsTrue(concatStream.CanRead);
+            Assert.IsTrue(_concatStream.CanRead);
         }
 
         [Test]
         public void TestCanSeek()
         {
-            Assert.IsFalse(concatStream.CanSeek);
+            Assert.IsFalse(_concatStream.CanSeek);
         }
 
         [Test]
         public void TestCanWrite()
         {
-            Assert.IsFalse(concatStream.CanWrite);
+            Assert.IsFalse(_concatStream.CanWrite);
         }
 
         [Test]
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                concatStream.Flush();
+                _concatStream.Flush();
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                _ = concatStream.Length;
+                _ = _concatStream.Length;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                _ = concatStream.Position;
+                _ = _concatStream.Position;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                concatStream.Position = 1;
+                _concatStream.Position = 1;
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                concatStream.Seek(1, new SeekOrigin());
+                _concatStream.Seek(1, new SeekOrigin());
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                concatStream.SetLength(1);
+                _concatStream.SetLength(1);
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests
         {
             try
             {
-                concatStream.Write(null, 0, 0);
+                _concatStream.Write(null, 0, 0);
                 Assert.Fail("A NotImplementedException should've been thrown");
             }
             catch (Exception ex)
@@ -155,16 +155,16 @@ namespace Snowflake.Data.Tests
         public void TestReadZeroByte()
         {
             byte[] buffer = new byte[0];
-            Assert.AreEqual(0, concatStream.Read(buffer, 0, 0)); // Read 0 byte
+            Assert.AreEqual(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
         }
 
         [Test]
         public void TestReadBytes()
         {
             byte[] buffer = new byte[3];
-            Assert.AreEqual(1, concatStream.Read(buffer, 0, 1)); // Read 1 byte
-            Assert.AreEqual(2, concatStream.Read(buffer, 0, 2)); // Read 2 bytes
-            Assert.AreEqual(3, concatStream.Read(buffer, 0, 3)); // Read 3 bytes
+            Assert.AreEqual(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
+            Assert.AreEqual(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
+            Assert.AreEqual(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
         }
 
         [Test]
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests
             try
             {
                 // An ArgumentException is thrown when 4 bytes is read from a buffer of size 3
-                concatStream.Read(buffer, 0, 4);
+                _concatStream.Read(buffer, 0, 4);
                 Assert.Fail("An ArgumentException should've been thrown");
             }
             catch (Exception ex)
