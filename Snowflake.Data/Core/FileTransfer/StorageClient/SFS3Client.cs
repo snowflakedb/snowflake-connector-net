@@ -243,7 +243,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             GetObjectRequest request = new GetObjectRequest
             {
                 BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName
+                Key = location.key + fileMetadata.srcFileName
             };
             return request;
         }
@@ -465,13 +465,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
+                if (err?.ErrorCode == EXPIRED_TOKEN)
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                 }
                 else
                 {
-                    fileMetadata.lastError = err;
+                    fileMetadata.lastError = err ?? ex;
                     fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 }
                 return;
@@ -507,13 +507,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
+                if (err?.ErrorCode == EXPIRED_TOKEN)
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                 }
                 else
                 {
-                    fileMetadata.lastError = err;
+                    fileMetadata.lastError = err ?? ex;
                     fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 }
                 return;
@@ -531,7 +531,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return new GetObjectRequest
             {
                 BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName,
+                Key = location.key + fileMetadata.srcFileName,
             };
         }
 
