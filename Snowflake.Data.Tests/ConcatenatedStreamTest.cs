@@ -56,99 +56,43 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestFlush()
         {
-            try
-            {
-                _concatStream.Flush();
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _concatStream.Flush());
         }
 
         [Test]
         public void TestLength()
         {
-            try
-            {
-                _ = _concatStream.Length;
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _ = _concatStream.Length);
         }
 
         [Test]
         public void TestGetPosition()
         {
-            try
-            {
-                _ = _concatStream.Position;
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _ = _concatStream.Position);
         }
 
         [Test]
         public void TestSetPosition()
         {
-            try
-            {
-                _concatStream.Position = 1;
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _concatStream.Position = 1);
         }
 
         [Test]
         public void TestSeek()
         {
-            try
-            {
-                _concatStream.Seek(1, new SeekOrigin());
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _concatStream.Seek(1, new SeekOrigin()));
         }
 
         [Test]
         public void TestSetLength()
         {
-            try
-            {
-                _concatStream.SetLength(1);
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _concatStream.SetLength(1));
         }
 
         [Test]
         public void TestWrite()
         {
-            try
-            {
-                _concatStream.Write(null, 0, 0);
-                Assert.Fail("A NotImplementedException should've been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is NotImplementedException);
-            }
+            Assert.Throws<NotImplementedException>(() => _concatStream.Write(null, 0, 0));
         }
 
         [Test]
