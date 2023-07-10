@@ -433,7 +433,7 @@ namespace Snowflake.Data.Tests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private static readonly PoolConfig previousPoolConfig = new();
+        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
 
         [SetUp]
         public void BeforeTest()
@@ -734,13 +734,13 @@ namespace Snowflake.Data.Tests
         
         private class TestSnowflakeDbFactory : DbProviderFactory 
         {
-            public override SnowflakeDbCommand CreateCommand()
+            public override DbCommand CreateCommand()
             {
                 var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>().As<IDbCommand>();
                 commandThrowingExceptionOnlyForRollback.CallBase = true;
                 commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
                     .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
-                return (SnowflakeDbCommand)commandThrowingExceptionOnlyForRollback.Object;
+                return (DbCommand)commandThrowingExceptionOnlyForRollback.Object;
             }
         }
     }

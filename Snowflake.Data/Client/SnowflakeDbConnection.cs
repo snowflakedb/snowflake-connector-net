@@ -22,7 +22,7 @@ namespace Snowflake.Data.Client
 
         internal ConnectionState _connectionState;
 
-        protected virtual DbProviderFactory DbProviderFactory => new SnowflakeDbFactory();
+        protected override DbProviderFactory DbProviderFactory => new SnowflakeDbFactory();
         
         internal int _connectionTimeout;
 
