@@ -2,18 +2,16 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Linq;
-using Snowflake.Data.Core.FileTransfer;
-
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Log;
     using System;
     using System.IO;
-    using System.Runtime.InteropServices;
+    using System.Linq;
+    using Snowflake.Data.Client;
+    using Snowflake.Data.Log;
     using Snowflake.Data.Core;
+    using Snowflake.Data.Core.FileTransfer;
 
     [TestFixture]
     class SFPutGetTest : SFBaseTest

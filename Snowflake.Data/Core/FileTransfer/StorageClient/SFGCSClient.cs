@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             else
             {
                 // Generate the file URL based on GCS location
-                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName);
+                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
                     // Issue a HEAD request
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             else
             {
                 // Generate the file URL based on GCS location
-                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName);
+                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
                 try
                 {
                     // Issue a HEAD request
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName));
+                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
                 }
                 request.Headers.Add("Authorization", $"Bearer {AccessToken}");
 
@@ -465,7 +465,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName));
+                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
                 }
                 request.Headers.Add("Authorization", $"Bearer {AccessToken}");
 
