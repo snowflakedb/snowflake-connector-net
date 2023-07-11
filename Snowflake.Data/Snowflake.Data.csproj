@@ -15,6 +15,7 @@
     <Copyright>Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.</Copyright>
     <Version>2.0.25</Version>
     <DebugType>Full</DebugType>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   
   <ItemGroup>
