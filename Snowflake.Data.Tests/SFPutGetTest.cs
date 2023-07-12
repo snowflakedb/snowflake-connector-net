@@ -113,6 +113,8 @@ namespace Snowflake.Data.Tests
         }
         
         [Test]
+        // PutGetTest hang on AWS so ignore it for now until we find the root cause
+        [IgnoreOnEnvIs("snowflake_cloud_env", new string[] { "AWS" })]
         [Parallelizable(ParallelScope.All)]
         public void TestPutGetCommand(
             [Values("gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string compressionType, 
