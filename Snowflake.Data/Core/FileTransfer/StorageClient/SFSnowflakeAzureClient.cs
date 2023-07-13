@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             BlobProperties response;
             try
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             BlobProperties response;
             try
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            return containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            return containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
         }
 
         /// <summary>
@@ -282,7 +282,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             try
             {
@@ -312,7 +312,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             try
             {
