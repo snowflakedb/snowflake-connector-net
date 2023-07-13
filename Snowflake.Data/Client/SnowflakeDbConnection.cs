@@ -105,40 +105,21 @@ namespace Snowflake.Data.Client
 
         public override ConnectionState State => _connectionState;
 
-        private string GetTransactionId()
-        {
-            if (!IsOpen())
-                return null;
-            using (IDbCommand command = CreateCommand())
-            {
-                command.CommandText = "SELECT CURRENT_TRANSACTION()";
-                var result = command.ExecuteScalar();
-                return result == null || result == DBNull.Value ? null : result.ToString();
-            }
-        }
-
-        internal bool HasActiveTransaction() => GetTransactionId() != null;
-        
         private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
-            var transactionInProgressId = GetTransactionId();
-            if (transactionInProgressId == null)
-                return TransactionRollbackStatus.NotNeeded; 
             try
             {
                 using (IDbCommand command = CreateCommand())
                 {
                     command.CommandText = "ROLLBACK";
-                    command.ExecuteNonQuery(); 
-                    // warning to indicate that driver was asked to close a connection with active transaction
-                    logger.Warn("Closing connection: rolled back transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId);
+                    command.ExecuteNonQuery();
                     return TransactionRollbackStatus.Success; 
                 }
             }
             catch (SnowflakeDbException exception)
             {
                 // error to indicate a problem with rolling back an active transaction and inability to return dirty connection to the pool 
-                logger.Error("Closing connection: unable to rollback transaction: " + transactionInProgressId + " in session: " + SfSession.sessionId + ", exception: " + exception.Message);
+                logger.Error("Closing connection: unable to rollback transaction in session: " + SfSession.sessionId + ", exception: " + exception.Message);
                 return TransactionRollbackStatus.Failure; // connection won't be pooled
             }
         }
