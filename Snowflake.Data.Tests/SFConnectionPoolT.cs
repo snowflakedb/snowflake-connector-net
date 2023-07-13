@@ -571,7 +571,6 @@ namespace Snowflake.Data.Tests
                 {
                     cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
                     Assert.AreEqual(DBNull.Value, cmd.ExecuteScalar());
-                    Assert.AreEqual(false, connectionWithSessionReused.HasActiveTransaction());
                 }
             } 
             
@@ -594,7 +593,8 @@ namespace Snowflake.Data.Tests
                     firstOpenedSessionId = connection1.SfSession.sessionId;
                     command.CommandText = "BEGIN TRANSACTION";
                     command.ExecuteNonQuery();
-                    Assert.AreEqual(true, connection1.HasActiveTransaction());
+                    command.CommandText = "SELECT CURRENT_TRANSACTION()";
+                    Assert.AreNotEqual(DBNull.Value, command.ExecuteScalar());
                 }
             }
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
@@ -608,7 +608,6 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(firstOpenedSessionId, connection2.SfSession.sessionId);
                     command.CommandText = "SELECT CURRENT_TRANSACTION()";
                     Assert.AreEqual(DBNull.Value, command.ExecuteScalar());
-                    Assert.AreEqual(false, connection2.HasActiveTransaction());
                 }
             }
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
