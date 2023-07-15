@@ -39,8 +39,7 @@ namespace Snowflake.Data.Client
 
         private enum TransactionRollbackStatus
         {
-            Undefined,
-            NotNeeded,
+            Undefined, // used to indicate ignored transaction status when pool disabled
             Success,
             Failure
         }
@@ -216,9 +215,8 @@ namespace Snowflake.Data.Client
 
         private bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
-            return SnowflakeDbConnectionPool.GetPooling() &&
-                   (transactionRollbackStatus == TransactionRollbackStatus.Success ||
-                    transactionRollbackStatus == TransactionRollbackStatus.NotNeeded);
+            return SnowflakeDbConnectionPool.GetPooling() && 
+                   transactionRollbackStatus == TransactionRollbackStatus.Success;
         }
         
         public override void Open()

@@ -129,7 +129,10 @@ namespace Snowflake.Data.Client
                 }
 
                 connection = sfc;
-                sfStatement = new SFStatement(sfc.SfSession);
+                if (sfc.SfSession != null)
+                {
+                    sfStatement = new SFStatement(sfc.SfSession);
+                }
             }
         }
 
