@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using Newtonsoft.Json;
 
 namespace Snowflake.Data.Tests
 {
@@ -681,6 +682,75 @@ namespace Snowflake.Data.Tests
                     //cmd.CommandText = "drop table if exists testPutArrayBind";
                     //cmd.ExecuteNonQuery();
                     
+                }
+
+                conn.Close();
+            }
+        }
+        
+        [Test]
+        public void testPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
+        {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
+                TypeNameHandling = TypeNameHandling.Auto
+            };
+            
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "create or replace table testPutArrayBind(cola REAL, colb TEXT, colc NUMBER(38,0))";
+                    var rowsCount = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(0, rowsCount);
+
+                    var insertCommand = "insert into testPutArrayBind values (?, ?, ?)";
+                    cmd.CommandText = insertCommand;
+
+                    var total = 250;
+                    
+                    List<double> arrdouble = new List<double>();
+                    List<string> arrstring = new List<string>();
+                    List<int> arrint = new List<int>();
+                    for (int i=0; i<total; i++)
+                    {
+                        arrdouble.Add(i * 10 + 1);
+                        arrdouble.Add(i * 10 + 2);
+                        arrdouble.Add(i * 10 + 3);
+                        
+                        arrstring.Add("stra"+i);
+                        arrstring.Add("strb"+i);
+                        arrstring.Add("strc"+i);
+                        
+                        arrint.Add(i * 10 + 1);
+                        arrint.Add(i * 10 + 2);
+                        arrint.Add(i * 10 + 3);
+                    }
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.DbType = DbType.Double;
+                    p1.Value = arrdouble.ToArray();
+                    cmd.Parameters.Add(p1);
+                    
+                    var p2 = cmd.CreateParameter();
+                    p2.ParameterName = "2";
+                    p2.DbType = DbType.String;
+                    p2.Value = arrstring.ToArray();
+                    cmd.Parameters.Add(p2);
+             
+                    var p3 = cmd.CreateParameter();
+                    p3.ParameterName = "3";
+                    p3.DbType = DbType.Int32;
+                    p3.Value = arrint.ToArray();
+                    cmd.Parameters.Add(p3);
+
+                    rowsCount = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(total * 3, rowsCount);
+
+                    cmd.CommandText = "SELECT * FROM testPutArrayBind";
+                    IDataReader reader = cmd.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
                 }
 
                 conn.Close();
