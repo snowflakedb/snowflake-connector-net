@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests
 
         public SFBaseTestAsync()
         {
-            testConfig = SfBaseTestSetup.TestConfig;
+            testConfig = TestEnvironmentSetup.TestConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests
     }
     
     [SetUpFixture]
-    public class SfBaseTestSetup
+    public class TestEnvironmentSetup
     {
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests
         public static TestConfig TestConfig { get; private set; }
         
         [OneTimeSetUp]
-        public void SfTestSetup()
+        public void Setup()
         {
 #if NETFRAMEWORK
             log4net.GlobalContext.Properties["framework"] = "net471";
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests
         }
 
         [OneTimeTearDown]
-        public void SfTestTearDown()
+        public void Cleanup()
         {
             ModifySchema(TestConfig.schema, SchemaAction.DROP);
         }
