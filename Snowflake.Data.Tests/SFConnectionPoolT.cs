@@ -588,6 +588,7 @@ namespace Snowflake.Data.Tests
             {
                 connection1.ConnectionString = ConnectionString;
                 connection1.Open();
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session is added to the pool after close connection");
                 using (var command = connection1.CreateCommand())
                 {
                     firstOpenedSessionId = connection1.SfSession.sessionId;
@@ -603,6 +604,7 @@ namespace Snowflake.Data.Tests
             {
                 connection2.ConnectionString = ConnectionString;
                 connection2.Open();
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session should be now removed from the pool");
                 using (var command = connection2.CreateCommand())
                 {
                     Assert.AreEqual(firstOpenedSessionId, connection2.SfSession.sessionId);
@@ -618,9 +620,15 @@ namespace Snowflake.Data.Tests
         {
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>();
+            commandThrowingExceptionOnlyForRollback.CallBase = true;
+            commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
+                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
+            var mockDbProviderFactory = new Mock<DbProviderFactory>();
+            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
 
-            using (var connection = new TestSnowflakeDbConnection())
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            using (var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object))
             {
                 connection.ConnectionString = ConnectionString;
                 connection.Open();
@@ -728,19 +736,12 @@ namespace Snowflake.Data.Tests
         
         private class TestSnowflakeDbConnection : SnowflakeDbConnection
         {
-            protected override DbProviderFactory DbProviderFactory => new TestSnowflakeDbFactory();
-        }
-        
-        private class TestSnowflakeDbFactory : DbProviderFactory 
-        {
-            public override DbCommand CreateCommand()
+            public TestSnowflakeDbConnection(DbProviderFactory dbProviderFactory)
             {
-                var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>().As<IDbCommand>();
-                commandThrowingExceptionOnlyForRollback.CallBase = true;
-                commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
-                    .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
-                return (DbCommand)commandThrowingExceptionOnlyForRollback.Object;
+                DbProviderFactory = dbProviderFactory;
             }
+
+            protected override DbProviderFactory DbProviderFactory { get; }
         }
     }
 }
