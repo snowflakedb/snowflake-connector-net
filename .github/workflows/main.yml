@@ -83,7 +83,7 @@ jobs:
     - name: Build with MSBuild
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
-  test:
+  test-windows:
     needs: [build-net, build-framework]
     name: Tests on Windows
     runs-on: windows-latest
