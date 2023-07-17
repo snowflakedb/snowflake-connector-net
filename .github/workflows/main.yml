@@ -88,7 +88,6 @@ jobs:
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
-      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['net6.0', 'net472', 'net471']
@@ -135,7 +134,6 @@ jobs:
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['net6.0']
@@ -175,7 +173,6 @@ jobs:
     name: Tests on MAC
     runs-on: macos-latest
     strategy:
-      max-parallel: 1
       matrix:
         #dotnet: ['2.2.402']
         dotnet: ['net6.0']
