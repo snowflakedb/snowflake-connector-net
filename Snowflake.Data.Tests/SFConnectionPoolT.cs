@@ -619,8 +619,15 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            
+            var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>().As<IDbCommand>();
+            commandThrowingExceptionOnlyForRollback.CallBase = true;
+            commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
+                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
+            var dbProviderFactory = new Mock<DbProviderFactory>();
+            dbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback);
 
-            using (var connection = new TestSnowflakeDbConnection())
+            using (var connection = new TestSnowflakeDbConnection(dbProviderFactory))
             {
                 connection.ConnectionString = ConnectionString;
                 connection.Open();
@@ -728,19 +735,13 @@ namespace Snowflake.Data.Tests
         
         private class TestSnowflakeDbConnection : SnowflakeDbConnection
         {
-            protected override DbProviderFactory DbProviderFactory => new TestSnowflakeDbFactory();
-        }
-        
-        private class TestSnowflakeDbFactory : DbProviderFactory 
-        {
-            public override DbCommand CreateCommand()
+            public TestSnowflakeDbConnection(DbProviderFactory dbProviderFactory)
             {
-                var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>().As<IDbCommand>();
-                commandThrowingExceptionOnlyForRollback.CallBase = true;
-                commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
-                    .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
-                return (DbCommand)commandThrowingExceptionOnlyForRollback.Object;
+                __dbProviderFactory = dbProviderFactory;
             }
+
+            private DbProviderFactory __dbProviderFactory;
+            protected override DbProviderFactory DbProviderFactory => __dbProviderFactory;
         }
     }
 }
