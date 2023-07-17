@@ -4,8 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Reflection;
 using System.IO;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests
 {
@@ -36,20 +38,22 @@ namespace Snowflake.Data.Tests
     }
 
     /*
-     * This is the base class for all tests that call async metodes in the library - it does not use a special SynchronizationContext
+     * This is the base class for all tests that call async methods in the library - it does not use a special SynchronizationContext
      * 
      */
-    [SetUpFixture]
+    [TestFixture]
     public class SFBaseTestAsync
     {
-        private const string connectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
-            "account={3};role={4};db={5};schema={6};warehouse={7}";
+        private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
+                                                              "account={3};role={4};db={5};schema={6};warehouse={7}";
+        private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
 
-        protected string ConnectionStringWithoutAuth
+        public SFBaseTestAsync()
         {
-            get
-            {
-                return String.Format(connectionStringWithoutAuthFmt,
+            testConfig = SfBaseTestSetup.TestConfig;
+        }
+
+        protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
                     testConfig.protocol,
                     testConfig.host,
                     testConfig.port,
@@ -58,24 +62,25 @@ namespace Snowflake.Data.Tests
                     testConfig.database,
                     testConfig.schema,
                     testConfig.warehouse);
-            }
-        }
-        private const string connectionStringSnowflakeAuthFmt = ";user={0};password={1};";
 
-        protected string ConnectionString
-        {
-            get {
-                return ConnectionStringWithoutAuth +
-                    String.Format(connectionStringSnowflakeAuthFmt,
-                    testConfig.user,
-                    testConfig.password);
-            }
-        }
+        protected string ConnectionString => ConnectionStringWithoutAuth +
+                                             string.Format(ConnectionStringSnowflakeAuthFmt,
+                                                 testConfig.user,
+                                                 testConfig.password);
 
-        protected TestConfig testConfig { get; set; }
-
+        protected TestConfig testConfig { get; }
+    }
+    
+    [SetUpFixture]
+    public class SfBaseTestSetup
+    {
+        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
+                                                   "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
+        
+        public static TestConfig TestConfig { get; private set; }
+        
         [OneTimeSetUp]
-        public void SFTestSetup()
+        public void SfTestSetup()
         {
 #if NETFRAMEWORK
             log4net.GlobalContext.Properties["framework"] = "net471";
@@ -86,32 +91,87 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-            String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            StreamReader reader = new StreamReader("parameters.json");
+            var reader = new StreamReader("parameters.json");
 
             var testConfigString = reader.ReadToEnd();
 
             // Local JSON settings to avoid using system wide settings which could be different 
             // than the default ones
-            JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
+            var jsonSettings = new JsonSerializerSettings
             {
-                ContractResolver = new DefaultContractResolver()
+                ContractResolver = new DefaultContractResolver
                 {
                     NamingStrategy = new DefaultNamingStrategy()
                 }
             };
-        Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, JsonSettings);
+            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
 
-            TestConfig testConnectionConfig;
-            if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
+            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
             {
-                testConfig = testConnectionConfig;
+                TestConfig = testConnectionConfig;
+                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
             }
             else
             {
                 Assert.Fail("Failed to load test configuration");
+            }
+            
+            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        }
+
+        [OneTimeTearDown]
+        public void SfTestTearDown()
+        {
+            ModifySchema(TestConfig.schema, SchemaAction.DROP);
+        }
+
+        private static string connectionString => string.Format(ConnectionStringFmt,
+            TestConfig.protocol,
+            TestConfig.host,
+            TestConfig.port,
+            TestConfig.account,
+            TestConfig.role,
+            TestConfig.database,
+            TestConfig.warehouse,
+            TestConfig.user,
+            TestConfig.password);
+
+        private enum SchemaAction
+        {
+            CREATE,
+            DROP
+        }
+
+        private static void ModifySchema(string schemaName, SchemaAction schemaAction)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+                var dbCommand = conn.CreateCommand();
+                switch (schemaAction)
+                {
+                    case SchemaAction.CREATE:
+                        dbCommand.CommandText = $"CREATE OR REPLACE SCHEMA {schemaName}";
+                        break;
+                    case SchemaAction.DROP:
+                        dbCommand.CommandText = $"DROP SCHEMA IF EXISTS {schemaName}";
+                        break;
+                    default:
+                        Assert.Fail($"Not supported action on schema: {schemaAction}");
+                        break;
+                }
+                try
+                {
+                    dbCommand.ExecuteNonQuery();
+                }
+                catch (InvalidOperationException e)
+                {
+                    Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
+                }
             }
         }
     }
@@ -149,13 +209,13 @@ namespace Snowflake.Data.Tests
         internal string protocol { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_USER", NullValueHandling = NullValueHandling.Ignore)]
-        internal string OktaUser { get; set; }
+        internal string oktaUser { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
-        internal string OktaPassword { get; set; }
+        internal string oktaPassword { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_URL", NullValueHandling = NullValueHandling.Ignore)]
-        internal string OktaURL { get; set; }
+        internal string oktaUrl { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_JWT_USER", NullValueHandling = NullValueHandling.Ignore)]
         internal string jwtAuthUser { get; set; }
@@ -207,29 +267,29 @@ namespace Snowflake.Data.Tests
 
         public TestConfig()
         {
-            this.protocol = "https";
-            this.port = "443";
+            protocol = "https";
+            port = "443";
         }
     }
 
     public class IgnoreOnEnvIsAttribute : Attribute, ITestAction
     {
-        String key;
+        private readonly string _key;
 
-        string[] values;
-        public IgnoreOnEnvIsAttribute(String key, string[] values)
+        private readonly string[] _values;
+        public IgnoreOnEnvIsAttribute(string key, string[] values)
         {
-            this.key = key;
-            this.values = values;
+            _key = key;
+            _values = values;
         }
 
         public void BeforeTest(ITest test)
         {
-            foreach (var value in this.values)
+            foreach (var value in _values)
             {
-                if (Environment.GetEnvironmentVariable(key) == value)
+                if (Environment.GetEnvironmentVariable(_key) == value)
                 {
-                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", key, value);
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", _key, value);
                 }
             }
         }
@@ -238,9 +298,6 @@ namespace Snowflake.Data.Tests
         {
         }
 
-        public ActionTargets Targets
-        {
-            get { return ActionTargets.Test | ActionTargets.Suite; }
-        }
+        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 }

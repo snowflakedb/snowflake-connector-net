@@ -686,9 +686,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
@@ -705,9 +705,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
@@ -719,9 +719,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
