@@ -151,5 +151,14 @@ namespace Snowflake.Data.Tests
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
             Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
         }
+
+        [Test]
+        public void TestFastParseDecimalWithNullByteArray()
+        {
+            UTF8Buffer srcVal = new UTF8Buffer(null, 0, 0);
+
+            decimal actualDecimalValue = FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length);
+            Assert.Zero(actualDecimalValue);
+        }
     }
 }

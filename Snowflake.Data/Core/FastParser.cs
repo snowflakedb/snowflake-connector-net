@@ -9,6 +9,11 @@ namespace Snowflake.Data.Core
 
         public static Int64 FastParseInt64(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                return 0;
+            }
+
             Int64 result = 0;
             int i = offset;
             bool isMinus = false;
@@ -43,6 +48,11 @@ namespace Snowflake.Data.Core
 
         public static Int32 FastParseInt32(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                return 0;
+            }
+
             Int32 result = 0;
             int i = offset;
             bool isMinus = false;
@@ -77,6 +87,11 @@ namespace Snowflake.Data.Core
 
         public static decimal FastParseDecimal(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                return 0;
+            }
+
             // Find any decimal point
             // Parse integer part and decimal part as 64-bit numbers
             // Calculate decimal number to return
