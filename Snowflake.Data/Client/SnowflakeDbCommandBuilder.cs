@@ -44,7 +44,6 @@ namespace Snowflake.Data.Client
         public sealed override string QuotePrefix
         {
             get => base.QuotePrefix;
-            // TODO: Why should it be possible to remove the QuotePrefix?
             set => base.QuotePrefix = string.IsNullOrEmpty(value) ? DEFAULT_QUOTE_PREFIX : value;
         }
 
@@ -60,7 +59,6 @@ namespace Snowflake.Data.Client
         public sealed override string QuoteSuffix
         {
             get => base.QuoteSuffix;
-            // TODO: Why should it be possible to remove the QuoteSuffix?
             set => base.QuoteSuffix = string.IsNullOrEmpty(value) ? DEFAULT_QUOTE_SUFFIX : value;
         }
 
