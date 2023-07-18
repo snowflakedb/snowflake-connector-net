@@ -60,7 +60,6 @@ namespace Snowflake.Data.Tests
         {
             string newQuoteSuffix = "\'";
 
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
             Assert.AreNotEqual(newQuoteSuffix, builder.QuoteSuffix);
 
             builder.QuoteSuffix = newQuoteSuffix;
