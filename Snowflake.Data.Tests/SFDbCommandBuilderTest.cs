@@ -51,7 +51,6 @@ namespace Snowflake.Data.Tests
             Assert.AreNotEqual(newQuotePrefix, builder.QuotePrefix);
 
             builder.QuotePrefix = newQuotePrefix;
-            Assert.AreNotEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
             Assert.AreEqual(newQuotePrefix, builder.QuotePrefix);
         }
 
@@ -63,7 +62,6 @@ namespace Snowflake.Data.Tests
             Assert.AreNotEqual(newQuoteSuffix, builder.QuoteSuffix);
 
             builder.QuoteSuffix = newQuoteSuffix;
-            Assert.AreNotEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
             Assert.AreEqual(newQuoteSuffix, builder.QuoteSuffix);
         }
     }
