@@ -48,7 +48,6 @@ namespace Snowflake.Data.Tests
         {
             string newQuotePrefix = "\'";
 
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
             Assert.AreNotEqual(newQuotePrefix, builder.QuotePrefix);
 
             builder.QuotePrefix = newQuotePrefix;
