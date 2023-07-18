@@ -26,11 +26,17 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestEmptyCommandBuilder()
+        public void TestDefaultCommandBuilder()
         {
-            Assert.AreEqual(null, builder.DataAdapter);
             Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
             Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
+        }
+
+        [Test]
+        public void TestCommandBuilderWithoutAdapter()
+        {
+            builder = new SnowflakeDbCommandBuilder();
+            Assert.AreEqual(null, builder.DataAdapter);
         }
 
         [Test]
