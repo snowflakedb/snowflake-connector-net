@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
@@ -641,7 +642,7 @@ namespace Snowflake.Data.Core
                     SFFileMetadata fileMetadata = new SFFileMetadata()
                     {
                         srcFileName = file,
-                        destFileName = file,
+                        destFileName = file.Split('/').Last(),
                         localLocation = TransferMetadata.localLocation,
                         stageInfo = TransferMetadata.stageInfo,
                         overwrite = TransferMetadata.overwrite,

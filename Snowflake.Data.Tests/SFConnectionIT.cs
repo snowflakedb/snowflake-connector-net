@@ -188,6 +188,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectString()
         {
+            var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = ConnectionString;
             conn.Open();
@@ -197,9 +198,9 @@ namespace Snowflake.Data.Tests
                 //cmd.ExecuteNonQuery();
                 //cmd.CommandText = "use database \"dlTest\"";
                 //cmd.ExecuteNonQuery();
-                cmd.CommandText = "create schema \"dlSchema\"";
+                cmd.CommandText = $"create schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use schema \"dlSchema\"";
+                cmd.CommandText = $"use schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
                 cmd.CommandText = "create table test1 (col1 string, col2 int)";
@@ -220,7 +221,7 @@ namespace Snowflake.Data.Tests
                         testConfig.role,
                         //"\"dlTest\"",
                         testConfig.database,
-                        "\"dlSchema\"",
+                        $"\"{schemaName}\"",
                         //testConfig.schema,
                         testConfig.warehouse,
                         testConfig.user,
@@ -243,7 +244,7 @@ namespace Snowflake.Data.Tests
             using (IDbCommand cmd = conn.CreateCommand())
             {
                 //cmd.CommandText = "drop database \"dlTest\"";
-                cmd.CommandText = "drop schema \"dlSchema\"";
+                cmd.CommandText = $"drop schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "use database "+ testConfig.database;
                 cmd.ExecuteNonQuery();
@@ -686,9 +687,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
@@ -705,9 +706,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
@@ -719,9 +720,9 @@ namespace Snowflake.Data.Tests
                     = ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.OktaURL,
-                        testConfig.OktaUser,
-                        testConfig.OktaPassword);
+                        testConfig.oktaUrl,
+                        testConfig.oktaUser,
+                        testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }

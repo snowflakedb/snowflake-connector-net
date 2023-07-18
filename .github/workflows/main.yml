@@ -1,9 +1,6 @@
-# This is a basic workflow to help you get started with Actions
-
 name: DotNet Build and Test
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
     branches: [ master ]
@@ -23,25 +20,17 @@ env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build-net:
     name: Build-Net
-    # The type of runner that the job will run on
     runs-on: windows-latest
     strategy:
       matrix:
         dotnet: ['6.0.100']
         cloud_env: ['AZURE', 'GCP', 'AWS']
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
       #Setup .NET
-      - uses: actions/checkout@main
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v1
         with:
@@ -64,7 +53,6 @@ jobs:
     strategy:
       matrix:
         cloud_env: ['AZURE', 'GCP', 'AWS']
-
     steps:
     - uses: actions/checkout@v1
     - name: Setup Nuget.exe
@@ -83,14 +71,12 @@ jobs:
     - name: Build with MSBuild
       run: msbuild snowflake-connector-net.sln -p:Configuration=Release
 
-  test:
+  test-windows:
     needs: [build-net, build-framework]
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
-      max-parallel: 1
       matrix:
-        #dotnet: ['2.2.402']
         dotnet: ['net6.0', 'net472', 'net471']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
@@ -131,13 +117,11 @@ jobs:
 #        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
   test-linux:
-    needs: test
+    needs: [build-net, build-framework]
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
       matrix:
-        #dotnet: ['2.2.402']
         dotnet: ['net6.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:
@@ -171,13 +155,11 @@ jobs:
           dotnet minicover uninstrument
 
   test-mac:
-    needs: test-linux
+    needs: [build-net, build-framework]
     name: Tests on MAC
     runs-on: macos-latest
     strategy:
-      max-parallel: 1
       matrix:
-        #dotnet: ['2.2.402']
         dotnet: ['net6.0']
         cloud_env: ['azure', 'gcp', 'aws']
     steps:

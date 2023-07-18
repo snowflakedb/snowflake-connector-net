@@ -380,7 +380,7 @@ namespace Snowflake.Data.Core.FileTransfer
             else
             {
                 var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
-                throw lastErr;
+                throw new Exception(msg);
             }
         }
 
@@ -467,7 +467,7 @@ namespace Snowflake.Data.Core.FileTransfer
             else
             {
                 var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
-                throw lastErr;
+                throw new Exception(msg);
             }
         }
 
