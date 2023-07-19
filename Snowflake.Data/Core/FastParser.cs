@@ -12,8 +12,9 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                Logger.Error("A null buffer was passed to FastParseInt64");
-                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseInt64", ex);
+                throw ex;
             }
 
             Int64 result = 0;
@@ -52,8 +53,9 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                Logger.Error("A null buffer was passed to FastParseInt32");
-                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseInt32", ex);
+                throw ex;
             }
 
             Int32 result = 0;
@@ -92,8 +94,9 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                Logger.Error("A null buffer was passed to FastParseDecimal");
-                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseDecimal", ex);
+                throw ex;
             }
 
             // Find any decimal point
