@@ -5,6 +5,7 @@
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
+    using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System;
     using System.Text;
@@ -157,8 +158,8 @@ namespace Snowflake.Data.Tests
         {
             UTF8Buffer srcVal = new UTF8Buffer(null, 0, 0);
 
-            decimal actualDecimalValue = FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length);
-            Assert.Zero(actualDecimalValue);
+            Exception ex = Assert.Throws<SnowflakeDbException>(() => FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length));
+            Assert.That(ex.Message, Does.Match(".*Cannot parse a null buffer.*"));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -11,7 +10,7 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                return 0;
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
             Int64 result = 0;
@@ -50,7 +49,7 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                return 0;
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
             Int32 result = 0;
@@ -89,7 +88,7 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
-                return 0;
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
             // Find any decimal point
