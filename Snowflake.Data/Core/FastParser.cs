@@ -1,15 +1,18 @@
 ﻿using System;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     public class FastParser
     {
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<FastParser>();
 
         public static Int64 FastParseInt64(byte[] s, int offset, int len)
         {
             if (s == null)
             {
+                Logger.Error("A null buffer was passed to FastParseInt64");
                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
@@ -49,6 +52,7 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
+                Logger.Error("A null buffer was passed to FastParseInt32");
                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
@@ -88,6 +92,7 @@ namespace Snowflake.Data.Core
         {
             if (s == null)
             {
+                Logger.Error("A null buffer was passed to FastParseDecimal");
                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
             }
 
