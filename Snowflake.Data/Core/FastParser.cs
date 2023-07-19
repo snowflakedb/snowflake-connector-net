@@ -1,14 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     public class FastParser
     {
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<FastParser>();
 
         public static Int64 FastParseInt64(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseInt64", ex);
+                throw ex;
+            }
+
             Int64 result = 0;
             int i = offset;
             bool isMinus = false;
@@ -43,6 +51,13 @@ namespace Snowflake.Data.Core
 
         public static Int32 FastParseInt32(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseInt32", ex);
+                throw ex;
+            }
+
             Int32 result = 0;
             int i = offset;
             bool isMinus = false;
@@ -77,6 +92,13 @@ namespace Snowflake.Data.Core
 
         public static decimal FastParseDecimal(byte[] s, int offset, int len)
         {
+            if (s == null)
+            {
+                Exception ex = new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Cannot parse a null buffer");
+                Logger.Error("A null buffer was passed to FastParseDecimal", ex);
+                throw ex;
+            }
+
             // Find any decimal point
             // Parse integer part and decimal part as 64-bit numbers
             // Calculate decimal number to return
