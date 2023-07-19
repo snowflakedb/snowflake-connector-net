@@ -156,5 +156,14 @@ namespace Snowflake.Data.Tests
 
             conn.Close();
         }
+
+        [Test]
+        public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
+        {
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                Assert.Throws<SnowflakeDbException>(() => conn.BeginTransaction());
+            }
+        }
     }
 }

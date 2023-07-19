@@ -1800,6 +1800,27 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
         }
+
+        [Test]
+        public void TestExplicitTransactionOperationsTracked()
+        {
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                Assert.AreEqual(false, conn.HasActiveTransaction());
+
+                var trans = conn.BeginTransaction();
+                Assert.AreEqual(true, conn.HasActiveTransaction());
+                trans.Rollback();
+                Assert.AreEqual(false, conn.HasActiveTransaction());
+
+                conn.BeginTransaction().Rollback();
+                Assert.AreEqual(false, conn.HasActiveTransaction());
+                
+                conn.BeginTransaction().Commit();
+                Assert.AreEqual(false, conn.HasActiveTransaction());
+            }
+        }
     }
 }
 
