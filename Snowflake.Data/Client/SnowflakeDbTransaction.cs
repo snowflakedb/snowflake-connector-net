@@ -21,11 +21,23 @@ namespace Snowflake.Data.Client
         private bool disposed = false;
         private bool isCommittedOrRollbacked = false;
 
+        internal bool IsActive => !disposed && !isCommittedOrRollbacked;
+        
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
             logger.Debug("Begin transaction.");
             if (isolationLevel != IsolationLevel.ReadCommitted)
             {
+                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+            }
+            if (connection == null)
+            {
+                logger.Error("Transaction cannot be started for an unknown connection");
+                throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY);
+            }
+            if (!connection.IsOpen())
+            {
+                logger.Error("Transaction cannot be started for a closed connection");
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
@@ -38,6 +50,7 @@ namespace Snowflake.Data.Client
                 command.CommandText = "BEGIN";
                 command.ExecuteNonQuery();
             }
+            connection.ExplicitTransaction = this;
         }
 
         public override IsolationLevel IsolationLevel
@@ -97,6 +110,7 @@ namespace Snowflake.Data.Client
                     this.Rollback();
                 }
                 isCommittedOrRollbacked = true;
+                connection.ExplicitTransaction = null; // let GC clean it
             }
             disposed = true;
 

@@ -551,6 +551,7 @@ namespace Snowflake.Data.Tests
                 connection.Open();
                 firstOpenedSessionId = connection.SfSession.sessionId;
                 connection.BeginTransaction();
+                Assert.AreEqual(true, connection.HasActiveTransaction());
                 Assert.Throws<SnowflakeDbException>(() =>
                 {
                     using (var command = connection.CreateCommand())
@@ -567,14 +568,32 @@ namespace Snowflake.Data.Tests
                 connectionWithSessionReused.Open();
                 
                 Assert.AreEqual(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
+                Assert.AreEqual(false, connectionWithSessionReused.HasActiveTransaction());
                 using (var cmd = connectionWithSessionReused.CreateCommand())
                 {
                     cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
                     Assert.AreEqual(DBNull.Value, cmd.ExecuteScalar());
                 }
-            } 
+            }
             
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be reused and any pending transaction rolled back before it gets back to the pool");
+        }
+
+        [Test]
+        public void TestTransactionStatusNotTrackedForNonExplicitTransactionCalls()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = ConnectionString;
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well 
+                    command.ExecuteNonQuery();
+                    Assert.AreEqual(false, connection.HasActiveTransaction()); 
+                }
+            }
         }
 
         [Test]
@@ -589,11 +608,11 @@ namespace Snowflake.Data.Tests
                 connection1.ConnectionString = ConnectionString;
                 connection1.Open();
                 Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session is added to the pool after close connection");
+                connection1.BeginTransaction();
+                Assert.AreEqual(true, connection1.HasActiveTransaction());
                 using (var command = connection1.CreateCommand())
                 {
                     firstOpenedSessionId = connection1.SfSession.sessionId;
-                    command.CommandText = "BEGIN TRANSACTION";
-                    command.ExecuteNonQuery();
                     command.CommandText = "SELECT CURRENT_TRANSACTION()";
                     Assert.AreNotEqual(DBNull.Value, command.ExecuteScalar());
                 }
@@ -605,6 +624,7 @@ namespace Snowflake.Data.Tests
                 connection2.ConnectionString = ConnectionString;
                 connection2.Open();
                 Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session should be now removed from the pool");
+                Assert.AreEqual(false, connection2.HasActiveTransaction());
                 using (var command = connection2.CreateCommand())
                 {
                     Assert.AreEqual(firstOpenedSessionId, connection2.SfSession.sessionId);
@@ -633,7 +653,8 @@ namespace Snowflake.Data.Tests
                 connection.ConnectionString = ConnectionString;
                 connection.Open();
                 connection.BeginTransaction();
-                // no Rollback or Commit; during internal Rollback exception will be thrown
+                Assert.AreEqual(true, connection.HasActiveTransaction());
+                // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
             }
             
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");

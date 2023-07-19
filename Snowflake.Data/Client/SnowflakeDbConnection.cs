@@ -51,6 +51,7 @@ namespace Snowflake.Data.Client
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
             _isArrayBindStageCreated = false;
+            ExplicitTransaction = null;
         }
 
         public SnowflakeDbConnection(string connectionString) : this()
@@ -103,22 +104,31 @@ namespace Snowflake.Data.Client
         public override string ServerVersion => IsOpen() ? SfSession.serverVersion : String.Empty;
 
         public override ConnectionState State => _connectionState;
+        internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
+        
+        internal bool HasActiveTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
 
         private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
+            if (!HasActiveTransaction())
+                return TransactionRollbackStatus.Success;
             try
             {
+                logger.Debug("Closing dirty connection: an active transaction exists in session: " + SfSession.sessionId);
                 using (IDbCommand command = CreateCommand())
                 {
                     command.CommandText = "ROLLBACK";
                     command.ExecuteNonQuery();
+                    // error to indicate a problem within application code that a connection was closed while still having a pending transaction
+                    logger.Error("Closing dirty connection: rollback transaction in session " + SfSession.sessionId + " succeeded.");
+                    ExplicitTransaction = null;
                     return TransactionRollbackStatus.Success; 
                 }
             }
             catch (SnowflakeDbException exception)
             {
-                // error to indicate a problem with rolling back an active transaction and inability to return dirty connection to the pool 
-                logger.Error("Closing connection: unable to rollback transaction in session: " + SfSession.sessionId + ", exception: " + exception.Message);
+                // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool 
+                logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
                 return TransactionRollbackStatus.Failure; // connection won't be pooled
             }
         }
