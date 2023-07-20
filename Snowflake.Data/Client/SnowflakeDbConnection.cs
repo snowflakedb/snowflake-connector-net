@@ -106,11 +106,11 @@ namespace Snowflake.Data.Client
         public override ConnectionState State => _connectionState;
         internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
         
-        internal bool HasActiveTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
+        internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
 
         private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
-            if (!HasActiveTransaction())
+            if (!HasActiveExplicitTransaction())
                 return TransactionRollbackStatus.Success;
             try
             {

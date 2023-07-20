@@ -551,7 +551,7 @@ namespace Snowflake.Data.Tests
                 connection.Open();
                 firstOpenedSessionId = connection.SfSession.sessionId;
                 connection.BeginTransaction();
-                Assert.AreEqual(true, connection.HasActiveTransaction());
+                Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
                 Assert.Throws<SnowflakeDbException>(() =>
                 {
                     using (var command = connection.CreateCommand())
@@ -568,7 +568,7 @@ namespace Snowflake.Data.Tests
                 connectionWithSessionReused.Open();
                 
                 Assert.AreEqual(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
-                Assert.AreEqual(false, connectionWithSessionReused.HasActiveTransaction());
+                Assert.AreEqual(false, connectionWithSessionReused.HasActiveExplicitTransaction());
                 using (var cmd = connectionWithSessionReused.CreateCommand())
                 {
                     cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
@@ -591,7 +591,7 @@ namespace Snowflake.Data.Tests
                 {
                     command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well 
                     command.ExecuteNonQuery();
-                    Assert.AreEqual(false, connection.HasActiveTransaction()); 
+                    Assert.AreEqual(false, connection.HasActiveExplicitTransaction()); 
                 }
             }
         }
@@ -609,7 +609,7 @@ namespace Snowflake.Data.Tests
                 connection1.Open();
                 Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session is added to the pool after close connection");
                 connection1.BeginTransaction();
-                Assert.AreEqual(true, connection1.HasActiveTransaction());
+                Assert.AreEqual(true, connection1.HasActiveExplicitTransaction());
                 using (var command = connection1.CreateCommand())
                 {
                     firstOpenedSessionId = connection1.SfSession.sessionId;
@@ -624,7 +624,7 @@ namespace Snowflake.Data.Tests
                 connection2.ConnectionString = ConnectionString;
                 connection2.Open();
                 Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session should be now removed from the pool");
-                Assert.AreEqual(false, connection2.HasActiveTransaction());
+                Assert.AreEqual(false, connection2.HasActiveExplicitTransaction());
                 using (var command = connection2.CreateCommand())
                 {
                     Assert.AreEqual(firstOpenedSessionId, connection2.SfSession.sessionId);
@@ -653,7 +653,7 @@ namespace Snowflake.Data.Tests
                 connection.ConnectionString = ConnectionString;
                 connection.Open();
                 connection.BeginTransaction();
-                Assert.AreEqual(true, connection.HasActiveTransaction());
+                Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
                 // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
             }
             
