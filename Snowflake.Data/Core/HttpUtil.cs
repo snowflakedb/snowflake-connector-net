@@ -379,7 +379,11 @@ namespace Snowflake.Data.Core
                     if (retryCount > maxRetry)
                     {
                         logger.Debug($"stop retry as maxHttpRetries {maxRetry} reached");
-                        return response;
+                        if (response != null)
+                        {
+                            return response;
+                        }
+                        throw new OperationCanceledException("http request failed and max retry reached");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore

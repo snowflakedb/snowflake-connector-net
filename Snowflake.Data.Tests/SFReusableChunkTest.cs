@@ -381,7 +381,7 @@ select parse_json('{
         public void testChunkRetry()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY - 1);
+            ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -436,7 +436,7 @@ select parse_json('{
         public void testExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {            
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(HttpUtil.MAX_RETRY + 1);
+            ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
