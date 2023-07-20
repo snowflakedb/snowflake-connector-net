@@ -12,15 +12,49 @@ namespace Snowflake.Data.Tests
     using System.Threading.Tasks;
     using System.Threading;
     using Snowflake.Data.Log;
-    using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
-    using System.Runtime.InteropServices;
     using System.Data.Common;
+    using Moq;
+    
+    class PoolConfig {
+        private readonly bool _pooling;
+        private readonly long _timeout;
+        private readonly int _maxPoolSize;
 
-    [TestFixture]
+        public PoolConfig()
+        {
+            _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
+            _timeout = SnowflakeDbConnectionPool.GetTimeout();
+            _pooling = SnowflakeDbConnectionPool.GetPooling();
+        }
+
+        public void Reset()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
+            SnowflakeDbConnectionPool.SetTimeout(_timeout);
+            SnowflakeDbConnectionPool.SetPooling(_pooling);
+        }
+    }
+    
+    [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
+        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
+
+        [SetUp]
+        public void BeforeTest()
+        {
+            previousPoolConfig.Reset();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            previousPoolConfig.Reset();
+        }
 
         [Test]
         [Ignore("dummy test case for showing test progress.")]
@@ -116,15 +150,13 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
             SnowflakeDbConnectionPool.ClearAllPools();
 
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             conn1.Close();
@@ -134,12 +166,10 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             conn1.Close();
@@ -159,7 +189,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolIsFull()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
@@ -227,7 +256,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolClean()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -262,7 +290,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolFull()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -305,7 +332,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolMultiThreading()
         {
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
@@ -343,7 +369,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolDisable()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -360,7 +385,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolWithDispose()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
@@ -384,7 +408,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolTurnOff()
         {
             SnowflakeDbConnectionPool.SetPooling(false);
@@ -410,14 +433,27 @@ namespace Snowflake.Data.Tests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
+        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
+
+        [SetUp]
+        public void BeforeTest()
+        {
+            previousPoolConfig.Reset();
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            previousPoolConfig.Reset();
+        }
 
         [Test]
-        [Ignore("Disable test case to prevent the static variable changed at the same time.")]
         public void TestConnectionPoolWithAsync()
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(true);
                 SnowflakeDbConnectionPool.SetMaxPoolSize(1);
                 SnowflakeDbConnectionPool.ClearAllPools();
 
@@ -449,7 +485,6 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestConnectionPoolWithInvalidOpenAsync()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             // make the connection string unique so it won't pick up connection
             // pooled by other test cases.
@@ -502,6 +537,127 @@ namespace Snowflake.Data.Tests
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
             ConcurrentPoolingAsyncHelper(connStr, true);
+        }
+
+        [Test]
+        public void TestRollbackTransactionOnPooledWhenExceptionOccurred()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+
+            object firstOpenedSessionId = null;
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = ConnectionString;
+                connection.Open();
+                firstOpenedSessionId = connection.SfSession.sessionId;
+                connection.BeginTransaction();
+                Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+                Assert.Throws<SnowflakeDbException>(() =>
+                {
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "invalid command will throw exception and leave session with an unfinished transaction";
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }
+
+            using (var connectionWithSessionReused = new SnowflakeDbConnection())
+            {
+                connectionWithSessionReused.ConnectionString = ConnectionString;
+                connectionWithSessionReused.Open();
+                
+                Assert.AreEqual(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
+                Assert.AreEqual(false, connectionWithSessionReused.HasActiveExplicitTransaction());
+                using (var cmd = connectionWithSessionReused.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
+                    Assert.AreEqual(DBNull.Value, cmd.ExecuteScalar());
+                }
+            }
+            
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be reused and any pending transaction rolled back before it gets back to the pool");
+        }
+
+        [Test]
+        public void TestTransactionStatusNotTrackedForNonExplicitTransactionCalls()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = ConnectionString;
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well 
+                    command.ExecuteNonQuery();
+                    Assert.AreEqual(false, connection.HasActiveExplicitTransaction()); 
+                }
+            }
+        }
+
+        [Test]
+        public void TestRollbackTransactionOnPooledWhenConnectionClose()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
+
+            string firstOpenedSessionId = null;
+            using (var connection1 = new SnowflakeDbConnection())
+            {
+                connection1.ConnectionString = ConnectionString;
+                connection1.Open();
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session is added to the pool after close connection");
+                connection1.BeginTransaction();
+                Assert.AreEqual(true, connection1.HasActiveExplicitTransaction());
+                using (var command = connection1.CreateCommand())
+                {
+                    firstOpenedSessionId = connection1.SfSession.sessionId;
+                    command.CommandText = "SELECT CURRENT_TRANSACTION()";
+                    Assert.AreNotEqual(DBNull.Value, command.ExecuteScalar());
+                }
+            }
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
+
+            using (var connection2 = new SnowflakeDbConnection())
+            {
+                connection2.ConnectionString = ConnectionString;
+                connection2.Open();
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection session should be now removed from the pool");
+                Assert.AreEqual(false, connection2.HasActiveExplicitTransaction());
+                using (var command = connection2.CreateCommand())
+                {
+                    Assert.AreEqual(firstOpenedSessionId, connection2.SfSession.sessionId);
+                    command.CommandText = "SELECT CURRENT_TRANSACTION()";
+                    Assert.AreEqual(DBNull.Value, command.ExecuteScalar());
+                }
+            }
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
+        }
+
+        [Test]
+        public void TestFailureOfTransactionRollbackOnConnectionClosePreventsAddingToPool()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>();
+            commandThrowingExceptionOnlyForRollback.CallBase = true;
+            commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
+                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
+            var mockDbProviderFactory = new Mock<DbProviderFactory>();
+            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
+
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            using (var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object))
+            {
+                connection.ConnectionString = ConnectionString;
+                connection.Open();
+                connection.BeginTransaction();
+                Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+                // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
+            }
+            
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }
 
         [Test]
@@ -597,6 +753,16 @@ namespace Snowflake.Data.Tests
                 // roughly at the same speed as connections for query tasks
                 await Task.Delay(100);
             }
+        }
+        
+        private class TestSnowflakeDbConnection : SnowflakeDbConnection
+        {
+            public TestSnowflakeDbConnection(DbProviderFactory dbProviderFactory)
+            {
+                DbProviderFactory = dbProviderFactory;
+            }
+
+            protected override DbProviderFactory DbProviderFactory { get; }
         }
     }
 }

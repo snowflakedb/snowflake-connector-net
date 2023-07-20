@@ -22,6 +22,8 @@ namespace Snowflake.Data.Client
 
         internal ConnectionState _connectionState;
 
+        protected override DbProviderFactory DbProviderFactory => new SnowflakeDbFactory();
+        
         internal int _connectionTimeout;
 
         private bool disposed = false;
@@ -35,6 +37,13 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
+        private enum TransactionRollbackStatus
+        {
+            Undefined, // used to indicate ignored transaction status when pool disabled
+            Success,
+            Failure
+        }
+
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
@@ -42,6 +51,7 @@ namespace Snowflake.Data.Client
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
             _isArrayBindStageCreated = false;
+            ExplicitTransaction = null;
         }
 
         public SnowflakeDbConnection(string connectionString) : this()
@@ -61,10 +71,15 @@ namespace Snowflake.Data.Client
 
         public bool IsOpen()
         {
-            return _connectionState == ConnectionState.Open;
+            return _connectionState == ConnectionState.Open && SfSession != null;
         }
 
-        public override string Database => _connectionState == ConnectionState.Open ? SfSession.database : string.Empty;
+        private bool IsNonClosedWithSession()
+        {
+            return _connectionState != ConnectionState.Closed && SfSession != null;
+        }
+
+        public override string Database => IsOpen() ? SfSession.database : string.Empty;
 
         public override int ConnectionTimeout => this._connectionTimeout;
 
@@ -86,9 +101,37 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public override string ServerVersion => _connectionState == ConnectionState.Open ? SfSession.serverVersion : "";
+        public override string ServerVersion => IsOpen() ? SfSession.serverVersion : String.Empty;
 
         public override ConnectionState State => _connectionState;
+        internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
+        
+        internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
+
+        private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
+        {
+            if (!HasActiveExplicitTransaction())
+                return TransactionRollbackStatus.Success;
+            try
+            {
+                logger.Debug("Closing dirty connection: an active transaction exists in session: " + SfSession.sessionId);
+                using (IDbCommand command = CreateCommand())
+                {
+                    command.CommandText = "ROLLBACK";
+                    command.ExecuteNonQuery();
+                    // error to indicate a problem within application code that a connection was closed while still having a pending transaction
+                    logger.Error("Closing dirty connection: rollback transaction in session " + SfSession.sessionId + " succeeded.");
+                    ExplicitTransaction = null;
+                    return TransactionRollbackStatus.Success; 
+                }
+            }
+            catch (SnowflakeDbException exception)
+            {
+                // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool 
+                logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
+                return TransactionRollbackStatus.Failure; // connection won't be pooled
+            }
+        }
 
         public override void ChangeDatabase(string databaseName)
         {
@@ -96,7 +139,7 @@ namespace Snowflake.Data.Client
 
             string alterDbCommand = $"use database {databaseName}";
 
-            using (IDbCommand cmd = this.CreateCommand())
+            using (IDbCommand cmd = CreateCommand())
             {
                 cmd.CommandText = alterDbCommand;
                 cmd.ExecuteNonQuery();
@@ -106,10 +149,11 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if ((_connectionState != ConnectionState.Closed) &&
-                (SfSession != null))
+            if (IsNonClosedWithSession())
             {
-                if (SnowflakeDbConnectionPool.addSession(SfSession))
+                var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+                
+                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -134,9 +178,11 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if ((_connectionState != ConnectionState.Closed) && SfSession != null)
+                if (IsNonClosedWithSession())
                 {
-                    if (SnowflakeDbConnectionPool.addSession(SfSession))
+                    var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+
+                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
@@ -177,6 +223,12 @@ namespace Snowflake.Data.Client
             return taskCompletionSource.Task;
         }
 
+        private bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+        {
+            return SnowflakeDbConnectionPool.GetPooling() && 
+                   transactionRollbackStatus == TransactionRollbackStatus.Success;
+        }
+        
         public override void Open()
         {
             logger.Debug("Open Connection.");
@@ -314,7 +366,9 @@ namespace Snowflake.Data.Client
 
         protected override DbCommand CreateDbCommand()
         {
-            return new SnowflakeDbCommand(this);
+            var command = DbProviderFactory.CreateCommand();
+            command.Connection = this;
+            return command;
         }
 
         protected override void Dispose(bool disposing)

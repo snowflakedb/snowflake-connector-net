@@ -149,9 +149,19 @@ namespace Snowflake.Data.Client
             maxPoolSize = size;
         }
 
+        public int GetMaxPoolSize()
+        {
+            return maxPoolSize;
+        }
+
         public void SetTimeout(long time)
         {
             timeout = time;
+        }
+
+        public long GetTimeout()
+        {
+            return timeout;
         }
 
         public int GetCurrentPoolSize()
@@ -203,9 +213,19 @@ namespace Snowflake.Data.Client
             SessionPoolSingleton.Instance.SetMaxPoolSize(size);
         }
 
+        public static int GetMaxPoolSize()
+        {
+            return SessionPoolSingleton.Instance.GetMaxPoolSize();
+        }
+
         public static void SetTimeout(long time)
         {
             SessionPoolSingleton.Instance.SetTimeout(time);
+        }
+        
+        public static long GetTimeout()
+        {
+            return SessionPoolSingleton.Instance.GetTimeout();
         }
 
         public static int GetCurrentPoolSize()
