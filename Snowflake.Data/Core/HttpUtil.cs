@@ -383,7 +383,7 @@ namespace Snowflake.Data.Core
                         {
                             return response;
                         }
-                        throw new OperationCanceledException("http request failed and max retry reached");
+                        throw new OperationCanceledException($"http request failed and max retry {maxRetry} reached");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
