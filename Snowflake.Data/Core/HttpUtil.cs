@@ -26,7 +26,8 @@ namespace Snowflake.Data.Core
             string proxyPassword,
             string noProxyList,
             bool disableRetry,
-            bool forceRetryOn404)
+            bool forceRetryOn404,
+            int maxHttpRetries)
         {
             CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
@@ -36,6 +37,7 @@ namespace Snowflake.Data.Core
             NoProxyList = noProxyList;
             DisableRetry = disableRetry;
             ForceRetryOn404 = forceRetryOn404;
+            MaxHttpRetries = maxHttpRetries;
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -46,7 +48,8 @@ namespace Snowflake.Data.Core
                     proxyPassword,
                     noProxyList,
                     disableRetry.ToString(),
-                    forceRetryOn404.ToString()});
+                    forceRetryOn404.ToString(),
+                    maxHttpRetries.ToString()});
         }
 
         public readonly bool CrlCheckEnabled;
@@ -57,6 +60,7 @@ namespace Snowflake.Data.Core
         public readonly string NoProxyList;
         public readonly bool DisableRetry;
         public readonly bool ForceRetryOn404;
+        public readonly int MaxHttpRetries;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -64,7 +68,6 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
-        static internal readonly int MAX_RETRY = 6;
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
@@ -93,7 +96,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404))
+                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -274,11 +277,13 @@ namespace Snowflake.Data.Core
 
             private bool disableRetry;
             private bool forceRetryOn404;
+            private int maxRetry;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetry) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
+                this.maxRetry = maxRetry;
             }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
@@ -305,6 +310,7 @@ namespace Snowflake.Data.Core
                 CancellationTokenSource childCts = null;
 
                 UriUpdater updater = new UriUpdater(requestMessage.RequestUri);
+                int retryCount = 0;
 
                 while (true)
                 {
@@ -369,12 +375,20 @@ namespace Snowflake.Data.Core
                         logger.Info("Response returned was null.");
                     }
 
+                    retryCount++;
+                    if (retryCount > maxRetry)
+                    {
+                        logger.Debug($"stop retry as maxHttpRetries {maxRetry} reached");
+                        return response;
+                    }
+
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
 
                     requestMessage.RequestUri = updater.Update();
 
-                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request");
+                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
+
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                     totalRetryTime += backOffInSec;
                     // Set next backoff time

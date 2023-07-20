@@ -17,6 +17,7 @@ namespace Snowflake.Data.Core
         internal bool insecureMode;
         internal bool disableRetry;
         internal bool forceRetryOn404;
+        internal int maxHttpRetries;
         internal SFSessionHttpClientProxyProperties proxyProperties;
 
         internal void WarnOnTimeout()
@@ -48,7 +49,8 @@ namespace Snowflake.Data.Core
                 proxyProperties.proxyPassword,
                 proxyProperties.nonProxyHosts,
                 disableRetry,
-                forceRetryOn404);
+                forceRetryOn404,
+                maxHttpRetries);
         }
 
         internal Dictionary<SFSessionParameter, object> ToParameterMap()
@@ -83,6 +85,7 @@ namespace Snowflake.Data.Core
                     insecureMode = Boolean.Parse(propertiesDictionary[SFSessionProperty.INSECUREMODE]),
                     disableRetry = Boolean.Parse(propertiesDictionary[SFSessionProperty.DISABLERETRY]),
                     forceRetryOn404 = Boolean.Parse(propertiesDictionary[SFSessionProperty.FORCERETRYON404]),
+                    maxHttpRetries = int.Parse(propertiesDictionary[SFSessionProperty.MAXHTTPRETRIES]),
                     proxyProperties = proxyPropertiesExtractor.ExtractProperties(propertiesDictionary)
                 };
             }

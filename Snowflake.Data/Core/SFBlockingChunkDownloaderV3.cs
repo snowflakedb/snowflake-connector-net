@@ -136,7 +136,8 @@ namespace Snowflake.Data.Core
             int backOffInSec = 1;
             bool retry = false;
             int retryCount = 0;
-            
+            int maxRetry = int.Parse(sessionProperies[SFSessionProperty.MAXHTTPRETRIES]);
+
             do
             {
                 retry = false;
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        if (retryCount < HttpUtil.MAX_RETRY)
+                        if (retryCount < maxRetry)
                         {
                             retry = true;
                             // reset the chunk before retry in case there could be garbage

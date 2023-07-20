@@ -78,6 +78,8 @@ namespace Snowflake.Data.Core
         FORCEPARSEERROR,
         [SFSessionPropertyAttr(required = false, defaultValue = "120")]
         BROWSER_RESPONSE_TIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "7")]
+        MAXHTTPRETRIES,
     }
 
     class SFSessionPropertyAttr : Attribute
