@@ -5,8 +5,7 @@ on:
       - master
 jobs:
   whitesource:
-    permissions: 
-      issues: write
+    permissions: write-all
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.user.login == 'sfc-gh-snyk-sca-sa' }}
     steps:
