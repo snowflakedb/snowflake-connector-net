@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Log;
     using log4net.Core;
-    using System;
 
     [TestFixture]
     class SFLoggerTest
@@ -19,8 +18,9 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void BeforeTest()
         {
-            ((Hierarchy)LogManager.GetRepository()).Root.Level = Level.Trace;
-            ((Hierarchy)LogManager.GetRepository()).RaiseConfigurationChanged(EventArgs.Empty);
+            // Log level defaults to Warn on net6.0 builds in github actions
+            // Set the threshold level to Debug
+            LogManager.GetRepository().Threshold = Level.Debug;
         }
 
         [TearDown] public void AfterTest()
