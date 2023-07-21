@@ -4,8 +4,12 @@
 
 namespace Snowflake.Data.Tests
 {
+    using log4net.Repository.Hierarchy;
+    using log4net;
     using NUnit.Framework;
     using Snowflake.Data.Log;
+    using log4net.Core;
+    using System;
 
     [TestFixture]
     class SFLoggerTest
@@ -15,7 +19,8 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void BeforeTest()
         {
-            log4net.Config.XmlConfigurator.Configure();
+            ((Hierarchy)LogManager.GetRepository()).Root.Level = Level.Trace;
+            ((Hierarchy)LogManager.GetRepository()).RaiseConfigurationChanged(EventArgs.Empty);
         }
 
         [TearDown] public void AfterTest()
