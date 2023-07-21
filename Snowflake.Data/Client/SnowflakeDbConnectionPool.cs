@@ -61,11 +61,11 @@ namespace Snowflake.Data.Client
             logger.Debug("SessionPool::cleanExpiredSessions");
             lock (_sessionPoolLock)
             {
-                long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
+                long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 foreach (var item in sessionPool.ToList())
                 {
-                    if ((item.startTime + timeout) <= timeNow)
+                    if (item.IsExpired(timeout, timeNow))
                     {
                         sessionPool.Remove(item);
                         item.close();
@@ -87,8 +87,8 @@ namespace Snowflake.Data.Client
                     {
                         SFSession session = sessionPool[i];
                         sessionPool.RemoveAt(i);
-                        long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
-                        if ((session.startTime + timeout) <= timeNow)
+                        long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                        if (session.IsExpired(timeout, timeNow))
                         {
                             session.close();
                             i--;
@@ -108,9 +108,8 @@ namespace Snowflake.Data.Client
             logger.Debug("SessionPool::addSession");
             if (!pooling)
                 return false;
-            long timeNow = DateTimeOffset.Now.ToUnixTimeSeconds();
-            // Do not pool session if not open or already expired
-            if ((session.startTime == 0) || ((session.startTime + timeout) <= timeNow))
+            long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (session.IsNotOpen() || session.IsExpired(timeout, timeNow))
                 return false;
 
             lock (_sessionPoolLock)

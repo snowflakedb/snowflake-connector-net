@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
         internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
             new SFSessionHttpClientProxyProperties.Extractor());
 
-        internal long startTime = 0;
+        private long _startTime = 0;
         internal string connStr = null;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Core
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
                 logger.Debug($"Session opened: {sessionId}");
-                startTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+                _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             }
             else
             {
@@ -479,6 +479,16 @@ namespace Snowflake.Data.Core
                     retry = false;
                 } while (retry);
             }
+        }
+
+        internal bool IsNotOpen()
+        {
+            return _startTime == 0;
+        }
+
+        internal bool IsExpired(long timeoutInSeconds, long utcTimeInSeconds)
+        {
+            return _startTime + timeoutInSeconds <= utcTimeInSeconds;
         }
     }
 }
