@@ -12,6 +12,12 @@ namespace Snowflake.Data.Tests
     {
         SFLogger _logger;
 
+        [OneTimeSetUp]
+        public void BeforeTest()
+        {
+            log4net.Config.XmlConfigurator.Configure();
+        }
+
         [TearDown] public void AfterTest()
         {
             // Return to default setting
