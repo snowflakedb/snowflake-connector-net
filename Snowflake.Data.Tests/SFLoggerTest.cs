@@ -46,8 +46,6 @@ namespace Snowflake.Data.Tests
         public void TestIsDebugEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            System.Console.WriteLine($"TestIsDebugEnabled: {isEnabled}");
-
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
@@ -57,8 +55,6 @@ namespace Snowflake.Data.Tests
         public void TestIsInfoEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            System.Console.WriteLine($"TestIsInfoEnabled: {isEnabled}");
-
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
@@ -95,12 +91,10 @@ namespace Snowflake.Data.Tests
         {
             if (isEnabled)
             {
-                System.Console.WriteLine("Enabling logger");
                 SFLoggerFactory.enableLogger();
             }
             else
             {
-                System.Console.WriteLine("Disabling logger");
                 SFLoggerFactory.disableLogger();
             }
 
