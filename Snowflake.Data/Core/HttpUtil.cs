@@ -376,7 +376,7 @@ namespace Snowflake.Data.Core
                     }
 
                     retryCount++;
-                    if (retryCount > maxRetry)
+                    if ((maxRetry > 0) && (retryCount > maxRetry))
                     {
                         logger.Debug($"stop retry as maxHttpRetries {maxRetry} reached");
                         if (response != null)

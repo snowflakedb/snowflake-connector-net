@@ -185,7 +185,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        if (retryCount < maxRetry)
+                        if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
