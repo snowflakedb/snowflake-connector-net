@@ -35,6 +35,7 @@ namespace Snowflake.Data.Tests.Session
                 insecureMode = false,
                 disableRetry = false,
                 forceRetryOn404 = false,
+                maxHttpRetries = 7,
                 proxyProperties = proxyProperties
             };
             
@@ -67,6 +68,7 @@ namespace Snowflake.Data.Tests.Session
                 insecureMode = TestDataGenarator.NextBool(),
                 disableRetry = TestDataGenarator.NextBool(),
                 forceRetryOn404 = TestDataGenarator.NextBool(),
+                maxHttpRetries = TestDataGenarator.NextInt(0, 15),
                 proxyProperties = proxyProperties
             };
             
@@ -82,6 +84,7 @@ namespace Snowflake.Data.Tests.Session
             Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
             Assert.AreEqual(properties.disableRetry, config.DisableRetry);
             Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
+            Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
         [Test, TestCaseSource(nameof(PropertiesProvider))]
@@ -106,6 +109,7 @@ namespace Snowflake.Data.Tests.Session
             Assert.AreEqual(testCase.expectedProperties.insecureMode, extractedProperties.insecureMode);
             Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
             Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
+            Assert.AreEqual(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
             Assert.AreEqual(proxyProperties, extractedProperties.proxyProperties);
             proxyExtractorMock.Verify(e => e.ExtractProperties(properties), Times.Once);
         }
@@ -122,7 +126,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = false,
                     disableRetry = false,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithValidateDefaultParametersChanged = new PropertiesTestCase()
@@ -135,7 +140,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = false,
                     disableRetry = false,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithClientSessionKeepAliveChanged = new PropertiesTestCase()
@@ -148,7 +154,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = false,
                     disableRetry = false,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithTimeoutChanged = new PropertiesTestCase()
@@ -161,7 +168,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = 15,
                     insecureMode = false,
                     disableRetry = false,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithInsecureModeChanged = new PropertiesTestCase()
@@ -174,7 +182,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = true,
                     disableRetry = false,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithDisableRetryChanged = new PropertiesTestCase()
@@ -187,7 +196,8 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = false,
                     disableRetry = true,
-                    forceRetryOn404 = false
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
                 }
             };
             var propertiesWithForceRetryOn404Changed = new PropertiesTestCase()
@@ -200,9 +210,24 @@ namespace Snowflake.Data.Tests.Session
                     timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
                     insecureMode = false,
                     disableRetry = false,
-                    forceRetryOn404 = true
+                    forceRetryOn404 = true,
+                    maxHttpRetries = 7
                 }
-            }; 
+            };
+            var propertiesWithMaxHttpRetiesChanged = new PropertiesTestCase()
+            {
+                conectionString = "account=test;user=test;password=test;maxHttpRetries=10",
+                expectedProperties = new SFSessionHttpClientProperties()
+                {
+                    validateDefaultParameters = true,
+                    clientSessionKeepAlive = false,
+                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    insecureMode = false,
+                    disableRetry = false,
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 10
+                }
+            };
             return new []
             {
                 defaultProperties,
@@ -211,7 +236,8 @@ namespace Snowflake.Data.Tests.Session
                 propertiesWithTimeoutChanged,
                 propertiesWithInsecureModeChanged,
                 propertiesWithDisableRetryChanged,
-                propertiesWithForceRetryOn404Changed
+                propertiesWithForceRetryOn404Changed,
+                propertiesWithMaxHttpRetiesChanged
             };
         }
 

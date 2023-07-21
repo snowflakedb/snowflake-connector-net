@@ -353,6 +353,34 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        public void TestLoginWithMaxRetryReached()
+        {
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
+            {
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+
+                conn.ConnectionString = maxRetryConnStr;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch
+                {
+                }
+                stopwatch.Stop();
+
+                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                // but should not delay more than another 16 seconds
+                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+            }
+        }
+
+        [Test]
         [Ignore("Disable unstable test cases for now")]
         public void TestDefaultLoginTimeout()
         {
@@ -1589,7 +1617,7 @@ namespace Snowflake.Data.Tests
             {
                 // No timeout
                 int timeoutSec = 0;
-                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0}",
+                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
                 conn.ConnectionString = infiniteLoginTimeOut;
@@ -1676,7 +1704,8 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                // unlimited retry count to trigger the timeout
+                conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 

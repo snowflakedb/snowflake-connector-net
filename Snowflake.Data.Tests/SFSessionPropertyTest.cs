@@ -39,6 +39,8 @@ namespace Snowflake.Data.Tests
             string defProxyHost = "proxy.com";
             string defProxyPort = "1234";
             string defNonProxyHosts = "localhost";
+
+            string defMaxHttpRetries = "7";
             
             var simpleTestCase = new TestCase()
             {
@@ -60,7 +62,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
-                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries }
                 }
             };
             var testCaseWithBrowserResponseTimeout = new TestCase()
@@ -83,7 +86,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
-                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "180" }
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "180" },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries }
                 }
             };   
             var testCaseWithProxySettings = new TestCase()
@@ -108,7 +112,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.PROXYHOST, defProxyHost },
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
-                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -135,7 +140,8 @@ namespace Snowflake.Data.Tests
                     { SFSessionProperty.PROXYHOST, defProxyHost },
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
-                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime }
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"

@@ -51,7 +51,8 @@ namespace Snowflake.Data.Tests
                 "proxyPassword",
                 "localhost", 
                 false,
-                false
+                false,
+                7
             );
             
             // when
@@ -74,7 +75,8 @@ namespace Snowflake.Data.Tests
                 null,
                 null, 
                 false,
-                false
+                false,
+                0
             );
             
             // when
