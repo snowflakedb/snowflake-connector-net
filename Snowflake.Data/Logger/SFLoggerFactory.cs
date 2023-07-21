@@ -18,12 +18,16 @@ namespace Snowflake.Data.Log
 
         public static void disableLogger()
         {
+            System.Console.WriteLine($"disableLogger before: {isLoggerEnabled}");
             isLoggerEnabled = false;
+            System.Console.WriteLine($"disableLogger after: {isLoggerEnabled}");
         }
 
         public static void enableLogger()
         {
+            System.Console.WriteLine($"enableLogger before: {isLoggerEnabled}");
             isLoggerEnabled = true;
+            System.Console.WriteLine($"enableLogger after: {isLoggerEnabled}");
         }
 
         public static void useDefaultLogger()
@@ -38,9 +42,13 @@ namespace Snowflake.Data.Log
 
         public static SFLogger GetLogger<T>()
         {
+            System.Console.WriteLine($"GetLogger isLoggerEnabled: {isLoggerEnabled}");
+
             // If true, return the default/specified logger
             if (isLoggerEnabled)
             {
+                System.Console.WriteLine($"GetLogger logger: {logger}");
+
                 // If no logger specified, use the default logger: log4net
                 if (logger == null)
                 {
