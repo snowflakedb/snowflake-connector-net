@@ -15,6 +15,7 @@ namespace Snowflake.Data.Tests
         [TearDown] public void AfterTest()
         {
             // Return to default setting
+            SFLoggerFactory.useDefaultLogger();
             SFLoggerFactory.enableLogger();
         }
 
