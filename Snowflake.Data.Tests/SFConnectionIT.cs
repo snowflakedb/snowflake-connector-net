@@ -1617,7 +1617,7 @@ namespace Snowflake.Data.Tests
             {
                 // No timeout
                 int timeoutSec = 0;
-                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries={0}",
+                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
                 conn.ConnectionString = infiniteLoginTimeOut;
@@ -1705,7 +1705,7 @@ namespace Snowflake.Data.Tests
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // unlimited retry count to trigger the timeout
-                conn.ConnectionString = ConnectionString + "maxHttpRetries={0}";
+                conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
