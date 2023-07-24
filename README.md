@@ -14,6 +14,12 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
+Coding conventions for the project
+==================================
+
+If you would like to contribute to this project, please get to know coding conventions we would like to follow:
+[Coding conventions](CodingConventions.md).
+
 Building the Package
 ====================
 
