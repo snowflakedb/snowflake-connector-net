@@ -21,9 +21,9 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        private static readonly string ConnectionFailureErrorCode = "08006";
+        private const string ConnectionFailureErrorCode = "08006";
 
         [Test]
         [Ignore("ConnectionIT")]
@@ -89,14 +89,14 @@ namespace Snowflake.Data.Tests
                     try
                     {
                         conn.Open();
-                        logger.Debug("{appName}");
+                        s_logger.Debug("{appName}");
                         Assert.Fail();
 
                     }
                     catch (SnowflakeDbException e)
                     {
                         // Expected
-                        logger.Debug("Failed opening connection ", e);
+                        s_logger.Debug("Failed opening connection ", e);
                         Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                     }
 
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    logger.Debug("Failed opening connection ", e);
+                    s_logger.Debug("Failed opening connection ", e);
                     Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                 }
 
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnection snowflakeConnection = null;
             for (var i = 0; i < 2; ++i)
             {
-                logger.Debug($"Running try #{i}");
+                s_logger.Debug($"Running try #{i}");
                 try
                 {
                     snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests
             SnowflakeDbConnection snowflakeConnection = null;
             for (var i = 0; i < 2; ++i)
             {
-                logger.Debug($"Running try #{i}");
+                s_logger.Debug($"Running try #{i}");
                 try
                 {
                     using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
@@ -1409,7 +1409,7 @@ namespace Snowflake.Data.Tests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    logger.Debug("Failed opening connection ", e);
+                    s_logger.Debug("Failed opening connection ", e);
                     Assert.AreEqual(270001, e.ErrorCode); //Internal error
                     Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                 }
