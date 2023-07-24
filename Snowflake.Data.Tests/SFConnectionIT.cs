@@ -23,6 +23,8 @@ namespace Snowflake.Data.Tests
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
+        private static readonly string ConnectionFailureErrorCode = "08006";
+
         [Test]
         [Ignore("ConnectionIT")]
         public void ConnectionITDone()
@@ -95,7 +97,7 @@ namespace Snowflake.Data.Tests
                     {
                         // Expected
                         logger.Debug("Failed opening connection ", e);
-                        Assert.AreEqual("08006", e.SqlState); // Connection failure
+                        Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                     }
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -132,13 +134,75 @@ namespace Snowflake.Data.Tests
                 {
                     // Expected
                     logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
 			}
         }
 
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnection snowflakeConnection = null;
+            for (var i = 0; i < 2; ++i)
+            {
+                logger.Debug($"Running try #{i}");
+                try
+                {
+                    snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
+                    snowflakeConnection.Open();
+                    Assert.Fail("Connection open should fail");
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertConnectionIsNotOpen(snowflakeConnection);
+                    if (explicitClose)
+                    {
+                        snowflakeConnection.Close();
+                        AssertConnectionIsNotOpen(snowflakeConnection);
+                    }
+                    snowflakeConnection = null;
+                }
+            }
+        }
+
+        [Test]
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsing()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnection snowflakeConnection = null;
+            for (var i = 0; i < 2; ++i)
+            {
+                logger.Debug($"Running try #{i}");
+                try
+                {
+                    using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
+                    {
+                        snowflakeConnection.Open();
+                    }
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertConnectionIsNotOpen(snowflakeConnection);
+                    snowflakeConnection = null;
+                }
+            }
+        }
+
+        private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
+        {
+            Assert.NotNull(snowflakeDbConnection);
+            Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
+            Assert.AreEqual(snowflakeDbConnection.State, ConnectionState.Closed); // ensure internal state is expected
+        }
+
+        [Test]
         public void TestCrlCheckSwitchConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1347,7 +1411,7 @@ namespace Snowflake.Data.Tests
                     // Expected
                     logger.Debug("Failed opening connection ", e);
                     Assert.AreEqual(270001, e.ErrorCode); //Internal error
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
                 }
             }
         }
