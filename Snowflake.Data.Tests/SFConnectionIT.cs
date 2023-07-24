@@ -23,8 +23,6 @@ namespace Snowflake.Data.Tests
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        private const string ConnectionFailureErrorCode = "08006";
-
         [Test]
         [Ignore("ConnectionIT")]
         public void ConnectionITDone()
@@ -97,7 +95,7 @@ namespace Snowflake.Data.Tests
                     {
                         // Expected
                         s_logger.Debug("Failed opening connection ", e);
-                        Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                        AssertIsConnectionFailure(e);
                     }
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -134,7 +132,7 @@ namespace Snowflake.Data.Tests
                 {
                     // Expected
                     s_logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertIsConnectionFailure(e);
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -159,7 +157,7 @@ namespace Snowflake.Data.Tests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertIsConnectionFailure(e);
                     AssertConnectionIsNotOpen(snowflakeConnection);
                     if (explicitClose)
                     {
@@ -188,7 +186,7 @@ namespace Snowflake.Data.Tests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertIsConnectionFailure(e);
                     AssertConnectionIsNotOpen(snowflakeConnection);
                     snowflakeConnection = null;
                 }
@@ -200,6 +198,11 @@ namespace Snowflake.Data.Tests
             Assert.NotNull(snowflakeDbConnection);
             Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
             Assert.AreEqual(snowflakeDbConnection.State, ConnectionState.Closed); // ensure internal state is expected
+        }
+
+        private static void AssertIsConnectionFailure(SnowflakeDbException e)
+        {
+            Assert.AreEqual(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
         }
 
         [Test]
@@ -1411,7 +1414,7 @@ namespace Snowflake.Data.Tests
                     // Expected
                     s_logger.Debug("Failed opening connection ", e);
                     Assert.AreEqual(270001, e.ErrorCode); //Internal error
-                    Assert.AreEqual(ConnectionFailureErrorCode, e.SqlState);
+                    AssertIsConnectionFailure(e);
                 }
             }
         }
