@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Data;
+
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -110,6 +112,50 @@ namespace Snowflake.Data.Tests
             // Delete temp files
             File.Delete(_inputFilePath);
             File.Delete(_outputFilePath);
+        }
+
+        [Test]
+        public void TestPutWildcard()
+        {
+            // Prepare the data files to be copied
+            var prefix = Guid.NewGuid();
+            var absolutePath = $"{Path.GetTempPath()}{prefix}";
+            var files = new [] {absolutePath + "_one.csv", absolutePath + "_two.csv", absolutePath + "_three.csv"};
+            
+            // Prepare temp file name with specified file extension
+            _inputFilePath = absolutePath + "*";
+            _outputFilePath = $@"{_outputDirectory}/{prefix}*";
+
+            // Prepare csv raw data and write to temp files
+            var rawDataRow = string.Join(",", COL_DATA) + "\n";
+            var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NUMBER_OF_ROWS));
+            
+            foreach (var file in files)
+            {
+                File.WriteAllText(file, rawData);
+            }
+            
+            // Set the stage path to user stage
+            _internalStagePath = "@~";
+
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                
+                // Put files to the stage
+                PutFile(conn);
+
+                // Verify that all files are on the stage
+                using (var cmd = conn.CreateCommand())
+                {
+                    var command = $"LIST @~ PATTERN = '{prefix}.*'";
+                    cmd.CommandText = (command);
+                    var dbDataReader = cmd.ExecuteReader();
+                    var dt = new DataTable();
+                    dt.Load(dbDataReader);
+                    Assert.AreEqual(files.Length, dt.Rows.Count);
+                }
+            }
         }
         
         [Test]
