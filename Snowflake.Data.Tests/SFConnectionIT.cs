@@ -145,10 +145,10 @@ namespace Snowflake.Data.Tests
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
         {
             SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnection snowflakeConnection = null;
-            for (var i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");
+                SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
                     snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
@@ -164,19 +164,18 @@ namespace Snowflake.Data.Tests
                         snowflakeConnection.Close();
                         AssertConnectionIsNotOpen(snowflakeConnection);
                     }
-                    snowflakeConnection = null;
                 }
             }
         }
 
         [Test]
-        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsing()
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
         {
             SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnection snowflakeConnection = null;
-            for (var i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");
+                SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
                     using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
@@ -188,7 +187,6 @@ namespace Snowflake.Data.Tests
                 {
                     AssertIsConnectionFailure(e);
                     AssertConnectionIsNotOpen(snowflakeConnection);
-                    snowflakeConnection = null;
                 }
             }
         }
@@ -197,7 +195,7 @@ namespace Snowflake.Data.Tests
         {
             Assert.NotNull(snowflakeDbConnection);
             Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
-            Assert.AreEqual(snowflakeDbConnection.State, ConnectionState.Closed); // ensure internal state is expected
+            Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
         }
 
         private static void AssertIsConnectionFailure(SnowflakeDbException e)
