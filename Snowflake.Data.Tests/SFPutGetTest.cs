@@ -68,8 +68,7 @@ namespace Snowflake.Data.Tests
         public void SetUp()
         {
             // Base object's names on on worker thread id
-            // string threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
-            var threadSuffix = "suff";
+            string threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
             
             _schemaName = testConfig.schema;
             _tableName = $"TABLE_{threadSuffix}";
