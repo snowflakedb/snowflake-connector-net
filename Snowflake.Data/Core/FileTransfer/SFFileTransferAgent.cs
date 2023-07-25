@@ -755,7 +755,7 @@ namespace Snowflake.Data.Core
         {
             if (!(directoryPath.Contains('?') || directoryPath.Contains('*')))
             {
-                return new List<string> { Path.GetFullPath(directoryPath) };
+                return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
             }
             
             var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
