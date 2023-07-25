@@ -782,7 +782,7 @@ namespace Snowflake.Data.Core
                         if (Environment.OSVersion.Platform == PlatformID.Unix ||
                             Environment.OSVersion.Platform == PlatformID.MacOSX)
                         {
-                            var pathBeginning = directoryPath.StartsWith(Path.DirectorySeparatorChar)
+                            var pathBeginning = directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString())
                                 ? Path.DirectorySeparatorChar.ToString()
                                 : $"{part}{Path.DirectorySeparatorChar}";
                             resolvedPaths.Add(pathBeginning);
