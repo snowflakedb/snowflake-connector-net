@@ -68,8 +68,9 @@ namespace Snowflake.Data.Tests
         public void SetUp()
         {
             // Base object's names on on worker thread id
-            string threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
-
+            // string threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
+            var threadSuffix = "suff";
+            
             _schemaName = testConfig.schema;
             _tableName = $"TABLE_{threadSuffix}";
             _stageName = $"STAGE_{threadSuffix}";
@@ -110,12 +111,24 @@ namespace Snowflake.Data.Tests
             }
             
             // Delete temp files
-            File.Delete(_inputFilePath);
+            if (_inputFilePath.Contains('?') || _inputFilePath.Contains('*'))
+            {
+                var files = Directory.GetFiles(Path.GetDirectoryName(_inputFilePath), Path.GetFileName(_inputFilePath));
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+            else
+            {
+                File.Delete(_inputFilePath);
+            }
+
             File.Delete(_outputFilePath);
         }
 
         [Test]
-        public void TestPutWildcard()
+        public void TestPutFileWildcard()
         {
             // Prepare the data files to be copied
             var prefix = Guid.NewGuid();
