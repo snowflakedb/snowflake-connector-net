@@ -677,137 +677,68 @@ namespace Snowflake.Data.Core
         /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
         private List<string> expandFileNames(string location)
         {
-            // Replace ~ with the user home directory path
-            if (location.Contains("~"))
+            location = ExpandHomeDirectoryIfNeeded(location);
+            var fileName = Path.GetFileName(location);
+            var directoryName = Path.GetDirectoryName(location);
+            var foundDirectories = ExpandDirectories(directoryName);
+            var filePaths = new List<string>();
+            
+            if (fileName.Contains('?') || fileName.Contains('*'))
             {
-                string homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
-                Environment.OSVersion.Platform == PlatformID.MacOSX)
-                ? Environment.GetEnvironmentVariable("HOME")
-                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
-
-                location = location.Replace("~", homePath);
-            }
-
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                location = Path.GetFullPath(location);
-            }
-
-            String fileName = Path.GetFileName(location);
-            string directoryName = Path.GetDirectoryName(location);
-
-            List<string> filePaths = new List<string>();
-            //filePaths.Add(""); //Start with an empty string to build upon
-            if (directoryName.Contains("?") ||
-                directoryName.Contains("*"))
-            {
-                // If there is a wildcard in at least one of the directory name in the file path
-                string[] pathParts = location.Split(Path.DirectorySeparatorChar);
-
-                string currPart;
-                for (int i = 0; i < pathParts.Length; i++)
+                foreach (var directory in foundDirectories)
                 {
-                    List<string> tempPaths = new List<string>();
-                    foreach (string filePath in filePaths)
+                    var ext = Path.GetExtension(fileName);
+                    if (4 == ext.Length && fileName.Contains('*'))
                     {
-                        currPart = pathParts[i];
-
-                        if (currPart.Contains("?") || currPart.Contains("*"))
-                        {
-                            if (i < pathParts.Length - 1)
-                            {
-                                // Expand the directories names
-                                tempPaths.AddRange(
-                                    Directory.GetDirectories(
-                                        filePath,
-                                        currPart,
-                                        SearchOption.TopDirectoryOnly));
-                            }
-                            else
-                            {
-                                // Expand the files names
-                                tempPaths.AddRange(
-                                    Directory.GetFiles(
-                                        filePath,
-                                        currPart,
-                                        SearchOption.TopDirectoryOnly));
-                            }
-                        }
-                        else
-                        {
-                            if (0 < i)
-                            {
-                                // Keep building the paths
-                                tempPaths.Add(filePath + Path.DirectorySeparatorChar + currPart);
-                            }
-                            else
-                            {
-                                // First part
-                                tempPaths.Add(currPart);
-                            }
-                        }
-                    }
-                    filePaths = tempPaths;
-                }
-            }
-            else if (fileName.Contains("?") || fileName.Contains("*"))
-            {
-                string ext = Path.GetExtension(fileName);
-                if ((4 == ext.Length) && (fileName.Contains("*")))
-                {
-                    /*
-                        * When you use the asterisk wildcard character in a searchPattern such as
-                        * "*.txt", the number of characters in the specified extension affects the
-                        * search as follows:
-                        * - If the specified extension is exactly three characters long, the method
-                        * returns files with extensions that begin with the specified extension. 
-                        * For example, "*.xls" returns both "book.xls" and "book.xlsx".
-                        * - In all other cases, the method returns files that exactly match the 
-                        * specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
-                        */
-                    string[] potentialMatches =
+                        /*
+                            * When you use the asterisk wildcard character in a searchPattern such as
+                            * "*.txt", the number of characters in the specified extension affects the
+                            * search as follows:
+                            * - If the specified extension is exactly three characters long, the method
+                            * returns files with extensions that begin with the specified extension. 
+                            * For example, "*.xls" returns both "book.xls" and "book.xlsx".
+                            * - In all other cases, the method returns files that exactly match the 
+                            * specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
+                            */
+                        var potentialMatches =
                             Directory.GetFiles(
-                                directoryName,
+                                directory,
                                 fileName,
                                 SearchOption.TopDirectoryOnly);
-                    foreach (string potentialMatch in potentialMatches)
-                    {
-                        if (potentialMatch.EndsWith(ext))
-                        {
-                            filePaths.Add(potentialMatch);
-                        }
+                        filePaths.AddRange(potentialMatches.Where(potentialMatch => potentialMatch.EndsWith(ext)));
                     }
-                }
-                else
-                {
-                    // If there is a wildcard in the file name in the file path
-                    filePaths.AddRange(
-                        Directory.GetFiles(
-                            directoryName,
-                            fileName,
-                            SearchOption.TopDirectoryOnly));
+                    else
+                    {
+                        // If there is a wildcard in the file name in the file path
+                        filePaths.AddRange(
+                            Directory.GetFiles(
+                                directory, 
+                                fileName, 
+                                SearchOption.TopDirectoryOnly));
+                    }
                 }
             }
             else
             {
-                // No wild card, just make sure it's a file
-                FileAttributes attr = File.GetAttributes(location);
-                if (!attr.HasFlag(FileAttributes.Directory))
+                // No wildcard in the filename
+                foreach (var directory in foundDirectories)
                 {
-                    filePaths.Add(location);
-                }
-                else
-                {
-                    throw new FileNotFoundException(
-                        "Directories not supported, you need to provide a file path", location);
+                    var fullPath = Path.GetFullPath(directory + fileName);
+                    // Make sure it's a file
+                    var attr = File.GetAttributes(fullPath);
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        throw new FileNotFoundException(
+                            "Directories not supported, you need to provide a file path", fullPath);
+                    }
+                    filePaths.Add(fullPath);
                 }
             }
 
             if (Logger.IsDebugEnabled())
             {
                 Logger.Debug("Expand " + location + " into : \n");
-                foreach (string filepath in filePaths)
+                foreach (var filepath in filePaths)
                 {
                     Logger.Debug("\t" + filepath + "\n");
                 }
@@ -815,7 +746,73 @@ namespace Snowflake.Data.Core
 
             return filePaths;
         }
+        
+        /// <summary>
+        /// Expand the wildcards in the directory path to generate the list of directories to be searched for the files.
+        /// </summary>
+        /// <param name="directoryPath">The path to expand</param>
+        private static IEnumerable<string> ExpandDirectories(string directoryPath)
+        {
+            if (!(directoryPath.Contains('?') || directoryPath.Contains('*')))
+            {
+                return new List<string> { Path.GetFullPath(directoryPath) };
+            }
+            
+            var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
+            var resolvedPaths = new List<string>();
 
+            foreach (var part in pathParts)
+            {
+                if (part.Contains('?') || part.Contains('*'))
+                {
+                    var tempPaths = new List<string>();
+                    foreach (var location in resolvedPaths)
+                    {
+                        var foundDirectories = Directory.GetDirectories(location, part, SearchOption.TopDirectoryOnly);
+                        foundDirectories = foundDirectories.Select(s => s + Path.DirectorySeparatorChar).ToArray();
+                        tempPaths.AddRange(foundDirectories);
+                    }
+
+                    resolvedPaths = tempPaths;
+                }
+                else
+                {
+                    if (resolvedPaths.Count == 0)
+                    {
+                        if (Environment.OSVersion.Platform == PlatformID.Unix ||
+                            Environment.OSVersion.Platform == PlatformID.MacOSX)
+                        {
+                            var pathBeginning = directoryPath.StartsWith(Path.DirectorySeparatorChar)
+                                ? Path.DirectorySeparatorChar.ToString()
+                                : $"{part}{Path.DirectorySeparatorChar}";
+                            resolvedPaths.Add(pathBeginning);
+                        }
+                    }
+                    else
+                    {
+                        resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
+                    }
+                }
+            }
+
+            return resolvedPaths;
+        }
+
+        /// <summary>
+        /// Expand the home directory if needed.
+        /// </summary>
+        /// <param name="directoryPath">The path to expand</param>
+        private static string ExpandHomeDirectoryIfNeeded(string directoryPath)
+        {
+            if (!directoryPath.Contains('~')) return directoryPath;
+            
+            var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
+                            Environment.OSVersion.Platform == PlatformID.MacOSX)
+                ? Environment.GetEnvironmentVariable("HOME")
+                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+
+            return directoryPath.Replace("~", homePath);
+        }
 
         /// <summary>
         /// Compress a file using the given file metadata (file path, compression type, etc...) and
