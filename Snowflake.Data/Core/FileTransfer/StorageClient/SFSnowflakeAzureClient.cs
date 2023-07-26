@@ -174,17 +174,30 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The Azure file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        {
+            UploadFile(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata);
+        }
+
+        /// <summary>
+        /// Upload the file to the Azure location.
+        /// </summary>
+        /// <param name="fileMetadata">The Azure file metadata.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
-               new Dictionary<string, string>();
+                new Dictionary<string, string>();
 
             BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
-                blobClient.Upload(new MemoryStream(fileBytes));
+                fileBytesStream.Position = 0;
+                blobClient.Upload(fileBytesStream);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -203,17 +216,30 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The Azure file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
+        public Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        {
+            return UploadFileAsync(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata, cancellationToken);
+        }
+
+        /// <summary>
+        /// Upload the file to the Azure location.
+        /// </summary>
+        /// <param name="fileMetadata">The Azure file metadata.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
-               new Dictionary<string, string>();
+                new Dictionary<string, string>();
 
             BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
-                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                fileBytesStream.Position = 0;
+                await blobClient.UploadAsync(fileBytesStream, cancellationToken);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)

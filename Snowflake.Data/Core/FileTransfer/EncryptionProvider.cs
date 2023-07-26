@@ -1,4 +1,8 @@
-﻿using System.IO;
+﻿/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
@@ -25,6 +29,8 @@ namespace Snowflake.Data.Core.FileTransfer
         // The default block size for AES
         private const int AES_BLOCK_SIZE = 128;
         private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
+        private const int OneMegabyteInBytes = 1024 * 1024;
+        private const int MaxBytesThresholdToStoreInMemory = OneMegabyteInBytes;
 
         /// <summary>
         /// The logger.
@@ -38,18 +44,35 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public byte[] EncryptFile(
+        [Obsolete("This method is deprecated. Use the method EncryptFileReturningStream() instead.")]
+        public static byte[] EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            string tempDir = null)
         {
-            using (FileStream fileStream = File.OpenRead(inFile))
-            {
-                MemoryStream ms = new MemoryStream();
-                fileStream.CopyTo(ms);
-                return EncryptStream(ms, encryptionMaterial, encryptionMetadata);
-            }
+            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
+            return EncryptFileReturningStream(inFile, encryptionMaterial, encryptionMetadata, tempDirWithDefaultValue).ToArray();
         }
+
+        /// <summary>
+        /// Encrypt data and write to the outStream.
+        /// </summary>
+        /// <param name="inFile">The data to write onto the stream.</param>
+        /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
+        /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <returns>The encrypted bytes of the file to upload.</returns>
+        public static FileBackedOutputStream EncryptFileReturningStream(
+            string inFile,
+            PutGetEncryptionMaterial encryptionMaterial,
+            SFEncryptionMetadata encryptionMetadata,
+            string tempDir)
+        {
+            using (var fileStream = File.OpenRead(inFile))
+            {
+                return EncryptStreamReturningStream(fileStream, encryptionMaterial, encryptionMetadata, tempDir);
+            }
+        }        
 
         /// <summary>
         /// Encrypt data and write to the outStream.
@@ -58,10 +81,29 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public byte[] EncryptStream(
+        [Obsolete("This method is deprecated. Use the method EncryptStreamReturningStream() instead.")]
+        public static byte[] EncryptStream(
             MemoryStream memoryStream,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            string tempDir = null)
+        {
+            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
+            return EncryptStreamReturningStream(memoryStream, encryptionMaterial, encryptionMetadata, tempDirWithDefaultValue).ToArray();
+        }
+
+        /// <summary>
+        /// Encrypt data and write to the outStream.
+        /// </summary>
+        /// <param name="inputStream">The data to write onto the stream.</param>
+        /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
+        /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <returns>The encrypted bytes of the file to upload.</returns>
+        public static FileBackedOutputStream EncryptStreamReturningStream(
+            Stream inputStream,
+            PutGetEncryptionMaterial encryptionMaterial,
+            SFEncryptionMetadata encryptionMetadata,
+            string tempDir)
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
@@ -75,11 +117,11 @@ namespace Snowflake.Data.Core.FileTransfer
             random.NextBytes(ivData);
             random.NextBytes(keyData);
 
-            // Byte[] to encrypt data into
-            byte[] encryptedBytes = CreateEncryptedBytes(
-                memoryStream,
+            var encryptedBytesStream = CreateEncryptedBytesStream(
+                inputStream,
                 keyData,
-                ivData);
+                ivData,
+                tempDir);
 
             // Encrypt file key
             byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
@@ -99,7 +141,7 @@ namespace Snowflake.Data.Core.FileTransfer
             encryptionMetadata.key = keyBase64;
             encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
 
-            return encryptedBytes;
+            return encryptedBytesStream;
         }
 
         /// <summary>
@@ -126,47 +168,52 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Creates a new byte array containing the encrypted/decrypted data.
         /// </summary>
-        /// <param name="memoryStream">The path of the file to write onto the stream.</param>
+        /// <param name="inputStream">The input stream to encrypt</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The encrypted bytes.</returns>
-        static private byte[] CreateEncryptedBytes(
-            MemoryStream memoryStream,
+        static private FileBackedOutputStream CreateEncryptedBytesStream(
+            Stream inputStream,
             byte[] key,
-            byte[] iv)
+            byte[] iv,
+            string tempDir)
         {
             Aes aes = Aes.Create();            
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
             aes.IV = iv;
-            memoryStream.Position = 0;
+            inputStream.Position = 0;
 
-            MemoryStream targetStream = new MemoryStream();
+            var targetStream = new FileBackedOutputStream(MaxBytesThresholdToStoreInMemory, tempDir);
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-            byte[] buffer = new byte[1024000];
+            byte[] buffer = new byte[MaxBytesThresholdToStoreInMemory];
             int bytesRead;
-            while ((bytesRead = memoryStream.Read(buffer, 0, buffer.Length)) > 0)
+            while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
             {
                 cryptoStream.Write(buffer, 0, bytesRead);
             }
             cryptoStream.FlushFinalBlock();
 
-            return targetStream.ToArray();
+            return targetStream;
         }
-
+        
         /// <summary>
         /// Decrypt data and write to the outStream.
         /// </summary>
         /// <param name="inFile">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
-        /// <returns>The encrypted bytes of the file to upload.</returns>
+        /// <param name="tempDir">Temporary directory which contains file related work</param>
+        /// <returns>The name of the file containing decrypted file bytes</returns>
         static public string DecryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            string tempDir = null)
         {
+            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
+
             // Get key and iv from metadata
             string keyBase64 = encryptionMetadata.key;
             string ivBase64 = encryptionMetadata.iv;
@@ -185,13 +232,18 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
 
             // Create key decipher with decoded key and AES ECB
-            byte[] decryptedBytes = CreateDecryptedBytes(
-                inFile,
-                decryptedFileKey,
-                ivBytes);
-
-            File.WriteAllBytes(tempFileName, decryptedBytes);
-
+            using (var decryptedBytesStream = CreateDecryptedBytesReturningStream(
+                       inFile,
+                       decryptedFileKey,
+                       ivBytes,
+                       tempDirWithDefaultValue))
+            {
+                using (var decryptedFileStream = File.Create(tempFileName))
+                {
+                    decryptedBytesStream.Position = 0;
+                    decryptedBytesStream.CopyTo(decryptedFileStream);
+                }
+            }
             return tempFileName;
         }
 
@@ -222,19 +274,20 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The path of the file to write onto the stream.</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
-        /// <returns>The encrypted bytes.</returns>
-        static private byte[] CreateDecryptedBytes(
+        /// <returns>The decrypted bytes stream</returns>
+        static private FileBackedOutputStream CreateDecryptedBytesReturningStream(
             string inFile,
             byte[] key,
-            byte[] iv)
+            byte[] iv,
+            string tempDir)
         {
             Aes aes = Aes.Create();
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
             aes.IV = iv;
-
-            MemoryStream targetStream = new MemoryStream();
+            
+            var targetStream = new FileBackedOutputStream(MaxBytesThresholdToStoreInMemory, tempDir);
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
 
             using(Stream inStream = File.OpenRead(inFile))
@@ -243,7 +296,7 @@ namespace Snowflake.Data.Core.FileTransfer
             }
             cryptoStream.FlushFinalBlock();
 
-            return targetStream.ToArray();
+            return targetStream;
         }
     }
 }

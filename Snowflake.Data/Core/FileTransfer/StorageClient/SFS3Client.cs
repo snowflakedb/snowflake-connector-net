@@ -10,7 +10,6 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -336,12 +335,24 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        {
+            UploadFile(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata);
+        }
+
+        /// <summary>
+        /// Upload the file to the S3 location.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Get the client
             SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
             AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
@@ -368,19 +379,31 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.destFileSize = fileMetadata.uploadSize;
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
         }
-
+        
         /// <summary>
         /// Upload the file to the S3 location.
         /// </summary>
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
+        public Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        {
+            return UploadFileAsync(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata, cancellationToken);
+        }
+
+        /// <summary>
+        /// Upload the file to the S3 location.
+        /// </summary>
+        /// <param name="fileMetadata">The S3 file metadata.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
+        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Get the client
             SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
             AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
@@ -411,23 +434,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="client"> Amazon S3 client.</param>
         /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         /// <returns>The Put Object request.</returns>
-        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Convert file bytes to memory stream
-            Stream stream = new MemoryStream(fileBytes);
-
+            
             // Create S3 PUT request
+            fileBytesStream.Position = 0;
             PutObjectRequest putObjectRequest = new PutObjectRequest
             {
                 BucketName = location.bucket,
                 Key = location.key + fileMetadata.destFileName,
-                InputStream = stream,
+                InputStream = fileBytesStream,
                 ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
             };
 
