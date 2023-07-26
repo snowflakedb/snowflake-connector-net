@@ -142,19 +142,9 @@ namespace Snowflake.Data.Tests
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                
                 PutFile(conn);
-
                 // Verify that all files have been uploaded
-                using (var cmd = conn.CreateCommand())
-                {
-                    var command = $"LIST @{_schemaName}.{_stageName} PATTERN = '{prefix}.*'";
-                    cmd.CommandText = (command);
-                    var dbDataReader = cmd.ExecuteReader();
-                    var dt = new DataTable();
-                    dt.Load(dbDataReader);
-                    Assert.AreEqual(files.Count, dt.Rows.Count);
-                }
+                VerifyFilesAreUploaded(conn, files, _internalStagePath, $"{prefix}.*");
             }
         }
         
@@ -183,7 +173,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
                 PutFile(conn);
                 // Verify that all files have been uploaded
-                VerifyFilesAreUploaded(conn, files, $"{_schemaName}.{_stageName}", $"{prefix}.*");
+                VerifyFilesAreUploaded(conn, files, _internalStagePath, $"{prefix}.*");
             }
         }
         
@@ -383,7 +373,7 @@ namespace Snowflake.Data.Tests
             // Verify that all files have been uploaded
             using (var cmd = conn.CreateCommand())
             {
-                var command = $"LIST @{stage} PATTERN = '{pattern}'";
+                var command = $"LIST {stage} PATTERN = '{pattern}'";
                 cmd.CommandText = (command);
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();
