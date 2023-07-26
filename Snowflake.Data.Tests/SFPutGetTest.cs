@@ -135,14 +135,14 @@ namespace Snowflake.Data.Tests
                 $"{absolutePath}_two.csv",
                 $"{absolutePath}_three.csv"
             };
-            logger.Warn("Files to be uploaded:\n" + string.Join("\n", files));
+            logger.Debug("Files to be uploaded:\n" + string.Join("\n", files));
             PrepareFileData(files);
             
             // Set the PUT query variables
             _inputFilePath = $"{absolutePath}*";
-            logger.Warn($"_inputFilePath: {_inputFilePath}");
+            logger.Debug($"_inputFilePath: {_inputFilePath}");
             _internalStagePath = $"@{_schemaName}.{_stageName}";
-            logger.Warn($"_internalStagePath: {_internalStagePath}");
+            logger.Debug($"_internalStagePath: {_internalStagePath}");
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -360,13 +360,13 @@ namespace Snowflake.Data.Tests
 
         private static void PrepareFileData(string file)
         {
-            logger.Warn($"Preparing data for file: {file}");
+            logger.Debug($"Preparing data for file: {file}");
             // Prepare csv raw data and write to temp files
             var rawDataRow = string.Join(",", COL_DATA) + "\n";
             var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NUMBER_OF_ROWS));
             
             File.WriteAllText(file, rawData);
-            logger.Warn($"is file created in the filesystem?: {File.Exists(file)}");
+            logger.Debug($"is file created in the filesystem?: {File.Exists(file)}");
             _filesToDelete.Add(file);
         }
 
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests
             using (var cmd = conn.CreateCommand())
             {
                 var command = $"LIST {stage} PATTERN = '{pattern}'";
-                logger.Warn($"Verify command: {command}");
+                logger.Debug($"Verify command: {command}");
                 cmd.CommandText = (command);
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();

@@ -737,10 +737,10 @@ namespace Snowflake.Data.Core
 
             //if (Logger.IsDebugEnabled())
             {
-                Logger.Warn("Expand " + location + " into : ");
+                Logger.Debug("Expand " + location + " into: ");
                 foreach (var filepath in filePaths)
                 {
-                    Logger.Warn("\t" + filepath );
+                    Logger.Debug("\t" + filepath );
                 }
             }
 
