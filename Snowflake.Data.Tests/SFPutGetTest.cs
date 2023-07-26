@@ -135,21 +135,21 @@ namespace Snowflake.Data.Tests
                 $"{absolutePath}_two.csv",
                 $"{absolutePath}_three.csv"
             };
-            logger.Debug("Files to be uploaded:\n" + string.Join("\n", files));
+            logger.Warn("Files to be uploaded:\n" + string.Join("\n", files));
             PrepareFileData(files);
             
             // Set the PUT query variables
             _inputFilePath = $"{absolutePath}*";
-            logger.Debug($"_inputFilePath: {_inputFilePath}");
+            logger.Warn($"_inputFilePath: {_inputFilePath}");
             _internalStagePath = $"@{_schemaName}.{_stageName}";
-            logger.Debug($"_internalStagePath: {_internalStagePath}");
+            logger.Warn($"_internalStagePath: {_internalStagePath}");
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
                 // Verify that all files have been uploaded
-                VerifyFilesAreUploaded(conn, files, _internalStagePath, $"{prefix}.*");
+                VerifyFilesAreUploaded(conn, files, _internalStagePath);
             }
         }
         
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
                 PutFile(conn);
                 // Verify that all files have been uploaded
-                VerifyFilesAreUploaded(conn, files, _internalStagePath, $"{prefix}.*");
+                VerifyFilesAreUploaded(conn, files, _internalStagePath);
             }
         }
         
@@ -360,13 +360,13 @@ namespace Snowflake.Data.Tests
 
         private static void PrepareFileData(string file)
         {
-            logger.Debug($"Preparing data for file: {file}");
+            logger.Warn($"Preparing data for file: {file}");
             // Prepare csv raw data and write to temp files
             var rawDataRow = string.Join(",", COL_DATA) + "\n";
             var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NUMBER_OF_ROWS));
             
             File.WriteAllText(file, rawData);
-            logger.Debug($"is file created in the filesystem?: {File.Exists(file)}");
+            logger.Warn($"is file created in the filesystem?: {File.Exists(file)}");
             _filesToDelete.Add(file);
         }
 
@@ -375,14 +375,14 @@ namespace Snowflake.Data.Tests
             files.ForEach(PrepareFileData);
         }
 
-        private static void VerifyFilesAreUploaded(DbConnection conn, ICollection<string> files, string stage, string pattern)
+        private static void VerifyFilesAreUploaded(DbConnection conn, ICollection<string> files, string stage)
         {
             // Verify that all files have been uploaded
             using (var cmd = conn.CreateCommand())
             {
-                var command = $"LIST {stage} PATTERN = '{pattern}'";
-                logger.Debug($"Verify command: {command}");
-                cmd.CommandText = (command);
+                var command = $"LIST {stage}";
+                logger.Warn($"Verify command: {command}");
+                cmd.CommandText = command;
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();
                 dt.Load(dbDataReader);
