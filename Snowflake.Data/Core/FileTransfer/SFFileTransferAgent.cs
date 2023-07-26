@@ -735,12 +735,12 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (Logger.IsDebugEnabled())
+            //if (Logger.IsDebugEnabled())
             {
-                Logger.Debug("Expand " + location + " into : \n");
+                Logger.Warn("Expand " + location + " into : ");
                 foreach (var filepath in filePaths)
                 {
-                    Logger.Debug("\t" + filepath + "\n");
+                    Logger.Warn("\t" + filepath );
                 }
             }
 
