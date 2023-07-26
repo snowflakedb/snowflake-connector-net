@@ -779,14 +779,16 @@ namespace Snowflake.Data.Core
                 {
                     if (resolvedPaths.Count == 0)
                     {
-                        if (Environment.OSVersion.Platform == PlatformID.Unix ||
-                            Environment.OSVersion.Platform == PlatformID.MacOSX)
+                        var pathBeginning = "";
+                        if ((Environment.OSVersion.Platform == PlatformID.Unix ||
+                             Environment.OSVersion.Platform == PlatformID.MacOSX) &&
+                            directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString()))
                         {
-                            var pathBeginning = directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString())
-                                ? Path.DirectorySeparatorChar.ToString()
-                                : $"{part}{Path.DirectorySeparatorChar}";
-                            resolvedPaths.Add(pathBeginning);
+                            pathBeginning = Path.DirectorySeparatorChar.ToString();
                         }
+
+                        pathBeginning += $"{part}{Path.DirectorySeparatorChar.ToString()}";
+                        resolvedPaths.Add(pathBeginning);
                     }
                     else
                     {
