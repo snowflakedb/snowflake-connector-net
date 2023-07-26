@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests
 {
@@ -19,6 +20,7 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFPutGetTest : SFBaseTest
     {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFPutGetTest>();
         private static string[] COL_NAME = {"C1", "C2", "C3"};
         private static string[] COL_DATA = {"FIRST", "SECOND", "THIRD"};
         private const int NUMBER_OF_ROWS = 4;
@@ -70,7 +72,8 @@ namespace Snowflake.Data.Tests
         public void SetUp()
         {
             // Base object's names on on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
+            //var threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
+            var threadSuffix = "suffix";
 
             _schemaName = testConfig.schema;
             _tableName = $"TABLE_{threadSuffix}";
@@ -133,11 +136,14 @@ namespace Snowflake.Data.Tests
                 $"{absolutePath}_two.csv",
                 $"{absolutePath}_three.csv"
             };
+            logger.Warn("Files to be uploaded:\n" + string.Join("\n", files));
             PrepareFileData(files);
             
             // Set the PUT query variables
             _inputFilePath = $"{absolutePath}*";
+            logger.Warn($"_inputFilePath: {_inputFilePath}");
             _internalStagePath = $"@{_schemaName}.{_stageName}";
+            logger.Warn($"_internalStagePath: {_internalStagePath}");
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -355,11 +361,13 @@ namespace Snowflake.Data.Tests
 
         private static void PrepareFileData(string file)
         {
+            logger.Warn($"Preparing data for file: {file}");
             // Prepare csv raw data and write to temp files
             var rawDataRow = string.Join(",", COL_DATA) + "\n";
             var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NUMBER_OF_ROWS));
             
             File.WriteAllText(file, rawData);
+            logger.Warn($"is file created in the filesystem?: {File.Exists(file)}");
             _filesToDelete.Add(file);
         }
 
@@ -374,6 +382,7 @@ namespace Snowflake.Data.Tests
             using (var cmd = conn.CreateCommand())
             {
                 var command = $"LIST {stage} PATTERN = '{pattern}'";
+                logger.Warn($"Verify command: {command}");
                 cmd.CommandText = (command);
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();
