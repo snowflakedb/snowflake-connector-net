@@ -6,47 +6,6 @@ by following coding convention rules.
 
 # Coding conventions
 
-## Writing tests
-
-### Arrange, Act, Assert pattern (3a)
-
-If possible split the test code into `arrange`, `act` and `assert` blocks.
-
-```csharp
-// arrange
-var config = new HttpClientConfig(
-    true,
-    "snowflake.com",
-    "123",
-    "testUser",
-    "proxyPassword",
-    "localhost", 
-    false,
-    false
-);
-
-// act
-var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-
-// assert
-Assert.IsTrue(handler.UseProxy);
-Assert.IsNotNull(handler.Proxy);
-```
-
-### TestThatSomethingShouldHappen methods
-
-Use test names in Pascal notation (but without MS proposed underline characters between logical parts of the test name addressing 3a pattern).
-
-```csharp
-[Test]
-public void TestThatLoginWithInvalidPassowrdFails() {
-}
-
-[Test]
-public void TestCreatingHttpClientHandlerWithProxy() {
-}
-```
-
 ## Writing code
 
 ### Static variables
@@ -141,5 +100,46 @@ Use `I` prefix (without `Interface` postfix), eg. `IName`.
 ```csharp
 interface IName
 {
+}
+```
+
+## Writing tests
+
+### Arrange, Act, Assert pattern (3a)
+
+If possible split the test code into `arrange`, `act` and `assert` blocks.
+
+```csharp
+// arrange
+var config = new HttpClientConfig(
+    true,
+    "snowflake.com",
+    "123",
+    "testUser",
+    "proxyPassword",
+    "localhost", 
+    false,
+    false
+);
+
+// act
+var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+// assert
+Assert.IsTrue(handler.UseProxy);
+Assert.IsNotNull(handler.Proxy);
+```
+
+### TestThatSomethingShouldHappen methods
+
+Use test names in Pascal notation (but without MS proposed underline characters between logical parts of the test name addressing 3a pattern).
+
+```csharp
+[Test]
+public void TestThatLoginWithInvalidPassowrdFails() {
+}
+
+[Test]
+public void TestCreatingHttpClientHandlerWithProxy() {
 }
 ```
