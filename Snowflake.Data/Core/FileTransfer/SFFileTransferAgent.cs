@@ -667,9 +667,8 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Expand the expand the wildcards if any to generate the list of paths for all files 
-        /// matched by the wildcards. Also replace 
-        /// Get the absolute path for the file.
+        /// Expand the expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
+        /// Also replace the relative paths to the absolute paths for the files if needed.
         /// </summary>
         /// <param name="location">The path to expand</param>
         /// <returns>The list of file matching the input location</returns>
@@ -691,15 +690,10 @@ namespace Snowflake.Data.Core
                     if (4 == ext.Length && fileName.Contains('*'))
                     {
                         /*
-                            * When you use the asterisk wildcard character in a searchPattern such as
-                            * "*.txt", the number of characters in the specified extension affects the
-                            * search as follows:
-                            * - If the specified extension is exactly three characters long, the method
-                            * returns files with extensions that begin with the specified extension. 
-                            * For example, "*.xls" returns both "book.xls" and "book.xlsx".
-                            * - In all other cases, the method returns files that exactly match the 
-                            * specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
-                            */
+                         * When you use the asterisk wildcard character in a searchPattern such as
+                         * "*.txt", the method returns files that exactly match the specified extension.
+                         * For example, "*.ai" returns "file.ai" but not "file.aif".
+                        */
                         var potentialMatches =
                             Directory.GetFiles(
                                 directory,
@@ -753,6 +747,10 @@ namespace Snowflake.Data.Core
         /// <param name="directoryPath">The path to expand</param>
         private static IEnumerable<string> ExpandDirectories(string directoryPath)
         {
+            if (string.IsNullOrEmpty(directoryPath))
+            {
+                return new List<string> {Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar};
+            }
             if (!(directoryPath.Contains('?') || directoryPath.Contains('*')))
             {
                 return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
