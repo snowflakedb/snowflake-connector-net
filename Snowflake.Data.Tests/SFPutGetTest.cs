@@ -19,23 +19,23 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFPutGetTest : SFBaseTest
     {
-        private static string[] COL_NAME = {"C1", "C2", "C3"};
-        private static string[] COL_DATA = {"FIRST", "SECOND", "THIRD"};
-        private const int NUMBER_OF_ROWS = 4;
-
+        private static readonly string[] s_colName = {"C1", "C2", "C3"};
+        private static readonly string[] s_colData = {"FIRST", "SECOND", "THIRD"};
+        private const int NumberOfRows = 4;
+        
+        [ThreadStatic] private static string t_schemaName;
+        [ThreadStatic] private static string t_tableName;
+        [ThreadStatic] private static string t_stageName;
+        [ThreadStatic] private static string t_fileName;
+        [ThreadStatic] private static string t_inputFilePath;
+        [ThreadStatic] private static string t_outputFilePath;
+        [ThreadStatic] private static string t_internalStagePath;
+        [ThreadStatic] private static StageType t_stageType;
+        [ThreadStatic] private static string t_compressionType;
+        [ThreadStatic] private static bool t_autoCompress;
+        [ThreadStatic] private static List<string> t_filesToDelete;
+        
         private string _outputDirectory;
-
-        [ThreadStatic] private static string _schemaName;
-        [ThreadStatic] private static string _tableName;
-        [ThreadStatic] private static string _stageName;
-        [ThreadStatic] private static string _fileName;
-        [ThreadStatic] private static string _inputFilePath;
-        [ThreadStatic] private static string _outputFilePath;
-        [ThreadStatic] private static string _internalStagePath;
-        [ThreadStatic] private static StageType _stageType;
-        [ThreadStatic] private static string _compressionType;
-        [ThreadStatic] private static bool _autoCompress;
-        [ThreadStatic] private static List<string> _filesToDelete;
 
         public enum StageType
         {
@@ -72,10 +72,10 @@ namespace Snowflake.Data.Tests
             // Base object's names on on worker thread id
             var threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
 
-            _schemaName = testConfig.schema;
-            _tableName = $"TABLE_{threadSuffix}";
-            _stageName = $"STAGE_{threadSuffix}";
-            _filesToDelete = new List<string>();
+            t_schemaName = testConfig.schema;
+            t_tableName = $"TABLE_{threadSuffix}";
+            t_stageName = $"STAGE_{threadSuffix}";
+            t_filesToDelete = new List<string>();
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -83,12 +83,12 @@ namespace Snowflake.Data.Tests
                 using (var command = conn.CreateCommand())
                 {
                     // Create temp table
-                    var columnNamesWithTypes = string.Join(",", COL_NAME.Select(col => col + " STRING"));
-                    command.CommandText = $"CREATE OR REPLACE TABLE {_schemaName}.{_tableName} ({columnNamesWithTypes})";
+                    var columnNamesWithTypes = string.Join(",", s_colName.Select(col => col + " STRING"));
+                    command.CommandText = $"CREATE OR REPLACE TABLE {t_schemaName}.{t_tableName} ({columnNamesWithTypes})";
                     command.ExecuteNonQuery();
 
                     // Create temp stage
-                    command.CommandText = $"CREATE OR REPLACE STAGE {_schemaName}.{_stageName}";
+                    command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageName}";
                     command.ExecuteNonQuery();
                 }
             }
@@ -103,20 +103,20 @@ namespace Snowflake.Data.Tests
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp stage
-                    command.CommandText = $"DROP STAGE IF EXISTS {_schemaName}.{_stageName}";
+                    command.CommandText = $"DROP STAGE IF EXISTS {t_schemaName}.{t_stageName}";
                     command.ExecuteNonQuery();
 
                     // Drop temp table
-                    command.CommandText = $"DROP TABLE IF EXISTS {_schemaName}.{_tableName}";
+                    command.CommandText = $"DROP TABLE IF EXISTS {t_schemaName}.{t_tableName}";
                     command.ExecuteNonQuery();
                 }
             }
             
             // Delete temp files if necessary
-            if (_filesToDelete == null)
+            if (t_filesToDelete == null)
                 return;
             
-            foreach (var file in _filesToDelete)
+            foreach (var file in t_filesToDelete)
             {
                 File.Delete(file);
             }
@@ -134,14 +134,14 @@ namespace Snowflake.Data.Tests
             PrepareFileData(files);
             
             // Set the PUT query variables
-            _inputFilePath = $"{absolutePathPrefix}*";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{absolutePathPrefix}*";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -159,14 +159,14 @@ namespace Snowflake.Data.Tests
             PrepareFileData($"{absolutePathPrefix}_four.txt");
 
             // Set the PUT query variables
-            _inputFilePath = $"{absolutePathPrefix}*.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{absolutePathPrefix}*.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -184,14 +184,14 @@ namespace Snowflake.Data.Tests
             PrepareFileData($"{absolutePathPrefix}_four.csv");
             
             // Set the PUT query variables
-            _inputFilePath = $"{absolutePathPrefix}_?.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{absolutePathPrefix}_?.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -199,16 +199,16 @@ namespace Snowflake.Data.Tests
         public void TestPutFileRelativePathWithoutDirectory()
         {
             // Set the PUT query variables
-            _inputFilePath = $"{Guid.NewGuid()}_1.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
             
-            PrepareFileData(_inputFilePath);
+            PrepareFileData(t_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, new List<string> { _inputFilePath }, _internalStagePath);
+                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
         
@@ -220,16 +220,16 @@ namespace Snowflake.Data.Tests
             Directory.CreateDirectory(relativePath);
             
             // Set the PUT query variables
-            _inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
             
-            PrepareFileData(_inputFilePath);
+            PrepareFileData(t_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, new List<string> { _inputFilePath }, _internalStagePath);
+                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
         
@@ -245,14 +245,14 @@ namespace Snowflake.Data.Tests
             PrepareFileData(files);
 
             // Set the PUT query variables
-            _inputFilePath = $"{relativePath}*";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{relativePath}*";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -273,14 +273,14 @@ namespace Snowflake.Data.Tests
             }
             
             // Set the PUT query variables
-            _inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
@@ -301,14 +301,14 @@ namespace Snowflake.Data.Tests
             }
             
             // Set the PUT query variables
-            _inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -329,14 +329,14 @@ namespace Snowflake.Data.Tests
             }
             
             // Set the PUT query variables
-            _inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
-            _internalStagePath = $"@{_schemaName}.{_stageName}";
+            t_inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, _internalStagePath);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
         
@@ -384,29 +384,29 @@ namespace Snowflake.Data.Tests
         
         private void PrepareTest(string compressionType, StageType stageType, string stagePath, bool autoCompress)
         {
-            _stageType = stageType;
-            _compressionType = compressionType;
-            _autoCompress = autoCompress;
+            t_stageType = stageType;
+            t_compressionType = compressionType;
+            t_autoCompress = autoCompress;
             
             // Prepare temp file name with specified file extension
-            _fileName = Guid.NewGuid() + ".csv" + 
-                        (_autoCompress? SFFileCompressionTypes.LookUpByName(_compressionType).FileExtension: "");
-            _inputFilePath = Path.GetTempPath() + _fileName;
-            _outputFilePath = $@"{_outputDirectory}/{_fileName}";
-            _filesToDelete.Add(_outputFilePath);
-            PrepareFileData(_inputFilePath);
+            t_fileName = Guid.NewGuid() + ".csv" + 
+                        (t_autoCompress? SFFileCompressionTypes.LookUpByName(t_compressionType).FileExtension: "");
+            t_inputFilePath = Path.GetTempPath() + t_fileName;
+            t_outputFilePath = $@"{_outputDirectory}/{t_fileName}";
+            t_filesToDelete.Add(t_outputFilePath);
+            PrepareFileData(t_inputFilePath);
 
             // Prepare stage name
-            switch (_stageType)
+            switch (t_stageType)
             {
                 case StageType.USER:
-                    _internalStagePath = $"@~{stagePath}";
+                    t_internalStagePath = $"@~{stagePath}";
                     break;
                 case StageType.TABLE:
-                    _internalStagePath = $"@{_schemaName}.%{_tableName}{stagePath}";
+                    t_internalStagePath = $"@{t_schemaName}.%{t_tableName}{stagePath}";
                     break;
                 case StageType.NAMED:
-                    _internalStagePath = $"@{_schemaName}.{_stageName}{stagePath}";
+                    t_internalStagePath = $"@{t_schemaName}.{t_stageName}{stagePath}";
                     break;
             }
         }
@@ -418,7 +418,7 @@ namespace Snowflake.Data.Tests
             {
                 // Prepare PUT query
                 string putQuery =
-                    $"PUT file://{_inputFilePath} {_internalStagePath} AUTO_COMPRESS={(_autoCompress ? "TRUE" : "FALSE")}";
+                    $"PUT file://{t_inputFilePath} {t_internalStagePath} AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}";
 
                 // Upload file
                 command.CommandText = putQuery;
@@ -429,11 +429,11 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(ResultStatus.UPLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check source and destination compression type
-                if (_autoCompress)
+                if (t_autoCompress)
                 {
-                    Assert.AreEqual(_compressionType,
+                    Assert.AreEqual(t_compressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(_compressionType,
+                    Assert.AreEqual(t_compressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
                 else
@@ -451,33 +451,33 @@ namespace Snowflake.Data.Tests
         {
             using (var command = conn.CreateCommand())
             {
-                switch (_stageType)
+                switch (t_stageType)
                 {
                     case StageType.TABLE:
-                        command.CommandText = $"COPY INTO {_schemaName}.{_tableName}";
+                        command.CommandText = $"COPY INTO {t_schemaName}.{t_tableName}";
                         break;
                     default:
                         command.CommandText =
-                            $"COPY INTO {_schemaName}.{_tableName} FROM {_internalStagePath}/{_fileName}";
+                            $"COPY INTO {t_schemaName}.{t_tableName} FROM {t_internalStagePath}/{t_fileName}";
                         break;
                 }
 
                 command.ExecuteNonQuery();
 
                 // Check contents are correct
-                command.CommandText = $"SELECT * FROM {_schemaName}.{_tableName}";
+                command.CommandText = $"SELECT * FROM {t_schemaName}.{t_tableName}";
                 var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    for (var i = 0; i < COL_DATA.Length; i++)
+                    for (var i = 0; i < s_colData.Length; i++)
                     {
-                        Assert.AreEqual(reader.GetString(i), COL_DATA[i]);
+                        Assert.AreEqual(reader.GetString(i), s_colData[i]);
                     }
                 }
 
                 // Check row count is correct
-                command.CommandText = $"SELECT COUNT(*) FROM {_schemaName}.{_tableName}";
-                Assert.AreEqual(NUMBER_OF_ROWS, command.ExecuteScalar());
+                command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
+                Assert.AreEqual(NumberOfRows, command.ExecuteScalar());
             }
         }
 
@@ -487,7 +487,7 @@ namespace Snowflake.Data.Tests
             using (var command = conn.CreateCommand())
             {
                 // Prepare GET query
-                var getQuery = $"GET {_internalStagePath}/{_fileName} file://{_outputDirectory}";
+                var getQuery = $"GET {t_internalStagePath}/{t_fileName} file://{_outputDirectory}";
 
                 // Download file
                 command.CommandText = getQuery;
@@ -499,7 +499,7 @@ namespace Snowflake.Data.Tests
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // Check file contents
-                using (var streamReader = new StreamReader(_outputFilePath))
+                using (var streamReader = new StreamReader(t_outputFilePath))
                 {
                     while (!streamReader.EndOfStream)
                     {
@@ -507,9 +507,9 @@ namespace Snowflake.Data.Tests
                         if (line == null) continue;
                         var values = line.Split(',');
 
-                        for (var i = 0; i < COL_DATA.Length; i++)
+                        for (var i = 0; i < s_colData.Length; i++)
                         {
-                            Assert.AreEqual(COL_DATA[i], values[i]);
+                            Assert.AreEqual(s_colData[i], values[i]);
                         }
                     }
                 }
@@ -519,11 +519,11 @@ namespace Snowflake.Data.Tests
         private static void PrepareFileData(string file)
         {
             // Prepare csv raw data and write to temp files
-            var rawDataRow = string.Join(",", COL_DATA) + "\n";
-            var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NUMBER_OF_ROWS));
+            var rawDataRow = string.Join(",", s_colData) + "\n";
+            var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NumberOfRows));
             
             File.WriteAllText(file, rawData);
-            _filesToDelete.Add(file);
+            t_filesToDelete.Add(file);
         }
 
         private static void PrepareFileData(List<string> files)
