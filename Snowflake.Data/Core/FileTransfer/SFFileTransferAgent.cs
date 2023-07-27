@@ -667,7 +667,7 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Expand the expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
+        /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
         /// Also replace the relative paths to the absolute paths for the files if needed.
         /// </summary>
         /// <param name="location">The path to expand</param>

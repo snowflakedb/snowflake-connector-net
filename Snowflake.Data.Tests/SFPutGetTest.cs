@@ -126,8 +126,7 @@ namespace Snowflake.Data.Tests
         public void TestPutFileAsteriskWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var absolutePath = $"{Path.GetTempPath()}{prefix}";
+            var absolutePath = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
                 $"{absolutePath}_one.csv",
                 $"{absolutePath}_two.csv",
@@ -152,8 +151,7 @@ namespace Snowflake.Data.Tests
         public void TestPutFileAsteriskWildcardWithExtension()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var absolutePath = $"{Path.GetTempPath()}{prefix}";
+            var absolutePath = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
                 $"{absolutePath}_one.csv",
                 $"{absolutePath}_two.csv",
@@ -180,8 +178,7 @@ namespace Snowflake.Data.Tests
         public void TestPutFileQuestionMarkWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var absolutePath = $"{Path.GetTempPath()}{prefix}";
+            var absolutePath = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
                 $"{absolutePath}_1.csv",
                 $"{absolutePath}_2.csv",
@@ -205,44 +202,42 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestPutFileRelativePathWithoutDirectory()
         {
-            // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var file = $"{prefix}_1.csv";
-            PrepareFileData(file);
-            
             // Set the PUT query variables
-            _inputFilePath = file;
+            _inputFilePath = $"{Guid.NewGuid()}_1.csv";
             _internalStagePath = $"@{_schemaName}.{_stageName}";
+            
+            // Prepare the data files to be copied
+            PrepareFileData(_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
                 // Verify that all files have been uploaded
-                VerifyFilesAreUploaded(conn, new List<string> { file }, _internalStagePath);
+                VerifyFilesAreUploaded(conn, new List<string> { _inputFilePath }, _internalStagePath);
             }
         }
         
         [Test]
         public void TestPutFileRelativePathWithDirectory()
         {
-            // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var relativePath = $"{prefix}";
+            var guid = Guid.NewGuid();
+            var relativePath = $"{guid}";
             Directory.CreateDirectory(relativePath);
-            var file = $"{relativePath}{Path.DirectorySeparatorChar}{prefix}_1.csv";
-            PrepareFileData(file);
             
             // Set the PUT query variables
-            _inputFilePath = file;
+            _inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
             _internalStagePath = $"@{_schemaName}.{_stageName}";
+            
+            // Prepare the data file to be copied
+            PrepareFileData(_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
                 // Verify that all files have been uploaded
-                VerifyFilesAreUploaded(conn, new List<string> { file }, _internalStagePath);
+                VerifyFilesAreUploaded(conn, new List<string> { _inputFilePath }, _internalStagePath);
             }
         }
         
@@ -250,8 +245,7 @@ namespace Snowflake.Data.Tests
         public void TestPutFileRelativePathAsteriskWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var relativePath = $"{prefix}";
+            var relativePath = $"{Guid.NewGuid()}";
             var files = new List<string> {
                 $"{relativePath}_one.csv",
                 $"{relativePath}_two.csv",
@@ -276,14 +270,14 @@ namespace Snowflake.Data.Tests
         public void TestPutDirectoryAsteriskWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{prefix}";
+            var guid = Guid.NewGuid();
+            var path = $"{Path.GetTempPath()}{guid}";
             var files = new List<string>();
             for (var i = 0; i < 3; i++)
             {
                 var filePath = $"{path}_{i}";
                 Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{prefix}_{i}_file.csv";
+                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
@@ -305,20 +299,20 @@ namespace Snowflake.Data.Tests
         public void TestPutDirectoryQuestionMarkWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{prefix}";
+            var guid = Guid.NewGuid();
+            var path = $"{Path.GetTempPath()}{guid}";
             var files = new List<string>();
             for (var i = 0; i < 3; i++)
             {
                 var filePath = $"{path}_{i}";
                 Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{prefix}_{i}_file.csv";
+                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
             
             // Set the PUT query variables
-            _inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{prefix}_?_file.csv";
+            _inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             _internalStagePath = $"@{_schemaName}.{_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -334,20 +328,20 @@ namespace Snowflake.Data.Tests
         public void TestPutDirectoryMixedWildcard()
         {
             // Prepare the data files to be copied
-            var prefix = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{prefix}";
+            var guid = Guid.NewGuid();
+            var path = $"{Path.GetTempPath()}{guid}";
             var files = new List<string>();
             for (var i = 0; i < 3; i++)
             {
                 var filePath = $"{path}_{i}";
                 Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{prefix}_{i}_file.csv";
+                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
             
             // Set the PUT query variables
-            _inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{prefix}_?_file.csv";
+            _inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             _internalStagePath = $"@{_schemaName}.{_stageName}";
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
