@@ -53,6 +53,16 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
+        [TestCase(System.Data.DbType.AnsiString, "abc", "TEXT", "abc")]
+        [TestCase(System.Data.DbType.AnsiStringFixedLength, "abc", "TEXT", "abc")]
+        public void TestCsharpTypeValToSfTypeVal(System.Data.DbType inputType, object inputValue, string outputType, string outputValue)
+        {
+            Tuple<string, string> actual = SFDataConverter.csharpTypeValToSfTypeVal(inputType, inputValue);
+            Assert.AreEqual(outputType, actual.Item1);
+            Assert.AreEqual(outputValue, actual.Item2);
+        }
+
+        [Test]
         [TestCase("0", false)]
         [TestCase("t", true)]
         [TestCase("T", true)]

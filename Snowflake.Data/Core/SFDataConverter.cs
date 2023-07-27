@@ -244,6 +244,8 @@ namespace Snowflake.Data.Core
                     destType = SFDataType.REAL;
                     break;
 
+                case DbType.AnsiString:
+                case DbType.AnsiStringFixedLength:
                 case DbType.Guid:
                 case DbType.String:
                 case DbType.StringFixedLength:
