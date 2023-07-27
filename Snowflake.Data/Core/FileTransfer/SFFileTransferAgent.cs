@@ -682,7 +682,7 @@ namespace Snowflake.Data.Core
             var foundDirectories = ExpandDirectories(directoryName);
             var filePaths = new List<string>();
             
-            if (fileName.Contains('?') || fileName.Contains('*'))
+            if (ContainsWildcard(fileName))
             {
                 foreach (var directory in foundDirectories)
                 {
@@ -718,9 +718,7 @@ namespace Snowflake.Data.Core
                 foreach (var directory in foundDirectories)
                 {
                     var fullPath = Path.GetFullPath(directory + fileName);
-                    // Make sure it's a file
-                    var attr = File.GetAttributes(fullPath);
-                    if (attr.HasFlag(FileAttributes.Directory))
+                    if (IsDirectory(fullPath))
                     {
                         throw new FileNotFoundException(
                             "Directories not supported, you need to provide a file path", fullPath);
@@ -751,7 +749,7 @@ namespace Snowflake.Data.Core
             {
                 return new List<string> {Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar};
             }
-            if (!(directoryPath.Contains('?') || directoryPath.Contains('*')))
+            if (!ContainsWildcard(directoryPath))
             {
                 return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
             }
@@ -761,7 +759,7 @@ namespace Snowflake.Data.Core
 
             foreach (var part in pathParts)
             {
-                if (part.Contains('?') || part.Contains('*'))
+                if (ContainsWildcard(part))
                 {
                     var tempPaths = new List<string>();
                     foreach (var location in resolvedPaths)
@@ -1367,6 +1365,17 @@ namespace Snowflake.Data.Core
             {
                 throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
             }
+        }
+        
+        private static bool IsDirectory(string path)
+        {
+            var attr = File.GetAttributes(path);
+            return attr.HasFlag(FileAttributes.Directory);
+        }
+
+        private static bool ContainsWildcard(string str)
+        {
+            return str.Contains('*') || str.Contains('?');
         }
     }
 }
