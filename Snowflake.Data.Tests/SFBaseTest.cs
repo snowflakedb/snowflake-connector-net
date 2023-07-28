@@ -67,6 +67,11 @@ namespace Snowflake.Data.Tests
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
                                                  testConfig.user,
                                                  testConfig.password);
+        
+        protected string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
+                                             string.Format(ConnectionStringSnowflakeAuthFmt,
+                                                 "unknown",
+                                                 testConfig.password);
 
         protected TestConfig testConfig { get; }
     }
