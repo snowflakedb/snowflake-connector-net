@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Security;
 using NUnit.Framework;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests
 {
@@ -68,16 +69,15 @@ namespace Snowflake.Data.Tests
             };
             var testCaseWithBrowserResponseTimeout = new TestCase()
             {
-                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};BROWSER_RESPONSE_TIMEOUT=180",
+                ConnectionString = $"ACCOUNT={defAccount};BROWSER_RESPONSE_TIMEOUT=180;authenticator=externalbrowser",
                 ExpectedProperties = new SFSessionProperties()
                 {
                     { SFSessionProperty.ACCOUNT, defAccount },
-                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.USER, "" },
                     { SFSessionProperty.HOST, defHost },
-                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.AUTHENTICATOR, ExternalBrowserAuthenticator.AUTH_NAME },
                     { SFSessionProperty.SCHEME, defScheme },
                     { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
-                    { SFSessionProperty.PASSWORD, defPassword },
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
