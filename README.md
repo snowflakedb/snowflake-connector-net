@@ -9,7 +9,6 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 
 - .NET Framework 4.7.1
 - .NET Framework 4.7.2
-- .NET Framework 4.7.3
 - .NET 6.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
