@@ -305,6 +305,10 @@ If you are using a different method for authentication, see the examples below:
 
   * `{login_name_for_IdP}` is your login name for your IdP.
 
+  You can override the default timeout after which external browser authentication is marked as failed.
+  The timeout prevents the infinite hang when the user does not provide the login details, e.g. when closing the browser tab.
+  To override, you can provide `BROWSER_RESPONSE_TIMEOUT` parameter (in seconds).
+
 
 * **Native SSO through Okta**
 
