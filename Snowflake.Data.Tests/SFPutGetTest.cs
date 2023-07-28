@@ -113,12 +113,12 @@ namespace Snowflake.Data.Tests
             }
             
             // Delete temp files if necessary
-            if (t_filesToDelete == null)
-                return;
-            
-            foreach (var file in t_filesToDelete)
+            if (t_filesToDelete != null)
             {
-                File.Delete(file);
+                foreach (var file in t_filesToDelete)
+                {
+                    File.Delete(file);
+                }
             }
         }
 
