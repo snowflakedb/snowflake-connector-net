@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
         [Ignore("ConnectionIT")]
@@ -87,15 +87,15 @@ namespace Snowflake.Data.Tests
                     try
                     {
                         conn.Open();
-                        logger.Debug("{appName}");
+                        s_logger.Debug("{appName}");
                         Assert.Fail();
 
                     }
                     catch (SnowflakeDbException e)
                     {
                         // Expected
-                        logger.Debug("Failed opening connection ", e);
-                        Assert.AreEqual("08006", e.SqlState); // Connection failure
+                        s_logger.Debug("Failed opening connection ", e);
+                        AssertIsConnectionFailure(e);
                     }
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -131,14 +131,79 @@ namespace Snowflake.Data.Tests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    s_logger.Debug("Failed opening connection ", e);
+                    AssertIsConnectionFailure(e);
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
 			}
         }
 
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            for (int i = 0; i < 2; ++i)
+            {
+                s_logger.Debug($"Running try #{i}");
+                SnowflakeDbConnection snowflakeConnection = null;
+                try
+                {
+                    snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
+                    snowflakeConnection.Open();
+                    Assert.Fail("Connection open should fail");
+                }
+                catch (SnowflakeDbException e)
+                {
+                    AssertIsConnectionFailure(e);
+                    AssertConnectionIsNotOpen(snowflakeConnection);
+                    if (explicitClose)
+                    {
+                        snowflakeConnection.Close();
+                        AssertConnectionIsNotOpen(snowflakeConnection);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
+        {
+            SnowflakeDbConnectionPool.SetPooling(true);
+            for (int i = 0; i < 2; ++i)
+            {
+                s_logger.Debug($"Running try #{i}");
+                SnowflakeDbConnection snowflakeConnection = null;
+                try
+                {
+                    using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
+                    {
+                        snowflakeConnection.Open();
+                    }
+                }
+                catch (SnowflakeDbException e)
+                {
+                    AssertIsConnectionFailure(e);
+                    AssertConnectionIsNotOpen(snowflakeConnection);
+                }
+            }
+        }
+
+        private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
+        {
+            Assert.NotNull(snowflakeDbConnection);
+            Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
+            Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
+        }
+
+        private static void AssertIsConnectionFailure(SnowflakeDbException e)
+        {
+            Assert.AreEqual(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
+        }
+
+        [Test]
         public void TestCrlCheckSwitchConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1345,9 +1410,9 @@ namespace Snowflake.Data.Tests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    logger.Debug("Failed opening connection ", e);
+                    s_logger.Debug("Failed opening connection ", e);
                     Assert.AreEqual(270001, e.ErrorCode); //Internal error
-                    Assert.AreEqual("08006", e.SqlState); // Connection failure
+                    AssertIsConnectionFailure(e);
                 }
             }
         }
