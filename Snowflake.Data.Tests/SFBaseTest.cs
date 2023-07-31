@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Client;
 
@@ -65,12 +66,12 @@ namespace Snowflake.Data.Tests
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
 
-            TestEnvironmentSetup.s_testPerformance.Add(testName, _stopwatch.Elapsed);
+            TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
         }
 
         public SFBaseTestAsync()
         {
-            testConfig = TestEnvironmentSetup.s_testConfig;
+            testConfig = TestEnvironment.s_testConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -97,14 +98,19 @@ namespace Snowflake.Data.Tests
     }
     
     [SetUpFixture]
-    public class TestEnvironmentSetup
+    public class TestEnvironment
     {
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
         
         public static TestConfig s_testConfig { get; private set; }
 
-        public static Dictionary<string, TimeSpan> s_testPerformance;
+        private static Dictionary<string, TimeSpan> s_testPerformance;
+
+        public static void RecordTestPerformance(string name, TimeSpan time)
+        {
+            s_testPerformance.Add(name, time);
+        }
 
         [OneTimeSetUp]
         public void Setup()
@@ -164,26 +170,11 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            var os = "";
-            
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                os = "windows";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                os = "linux";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                os = "macos";
-            }
-            
-            var resultText = "test;time\n";
-            foreach (var test in s_testPerformance)
-            {
-                resultText += $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}\n";
-            }
+            var os = GetOs();
+
+            var resultText = s_testPerformance.Aggregate(
+                "test;time\n",
+                (current, test) => current + $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}\n");
 
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
@@ -236,6 +227,24 @@ namespace Snowflake.Data.Tests
                     Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
                 }
             }
+        }
+
+        private static string GetOs()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "windows";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "linux";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "macos";
+            }
+
+            return "unknown";
         }
     }
 
