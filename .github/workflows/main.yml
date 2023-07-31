@@ -123,7 +123,7 @@ jobs:
     strategy:
       matrix:
         dotnet: ['net6.0']
-        cloud_env: ['azure', 'gcp', 'aws']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
@@ -153,6 +153,8 @@ jobs:
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
+        env:
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
 
   test-mac:
     needs: [build-net, build-framework]
@@ -161,7 +163,7 @@ jobs:
     strategy:
       matrix:
         dotnet: ['net6.0']
-        cloud_env: ['azure', 'gcp', 'aws']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
@@ -191,3 +193,5 @@ jobs:
           dotnet minicover reset
           dotnet test --no-build
           dotnet minicover uninstrument
+        env:
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
