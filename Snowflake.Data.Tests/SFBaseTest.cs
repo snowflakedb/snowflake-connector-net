@@ -170,16 +170,13 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            var os = GetOs();
-
             var resultText = s_testPerformance.Aggregate(
                 "test;time\n",
                 (current, test) => current + $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}\n");
-
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             
-            File.WriteAllText($"../../../{os}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+            File.WriteAllText($"../../../{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
         
         private static string s_connectionString => string.Format(ConnectionStringFmt,
