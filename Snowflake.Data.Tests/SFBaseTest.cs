@@ -45,6 +45,7 @@ namespace Snowflake.Data.Tests
      * 
      */
     [TestFixture]
+    [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
@@ -71,7 +72,7 @@ namespace Snowflake.Data.Tests
 
         public SFBaseTestAsync()
         {
-            testConfig = TestEnvironment.s_testConfig;
+            testConfig = TestEnvironment.TestConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -103,7 +104,7 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
         
-        public static TestConfig s_testConfig { get; private set; }
+        public static TestConfig TestConfig { get; private set; }
 
         private static Dictionary<string, TimeSpan> s_testPerformance;
 
@@ -144,21 +145,21 @@ namespace Snowflake.Data.Tests
 
             if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
             {
-                s_testConfig = testConnectionConfig;
-                s_testConfig.schema = s_testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                TestConfig = testConnectionConfig;
+                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
             }
             else
             {
                 Assert.Fail("Failed to load test configuration");
             }
             
-            ModifySchema(s_testConfig.schema, SchemaAction.CREATE);
+            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
         
         [OneTimeTearDown]
         public void Cleanup()
         {
-            ModifySchema(s_testConfig.schema, SchemaAction.DROP);
+            ModifySchema(TestConfig.schema, SchemaAction.DROP);
         }
         
         [OneTimeSetUp]
@@ -181,15 +182,15 @@ namespace Snowflake.Data.Tests
         }
         
         private static string s_connectionString => string.Format(ConnectionStringFmt,
-            s_testConfig.protocol,
-            s_testConfig.host,
-            s_testConfig.port,
-            s_testConfig.account,
-            s_testConfig.role,
-            s_testConfig.database,
-            s_testConfig.warehouse,
-            s_testConfig.user,
-            s_testConfig.password);
+            TestConfig.protocol,
+            TestConfig.host,
+            TestConfig.port,
+            TestConfig.account,
+            TestConfig.role,
+            TestConfig.database,
+            TestConfig.warehouse,
+            TestConfig.user,
+            TestConfig.password);
 
         private enum SchemaAction
         {
