@@ -5,8 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Reflection;
 using System.IO;
+using System.Runtime.InteropServices;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests
@@ -48,9 +50,27 @@ namespace Snowflake.Data.Tests
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
 
+        private Stopwatch _stopwatch;
+        
+        [SetUp]
+        public void BeforeTest()
+        {
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            _stopwatch.Stop();
+            var testName = $"{TestContext.CurrentContext.Test.FullName}";
+
+            TestEnvironmentSetup.s_testPerformance.Add(testName, _stopwatch.Elapsed);
+        }
+
         public SFBaseTestAsync()
         {
-            testConfig = TestEnvironmentSetup.TestConfig;
+            testConfig = TestEnvironmentSetup.s_testConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -82,8 +102,10 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
         
-        public static TestConfig TestConfig { get; private set; }
-        
+        public static TestConfig s_testConfig { get; private set; }
+
+        public static Dictionary<string, TimeSpan> s_testPerformance;
+
         [OneTimeSetUp]
         public void Setup()
         {
@@ -116,33 +138,69 @@ namespace Snowflake.Data.Tests
 
             if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
             {
-                TestConfig = testConnectionConfig;
-                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                s_testConfig = testConnectionConfig;
+                s_testConfig.schema = s_testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
             }
             else
             {
                 Assert.Fail("Failed to load test configuration");
             }
             
-            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+            ModifySchema(s_testConfig.schema, SchemaAction.CREATE);
         }
-
+        
         [OneTimeTearDown]
         public void Cleanup()
         {
-            ModifySchema(TestConfig.schema, SchemaAction.DROP);
+            ModifySchema(s_testConfig.schema, SchemaAction.DROP);
+        }
+        
+        [OneTimeSetUp]
+        private void SetupTestPerformance()
+        {
+            s_testPerformance = new Dictionary<string, TimeSpan>();
         }
 
-        private static string connectionString => string.Format(ConnectionStringFmt,
-            TestConfig.protocol,
-            TestConfig.host,
-            TestConfig.port,
-            TestConfig.account,
-            TestConfig.role,
-            TestConfig.database,
-            TestConfig.warehouse,
-            TestConfig.user,
-            TestConfig.password);
+        [OneTimeTearDown]
+        private void CreateTestTimeArtifact()
+        {
+            var os = "";
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                os = "windows";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                os = "linux";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                os = "macos";
+            }
+            
+            var resultText = "test;time\n";
+            foreach (var test in s_testPerformance)
+            {
+                resultText += $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}\n";
+            }
+
+            var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
+            var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            
+            File.WriteAllText($"../../../{os}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+        }
+        
+        private static string s_connectionString => string.Format(ConnectionStringFmt,
+            s_testConfig.protocol,
+            s_testConfig.host,
+            s_testConfig.port,
+            s_testConfig.account,
+            s_testConfig.role,
+            s_testConfig.database,
+            s_testConfig.warehouse,
+            s_testConfig.user,
+            s_testConfig.password);
 
         private enum SchemaAction
         {
@@ -154,7 +212,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = s_connectionString;
                 conn.Open();
                 var dbCommand = conn.CreateCommand();
                 switch (schemaAction)
