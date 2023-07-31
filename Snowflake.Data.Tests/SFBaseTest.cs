@@ -170,9 +170,10 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            var resultText = s_testPerformance.Aggregate(
-                "test;time\n",
-                (current, test) => current + $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}\n");
+            var resultText = "test;time_in_ms\n";
+            resultText += string.Join("\n",
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+            
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             
