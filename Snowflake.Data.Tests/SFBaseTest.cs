@@ -156,13 +156,13 @@ namespace Snowflake.Data.Tests
         }
         
         [OneTimeSetUp]
-        private void SetupTestPerformance()
+        public void SetupTestPerformance()
         {
             s_testPerformance = new Dictionary<string, TimeSpan>();
         }
 
         [OneTimeTearDown]
-        private void CreateTestTimeArtifact()
+        public void CreateTestTimeArtifact()
         {
             var os = "";
             
