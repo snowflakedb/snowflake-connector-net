@@ -687,13 +687,14 @@ namespace Snowflake.Data.Core
                 foreach (var directory in foundDirectories)
                 {
                     var ext = Path.GetExtension(fileName);
+                    /*
+                     * We have to check that the extension format is exactly 4 characters (e.g. .txt) as there is
+                     * an anomaly within .NET Framework usage of GetFiles method when using three-character
+                     * file extension (without a dot) which returns files with extensions that begin with the
+                     * specified pattern. For example searching for "*.xls" returns both "book.xls" and "book.xlsx".
+                     */
                     if (4 == ext.Length && fileName.Contains('*'))
                     {
-                        /*
-                         * When you use the asterisk wildcard character in a searchPattern such as
-                         * "*.txt", the method returns files that exactly match the specified extension.
-                         * For example, "*.ai" returns "file.ai" but not "file.aif".
-                        */
                         var potentialMatches =
                             Directory.GetFiles(
                                 directory,
@@ -703,7 +704,6 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        // If there is a wildcard in the file name in the file path
                         filePaths.AddRange(
                             Directory.GetFiles(
                                 directory, 
