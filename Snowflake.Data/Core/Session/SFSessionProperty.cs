@@ -292,23 +292,28 @@ namespace Snowflake.Data.Core
                 var authenticatorDefined =
                     properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
+                var authenticatorsWithoutPassword = new List<string>()
+                {
+                    ExternalBrowserAuthenticator.AUTH_NAME,
+                    KeyPairAuthenticator.AUTH_NAME,
+                    OAuthAuthenticator.AUTH_NAME
+                };
                 // External browser, jwt and oauth don't require a password for authenticating
-                return !(authenticatorDefined &&
-                        (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME,
-                            StringComparison.OrdinalIgnoreCase) ||
-                        authenticator.Equals(KeyPairAuthenticator.AUTH_NAME,
-                            StringComparison.OrdinalIgnoreCase) ||
-                        authenticator.Equals(OAuthAuthenticator.AUTH_NAME,
-                        StringComparison.OrdinalIgnoreCase)));
+                return !authenticatorDefined || !authenticatorsWithoutPassword
+                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
             }
             else if (sessionProperty.Equals(SFSessionProperty.USER))
             {
                 var authenticatorDefined =
                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                // Oauth don't require a username for authenticating
-                return !(authenticatorDefined && (
-                    authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase)));
+                var authenticatorsWithoutUsername = new List<string>()
+                {
+                    OAuthAuthenticator.AUTH_NAME,
+                    ExternalBrowserAuthenticator.AUTH_NAME
+                };
+                return !authenticatorDefined || !authenticatorsWithoutUsername
+                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
