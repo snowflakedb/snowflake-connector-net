@@ -16,6 +16,11 @@ on:
         description: "Test scenario tags"
         required: false
 
+concurrency:
+  # older builds for the same pull request numer or branch should be cancelled
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
