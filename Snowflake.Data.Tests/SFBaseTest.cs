@@ -176,8 +176,12 @@ namespace Snowflake.Data.Tests
             
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+
+            var separator = Path.DirectorySeparatorChar;
             
-            File.WriteAllText($"../../../{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+            // We have to go up 3 times as the working directory path looks as follows:
+            // Snowflake.Data.Tests/bin/debug/{.net_version}/
+            File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
         
         private static string s_connectionString => string.Format(ConnectionStringFmt,

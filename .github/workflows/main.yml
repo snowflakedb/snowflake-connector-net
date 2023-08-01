@@ -166,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
-          path: Snowflake.Data.Tests\linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
 
   test-mac:
     needs: [build-net, build-framework]
@@ -212,4 +212,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
-          path: Snowflake.Data.Tests\macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+          path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
