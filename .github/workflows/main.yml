@@ -16,6 +16,11 @@ on:
         description: "Test scenario tags"
         required: false
 
+concurrency:
+  # older builds for the same pull request numer or branch should be cancelled
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
@@ -25,6 +30,7 @@ jobs:
     name: Build-Net
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         dotnet: ['6.0.100']
         cloud_env: ['AZURE', 'GCP', 'AWS']
@@ -51,6 +57,7 @@ jobs:
     name: Build-Framework
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
@@ -76,6 +83,7 @@ jobs:
     name: Tests on Windows
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         dotnet: ['net6.0', 'net472', 'net471']
         cloud_env: ['AZURE', 'GCP', 'AWS']
@@ -127,6 +135,7 @@ jobs:
     name: Tests on Linux
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         dotnet: ['net6.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
@@ -173,6 +182,7 @@ jobs:
     name: Tests on MAC
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         dotnet: ['net6.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
