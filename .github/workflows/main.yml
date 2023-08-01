@@ -101,7 +101,7 @@ jobs:
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
-          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"Snowflake.Data.Tests.SFDbCommandIT.TestSimpleLargeResultSet" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -157,7 +157,7 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build --filter="Snowflake.Data.Tests.SFDbCommandIT.TestSimpleLargeResultSet"
+          dotnet test --no-build
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
@@ -203,7 +203,7 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build --filter="Snowflake.Data.Tests.SFDbCommandIT.TestSimpleLargeResultSet"
+          dotnet test --no-build
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
