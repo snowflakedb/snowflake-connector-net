@@ -179,6 +179,8 @@ namespace Snowflake.Data.Tests
 
             var separator = Path.DirectorySeparatorChar;
             
+            // We have to go up 3 times as the working directory path looks as follows:
+            // Snowflake.Data.Tests/bin/debug/{.net_version}/
             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
         
