@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             
-            File.WriteAllText($"../../../{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+            File.WriteAllText($"..{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
         
         private static string s_connectionString => string.Format(ConnectionStringFmt,
