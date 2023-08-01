@@ -104,11 +104,17 @@ jobs:
           ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
-      - name: Upload Artifacts
+          net_version: ${{ matrix.dotnet }}
+      - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
           path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+      - name: Upload Test Performance Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-performance
+          path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
 #disable Code coverage for now as codecov is deprecated
 #https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
 #      - name: Install Codecov
@@ -155,6 +161,12 @@ jobs:
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
+          net_version: ${{ matrix.dotnet }}
+      - name: Upload Test Performance Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-performance
+          path: Snowflake.Data.Tests\linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
 
   test-mac:
     needs: [build-net, build-framework]
@@ -195,3 +207,9 @@ jobs:
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
+          net_version: ${{ matrix.dotnet }}
+      - name: Upload Test Performance Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-performance
+          path: Snowflake.Data.Tests\macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv

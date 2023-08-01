@@ -19,10 +19,11 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFPutGetTest : SFBaseTest
     {
+        private const int NumberOfRows = 4;
         private static readonly string[] s_colName = {"C1", "C2", "C3"};
         private static readonly string[] s_colData = {"FIRST", "SECOND", "THIRD"};
-        private const int NumberOfRows = 4;
-        
+        private static string s_outputDirectory;
+
         [ThreadStatic] private static string t_schemaName;
         [ThreadStatic] private static string t_tableName;
         [ThreadStatic] private static string t_stageName;
@@ -35,8 +36,6 @@ namespace Snowflake.Data.Tests
         [ThreadStatic] private static bool t_autoCompress;
         [ThreadStatic] private static List<string> t_filesToDelete;
         
-        private string _outputDirectory;
-
         public enum StageType
         {
             USER,
@@ -52,18 +51,18 @@ namespace Snowflake.Data.Tests
         }
 
         [OneTimeSetUp]
-        public void OneTimeSetUp()
+        public static void OneTimeSetUp()
         {
             // Create temp output directory for downloaded files
-            _outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(_outputDirectory);
+            s_outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(s_outputDirectory);
         }
 
         [OneTimeTearDown]
-        public void OneTimeTearDown()
+        public static void OneTimeTearDown()
         {
             // Delete temp output directory and downloaded files
-            Directory.Delete(_outputDirectory, true);
+            Directory.Delete(s_outputDirectory, true);
         }
         
         [SetUp]
@@ -392,7 +391,7 @@ namespace Snowflake.Data.Tests
             t_fileName = Guid.NewGuid() + ".csv" + 
                         (t_autoCompress? SFFileCompressionTypes.LookUpByName(t_compressionType).FileExtension: "");
             t_inputFilePath = Path.GetTempPath() + t_fileName;
-            t_outputFilePath = $@"{_outputDirectory}/{t_fileName}";
+            t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
             t_filesToDelete.Add(t_outputFilePath);
             PrepareFileData(t_inputFilePath);
 
@@ -487,7 +486,7 @@ namespace Snowflake.Data.Tests
             using (var command = conn.CreateCommand())
             {
                 // Prepare GET query
-                var getQuery = $"GET {t_internalStagePath}/{t_fileName} file://{_outputDirectory}";
+                var getQuery = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
 
                 // Download file
                 command.CommandText = getQuery;

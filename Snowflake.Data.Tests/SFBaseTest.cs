@@ -5,8 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Reflection;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests
@@ -48,9 +51,27 @@ namespace Snowflake.Data.Tests
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
 
+        private Stopwatch _stopwatch;
+        
+        [SetUp]
+        public void BeforeTest()
+        {
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            _stopwatch.Stop();
+            var testName = $"{TestContext.CurrentContext.Test.FullName}";
+
+            TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
+        }
+
         public SFBaseTestAsync()
         {
-            testConfig = TestEnvironmentSetup.TestConfig;
+            testConfig = TestEnvironment.TestConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -77,13 +98,20 @@ namespace Snowflake.Data.Tests
     }
     
     [SetUpFixture]
-    public class TestEnvironmentSetup
+    public class TestEnvironment
     {
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
         
         public static TestConfig TestConfig { get; private set; }
-        
+
+        private static Dictionary<string, TimeSpan> s_testPerformance;
+
+        public static void RecordTestPerformance(string name, TimeSpan time)
+        {
+            s_testPerformance.Add(name, time);
+        }
+
         [OneTimeSetUp]
         public void Setup()
         {
@@ -126,14 +154,33 @@ namespace Snowflake.Data.Tests
             
             ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
-
+        
         [OneTimeTearDown]
         public void Cleanup()
         {
             ModifySchema(TestConfig.schema, SchemaAction.DROP);
         }
+        
+        [OneTimeSetUp]
+        public void SetupTestPerformance()
+        {
+            s_testPerformance = new Dictionary<string, TimeSpan>();
+        }
 
-        private static string connectionString => string.Format(ConnectionStringFmt,
+        [OneTimeTearDown]
+        public void CreateTestTimeArtifact()
+        {
+            var resultText = "test;time_in_ms\n";
+            resultText += string.Join("\n",
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+            
+            var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
+            var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            
+            File.WriteAllText($"../../../{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+        }
+        
+        private static string s_connectionString => string.Format(ConnectionStringFmt,
             TestConfig.protocol,
             TestConfig.host,
             TestConfig.port,
@@ -154,7 +201,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = connectionString;
+                conn.ConnectionString = s_connectionString;
                 conn.Open();
                 var dbCommand = conn.CreateCommand();
                 switch (schemaAction)
@@ -178,6 +225,24 @@ namespace Snowflake.Data.Tests
                     Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
                 }
             }
+        }
+
+        private static string GetOs()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "windows";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "linux";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "macos";
+            }
+
+            return "unknown";
         }
     }
 
