@@ -45,7 +45,6 @@ namespace Snowflake.Data.Tests
      * 
      */
     [TestFixture]
-    [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
