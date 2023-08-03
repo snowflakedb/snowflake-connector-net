@@ -160,14 +160,9 @@ jobs:
         run: |
           dotnet restore
           dotnet build
-      - name: Run minicover
+      - name: Run Tests
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
-          dotnet minicover reset
           dotnet test --no-build
-          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -207,14 +202,9 @@ jobs:
         run: |
           dotnet restore
           dotnet build
-      - name: Run minicover
+      - name: Run Tests
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
-          dotnet minicover reset
           dotnet test --no-build
-          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
