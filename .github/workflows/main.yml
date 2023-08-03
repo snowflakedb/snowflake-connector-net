@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['6.0.100']
+        dotnet: ['6.0.412']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
@@ -92,7 +92,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -144,7 +144,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -186,7 +186,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
