@@ -45,6 +45,7 @@ namespace Snowflake.Data.Tests
      * 
      */
     [TestFixture]
+    [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
@@ -54,14 +55,14 @@ namespace Snowflake.Data.Tests
         private Stopwatch _stopwatch;
         
         [SetUp]
-        public void BeforeTest()
+        public void SetupStopwatch()
         {
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
         }
 
         [TearDown]
-        public void AfterTest()
+        public void RecordPerformance()
         {
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
