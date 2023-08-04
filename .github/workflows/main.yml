@@ -109,7 +109,7 @@ jobs:
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
-          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_windows.xml" -oldStyle
+          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -117,28 +117,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_windows.xml
+          path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
-      - name: Upload coverage reports to Codecov (take 1)
-        id: uploadToCodeCovTake1
-        uses: codecov/codecov-action@v3
-        continue-on-error: true
-        with:
-          fail_ci_if_error: true
-          verbose: true
-      - name: Upload coverage reports to Codecov (take 2)
-        id: uploadToCodeCovTake2
-        # only run when take 1 failed
-        if: steps.uploadToCodeCovTake1.outcome == 'failure'
-        uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true
-          verbose: true
 
   test-linux:
     needs: [build-net, build-framework]
@@ -176,32 +160,16 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_linux.json'
+          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
-      - name: Upload Test Performance Report
+      - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
-          name: tests-performance
-          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
-      - name: Upload coverage reports to Codecov (take 1)
-        id: uploadToCodeCovTake1
-        uses: codecov/codecov-action@v3
-        continue-on-error: true
-        with:
-          fail_ci_if_error: true
-          verbose: true
-      - name: Upload coverage reports to Codecov (take 2)
-        id: uploadToCodeCovTake2
-        # only run when take 1 failed
-        if: steps.uploadToCodeCovTake1.outcome == 'failure'
-        uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true
-          verbose: true
+          name: code-coverage-report
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
 
   test-mac:
     needs: [build-net, build-framework]
@@ -239,29 +207,37 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_mac.json'
+          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
-      - name: Upload coverage reports to Codecov (take 1)
-        id: uploadToCodeCovTake1
-        uses: codecov/codecov-action@v3
-        continue-on-error: true
+
+  upload_code_coverage: # it's separate job because codecov action can fail https://github.com/codecov/codecov-action/issues/598 (and we want to know about it), but we don't want to fail required mac build
+    needs: [test-windows,test-linux,test-mac]
+    name: Upload code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout # it is still recommended to check out https://about.codecov.io/blog/uploading-code-coverage-in-a-separate-job-on-github-actions/
+        uses: actions/checkout@v3
+      - name: Download code coverage result
+        uses: actions/download-artifact@v3
         with:
-          fail_ci_if_error: true
-          verbose: true
-      - name: Upload coverage reports to Codecov (take 2)
-        id: uploadToCodeCovTake2
-        # only run when take 1 failed
-        if: steps.uploadToCodeCovTake1.outcome == 'failure'
+          name: code-coverage-report
+          path: Snowflake.Data.Tests
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
-          verbose: true
