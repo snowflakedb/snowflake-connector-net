@@ -109,7 +109,7 @@ jobs:
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
-          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_windows.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -117,18 +117,28 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_windows.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-#disable Code coverage for now as codecov is deprecated
-#https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
-#      - name: Install Codecov
-#        run: pip install codecov
-#      - name: Run Codecoverage
-#        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
+      - name: Upload coverage reports to Codecov (take 1)
+        id: uploadToCodeCovTake1
+        uses: codecov/codecov-action@v3
+        continue-on-error: true
+        with:
+          fail_ci_if_error: true
+          verbose: true
+      - name: Upload coverage reports to Codecov (take 2)
+        id: uploadToCodeCovTake2
+        # only run when take 1 failed
+        if: steps.uploadToCodeCovTake1.outcome == 'failure'
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          verbose: true
 
   test-linux:
     needs: [build-net, build-framework]
@@ -166,7 +176,7 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build
+          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_linux.json'
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
@@ -176,6 +186,22 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
+      - name: Upload coverage reports to Codecov (take 1)
+        id: uploadToCodeCovTake1
+        uses: codecov/codecov-action@v3
+        continue-on-error: true
+        with:
+          fail_ci_if_error: true
+          verbose: true
+      - name: Upload coverage reports to Codecov (take 2)
+        id: uploadToCodeCovTake2
+        # only run when take 1 failed
+        if: steps.uploadToCodeCovTake1.outcome == 'failure'
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          verbose: true
 
   test-mac:
     needs: [build-net, build-framework]
@@ -213,7 +239,7 @@ jobs:
           dotnet tool install --local MiniCover --version 3.4.7
           dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
           dotnet minicover reset
-          dotnet test --no-build
+          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage_mac.json'
           dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
@@ -223,3 +249,19 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      # codecov action sometimes fails but retry works - until action provides retry let's retry on our own https://github.com/codecov/codecov-action/issues/926
+      - name: Upload coverage reports to Codecov (take 1)
+        id: uploadToCodeCovTake1
+        uses: codecov/codecov-action@v3
+        continue-on-error: true
+        with:
+          fail_ci_if_error: true
+          verbose: true
+      - name: Upload coverage reports to Codecov (take 2)
+        id: uploadToCodeCovTake2
+        # only run when take 1 failed
+        if: steps.uploadToCodeCovTake1.outcome == 'failure'
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          verbose: true
