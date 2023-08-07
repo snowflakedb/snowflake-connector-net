@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests
         }
 
         [TearDown]
-        public void RecordPerformance()
+        public void TearDown()
         {
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
