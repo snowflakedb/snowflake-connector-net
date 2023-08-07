@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests
         private Stopwatch _stopwatch;
         
         [SetUp]
-        public void SetupStopwatch()
+        public void BeforeTest()
         {
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
