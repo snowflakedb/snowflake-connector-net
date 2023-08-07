@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests
         }
 
         [TearDown]
-        public void TearDown()
+        public void AfterTest()
         {
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
