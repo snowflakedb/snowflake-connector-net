@@ -39,12 +39,24 @@ public class ExampleClass
 
 #### Public static member
 
-Use Pascal notation, eg. `SomeVariable`.
+Use PascalCase, eg. `SomeVariable`.
 
 ```csharp
 public class ExampleClass
 {
     public static Something SomeVariable;
+}
+```
+#### Const member
+
+Use always PascalCase regardless of the modifier public/private/internal.
+
+```csharp
+public class ExampleClass
+{
+    public int SomeInteger = 1234;
+    private string SomeString = "abc";
+    internal string SomeInternalString = "xyz";
 }
 ```
 
@@ -83,9 +95,19 @@ Use CamelCase, eg. `someVariable`.
 }
 ```
 
+### Const variables
+
+Use PascalCase, eg. `SomeConst`.
+
+```csharp
+{
+    const SomeConst = 1;
+}
+```
+
 ### Method names
 
-Use PascalNotation eg. `SomeMethod` for all methods (normal, object members, static members, public, internal, private).
+Use PascalCase, eg. `SomeMethod` for all methods (normal, object members, static members, public, internal, private).
 
 ```csharp
 void SomeMethod() {
@@ -99,6 +121,28 @@ Use `I` prefix (without `Interface` postfix), eg. `IName`.
 
 ```csharp
 interface IName
+{
+}
+```
+
+### Class naming
+
+#### Class implementing a standard interface
+
+Use `Snowflake` prefix, eg. `SnowflakeDbCommand` because the class extends `DbCommand` abstract class and implements `IDbCommand` interface.
+
+```csharp
+public class SnowflakeDbCommand : DbCommand
+{
+}
+```
+
+#### Class not implementing any standard interface
+
+Don't use any particular prefix if the class does not implement any standard interface. 
+
+```csharp
+public class FastParser
 {
 }
 ```
@@ -132,7 +176,7 @@ Assert.IsNotNull(handler.Proxy);
 
 ### TestThatSomethingShouldHappen methods
 
-Use test names in Pascal notation (but without MS proposed underline characters between logical parts of the test name addressing 3a pattern).
+Use test names in PascalCase notation (but without MS proposed underline characters between logical parts of the test name addressing 3a pattern).
 
 ```csharp
 [Test]
