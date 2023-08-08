@@ -91,7 +91,7 @@ Use camelCase, eg. `someVariable`.
 
 ```csharp
 {
-    Something _someVariable;
+    Something someVariable;
 }
 ```
 
@@ -114,6 +114,17 @@ void SomeMethod() {
 }
 ```
 
+### Enums
+
+Use PascalCase for both both: enumeration name and values, eg. `SomeEnumeration` with value `SomeValue`.
+
+```csharp
+public enum SomeEnumeration
+{
+    SomeValue = 5,
+    SomeOtherValeu = 7
+}
+```
 
 ### Interface
 
