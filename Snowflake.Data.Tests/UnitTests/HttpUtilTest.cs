@@ -4,7 +4,7 @@
 
 using System.Net.Http;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Core;

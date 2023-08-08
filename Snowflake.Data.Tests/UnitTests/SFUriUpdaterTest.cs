@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using System;

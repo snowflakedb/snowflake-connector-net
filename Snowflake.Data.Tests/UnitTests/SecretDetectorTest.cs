@@ -2,7 +2,9 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+using Amazon.S3.Model.Internal.MarshallTransformations;
+
+namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Log;
@@ -149,10 +151,10 @@ namespace Snowflake.Data.Tests
             BasicMasking(@"sig=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"sig=****");
 
             // signature
-            BasicMasking(@"signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****");
+            BasicMasking(@"signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****"); 
 
             // AWSAccessKeyId
-            BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****");
+            BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****"); // pragma: allowlist secret
 
             // password
             BasicMasking(@"password=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"password=****");
@@ -168,8 +170,8 @@ namespace Snowflake.Data.Tests
         public void TestPrivateKey()
         {
             // Verify that all allowed characters are correctly supported
-            BasicMasking("-----BEGIN PRIVATE KEY-----\na0a==aaB/aa1aaaa\naaaaCaaa+aa95aaa\n-----END PRIVATE KEY-----",
-                "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----");
+            BasicMasking("-----BEGIN PRIVATE KEY-----\na0a==aaB/aa1aaaa\naaaaCaaa+aa95aaa\n-----END PRIVATE KEY-----", // pragma: allowlist secret
+                "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----"); // pragma: allowlist secret
         }
 
         [Test]
@@ -230,15 +232,15 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestMaskToken()
         {
-            string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
-                 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" +
-                 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" +
-                 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" +
-                 "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" +
-                 "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" +
-                 "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" +
-                 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" +
-                 "XdJYuI8vhg=f0bKSq7AhQ2Bh";
+            string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
+                 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
+                 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
+                 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
+                 "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
+                 "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
+                 "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
+                 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
+                 "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
 
             string tokenStrWithPrefix = "Token =" + longToken;
             mask = SecretDetector.MaskSecrets(tokenStrWithPrefix);
@@ -330,20 +332,20 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestTokenPassword()
         {
-            string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
-                 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" +
-                 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" +
-                 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" +
-                 "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" +
-                 "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" +
-                 "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" +
-                 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" +
-                 "XdJYuI8vhg=f0bKSq7AhQ2Bh";
+            string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
+                 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
+                 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
+                 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
+                 "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
+                 "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
+                 "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
+                 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
+                 "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
 
-            string longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" +
-                  "MwKteDS5DRE/Pb+5MzvWjDH7LFPV5b_" +
-                  "/tX/yoLG3b4TuC6Q5qNzsARPPn_zs/j" +
-                  "BbDOEg1-IfPpdsbwX6ETeEnhxkHIL4H" +
+            string longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" + // pragma: allowlist secret
+                  "MwKteDS5DRE/Pb+5MzvWjDH7LFPV5b_" + // pragma: allowlist secret
+                  "/tX/yoLG3b4TuC6Q5qNzsARPPn_zs/j" + // pragma: allowlist secret
+                  "BbDOEg1-IfPpdsbwX6ETeEnhxkHIL4H" + // pragma: allowlist secret
                   "sP-V";
 
             string randomPwd = "Fh[+2J~AcqeqW%?";
@@ -526,8 +528,8 @@ namespace Snowflake.Data.Tests
         {
             string randomHttpResponse =
                 "\"data\" : {" +
-                "\"masterToken\" : \"ver:1-hint:92019676298218-ETMsDgAAAXrK7h+Y=" +
-                "\"token\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+                "\"masterToken\" : \"ver:1-hint:92019676298218-ETMsDgAAAXrK7h+Y=" + // pragma: allowlist secret
+                "\"token\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
                 "\"remMeValidityInSeconds\" : 0," +
                 "\"healthCheckInterval\" : 12," +
                 "\"newClientForUpgrade\" : null," +
