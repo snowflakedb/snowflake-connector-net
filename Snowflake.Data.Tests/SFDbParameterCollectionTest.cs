@@ -183,11 +183,14 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestDbParameterCollectionInsert([Values] SFDataType SFDataType)
         {
-            int expectedParameterIndex = 0;
-            SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
+            SnowflakeDbParameter parameter;
+            for (int expectedParamIndex = 0; expectedParamIndex < PARAM_COUNT; expectedParamIndex++)
+            {
+                parameter = new SnowflakeDbParameter(expectedParamIndex.ToString(), SFDataType);
 
-            _parameterCollection.Insert(expectedParameterIndex, parameter);
-            Assert.AreEqual(expectedParameterIndex, _parameterCollection.IndexOf(parameter));
+                _parameterCollection.Insert(expectedParamIndex, parameter);
+                Assert.AreEqual(expectedParamIndex, _parameterCollection.IndexOf(parameter));
+            }
         }
 
         [Test]
