@@ -133,10 +133,9 @@ namespace Snowflake.Data.Tests
             IEnumerator parameterEnumerator = _parameterCollection.GetEnumerator();
 
             parameterEnumerator.Reset();
-            while (parameterEnumerator.MoveNext())
-            {
-                Assert.AreEqual(parameter, (SnowflakeDbParameter)parameterEnumerator.Current);
-            }
+            Assert.IsTrue(parameterEnumerator.MoveNext());
+            Assert.AreEqual(parameter, (SnowflakeDbParameter)parameterEnumerator.Current);
+            Assert.IsFalse(parameterEnumerator.MoveNext());
         }
 
         [Test]
