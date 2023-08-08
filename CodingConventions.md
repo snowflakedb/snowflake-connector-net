@@ -18,7 +18,7 @@ Use `s_` prefix + camelCase, eg. `s_someVariable`.
 public class ExampleClass
 {
     private static Something s_someVariable;
-    internal static Something s_someVariable2;
+    internal static Something s_someInternalVariable;
 }
 ```
 
@@ -33,7 +33,7 @@ public class ExampleClass
     private static Something t_someVariable;
     
     [ThreadStatic]
-    internal static Something t_someVariable2;
+    internal static Something t_someInternalVariable;
 }
 ```
 
@@ -70,7 +70,7 @@ Use `_` prefix + camelCase, eg. `_someVariable`.
 public class ExampleClass
 {
     private Something _someVariable;
-    internal Something _someVariable2;
+    internal Something _someInternalVariable;
 }
 ```
 
@@ -116,13 +116,13 @@ void SomeMethod() {
 
 ### Enums
 
-Use PascalCase for both both: enumeration name and values, eg. `SomeEnumeration` with value `SomeValue`.
+Use PascalCase for both: enumeration name and values, eg. `SomeEnumeration` with value `SomeValue`.
 
 ```csharp
 public enum SomeEnumeration
 {
     SomeValue = 5,
-    SomeOtherValeu = 7
+    SomeOtherValue = 7
 }
 ```
 
