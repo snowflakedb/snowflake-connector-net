@@ -12,7 +12,7 @@ by following coding convention rules.
 
 #### Internal or private static member
 
-Use `s_` prefix + CamelCase, eg. `s_someVariable`.
+Use `s_` prefix + camelCase, eg. `s_someVariable`.
 
 ```csharp
 public class ExampleClass
@@ -24,7 +24,7 @@ public class ExampleClass
 
 #### Internal or private thread static member
 
-Use `t_` prefix + CamelCase, eg. `t_someVariable`.
+Use `t_` prefix + camelCase, eg. `t_someVariable`.
 
 ```csharp
 public class ExampleClass
@@ -64,7 +64,7 @@ public class ExampleClass
 
 #### Internal or private member
 
-Use `_` prefix + CamelCase, eg. `_someVariable`.
+Use `_` prefix + camelCase, eg. `_someVariable`.
 
 ```csharp
 public class ExampleClass
@@ -87,7 +87,7 @@ public class ExampleClass
 
 ### Local variables
 
-Use CamelCase, eg. `someVariable`.
+Use camelCase, eg. `someVariable`.
 
 ```csharp
 {
