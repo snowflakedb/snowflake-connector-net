@@ -7,3 +7,4 @@ Please explain the changes you made here.
 - [ ] Created tests which fail without the change (if possible)
 - [ ] All tests passing (`dotnet test`)
 - [ ] Extended the README / documentation, if necessary
+- [ ] Provide JIRA issue id (if possible) or GitHub issue id in PR name
