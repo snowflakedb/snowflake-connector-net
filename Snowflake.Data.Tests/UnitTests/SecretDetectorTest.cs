@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Collections.Generic;
 
     [TestFixture]
-    class SecretDetectorTest : SFBaseTest
+    class SecretDetectorTest
     {
         SecretDetector.Mask mask;
 

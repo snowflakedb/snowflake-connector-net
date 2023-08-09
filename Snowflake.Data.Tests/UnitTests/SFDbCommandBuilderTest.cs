@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
 
     [TestFixture]
-    class SFDbCommandBuilderTest : SFBaseTest
+    class SFDbCommandBuilderTest
     {
         SnowflakeDbCommandBuilder builder;
 
