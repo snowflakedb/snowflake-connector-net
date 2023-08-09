@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.IntegrationTests
 {
     using NUnit.Framework;
     using System;

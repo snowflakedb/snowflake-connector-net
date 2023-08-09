@@ -3,7 +3,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Net.Http;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
     class SFOktaTest

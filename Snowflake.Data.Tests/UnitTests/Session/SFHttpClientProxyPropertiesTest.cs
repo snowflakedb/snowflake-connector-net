@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.Session
+namespace Snowflake.Data.Tests.UnitTests.Session
 {
 
     [TestFixture]

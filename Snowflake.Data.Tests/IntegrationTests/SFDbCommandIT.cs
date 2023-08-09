@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.IntegrationTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Client;

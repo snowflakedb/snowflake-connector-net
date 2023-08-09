@@ -5,7 +5,7 @@
 using System;
 using System.Linq;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.Util
 {
 
     public class TestDataGenarator

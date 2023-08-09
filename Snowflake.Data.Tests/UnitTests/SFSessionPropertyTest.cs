@@ -8,7 +8,7 @@ using System.Security;
 using NUnit.Framework;
 using Snowflake.Data.Core.Authenticator;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.UnitTests
 {
     class SFSessionPropertyTest
     {

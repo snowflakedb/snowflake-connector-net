@@ -9,7 +9,7 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;

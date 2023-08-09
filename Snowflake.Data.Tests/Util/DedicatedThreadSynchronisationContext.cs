@@ -1,11 +1,10 @@
-﻿using NUnit.Framework;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
+using NUnit.Framework;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.Util
 {
     /*
      * This class will not deadlock, but it will cause tests to fail if the Send or Post methods have been called during a test
