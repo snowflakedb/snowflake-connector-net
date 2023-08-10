@@ -5,6 +5,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO.Compression;
+using System.Text;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -28,11 +30,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_tableName;
         [ThreadStatic] private static string t_stageName;
         [ThreadStatic] private static string t_fileName;
+        [ThreadStatic] private static string t_outputFileName;
         [ThreadStatic] private static string t_inputFilePath;
         [ThreadStatic] private static string t_outputFilePath;
         [ThreadStatic] private static string t_internalStagePath;
         [ThreadStatic] private static StageType t_stageType;
         [ThreadStatic] private static string t_compressionType;
+        [ThreadStatic] private static string t_destCompressionType;
         [ThreadStatic] private static bool t_autoCompress;
         [ThreadStatic] private static List<string> t_filesToDelete;
         
@@ -342,7 +346,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [Parallelizable(ParallelScope.All)]
         public void TestPutGetCommand(
-            [Values("gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string compressionType, 
+            [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string compressionType,
             [Values] StageType stageType,
             [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
             [Values] bool autoCompress)
@@ -352,7 +356,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-
                 PutFile(conn);
                 CopyIntoTable(conn);
                 GetFile(conn);
@@ -384,12 +387,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_stageType = stageType;
             t_compressionType = compressionType;
             t_autoCompress = autoCompress;
-            
             // Prepare temp file name with specified file extension
             t_fileName = Guid.NewGuid() + ".csv" + 
                         (t_autoCompress? SFFileCompressionTypes.LookUpByName(t_compressionType).FileExtension: "");
             t_inputFilePath = Path.GetTempPath() + t_fileName;
-            t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
+            if (UseGzipCompressionForNotCompressedFilesWithAutoCompressOption())
+            {
+                t_destCompressionType = "gzip";
+                t_outputFileName = $"{t_fileName}.gz";
+            }
+            else
+            {
+                t_destCompressionType = t_compressionType;
+                t_outputFileName = t_fileName;
+            }
+            t_outputFilePath = $@"{s_outputDirectory}/{t_outputFileName}";
             t_filesToDelete.Add(t_outputFilePath);
             PrepareFileData(t_inputFilePath);
 
@@ -408,6 +420,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        private static bool UseGzipCompressionForNotCompressedFilesWithAutoCompressOption()
+        {
+            if (t_autoCompress == false)
+            {
+                return false;
+            }
+            if (t_compressionType != "none")
+            {
+                return false;
+            }
+            return true;
+        }
+        
         // PUT - upload file from local directory to the stage
         private void PutFile(SnowflakeDbConnection conn)
         {
@@ -430,7 +455,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     Assert.AreEqual(t_compressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(t_compressionType,
+                    Assert.AreEqual(t_destCompressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
                 else
@@ -496,21 +521,49 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // Check file contents
-                using (var streamReader = new StreamReader(t_outputFilePath))
+                foreach (var line in ReadOutputFileLinesUnzippingIfCompressedBecauseOfAutoCompression())
                 {
-                    while (!streamReader.EndOfStream)
-                    {
-                        var line = streamReader.ReadLine();
-                        if (line == null) continue;
-                        var values = line.Split(',');
+                    if (string.IsNullOrEmpty(line)) continue;
+                    var values = line.Split(',');
 
-                        for (var i = 0; i < s_colData.Length; i++)
-                        {
-                            Assert.AreEqual(s_colData[i], values[i]);
-                        }
+                    for (var i = 0; i < s_colData.Length; i++)
+                    {
+                        Assert.AreEqual(s_colData[i], values[i]);
                     }
                 }
             }
+        }
+
+        private static string[] ReadOutputFileLinesUnzippingIfCompressedBecauseOfAutoCompression()
+        {
+            using (var outputStream = File.OpenRead(t_outputFilePath))
+            {
+                if (!IsCompressedBecauseOfAutoCompression())
+                {
+                    return splitLines(outputStream);
+                }
+                using (var decompressingStream = new GZipStream(outputStream, CompressionMode.Decompress))
+                {
+                    using (var decompressedStream = new MemoryStream())
+                    {
+                        decompressingStream.CopyTo(decompressedStream);
+                        return splitLines(decompressedStream);
+                    }
+                }
+            }
+        }
+
+        private static string[] splitLines(Stream stream)
+        {
+            var bytes = new byte[stream.Length];
+            stream.Position = 0;
+            stream.Read(bytes, 0, (int) stream.Length);
+            return Encoding.UTF8.GetString(bytes).Split('\n');
+        }
+
+        private static bool IsCompressedBecauseOfAutoCompression()
+        {
+            return t_compressionType == "none" && t_destCompressionType == "gzip" && t_autoCompress;
         }
 
         private static void PrepareFileData(string file)
