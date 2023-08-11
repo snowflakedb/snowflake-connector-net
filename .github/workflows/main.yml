@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['6.0.100']
+        dotnet: ['6.0.412']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
@@ -92,7 +92,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -144,7 +144,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -160,14 +160,9 @@ jobs:
         run: |
           dotnet restore
           dotnet build
-      - name: Run minicover
+      - name: Run Tests
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
-          dotnet minicover reset
           dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
-          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -197,7 +192,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.100
+          dotnet-version: 6.0.412
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -213,14 +208,9 @@ jobs:
         run: |
           dotnet restore
           dotnet build
-      - name: Run minicover
+      - name: Run Tests
         run: |
-          dotnet new tool-manifest
-          dotnet tool install --local MiniCover --version 3.4.7
-          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
-          dotnet minicover reset
           dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
-          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}

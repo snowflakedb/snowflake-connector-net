@@ -12,10 +12,10 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     class SFDbAdaptorIT : SFBaseTest
     {
-        IDbDataAdapter _adapter;
-        SnowflakeDbCommand _command;
+        private IDbDataAdapter _adapter;
+        private SnowflakeDbCommand _command;
 
-        [Test]
+        [SetUp]
         public void BeforeTest()
         {
             _adapter = new SnowflakeDbDataAdapter();
