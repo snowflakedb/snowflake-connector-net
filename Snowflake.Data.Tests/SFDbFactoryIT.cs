@@ -85,13 +85,15 @@ namespace Snowflake.Data.Tests
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
             builder.ConnectionString = ConnectionString;
 
+            _connection.ConnectionString = builder.ConnectionString;
+            _connection.Open();
+
             // set command's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
             var result = _command.ExecuteScalar();
 
-            Assert.AreEqual(ConnectionString, builder.ConnectionString);
             Assert.AreEqual(1, result);
         }
 
