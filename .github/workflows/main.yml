@@ -162,7 +162,7 @@ jobs:
           dotnet build
       - name: Run Tests
         run: |
-          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
+          dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
