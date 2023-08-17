@@ -117,7 +117,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          path: |
+            Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+            Snowflake.Data.Tests\*.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
@@ -170,13 +172,15 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: ./linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
-          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          path: |
+            ./*.json
+            ./*.xml
+      # - name: Upload coverage reports to Codecov
+        # uses: codecov/codecov-action@v3
+        # with:
+          # # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          # token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          # fail_ci_if_error: true
 
   test-mac:
     needs: [build-net, build-framework]
@@ -218,7 +222,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: ./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
+          path: |
+            ./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
+            ./*.json
+            ./*.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
