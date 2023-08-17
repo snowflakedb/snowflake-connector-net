@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests
     using System.Collections;
 
     [TestFixture]
-    class SFDbParameterCollectionTest : SFBaseTest
+    class SFDbParameterCollectionTest
     {
         SnowflakeDbParameterCollection _parameterCollection;
         const int PARAM_COUNT = 10;
