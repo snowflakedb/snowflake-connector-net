@@ -113,8 +113,11 @@ jobs:
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
-      - name: List all xml files
-        run: dir /A-D /S /B | findstr .xml
+      - name: List all files
+        run: |
+          dir
+          cd Snowflake.Data.Tests
+          dir
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
@@ -166,7 +169,12 @@ jobs:
           dotnet build
       - name: Run Tests
         run: |
+          dotnet new tool-manifest
+          dotnet tool install --local MiniCover --version 3.4.7
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover reset
           dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -218,7 +226,12 @@ jobs:
           dotnet build
       - name: Run Tests
         run: |
+          dotnet new tool-manifest
+          dotnet tool install --local MiniCover --version 3.4.7
+          dotnet minicover instrument --workdir ./ --assemblies 'Snowflake.Data.Tests/**/bin/**/Snowflake.Data.dll' --sources 'Snowflake.Data/**/*.cs'
+          dotnet minicover reset
           dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput='./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json'
+          dotnet minicover uninstrument
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -228,10 +241,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: |
-            ./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
-            ./*.json
-            ./*.xml
+          path: ./macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.json
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
