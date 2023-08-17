@@ -113,6 +113,8 @@ jobs:
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: List all xml files
+        run: dir /A-D /S /B | findstr .xml
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
@@ -125,12 +127,12 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-      # - name: Upload coverage reports to Codecov
-        # uses: codecov/codecov-action@v3
-        # with:
-          # # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
-          # token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          # fail_ci_if_error: true
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: true
 
   test-linux:
     needs: [build-net, build-framework]
@@ -168,6 +170,8 @@ jobs:
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: List all files
+        run: find .
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
@@ -218,6 +222,8 @@ jobs:
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: List all files
+        run: find .
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v3
         with:
