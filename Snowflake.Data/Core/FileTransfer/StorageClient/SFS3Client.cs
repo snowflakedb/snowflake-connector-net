@@ -181,22 +181,24 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             AmazonS3Client client = SFS3Client.S3Client;
 
             GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
-            GetObjectResponse response = null;
+
             try
             {
                 // Issue the GET request
                 var task = client.GetObjectAsync(request);
+                task.ConfigureAwait(false);
                 task.Wait();
 
-                response = task.Result;
+                using (GetObjectResponse response = task.Result)
+                {
+                    return HandleFileHeaderResponse(ref fileMetadata, response);
+                }
             }
             catch (Exception ex)
             {
                 fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 return null;
             }
-
-            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
@@ -345,6 +347,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 var task = client.PutObjectAsync(putObjectRequest);
+                task.ConfigureAwait(false);
                 task.Wait();
             }
             catch (Exception ex)
@@ -453,13 +456,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the GET request
                 var task = client.GetObjectAsync(getObjectRequest);
+                task.ConfigureAwait(false);
                 task.Wait();
 
-                GetObjectResponse response = task.Result;
-                // Write to file
-                using (var fileStream = File.Create(fullDstPath))
+                using (GetObjectResponse response = task.Result)
                 {
-                    response.ResponseStream.CopyTo(fileStream);
+                    // Write to file
+                    using (var fileStream = File.Create(fullDstPath))
+                    {
+                        response.ResponseStream.CopyTo(fileStream);
+                    }
                 }
             }
             catch (Exception ex)
