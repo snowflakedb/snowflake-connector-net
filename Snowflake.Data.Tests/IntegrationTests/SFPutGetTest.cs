@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void SetUp()
         {
             // Base object's names on on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId.Replace('#', '_');
+            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
 
             t_schemaName = testConfig.schema;
             t_tableName = $"TABLE_{threadSuffix}";
@@ -340,8 +340,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
-        // PutGetTest hang on AWS so ignore it for now until we find the root cause
-        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AWS" })]
         [Parallelizable(ParallelScope.All)]
         public void TestPutGetCommand(
             [Values("gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string compressionType, 

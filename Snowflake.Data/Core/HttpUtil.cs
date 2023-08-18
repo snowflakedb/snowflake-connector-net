@@ -71,7 +71,13 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
-        private HttpUtil() { }
+        private HttpUtil()
+        {
+            // This value is used by AWS SDK and can cause deadlock, 
+            // so we need to increase the default value of 2
+            // See: https://github.com/aws/aws-sdk-net/issues/152
+            ServicePointManager.DefaultConnectionLimit = 50;
+        }
 
         internal static HttpUtil Instance { get; } = new HttpUtil();
 
