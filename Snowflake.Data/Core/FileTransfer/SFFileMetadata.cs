@@ -122,5 +122,35 @@ namespace Snowflake.Data.Core.FileTransfer
 
         // Proxy credentials of the remote storage client.
         public ProxyCredentials proxyCredentials { get; set; }
+        
+        public int MaxBytesInMemory { get; set; }
+    }
+
+    internal class FileTransferConfiguration
+    {
+
+        private const int OneMegabyteInBytes = 1024 * 1024;
+        
+        public string TempDir { get; set; }
+
+        public int MaxBytesInMemory { get; set; }
+
+        public static FileTransferConfiguration DefaultConfiguration =>
+            new FileTransferConfiguration()
+            {
+                TempDir = DefaultTempDir,
+                MaxBytesInMemory = DefaultMaxBytesInMemory
+            };
+
+        public static FileTransferConfiguration FromFileMetadata(SFFileMetadata fileMetadata) =>
+            new FileTransferConfiguration()
+            {
+                TempDir = fileMetadata.tmpDir ?? DefaultTempDir,
+                MaxBytesInMemory = fileMetadata.MaxBytesInMemory
+            };
+
+        public static int DefaultMaxBytesInMemory => OneMegabyteInBytes;
+
+        private static string DefaultTempDir => Path.GetTempPath();
     }
 }

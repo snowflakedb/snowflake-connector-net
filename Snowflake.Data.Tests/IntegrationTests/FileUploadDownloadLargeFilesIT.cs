@@ -58,14 +58,14 @@ namespace Snowflake.Data.Tests
         private static void GenerateLargeFile(string fullFileName)
         {
             File.Delete(fullFileName);
-            RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 256 * 1024);
+            RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
         private void UploadFile()
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MAX_BYTES_IN_MEMORY=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{s_fullFileName} @~/{s_remoteFolderName} AUTO_COMPRESS=FALSE";

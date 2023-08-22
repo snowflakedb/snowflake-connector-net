@@ -29,8 +29,6 @@ namespace Snowflake.Data.Core.FileTransfer
         // The default block size for AES
         private const int AES_BLOCK_SIZE = 128;
         private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
-        private const int OneMegabyteInBytes = 1024 * 1024;
-        private const int MaxBytesThresholdToStoreInMemory = OneMegabyteInBytes;
 
         /// <summary>
         /// The logger.
@@ -49,10 +47,10 @@ namespace Snowflake.Data.Core.FileTransfer
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            string tempDir = null)
+            FileTransferConfiguration transferConfiguration = null)
         {
-            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
-            return EncryptFileReturningStream(inFile, encryptionMaterial, encryptionMetadata, tempDirWithDefaultValue).ToArray();
+            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
+            return EncryptFileReturningStream(inFile, encryptionMaterial, encryptionMetadata, transferConfigurationWithDefaultValue).ToArray();
         }
 
         /// <summary>
@@ -66,11 +64,11 @@ namespace Snowflake.Data.Core.FileTransfer
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            string tempDir)
+            FileTransferConfiguration transferConfiguration)
         {
             using (var fileStream = File.OpenRead(inFile))
             {
-                return EncryptStreamReturningStream(fileStream, encryptionMaterial, encryptionMetadata, tempDir);
+                return EncryptStreamReturningStream(fileStream, encryptionMaterial, encryptionMetadata, transferConfiguration);
             }
         }        
 
@@ -86,10 +84,10 @@ namespace Snowflake.Data.Core.FileTransfer
             MemoryStream memoryStream,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            string tempDir = null)
+            FileTransferConfiguration transferConfiguration = null)
         {
-            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
-            return EncryptStreamReturningStream(memoryStream, encryptionMaterial, encryptionMetadata, tempDirWithDefaultValue).ToArray();
+            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
+            return EncryptStreamReturningStream(memoryStream, encryptionMaterial, encryptionMetadata, transferConfigurationWithDefaultValue).ToArray();
         }
 
         /// <summary>
@@ -103,7 +101,7 @@ namespace Snowflake.Data.Core.FileTransfer
             Stream inputStream,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            string tempDir)
+            FileTransferConfiguration transferConfiguration)
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
@@ -121,7 +119,7 @@ namespace Snowflake.Data.Core.FileTransfer
                 inputStream,
                 keyData,
                 ivData,
-                tempDir);
+                transferConfiguration);
 
             // Encrypt file key
             byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
@@ -150,7 +148,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="masterKey">The key to use for encryption.</param>
         /// <param name="unencryptedFileKey">The file key to encrypt.</param>
         /// <returns>The encrypted key.</returns>
-        static private byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+        private static byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
             Aes aes = Aes.Create();            
             aes.Key = masterKey;
@@ -172,11 +170,11 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The encrypted bytes.</returns>
-        static private FileBackedOutputStream CreateEncryptedBytesStream(
+        private static FileBackedOutputStream CreateEncryptedBytesStream(
             Stream inputStream,
             byte[] key,
             byte[] iv,
-            string tempDir)
+            FileTransferConfiguration transferConfiguration)
         {
             Aes aes = Aes.Create();            
             aes.Key = key;
@@ -185,9 +183,9 @@ namespace Snowflake.Data.Core.FileTransfer
             aes.IV = iv;
             inputStream.Position = 0;
 
-            var targetStream = new FileBackedOutputStream(MaxBytesThresholdToStoreInMemory, tempDir);
+            var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-            byte[] buffer = new byte[MaxBytesThresholdToStoreInMemory];
+            byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
             int bytesRead;
             while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
             {
@@ -206,13 +204,13 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <param name="tempDir">Temporary directory which contains file related work</param>
         /// <returns>The name of the file containing decrypted file bytes</returns>
-        static public string DecryptFile(
+        public static string DecryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            string tempDir = null)
+            FileTransferConfiguration transferConfiguration = null)
         {
-            var tempDirWithDefaultValue = tempDir ?? Path.GetTempPath();
+            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
 
             // Get key and iv from metadata
             string keyBase64 = encryptionMetadata.key;
@@ -236,7 +234,7 @@ namespace Snowflake.Data.Core.FileTransfer
                        inFile,
                        decryptedFileKey,
                        ivBytes,
-                       tempDirWithDefaultValue))
+                       transferConfigurationWithDefaultValue))
             {
                 using (var decryptedFileStream = File.Create(tempFileName))
                 {
@@ -253,7 +251,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="masterKey">The key to use for encryption.</param>
         /// <param name="unencryptedFileKey">The file key to encrypt.</param>
         /// <returns>The encrypted key.</returns>
-        static private byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+        private static byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
             Aes aes = Aes.Create();
             aes.Key = masterKey;
@@ -275,11 +273,11 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The decrypted bytes stream</returns>
-        static private FileBackedOutputStream CreateDecryptedBytesReturningStream(
+        private static FileBackedOutputStream CreateDecryptedBytesReturningStream(
             string inFile,
             byte[] key,
             byte[] iv,
-            string tempDir)
+            FileTransferConfiguration transferConfiguration)
         {
             Aes aes = Aes.Create();
             aes.Key = key;
@@ -287,7 +285,7 @@ namespace Snowflake.Data.Core.FileTransfer
             aes.Padding = PaddingMode.PKCS7;
             aes.IV = iv;
             
-            var targetStream = new FileBackedOutputStream(MaxBytesThresholdToStoreInMemory, tempDir);
+            var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
 
             using(Stream inStream = File.OpenRead(inFile))

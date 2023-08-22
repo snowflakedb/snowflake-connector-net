@@ -589,7 +589,8 @@ namespace Snowflake.Data.Core
                         parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
-                        proxyCredentials = null
+                        proxyCredentials = null,
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory()
                     };
 
                     /// The storage client used to upload data from files or streams
@@ -648,7 +649,8 @@ namespace Snowflake.Data.Core
                         overwrite = TransferMetadata.overwrite,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         parallel = TransferMetadata.parallel,
-                        encryptionMaterial = TransferMetadata.encryptionMaterial[index]
+                        encryptionMaterial = TransferMetadata.encryptionMaterial[index],
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory()
                     };
 
                     /// The storage client used to download data from files or streams
@@ -666,6 +668,26 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private int GetFileTransferMaxBytesInMemory()
+        {
+            if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY, out var maxBytesInMemoryString))
+            {
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+            if (string.IsNullOrEmpty(maxBytesInMemoryString))
+            {
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+            try
+            {
+                return int.Parse(maxBytesInMemoryString);
+            }
+            catch (Exception e)
+            {
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+        }
+            
         /// <summary>
         /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
         /// Also replace the relative paths to the absolute paths for the files if needed.

@@ -80,6 +80,8 @@ namespace Snowflake.Data.Core
         BROWSER_RESPONSE_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "7")]
         MAXHTTPRETRIES,
+        [SFSessionPropertyAttr(required = false)]
+        FILE_TRANSFER_MAX_BYTES_IN_MEMORY
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -240,6 +242,7 @@ namespace Snowflake.Data.Core
             }
 
             checkSessionProperties(properties);
+            ValidateFileTransferMaxBytesInMemoryProperty(properties);
 
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
@@ -285,6 +288,34 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private static void ValidateFileTransferMaxBytesInMemoryProperty(SFSessionProperties properties)
+        {
+            if (!properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY, out var maxBytesInMemoryString))
+            {
+                return;
+            }
+
+            var propertyName = SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY.ToString();
+            int maxBytesInMemory;
+            try
+            {
+                maxBytesInMemory = int.Parse(maxBytesInMemoryString);
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Value for parameter {propertyName} could not be parsed");
+                throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+            }
+            
+            if (maxBytesInMemory <= 0)
+            {
+                logger.Error($"Value for parameter {propertyName} should be greater than 0");
+                throw new SnowflakeDbException(
+                    new Exception($"Value for parameter {propertyName} should be greater than 0"),
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+            }
+        }
+        
         private static bool IsRequired(SFSessionProperty sessionProperty, SFSessionProperties properties)
         {
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))

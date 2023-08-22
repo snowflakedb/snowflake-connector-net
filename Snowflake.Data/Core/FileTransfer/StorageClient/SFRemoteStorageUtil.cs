@@ -362,7 +362,7 @@ namespace Snowflake.Data.Core.FileTransfer
                           fullDstPath,
                           fileMetadata.encryptionMaterial,
                           encryptionMetadata,
-                          fileMetadata.tmpDir);
+                          FileTransferConfiguration.FromFileMetadata(fileMetadata));
 
                         File.Delete(fullDstPath);
 
@@ -449,7 +449,7 @@ namespace Snowflake.Data.Core.FileTransfer
                           fullDstPath,
                           fileMetadata.encryptionMaterial,
                           fileHeader.encryptionMetadata,
-                          fileMetadata.tmpDir);
+                          FileTransferConfiguration.FromFileMetadata(fileMetadata));
 
                         File.Delete(fullDstPath);
 
@@ -526,7 +526,7 @@ namespace Snowflake.Data.Core.FileTransfer
                         fileMetadata.memoryStream,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,
-                        fileMetadata.tmpDir);
+                        FileTransferConfiguration.FromFileMetadata(fileMetadata));
                 }
                 else
                 {
@@ -534,7 +534,7 @@ namespace Snowflake.Data.Core.FileTransfer
                         fileMetadata.realSrcFilePath,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,
-                        fileMetadata.tmpDir);
+                        FileTransferConfiguration.FromFileMetadata(fileMetadata));
                 }
             }
             else
