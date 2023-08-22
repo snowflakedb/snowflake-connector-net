@@ -189,7 +189,7 @@ namespace Snowflake.Data.Core
 
                 if (response.data.queryResultFormat == ResultFormat.Arrow)
                 {
-                    return new SFResultSetArrow(response.data, this, cancellationToken);
+                    return new ArrowResultSet(response.data, this, cancellationToken);
                 }
 
                 return new SFResultSet(response.data, this, cancellationToken);

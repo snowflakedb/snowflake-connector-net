@@ -2,13 +2,14 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Core
 {
-    internal class SFArrowResultChunk : IResultChunk
+    internal class ArrowResultChunk : IResultChunk
     {
         public RecordBatch RecordBatch { get; set; }
 
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Core
         private int _colCount;
         private int _chunkIndex;
 
-        public SFArrowResultChunk(RecordBatch recordBatch)
+        public ArrowResultChunk(RecordBatch recordBatch)
         {
             RecordBatch = recordBatch;
             
@@ -32,18 +33,14 @@ namespace Snowflake.Data.Core
             string s;
             switch (column.Data.DataType.TypeId)
             {
-                case ArrowTypeId.Int16: 
-                    s = ((Int16Array)column).GetValue(rowIndex).ToString();
-                    break;
                 case ArrowTypeId.Int32: 
                     s = ((Int32Array)column).GetValue(rowIndex).ToString();
                     break;
                 
-                // TODO: other types
+                // TODO in SNOW-893834 -  other types
                 
                 default:
-                    s = null;
-                    break;
+                    throw new NotImplementedException();
             }
             
             if (s == null)

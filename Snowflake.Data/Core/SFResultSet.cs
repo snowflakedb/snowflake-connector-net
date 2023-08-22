@@ -234,9 +234,7 @@ namespace Snowflake.Data.Core
         private void updateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
-            session.database = responseData.finalDatabaseName;
-            session.schema = responseData.finalSchemaName;
-
+            session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
     }
