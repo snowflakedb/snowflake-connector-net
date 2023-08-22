@@ -106,10 +106,14 @@ jobs:
         run: |
            gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build Driver
+        run: |
+          dotnet restore
+          dotnet build --debug -f ${{ matrix.dotnet }}
       - name: Run Opencover
         run: |
           cd Snowflake.Data.Tests
-          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+          ..\OpenCover.4.7.1221\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} --no-build -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
