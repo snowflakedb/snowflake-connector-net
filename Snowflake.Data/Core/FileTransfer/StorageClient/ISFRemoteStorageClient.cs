@@ -65,9 +65,8 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
-        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
-        
+
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
@@ -76,7 +75,6 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
-        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken);
         
         /// <summary>

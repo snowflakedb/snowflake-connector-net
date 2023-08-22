@@ -42,7 +42,6 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        [Obsolete("This method is deprecated. Use the method EncryptFileReturningStream() instead.")]
         public static byte[] EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
@@ -79,7 +78,6 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        [Obsolete("This method is deprecated. Use the method EncryptStreamReturningStream() instead.")]
         public static byte[] EncryptStream(
             MemoryStream memoryStream,
             PutGetEncryptionMaterial encryptionMaterial,

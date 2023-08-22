@@ -174,7 +174,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The Azure file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
         {
             UploadFile(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata);
@@ -216,7 +215,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The Azure file metadata.</param>
         /// <param name="fileBytes">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        [Obsolete("This method is deprecated. Use the method with file bytes stream instead.")]
         public Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             return UploadFileAsync(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata, cancellationToken);
