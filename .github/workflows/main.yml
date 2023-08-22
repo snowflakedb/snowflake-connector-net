@@ -108,6 +108,7 @@ jobs:
             ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: |
+          cd Snowflake.Data.Tests
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }}
       - name: Run Opencover
