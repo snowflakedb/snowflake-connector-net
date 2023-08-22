@@ -65,7 +65,7 @@ namespace Snowflake.Data.Core
 
         internal override async Task<bool> NextAsync()
         {
-            throwIfClosed();
+            ThrowIfClosed();
 
             _currentChunkRowIdx++;
             if (_currentChunkRowIdx < _currentChunkRowCount)
@@ -84,7 +84,7 @@ namespace Snowflake.Data.Core
 
         internal override bool Next()
         {
-            throwIfClosed();
+            ThrowIfClosed();
 
             _currentChunkRowIdx++;
             if (_currentChunkRowIdx < _currentChunkRowCount)
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Core
         /// <returns>True if it works, false otherwise.</returns>
         internal override bool Rewind()
         {
-            throwIfClosed();
+            ThrowIfClosed();
 
             if (_currentChunkRowIdx >= 0)
             {
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Core
 
         internal override UTF8Buffer getObjectInternal(int columnIndex)
         {
-            throwIfClosed();
+            ThrowIfClosed();
 
             if (columnIndex < 0 || columnIndex >= columnCount)
             {
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core
             session.UpdateSessionParameterMap(responseData.parameters);
         }
 
-        private void throwIfClosed()
+        private void ThrowIfClosed()
         {
             if (isClosed)
             {
