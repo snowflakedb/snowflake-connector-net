@@ -98,7 +98,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Before Test
-        run: nuget install OpenCover -Version 4.6.519
+        run: nuget install OpenCover -Version 4.7.1221
       - name: Decrypt Parameters
         shell: bash
         env:
