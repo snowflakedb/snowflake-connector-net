@@ -219,6 +219,7 @@ jobs:
           dotnet build
       - name: Run Tests
         run: |
+          cd Snowflake.Data.Tests
           dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
