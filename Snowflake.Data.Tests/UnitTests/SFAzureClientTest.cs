@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     path = LocationPath,
                     presignedUrl = null,
                     region = Region,
-                    stageCredentials = StageCredentials,
+                    stageCredentials = _stageCredentials,
                     storageAccount = StorageAccount
                 }
             };
