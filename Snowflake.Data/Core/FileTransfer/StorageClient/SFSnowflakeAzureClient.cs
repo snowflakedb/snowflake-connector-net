@@ -54,6 +54,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
+        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient mockClient) : this(stageInfo)
+        {
+            // Inject the mock BlobServiceClient
+            blobServiceClient = mockClient;
+        }
+
         /// <summary>
         /// Extract the bucket name and path from the stage location.
         /// </summary>
@@ -213,7 +219,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the POST/PUT request
-                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken).ConfigureAwait(false);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -287,8 +293,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                var task = blobClient.DownloadToAsync(fullDstPath);
-                task.Wait();
+                blobClient.DownloadTo(fullDstPath);
             }
             catch (RequestFailedException ex)
             {
@@ -328,13 +333,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
-        private SFFileMetadata HandleFileHeaderErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Status == (int)HttpStatusCode.BadRequest)
+            RequestFailedException err = (RequestFailedException)ex;
+            if (err.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Status == (int)HttpStatusCode.NotFound)
+            else if (err.Status == (int)HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -344,35 +350,37 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             return fileMetadata;
         }
-        
-        private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+
+        private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Status == (int)HttpStatusCode.BadRequest)
+            RequestFailedException err = (RequestFailedException)ex;
+            if (err.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (ex.Status == (int)HttpStatusCode.Unauthorized)
+            else if (err.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
-                ex.Status == (int)HttpStatusCode.InternalServerError ||
-                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
+            else if (err.Status == (int)HttpStatusCode.Forbidden ||
+                err.Status == (int)HttpStatusCode.InternalServerError ||
+                err.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
             return fileMetadata;
         }
 
-        private SFFileMetadata HandleDownloadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            if (ex.Status == (int)HttpStatusCode.Unauthorized)
+            RequestFailedException err = (RequestFailedException)ex;
+            if (err.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
-                ex.Status == (int)HttpStatusCode.InternalServerError ||
-                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
+            else if (err.Status == (int)HttpStatusCode.Forbidden ||
+                err.Status == (int)HttpStatusCode.InternalServerError ||
+                err.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
