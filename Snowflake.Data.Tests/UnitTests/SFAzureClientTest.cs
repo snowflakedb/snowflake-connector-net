@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         const string Region = "canadacentral";
 
-        Dictionary<string, string> StageCredentials = new Dictionary<string, string>()
+        Dictionary<string, string> _stageCredentials = new Dictionary<string, string>()
         {
             {"AZURE_SAS_TOKEN", "MOCK_AZURE_SAS_TOKEN"}
         };
