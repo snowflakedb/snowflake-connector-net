@@ -64,6 +64,11 @@ namespace Snowflake.Data.Tests.Mock
             {
                 if (method == HttpMethod.Head)
                 {
+                    Console.WriteLine("response: " + response);
+                    Console.WriteLine("response.Content: " + response.Content);
+                    Console.WriteLine("response.Content.Headers: " + response.Content.Headers);
+                    Console.WriteLine("response.Content.Headers.ContentLength: " + response.Content.Headers.ContentLength);
+                    Console.WriteLine("CONTENT_LENGTH: " + CONTENT_LENGTH);
                     response.Content.Headers.ContentLength = CONTENT_LENGTH;
                     response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFC_DIGEST);
                 }
