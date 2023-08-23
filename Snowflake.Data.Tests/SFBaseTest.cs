@@ -54,12 +54,15 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
 
         private Stopwatch _stopwatch;
+
+        private List<string> _tablesToRemove;
         
         [SetUp]
         public void BeforeTest()
         {
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
+            _tablesToRemove = new List<string>();
         }
 
         [TearDown]
@@ -69,6 +72,41 @@ namespace Snowflake.Data.Tests
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
 
             TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            RemoveTables();
+        }
+
+        private void RemoveTables()
+        {
+            if (_tablesToRemove.Count == 0)
+                return;
+            
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                var cmd = conn.CreateCommand();
+
+                foreach (var table in _tablesToRemove)
+                {
+                    cmd.CommandText = $"DROP TABLE IF EXISTS {table}";
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns)
+        {
+            var columnsStr = string.Join(',', columns);
+            
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr})";
+                cmd.ExecuteNonQuery();
+                
+                _tablesToRemove.Add(tableName);
+            }
         }
 
         public SFBaseTestAsync()
