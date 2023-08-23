@@ -53,7 +53,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The HTTP client.
         /// </summary>
-        private HttpClient HttpClient;
+        private static HttpClient s_httpClient = new HttpClient();
 
         /// <summary>
         /// GCS client with access token.
@@ -76,7 +76,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
 
-            HttpClient = new HttpClient();
             HttpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
         }
 
