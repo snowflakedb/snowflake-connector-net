@@ -70,8 +70,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Setup mock GCS HTTP client
             MockGCSHttpClient mockClient = new MockGCSHttpClient();
-            _client = new SFGCSClient(_fileMetadata.stageInfo, mockClient);
-
+            _client = new SFGCSClient(_fileMetadata.stageInfo);
+            _client.SetCustomHttpClient(mockClient);
             _cancellationToken = new CancellationToken();
         }
 

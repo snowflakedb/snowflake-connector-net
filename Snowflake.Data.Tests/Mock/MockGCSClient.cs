@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockGCSHttpClient : DelegatingHandler
+    class MockGCSHttpClient : HttpClientHandler
     {
         // Mock GCS data for FileHeader
         public const string GcsIV = "MOCK_GCS";
