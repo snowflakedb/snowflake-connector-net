@@ -76,12 +76,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
 
-            HttpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
+            s_httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
         }
 
         internal SFGCSClient(PutGetStageInfo stageInfo, DelegatingHandler mockHttpClient) : this(stageInfo)
         {
-            HttpClient = new HttpClient(mockHttpClient);
+            s_httpClient = new HttpClient(mockHttpClient);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
             {
-                var task = HttpClient.SendAsync(requestMessage);
+                var task = s_httpClient.SendAsync(requestMessage);
                 task.Wait();
 
                 HttpResponseMessage response = task.Result;
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
             {
-                HttpResponseMessage response = await HttpClient.SendAsync(requestMessage).ConfigureAwait(false);
+                HttpResponseMessage response = await s_httpClient.SendAsync(requestMessage).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 SetUpRequestMessageForUpload(requestMessage, fileMetadata, encryptionMetadata, encryptionData, fileBytes);
 
-                var task = HttpClient.SendAsync(requestMessage);
+                var task = s_httpClient.SendAsync(requestMessage);
                 task.Wait();
 
                 HttpResponseMessage response = task.Result;
@@ -277,7 +277,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 SetUpRequestMessageForUpload(requestMessage, fileMetadata, encryptionMetadata, encryptionData, fileBytes);
 
-                HttpResponseMessage response = await HttpClient.SendAsync(requestMessage).ConfigureAwait(false);
+                HttpResponseMessage response = await s_httpClient.SendAsync(requestMessage).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                var task = HttpClient.SendAsync(requestMessage);
+                var task = s_httpClient.SendAsync(requestMessage);
                 task.Wait();
                 HttpResponseMessage response = task.Result;
 
@@ -397,7 +397,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                HttpResponseMessage response = await HttpClient.SendAsync(requestMessage).ConfigureAwait(false);
+                HttpResponseMessage response = await s_httpClient.SendAsync(requestMessage).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
