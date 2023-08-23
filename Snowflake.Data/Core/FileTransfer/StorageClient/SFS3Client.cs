@@ -38,16 +38,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// The metadata header keys.
         /// </summary>
         private const string AMZ_META_PREFIX = "x-amz-meta-";
-        private const string AMZ_IV = "x-amz-iv";
-        private const string AMZ_KEY = "x-amz-key";
-        private const string AMZ_MATDESC = "x-amz-matdesc";
-        private const string SFC_DIGEST = "sfc-digest";
+        public const string AMZ_IV = "x-amz-iv";
+        public const string AMZ_KEY = "x-amz-key";
+        public const string AMZ_MATDESC = "x-amz-matdesc";
+        public const string SFC_DIGEST = "sfc-digest";
 
         /// <summary>
         /// The status of the request.
         /// </summary>
-        private const string EXPIRED_TOKEN = "ExpiredToken";
-        private const string NO_SUCH_KEY = "NoSuchKey";
+        public const string EXPIRED_TOKEN = "ExpiredToken";
+        public const string NO_SUCH_KEY = "NoSuchKey";
 
         /// <summary>
         /// The application header type.
@@ -133,6 +133,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
+        internal SFS3Client(
+            PutGetStageInfo stageInfo,
+            int maxRetry,
+            int parallel,
+            ProxyCredentials proxyCredentials,
+            AmazonS3Client mockClient) : this(stageInfo, maxRetry, parallel, proxyCredentials)
+        {
+            // Inject the mock S3Client
+            S3Client = mockClient;
+        }
+
         /// <summary>
         /// Extract the bucket name and path from the stage location.
         /// </summary>
@@ -196,7 +207,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                fileMetadata = HandleFileHeaderErr(ex.InnerException, fileMetadata); // S3 places the AmazonS3Exception on the InnerException on non-async calls
                 return null;
             }
         }
@@ -223,7 +234,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                fileMetadata = HandleFileHeaderErr(ex, fileMetadata); // S3 throws the AmazonS3Exception on async calls
                 return null;
             }
 
@@ -283,7 +294,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="clientConfig">The client config to update.</param>
         /// <param name="region">The region if any.</param>
         /// <param name="endpoint">The endpoint if any.</param>
-        private void setCommonClientConfig(
+        private static void setCommonClientConfig(
         AmazonS3Config clientConfig,
         string region,
         string endpoint,
@@ -352,16 +363,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata = HandleUploadFileErr(ex.InnerException, fileMetadata);
                 return;
             }
 
@@ -389,16 +391,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
                 return;
             }
 
@@ -470,16 +463,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err?.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err ?? ex;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata = HandleDownloadFileErr(ex.InnerException, fileMetadata);
                 return;
             }
 
@@ -512,16 +496,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-                if (err?.ErrorCode == EXPIRED_TOKEN)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else
-                {
-                    fileMetadata.lastError = err ?? ex;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
+                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
 
@@ -549,9 +524,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file metadata.</returns>
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-
-            AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-            if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == SFStorageClientUtil.BAD_REQUEST_ERR)
+            AmazonS3Exception err = (AmazonS3Exception)ex;
+            if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == HttpStatusCode.BadRequest.ToString())
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
@@ -562,6 +536,48 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             else
             {
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Handle file upload error.
+        /// </summary>
+        /// <param name="ex">Exception from file header.</param>
+        /// <param name="fileMetadata">The file metadata.</param>
+        /// <returns>The file metadata.</returns>
+        public SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        {
+            AmazonS3Exception err = (AmazonS3Exception)ex;
+            if (err.ErrorCode == EXPIRED_TOKEN)
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+            }
+            else
+            {
+                fileMetadata.lastError = err;
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+            }
+            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Handle file download error.
+        /// </summary>
+        /// <param name="ex">Exception from file header.</param>
+        /// <param name="fileMetadata">The file metadata.</param>
+        /// <returns>The file metadata.</returns>
+        public SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        {
+            AmazonS3Exception err = (AmazonS3Exception)ex;
+            if (err.ErrorCode == EXPIRED_TOKEN)
+            {
+                fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+            }
+            else
+            {
+                fileMetadata.lastError = err;
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
             return fileMetadata;
         }
