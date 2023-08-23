@@ -288,17 +288,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the GCS location.
         /// </summary>
         /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
-        {
-            UploadFile(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata);
-        }
-
-        /// <summary>
-        /// Upload the file to the GCS location.
-        /// </summary>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
@@ -324,17 +313,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 fileMetadata = HandleUploadFileErr(ex, fileMetadata);
                 return;
             }
-        }
-        
-        /// <summary>
-        /// Upload the file to the GCS location.
-        /// </summary>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
-        {
-            return UploadFileAsync(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata, cancellationToken);
         }
 
         /// <summary>

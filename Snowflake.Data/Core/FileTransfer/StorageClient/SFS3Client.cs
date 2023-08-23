@@ -333,17 +333,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the S3 location.
         /// </summary>
         /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
-        {
-            UploadFile(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata);
-        }
-
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
@@ -377,17 +366,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-        }
-        
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
-        {
-            return UploadFileAsync(fileMetadata, new MemoryStream(fileBytes), encryptionMetadata, cancellationToken);
         }
 
         /// <summary>

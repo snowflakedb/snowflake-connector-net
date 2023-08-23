@@ -522,7 +522,7 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 if (fileMetadata.memoryStream != null)
                 {
-                    return EncryptionProvider.EncryptStreamReturningStream(
+                    return EncryptionProvider.EncryptStream(
                         fileMetadata.memoryStream,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,
@@ -530,7 +530,7 @@ namespace Snowflake.Data.Core.FileTransfer
                 }
                 else
                 {
-                    return EncryptionProvider.EncryptFileReturningStream(
+                    return EncryptionProvider.EncryptFile(
                         fileMetadata.realSrcFilePath,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,

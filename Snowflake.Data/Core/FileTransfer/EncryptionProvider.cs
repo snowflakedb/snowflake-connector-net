@@ -42,24 +42,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static byte[] EncryptFile(
-            string inFile,
-            PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata,
-            FileTransferConfiguration transferConfiguration = null)
-        {
-            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
-            return EncryptFileReturningStream(inFile, encryptionMaterial, encryptionMetadata, transferConfigurationWithDefaultValue).ToArray();
-        }
-
-        /// <summary>
-        /// Encrypt data and write to the outStream.
-        /// </summary>
-        /// <param name="inFile">The data to write onto the stream.</param>
-        /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
-        /// <param name="encryptionMetadata">Store the encryption metadata into</param>
-        /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static FileBackedOutputStream EncryptFileReturningStream(
+        public static FileBackedOutputStream EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
@@ -67,25 +50,8 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             using (var fileStream = File.OpenRead(inFile))
             {
-                return EncryptStreamReturningStream(fileStream, encryptionMaterial, encryptionMetadata, transferConfiguration);
+                return EncryptStream(fileStream, encryptionMaterial, encryptionMetadata, transferConfiguration);
             }
-        }        
-
-        /// <summary>
-        /// Encrypt data and write to the outStream.
-        /// </summary>
-        /// <param name="memoryStream">The data to write onto the stream.</param>
-        /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
-        /// <param name="encryptionMetadata">Store the encryption metadata into</param>
-        /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static byte[] EncryptStream(
-            MemoryStream memoryStream,
-            PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata,
-            FileTransferConfiguration transferConfiguration = null)
-        {
-            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
-            return EncryptStreamReturningStream(memoryStream, encryptionMaterial, encryptionMetadata, transferConfigurationWithDefaultValue).ToArray();
         }
 
         /// <summary>
@@ -95,7 +61,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static FileBackedOutputStream EncryptStreamReturningStream(
+        public static FileBackedOutputStream EncryptStream(
             Stream inputStream,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,

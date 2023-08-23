@@ -65,17 +65,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
-        void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
-
-        /// <summary>
-        /// Attempt upload of a file and retry if fails.
-        /// </summary>
         void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata);
-        
-        /// <summary>
-        /// Attempt upload of a file and retry if fails.
-        /// </summary>
-        Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken);
         
         /// <summary>
         /// Attempt upload of a file and retry if fails.

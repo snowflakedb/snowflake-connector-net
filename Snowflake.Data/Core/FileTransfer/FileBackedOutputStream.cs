@@ -60,26 +60,6 @@ namespace Snowflake.Data.Core.FileTransfer
             get => _outputStream.Position;
             set => _outputStream.Position = value;
         }
-        
-        [Obsolete("It is not a good idea to load large stream into memory at once. Created only for backward compatibility issues.")]
-        public byte[] ToArray()
-        {
-            if (IsUsingFileOutputStream())
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    var originalPosition = _fileOutputStream.Position;
-                    _fileOutputStream.Position = 0;
-                    _fileOutputStream.CopyTo(memoryStream);
-                    _fileOutputStream.Position = originalPosition;
-                    return memoryStream.ToArray();
-                }
-            }
-            else
-            {
-                return _memoryOutputStream.ToArray();
-            }
-        }
 
         protected override void Dispose(bool disposing)
         {
