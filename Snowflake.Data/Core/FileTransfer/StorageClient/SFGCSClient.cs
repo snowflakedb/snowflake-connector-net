@@ -348,7 +348,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
                 fileMetadata.presignedUrl;
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
@@ -393,7 +393,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
                 fileMetadata.presignedUrl;
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
