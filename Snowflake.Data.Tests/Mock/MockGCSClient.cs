@@ -14,16 +14,16 @@ namespace Snowflake.Data.Tests.Mock
     class MockGCSHttpClient : DelegatingHandler
     {
         // Mock GCS data for FileHeader
-        public const string GCS_IV = "MOCK_GCS";
-        public const string GCS_KEY = "MOCK_GCS_KEY";
-        public const string GCS_MATDESC = "MOCK_GCS_MATDESC";
-        public const string SFC_DIGEST = "MOCK_SFC_DIGEST";
+        public const string GcsIV = "MOCK_GCS";
+        public const string GcsKey = "MOCK_GCS_KEY";
+        public const string GcsMatdesc = "MOCK_GCS_MATDESC";
+        public const string SFCDigest = "MOCK_SFC_DIGEST";
 
         // Mock data for downloaded file
-        public const string FILE_CONTENT = "GCSClientTest";
+        public const string GcsFileContent = "GCSClientTest";
 
         // Mock content length
-        public const int CONTENT_LENGTH = 9999;
+        public const int ContentLength = 9999;
 
         internal void SetHttpResponseStatusCode(HttpResponseMessage response, string key)
         {
@@ -64,8 +64,8 @@ namespace Snowflake.Data.Tests.Mock
                 if (method == HttpMethod.Head)
                 {
                     response.Content = new StringContent("");
-                    response.Content.Headers.ContentLength = CONTENT_LENGTH;
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFC_DIGEST);
+                    response.Content.Headers.ContentLength = ContentLength;
+                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
                 }
                 else if (method == HttpMethod.Put)
                 {
@@ -73,15 +73,15 @@ namespace Snowflake.Data.Tests.Mock
                 }
                 else if (method == HttpMethod.Get)
                 {
-                    response.Content = new StringContent(FILE_CONTENT);
+                    response.Content = new StringContent(GcsFileContent);
                     response.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
                         "{" +
-                        $"\"ContentEncryptionIV\": \"{GCS_IV}\", " +
-                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{GCS_KEY}\"}}" +
+                        $"\"ContentEncryptionIV\": \"{GcsIV}\", " +
+                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{GcsKey}\"}}" +
                         "}");
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, GCS_MATDESC);
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFC_DIGEST);
-                    response.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, CONTENT_LENGTH.ToString());
+                    response.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, GcsMatdesc);
+                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
+                    response.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, ContentLength.ToString());
                 }
             }
             else
