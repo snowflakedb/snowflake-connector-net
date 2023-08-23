@@ -19,8 +19,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     internal class SFBindTestIT : SFBaseTest
     {
         [Test]
-        [Ignore("SFBindTestIT")]
-        public void SFBindTestITDone()
+        [Ignore("BindTestIT")]
+        public void BindTestITDone()
         {
             // Do nothing;
         }
