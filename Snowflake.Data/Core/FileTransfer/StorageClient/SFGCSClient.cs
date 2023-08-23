@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
                 fileMetadata.presignedUrl;
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
                 fileMetadata.presignedUrl;
 
             using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
