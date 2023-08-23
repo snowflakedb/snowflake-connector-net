@@ -135,13 +135,6 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public int MaxBytesInMemory { get; set; }
 
-        public static FileTransferConfiguration DefaultConfiguration =>
-            new FileTransferConfiguration()
-            {
-                TempDir = DefaultTempDir,
-                MaxBytesInMemory = DefaultMaxBytesInMemory
-            };
-
         public static FileTransferConfiguration FromFileMetadata(SFFileMetadata fileMetadata) =>
             new FileTransferConfiguration()
             {

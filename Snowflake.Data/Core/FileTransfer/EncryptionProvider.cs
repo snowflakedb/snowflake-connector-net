@@ -41,8 +41,9 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static FileBackedOutputStream EncryptFile(
+        public static Stream EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
@@ -60,8 +61,9 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inputStream">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static FileBackedOutputStream EncryptStream(
+        public static Stream EncryptStream(
             Stream inputStream,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
@@ -133,8 +135,9 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inputStream">The input stream to encrypt</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes.</returns>
-        private static FileBackedOutputStream CreateEncryptedBytesStream(
+        private static Stream CreateEncryptedBytesStream(
             Stream inputStream,
             byte[] key,
             byte[] iv,
@@ -166,16 +169,14 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
-        /// <param name="tempDir">Temporary directory which contains file related work</param>
+        /// <param name="transferConfiguration">Contains parameters used during decryption process</param>
         /// <returns>The name of the file containing decrypted file bytes</returns>
         public static string DecryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
-            FileTransferConfiguration transferConfiguration = null)
+            FileTransferConfiguration transferConfiguration)
         {
-            var transferConfigurationWithDefaultValue = transferConfiguration ?? FileTransferConfiguration.DefaultConfiguration;
-
             // Get key and iv from metadata
             string keyBase64 = encryptionMetadata.key;
             string ivBase64 = encryptionMetadata.iv;
@@ -194,11 +195,11 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
 
             // Create key decipher with decoded key and AES ECB
-            using (var decryptedBytesStream = CreateDecryptedBytesReturningStream(
+            using (var decryptedBytesStream = CreateDecryptedBytesStream(
                        inFile,
                        decryptedFileKey,
                        ivBytes,
-                       transferConfigurationWithDefaultValue))
+                       transferConfiguration))
             {
                 using (var decryptedFileStream = File.Create(tempFileName))
                 {
@@ -237,7 +238,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The decrypted bytes stream</returns>
-        private static FileBackedOutputStream CreateDecryptedBytesReturningStream(
+        private static Stream CreateDecryptedBytesStream(
             string inFile,
             byte[] key,
             byte[] iv,
