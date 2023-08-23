@@ -2,7 +2,6 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
 using System.Net;
@@ -64,6 +63,7 @@ namespace Snowflake.Data.Tests.Mock
             {
                 if (method == HttpMethod.Head)
                 {
+                    response.Content = new StringContent("");
                     response.Content.Headers.ContentLength = CONTENT_LENGTH;
                     response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFC_DIGEST);
                 }
