@@ -39,7 +39,8 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.412
+          dotnet-version: '6.0.x'
+          dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -90,7 +91,8 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.412
+          dotnet-version: '6.0.x'
+          dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -131,7 +133,8 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.412
+          dotnet-version: '6.0.x'
+          dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
