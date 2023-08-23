@@ -7,7 +7,7 @@ using System.IO;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
-    public class FileBackedOutputStream : Stream
+    internal class FileBackedOutputStream : Stream
     {
         private readonly int _maxInMemoryBytes;
         private readonly string _tempDirForFiles;
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Core.FileTransfer
         private void SwitchFromMemoryToTempFile()
         {
             _fileName = GenerateTempFilePath();
-            _fileOutputStream = new FileStream(_fileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096,
+            _fileOutputStream = new FileStream(_fileName, FileMode.Create, FileAccess.ReadWrite, FileShare.Delete, 4096,
                 FileOptions.DeleteOnClose);
             _memoryOutputStream.Position = 0;
             _memoryOutputStream.CopyTo(_fileOutputStream);
