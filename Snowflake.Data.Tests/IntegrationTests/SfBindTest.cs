@@ -18,8 +18,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     internal class SfBindTest : SFBaseTest
     {
-        private readonly string _testName = TestContext.CurrentContext.Test.Name;
-        
         [Test]
         [Ignore("SfBindTest")]
         public void SfBindTestDone()
@@ -30,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestArrayBind()
         {
-            CreateOrReplaceTable(_testName, new []
+            CreateOrReplaceTable(TestName, new []
             {
                 "cola INTEGER",
                 "colb STRING"
@@ -41,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {_testName} VALUES (?, ?)";
+                    cmd.CommandText = $"INSERT INTO {TestName} VALUES (?, ?)";
 
                     var p1 = cmd.CreateParameter();
                     p1.ParameterName = "1";
@@ -64,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestBindNullValue()
         {
-            CreateOrReplaceTable(_testName, new[]
+            CreateOrReplaceTable(TestName, new[]
             {
                 "intData NUMBER",
                 "fixedNumericData NUMBER(10,1)",
@@ -144,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            cmd.CommandText = $"INSERT INTO {_testName}({colName}) VALUES(:p0)";
+                            cmd.CommandText = $"INSERT INTO {TestName}({colName}) VALUES(:p0)";
                             param.Value = DBNull.Value;
                             cmd.Parameters.Add(param);
                             var rowsInserted = cmd.ExecuteNonQuery();
@@ -154,7 +152,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             try
                             {
-                                cmd.CommandText = $"INSERT INTO {_testName}(stringData) VALUES(:p0)";
+                                cmd.CommandText = $"INSERT INTO {TestName}(stringData) VALUES(:p0)";
                                 param.Value = DBNull.Value;
                                 cmd.Parameters.Add(param);
                                 cmd.ExecuteNonQuery();
@@ -170,7 +168,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (var cmd = conn.CreateCommand())
                         {
-                            cmd.CommandText = $"SELECT {colName} FROM {_testName}";
+                            cmd.CommandText = $"SELECT {colName} FROM {TestName}";
                             using (var reader = cmd.ExecuteReader())
                             {
                                 reader.Read();
@@ -183,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (var cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = $"DELETE FROM {_testName}";
+                        cmd.CommandText = $"DELETE FROM {TestName}";
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -193,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestBindValue()
         {
-            CreateOrReplaceTable(_testName, new[]
+            CreateOrReplaceTable(TestName, new[]
             {
                 "intData NUMBER",
                 "fixedNumericData NUMBER(10,1)",
@@ -285,7 +283,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            cmd.CommandText = $"INSERT INTO {_testName}({colName}) VALUES(:p0)";
+                            cmd.CommandText = $"INSERT INTO {TestName}({colName}) VALUES(:p0)";
                             cmd.Parameters.Add(param);
                             var rowsInserted = cmd.ExecuteNonQuery();
                             Assert.AreEqual(1, rowsInserted);
@@ -294,7 +292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             try
                             {
-                                cmd.CommandText = $"INSERT INTO {_testName}(stringData) VALUES(:p0)";
+                                cmd.CommandText = $"INSERT INTO {TestName}(stringData) VALUES(:p0)";
                                 param.Value = DBNull.Value;
                                 cmd.Parameters.Add(param);
                                 cmd.ExecuteNonQuery();
@@ -310,7 +308,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (var cmd = conn.CreateCommand())
                         {
-                            cmd.CommandText = $"SELECT {colName} FROM {_testName}";
+                            cmd.CommandText = $"SELECT {colName} FROM {TestName}";
                             using (var reader = cmd.ExecuteReader())
                             {
                                 reader.Read();
@@ -323,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (var cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = $"DELETE FROM {_testName}";
+                        cmd.CommandText = $"DELETE FROM {TestName}";
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -344,7 +342,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var isTypeSupported = true;
                         if (!type.Equals(SFDataType.FIXED))
                         {
-                            CreateOrReplaceTable(_testName, new []
+                            CreateOrReplaceTable(TestName, new []
                             {
                                 $"data {type.ToString()}",
                                 "unsupportedType VARCHAR"
@@ -352,7 +350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                         else
                         {
-                            CreateOrReplaceTable(_testName, new []
+                            CreateOrReplaceTable(TestName, new []
                             {
                                 "data NUMBER",
                                 "unsupportedType VARCHAR"
@@ -406,7 +404,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 // Set to an unsupported DB type to check that SFDataType has precedence
                                 param.DbType = DbType.Object;
-                                cmd.CommandText = $"INSERT INTO {_testName}(data) VALUES(:p0)";
+                                cmd.CommandText = $"INSERT INTO {TestName}(data) VALUES(:p0)";
                                 cmd.Parameters.Add(param);
                                 var rowsInserted = cmd.ExecuteNonQuery();
                                 Assert.AreEqual(1, rowsInserted);
@@ -418,7 +416,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 try
                                 {
-                                    cmd.CommandText = $"INSERT INTO {_testName}(unsupportedType) VALUES(:p0)";
+                                    cmd.CommandText = $"INSERT INTO {TestName}(unsupportedType) VALUES(:p0)";
                                     param.Value = DBNull.Value;
                                     cmd.Parameters.Add(param);
                                     cmd.ExecuteNonQuery();
@@ -434,7 +432,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             using (var cmd = conn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT data FROM {_testName}";
+                                cmd.CommandText = $"SELECT data FROM {TestName}";
                                 using (var reader = cmd.ExecuteReader())
                                 {
                                     reader.Read();
@@ -504,7 +502,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBind()
         {
-            CreateOrReplaceTable(_testName, new []
+            CreateOrReplaceTable(TestName, new []
             {
                 "cola INTEGER",
                 "colb STRING",
@@ -518,7 +516,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {_testName} values (?, ?, ?, ?, ?, ?)";
+                    cmd.CommandText = $"INSERT INTO {TestName} values (?, ?, ?, ?, ?, ?)";
 
                     const int Total = 250000;
 
@@ -617,7 +615,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(Total * 3, count);
 
-                    cmd.CommandText = $"SELECT * FROM {_testName}";
+                    cmd.CommandText = $"SELECT * FROM {TestName}";
                     var reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                 }
@@ -630,7 +628,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
                 TypeNameHandling = TypeNameHandling.Auto
             };
-            CreateOrReplaceTable(_testName, new []
+            CreateOrReplaceTable(TestName, new []
             {
                 "cola REAL",
                 "colb TEXT",
@@ -642,7 +640,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {_testName} VALUES (?, ?, ?)";
+                    cmd.CommandText = $"INSERT INTO {TestName} VALUES (?, ?, ?)";
 
                     const int Total = 250;
                     
@@ -684,7 +682,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rowsCount = cmd.ExecuteNonQuery();
                     Assert.AreEqual(Total * 3, rowsCount);
 
-                    cmd.CommandText = $"SELECT * FROM {_testName}";
+                    cmd.CommandText = $"SELECT * FROM {TestName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                 }
@@ -694,7 +692,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBind1()
         {
-            CreateOrReplaceTable(_testName, new []
+            CreateOrReplaceTable(TestName, new []
             {
                 "cola INTEGER"
             });
@@ -704,7 +702,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {_testName} VALUES (?)";
+                    cmd.CommandText = $"INSERT INTO {TestName} VALUES (?)";
 
                     const int Total = 70000;
 
@@ -722,7 +720,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(70000, count);
 
-                    cmd.CommandText = $"SELECT * FROM {_testName}";
+                    cmd.CommandText = $"SELECT * FROM {TestName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                 }

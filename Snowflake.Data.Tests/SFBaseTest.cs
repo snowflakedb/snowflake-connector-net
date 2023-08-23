@@ -52,6 +52,7 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
+        protected readonly string TestName = TestContext.CurrentContext.Test.Name;
 
         private Stopwatch _stopwatch;
 
