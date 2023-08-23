@@ -18,21 +18,21 @@ namespace Snowflake.Data.Tests.Mock
     class MockBlobClient : BlobClient
     {
         // Mock Azure data for FileHeader
-        public const string AZURE_IV = "MOCK_AZURE_IV";
-        public const string AZURE_KEY = "MOCK_AZURE_KEY";
-        public const string AZURE_MATDESC = "MOCK_AZURE_MATDESC";
-        public const string SFC_DIGEST = "MOCK_SFC_DIGEST";
+        public const string AzureIV = "MOCK_AZURE_IV";
+        public const string AzureKey = "MOCK_AZURE_KEY";
+        public const string AzureMatdesc = "MOCK_AZURE_MATDESC";
+        public const string SFCDigest = "MOCK_SFC_DIGEST";
 
         // Mock error message for Azure errors
-        public const string AZURE_ERROR_MESSAGE = "Azure Error Message";
+        public const string AzureErrorMessage = "Azure Error Message";
 
         // Mock content length
-        public const int CONTENT_LENGTH = 9999;
+        public const int ContentLength = 9999;
 
         // Stores the HttpStatusCode string
-        string key;
+        string _key;
 
-        public MockBlobClient(string blobName) { key = MockBlobContainerClient.blobContainerName; }
+        public MockBlobClient(string blobName) { _key = MockBlobContainerClient.blobContainerName; }
 
         public Exception CreateMockAzureError(string key)
         {
@@ -43,25 +43,25 @@ namespace Snowflake.Data.Tests.Mock
             switch (statusCode)
             {
                 case HttpStatusCode.BadRequest:
-                    azureError = new RequestFailedException((int)HttpStatusCode.BadRequest, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.BadRequest, AzureErrorMessage);
                     break;
                 case HttpStatusCode.NotFound:
-                    azureError = new RequestFailedException((int)HttpStatusCode.NotFound, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.NotFound, AzureErrorMessage);
                     break;
                 case HttpStatusCode.Unauthorized:
-                    azureError = new RequestFailedException((int)HttpStatusCode.Unauthorized, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.Unauthorized, AzureErrorMessage);
                     break;
                 case HttpStatusCode.Forbidden:
-                    azureError = new RequestFailedException((int)HttpStatusCode.Forbidden, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.Forbidden, AzureErrorMessage);
                     break;
                 case HttpStatusCode.InternalServerError:
-                    azureError = new RequestFailedException((int)HttpStatusCode.InternalServerError, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.InternalServerError, AzureErrorMessage);
                     break;
                 case HttpStatusCode.ServiceUnavailable:
-                    azureError = new RequestFailedException((int)HttpStatusCode.ServiceUnavailable, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException((int)HttpStatusCode.ServiceUnavailable, AzureErrorMessage);
                     break;
                 default:
-                    azureError = new RequestFailedException(0, AZURE_ERROR_MESSAGE);
+                    azureError = new RequestFailedException(0, AzureErrorMessage);
                     break;
             }
 
@@ -70,25 +70,25 @@ namespace Snowflake.Data.Tests.Mock
 
         public Response<BlobProperties> createMockResponseForBlobProperties()
         {
-            if (key == HttpStatusCode.OK.ToString())
+            if (_key == HttpStatusCode.OK.ToString())
             {
                 Dictionary<string, string> metadata = new Dictionary<string, string>
                 {
                     { "encryptiondata",
                         "{" +
-                        $"\"ContentEncryptionIV\": \"{AZURE_IV}\", " +
-                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{AZURE_KEY}\"}}" +
+                        $"\"ContentEncryptionIV\": \"{AzureIV}\", " +
+                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{AzureKey}\"}}" +
                         "}"
                     },
                     {
-                        "matdesc", AZURE_MATDESC
+                        "matdesc", AzureMatdesc
                     },
                     {
-                        "sfcdigest", SFC_DIGEST
+                        "sfcdigest", SFCDigest
                     }
                 };
 
-                BlobProperties blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: CONTENT_LENGTH);
+                BlobProperties blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: ContentLength);
 
                 Response<BlobProperties> mockResponse = Response.FromValue(
                             blobProperties,
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAzureError(key);
+                throw CreateMockAzureError(_key);
             }
         }
 
@@ -118,13 +118,13 @@ namespace Snowflake.Data.Tests.Mock
 
         public Response<BlobContentInfo> createMockResponseForBlobContentInfo()
         {
-            if (key == HttpStatusCode.OK.ToString())
+            if (_key == HttpStatusCode.OK.ToString())
             {
                 return null;
             }
             else
             {
-                throw CreateMockAzureError(key);
+                throw CreateMockAzureError(_key);
             }
         }
 
@@ -149,25 +149,25 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Response DownloadTo(string path)
         {
-            if (key == HttpStatusCode.OK.ToString())
+            if (_key == HttpStatusCode.OK.ToString())
             {
                 return null;
             }
             else
             {
-                throw CreateMockAzureError(key);
+                throw CreateMockAzureError(_key);
             }
         }
 
         public override async Task<Response> DownloadToAsync(string path, CancellationToken cancellationToken)
         {
-            if (key == HttpStatusCode.OK.ToString())
+            if (_key == HttpStatusCode.OK.ToString())
             {
                 return await Task.Run(() => Task.FromResult<Response>(null)).ConfigureAwait(false);
             }
             else
             {
-                throw CreateMockAzureError(key);
+                throw CreateMockAzureError(_key);
             }
         }
     }

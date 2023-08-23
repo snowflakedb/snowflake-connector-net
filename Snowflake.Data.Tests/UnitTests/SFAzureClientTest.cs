@@ -18,64 +18,64 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFAzureClientTest : SFBaseTest
     {
         // Mock data for file metadata
-        const string ENDPOINT = "blob.core.windows.net";
+        const string EndPoint = "blob.core.windows.net";
 
-        const string LOCATION_STAGE = "mock-customer-stage";
-        const string LOCATION_ID = "mock-id";
-        const string LOCATION_TABLES = "tables";
-        const string LOCATION_KEY = "mock-key";
-        const string PATH = LOCATION_TABLES + "/" + LOCATION_KEY + "/";
-        const string LOCATION = LOCATION_STAGE + "/" + LOCATION_ID + "/" + PATH;
+        const string LocationStage = "mock-customer-stage";
+        const string LocationId = "mock-id";
+        const string LocationTables = "tables";
+        const string LocationKey = "mock-key";
+        const string LocationPath = LocationTables + "/" + LocationKey + "/";
+        const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
 
-        const string REGION = "canadacentral";
+        const string Region = "canadacentral";
 
-        Dictionary<string, string> STAGE_CREDENTIALS = new Dictionary<string, string>()
+        Dictionary<string, string> StageCredentials = new Dictionary<string, string>()
         {
             {"AZURE_SAS_TOKEN", "MOCK_AZURE_SAS_TOKEN"}
         };
 
-        const string STORAGE_ACCOUNT = "mockStorageAccount";
+        const string StorageAccount = "mockStorageAccount";
 
         // Settings for mock client
-        const int PARALLEL = 0;
+        const int Parallel = 0;
 
         // File name for download tests
-        const string DOWNLOAD_FILE_NAME = "mockFileName.txt";
+        const string DownloadFileName = "mockFileName.txt";
 
         // Token for async tests
-        CancellationToken cancellationToken;
+        CancellationToken _cancellationToken;
 
         // Mock upload file size
-        const int UPLOAD_FILE_SIZE = 9999;
+        const int UploadFileSize = 9999;
 
         // The mock client and metadata
-        SFSnowflakeAzureClient client;
-        SFFileMetadata fileMetadata;
+        SFSnowflakeAzureClient _client;
+        SFFileMetadata _fileMetadata;
 
         [SetUp]
         public void BeforeTest()
         {
-            fileMetadata = new SFFileMetadata()
+            _fileMetadata = new SFFileMetadata()
             {
                 stageInfo = new PutGetStageInfo()
                 {
-                    endPoint = ENDPOINT,
+                    endPoint = EndPoint,
                     isClientSideEncrypted = true,
-                    location = LOCATION,
+                    location = Location,
                     locationType = SFRemoteStorageUtil.AZURE_FS,
-                    path = PATH,
+                    path = LocationPath,
                     presignedUrl = null,
-                    region = REGION,
-                    stageCredentials = STAGE_CREDENTIALS,
-                    storageAccount = STORAGE_ACCOUNT
+                    region = Region,
+                    stageCredentials = StageCredentials,
+                    storageAccount = StorageAccount
                 }
             };
 
             // Setup mock client
             MockAzureClient mockClient = new MockAzureClient();
-            client = new SFSnowflakeAzureClient(fileMetadata.stageInfo, mockClient);
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockClient);
 
-            cancellationToken = new CancellationToken();
+            _cancellationToken = new CancellationToken();
         }
 
         [Test]
@@ -88,10 +88,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractBucketNameAndPath()
         {
-            RemoteLocation location = client.ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
             // Split LOCATION based on the first '/' character
-            string[] bucketAndKey = LOCATION.Split(new[] { '/' }, 2);
+            string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
 
             Assert.AreEqual(bucketAndKey[0], location.bucket);
             Assert.AreEqual(bucketAndKey[1], location.key);
@@ -105,9 +105,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
-            FileHeader fileHeader = client.GetFileHeader(fileMetadata);
+            FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
 
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
@@ -120,9 +120,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestGetFileHeaderAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
-            FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
@@ -131,18 +131,18 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockBlobClient.CONTENT_LENGTH, fileHeader.contentLength);
-                Assert.AreEqual(MockBlobClient.SFC_DIGEST, fileHeader.digest);
-                Assert.AreEqual(MockBlobClient.AZURE_IV, fileHeader.encryptionMetadata.iv);
-                Assert.AreEqual(MockBlobClient.AZURE_KEY, fileHeader.encryptionMetadata.key);
-                Assert.AreEqual(MockBlobClient.AZURE_MATDESC, fileHeader.encryptionMetadata.matDesc);
+                Assert.AreEqual(MockBlobClient.ContentLength, fileHeader.contentLength);
+                Assert.AreEqual(MockBlobClient.SFCDigest, fileHeader.digest);
+                Assert.AreEqual(MockBlobClient.AzureIV, fileHeader.encryptionMetadata.iv);
+                Assert.AreEqual(MockBlobClient.AzureKey, fileHeader.encryptionMetadata.key);
+                Assert.AreEqual(MockBlobClient.AzureMatdesc, fileHeader.encryptionMetadata.matDesc);
             }
             else
             {
                 Assert.IsNull(fileHeader);
             }
 
-            Assert.AreEqual(expectedResultStatus.ToString(), fileMetadata.resultStatus);
+            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -155,14 +155,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            fileMetadata.uploadSize = UPLOAD_FILE_SIZE;
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.uploadSize = UploadFileSize;
 
-            client.UploadFile(fileMetadata, new byte[0], new SFEncryptionMetadata()
+            _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
-                iv = MockBlobClient.AZURE_IV,
-                key = MockBlobClient.AZURE_KEY,
-                matDesc = MockBlobClient.AZURE_MATDESC
+                iv = MockBlobClient.AzureIV,
+                key = MockBlobClient.AzureKey,
+                matDesc = MockBlobClient.AzureMatdesc
             });
 
             AssertForUploadFileTests(expectedResultStatus);
@@ -179,16 +179,16 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            fileMetadata.uploadSize = UPLOAD_FILE_SIZE;
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.uploadSize = UploadFileSize;
 
-            await client.UploadFileAsync(fileMetadata, new byte[0], new SFEncryptionMetadata()
+            await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
-                iv = MockBlobClient.AZURE_IV,
-                key = MockBlobClient.AZURE_KEY,
-                matDesc = MockBlobClient.AZURE_MATDESC
+                iv = MockBlobClient.AzureIV,
+                key = MockBlobClient.AzureKey,
+                matDesc = MockBlobClient.AzureMatdesc
             },
-            cancellationToken).ConfigureAwait(false);
+            _cancellationToken).ConfigureAwait(false);
 
             AssertForUploadFileTests(expectedResultStatus);
         }
@@ -197,10 +197,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(fileMetadata.uploadSize, fileMetadata.destFileSize);
+                Assert.AreEqual(_fileMetadata.uploadSize, _fileMetadata.destFileSize);
             }
 
-            Assert.AreEqual(expectedResultStatus.ToString(), fileMetadata.resultStatus);
+            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -212,9 +212,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
-            client.DownloadFile(fileMetadata, DOWNLOAD_FILE_NAME, PARALLEL);
+            _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
             AssertForDownloadFileTests(expectedResultStatus);
         }
@@ -229,16 +229,16 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Setup request
-            fileMetadata.stageInfo.location = httpStatusCode.ToString();
+            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
-            await client.DownloadFileAsync(fileMetadata, DOWNLOAD_FILE_NAME, PARALLEL, cancellationToken).ConfigureAwait(false);
+            await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
         {
-            Assert.AreEqual(expectedResultStatus.ToString(), fileMetadata.resultStatus);
+            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
     }
 }
