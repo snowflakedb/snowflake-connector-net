@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests
 
         protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns)
         {
-            var columnsStr = string.Join(',', columns);
+            var columnsStr = string.Join(", ", columns);
             
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
