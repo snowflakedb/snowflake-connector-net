@@ -19,7 +19,6 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFGCSClientTest : SFBaseTest
     {
         // Mock data for file metadata
-
         const string LocationStage = "mock-customer-stage";
         const string LocationId = "mock-id";
         const string LocationTables = "tables";
