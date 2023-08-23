@@ -16,11 +16,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Collections.Generic;
 
     [TestFixture]
-    internal class SfBindTest : SFBaseTest
+    internal class SFBindTestIT : SFBaseTest
     {
         [Test]
-        [Ignore("SfBindTest")]
-        public void SfBindTestDone()
+        [Ignore("SFBindTestIT")]
+        public void SFBindTestITDone()
         {
             // Do nothing;
         }
