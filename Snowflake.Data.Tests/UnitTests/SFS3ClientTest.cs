@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Setup mock S3 client
-            MockS3Client mockClient = SetUpMockAwsClient(_fileMetadata);
+            var mockClient = SetUpMockAwsClient(_fileMetadata);
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockClient); 
             _fileMetadata.client = _client;
 
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         internal static MockS3Client SetUpMockAwsClient(SFFileMetadata fileMetadata)
         {
-            AmazonS3Config clientConfig = new AmazonS3Config();
+            var clientConfig = new AmazonS3Config();
             RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(fileMetadata.stageInfo.region);
             clientConfig.RegionEndpoint = regionEndpoint;
             MockS3Client mockClient = new MockS3Client(AwsKeyId,
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractBucketNameAndPath()
         {
-            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
+            var location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
             // Split LOCATION based on the first '/' character
             string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
