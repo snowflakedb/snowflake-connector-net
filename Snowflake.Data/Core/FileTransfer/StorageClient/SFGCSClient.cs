@@ -25,10 +25,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// GCS header values.
         /// </summary>
         private const string GCS_METADATA_PREFIX = "x-goog-meta-";
-        public const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
-        public const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
-        public const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
-        public const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
+        internal const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
+        internal const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
+        internal const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
+        internal const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
 
         /// <summary>
         /// The GCS access token.
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The custom WebRequest.
         /// </summary>
-        private WebRequest CustomWebRequest = null;
+        private WebRequest _customWebRequest = null;
 
         /// <summary>
         /// GCS client with access token.
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         internal void SetCustomWebRequest(WebRequest mockWebRequest)
         {
-            CustomWebRequest = mockWebRequest;
+            _customWebRequest = mockWebRequest;
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue a HEAD request
-                WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : CustomWebRequest;
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
                 using (WebResponse response = request.GetResponse())
                 {
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                    HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                     fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
                 }
             }
@@ -207,7 +207,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue a HEAD request
-                WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : CustomWebRequest;
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
                 using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
                 {
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                    HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                     fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
                 }
             }
@@ -286,7 +286,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                 fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
             }
         }
@@ -320,7 +320,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                 fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
             }
         }
@@ -342,17 +342,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
-            //string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-            //    generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
-            //    fileMetadata.presignedUrl;
-
-            //WebRequest request = CustomWebRequest == null ? WebRequest.Create(url) : CustomWebRequest;
-
-            //request.Method = "PUT";
-
-            //request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-
-            WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : CustomWebRequest;
+            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
 
             request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
@@ -404,7 +394,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : CustomWebRequest;
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
                 using (WebResponse response = request.GetResponse())
                 {
@@ -423,7 +413,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                 fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
             }
         }
@@ -439,7 +429,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : CustomWebRequest;
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
                 using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
                 {
@@ -458,7 +448,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
                 fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
             }
         }
