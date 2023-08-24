@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.stageInfo.location = requestKey + "/" + HttpMethod.Put;
             _fileMetadata.uploadSize = UploadFileSize;
 
-            _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockS3Client.AmzIV,
                 key = MockS3Client.AmzKey,
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.stageInfo.location = requestKey + "/" + HttpMethod.Put + "/async";
             _fileMetadata.uploadSize = UploadFileSize;
 
-            await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockS3Client.AmzIV,
                 key = MockS3Client.AmzKey,
