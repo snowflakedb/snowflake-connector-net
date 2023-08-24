@@ -458,36 +458,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="response">The HTTP response message.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
-        private void HandleDownloadResponse(HttpResponseMessage response, SFFileMetadata fileMetadata)
-        {
-            HttpResponseHeaders headers = response.Headers;
-
-            // Get header values
-            dynamic encryptionData = JsonConvert.DeserializeObject(headers.GetValues(GCS_METADATA_ENCRYPTIONDATAPROP).First());
-            string matDesc = headers.GetValues(GCS_METADATA_MATDESC_KEY).First();
-
-            // Get encryption metadata from encryption data header value
-            SFEncryptionMetadata encryptionMetadata = null;
-            if (encryptionData != null)
-            {
-                encryptionMetadata = new SFEncryptionMetadata
-                {
-                    iv = encryptionData["ContentEncryptionIV"],
-                    key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                    matDesc = matDesc
-                };
-                fileMetadata.encryptionMetadata = encryptionMetadata;
-            }
-
-            fileMetadata.sha256Digest = headers.GetValues(GCS_METADATA_SFC_DIGEST).First();
-            fileMetadata.srcFileSize = (long)Convert.ToDouble(headers.GetValues(GCS_FILE_HEADER_CONTENT_LENGTH).First());
-        }
-
-        /// <summary>
-        /// Handle download http response.
-        /// </summary>
-        /// <param name="response">The HTTP response message.</param>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
         private void HandleDownloadResponse(WebResponse response, SFFileMetadata fileMetadata)
         {
             WebHeaderCollection headers = response.Headers;
