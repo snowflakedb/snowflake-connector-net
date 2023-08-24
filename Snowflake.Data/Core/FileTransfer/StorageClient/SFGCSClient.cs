@@ -121,18 +121,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
         {
-            WebRequest request;
+            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                fileMetadata.presignedUrl;
 
-            if (string.IsNullOrEmpty(fileMetadata.presignedUrl))
-            {
-                request = WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName));
-                request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-                request.Method = method;
-            }
-            else
-            {
-                request = WebRequest.Create(fileMetadata.presignedUrl);
-            }
+            WebRequest request = WebRequest.Create(url);
+            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+            request.Method = method;
 
             return request;
         }
@@ -154,10 +149,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     encryptionMetadata = fileMetadata.encryptionMetadata
                 };
             }
-
-            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
-                fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
             //{
@@ -221,7 +212,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         response.StatusCode == HttpStatusCode.NotFound)
                     {
                         fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                        return new FileHeader();
                     }
                 }
                 else
@@ -252,10 +242,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     encryptionMetadata = fileMetadata.encryptionMetadata
                 };
             }
-
-            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
-                fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
             //{
@@ -317,7 +303,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         response.StatusCode == HttpStatusCode.NotFound)
                     {
                         fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                        return new FileHeader();
                     }
                 }
                 else
@@ -475,13 +460,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
+            // Issue the POST/PUT request
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
                 generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
-            // Issue the POST/PUT request
-            WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : CustomWebRequest;
+            WebRequest request = CustomWebRequest == null ? WebRequest.Create(url) : CustomWebRequest;
 
+            request.Method = "PUT";
+
+            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
             request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
             request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
@@ -529,10 +517,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
-            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
-                fileMetadata.presignedUrl;
-
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
             //{
             //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
@@ -606,10 +590,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
-            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
-                fileMetadata.presignedUrl;
-
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
             //{
             //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
