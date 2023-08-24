@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Security;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -14,15 +15,30 @@ namespace Snowflake.Data.Tests.UnitTests
     {
 
         [Test, TestCaseSource("ConnectionStringTestCases")]
-        public void ShouldParseProperties(TestCase testcase)
+        public void TestThatPropertiesAreParsed(TestCase testcase)
         {
-            // when
+            // act
             var properties = SFSessionProperties.parseConnectionString(
                 testcase.ConnectionString,
                 testcase.SecurePassword);
 
-            // then
+            // assert
             CollectionAssert.AreEquivalent(testcase.ExpectedProperties, properties);
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
+        public void TestThatItFailsForWrongFileTransferMaxBytesInMemoryParameter(string connectionString, string expectedErrorMessagePart)
+        {
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(
+                () => SFSessionProperties.parseConnectionString(connectionString, null)
+            );
+            
+            // assert
+            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.IsTrue(exception.Message.Contains(expectedErrorMessagePart));
         }
         
         public static IEnumerable<TestCase> ConnectionStringTestCases()
@@ -145,13 +161,39 @@ namespace Snowflake.Data.Tests.UnitTests
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
-            };            
+            };
+            var testCaseWithFileTransferMaxBytesInMemory = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};FILE_TRANSFER_MEMORY_THRESHOLD=25;",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" }
+                }
+            };
             return new TestCase[]
             {
                 simpleTestCase,
                 testCaseWithBrowserResponseTimeout,
                 testCaseWithProxySettings,
-                testCaseThatDefaultForUseProxyIsFalse
+                testCaseThatDefaultForUseProxyIsFalse,
+                testCaseWithFileTransferMaxBytesInMemory
             };
         }
         
