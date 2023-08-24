@@ -27,8 +27,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MAX_BYTES_IN_MEMORY=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MAX_BYTES_IN_MEMORY")]
-        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MAX_BYTES_IN_MEMORY=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MAX_BYTES_IN_MEMORY")]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
         public void TestThatItFailsForWrongFileTransferMaxBytesInMemoryParameter(string connectionString, string expectedErrorMessagePart)
         {
             // act
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
             var testCaseWithFileTransferMaxBytesInMemory = new TestCase()
             {
-                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};FILE_TRANSFER_MAX_BYTES_IN_MEMORY=25;",
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};FILE_TRANSFER_MEMORY_THRESHOLD=25;",
                 ExpectedProperties = new SFSessionProperties()
                 {
                     { SFSessionProperty.ACCOUNT, defAccount },
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY, "25" }
+                    { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" }
                 }
             };
             return new TestCase[]

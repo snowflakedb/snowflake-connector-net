@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MAX_BYTES_IN_MEMORY=1048576;";
+                conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{s_fullFileName} @~/{s_remoteFolderName} AUTO_COMPRESS=FALSE";

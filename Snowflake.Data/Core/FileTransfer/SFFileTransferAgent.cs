@@ -670,7 +670,7 @@ namespace Snowflake.Data.Core
 
         private int GetFileTransferMaxBytesInMemory()
         {
-            if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY, out var maxBytesInMemoryString))
+            if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
             {
                 return FileTransferConfiguration.DefaultMaxBytesInMemory;
             }

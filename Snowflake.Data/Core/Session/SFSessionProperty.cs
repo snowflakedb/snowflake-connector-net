@@ -81,7 +81,7 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "7")]
         MAXHTTPRETRIES,
         [SFSessionPropertyAttr(required = false)]
-        FILE_TRANSFER_MAX_BYTES_IN_MEMORY
+        FILE_TRANSFER_MEMORY_THRESHOLD
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -290,12 +290,12 @@ namespace Snowflake.Data.Core
 
         private static void ValidateFileTransferMaxBytesInMemoryProperty(SFSessionProperties properties)
         {
-            if (!properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY, out var maxBytesInMemoryString))
+            if (!properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
             {
                 return;
             }
 
-            var propertyName = SFSessionProperty.FILE_TRANSFER_MAX_BYTES_IN_MEMORY.ToString();
+            var propertyName = SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD.ToString();
             int maxBytesInMemory;
             try
             {
