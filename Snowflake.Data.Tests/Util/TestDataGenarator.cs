@@ -3,63 +3,86 @@
  */
 
 using System;
-using System.Linq;
 
 namespace Snowflake.Data.Tests.Util
 {
 
     public class TestDataGenarator
     {
-        private static Random random = new Random();
-        private static string lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
-        private static string uppercaseChars = lowercaseChars.ToUpper();
-        private static string nonZeroDigits = "123456789";
-        private static string digitChars = "0" + nonZeroDigits;
-        private static string letterChars = lowercaseChars + uppercaseChars;
-        private static string alphanumericChars = letterChars + digitChars;
+        private static Random s_random = new Random();
+        private static string s_lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+        private static string s_uppercaseChars = s_lowercaseChars.ToUpper();
+        private static string s_nonZeroDigits = "123456789";
+        private static string s_digitChars = "0" + s_nonZeroDigits;
+        private static string s_letterChars = s_lowercaseChars + s_uppercaseChars;
+        private static string s_alphanumericChars = s_letterChars + s_digitChars;
         
         public static bool NextBool()
         {
-            return random.Next(0, 1) == 1;
+            return s_random.Next(0, 1) == 1;
         }
 
         public static int NextInt(int minValueInclusive, int maxValueExclusive)
         {
-            return random.Next(minValueInclusive, maxValueExclusive);
+            return s_random.Next(minValueInclusive, maxValueExclusive);
         }
         
         public static string NextAlphaNumeric()
         {
-            return NextLetter() +
-                   Enumerable.Repeat(alphanumericChars, random.Next(5, 12))
-                       .Select(NextChar)
-                       .Aggregate((s1, s2) => s1 + s2);
+            return NextAlphaNumeric(s_random.Next(5, 12));
+        }
+
+        public static string NextAlphaNumeric(int length)
+        {
+            if (length < 1)
+            {
+                return "";
+            }
+            var buffer = new char[length];
+            buffer[0] = NextLetterChar();
+            for (var i = 1; i < length; i++)
+            {
+                buffer[i] = NextAlphaNumericChar();
+            }
+            return new string(buffer);
         }
 
         public static string NextDigitsString(int length)
         {
+            if (length < 1)
+            {
+                return "";
+            }
+
             if (length == 1)
             {
-                return NextNonZeroDigitString();
-            } 
-            return NextNonZeroDigitString() + Enumerable.Repeat(digitChars, length - 1)
-                .Select(NextChar)
-                .Aggregate((s1, s2) => s1 + s2);
+                NextDigitAsString();
+            }
+            var buffer = new char[length];
+            buffer[0] = NextNonZeroDigitChar();
+            for (var i = 1; i < length; i++)
+            {
+                buffer[i] = NextDigitChar();
+            }
+            return new string(buffer);
         }
+        
+        private static char NextAlphaNumericChar() => NextChar(s_alphanumericChars);
+        
+        public static string NextNonZeroDigitAsString() => NextNonZeroDigitChar().ToString();
 
-        public static string NextNonZeroDigitString()
-        {
-            return NextChar(nonZeroDigits);
-        }
+        private static char NextNonZeroDigitChar() => NextChar(s_nonZeroDigits);
+        
+        private static string NextDigitAsString() => NextDigitChar().ToString(); 
+        
+        private static char NextDigitChar() => NextChar(s_digitChars);
+        
+        private static string NextLetterAsString() => NextLetterChar().ToString();
 
-        private static string NextLetter()
-        {
-            return NextChar(letterChars);
-        }
+        private static char NextLetterChar() => NextChar(s_letterChars);
 
-        private static string NextChar(string chars)
-        {
-            return chars[random.Next(chars.Length)].ToString();
-        }
+        private static string NextCharAsString(string chars) => NextChar(chars).ToString();
+
+        private static char NextChar(string chars) => chars[s_random.Next(chars.Length)];
     }
 }
