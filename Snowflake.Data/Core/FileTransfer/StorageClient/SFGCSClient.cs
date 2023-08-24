@@ -51,10 +51,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
 
         /// <summary>
-        /// The custom HTTP client.
+        /// The custom WebRequest.
         /// </summary>
-        private HttpClient CustomHttpClient = null;
-
         private WebRequest CustomWebRequest = null;
 
         /// <summary>
@@ -77,11 +75,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
-        }
-
-        internal void SetCustomHttpClient(HttpClientHandler mockHttpClient)
-        {
-            CustomHttpClient = new HttpClient(mockHttpClient);
         }
 
         internal void SetCustomWebRequest(WebRequest mockWebRequest)
@@ -150,38 +143,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 };
             }
 
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
-            //{
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        var task = httpClient.SendAsync(requestMessage);
-            //        task.Wait();
-            //        using (HttpResponseMessage response = task.Result)
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                string digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST).First();
-            //                long contentLength = (long)response.Content.Headers.ContentLength;
-
-            //                fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-            //                return new FileHeader
-            //                {
-            //                    digest = digest,
-            //                    contentLength = contentLength
-            //                };
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleFileHeaderErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
-
             try
             {
                 // Issue a HEAD request
@@ -242,36 +203,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     encryptionMetadata = fileMetadata.encryptionMetadata
                 };
             }
-
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
-            //{
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        using (HttpResponseMessage response = await httpClient.SendAsync(requestMessage).ConfigureAwait(false))
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                string digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST).First();
-            //                long contentLength = (long)response.Content.Headers.ContentLength;
-
-            //                fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-            //                return new FileHeader
-            //                {
-            //                    digest = digest,
-            //                    contentLength = contentLength
-            //                };
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleFileHeaderErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
 
             try
             {
@@ -338,34 +269,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
 
-            //string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, url))
-            //{
-            //    SetUpRequestMessageForUpload(requestMessage, fileMetadata, encryptionMetadata, encryptionData, fileBytes);
-
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        var task = httpClient.SendAsync(requestMessage);
-            //        task.Wait();
-
-            //        using (HttpResponseMessage response = task.Result)
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                fileMetadata.destFileSize = fileMetadata.uploadSize;
-            //                fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleUploadFileErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
-
             try
             {
                 WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
@@ -396,30 +299,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
-
-            //string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, url))
-            //{
-            //    SetUpRequestMessageForUpload(requestMessage, fileMetadata, encryptionMetadata, encryptionData, fileBytes);
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        using (HttpResponseMessage response = await httpClient.SendAsync(requestMessage).ConfigureAwait(false))
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                fileMetadata.destFileSize = fileMetadata.uploadSize;
-            //                fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleUploadFileErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
 
             try
             {
@@ -461,15 +340,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
-            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
-                fileMetadata.presignedUrl;
+            //string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+            //    generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
+            //    fileMetadata.presignedUrl;
 
-            WebRequest request = CustomWebRequest == null ? WebRequest.Create(url) : CustomWebRequest;
+            //WebRequest request = CustomWebRequest == null ? WebRequest.Create(url) : CustomWebRequest;
 
-            request.Method = "PUT";
+            //request.Method = "PUT";
 
-            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+            //request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+
+            WebRequest request = CustomWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : CustomWebRequest;
+
             request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
             request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
@@ -517,44 +399,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
-            //{
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        var task = httpClient.SendAsync(requestMessage);
-            //        task.Wait();
-            //        using (HttpResponseMessage response = task.Result)
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                // Write to file
-            //                using (var fileStream = File.Create(fullDstPath))
-            //                {
-            //                    using (var readTask = response.Content.ReadAsStreamAsync())
-            //                    {
-            //                        readTask.Wait();
-            //                        Stream responseStream = readTask.Result;
-
-            //                        responseStream.CopyTo(fileStream);
-            //                        responseStream.Flush();
-            //                    }
-            //                }
-
-            //                HandleDownloadResponse(response, fileMetadata);
-
-            //                fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleDownloadFileErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
-
             try
             {
                 // Issue the GET request
@@ -590,39 +434,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="maxConcurrency">Number of max concurrency.</param>
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
-            //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
-            //{
-            //    using (HttpClient httpClient = CustomHttpClient == null ? new HttpClient() : CustomHttpClient)
-            //    {
-            //        httpClient.DefaultRequestHeaders.Authorization = (new AuthenticationHeaderValue("Bearer", AccessToken));
-
-            //        using (HttpResponseMessage response = await httpClient.SendAsync(requestMessage).ConfigureAwait(false))
-            //        {
-            //            if (response.IsSuccessStatusCode)
-            //            {
-            //                // Write to file
-            //                using (var fileStream = File.Create(fullDstPath))
-            //                {
-            //                    using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
-            //                    {
-            //                        responseStream.CopyTo(fileStream);
-            //                        responseStream.Flush();
-            //                    }
-            //                }
-
-            //                HandleDownloadResponse(response, fileMetadata);
-
-            //                fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
-            //            }
-            //            else
-            //            {
-            //                fileMetadata.lastError = new HttpRequestException($"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase})");
-            //                fileMetadata = HandleDownloadFileErr(response.StatusCode, fileMetadata);
-            //            }
-            //        }
-            //    }
-            //}
-
             try
             {
                 // Issue the GET request

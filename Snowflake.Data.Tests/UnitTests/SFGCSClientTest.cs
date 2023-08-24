@@ -69,9 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Setup mock GCS HTTP client
-            MockGCSHttpClient mockClient = new MockGCSHttpClient();
             _client = new SFGCSClient(_fileMetadata.stageInfo);
-            _client.SetCustomHttpClient(mockClient);
 
             _cancellationToken = new CancellationToken();
         }
@@ -109,13 +107,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup file metadata
             _fileMetadata.resultStatus = expectedResultStatus.ToString();
-            _fileMetadata.sha256Digest = MockGCSHttpClient.SFCDigest;
-            _fileMetadata.srcFileSize = MockGCSHttpClient.ContentLength;
+            _fileMetadata.sha256Digest = MockGCSWebRequest.SFCDigest;
+            _fileMetadata.srcFileSize = MockGCSWebRequest.FileContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
             {
-                iv = MockGCSHttpClient.GcsIV,
-                key = MockGCSHttpClient.GcsKey,
-                matDesc = MockGCSHttpClient.GcsMatdesc
+                iv = MockGCSWebRequest.GcsIV,
+                key = MockGCSWebRequest.GcsKey,
+                matDesc = MockGCSWebRequest.GcsMatdesc
             };
 
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
@@ -130,13 +128,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup file metadata
             _fileMetadata.resultStatus = expectedResultStatus.ToString();
-            _fileMetadata.sha256Digest = MockGCSHttpClient.SFCDigest;
-            _fileMetadata.srcFileSize = MockGCSHttpClient.ContentLength;
+            _fileMetadata.sha256Digest = MockGCSWebRequest.SFCDigest;
+            _fileMetadata.srcFileSize = MockGCSWebRequest.FileContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
             {
-                iv = MockGCSHttpClient.GcsIV,
-                key = MockGCSHttpClient.GcsKey,
-                matDesc = MockGCSHttpClient.GcsMatdesc
+                iv = MockGCSWebRequest.GcsIV,
+                key = MockGCSWebRequest.GcsKey,
+                matDesc = MockGCSWebRequest.GcsMatdesc
             };
 
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
@@ -146,11 +144,11 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private void AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(ResultStatus expectedResultStatus, FileHeader fileHeader)
         {
-            Assert.AreEqual(MockGCSHttpClient.ContentLength, fileHeader.contentLength);
-            Assert.AreEqual(MockGCSHttpClient.SFCDigest, fileHeader.digest);
-            Assert.AreEqual(MockGCSHttpClient.GcsIV, fileHeader.encryptionMetadata.iv);
-            Assert.AreEqual(MockGCSHttpClient.GcsKey, fileHeader.encryptionMetadata.key);
-            Assert.AreEqual(MockGCSHttpClient.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
+            Assert.AreEqual(MockGCSWebRequest.FileContentLength, fileHeader.contentLength);
+            Assert.AreEqual(MockGCSWebRequest.SFCDigest, fileHeader.digest);
+            Assert.AreEqual(MockGCSWebRequest.GcsIV, fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual(MockGCSWebRequest.GcsKey, fileHeader.encryptionMetadata.key);
+            Assert.AreEqual(MockGCSWebRequest.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
@@ -207,8 +205,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockGCSHttpClient.ContentLength, fileHeader.contentLength);
-                Assert.AreEqual(MockGCSHttpClient.SFCDigest, fileHeader.digest);
+                Assert.AreEqual(MockGCSWebRequest.FileContentLength, fileHeader.contentLength);
+                Assert.AreEqual(MockGCSWebRequest.SFCDigest, fileHeader.digest);
             }
             else
             {
@@ -239,9 +237,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
-                iv = MockGCSHttpClient.GcsIV,
-                key = MockGCSHttpClient.GcsKey,
-                matDesc = MockGCSHttpClient.GcsMatdesc
+                iv = MockGCSWebRequest.GcsIV,
+                key = MockGCSWebRequest.GcsKey,
+                matDesc = MockGCSWebRequest.GcsMatdesc
             });
 
             AssertForUploadFileTests(expectedResultStatus);
@@ -268,9 +266,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
-                iv = MockGCSHttpClient.GcsIV,
-                key = MockGCSHttpClient.GcsKey,
-                matDesc = MockGCSHttpClient.GcsMatdesc
+                iv = MockGCSWebRequest.GcsIV,
+                key = MockGCSWebRequest.GcsKey,
+                matDesc = MockGCSWebRequest.GcsMatdesc
             },
             _cancellationToken).ConfigureAwait(false);
 
@@ -336,7 +334,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(DownloadFileName);
-                Assert.AreEqual(MockGCSHttpClient.GcsFileContent, text);
+                Assert.AreEqual(MockGCSWebResponse.GcsFileContent, text);
                 File.Delete(DownloadFileName);
             }
 
