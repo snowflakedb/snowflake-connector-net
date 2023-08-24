@@ -18,30 +18,30 @@ namespace Snowflake.Data.Tests.Mock
     class MockS3Client : AmazonS3Client
     {
         // Mock status codes for S3 requests
-        public const string AwsStatusOk = "OK";
-        public const string AwsStatusError = "AWS_ERROR";
+        internal const string AwsStatusOk = "OK";
+        internal const string AwsStatusError = "AWS_ERROR";
 
         // Mock S3 data for FileHeader
-        public const string AmzIV = "MOCK_AMZ_IV";
-        public const string AmzKey = "MOCK_AMZ_KEY";
-        public const string AmzMatdesc = "MOCK_AMZ_MATDESC";
-        public const string SfcDigest = "MOCK_SFC_DIGEST";
+        internal const string AmzIV = "MOCK_AMZ_IV";
+        internal const string AmzKey = "MOCK_AMZ_KEY";
+        internal const string AmzMatdesc = "MOCK_AMZ_MATDESC";
+        internal const string SfcDigest = "MOCK_SFC_DIGEST";
 
         // Mock error message for S3 errors
-        public const string S3ErrorMessage = "S3 Error Message";
+        internal const string S3ErrorMessage = "S3 Error Message";
 
         // Mock data for downloaded file
-        public const string S3FileContent = "S3ClientTest";
+        internal const string S3FileContent = "S3ClientTest";
 
         // Mock content length
-        public const int ContentLength = 9999;
+        internal const int ContentLength = 9999;
 
         public MockS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsSessionToken, AmazonS3Config clientConfig)
     : base(awsAccessKeyId, awsSecretAccessKey, awsSessionToken, clientConfig)
         {
         }
 
-        public Exception CreateMockAwsResponseError(string errorCode, string isAsync)
+        internal Exception CreateMockAwsResponseError(string errorCode, string isAsync)
         {
             AmazonS3Exception awsError = new AmazonS3Exception(S3ErrorMessage);
             awsError.ErrorCode = errorCode;
