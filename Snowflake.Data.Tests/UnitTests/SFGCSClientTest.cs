@@ -14,7 +14,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     using System.Threading;
     using Snowflake.Data.Tests.Mock;
-    using Azure.Storage.Blobs.Models;
 
     [TestFixture]
     class SFGCSClientTest : SFBaseTest
