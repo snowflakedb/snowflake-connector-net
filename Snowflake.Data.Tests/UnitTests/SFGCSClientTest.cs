@@ -14,6 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     using System.Threading;
     using Snowflake.Data.Tests.Mock;
+    using Azure.Storage.Blobs.Models;
 
     [TestFixture]
     class SFGCSClientTest : SFBaseTest
@@ -72,6 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
             MockGCSHttpClient mockClient = new MockGCSHttpClient();
             _client = new SFGCSClient(_fileMetadata.stageInfo);
             _client.SetCustomHttpClient(mockClient);
+
             _cancellationToken = new CancellationToken();
         }
 
@@ -166,6 +168,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            _client.SetCustomWebRequest(mockWebRequest);
+
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
 
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -183,6 +190,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
+
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            _client.SetCustomWebRequest(mockWebRequest);
 
             CancellationToken cancellationToken = new CancellationToken();
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, cancellationToken).ConfigureAwait(false);
@@ -218,6 +230,11 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
 
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            _client.SetCustomWebRequest(mockWebRequest);
+
             _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
                 iv = MockGCSHttpClient.GcsIV,
@@ -240,6 +257,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
+
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            _client.SetCustomWebRequest(mockWebRequest);
 
             await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
             {
@@ -273,6 +295,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+
+            _client.SetCustomWebRequest(mockWebRequest);
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
             AssertForDownloadFileTests(expectedResultStatus);
@@ -288,6 +315,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
+
+            // Setup web request
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            _client.SetCustomWebRequest(mockWebRequest);
 
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
