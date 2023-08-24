@@ -110,7 +110,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 clientConfig = new AmazonS3Config();
             }
 
-            setCommonClientConfig(
+            SetCommonClientConfig(
                 clientConfig,
                 stageInfo.region,
                 stageInfo.endPoint,
@@ -293,12 +293,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="clientConfig">The client config to update.</param>
         /// <param name="region">The region if any.</param>
         /// <param name="endpoint">The endpoint if any.</param>
-        private static void setCommonClientConfig(
-        AmazonS3Config clientConfig,
-        string region,
-        string endpoint,
-        int maxRetry,
-        int parallel)
+        private static void SetCommonClientConfig(
+            AmazonS3Config clientConfig,
+            string region,
+            string endpoint,
+            int maxRetry,
+            int parallel)
         {
             // Always return a regional URL
             clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
