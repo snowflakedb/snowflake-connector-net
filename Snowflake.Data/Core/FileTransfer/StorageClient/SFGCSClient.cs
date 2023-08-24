@@ -138,7 +138,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Head, url))
@@ -432,7 +432,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
             // Issue the POST/PUT request
@@ -488,7 +488,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
@@ -567,7 +567,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName) :
                 fileMetadata.presignedUrl;
 
             //using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, url))
