@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Tests.Mock;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.IO;
 
     [TestFixture]
     class SFAzureClientTest : SFBaseTest
@@ -158,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
 
-            _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockBlobClient.AzureIV,
                 key = MockBlobClient.AzureKey,
@@ -182,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
 
-            await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockBlobClient.AzureIV,
                 key = MockBlobClient.AzureKey,
