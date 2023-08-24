@@ -543,7 +543,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
         /// <returns>The file metadata.</returns>
-        public SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
             AmazonS3Exception err = (AmazonS3Exception)ex;
             if (err.ErrorCode == EXPIRED_TOKEN)
@@ -564,7 +564,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
         /// <returns>The file metadata.</returns>
-        public SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
             AmazonS3Exception err = (AmazonS3Exception)ex;
             if (err.ErrorCode == EXPIRED_TOKEN)
