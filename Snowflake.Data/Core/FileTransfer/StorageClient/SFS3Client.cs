@@ -38,16 +38,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// The metadata header keys.
         /// </summary>
         private const string AMZ_META_PREFIX = "x-amz-meta-";
-        public const string AMZ_IV = "x-amz-iv";
-        public const string AMZ_KEY = "x-amz-key";
-        public const string AMZ_MATDESC = "x-amz-matdesc";
-        public const string SFC_DIGEST = "sfc-digest";
+        internal const string AMZ_IV = "x-amz-iv";
+        internal const string AMZ_KEY = "x-amz-key";
+        internal const string AMZ_MATDESC = "x-amz-matdesc";
+        internal const string SFC_DIGEST = "sfc-digest";
 
         /// <summary>
         /// The status of the request.
         /// </summary>
-        public const string EXPIRED_TOKEN = "ExpiredToken";
-        public const string NO_SUCH_KEY = "NoSuchKey";
+        internal const string EXPIRED_TOKEN = "ExpiredToken";
+        internal const string NO_SUCH_KEY = "NoSuchKey";
 
         /// <summary>
         /// The application header type.
