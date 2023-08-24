@@ -18,23 +18,23 @@ namespace Snowflake.Data.Tests.Mock
     class MockBlobClient : BlobClient
     {
         // Mock Azure data for FileHeader
-        public const string AzureIV = "MOCK_AZURE_IV";
-        public const string AzureKey = "MOCK_AZURE_KEY";
-        public const string AzureMatdesc = "MOCK_AZURE_MATDESC";
-        public const string SFCDigest = "MOCK_SFC_DIGEST";
+        internal const string AzureIV = "MOCK_AZURE_IV";
+        internal const string AzureKey = "MOCK_AZURE_KEY";
+        internal const string AzureMatdesc = "MOCK_AZURE_MATDESC";
+        internal const string SFCDigest = "MOCK_SFC_DIGEST";
 
         // Mock error message for Azure errors
-        public const string AzureErrorMessage = "Azure Error Message";
+        internal const string AzureErrorMessage = "Azure Error Message";
 
         // Mock content length
-        public const int ContentLength = 9999;
+        internal const int ContentLength = 9999;
 
         // Stores the HttpStatusCode string
         string _key;
 
-        public MockBlobClient(string blobName) { _key = MockBlobContainerClient.blobContainerName; }
+        internal MockBlobClient(string blobName) { _key = MockBlobContainerClient.blobContainerName; }
 
-        public Exception CreateMockAzureError(string key)
+        internal Exception CreateMockAzureError(string key)
         {
             HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
 
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.Mock
             return azureError;
         }
 
-        public Response<BlobProperties> createMockResponseForBlobProperties()
+        internal Response<BlobProperties> createMockResponseForBlobProperties()
         {
             if (_key == HttpStatusCode.OK.ToString())
             {
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.Mock
 
     class MockBlobContainerClient : BlobContainerClient
     {
-        public static string blobContainerName;
+        internal static string blobContainerName;
 
         public MockBlobContainerClient(string blobContainerName) { MockBlobContainerClient.blobContainerName = blobContainerName; }
 
