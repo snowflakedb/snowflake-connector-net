@@ -325,20 +325,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
-        private void SetUpRequestMessageForUpload(HttpRequestMessage requestMessage,
-            SFFileMetadata fileMetadata,
-            SFEncryptionMetadata encryptionMetadata,
-            String encryptionData,
-            byte[] fileBytes)
-        {
-            requestMessage.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
-            requestMessage.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
-            requestMessage.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
-
-            ByteArrayContent byteContent = new ByteArrayContent(fileBytes);
-            requestMessage.Content = byteContent;
-        }
-
         private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
