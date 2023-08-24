@@ -12,13 +12,18 @@ namespace Snowflake.Data.Tests
     public class FileBackedOutputStreamTest
     {
         private const string ShortText = "short text";
+        private const int MaxBytesInMemory = 50;
         private static readonly string s_longText = RandomJsonGenerator.GenerateRandomJsonString(5);
         
         [Test]
         public void TestThatSwitchesFromMemoryToFileOnGivenThresholdAndAllowsToReadAll()
         {
+            // expect
+            Assert.IsTrue(ShortText.Length < MaxBytesInMemory);
+            Assert.IsTrue(s_longText.Length > MaxBytesInMemory);
+            
             // arrange
-            var stream = new FileBackedOutputStream(50, Path.GetTempPath());
+            var stream = new FileBackedOutputStream(MaxBytesInMemory, Path.GetTempPath());
             
             // assert
             Assert.IsFalse(stream.IsUsingFileOutputStream());
@@ -51,8 +56,11 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestThatAfterDisposeNoTemporaryFileExists()
         {
+            // expect
+            Assert.IsTrue(s_longText.Length > MaxBytesInMemory);
+            
             // arrange
-            var stream = new FileBackedOutputStream(50, Path.GetTempPath());
+            var stream = new FileBackedOutputStream(MaxBytesInMemory, Path.GetTempPath());
             ToByteStream(s_longText).CopyTo(stream);
             
             // assert

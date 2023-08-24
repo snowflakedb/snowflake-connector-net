@@ -42,8 +42,8 @@ namespace Snowflake.Data.Tests
         public void TestThatUploadsAndDownloadsTheSameFile()
         {
             // act
-            UploadFile();
-            DownloadFile();
+            UploadFile(s_fullFileName, s_remoteFolderName);
+            DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
             
             // assert
             Assert.AreEqual(
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests
                 CalcualteMD5(s_fullDownloadedFileName));
             
             // cleanup
-            RemoveFilesFromServer();
+            RemoveFilesFromServer(s_remoteFolderName);
             RemoveLocalFile(s_fullDownloadedFileName);
         }
 
@@ -61,39 +61,39 @@ namespace Snowflake.Data.Tests
             RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
-        private void UploadFile()
+        private void UploadFile(string fullFileName, string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = $"PUT file://{s_fullFileName} @~/{s_remoteFolderName} AUTO_COMPRESS=FALSE";
+                command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
                 command.ExecuteNonQuery();
             }
         }
 
-        private void DownloadFile()
+        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName)
         {
-            var filePattern = $"{s_remoteFolderName}/{FileName}";
+            var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = $"GET @~/{s_remoteFolderName} file://{s_downloadFolderName} PATTERN='{filePattern}'";
+                command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
                 command.ExecuteNonQuery();
             }
         }
         
-        private void RemoveFilesFromServer()
+        private void RemoveFilesFromServer(string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = $"remove @~/{s_remoteFolderName};";
+                command.CommandText = $"remove @~/{remoteFolderName};";
                 command.ExecuteNonQuery();
             }
         }
