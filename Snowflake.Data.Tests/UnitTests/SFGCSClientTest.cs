@@ -235,7 +235,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockWebRequest.Method = "PUT";
             _client.SetCustomWebRequest(mockWebRequest);
 
-            _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockGCSWebRequest.GcsIV,
                 key = MockGCSWebRequest.GcsKey,
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockWebRequest.Method = "PUT";
             _client.SetCustomWebRequest(mockWebRequest);
 
-            await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
+            await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
                 iv = MockGCSWebRequest.GcsIV,
                 key = MockGCSWebRequest.GcsKey,

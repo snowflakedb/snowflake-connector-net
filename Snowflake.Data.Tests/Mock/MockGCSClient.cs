@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override int Timeout { get; set; }
 
-        public MemoryStream memoryStream = new MemoryStream();
+        public Stream memoryStream = new MemoryStream();
 
         // Mock GCS data for FileHeader
         public const string GcsIV = "MOCK_GCS";
@@ -130,6 +130,11 @@ namespace Snowflake.Data.Tests.Mock
         public override Stream GetRequestStream()
         {
             return memoryStream;
+        }
+
+        public override Task<Stream> GetRequestStreamAsync()
+        {
+            return Task.FromResult(memoryStream);
         }
     }
 
