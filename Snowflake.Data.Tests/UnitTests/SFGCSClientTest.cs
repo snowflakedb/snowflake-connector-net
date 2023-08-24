@@ -170,6 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = "HEAD";
             _client.SetCustomWebRequest(mockWebRequest);
 
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
@@ -193,6 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = "HEAD";
             _client.SetCustomWebRequest(mockWebRequest);
 
             CancellationToken cancellationToken = new CancellationToken();
@@ -232,6 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = "PUT";
             _client.SetCustomWebRequest(mockWebRequest);
 
             _client.UploadFile(_fileMetadata, new byte[0], new SFEncryptionMetadata()
@@ -260,6 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = "PUT";
             _client.SetCustomWebRequest(mockWebRequest);
 
             await _client.UploadFileAsync(_fileMetadata, new byte[0], new SFEncryptionMetadata()
@@ -297,8 +301,9 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-
+            mockWebRequest.Method = "GET";
             _client.SetCustomWebRequest(mockWebRequest);
+
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
             AssertForDownloadFileTests(expectedResultStatus);
@@ -318,6 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup web request
             string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
             MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = "GET";
             _client.SetCustomWebRequest(mockWebRequest);
 
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);

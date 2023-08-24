@@ -212,8 +212,23 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
-                fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                // presignedUrls have a different error handling for file headers
+                if (fileMetadata.presignedUrl != null)
+                {
+                    HttpWebResponse response = (HttpWebResponse)ex.Response;
+                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                        response.StatusCode == HttpStatusCode.Forbidden ||
+                        response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+                        return new FileHeader();
+                    }
+                }
+                else
+                {
+                    HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                    fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                }
             }
 
             return null;
@@ -293,8 +308,23 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
-                fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                // presignedUrls have a different error handling for file headers
+                if (fileMetadata.presignedUrl != null)
+                {
+                    HttpWebResponse response = (HttpWebResponse)ex.Response;
+                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                        response.StatusCode == HttpStatusCode.Forbidden ||
+                        response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+                        return new FileHeader();
+                    }
+                }
+                else
+                {
+                    HttpStatusCode statusCode = CustomWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)CustomWebRequest.Timeout;
+                    fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                }
             }
 
             return null;
