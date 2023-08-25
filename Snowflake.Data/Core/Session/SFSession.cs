@@ -29,6 +29,8 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
+        private const int SF_DEFAULT_QUERY_CONTEXT_CACHE_SIZE = 5;
+
         internal string sessionId;
 
         internal string sessionToken;
@@ -65,6 +67,12 @@ namespace Snowflake.Data.Core
         private long _startTime = 0;
         internal string connStr = null;
 
+        private QueryContextCache queryContextCache = new QueryContextCache(SF_DEFAULT_QUERY_CONTEXT_CACHE_SIZE);
+
+        private int queryContextCacheSize = SF_DEFAULT_QUERY_CONTEXT_CACHE_SIZE;
+
+        private bool disableQueryContextCache = false;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -77,6 +85,10 @@ namespace Snowflake.Data.Core
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+                if (!disableQueryContextCache)
+                {
+                    queryContextCache = new QueryContextCache(queryContextCacheSize);
+                }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             }
@@ -121,6 +133,7 @@ namespace Snowflake.Data.Core
         {
             connStr = connectionString;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             ValidateApplicationName(properties);
             try
             {
@@ -375,6 +388,30 @@ namespace Snowflake.Data.Core
                     stopHeartBeatForThisSession();
                 }
             }
+            if (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE))
+            {
+                string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
+                queryContextCacheSize = Int32.Parse(val);
+                queryContextCache.setCapacity(queryContextCacheSize);
+            }
+        }
+
+        internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
+        {
+            if (disableQueryContextCache)
+            {
+                return;
+            }
+            queryContextCache.update(queryContext);
+        }
+
+        internal RequestQueryContext GetQueryContextRequest()
+        {
+            if (disableQueryContextCache)
+            {
+                return null;
+            }
+            return queryContextCache.getQueryContextRequest();
         }
 
         internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)

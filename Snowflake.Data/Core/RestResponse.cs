@@ -229,6 +229,37 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "rowsetBase64", NullValueHandling = NullValueHandling.Ignore)]
         internal string rowsetBase64 { get; set; }
+
+        // query context
+        [JsonProperty(PropertyName = "queryContext", NullValueHandling = NullValueHandling.Ignore)]
+        internal ResponseQueryContext queryContext { get; set; }
+    }
+
+    // The query context in query response
+    internal class ResponseQueryContext
+    {
+        [JsonProperty(PropertyName = "entries")]
+        internal List<ResponseQueryContextElement> entries { get; set; }
+    }
+
+    // The query context in query response
+    internal class ResponseQueryContextElement
+    {
+        // database id as key. (bigint)
+        [JsonProperty(PropertyName = "id")]
+        public long id { get; set; }
+
+        // When the query context read (bigint). Compare for same id.
+        [JsonProperty(PropertyName = "timestamp")]
+        public long readTimestamp { get; set; }
+
+        // Priority of the query context (bigint). Compare for different ids.
+        [JsonProperty(PropertyName = "priority")]
+        public long priority { get; set; }
+
+        // Opaque information (object with a value of base64 encoded string).
+        [JsonProperty(PropertyName = "context", NullValueHandling = NullValueHandling.Ignore)]
+        public string context { get; set; }
     }
 
     internal class ExecResponseRowType

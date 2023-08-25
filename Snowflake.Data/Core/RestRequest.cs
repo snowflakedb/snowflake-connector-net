@@ -299,6 +299,36 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "parameters")]
         internal Dictionary<string, string> parameters { get; set; }
+
+        [JsonProperty(PropertyName = "queryContextDTO", NullValueHandling = NullValueHandling.Ignore)]
+        internal RequestQueryContext queryContextDTO { get; set; }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContext
+    {
+        [JsonProperty(PropertyName = "entries")]
+        internal List<RequestQueryContextElement> entries { get; set; }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContextElement
+    {
+        // database id as key. (bigint)
+        [JsonProperty(PropertyName = "id")]
+        public long id { get; set; }
+
+        // When the query context read (bigint). Compare for same id.
+        [JsonProperty(PropertyName = "timestamp")]
+        public long readTimestamp { get; set; }
+
+        // Priority of the query context (bigint). Compare for different ids.
+        [JsonProperty(PropertyName = "priority")]
+        public long priority { get; set; }
+
+        // Opaque information (object with a value of base64 encoded string).
+        [JsonProperty(PropertyName = "context")]
+        public object context { get; set; }
     }
 
     class QueryCancelRequest
