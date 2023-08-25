@@ -164,24 +164,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                // presignedUrls have a different error handling for file headers
-                if (fileMetadata.presignedUrl != null)
-                {
-                    HttpWebResponse response = (HttpWebResponse)ex.Response;
-                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
-                        response.StatusCode == HttpStatusCode.Forbidden ||
-                        response.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                    }
-                }
-                else
-                {
-                    // GCS presigned urls have a different error handling for file headers
-                    fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                        HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
-                        HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
-                }
+                // GCS presigned urls have a different error handling for file headers
+                fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                       HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
+                       HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
             }
 
             return null;
