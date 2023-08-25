@@ -148,7 +148,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue a HEAD request
                 WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-                using (WebResponse response = request.GetResponse())
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
                     var contentLength = response.Headers.GetValues("content-length");
@@ -177,7 +177,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                    // GCS presigned urls have a different error handling for file headers
+                    fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                        HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
+                        HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
                 }
             }
 
@@ -208,7 +211,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue a HEAD request
                 WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-                using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
                     var contentLength = response.Headers.GetValues("content-length");
@@ -224,21 +227,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                // presignedUrls have a different error handling for file headers
-                if (fileMetadata.presignedUrl != null)
-                {
-                    HttpWebResponse response = (HttpWebResponse)ex.Response;
-                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
-                        response.StatusCode == HttpStatusCode.Forbidden ||
-                        response.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                    }
-                }
-                else
-                {
-                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
-                }
+                // GCS presigned urls have a different error handling for file headers
+                fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                       HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
+                       HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
             }
 
             return null;
@@ -276,7 +268,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 fileBytesStream.CopyTo(dataStream);
                 dataStream.Close();
 
-                using (WebResponse response = request.GetResponse())
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     fileMetadata.destFileSize = fileMetadata.uploadSize;
                     fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
@@ -307,9 +299,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 fileByteStream.CopyTo(dataStream);
                 dataStream.Close();
 
-                WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
-
-                using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     fileMetadata.destFileSize = fileMetadata.uploadSize;
                     fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
@@ -378,7 +368,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
-                using (WebResponse response = request.GetResponse())
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
                     using (var fileStream = File.Create(fullDstPath))
@@ -412,7 +402,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 // Issue the GET request
                 WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
-                using (WebResponse response = await request.GetResponseAsync().ConfigureAwait(false))
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     // Write to file
                     using (var fileStream = File.Create(fullDstPath))
@@ -438,7 +428,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="response">The HTTP response message.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
-        private void HandleDownloadResponse(WebResponse response, SFFileMetadata fileMetadata)
+        private void HandleDownloadResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
         {
             WebHeaderCollection headers = response.Headers;
 
@@ -464,12 +454,37 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         }
 
         /// <summary>
-        /// Handle file header error.
+        /// Handle file header error for presigned urls.
         /// </summary>
         /// <param name="ex">The file header exception.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <returns>File Metadata</returns>
-        private SFFileMetadata HandleFileHeaderErr(WebException ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
+        {
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.NotFound)
+            {
+                fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+            }
+            else
+            {
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+
+            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Handle file header error for generated urls.
+        /// </summary>
+        /// <param name="ex">The file header exception.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <returns>File Metadata</returns>
+        private SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
             fileMetadata.lastError = ex;
