@@ -54,6 +54,8 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected readonly string TestName = TestContext.CurrentContext.Test.Name;
 
+        protected string TableName => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+
         private Stopwatch _stopwatch;
 
         private List<string> _tablesToRemove;

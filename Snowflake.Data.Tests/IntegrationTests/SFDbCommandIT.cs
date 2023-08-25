@@ -137,28 +137,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test case takes too much time so run it manually")]
         public void TestRowsAffectedOverflowInt()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            CreateOrReplaceTable(TableName, new []{"c1 NUMBER"});
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
-                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = "create or replace table test_rows_affected_overflow(c1 number)";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "insert into test_rows_affected_overflow select seq4() from table(generator(rowcount=>2147484000))";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.AreEqual(-1, affected);
-
-                    command.CommandText = "drop table if exists test_rows_affected_overflow";
-                    command.ExecuteNonQuery();
                 }
                 conn.Close();
             }
         }
-
     }
 
     [TestFixture]
