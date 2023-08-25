@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
-        protected readonly string TestName = TestContext.CurrentContext.Test.Name;
+        protected readonly string TestName = TestContext.CurrentContext.Test.MethodName;
 
         protected string TableName => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
 
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns)
+        protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
             var columnsStr = string.Join(", ", columns);
             
@@ -105,11 +105,16 @@ namespace Snowflake.Data.Tests
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr})";
+                cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr}) {additionalQueryStr}";
                 cmd.ExecuteNonQuery();
                 
                 _tablesToRemove.Add(tableName);
             }
+        }
+
+        protected void AddTableToRemoveList(string tableName)
+        {
+            _tablesToRemove.Add(tableName);
         }
 
         public SFBaseTestAsync()

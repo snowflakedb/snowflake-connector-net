@@ -128,11 +128,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testMSArrayBind(cola integer, colb string);" +
-                                      "insert into testMSArrayBind values (?, ?);" +
-                                      "insert into testMSArrayBind values (?, ?), (?, ?);" +
-                                      "select * from testMSArrayBind;" +
-                                      "drop table if exists testMSArrayBind";
+                    cmd.CommandText = $"create or replace table {TableName}(cola integer, colb string);" +
+                                      $"insert into {TableName} values (?, ?);" +
+                                      $"insert into {TableName} values (?, ?), (?, ?);" +
+                                      $"select * from {TableName};" +
+                                      $"drop table if exists {TableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -232,11 +232,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace temporary table testMSArrayBind(cola integer, colb string);" +
-                                      "insert into testMSArrayBind values (?, ?);" +
-                                      "insert into testMSArrayBind values (?, ?), (?, ?);" +
-                                      "select * from testMSArrayBind;" +
-                                      "drop table if exists testMSArrayBind";
+                    cmd.CommandText = $"create or replace temporary table {TableName}(cola integer, colb string);" +
+                                      $"insert into {TableName} values (?, ?);" +
+                                      $"insert into {TableName} values (?, ?), (?, ?);" +
+                                      $"select * from {TableName};" +
+                                      $"drop table if exists {TableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -301,13 +301,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1;" +
-                                      "create or replace temporary table t1(c1 varchar);" +
-                                      "explain using text select * from t1;" +
+                                      $"create or replace temporary table {TableName}(c1 varchar);" +
+                                      $"explain using text select * from {TableName};" +
                                       "show parameters;" +
-                                      "insert into t1 values ('str1');" +
-                                      "desc table t1;" +
-                                      "list @%t1;" +
-                                      "remove @%t1;" +
+                                      $"insert into {TableName} values ('str1');" +
+                                      $"desc table {TableName};" +
+                                      $"list @%{TableName};" +
+                                      $"remove @%{TableName};" +
                                       "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
                                       "call p1();" +
                                       "use role public";
