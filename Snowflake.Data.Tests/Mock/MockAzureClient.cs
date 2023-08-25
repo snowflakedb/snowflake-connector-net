@@ -37,33 +37,7 @@ namespace Snowflake.Data.Tests.Mock
         internal Exception CreateMockAzureError(string key)
         {
             HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
-
-            RequestFailedException azureError;
-
-            switch (statusCode)
-            {
-                case HttpStatusCode.BadRequest:
-                    azureError = new RequestFailedException((int)HttpStatusCode.BadRequest, AzureErrorMessage);
-                    break;
-                case HttpStatusCode.NotFound:
-                    azureError = new RequestFailedException((int)HttpStatusCode.NotFound, AzureErrorMessage);
-                    break;
-                case HttpStatusCode.Unauthorized:
-                    azureError = new RequestFailedException((int)HttpStatusCode.Unauthorized, AzureErrorMessage);
-                    break;
-                case HttpStatusCode.Forbidden:
-                    azureError = new RequestFailedException((int)HttpStatusCode.Forbidden, AzureErrorMessage);
-                    break;
-                case HttpStatusCode.InternalServerError:
-                    azureError = new RequestFailedException((int)HttpStatusCode.InternalServerError, AzureErrorMessage);
-                    break;
-                case HttpStatusCode.ServiceUnavailable:
-                    azureError = new RequestFailedException((int)HttpStatusCode.ServiceUnavailable, AzureErrorMessage);
-                    break;
-                default:
-                    azureError = new RequestFailedException(0, AzureErrorMessage);
-                    break;
-            }
+            RequestFailedException azureError = new RequestFailedException((int)statusCode, AzureErrorMessage);
 
             return azureError;
         }
