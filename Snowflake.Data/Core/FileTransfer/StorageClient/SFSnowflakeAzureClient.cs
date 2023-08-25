@@ -54,10 +54,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
-        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient mockClient) : this(stageInfo)
+        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient blobServiceClientMock) : this(stageInfo)
         {
             // Inject the mock BlobServiceClient
-            blobServiceClient = mockClient;
+            blobServiceClient = blobServiceClientMock;
         }
 
         /// <summary>

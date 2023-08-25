@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.Mock
         }
     }
 
-    class MockAzureClient : BlobServiceClient
+    class MockAzureBlobClient : BlobServiceClient
     {
         public override BlobContainerClient GetBlobContainerClient(string blobContainerName) =>
             new MockBlobContainerClient(blobContainerName);

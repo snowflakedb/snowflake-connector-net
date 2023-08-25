@@ -73,8 +73,8 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Setup mock client
-            MockAzureClient mockClient = new MockAzureClient();
-            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockClient);
+            MockAzureBlobClient blobServiceClientMock = new MockAzureBlobClient();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, blobServiceClientMock);
 
             _cancellationToken = new CancellationToken();
         }
