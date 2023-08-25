@@ -335,14 +335,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
-        private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            RequestFailedException err = (RequestFailedException)ex;
-            if (err.Status == (int)HttpStatusCode.BadRequest)
+            if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Status == (int)HttpStatusCode.NotFound)
+            else if (ex.Status == (int)HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -353,36 +352,34 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return fileMetadata;
         }
 
-        private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            RequestFailedException err = (RequestFailedException)ex;
-            if (err.Status == (int)HttpStatusCode.BadRequest)
+            if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (err.Status == (int)HttpStatusCode.Unauthorized)
+            else if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Status == (int)HttpStatusCode.Forbidden ||
-                err.Status == (int)HttpStatusCode.InternalServerError ||
-                err.Status == (int)HttpStatusCode.ServiceUnavailable)
+            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
+                ex.Status == (int)HttpStatusCode.InternalServerError ||
+                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
             return fileMetadata;
         }
 
-        private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleDownloadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
-            RequestFailedException err = (RequestFailedException)ex;
-            if (err.Status == (int)HttpStatusCode.Unauthorized)
+            if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (err.Status == (int)HttpStatusCode.Forbidden ||
-                err.Status == (int)HttpStatusCode.InternalServerError ||
-                err.Status == (int)HttpStatusCode.ServiceUnavailable)
+            else if (ex.Status == (int)HttpStatusCode.Forbidden ||
+                ex.Status == (int)HttpStatusCode.InternalServerError ||
+                ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
