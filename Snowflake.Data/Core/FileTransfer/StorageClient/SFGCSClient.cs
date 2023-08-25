@@ -177,8 +177,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                    fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 }
             }
 
@@ -238,8 +237,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                    fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
+                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 }
             }
 
@@ -286,8 +284,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
             }
         }
 
@@ -320,8 +317,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
+                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
             }
         }
 
@@ -399,8 +395,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
+                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
             }
         }
 
@@ -434,8 +429,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
+                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
             }
         }
 
@@ -472,23 +466,26 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// Handle file header error.
         /// </summary>
-        /// <param name="statusCode">The HTTP status code.</param>
+        /// <param name="ex">The file header exception.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <returns>File Metadata</returns>
-        private SFFileMetadata HandleFileHeaderErr(HttpStatusCode statusCode, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErr(WebException ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
-            if (statusCode == HttpStatusCode.Unauthorized)
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (statusCode == HttpStatusCode.Forbidden ||
-                statusCode == HttpStatusCode.InternalServerError ||
-                statusCode == HttpStatusCode.ServiceUnavailable)
+            else if (response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.InternalServerError ||
+                response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
-            else if (statusCode == HttpStatusCode.NotFound)
+            else if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
             }
@@ -502,22 +499,25 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// Handle file upload error.
         /// </summary>
-        /// <param name="statusCode">The HTTP status code.</param>
+        /// <param name="ex">The file header exception.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <returns>File Metadata</returns>
-        private SFFileMetadata HandleUploadFileErr(HttpStatusCode statusCode, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
-            if (statusCode == HttpStatusCode.BadRequest && GCS_ACCESS_TOKEN != null)
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.BadRequest && GCS_ACCESS_TOKEN != null)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
-            else if (statusCode == HttpStatusCode.Unauthorized)
+            else if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (statusCode == HttpStatusCode.Forbidden ||
-                statusCode == HttpStatusCode.InternalServerError ||
-                statusCode == HttpStatusCode.ServiceUnavailable)
+            else if (response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.InternalServerError ||
+                response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
@@ -527,18 +527,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// Handle file download error.
         /// </summary>
-        /// <param name="statusCode">The HTTP status code.</param>
+        /// <param name="ex">The file header exception.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <returns>File Metadata</returns>
-        private SFFileMetadata HandleDownloadFileErr(HttpStatusCode statusCode, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
-            if (statusCode == HttpStatusCode.Unauthorized)
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
-            else if (statusCode == HttpStatusCode.Forbidden ||
-                statusCode == HttpStatusCode.InternalServerError ||
-                statusCode == HttpStatusCode.ServiceUnavailable)
+            else if (response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.InternalServerError ||
+                response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
