@@ -33,7 +33,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "cola INTEGER",
                 "colb STRING"
             });
-
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
@@ -41,7 +40,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"insert into {TableName} values (?, ?)";
+                    string insertCommand = $"insert into {TableName} values (?, ?)";
+                    cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
                     p1.ParameterName = "1";
@@ -58,6 +58,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(3, count);
                 }
+
+                conn.Close();
             }
         }
 
@@ -77,7 +79,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "dateTimeData DATETIME",
                 "dateTimeWithTimeZone TIMESTAMP_TZ"
             });
-            
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
                 dbConnection.ConnectionString = ConnectionString;
@@ -108,39 +109,39 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             case DbType.VarNumeric:
                                 colName = "fixedNumericData";
                                 break;
-                            
+
                             case DbType.Boolean:
                                 colName = "boolData";
                                 break;
-                            
+
                             case DbType.Double:
                             case DbType.Single:
                                 colName = "floatingNumData";
                                 break;
-                            
+
                             case DbType.Guid:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
                                 break;
-                            
+
                             case DbType.Date:
                                 colName = "dateData";
                                 break;
-                            
+
                             case DbType.Time:
                                 colName = "timeData";
                                 break;
-                            
+
                             case DbType.DateTime:
                             case DbType.DateTime2:
                                 colName = "dateTimeData";
                                 break;
-                            
+
                             case DbType.DateTimeOffset:
                                 colName = "dateTimeWithTimeZone";
                                 break;
-                            
+
                             case DbType.Binary:
                                 colName = "binaryData";
                                 break;
@@ -179,7 +180,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName}";
+                            command.CommandText = $"select {colName} from {TableName};";
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
@@ -250,46 +251,46 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 colName = "fixedNumericData";
                                 param.Value = 10.1;
                                 break;
-                            
+
                             case DbType.Boolean:
                                 colName = "boolData";
                                 param.Value = true;
                                 break;
-                            
+
                             case DbType.Double:
                             case DbType.Single:
                                 colName = "floatingNumData";
                                 param.Value = 2.5;
                                 break;
-                            
+
                             case DbType.Guid:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
                                 param.Value = "thisIsAString";
                                 break;
-                            
+
                             case DbType.Date:
                                 colName = "dateData";
                                 param.Value = DateTime.Now;
                                 break;
-                            
+
                             case DbType.Time:
                                 colName = "timeData";
                                 param.Value = DateTime.Now;
                                 break;
-                            
+
                             case DbType.DateTime:
                             case DbType.DateTime2:
                                 colName = "dateTimeData";
                                 param.Value = DateTime.Now;
                                 break;
-                            
+
                             case DbType.DateTimeOffset:
                                 colName = "dateTimeWithTimeZone";
                                 param.Value = DateTimeOffset.Now;
                                 break;
-                            
+
                             case DbType.Binary:
                                 colName = "binaryData";
                                 param.Value = Encoding.UTF8.GetBytes("BinaryData");
@@ -328,7 +329,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName}";
+                            command.CommandText = $"select {colName} from {TableName};";
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
@@ -339,10 +340,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
 
                     // Clean up between each case
-                    using (var cmd = dbConnection.CreateCommand())
+                    using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        cmd.CommandText = $"DELETE FROM {TableName}";
-                        cmd.ExecuteNonQuery();
+                        command.CommandText = $"DELETE FROM {TableName}";
+                        command.ExecuteNonQuery();
                     }
                 }
             }
@@ -351,7 +352,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testBindValueWithSFDataType()
         {
-            
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
                 dbConnection.ConnectionString = ConnectionString;
@@ -453,7 +453,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             using (IDbCommand command = dbConnection.CreateCommand())
                             {
-                                command.CommandText = $"select data from {TableName}";
+                                command.CommandText = $"select data from {TableName};";
                                 using (IDataReader reader = command.ExecuteReader())
                                 {
                                     reader.Read();
@@ -518,6 +518,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Clear();
                     Assert.AreEqual(0, cmd.Parameters.Count);
                 }
+
+                conn.Close();
             }
         }
 
@@ -648,6 +650,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     //cmd.ExecuteNonQuery();
                     
                 }
+
+                conn.Close();
             }
         }
         
@@ -663,6 +667,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "colb TEXT",
                 "colc NUMBER(38,0)"
             });
+            
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
@@ -716,6 +721,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                 }
+
+                conn.Close();
             }
         }
 
@@ -756,6 +763,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                 }
+                conn.Close();
             }
         }
     }
