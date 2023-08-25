@@ -334,7 +334,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(DownloadFileName);
-                Assert.AreEqual(MockGCSWebResponse.GcsFileContent, text);
+                Assert.AreEqual(MockGCSWebRequest.GcsFileContent, text);
                 File.Delete(DownloadFileName);
             }
 

@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using Moq;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
 using System.IO;
@@ -33,54 +34,27 @@ namespace Snowflake.Data.Tests.Mock
         // Mock content length
         public const int FileContentLength = 9999;
 
+        // Mock data for downloaded file
+        public const string GcsFileContent = "GCSClientTest";
+
         public MockGCSWebRequest(string requestUriString)
         {
             requestUri = new Uri(requestUriString);
             Headers = new WebHeaderCollection();
         }
 
-        internal WebException SetHttpResponseStatusCode(MockGCSWebResponse response, string key)
-        {
-            HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
-
-            switch (statusCode)
-            {
-                case HttpStatusCode.BadRequest:
-                    Timeout = (int)HttpStatusCode.BadRequest;
-                    break;
-                case HttpStatusCode.NotFound:
-                    Timeout = (int)HttpStatusCode.NotFound;
-                    break;
-                case HttpStatusCode.Unauthorized:
-                    Timeout = (int)HttpStatusCode.Unauthorized;
-                    break;
-                case HttpStatusCode.Forbidden:
-                    Timeout = (int)HttpStatusCode.Forbidden;
-                    break;
-                case HttpStatusCode.InternalServerError:
-                    Timeout = (int)HttpStatusCode.InternalServerError;
-                    break;
-                case HttpStatusCode.ServiceUnavailable:
-                    Timeout = (int)HttpStatusCode.ServiceUnavailable;
-                    break;
-                default:
-                    Timeout = (int)HttpStatusCode.Ambiguous;
-                    break;
-            }
-
-            return new WebException(null, null, 0, response);
-        }
-
         protected WebResponse CreateMockWebResponse(string key, string method)
         {
-            WebResponse response = new MockGCSWebResponse();
+            var response = new Mock<HttpWebResponse>();
 
             if (key == HttpStatusCode.OK.ToString())
             {
+                response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+
                 if (method == HttpMethod.Head.ToString())
                 {
-                    response.Headers.Add("content-length", FileContentLength.ToString());
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
+                    response.Object.Headers.Add("content-length", FileContentLength.ToString());
+                    response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
                 }
                 else if (method == HttpMethod.Put.ToString())
                 {
@@ -88,23 +62,26 @@ namespace Snowflake.Data.Tests.Mock
                 }
                 else if (method == HttpMethod.Get.ToString())
                 {
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
+                    response.Setup(c => c.GetResponseStream()).Returns(new MemoryStream(Encoding.ASCII.GetBytes(GcsFileContent)));
+
+                    response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
                         "{" +
                         $"\"ContentEncryptionIV\": \"{GcsIV}\", " +
                         $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{GcsKey}\"}}" +
                         "}");
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, GcsMatdesc);
-                    response.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
-                    response.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, FileContentLength.ToString());
+                    response.Object.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, GcsMatdesc);
+                    response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
+                    response.Object.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, FileContentLength.ToString());
                 }
             }
             else
             {
-                SetHttpResponseStatusCode((MockGCSWebResponse)response, key);
-                throw new WebException("Mock Error");
+                response.SetupGet(c => c.StatusCode)
+                    .Returns((HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key));
+                throw new WebException("Mock GCS Error", null, 0, response.Object);
             }
 
-            return response;
+            return response.Object;
         }
 
         public override WebResponse GetResponse()
@@ -137,23 +114,5 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult(memoryStream);
         }
     }
-
-    class MockGCSWebResponse : WebResponse
-    {
-        // Mock data for downloaded file
-        public const string GcsFileContent = "GCSClientTest";
-        public override WebHeaderCollection Headers { get; }
-
-        public MockGCSWebResponse()
-        {
-            Headers = new WebHeaderCollection();
-        }
-
-        public override Stream GetResponseStream()
-        {
-            return new MemoryStream(Encoding.ASCII.GetBytes(GcsFileContent));
-        }
-    }
-
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
 }

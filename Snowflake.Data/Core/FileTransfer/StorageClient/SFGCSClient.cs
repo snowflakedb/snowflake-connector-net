@@ -177,7 +177,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                    HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                     fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
                 }
             }
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 }
                 else
                 {
-                    HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                    HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                     fileMetadata = HandleFileHeaderErr(statusCode, fileMetadata);
                 }
             }
@@ -286,7 +286,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                 fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
             }
         }
@@ -320,7 +320,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                 fileMetadata = HandleUploadFileErr(statusCode, fileMetadata);
             }
         }
@@ -399,7 +399,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                 fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
             }
         }
@@ -434,7 +434,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (WebException ex)
             {
-                HttpStatusCode statusCode = _customWebRequest == null ? ((HttpWebResponse)ex.Response).StatusCode : (HttpStatusCode)_customWebRequest.Timeout;
+                HttpStatusCode statusCode = ((HttpWebResponse)ex.Response).StatusCode;
                 fileMetadata = HandleDownloadFileErr(statusCode, fileMetadata);
             }
         }
