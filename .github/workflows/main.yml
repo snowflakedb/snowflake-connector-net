@@ -45,19 +45,24 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      - name: Before Test
-        run: nuget install OpenCover -Version 4.6.519
+      - name: Setup dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage --version 17.8.4
       - name: Decrypt Parameters
         shell: bash
         env:
-           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
         run: |
-           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
-            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: Run Opencover
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Build Driver
         run: |
           cd Snowflake.Data.Tests
-          ..\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f ${{ matrix.dotnet }} -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml" -oldStyle
+          dotnet restore
+          dotnet build -f ${{ matrix.dotnet }}
+      - name: Run Tests
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -65,18 +70,18 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
           name: tests-performance
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-#disable Code coverage for now as codecov is deprecated
-#https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
-#      - name: Install Codecov
-#        run: pip install codecov
-#      - name: Run Codecoverage
-#        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+  #disable Code coverage for now as codecov is deprecated
+  #https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
+  #      - name: Install Codecov
+  #        run: pip install codecov
+  #      - name: Run Codecoverage
+  #        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
 
   test-linux:
     name: Tests on Linux
@@ -97,23 +102,31 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+      - name: Setup dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage --version 17.8.4
       - name: Decrypt Parameters
         shell: bash
         env:
-           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
         run: |
-           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
-            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: |
           dotnet restore
           dotnet build
       - name: Run Tests
         run: |
-          dotnet test --no-build
+          cd Snowflake.Data.Tests
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
@@ -139,23 +152,31 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+      - name: Setup dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage --version 17.8.4
       - name: Decrypt Parameters
         shell: bash
         env:
-           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
         run: |
-           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
-            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
       - name: Build Driver
         run: |
           dotnet restore
           dotnet build
       - name: Run Tests
         run: |
-          dotnet test --no-build
+          cd Snowflake.Data.Tests
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v3
         with:
