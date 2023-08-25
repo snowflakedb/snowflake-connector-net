@@ -10,7 +10,6 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -181,22 +180,24 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             AmazonS3Client client = SFS3Client.S3Client;
 
             GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
-            GetObjectResponse response = null;
+
             try
             {
                 // Issue the GET request
                 var task = client.GetObjectAsync(request);
+                task.ConfigureAwait(false);
                 task.Wait();
 
-                response = task.Result;
+                using (GetObjectResponse response = task.Result)
+                {
+                    return HandleFileHeaderResponse(ref fileMetadata, response);
+                }
             }
             catch (Exception ex)
             {
                 fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
                 return null;
             }
-
-            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
@@ -332,19 +333,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the S3 location.
         /// </summary>
         /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Get the client
             SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
             AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
                 // Issue the POST/PUT request
                 var task = client.PutObjectAsync(putObjectRequest);
+                task.ConfigureAwait(false);
                 task.Wait();
             }
             catch (Exception ex)
@@ -370,14 +372,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the S3 location.
         /// </summary>
         /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Get the client
             SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
             AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytes, encryptionMetadata);
+            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
@@ -408,23 +410,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="client"> Amazon S3 client.</param>
         /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         /// <returns>The Put Object request.</returns>
-        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Convert file bytes to memory stream
-            Stream stream = new MemoryStream(fileBytes);
-
+            
             // Create S3 PUT request
+            fileBytesStream.Position = 0;
             PutObjectRequest putObjectRequest = new PutObjectRequest
             {
                 BucketName = location.bucket,
                 Key = location.key + fileMetadata.destFileName,
-                InputStream = stream,
+                InputStream = fileBytesStream,
                 ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
             };
 
@@ -453,13 +453,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the GET request
                 var task = client.GetObjectAsync(getObjectRequest);
+                task.ConfigureAwait(false);
                 task.Wait();
 
-                GetObjectResponse response = task.Result;
-                // Write to file
-                using (var fileStream = File.Create(fullDstPath))
+                using (GetObjectResponse response = task.Result)
                 {
-                    response.ResponseStream.CopyTo(fileStream);
+                    // Write to file
+                    using (var fileStream = File.Create(fullDstPath))
+                    {
+                        response.ResponseStream.CopyTo(fileStream);
+                    }
                 }
             }
             catch (Exception ex)
