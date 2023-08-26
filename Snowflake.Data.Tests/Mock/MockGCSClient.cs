@@ -16,34 +16,33 @@ namespace Snowflake.Data.Tests.Mock
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
     class MockGCSWebRequest : WebRequest
     {
-        public Uri requestUri;
+        internal Uri _requestUri;
+
         public override WebHeaderCollection Headers { get; set; }
 
         public override string Method { get; set; }
 
-        public override int Timeout { get; set; }
-
-        public Stream memoryStream = new MemoryStream();
+        internal Stream _mockMemoryStream = new MemoryStream();
 
         // Mock GCS data for FileHeader
-        public const string GcsIV = "MOCK_GCS";
-        public const string GcsKey = "MOCK_GCS_KEY";
-        public const string GcsMatdesc = "MOCK_GCS_MATDESC";
-        public const string SFCDigest = "MOCK_SFC_DIGEST";
+        internal const string GcsIV = "MOCK_GCS";
+        internal const string GcsKey = "MOCK_GCS_KEY";
+        internal const string GcsMatdesc = "MOCK_GCS_MATDESC";
+        internal const string SFCDigest = "MOCK_SFC_DIGEST";
 
         // Mock content length
-        public const int FileContentLength = 9999;
+        internal const int FileContentLength = 9999;
 
         // Mock data for downloaded file
-        public const string GcsFileContent = "GCSClientTest";
+        internal const string GcsFileContent = "GCSClientTest";
 
         public MockGCSWebRequest(string requestUriString)
         {
-            requestUri = new Uri(requestUriString);
+            _requestUri = new Uri(requestUriString);
             Headers = new WebHeaderCollection();
         }
 
-        protected WebResponse CreateMockWebResponse(string key, string method)
+        internal WebResponse CreateMockWebResponse(string key, string method)
         {
             var response = new Mock<HttpWebResponse>();
 
@@ -86,7 +85,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override WebResponse GetResponse()
         {
-            string[] requestKey = requestUri.AbsolutePath.ToString().Split('/');
+            string[] requestKey = _requestUri.AbsolutePath.ToString().Split('/');
             string key = requestKey[1]; // Skip the first index
 
             WebResponse response = CreateMockWebResponse(key, Method);
@@ -96,7 +95,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task<WebResponse> GetResponseAsync()
         {
-            string[] requestKey = requestUri.AbsolutePath.ToString().Split('/');
+            string[] requestKey = _requestUri.AbsolutePath.ToString().Split('/');
             string key = requestKey[1]; // Skip the first index
 
             WebResponse response = CreateMockWebResponse(key, Method);
@@ -106,12 +105,12 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Stream GetRequestStream()
         {
-            return memoryStream;
+            return _mockMemoryStream;
         }
 
         public override Task<Stream> GetRequestStreamAsync()
         {
-            return Task.FromResult(memoryStream);
+            return Task.FromResult(_mockMemoryStream);
         }
     }
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
