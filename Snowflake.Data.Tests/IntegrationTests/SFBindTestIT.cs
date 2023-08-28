@@ -28,15 +28,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testArrayBind()
         {
-            CreateOrReplaceTable(TableName, new []
-            {
-                "cola INTEGER",
-                "colb STRING"
-            });
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []
+                {
+                    "cola INTEGER",
+                    "colb STRING"
+                }, null, conn);
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -66,23 +68,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testBindNullValue()
         {
-            CreateOrReplaceTable(TableName, new[]
-            {
-                "intData NUMBER",
-                "fixedNumericData NUMBER(10,1)",
-                "floatingNumData DOUBLE",
-                "stringData VARCHAR",
-                "binaryData BINARY",
-                "boolData BOOLEAN",
-                "dateData DATE",
-                "timeData TIME",
-                "dateTimeData DATETIME",
-                "dateTimeWithTimeZone TIMESTAMP_TZ"
-            });
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
                 dbConnection.ConnectionString = ConnectionString;
                 dbConnection.Open();
+                CreateOrReplaceTable(TableName, new[]
+                {
+                    "intData NUMBER",
+                    "fixedNumericData NUMBER(10,1)",
+                    "floatingNumData DOUBLE",
+                    "stringData VARCHAR",
+                    "binaryData BINARY",
+                    "boolData BOOLEAN",
+                    "dateData DATE",
+                    "timeData TIME",
+                    "dateTimeData DATETIME",
+                    "dateTimeWithTimeZone TIMESTAMP_TZ"
+                }, null, dbConnection);
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
@@ -203,23 +205,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testBindValue()
         {
-            CreateOrReplaceTable(TableName, new[]
-            {
-                "intData NUMBER",
-                "fixedNumericData NUMBER(10,1)",
-                "floatingNumData DOUBLE",
-                "stringData VARCHAR",
-                "binaryData BINARY",
-                "boolData BOOLEAN",
-                "dateData DATE",
-                "timeData TIME",
-                "dateTimeData DATETIME",
-                "dateTimeWithTimeZone TIMESTAMP_TZ"
-            });
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
                 dbConnection.ConnectionString = ConnectionString;
                 dbConnection.Open();
+                
+                CreateOrReplaceTable(TableName, new[]
+                {
+                    "intData NUMBER",
+                    "fixedNumericData NUMBER(10,1)",
+                    "floatingNumData DOUBLE",
+                    "stringData VARCHAR",
+                    "binaryData BINARY",
+                    "boolData BOOLEAN",
+                    "dateData DATE",
+                    "timeData TIME",
+                    "dateTimeData DATETIME",
+                    "dateTimeWithTimeZone TIMESTAMP_TZ"
+                }, null, dbConnection);
+                
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
@@ -361,22 +365,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     if (!type.Equals(SFDataType.None))
                     {
                         bool isTypeSupported = true;
+                        string[] columns;
                         if (!type.Equals(SFDataType.FIXED))
                         {
-                            CreateOrReplaceTable(TableName, new []
+                            columns = new[]
                             {
                                 $"data {type.ToString()}",
                                 "unsupportedType VARCHAR"
-                            });
+                            };
                         }
                         else
                         {
-                            CreateOrReplaceTable(TableName, new []
+                            columns = new[]
                             {
                                 "data NUMBER",
                                 "unsupportedType VARCHAR"
-                            });
+                            };
                         }
+                        
+                        CreateOrReplaceTable(TableName, columns, null, dbConnection);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
@@ -526,19 +533,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testPutArrayBind()
         {
-            CreateOrReplaceTable(TableName, new []
-            {
-                "cola INTEGER",
-                "colb STRING",
-                "colc DATE",
-                "cold TIME",
-                "cole TIMESTAMP_NTZ",
-                "colf TIMESTAMP_TZ" 
-            });
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []
+                {
+                    "cola INTEGER",
+                    "colb STRING",
+                    "colc DATE",
+                    "cold TIME",
+                    "cole TIMESTAMP_NTZ",
+                    "colf TIMESTAMP_TZ" 
+                }, null, conn);
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -661,16 +669,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
                 TypeNameHandling = TypeNameHandling.Auto
             };
-            CreateOrReplaceTable(TableName, new []
-            {
-                "cola REAL",
-                "colb TEXT",
-                "colc NUMBER(38,0)"
-            });
             
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []
+                {
+                    "cola REAL",
+                    "colb TEXT",
+                    "colc NUMBER(38,0)"
+                }, null, conn);
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -729,14 +738,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testPutArrayBind1()
         {
-            CreateOrReplaceTable(TableName, new []
-            {
-                "cola INTEGER"
-            });
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []
+                {
+                    "cola INTEGER"
+                }, null, conn);
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {

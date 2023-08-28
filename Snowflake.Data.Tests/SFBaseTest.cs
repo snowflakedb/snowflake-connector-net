@@ -97,19 +97,27 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
+        protected void CreateOrReplaceTable(string tableName, IEnumerable<string> columns, string additionalQueryStr = null, IDbConnection conn = null)
         {
             var columnsStr = string.Join(", ", columns);
+            var cmd = new SnowflakeDbCommand();
+            cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr}) {additionalQueryStr}";
             
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            if (conn != null)
             {
-                conn.Open();
-                var cmd = conn.CreateCommand();
-                cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr}) {additionalQueryStr}";
+                cmd.Connection = (SnowflakeDbConnection)conn;
                 cmd.ExecuteNonQuery();
-                
-                _tablesToRemove.Add(tableName);
             }
+            else
+            {
+                var newConn = new SnowflakeDbConnection(ConnectionString);
+                newConn.Open();
+                cmd.Connection = newConn;
+                cmd.ExecuteNonQuery();
+                newConn.Close();
+            }
+
+            _tablesToRemove.Add(tableName);
         }
 
         protected void AddTableToRemoveList(string tableName)

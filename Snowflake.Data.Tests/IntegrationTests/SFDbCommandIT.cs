@@ -137,10 +137,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test case takes too much time so run it manually")]
         public void TestRowsAffectedOverflowInt()
         {
-            CreateOrReplaceTable(TableName, new []{"c1 NUMBER"});
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"c1 NUMBER"}, null, conn);
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
@@ -795,12 +796,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testExecuteScalarAsyncSelect()
         {
-            CreateOrReplaceTable(TableName, new []{"cola INTEGER"});
             CancellationTokenSource externalCancel = new CancellationTokenSource();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"cola INTEGER"}, null, conn);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {

@@ -22,11 +22,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void testDelCharPr431()
         {
-            CreateOrReplaceTable(TableName, new []{"col STRING"});
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"col STRING"}, null, conn);
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -67,11 +68,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(1);
             
-            CreateOrReplaceTable(TableName, new []{"src VARIANT"});
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"src VARIANT"}, null, conn);
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -125,12 +127,13 @@ select parse_json('{{
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
-
-            CreateOrReplaceTable(TableName, new []{"col STRING"});
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"col STRING"}, null, conn);
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -172,11 +175,13 @@ select parse_json('{{
         {            
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
-            CreateOrReplaceTable(TableName, new []{"col STRING"});
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"col STRING"}, null, conn);
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;

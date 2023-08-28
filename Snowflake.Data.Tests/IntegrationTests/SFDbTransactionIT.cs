@@ -26,11 +26,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {
-            CreateOrReplaceTable(TableName, new []{"c INT"});
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(TableName, new []{"c INT"}, null, conn);
 
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
@@ -52,14 +53,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Test SNOW-761136 unnecessary ROLLBACK 
         public void TestTransactionRollback()
         {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            
             CreateOrReplaceTable(TableName, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            });
-            var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            }, null, conn);
             
             using (DbTransaction transaction = conn.BeginTransaction())
             {
@@ -102,14 +104,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Test SNOW-761136 unnecessary ROLLBACK 
         public void TestTransactionRollbackOn2Transactions()
         {
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            
             CreateOrReplaceTable(TableName, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            });
-            var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            }, null, conn);
             
             using (DbTransaction transaction = conn.BeginTransaction())
             {

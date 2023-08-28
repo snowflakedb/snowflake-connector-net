@@ -710,10 +710,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionDispose()
         {
-            CreateOrReplaceTable(TableName, new []{"c INT"});
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                CreateOrReplaceTable(TableName, new []{"c INT"}, null, conn);
                 var t1 = conn.BeginTransaction();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
