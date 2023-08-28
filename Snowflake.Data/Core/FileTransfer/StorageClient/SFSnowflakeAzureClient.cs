@@ -48,7 +48,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Get the Azure SAS token and create the client
             if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
             {
-                string blobEndpoint = string.Format("https://{0}.blob.core.windows.net", stageInfo.storageAccount);
+                string blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
                 blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
                     new AzureSasCredential(sasToken));
             }
