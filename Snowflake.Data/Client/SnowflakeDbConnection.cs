@@ -151,6 +151,7 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
+                SfSession.lastQueryId = null;
                 var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
                 if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
@@ -180,6 +181,7 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
+                    SfSession.lastQueryId = null;
                     var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
                     if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
@@ -321,17 +323,26 @@ namespace Snowflake.Data.Client
                 cancellationToken);
         }
 
-        public Mutex GetArrayBindingMutex()
+        public string GetQueryId()
+        {
+            if (SfSession != null)
+            {
+                return SfSession.lastQueryId;
+            }
+            return null;
+        }
+
+        internal Mutex GetArrayBindingMutex()
         {
             return _arraybindingMutex;
         }
 
-        public bool IsArrayBindStageCreated()
+        internal bool IsArrayBindStageCreated()
         {
             return _isArrayBindStageCreated;
         }
 
-        public void SetArrayBindStageCreated()
+        internal void SetArrayBindStageCreated()
         {
             _isArrayBindStageCreated = true;
         }

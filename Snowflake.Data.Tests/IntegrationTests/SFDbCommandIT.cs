@@ -837,5 +837,69 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestGetQueryId()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // query id is null when no query executed
+                string queryId = conn.GetQueryId();
+                Assert.IsNull(queryId);
+
+                // query id from ExecuteNonQuery
+                SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
+                command.CommandText = "create or replace temporary table testgetqueryid(cola string)";
+                command.ExecuteNonQuery();
+                queryId = conn.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, command.GetQueryId());
+
+                // query id from ExecuteReader
+                command.CommandText = "show tables like 'testgetqueryid'";
+                SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                queryId = reader.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, command.GetQueryId());
+                Assert.IsTrue(reader.Read());
+
+                // query id from insert query
+                command.CommandText = "insert into testgetqueryid values('test')";
+                command.ExecuteNonQuery();
+                queryId = conn.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, command.GetQueryId());
+
+                // query id from select query
+                command.CommandText = "select * from testgetqueryid";
+                reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                queryId = conn.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, command.GetQueryId());
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("test", reader.GetString(0));
+
+                // use query Id to get the result
+                command.CommandText = $"select * from table(result_scan('{queryId}'))";
+                reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("test", reader.GetString(0));
+
+                conn.Close();
+
+                // connection pooling is enabled by default, the session should be reused
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // query id is set to null after session reused from pool
+                queryId = conn.GetQueryId();
+                Assert.IsNull(queryId);
+
+                conn.Close();
+            }
+        }
     }
 }

@@ -182,6 +182,7 @@ namespace Snowflake.Data.Core
         {
             if (response.success)
             {
+                SfSession.lastQueryId = response.data.queryId;
                 if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
                 {
                     return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
