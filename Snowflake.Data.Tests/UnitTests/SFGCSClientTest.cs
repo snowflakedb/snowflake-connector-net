@@ -81,6 +81,14 @@ namespace Snowflake.Data.Tests.UnitTests
             // Do nothing;
         }
 
+        private void SetUpCustomWebRequest(string method)
+        {
+            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
+            var mockWebRequest = new MockGCSWebRequest(url);
+            mockWebRequest.Method = method;
+            _client.SetCustomWebRequest(mockWebRequest);
+        }
+
         [Test]
         public void TestConstructorWithoutGCSAccessToken()
         {
@@ -164,12 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "HEAD";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("HEAD");
 
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
 
@@ -188,12 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "HEAD";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("HEAD");
 
             CancellationToken cancellationToken = new CancellationToken();
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, cancellationToken).ConfigureAwait(false);
@@ -228,12 +226,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "PUT";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("PUT");
 
             _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
@@ -257,12 +250,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "PUT";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("PUT");
 
             await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
@@ -295,12 +283,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "GET";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("GET");
 
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
@@ -317,12 +300,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup request
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-
-            // Setup web request
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            MockGCSWebRequest mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = "GET";
-            _client.SetCustomWebRequest(mockWebRequest);
+            SetUpCustomWebRequest("GET");
 
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
