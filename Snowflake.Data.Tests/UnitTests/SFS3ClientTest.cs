@@ -155,11 +155,13 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(MockAmazonS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
         public async Task TestGetFileHeaderAsync(string requestKey, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // arrange request
             _fileMetadata.stageInfo.location = requestKey + "/" + HttpMethod.Head + "/async";
 
+            // act
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
+            // assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
