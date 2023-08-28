@@ -89,10 +89,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractBucketNameAndPath()
         {
-            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
-
             // Split LOCATION based on the first '/' character
             string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
+
+            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
             Assert.AreEqual(bucketAndKey[0], location.bucket);
             Assert.AreEqual(bucketAndKey[1], location.key);
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
-            AssertForDownloadFileTests(expectedResultStatus);
+            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
 
@@ -234,11 +234,6 @@ namespace Snowflake.Data.Tests.UnitTests
 
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
-            AssertForDownloadFileTests(expectedResultStatus);
-        }
-
-        private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
-        {
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
     }
