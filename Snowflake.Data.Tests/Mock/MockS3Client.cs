@@ -15,7 +15,7 @@ using System.Net;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockS3Client : AmazonS3Client
+    class MockAmazonS3Client : AmazonS3Client
     {
         // Mock status codes for S3 requests
         internal const string AwsStatusOk = "OK";
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
         // Mock content length
         internal const int ContentLength = 9999;
 
-        public MockS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsSessionToken, AmazonS3Config clientConfig)
+        public MockAmazonS3Client(string awsAccessKeyId, string awsSecretAccessKey, string awsSessionToken, AmazonS3Config clientConfig)
     : base(awsAccessKeyId, awsSecretAccessKey, awsSessionToken, clientConfig)
         {
         }

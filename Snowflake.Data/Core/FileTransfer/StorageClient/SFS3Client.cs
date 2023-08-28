@@ -137,10 +137,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             int maxRetry,
             int parallel,
             ProxyCredentials proxyCredentials,
-            AmazonS3Client mockClient) : this(stageInfo, maxRetry, parallel, proxyCredentials)
+            AmazonS3Client amazonS3ClientMock) : this(stageInfo, maxRetry, parallel, proxyCredentials)
         {
             // Inject the mock S3Client
-            S3Client = mockClient;
+            S3Client = amazonS3ClientMock;
         }
 
         /// <summary>
