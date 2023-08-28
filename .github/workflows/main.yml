@@ -83,6 +83,8 @@ jobs:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          ignore:
+            - "Snowflake.Data.Tests"
 
   test-linux:
     name: Tests on Linux
@@ -140,6 +142,8 @@ jobs:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          ignore:
+            - "Snowflake.Data.Tests"
 
   test-mac:
     name: Tests on MAC
@@ -197,3 +201,5 @@ jobs:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+          ignore:
+            - "Snowflake.Data.Tests"
