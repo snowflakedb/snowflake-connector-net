@@ -1,0 +1,5 @@
+{
+  "common": {
+    "log_path": "./test-logs/log_file.log"
+  }
+}

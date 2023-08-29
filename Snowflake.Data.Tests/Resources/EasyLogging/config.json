@@ -1,0 +1,6 @@
+{
+  "common": {
+    "log_level": "info",
+    "log_path": "./test-logs/log_file.log"
+  }
+}
