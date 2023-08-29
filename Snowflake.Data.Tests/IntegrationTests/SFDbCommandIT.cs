@@ -847,40 +847,52 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 // query id is null when no query executed
-                string queryId = conn.GetQueryId();
+                SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
+                string queryId = command.GetQueryId();
                 Assert.IsNull(queryId);
 
                 // query id from ExecuteNonQuery
-                SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
                 command.CommandText = "create or replace temporary table testgetqueryid(cola string)";
                 command.ExecuteNonQuery();
-                queryId = conn.GetQueryId();
+                queryId = command.GetQueryId();
                 Assert.IsNotEmpty(queryId);
-                Assert.AreEqual(queryId, command.GetQueryId());
 
                 // query id from ExecuteReader
                 command.CommandText = "show tables like 'testgetqueryid'";
                 SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                queryId = reader.GetQueryId();
+                queryId = command.GetQueryId();
                 Assert.IsNotEmpty(queryId);
-                Assert.AreEqual(queryId, command.GetQueryId());
+                Assert.AreEqual(queryId, reader.GetQueryId());
                 Assert.IsTrue(reader.Read());
 
                 // query id from insert query
                 command.CommandText = "insert into testgetqueryid values('test')";
                 command.ExecuteNonQuery();
-                queryId = conn.GetQueryId();
+                queryId = command.GetQueryId();
                 Assert.IsNotEmpty(queryId);
-                Assert.AreEqual(queryId, command.GetQueryId());
 
                 // query id from select query
                 command.CommandText = "select * from testgetqueryid";
                 reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                queryId = conn.GetQueryId();
+                queryId = command.GetQueryId();
                 Assert.IsNotEmpty(queryId);
-                Assert.AreEqual(queryId, command.GetQueryId());
+                Assert.AreEqual(queryId, reader.GetQueryId());
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
+
+                // query id from different DbCommand instance
+                SnowflakeDbCommand command2 = (SnowflakeDbCommand)conn.CreateCommand();
+                string queryId2 = command2.GetQueryId();
+                Assert.IsNull(queryId2);
+                command2.CommandText = "select 'test2'";
+                SnowflakeDbDataReader reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
+                queryId2 = command2.GetQueryId();
+                Assert.IsNotEmpty(queryId2);
+                Assert.AreEqual(queryId2, reader2.GetQueryId());
+                // each DbCommand instance has it's own query Id.
+                Assert.AreNotEqual(queryId2, queryId);
+                Assert.IsTrue(reader2.Read());
+                Assert.AreEqual("test2", reader2.GetString(0));
 
                 // use query Id to get the result
                 command.CommandText = $"select * from table(result_scan('{queryId}'))";
@@ -888,15 +900,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
 
-                conn.Close();
-
-                // connection pooling is enabled by default, the session should be reused
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                // query id is set to null after session reused from pool
-                queryId = conn.GetQueryId();
-                Assert.IsNull(queryId);
+                command2.CommandText = $"select * from table(result_scan('{queryId2}'))";
+                reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
+                Assert.IsTrue(reader2.Read());
+                Assert.AreEqual("test2", reader2.GetString(0));
 
                 conn.Close();
             }
