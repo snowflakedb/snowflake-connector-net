@@ -65,9 +65,6 @@ namespace Snowflake.Data.Core
         private long _startTime = 0;
         internal string connStr = null;
 
-        // the query id of the last succeeded query
-        internal string lastQueryId { get; set; }
-
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)

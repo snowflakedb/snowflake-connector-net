@@ -60,6 +60,9 @@ namespace Snowflake.Data.Core
 
         string _bindStage = null;
 
+        // the query id of the last succeeded query
+        string _lastQueryId = null;
+
         internal SFStatement(SFSession session)
         {
             SfSession = session;
@@ -182,7 +185,7 @@ namespace Snowflake.Data.Core
         {
             if (response.success)
             {
-                SfSession.lastQueryId = response.data.queryId;
+                _lastQueryId = response.data.queryId;
                 if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
                 {
                     return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
@@ -777,6 +780,11 @@ namespace Snowflake.Data.Core
             fileTransferAgent.execute();
 
             return fileTransferAgent.result();
+        }
+
+        internal string GetQueryId()
+        {
+            return _lastQueryId;
         }
     }
 }

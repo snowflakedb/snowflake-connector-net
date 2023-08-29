@@ -240,13 +240,13 @@ namespace Snowflake.Data.Client
 
         public string GetQueryId()
         {
-            SnowflakeDbConnection conn = (SnowflakeDbConnection)connection;
-            if ((conn != null) && (conn.SfSession != null))
+            if (sfStatement != null)
             {
-                return conn.SfSession.lastQueryId;
+                return sfStatement.GetQueryId();
             }
             return null;
         }
+
         protected override DbParameter CreateDbParameter()
         {
             return new SnowflakeDbParameter();
