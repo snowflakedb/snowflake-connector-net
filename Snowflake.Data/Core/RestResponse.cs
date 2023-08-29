@@ -232,14 +232,14 @@ namespace Snowflake.Data.Core
 
         // query context
         [JsonProperty(PropertyName = "queryContext", NullValueHandling = NullValueHandling.Ignore)]
-        internal ResponseQueryContext queryContext { get; set; }
+        internal ResponseQueryContext QueryContext { get; set; }
     }
 
     // The query context in query response
     internal class ResponseQueryContext
     {
         [JsonProperty(PropertyName = "entries")]
-        internal List<ResponseQueryContextElement> entries { get; set; }
+        internal List<ResponseQueryContextElement> Entries { get; set; }
     }
 
     // The query context in query response
@@ -247,19 +247,19 @@ namespace Snowflake.Data.Core
     {
         // database id as key. (bigint)
         [JsonProperty(PropertyName = "id")]
-        public long id { get; set; }
+        public long Id { get; set; }
 
         // When the query context read (bigint). Compare for same id.
         [JsonProperty(PropertyName = "timestamp")]
-        public long readTimestamp { get; set; }
+        public long ReadTimestamp { get; set; }
 
         // Priority of the query context (bigint). Compare for different ids.
         [JsonProperty(PropertyName = "priority")]
-        public long priority { get; set; }
+        public long Priority { get; set; }
 
         // Opaque information (object with a value of base64 encoded string).
         [JsonProperty(PropertyName = "context", NullValueHandling = NullValueHandling.Ignore)]
-        public string context { get; set; }
+        public string Context { get; set; }
     }
 
     internal class ExecResponseRowType

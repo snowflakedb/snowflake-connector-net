@@ -10,11 +10,11 @@ namespace Snowflake.Data.Core
     {
         // base64 encoded string of Opaque information
         [JsonProperty(PropertyName = "base64Data")]
-        public string base64Data { get; set; }
+        public string Base64Data { get; set; }
 
         public QueryContextValue(string context)
         {
-            base64Data = context;
+            Base64Data = context;
         }
     }
     internal class QueryContextValueEmpty
@@ -25,24 +25,24 @@ namespace Snowflake.Data.Core
     internal class QueryContextElement
     {
         // database id as key. (bigint)
-        public long id { get; set; }
+        public long Id { get; set; }
 
         // When the query context read (bigint). Compare for same id.
-        public long readTimestamp { get; set; }
+        public long ReadTimestamp { get; set; }
 
         // Priority of the query context (bigint). Compare for different ids.
-        public long priority { get; set; }
+        public long Priority { get; set; }
 
         // Opaque information (object with a value of base64 encoded string).
-        public string context { get; set; }
+        public string Context { get; set; }
 
         public QueryContextElement(long in_id, long in_timestamp,
                             long in_pri, string in_context)
         {
-            id = in_id;
-            readTimestamp = in_timestamp;
-            priority = in_pri;
-            context = in_context;
+            Id = in_id;
+            ReadTimestamp = in_timestamp;
+            Priority = in_pri;
+            Context = in_context;
         }
 
         public override bool Equals(Object obj)
@@ -53,67 +53,67 @@ namespace Snowflake.Data.Core
             }
 
             QueryContextElement other = (QueryContextElement)obj;
-            return (id == other.id) &&
-                   (priority == other.priority) &&
-                   (readTimestamp == other.readTimestamp) &&
-                   (context.Equals(other.context));
+            return (Id == other.Id) &&
+                   (Priority == other.Priority) &&
+                   (ReadTimestamp == other.ReadTimestamp) &&
+                   (Context.Equals(other.Context));
         }
 
         public override int GetHashCode()
         {
             int hash = 31;
 
-            hash = hash * 31 + (int)id;
-            hash += (hash * 31) + (int)readTimestamp;
-            hash += (hash * 31) + (int)priority;
-            hash += (hash * 31) + context.GetHashCode();
+            hash = hash * 31 + (int)Id;
+            hash += (hash * 31) + (int)ReadTimestamp;
+            hash += (hash * 31) + (int)Priority;
+            hash += (hash * 31) + Context.GetHashCode();
 
             return hash;
         }
     };
 
-    class elementComparer : IComparer<QueryContextElement>
+    class ElementComparer : IComparer<QueryContextElement>
     {
         public int Compare(QueryContextElement x, QueryContextElement y)
         {
-            if (x.priority != y.priority) return x.priority > y.priority ? 1 : -1;
-            if (x.id != y.id) return x.id > y.id ? 1 : -1;
-            if (x.readTimestamp != y.readTimestamp) return x.readTimestamp > y.readTimestamp ? 1 : -1;
+            if (x.Priority != y.Priority) return x.Priority > y.Priority ? 1 : -1;
+            if (x.Id != y.Id) return x.Id > y.Id ? 1 : -1;
+            if (x.ReadTimestamp != y.ReadTimestamp) return x.ReadTimestamp > y.ReadTimestamp ? 1 : -1;
             return 0;
         }
     }
 
     internal class QueryContextCache
     {
-        private int capacity; // Capacity of the cache
-        private Dictionary<long, QueryContextElement> idMap; // Map for id and QCC
-        private Dictionary<long, QueryContextElement> priorityMap; // Map for priority and QCC
-        private Dictionary<long, QueryContextElement>newPriorityMap; // Intermediate map for priority and QCC for current round of merging
-        private SortedSet<QueryContextElement> cacheSet; // Order data as per priority
-        private SFLogger logger = SFLoggerFactory.GetLogger<QueryContextCache>();
+        private int _capacity; // Capacity of the cache
+        private Dictionary<long, QueryContextElement> _idMap; // Map for id and QCC
+        private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
+        private Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
+        private SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
+        private SFLogger _logger = SFLoggerFactory.GetLogger<QueryContextCache>();
 
         public QueryContextCache(int capacity)
         {
-            this.capacity = capacity;
-            idMap = new Dictionary<long, QueryContextElement>();
-            priorityMap = new Dictionary<long, QueryContextElement>();
-            newPriorityMap = new Dictionary<long, QueryContextElement>();
-            cacheSet = new SortedSet<QueryContextElement>(new elementComparer());
+            _capacity = capacity;
+            _idMap = new Dictionary<long, QueryContextElement>();
+            _priorityMap = new Dictionary<long, QueryContextElement>();
+            _newPriorityMap = new Dictionary<long, QueryContextElement>();
+            _cacheSet = new SortedSet<QueryContextElement>(new ElementComparer());
         }
 
-        public void merge(long id, long readTimestamp, long priority, string context)
+        public void Merge(long id, long readTimestamp, long priority, string context)
         {
-            if (idMap.ContainsKey(id))
+            if (_idMap.ContainsKey(id))
             {
                 // ID found in the cache
-                QueryContextElement qce = idMap[id];
-                if (readTimestamp > qce.readTimestamp)
+                QueryContextElement qce = _idMap[id];
+                if (readTimestamp > qce.ReadTimestamp)
                 {
-                    if (qce.priority == priority)
+                    if (qce.Priority == priority)
                     {
                         // Same priority, overwrite new data at same place
-                        qce.readTimestamp = readTimestamp;
-                        qce.context = context;
+                        qce.ReadTimestamp = readTimestamp;
+                        qce.Context = context;
                     }
                     else
                     {
@@ -121,92 +121,92 @@ namespace Snowflake.Data.Core
                         QueryContextElement newQCE =
                             new QueryContextElement(id, readTimestamp, priority, context);
 
-                        replaceQCE(qce, newQCE);
+                        ReplaceQCE(qce, newQCE);
                     } // new priority
                 } // new data is recent
-                else if (readTimestamp == qce.readTimestamp && qce.priority != priority)
+                else if (readTimestamp == qce.ReadTimestamp && qce.Priority != priority)
                 {
                     // Same read timestamp but change in priority
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
-                    replaceQCE(qce, newQCE);
+                    ReplaceQCE(qce, newQCE);
                 }
             } // id found
             else
             {
                 // new id
-                if (priorityMap.ContainsKey(priority))
+                if (_priorityMap.ContainsKey(priority))
                 {
                     // Same priority with different id
-                    QueryContextElement qce = priorityMap[priority];
+                    QueryContextElement qce = _priorityMap[priority];
                     // Replace with new data
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
-                    replaceQCE(qce, newQCE);
+                    ReplaceQCE(qce, newQCE);
                 }
                 else
                 {
                     // new priority
                     // Add new element in the cache
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
-                    addQCE(newQCE);
+                    AddQCE(newQCE);
                 }
             }
         }
 
         /** Sync the newPriorityMap with the priorityMap at the end of current round of merge */
-        public void syncPriorityMap()
+        public void SyncPriorityMap()
         {
-            logger.Debug(
-                $"syncPriorityMap called priorityMap size = {priorityMap.Count}, newPrioirtyMap size = {newPriorityMap.Count}");
-            foreach (KeyValuePair<long, QueryContextElement> entry in newPriorityMap)
+            _logger.Debug(
+                $"syncPriorityMap called priorityMap size = {_priorityMap.Count}, newPrioirtyMap size = {_newPriorityMap.Count}");
+            foreach (KeyValuePair<long, QueryContextElement> entry in _newPriorityMap)
             {
-                priorityMap.Add(entry.Key, entry.Value);
+                _priorityMap.Add(entry.Key, entry.Value);
             }
             // clear the newPriorityMap for next round of QCC merge(a round consists of multiple entries)
-            newPriorityMap.Clear();
+            _newPriorityMap.Clear();
         }
 
         /**
          * After the merge, loop through priority list and make sure cache is at most capacity. Remove all
          * other elements from the list based on priority.
          */
-        public void checkCacheCapacity()
+        public void CheckCacheCapacity()
         {
-            logger.Debug(
-                $"checkCacheCapacity() called. cacheSet size {cacheSet.Count} cache capacity {capacity}");
-            if (cacheSet.Count > capacity)
+            _logger.Debug(
+                $"checkCacheCapacity() called. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
+            if (_cacheSet.Count > _capacity)
             {
                 // remove elements based on priority
-                while (cacheSet.Count > capacity)
+                while (_cacheSet.Count > _capacity)
                 {
-                    QueryContextElement qce = cacheSet.Last();
-                    removeQCE(qce);
+                    QueryContextElement qce = _cacheSet.Last();
+                    RemoveQCE(qce);
                 }
             }
 
-            logger.Debug(
-                $"checkCacheCapacity() returns. cacheSet size {cacheSet.Count} cache capacity {capacity}");
+            _logger.Debug(
+                $"checkCacheCapacity() returns. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
         }
 
         /** Clear the cache. */
-        public void clearCache()
+        public void ClearCache()
         {
-            logger.Debug("clearCache() called");
-            idMap.Clear();
-            priorityMap.Clear();
-            cacheSet.Clear();
-            logger.Debug($"clearCache() returns. Number of entries in cache now {cacheSet.Count}");
+            _logger.Debug("clearCache() called");
+            _idMap.Clear();
+            _priorityMap.Clear();
+            _cacheSet.Clear();
+            _logger.Debug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
         }
 
-        public void setCapacity(int cap)
+        public void SetCapacity(int cap)
         {
             // check without locking first for performance reason
-            if (capacity == cap)
+            if (_capacity == cap)
                 return;
 
-            logger.Debug($"set capacity from {capacity} to {cap}");
-            capacity = cap;
-            checkCacheCapacity();
-            logCacheEntries();
+            _logger.Debug($"set capacity from {_capacity} to {cap}");
+            _capacity = cap;
+            CheckCacheCapacity();
+            LogCacheEntries();
         }
 
         /**
@@ -217,65 +217,65 @@ namespace Snowflake.Data.Core
          */
         public SortedSet<QueryContextElement> getElements()
         {
-            return cacheSet;
+            return _cacheSet;
         }
 
-        public int getSize()
+        public int GetSize()
         {
-            return cacheSet.Count;
+            return _cacheSet.Count;
         }
 
         /**
          * Update query context chache with the query context received in query response
          * @param queryContext: the QueryContext body parsed from query response
          */
-        public void update(ResponseQueryContext queryContext)
+        public void Update(ResponseQueryContext queryContext)
         {
             // Log existing cache entries
-            logCacheEntries();
+            LogCacheEntries();
 
-            if (queryContext == null || queryContext.entries == null)
+            if (queryContext == null || queryContext.Entries == null)
             {
                 // Clear the cache
-                clearCache();
+                ClearCache();
                 return;
             }
-            foreach (ResponseQueryContextElement entry in queryContext.entries)
+            foreach (ResponseQueryContextElement entry in queryContext.Entries)
             {
-                merge(entry.id, entry.readTimestamp, entry.priority, entry.context);
+                Merge(entry.Id, entry.ReadTimestamp, entry.Priority, entry.Context);
             }
 
-            syncPriorityMap();
+            SyncPriorityMap();
 
             // After merging all entries, truncate to capacity
-            checkCacheCapacity();
+            CheckCacheCapacity();
             // Log existing cache entries
-            logCacheEntries();
+            LogCacheEntries();
         }
 
         /**
          * Get the query context can be sent through query request
          * @return the QueryContext body
          */
-        public RequestQueryContext getQueryContextRequest()
+        public RequestQueryContext GetQueryContextRequest()
         {
             RequestQueryContext reqQCC = new RequestQueryContext();
-            reqQCC.entries = new List<RequestQueryContextElement>();
-            foreach (QueryContextElement elem in cacheSet)
+            reqQCC.Entries = new List<RequestQueryContextElement>();
+            foreach (QueryContextElement elem in _cacheSet)
             {
                 RequestQueryContextElement reqElem = new RequestQueryContextElement();
-                reqElem.id = elem.id;
-                reqElem.priority = elem.priority;
-                reqElem.readTimestamp = elem.readTimestamp;
-                if (elem.context != null)
+                reqElem.Id = elem.Id;
+                reqElem.Priority = elem.Priority;
+                reqElem.ReadTimestamp = elem.ReadTimestamp;
+                if (elem.Context != null)
                 {
-                    reqElem.context = new QueryContextValue(elem.context);
+                    reqElem.Context = new QueryContextValue(elem.Context);
                 }
                 else
                 {
-                    reqElem.context = new QueryContextValueEmpty();
+                    reqElem.Context = new QueryContextValueEmpty();
                 }
-                reqQCC.entries.Add(reqElem);
+                reqQCC.Entries.Add(reqElem);
             }
 
             return reqQCC;
@@ -285,18 +285,18 @@ namespace Snowflake.Data.Core
          * Get the query context in response format, for test purpose
          * @return the QueryContext body
          */
-        public ResponseQueryContext getQueryContextResponse()
+        public ResponseQueryContext GetQueryContextResponse()
         {
             ResponseQueryContext rspQCC = new ResponseQueryContext();
-            rspQCC.entries = new List<ResponseQueryContextElement>();
-            foreach (QueryContextElement elem in cacheSet)
+            rspQCC.Entries = new List<ResponseQueryContextElement>();
+            foreach (QueryContextElement elem in _cacheSet)
             {
                 ResponseQueryContextElement rspElem = new ResponseQueryContextElement();
-                rspElem.id = elem.id;
-                rspElem.priority = elem.priority;
-                rspElem.readTimestamp = elem.readTimestamp;
-                rspElem.context = elem.context;
-                rspQCC.entries.Add(rspElem);
+                rspElem.Id = elem.Id;
+                rspElem.Priority = elem.Priority;
+                rspElem.ReadTimestamp = elem.ReadTimestamp;
+                rspElem.Context = elem.Context;
+                rspQCC.Entries.Add(rspElem);
             }
 
             return rspQCC;
@@ -307,13 +307,13 @@ namespace Snowflake.Data.Core
          *
          * @param qce element to add
          */
-        private void addQCE(QueryContextElement qce)
+        private void AddQCE(QueryContextElement qce)
         {
-            idMap.Add(qce.id, qce);
+            _idMap.Add(qce.Id, qce);
             // In a round of merge operations, we should save the new priority->qce mapping in an additional map
             // and sync `newPriorityMap` to `priorityMap` at the end of a for loop of `merge` operations
-            newPriorityMap.Add(qce.priority, qce);
-            cacheSet.Add(qce);
+            _newPriorityMap.Add(qce.Priority, qce);
+            _cacheSet.Add(qce);
         }
 
         /**
@@ -321,11 +321,11 @@ namespace Snowflake.Data.Core
          *
          * @param qce element to remove.
          */
-        private void removeQCE(QueryContextElement qce)
+        private void RemoveQCE(QueryContextElement qce)
         {
-            cacheSet.Remove(qce);
-            priorityMap.Remove(qce.priority);
-            idMap.Remove(qce.id);
+            _cacheSet.Remove(qce);
+            _priorityMap.Remove(qce.Priority);
+            _idMap.Remove(qce.Id);
         }
 
         /**
@@ -335,21 +335,21 @@ namespace Snowflake.Data.Core
          * @param oldQCE an element exist in the cache
          * @param newQCE a new element just received.
          */
-        private void replaceQCE(QueryContextElement oldQCE, QueryContextElement newQCE)
+        private void ReplaceQCE(QueryContextElement oldQCE, QueryContextElement newQCE)
         {
             // Remove old element from the cache
-            removeQCE(oldQCE);
+            RemoveQCE(oldQCE);
             // Add new element in the cache
-            addQCE(newQCE);
+            AddQCE(newQCE);
         }
 
         /** Debugging purpose, log the all entries in the cache. */
-        private void logCacheEntries()
+        private void LogCacheEntries()
         {
 #if DEBUG
-            foreach (QueryContextElement elem in cacheSet)
+            foreach (QueryContextElement elem in _cacheSet)
             {
-                logger.Debug($"Cache Entry: id: {elem.id} readTimestamp: {elem.readTimestamp} priority: {elem.priority}");
+                _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
             }
 #endif
         }

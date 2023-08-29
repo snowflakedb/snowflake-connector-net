@@ -13,258 +13,258 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class QueryContextCacheTest
     {
-        private QueryContextCache qcc = null;
-        private long BASE_READ_TIMESTAMP = 1668727958;
-        private string CONTEXT = "Some query context";
-        private long BASE_ID = 0;
-        private long BASE_PRIORITY = 0;
+        private QueryContextCache _qcc = null;
+        private const long BaseReadTimestamp = 1668727958;
+        private const string Context = "Some query context";
+        private const long BaseId = 0;
+        private const long BasePriority = 0;
+        private const int MaxCapacity = 5;
 
-        private int MAX_CAPACITY = 5;
-        private long[] expectedIDs;
-        private long[] expectedReadTimestamp;
-        private long[] expectedPriority;
+        private long[] _expectedIDs;
+        private long[] _expectedReadTimestamp;
+        private long[] _expectedPriority;
 
-        private void initCache()
+        private void InitCache()
         {
-            qcc = new QueryContextCache(MAX_CAPACITY);
+            _qcc = new QueryContextCache(MaxCapacity);
         }
 
-        private void initCacheWithData()
+        private void InitCacheWithData()
         {
-            initCacheWithDataWithContext(CONTEXT);
+            InitCacheWithDataWithContext(Context);
         }
 
-        private void initCacheWithDataWithContext(String context)
+        private void InitCacheWithDataWithContext(String context)
         {
-            qcc = new QueryContextCache(MAX_CAPACITY);
-            expectedIDs = new long[MAX_CAPACITY];
-            expectedReadTimestamp = new long[MAX_CAPACITY];
-            expectedPriority = new long[MAX_CAPACITY];
-            for (int i = 0; i < MAX_CAPACITY; i++)
+            _qcc = new QueryContextCache(MaxCapacity);
+            _expectedIDs = new long[MaxCapacity];
+            _expectedReadTimestamp = new long[MaxCapacity];
+            _expectedPriority = new long[MaxCapacity];
+            for (int i = 0; i < MaxCapacity; i++)
             {
-                expectedIDs[i] = BASE_ID + i;
-                expectedReadTimestamp[i] = BASE_READ_TIMESTAMP + i;
-                expectedPriority[i] = BASE_PRIORITY + i;
-                qcc.merge(expectedIDs[i], expectedReadTimestamp[i], expectedPriority[i], context);
+                _expectedIDs[i] = BaseId + i;
+                _expectedReadTimestamp[i] = BaseReadTimestamp + i;
+                _expectedPriority[i] = BasePriority + i;
+                _qcc.Merge(_expectedIDs[i], _expectedReadTimestamp[i], _expectedPriority[i], context);
             }
-            qcc.syncPriorityMap();
+            _qcc.SyncPriorityMap();
         }
 
-        private void initCacheWithDataInRandomOrder()
+        private void InitCacheWithDataInRandomOrder()
         {
-            qcc = new QueryContextCache(MAX_CAPACITY);
-            expectedIDs = new long[MAX_CAPACITY];
-            expectedReadTimestamp = new long[MAX_CAPACITY];
-            expectedPriority = new long[MAX_CAPACITY];
-            for (int i = 0; i < MAX_CAPACITY; i++)
+            _qcc = new QueryContextCache(MaxCapacity);
+            _expectedIDs = new long[MaxCapacity];
+            _expectedReadTimestamp = new long[MaxCapacity];
+            _expectedPriority = new long[MaxCapacity];
+            for (int i = 0; i < MaxCapacity; i++)
             {
-                expectedIDs[i] = BASE_ID + i;
-                expectedReadTimestamp[i] = BASE_READ_TIMESTAMP + i;
-                expectedPriority[i] = BASE_PRIORITY + i;
+                _expectedIDs[i] = BaseId + i;
+                _expectedReadTimestamp[i] = BaseReadTimestamp + i;
+                _expectedPriority[i] = BasePriority + i;
             }
 
-            qcc.merge(expectedIDs[3], expectedReadTimestamp[3], expectedPriority[3], CONTEXT);
-            qcc.merge(expectedIDs[2], expectedReadTimestamp[2], expectedPriority[2], CONTEXT);
-            qcc.merge(expectedIDs[4], expectedReadTimestamp[4], expectedPriority[4], CONTEXT);
-            qcc.merge(expectedIDs[0], expectedReadTimestamp[0], expectedPriority[0], CONTEXT);
-            qcc.merge(expectedIDs[1], expectedReadTimestamp[1], expectedPriority[1], CONTEXT);
-            qcc.syncPriorityMap();
+            _qcc.Merge(_expectedIDs[3], _expectedReadTimestamp[3], _expectedPriority[3], Context);
+            _qcc.Merge(_expectedIDs[2], _expectedReadTimestamp[2], _expectedPriority[2], Context);
+            _qcc.Merge(_expectedIDs[4], _expectedReadTimestamp[4], _expectedPriority[4], Context);
+            _qcc.Merge(_expectedIDs[0], _expectedReadTimestamp[0], _expectedPriority[0], Context);
+            _qcc.Merge(_expectedIDs[1], _expectedReadTimestamp[1], _expectedPriority[1], Context);
+            _qcc.SyncPriorityMap();
         }
 
-        private void assertCacheData()
+        private void AssertCacheData()
         {
-            assertCacheDataWithContext(CONTEXT);
+            AssertCacheDataWithContext(Context);
         }
 
-        private void assertCacheDataWithContext(string context)
+        private void AssertCacheDataWithContext(string context)
         {
-            int size = qcc.getSize();
-            Assert.IsTrue(size == MAX_CAPACITY);
+            int size = _qcc.GetSize();
+            Assert.IsTrue(size == MaxCapacity);
 
             // Compare elements
-            SortedSet<QueryContextElement> elements = qcc.getElements();
+            SortedSet<QueryContextElement> elements = _qcc.getElements();
             int i = 0;
             foreach (QueryContextElement elem in elements)
             {
-                Assert.AreEqual(expectedIDs[i], elem.id);
-                Assert.AreEqual(expectedReadTimestamp[i], elem.readTimestamp);
-                Assert.AreEqual(expectedPriority[i], elem.priority);
-                Assert.AreEqual(context, elem.context);
+                Assert.AreEqual(_expectedIDs[i], elem.Id);
+                Assert.AreEqual(_expectedReadTimestamp[i], elem.ReadTimestamp);
+                Assert.AreEqual(_expectedPriority[i], elem.Priority);
+                Assert.AreEqual(context, elem.Context);
                 i++;
             }
-            Assert.AreEqual(i, MAX_CAPACITY);
+            Assert.AreEqual(i, MaxCapacity);
         }
 
         [Test]
-        public void testIsEmpty()
+        public void TestIsEmpty()
         {
-            initCache();
-            Assert.IsTrue(qcc.getSize() == 0);
+            InitCache();
+            Assert.IsTrue(_qcc.GetSize() == 0);
         }
 
         [Test]
-        public void testWithSomeData()
+        public void TestWithSomeData()
         {
-            initCacheWithData();
+            InitCacheWithData();
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testWithSomeDataInRandomOrder()
+        public void TestWithSomeDataInRandomOrder()
         {
-            initCacheWithDataInRandomOrder();
+            InitCacheWithDataInRandomOrder();
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testMoreThanCapacity()
+        public void TestMoreThanCapacity()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             // Add one more element at the end
-            int i = MAX_CAPACITY;
-            qcc.merge(BASE_ID + i, BASE_READ_TIMESTAMP + i, BASE_PRIORITY + i, CONTEXT);
-            qcc.syncPriorityMap();
-            qcc.checkCacheCapacity();
+            int i = MaxCapacity;
+            _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
 
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testUpdateTimestamp()
+        public void TestUpdateTimestamp()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             // Add one more element with new TS with existing id
             int updatedID = 1;
-            expectedReadTimestamp[updatedID] = BASE_READ_TIMESTAMP + updatedID + 10;
-            qcc.merge(
-                BASE_ID + updatedID, expectedReadTimestamp[updatedID], BASE_PRIORITY + updatedID, CONTEXT);
-            qcc.syncPriorityMap();
-            qcc.checkCacheCapacity();
+            _expectedReadTimestamp[updatedID] = BaseReadTimestamp + updatedID + 10;
+            _qcc.Merge(
+                BaseId + updatedID, _expectedReadTimestamp[updatedID], BasePriority + updatedID, Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
 
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testUpdatePriority()
+        public void TestUpdatePriority()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             // Add one more element with new priority with existing id
             int updatedID = 3;
-            long updatedPriority = BASE_PRIORITY + updatedID + 7;
+            long updatedPriority = BasePriority + updatedID + 7;
 
-            expectedPriority[updatedID] = updatedPriority;
-            qcc.merge(
-                BASE_ID + updatedID, BASE_READ_TIMESTAMP + updatedID, expectedPriority[updatedID], CONTEXT);
-            qcc.syncPriorityMap();
-            qcc.checkCacheCapacity();
+            _expectedPriority[updatedID] = updatedPriority;
+            _qcc.Merge(
+                BaseId + updatedID, BaseReadTimestamp + updatedID, _expectedPriority[updatedID], Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
 
-            for (int i = updatedID; i < MAX_CAPACITY - 1; i++)
+            for (int i = updatedID; i < MaxCapacity - 1; i++)
             {
-                expectedIDs[i] = expectedIDs[i + 1];
-                expectedReadTimestamp[i] = expectedReadTimestamp[i + 1];
-                expectedPriority[i] = expectedPriority[i + 1];
+                _expectedIDs[i] = _expectedIDs[i + 1];
+                _expectedReadTimestamp[i] = _expectedReadTimestamp[i + 1];
+                _expectedPriority[i] = _expectedPriority[i + 1];
             }
 
-            expectedIDs[MAX_CAPACITY - 1] = BASE_ID + updatedID;
-            expectedReadTimestamp[MAX_CAPACITY - 1] = BASE_READ_TIMESTAMP + updatedID;
-            expectedPriority[MAX_CAPACITY - 1] = updatedPriority;
+            _expectedIDs[MaxCapacity - 1] = BaseId + updatedID;
+            _expectedReadTimestamp[MaxCapacity - 1] = BaseReadTimestamp + updatedID;
+            _expectedPriority[MaxCapacity - 1] = updatedPriority;
 
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testAddSamePriority()
+        public void TestAddSamePriority()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             // Add one more element with same priority
-            int i = MAX_CAPACITY;
-            long UpdatedPriority = BASE_PRIORITY + 1;
-            qcc.merge(BASE_ID + i, BASE_READ_TIMESTAMP + i, UpdatedPriority, CONTEXT);
-            qcc.syncPriorityMap();
-            qcc.checkCacheCapacity();
-            expectedIDs[1] = BASE_ID + i;
-            expectedReadTimestamp[1] = BASE_READ_TIMESTAMP + i;
+            int i = MaxCapacity;
+            long updatedPriority = BasePriority + 1;
+            _qcc.Merge(BaseId + i, BaseReadTimestamp + i, updatedPriority, Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
+            _expectedIDs[1] = BaseId + i;
+            _expectedReadTimestamp[1] = BaseReadTimestamp + i;
 
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testAddSameIDButStaleTimestamp()
+        public void TestAddSameIDButStaleTimestamp()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             // Add one more element with same priority
             int i = 2;
-            qcc.merge(BASE_ID + i, BASE_READ_TIMESTAMP + i - 10, BASE_PRIORITY + i, CONTEXT);
-            qcc.syncPriorityMap();
-            qcc.checkCacheCapacity();
+            _qcc.Merge(BaseId + i, BaseReadTimestamp + i - 10, BasePriority + i, Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
 
             // Compare elements
-            assertCacheData();
+            AssertCacheData();
         }
 
         [Test]
-        public void testEmptyCacheWithNullData()
+        public void TestEmptyCacheWithNullData()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
-            qcc.update(null);
-            Assert.AreEqual(qcc.getSize(), 0);
+            _qcc.Update(null);
+            Assert.AreEqual(_qcc.GetSize(), 0);
         }
 
         [Test]
-        public void testEmptyCacheWithEmptyResponseData()
+        public void TestEmptyCacheWithEmptyResponseData()
         {
-            initCacheWithData();
+            InitCacheWithData();
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
-            qcc.update(rsp);
-            Assert.AreEqual(qcc.getSize(), 0);
+            _qcc.Update(rsp);
+            Assert.AreEqual(_qcc.GetSize(), 0);
         }
 
         [Test]
-        public void testSerializeRequestAndDeserializeResponseData()
+        public void TestSerializeRequestAndDeserializeResponseData()
         {
-            // Init qcc
-            initCacheWithData();
-            assertCacheData();
+            // Init _qcc
+            InitCacheWithData();
+            AssertCacheData();
 
-            var json = JsonConvert.SerializeObject(qcc.getQueryContextResponse(), JsonUtils.JsonSettings);
+            var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
 
-            // Clear qcc
-            qcc.clearCache();
-            Assert.AreEqual(qcc.getSize(), 0);
+            // Clear _qcc
+            _qcc.ClearCache();
+            Assert.AreEqual(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
-            qcc.update(rsp);
-            assertCacheData();
+            _qcc.Update(rsp);
+            AssertCacheData();
         }
 
         [Test]
-        public void testSerializeRequestAndDeserializeResponseDataWithNullContext()
+        public void TestSerializeRequestAndDeserializeResponseDataWithNullContext()
         {
-            // Init qcc
-            initCacheWithDataWithContext(null);
-            assertCacheDataWithContext(null);
+            // Init _qcc
+            InitCacheWithDataWithContext(null);
+            AssertCacheDataWithContext(null);
 
-            var json = JsonConvert.SerializeObject(qcc.getQueryContextResponse(), JsonUtils.JsonSettings);
+            var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
 
-            // Clear qcc
-            qcc.clearCache();
-            Assert.AreEqual(qcc.getSize(), 0);
+            // Clear _qcc
+            _qcc.ClearCache();
+            Assert.AreEqual(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
-            qcc.update(rsp);
-            assertCacheDataWithContext(null);
+            _qcc.Update(rsp);
+            AssertCacheDataWithContext(null);
         }
     }
 }

@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core
             postBody.sqlText = sql;
             postBody.describeOnly = describeOnly;
 			postBody.parameters = bodyParameters;
-            postBody.queryContextDTO = SfSession.GetQueryContextRequest();
+            postBody.QueryContextDTO = SfSession.GetQueryContextRequest();
             if (_bindStage == null)
             {
                 postBody.parameterBindings = bindings;
