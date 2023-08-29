@@ -3,19 +3,14 @@
  */
 
 using Azure;
-using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Metadata = System.Collections.Generic.IDictionary<string, string>;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using System;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockBlobClient : BlobClient
+    class MockAzureClient
     {
         // Mock Azure data for FileHeader
         internal const string AzureIV = "MOCK_AZURE_IV";
@@ -29,12 +24,8 @@ namespace Snowflake.Data.Tests.Mock
         // Mock content length
         internal const int ContentLength = 9999;
 
-        // Stores the HttpStatusCode string
-        string _key;
-
-        internal MockBlobClient(string blobName) { _key = MockBlobContainerClient.blobContainerName; }
-
-        internal Exception CreateMockAzureError(string key)
+        // Creates the Azure exception for mock requests
+        static internal Exception CreateMockAzureError(string key)
         {
             HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
             RequestFailedException azureError = new RequestFailedException((int)statusCode, AzureErrorMessage);
@@ -42,9 +33,10 @@ namespace Snowflake.Data.Tests.Mock
             return azureError;
         }
 
-        internal Response<BlobProperties> createMockResponseForBlobProperties()
+        // Creates the Azure response for blob properties requests
+        static internal Response<BlobProperties> createMockResponseForBlobProperties(string key)
         {
-            if (_key == HttpStatusCode.OK.ToString())
+            if (key == HttpStatusCode.OK.ToString())
             {
                 Dictionary<string, string> metadata = new Dictionary<string, string>
                 {
@@ -72,95 +64,21 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAzureError(_key);
+                throw CreateMockAzureError(key);
             }
         }
 
-        public override Response<BlobProperties> GetProperties(
-            BlobRequestConditions conditions = default,
-            CancellationToken cancellationToken = default)
+        // Create the Azure response based for bloc content info requests
+        static internal Response<BlobContentInfo> createMockResponseForBlobContentInfo(string key)
         {
-            return createMockResponseForBlobProperties();
-        }
-
-        public override async Task<Response<BlobProperties>> GetPropertiesAsync(
-            BlobRequestConditions conditions = default,
-            CancellationToken cancellationToken = default)
-        {
-            return await Task.Run(() => createMockResponseForBlobProperties()).ConfigureAwait(false);
-        }
-
-        public Response<BlobContentInfo> createMockResponseForBlobContentInfo()
-        {
-            if (_key == HttpStatusCode.OK.ToString())
+            if (key == HttpStatusCode.OK.ToString())
             {
                 return null;
             }
             else
             {
-                throw CreateMockAzureError(_key);
+                throw CreateMockAzureError(key);
             }
         }
-
-        public override Response<BlobContentInfo> Upload(Stream content)
-        {
-            return createMockResponseForBlobContentInfo();
-        }
-        
-        public override async Task<Response<BlobContentInfo>> UploadAsync(Stream content,
-            CancellationToken cancellationToken = default)
-        {
-            return await Task.Run(() => createMockResponseForBlobContentInfo()).ConfigureAwait(false);
-        }
-
-        public override Response<BlobInfo> SetMetadata(
-            Metadata metadata,
-            BlobRequestConditions conditions = default,
-            CancellationToken cancellationToken = default)
-        {
-            return null;
-        }
-
-        public override Response DownloadTo(string path)
-        {
-            if (_key == HttpStatusCode.OK.ToString())
-            {
-                return null;
-            }
-            else
-            {
-                throw CreateMockAzureError(_key);
-            }
-        }
-
-        public override async Task<Response> DownloadToAsync(string path, CancellationToken cancellationToken)
-        {
-            if (_key == HttpStatusCode.OK.ToString())
-            {
-                return await Task.Run(() => Task.FromResult<Response>(null)).ConfigureAwait(false);
-            }
-            else
-            {
-                throw CreateMockAzureError(_key);
-            }
-        }
-    }
-
-    class MockBlobContainerClient : BlobContainerClient
-    {
-        internal static string blobContainerName;
-
-        public MockBlobContainerClient(string blobContainerName) { MockBlobContainerClient.blobContainerName = blobContainerName; }
-
-        public override BlobClient GetBlobClient(string blobName)
-        {
-            return new MockBlobClient(blobName);
-        }
-    }
-
-    class MockAzureBlobClient : BlobServiceClient
-    {
-        public override BlobContainerClient GetBlobContainerClient(string blobContainerName) =>
-            new MockBlobContainerClient(blobContainerName);
     }
 }

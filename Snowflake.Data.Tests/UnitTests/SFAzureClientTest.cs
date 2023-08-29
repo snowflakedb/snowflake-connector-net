@@ -14,6 +14,10 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading;
     using System.Threading.Tasks;
     using System.IO;
+    using Azure.Storage.Blobs;
+    using Moq;
+    using Azure;
+    using Azure.Storage.Blobs.Models;
 
     [TestFixture]
     class SFAzureClientTest : SFBaseTest
@@ -72,10 +76,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
-            // Setup mock client
-            MockAzureBlobClient blobServiceClientMock = new MockAzureBlobClient();
-            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, blobServiceClientMock);
-
             _cancellationToken = new CancellationToken();
         }
 
@@ -89,11 +89,16 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractBucketNameAndPath()
         {
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             // Split LOCATION based on the first '/' character
             string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
 
+            // Act
             RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
+            // Assert
             Assert.AreEqual(bucketAndKey[0], location.bucket);
             Assert.AreEqual(bucketAndKey[1], location.key);
         }
@@ -105,11 +110,31 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.GetProperties(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+                        .Returns(() => MockAzureClient.createMockResponseForBlobProperties(key));
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Act
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
 
+            // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
@@ -120,11 +145,31 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
         public async Task TestGetFileHeaderAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.GetPropertiesAsync(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
+                        .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobProperties(key)).ConfigureAwait(false));
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Act
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
+            // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
@@ -132,11 +177,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockBlobClient.ContentLength, fileHeader.contentLength);
-                Assert.AreEqual(MockBlobClient.SFCDigest, fileHeader.digest);
-                Assert.AreEqual(MockBlobClient.AzureIV, fileHeader.encryptionMetadata.iv);
-                Assert.AreEqual(MockBlobClient.AzureKey, fileHeader.encryptionMetadata.key);
-                Assert.AreEqual(MockBlobClient.AzureMatdesc, fileHeader.encryptionMetadata.matDesc);
+                Assert.AreEqual(MockAzureClient.ContentLength, fileHeader.contentLength);
+                Assert.AreEqual(MockAzureClient.SFCDigest, fileHeader.digest);
+                Assert.AreEqual(MockAzureClient.AzureIV, fileHeader.encryptionMetadata.iv);
+                Assert.AreEqual(MockAzureClient.AzureKey, fileHeader.encryptionMetadata.key);
+                Assert.AreEqual(MockAzureClient.AzureMatdesc, fileHeader.encryptionMetadata.matDesc);
             }
             else
             {
@@ -155,17 +200,37 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.Upload(It.IsAny<Stream>()))
+                        .Returns(() => MockAzureClient.createMockResponseForBlobContentInfo(key));
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
 
+            // Act
             _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
-                iv = MockBlobClient.AzureIV,
-                key = MockBlobClient.AzureKey,
-                matDesc = MockBlobClient.AzureMatdesc
+                iv = MockAzureClient.AzureIV,
+                key = MockAzureClient.AzureKey,
+                matDesc = MockAzureClient.AzureMatdesc
             });
 
+            // Assert
             AssertForUploadFileTests(expectedResultStatus);
         }
 
@@ -179,18 +244,38 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                        .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
             _fileMetadata.uploadSize = UploadFileSize;
 
+            // Act
             await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
-                iv = MockBlobClient.AzureIV,
-                key = MockBlobClient.AzureKey,
-                matDesc = MockBlobClient.AzureMatdesc
+                iv = MockAzureClient.AzureIV,
+                key = MockAzureClient.AzureKey,
+                matDesc = MockAzureClient.AzureMatdesc
             },
             _cancellationToken).ConfigureAwait(false);
 
+            // Assert
             AssertForUploadFileTests(expectedResultStatus);
         }
 
@@ -212,11 +297,41 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.DownloadTo(It.IsAny<string>()))
+                        .Returns(() =>
+                        {
+                            if (key == HttpStatusCode.OK.ToString())
+                            {
+                                return null;
+                            }
+                            else
+                            {
+                                throw MockAzureClient.CreateMockAzureError(key);
+                            }
+                        });
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Act
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
+            // Assert
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
@@ -229,11 +344,41 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
+            // Arrange
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns<string>((key) =>
+                {
+                    var mockBlobContainerClient = new Mock<BlobContainerClient>();
+                    mockBlobContainerClient.Setup(client => client.GetBlobClient(It.IsAny<string>()))
+                    .Returns<string>((blobName) =>
+                    {
+                        var mockBlobClient = new Mock<BlobClient>();
+                        mockBlobClient.Setup(client => client.DownloadToAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                        .Returns(async () =>
+                        {
+                            if (key == HttpStatusCode.OK.ToString())
+                            {
+                                return await Task.Run(() => Task.FromResult<Response>(null)).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                throw MockAzureClient.CreateMockAzureError(key);
+                            }
+                        });
+
+                        return mockBlobClient.Object;
+                    });
+
+                    return mockBlobContainerClient.Object;
+                });
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
             _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
+            // Act
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
+            // Assert
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
     }
