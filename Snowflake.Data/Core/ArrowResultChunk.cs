@@ -30,11 +30,11 @@ namespace Snowflake.Data.Core
         {
             var column = RecordBatch.Column(columnIndex);
 
-            string s;
+            string stringBuffer;
             switch (column.Data.DataType.TypeId)
             {
                 case ArrowTypeId.Int32: 
-                    s = ((Int32Array)column).GetValue(rowIndex).ToString();
+                    stringBuffer = ((Int32Array)column).GetValue(rowIndex).ToString();
                     break;
                 
                 // TODO in SNOW-893834 -  other types
@@ -43,10 +43,10 @@ namespace Snowflake.Data.Core
                     throw new NotImplementedException();
             }
             
-            if (s == null)
+            if (stringBuffer == null)
                 return null;
             
-            return new UTF8Buffer(Encoding.UTF8.GetBytes(s));
+            return new UTF8Buffer(Encoding.UTF8.GetBytes(stringBuffer));
         }
         
         public int GetRowCount()

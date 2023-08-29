@@ -4,7 +4,7 @@
 
 namespace Snowflake.Data.Core
 {
-    public enum ResultFormat
+    public enum ResultFormat // TODO add tests for ResultFormat
     {
         Json,
         Arrow

@@ -131,6 +131,7 @@ namespace Snowflake.Data.Core
 
             if (_currentChunkRowIdx >= 0)
             {
+                // TODO in SNOW-893835 - rewind
                 _currentChunkRowIdx--; 
                 return true;
             }

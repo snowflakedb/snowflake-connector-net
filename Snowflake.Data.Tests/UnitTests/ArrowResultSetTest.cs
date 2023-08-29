@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class ArrowResultSetTest
     {
-        private static int s_rowCount = 10;
+        private const int RowCount = 10;
         private RecordBatch _recordBatch;
         private ArrowResultSet _arrowResultSet;
 
@@ -32,9 +32,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
-            s_rowCount = 10;
             _recordBatch = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, s_rowCount))))
+                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, RowCount))))
                 .Build();
             var responseData = PrepareResponseData(_recordBatch);
             var sfStatement = PrepareStatement();
@@ -43,64 +42,90 @@ namespace Snowflake.Data.Tests.UnitTests
         }
         
         [Test]
-        public void TestNext()
+        public void TestNextReturnsTrueUntilRowsExist()
         {
-            var column = (Int32Array)_recordBatch.Column(0);
-            for (var i = 0; i < s_rowCount; ++i)
+            for (var i = 0; i < RowCount; ++i)
             {
                 Assert.IsTrue(_arrowResultSet.Next());
-                Assert.AreEqual(column.GetValue(i), _arrowResultSet.GetValue<Int32>(0));
             }
             Assert.IsFalse(_arrowResultSet.Next());
         }
 
         [Test]
-        public async Task TestNextAsync()
+        public async Task TestNextAsyncReturnsTrueUntilRowsExist()
         {
-            var column = (Int32Array)_recordBatch.Column(0);
-            for (var i = 0; i < s_rowCount; ++i)
+            for (var i = 0; i < RowCount; ++i)
             {
                 Assert.IsTrue(await _arrowResultSet.NextAsync());
-                Assert.AreEqual(column.GetValue(i), _arrowResultSet.GetValue<Int32>(0));
             }
             Assert.IsFalse(await _arrowResultSet.NextAsync());
         }
 
         [Test]
-        public void TestNextResult()
+        public void TestNextResultReturnsFalse()
         {
             Assert.IsFalse(_arrowResultSet.NextResult());
         }
 
         [Test]
-        public async Task TestNextResultAsync()
+        public async Task TestNextResultAsyncReturnsFalse()
         {
             Assert.IsFalse(await _arrowResultSet.NextResultAsync(CancellationToken.None));
         }
 
         [Test]
-        public void TestHasRows()
+        public void TestHasRowsReturnsTrueIfRowExists()
         {
             Assert.IsTrue(_arrowResultSet.HasRows());
         }
 
         [Test]
-        public void TestRewind()
+        public void TestHasRowsReturnsFalseIfNoRows()
+        {
+            _recordBatch = new RecordBatch.Builder()
+                .Append("Col_Int32", false, col => col.Int32(array => array.Clear()))
+                .Build();
+            var responseData = PrepareResponseData(_recordBatch);
+            var sfStatement = PrepareStatement();
+
+            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+            Assert.IsFalse(_arrowResultSet.HasRows());
+        }
+
+        [Test]
+        public void TestRewindReturnsFalseForFirstRow()
         {
             Assert.IsFalse(_arrowResultSet.Rewind());
+            _arrowResultSet.Next();
+        }
+
+        [Test]
+        public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
+        {
             _arrowResultSet.Next();
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsFalse(_arrowResultSet.Rewind());
         }
 
         [Test]
-        public void TestGetObjectInternal()
+        public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
         {
-            var column = (Int32Array)_recordBatch.Column(0);
-            for (var i = 0; i < s_rowCount; ++i)
+            _arrowResultSet.Next();
+            _arrowResultSet.Next();
+            Assert.IsTrue(_arrowResultSet.Rewind());
+            Assert.IsTrue(_arrowResultSet.Rewind());
+            Assert.IsFalse(_arrowResultSet.Rewind());
+        }
+
+        [Test]
+        public void TestGetObjectInternalReturnsProperValuesForFirstColumn()
+        {
+            const int ColumnIndex = 0;
+            var columnValues = (Int32Array)_recordBatch.Column(ColumnIndex);
+            for (var i = 0; i < RowCount; ++i)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(column.GetValue(i).ToString(), _arrowResultSet.getObjectInternal(0).ToString());
+                Assert.AreEqual(columnValues.GetValue(i).ToString(), _arrowResultSet.getObjectInternal(ColumnIndex).ToString());
             }
         }
         

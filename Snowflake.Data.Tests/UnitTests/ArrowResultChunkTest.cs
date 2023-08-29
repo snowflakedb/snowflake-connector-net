@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class ArrowResultChunkTest
     {
-        private static int s_rowCount = 10;
+        private const int RowCount = 10;
         private RecordBatch _recordBatch;
         private ArrowResultChunk _chunk;
         
@@ -27,37 +27,36 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
-            s_rowCount = 10;
             _recordBatch = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, s_rowCount))))
+                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, RowCount))))
                 .Build();
             _chunk = new ArrowResultChunk(_recordBatch);
         }
         
         [Test]
-        public void TestExtractCell()
+        public void TestExtractCellReadsAllRows()
         {
             var column = (Int32Array)_recordBatch.Column(0);
-            for (var i = 0; i < s_rowCount; ++i)
+            for (var i = 0; i < RowCount; ++i)
             {
                 Assert.AreEqual(column.GetValue(i).ToString(), _chunk.ExtractCell(i, 0).SafeToString());
             }
         }
 
         [Test]
-        public void TestExtractCellOutOfRangeException()
+        public void TestExtractCellThrowsOutOfRangeException()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => _chunk.ExtractCell(s_rowCount, 0).SafeToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => _chunk.ExtractCell(RowCount, 0).SafeToString());
         }
         
         [Test]
-        public void TestGetRowCount()
+        public void TestGetRowCountReturnsNumberOfRows()
         {
-            Assert.AreEqual(s_rowCount, _chunk.GetRowCount());
+            Assert.AreEqual(RowCount, _chunk.GetRowCount());
         }
 
         [Test]
-        public void TestGetChunkIndex()
+        public void TestGetChunkIndexReturnsFirstChunk()
         {
             Assert.AreEqual(0, _chunk.GetChunkIndex());
         }
