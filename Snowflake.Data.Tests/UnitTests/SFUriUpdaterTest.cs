@@ -34,7 +34,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        // Test with Retry reason enabled
         public void TestRetryReasonEnabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -47,7 +46,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        // Test with Retry reason enabled
         public void TestRetryReasonDisabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
