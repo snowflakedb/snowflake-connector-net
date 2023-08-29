@@ -513,7 +513,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // Check file contents
-                foreach (var line in ReadOutputFileLinesUnzippingIfReallyCompressed())
+                foreach (var line in ReadOutputFileLines())
                 {
                     if (string.IsNullOrEmpty(line)) continue;
                     var values = line.Split(',');
@@ -526,7 +526,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private static string[] ReadOutputFileLinesUnzippingIfReallyCompressed()
+        private static string[] ReadOutputFileLines()
         {
             using (var outputStream = File.OpenRead(t_outputFilePath))
             {
