@@ -96,7 +96,6 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestRewindReturnsFalseForFirstRow()
         {
             Assert.IsFalse(_arrowResultSet.Rewind());
-            _arrowResultSet.Next();
         }
 
         [Test]
