@@ -72,11 +72,11 @@ namespace Snowflake.Data.Core
             return Int32.Parse(val);
         }
 
-        private BlockingCollection<Task<IResultChunk>> _downloadTasks;
+        private BlockingCollection<Task<BaseResultChunk>> _downloadTasks;
         
         private void FillDownloads()
         {
-            _downloadTasks = new BlockingCollection<Task<IResultChunk>>(prefetchThreads);
+            _downloadTasks = new BlockingCollection<Task<BaseResultChunk>>(prefetchThreads);
 
             Task.Run(() =>
             {
@@ -96,11 +96,11 @@ namespace Snowflake.Data.Core
             });
         }
         
-        public Task<IResultChunk> GetNextChunkAsync()
+        public Task<BaseResultChunk> GetNextChunkAsync()
         {
             if (_downloadTasks.IsCompleted)
             {
-                return Task.FromResult<IResultChunk>(null);
+                return Task.FromResult<BaseResultChunk>(null);
             }
             else
             {
@@ -108,17 +108,15 @@ namespace Snowflake.Data.Core
             }
         }
         
-        private async Task<IResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
+        private async Task<BaseResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
             logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
-            SFResultChunk chunk = downloadContext.chunk;
-
-            chunk.downloadState = DownloadState.IN_PROGRESS;
+            BaseResultChunk chunk = downloadContext.chunk;
 
             S3DownloadRequest downloadRequest = 
                 new S3DownloadRequest()
                 {
-                    Url = new UriBuilder(chunk.url).Uri,
+                    Url = new UriBuilder(chunk.Url).Uri,
                     qrmk = downloadContext.qrmk,
                     // s3 download request timeout to one hour
                     RestTimeout = TimeSpan.FromHours(1),
@@ -141,7 +139,6 @@ namespace Snowflake.Data.Core
 
             ParseStreamIntoChunk(stream, chunk);
 
-            chunk.downloadState = DownloadState.SUCCESS;
             logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
 
             return chunk;
@@ -157,21 +154,21 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="content"></param>
         /// <param name="resultChunk"></param>
-        private void ParseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
+        private void ParseStreamIntoChunk(Stream content, BaseResultChunk resultChunk)
         {
             Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
             Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(concatStream);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.Format, concatStream);
             parser.ParseChunk(resultChunk);
         }
     }
 
     class DownloadContext
     {
-        public SFResultChunk chunk { get; set; }
+        public BaseResultChunk chunk { get; set; }
 
         public int chunkIndex { get; set; }
 

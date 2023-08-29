@@ -13,8 +13,10 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class ArrowResultChunkTest
     {
-        private const int RowCount = 10;
-        private RecordBatch _recordBatch;
+        private const int RowCountBatchOne = 10;
+        private const int RowCountBatchTwo = 20;
+        private RecordBatch _recordBatchOne;
+        private RecordBatch _recordBatchTwo;
         private ArrowResultChunk _chunk;
         
         [Test]
@@ -27,38 +29,135 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
-            _recordBatch = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, RowCount))))
+            _recordBatchOne = new RecordBatch.Builder()
+                .Append("Col_Int32", false, col => col.Int32(
+                    array => array.AppendRange(Enumerable.Range(1, RowCountBatchOne))))
                 .Build();
-            _chunk = new ArrowResultChunk(_recordBatch);
+
+            _recordBatchTwo = new RecordBatch.Builder()
+                .Append("Col_Int32", false, col => col.Int32(
+                    array => array.AppendRange(Enumerable.Range(1, RowCountBatchTwo))))
+                .Build();
+            
+            _chunk = new ArrowResultChunk(_recordBatchOne);
         }
         
         [Test]
+        public void TestAddRecordBatchAddsBatchTwo()
+        {
+            _chunk.AddRecordBatch(_recordBatchTwo);
+
+            Assert.AreEqual(2, _chunk.RecordBatch.Count);
+        }
+
+        [Test]
+        public void TestNextIteratesThroughAllRecordsOfOneBatch()
+        {
+            for (var i = 0; i < RowCountBatchOne; ++i)
+            {
+                Assert.IsTrue(_chunk.Next());
+            }
+            Assert.IsFalse(_chunk.Next());
+        }
+
+        [Test]
+        public void TestNextIteratesThroughAllRecordsOfTwoBatches()
+        {
+            _chunk.AddRecordBatch(_recordBatchTwo);
+            
+            for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
+            {
+                Assert.IsTrue(_chunk.Next());
+            }
+            Assert.IsFalse(_chunk.Next());
+        }
+
+        [Test]
+        public void TestRewindIteratesThroughAllRecordsOfOneBatch()
+        {
+            for (var i = 0; i < RowCountBatchOne; ++i)
+            {
+                _chunk.Next();
+            }
+            _chunk.Next();
+            
+            for (var i = 0; i < RowCountBatchOne; ++i)
+            {
+                Assert.IsTrue(_chunk.Rewind());
+            }
+            Assert.IsFalse(_chunk.Rewind());
+        }
+        
+        [Test]
+        public void TestRewindIteratesThroughAllRecordsOfTwoBatch()
+        {
+            _chunk.AddRecordBatch(_recordBatchTwo);
+            
+            for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
+            {
+                _chunk.Next();
+            }
+            _chunk.Next();
+            
+            for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
+            {
+                Assert.IsTrue(_chunk.Rewind());
+            }
+            Assert.IsFalse(_chunk.Rewind());
+        }
+        
+        [Test]
+        public void TestResetClearsChunkData()
+        {
+            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+            {
+                url = "new_url",
+                uncompressedSize = 100,
+                rowCount = 2
+            };
+            
+            _chunk.Reset(chunkInfo, 0);
+            
+            Assert.AreEqual(0, _chunk.ChunkIndex);
+            Assert.AreEqual(chunkInfo.url, _chunk.Url);
+            Assert.AreEqual(chunkInfo.rowCount, _chunk.RowCount);
+        }
+
+        [Test]
         public void TestExtractCellReadsAllRows()
         {
-            var column = (Int32Array)_recordBatch.Column(0);
-            for (var i = 0; i < RowCount; ++i)
+            var column = (Int32Array)_recordBatchOne.Column(0);
+            for (var i = 0; i < RowCountBatchOne; ++i)
             {
-                Assert.AreEqual(column.GetValue(i).ToString(), _chunk.ExtractCell(i, 0).SafeToString());
+                var valueFromRecordBatch = column.GetValue(i).ToString();
+                
+                _chunk.Next();
+                Assert.AreEqual(valueFromRecordBatch, _chunk.ExtractCell(0).SafeToString());
             }
         }
 
         [Test]
         public void TestExtractCellThrowsOutOfRangeException()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => _chunk.ExtractCell(RowCount, 0).SafeToString());
+            for (var i = 0; i < RowCountBatchOne; ++i)
+            {
+                _chunk.Next();
+            }
+
+            Assert.IsFalse(_chunk.Next());
+            Assert.Throws<ArgumentOutOfRangeException>(() => _chunk.ExtractCell(0).SafeToString());
         }
         
         [Test]
-        public void TestGetRowCountReturnsNumberOfRows()
+        public void TestRowCountReturnsNumberOfRows()
         {
-            Assert.AreEqual(RowCount, _chunk.GetRowCount());
+            Assert.AreEqual(RowCountBatchOne, _chunk.RowCount);
         }
 
         [Test]
         public void TestGetChunkIndexReturnsFirstChunk()
         {
-            Assert.AreEqual(0, _chunk.GetChunkIndex());
+            Assert.AreEqual(0, _chunk.ChunkIndex);
         }
         
     }

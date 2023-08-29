@@ -16,10 +16,8 @@ namespace Snowflake.Data.Core
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
         
-        private int _currentChunkRowIdx = -1;
-        private int _currentChunkRowCount;
         private readonly int _totalChunkCount;
-        private IResultChunk _currentChunk;
+        private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
 
         public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
@@ -32,7 +30,6 @@ namespace Snowflake.Data.Core
                     using (var reader = new ArrowStreamReader(stream))
                     {
                         var recordBatch = reader.ReadNextRecordBatch();
-                        _currentChunkRowCount = recordBatch.Length;
                         _currentChunk = new ArrowResultChunk(recordBatch);
                     }
                 }
@@ -43,9 +40,7 @@ namespace Snowflake.Data.Core
                 if (responseData.chunks != null)
                 {
                     _totalChunkCount = responseData.chunks.Count;
-                    
-                    // TODO in SNOW-893835 - support for multiple chunks
-                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                    _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
                 }
 
                 responseData.rowSet = null;
@@ -67,16 +62,14 @@ namespace Snowflake.Data.Core
         {
             ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
 
             if (_totalChunkCount > 0)
             {
-                // TODO in SNOW-893835 - support for multiple chunks
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                s_logger.Info("Get next chunk from chunk downloader");
+                _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+                return _currentChunk?.Next() ?? false;
             }
 
             return false;
@@ -86,16 +79,14 @@ namespace Snowflake.Data.Core
         {
             ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
-
+            
             if (_totalChunkCount > 0)
             {
-                // TODO in SNOW-893835 - support for multiple chunks
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                s_logger.Info("Get next chunk from chunk downloader");
+                _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+                return _currentChunk?.Next() ?? false;
             }
 
             return false;
@@ -118,7 +109,7 @@ namespace Snowflake.Data.Core
                 return false;
             }
 
-            return _currentChunkRowCount > 0 || _totalChunkCount > 0;
+            return _currentChunk.RowCount > 0 || _totalChunkCount > 0;
         }
 
         /// <summary>
@@ -129,13 +120,10 @@ namespace Snowflake.Data.Core
         {
             ThrowIfClosed();
 
-            if (_currentChunkRowIdx >= 0)
-            {
-                // TODO in SNOW-893835 - rewind
-                _currentChunkRowIdx--; 
+            if (_currentChunk.Rewind())
                 return true;
-            }
-
+            
+            // cannot rewind to previous chunk
             return false;
         }
 
@@ -148,7 +136,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
 
-            return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
+            return _currentChunk.ExtractCell(columnIndex);
         }
 
         private void UpdateSessionStatus(QueryExecResponseData responseData)
@@ -156,14 +144,6 @@ namespace Snowflake.Data.Core
             SFSession session = this.sfStatement.SfSession;
             session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
-        }
-
-        private void ThrowIfClosed()
-        {
-            if (isClosed)
-            {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
         }
     }
 }

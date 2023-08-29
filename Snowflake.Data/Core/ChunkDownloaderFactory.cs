@@ -36,7 +36,8 @@ namespace Snowflake.Data.Core
                         responseData.qrmk,
                         responseData.chunkHeaders,
                         cancellationToken,
-                        resultSet);
+                        resultSet,
+                        responseData.queryResultFormat);
                 default:
                     throw new Exception("Unsupported Chunk Downloader version specified in the SFConfiguration");
             }

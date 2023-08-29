@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public async Task ParseChunk(IResultChunk chunk)
+        public async Task ParseChunk(BaseResultChunk chunk)
         {
             await Task.Run(() =>
             {
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core
                 using (StreamReader sr = new StreamReader(stream))
                 using (JsonTextReader jr = new JsonTextReader(sr))
                 {
-                    ((SFResultChunk)chunk).rowSet = JsonSerializer.Deserialize<string[,]>(jr);
+                    chunk.RowSet = JsonSerializer.Deserialize<string[,]>(jr);
                 }
             });
         }

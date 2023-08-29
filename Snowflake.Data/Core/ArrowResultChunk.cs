@@ -3,38 +3,92 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Core
 {
-    internal class ArrowResultChunk : IResultChunk
+    internal class ArrowResultChunk : BaseResultChunk
     {
-        public RecordBatch RecordBatch { get; set; }
+        internal override ResultFormat Format => ResultFormat.ARROW;
 
-        private int _rowCount;
-        private int _colCount;
-        private int _chunkIndex;
+        public List<RecordBatch> RecordBatch { get; set; }
 
+        private int _currentBatchIndex = 0;
+        private int _currentRecordIndex = -1;
+        
         public ArrowResultChunk(RecordBatch recordBatch)
         {
-            RecordBatch = recordBatch;
+            RecordBatch = new List<RecordBatch>{recordBatch};
             
-            _rowCount = recordBatch.Length;
-            _colCount = recordBatch.ColumnCount;
-            _chunkIndex = 0;
+            RowCount = recordBatch.Length;
+            ColCount = recordBatch.ColumnCount;
+            ChunkIndex = 0;
         }
 
-        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        public ArrowResultChunk(int columnCount)
         {
-            var column = RecordBatch.Column(columnIndex);
+            RecordBatch = new List<RecordBatch>();
+
+            RowCount = 0;
+            ColCount = columnCount;
+            ChunkIndex = 0;
+        }
+        
+        public void AddRecordBatch(RecordBatch recordBatch)
+        {
+            RecordBatch.Add(recordBatch);
+        }
+
+        internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
+        {
+            base.Reset(chunkInfo, chunkIndex);
+
+            _currentBatchIndex = 0;
+            _currentRecordIndex = -1;
+            RecordBatch.Clear();
+        }
+
+        internal override bool Next()
+        {
+            _currentRecordIndex += 1;
+            if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
+                return true;
+            
+            _currentBatchIndex += 1;
+            _currentRecordIndex = 0;
+
+            return _currentBatchIndex < RecordBatch.Count;
+        }
+
+        internal override bool Rewind()
+        {
+            _currentRecordIndex -= 1;
+            if (_currentRecordIndex >= 0)
+                return true;
+            
+            _currentBatchIndex -= 1;
+
+            if (_currentBatchIndex >= 0)
+            {
+                _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
+                return true;
+            }
+
+            return false;
+        }
+        
+        public override UTF8Buffer ExtractCell(int columnIndex)
+        {
+            var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
 
             string stringBuffer;
             switch (column.Data.DataType.TypeId)
             {
                 case ArrowTypeId.Int32: 
-                    stringBuffer = ((Int32Array)column).GetValue(rowIndex).ToString();
+                    stringBuffer = ((Int32Array)column).GetValue(_currentRecordIndex).ToString();
                     break;
                 
                 // TODO in SNOW-893834 -  other types
@@ -47,16 +101,6 @@ namespace Snowflake.Data.Core
                 return null;
             
             return new UTF8Buffer(Encoding.UTF8.GetBytes(stringBuffer));
-        }
-        
-        public int GetRowCount()
-        {
-            return _rowCount;
-        }
-
-        public int GetChunkIndex()
-        {
-            return _chunkIndex;
         }
     }
 

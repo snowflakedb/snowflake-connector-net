@@ -238,13 +238,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
-                IDataReader reader = cmd.ExecuteReader();
-                int counter = 0;
-                while (reader.Read())
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42), UUID_STRING() as Pierwsz_kolumna, UUID_STRING() as Druga_kolumna from table(generator(rowcount => 5000)) v order by 1";
+                using (IDataReader reader = cmd.ExecuteReader())
                 {
-                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
-                    counter++;
+                    int counter = 0;
+                    while (reader.Read())
+                    {
+                        Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                        counter++;
+                    }
                 }
                 conn.Close();
             }
@@ -310,6 +312,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+        }
+
+        [Test]
+        [Parallelizable(ParallelScope.Children)]
+        public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
+                {
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    counter++;
+                }
+                conn.Close();
+            }
         }
 
         [Test]
@@ -519,7 +546,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.AreEqual(expectedResult[i], rowsAffected);
                     }
                 }
-                conn.Close();
             }
         }
 

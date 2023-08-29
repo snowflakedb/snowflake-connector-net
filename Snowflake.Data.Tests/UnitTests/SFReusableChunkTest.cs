@@ -25,144 +25,89 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public async Task TestSimpleChunk()
+        public void TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = 100,
-                rowCount = 2
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(3);
-            chunk.Reset(chunkInfo, 0);
-
-            await parser.ParseChunk(chunk);
-
-            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual("1", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("abcde", chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("5.678", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
-        public async Task TestChunkWithNull()
+        public void TestChunkWithNull()
         {
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = 100,
-                rowCount = 2
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(3);
-            chunk.Reset(chunkInfo, 0);
-
-            await parser.ParseChunk(chunk);
-
-            Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
-        public async Task TestChunkWithDate()
+        public void TestChunkWithDate()
         {
             string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = 100,
-                rowCount = 2
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(3);
-            chunk.Reset(chunkInfo, 0);
-
-            await parser.ParseChunk(chunk);
-
-            Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
-        public async Task TestChunkWithEscape()
+        public void TestChunkWithEscape()
         {
             string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = bytes.Length,
-                rowCount = 2
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(3);
-            chunk.Reset(chunkInfo, 0);
-
-            await parser.ParseChunk(chunk);
-
-            Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
-        public async Task TestChunkWithLongString()
+        public void TestChunkWithLongString()
         {
             string longstring = new string('å', 10 * 1000 * 1000);
             string data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = bytes.Length,
-                rowCount = 2
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(3);
-            chunk.Reset(chunkInfo, 0);
-
-            await parser.ParseChunk(chunk);
-
-            Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual(longstring, chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(longstring, chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
@@ -170,23 +115,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Unterminated escape sequence
             string data = "[ [\"åäö\\";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
-
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = bytes.Length,
-                rowCount = 1
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(1);
-            chunk.Reset(chunkInfo, 0);
 
             try
             {
-                await parser.ParseChunk(chunk);
+                await PrepareChunkAsync(data, 1, 1);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -200,23 +132,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Unterminated string
             string data = "[ [\"åäö";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            IChunkParser parser = new ReusableChunkParser(stream);
-
-            ExecResponseChunk chunkInfo = new ExecResponseChunk()
-            {
-                url = "fake",
-                uncompressedSize = bytes.Length,
-                rowCount = 1
-            };
-
-            SFReusableChunk chunk = new SFReusableChunk(1);
-            chunk.Reset(chunkInfo, 0);
-
+            
             try
             {
-                await parser.ParseChunk(chunk);
+                await PrepareChunkAsync(data, 1, 1);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -226,11 +145,75 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public async Task TestParserWithTab()
+        public void TestParserWithTab()
         {
             // Unterminated string
             string data = "[[\"abc\t\"]]";
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            var chunk = PrepareChunkAsync(data, 1, 1).Result;
+
+            chunk.Next();
+            string val = chunk.ExtractCell(0).SafeToString();
+            Assert.AreEqual("abc\t", chunk.ExtractCell(0).SafeToString());
+        }
+
+        [Test]
+        public void TestNextIteratesThroughAllRecords()
+        {
+            const int RowCount = 3;
+            string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+            var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
+
+            for (var i = 0; i < RowCount; ++i)
+            {
+                Assert.IsTrue(chunk.Next());
+            }
+            Assert.IsFalse(chunk.Next());
+        }
+        
+        [Test]
+        public void TestRewindIteratesThroughAllRecords()
+        {
+            const int RowCount = 3;
+            string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+            var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
+
+            for (var i = 0; i < RowCount; ++i)
+            {
+                chunk.Next();
+            }
+            chunk.Next();
+            
+            for (var i = 0; i < RowCount; ++i)
+            {
+                Assert.IsTrue(chunk.Rewind());
+            }
+            Assert.IsFalse(chunk.Rewind());
+        }
+        
+        [Test]
+        public void TestResetClearsChunkData()
+        {
+            const int RowCount = 3;
+            string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+            var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
+
+            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+            {
+                url = "new_url",
+                uncompressedSize = 100,
+                rowCount = 200
+            };
+            
+            chunk.Reset(chunkInfo, 0);
+            
+            Assert.AreEqual(0, chunk.ChunkIndex);
+            Assert.AreEqual(chunkInfo.url, chunk.Url);
+            Assert.AreEqual(chunkInfo.rowCount, chunk.RowCount);
+        }
+      
+        private async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(stringData);
             Stream stream = new MemoryStream(bytes);
             IChunkParser parser = new ReusableChunkParser(stream);
 
@@ -238,16 +221,14 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 url = "fake",
                 uncompressedSize = bytes.Length,
-                rowCount = 1
+                rowCount = rowCount
             };
 
-            SFReusableChunk chunk = new SFReusableChunk(1);
+            SFReusableChunk chunk = new SFReusableChunk(colCount);
             chunk.Reset(chunkInfo, 0);
-
+            
             await parser.ParseChunk(chunk);
-            string val = chunk.ExtractCell(0, 0).SafeToString();
-            Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0).SafeToString());
+            return chunk;
         }
-
     }
 }

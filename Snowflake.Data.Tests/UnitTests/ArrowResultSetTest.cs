@@ -93,15 +93,23 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestRewindReturnsFalseBeforeFirstRow()
+        {
+            Assert.IsFalse(_arrowResultSet.Rewind());
+        }
+
+        [Test]
         public void TestRewindReturnsFalseForFirstRow()
         {
+            _arrowResultSet.Next(); // move to first row
             Assert.IsFalse(_arrowResultSet.Rewind());
         }
 
         [Test]
         public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
         {
-            _arrowResultSet.Next();
+            _arrowResultSet.Next(); // move to first row
+            _arrowResultSet.Next(); // move to second row
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsFalse(_arrowResultSet.Rewind());
         }
@@ -109,8 +117,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
         {
-            _arrowResultSet.Next();
-            _arrowResultSet.Next();
+            _arrowResultSet.Next(); // move to first row
+            _arrowResultSet.Next(); // move to second row
+            _arrowResultSet.Next(); // move to third row
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsFalse(_arrowResultSet.Rewind());

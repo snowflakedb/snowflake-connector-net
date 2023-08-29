@@ -230,7 +230,7 @@ select parse_json('{{
                 _exceptionsThrown = 0;
             }
             
-            public IChunkParser GetParser(Stream stream)
+            public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
                 if (++_exceptionsThrown <= _expectedExceptionsNumber)
                     return new ThrowingReusableChunkParser();
@@ -241,7 +241,7 @@ select parse_json('{{
 
         class ThrowingReusableChunkParser : IChunkParser
         {
-            public Task ParseChunk(IResultChunk chunk)
+            public Task ParseChunk(BaseResultChunk chunk)
             { 
                 throw new Exception("json parsing error.");
             }

@@ -12,8 +12,11 @@ namespace Snowflake.Data.Core
     {
         public static IChunkParserFactory Instance = new ChunkParserFactory();
 
-        public IChunkParser GetParser(Stream stream)
+        public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
         {
+            if (resultFormat == ResultFormat.ARROW)
+                return new ArrowChunkParser(stream);
+            
             switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
                 case 1:
