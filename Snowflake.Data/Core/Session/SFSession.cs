@@ -67,7 +67,7 @@ namespace Snowflake.Data.Core
         private long _startTime = 0;
         internal string connStr = null;
 
-        private QueryContextCache queryContextCache = new QueryContextCache(DefaultQueryContextCacheSize);
+        private QueryContextCache _queryContextCache = new QueryContextCache(DefaultQueryContextCacheSize);
 
         private int _queryContextCacheSize = DefaultQueryContextCacheSize;
 
@@ -85,11 +85,7 @@ namespace Snowflake.Data.Core
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
-                if (!_disableQueryContextCache)
-                {
-                    queryContextCache = new QueryContextCache(_queryContextCacheSize);
-                }
-                else
+                if (_disableQueryContextCache)
                 {
                     logger.Debug("Query context cache disabled.");
                 }
@@ -396,7 +392,10 @@ namespace Snowflake.Data.Core
             {
                 string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
                 _queryContextCacheSize = Int32.Parse(val);
-                queryContextCache.SetCapacity(_queryContextCacheSize);
+                if (!_disableQueryContextCache)
+                {
+                    _queryContextCache.SetCapacity(_queryContextCacheSize);
+                }
             }
         }
 
@@ -406,7 +405,7 @@ namespace Snowflake.Data.Core
             {
                 return;
             }
-            queryContextCache.Update(queryContext);
+            _queryContextCache.Update(queryContext);
         }
 
         internal RequestQueryContext GetQueryContextRequest()
@@ -415,7 +414,7 @@ namespace Snowflake.Data.Core
             {
                 return null;
             }
-            return queryContextCache.GetQueryContextRequest();
+            return _queryContextCache.GetQueryContextRequest();
         }
 
         internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
