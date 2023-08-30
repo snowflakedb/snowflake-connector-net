@@ -1,13 +1,13 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Core
 {
@@ -222,6 +222,13 @@ namespace Snowflake.Data.Core
         // multiple statements response data
         [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
         internal string resultIds { get; set; }
+        
+        [JsonProperty(PropertyName = "queryResultFormat", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonConverter(typeof(StringEnumConverter))]
+        internal ResultFormat queryResultFormat { get; set; }
+
+        [JsonProperty(PropertyName = "rowsetBase64", NullValueHandling = NullValueHandling.Ignore)]
+        internal string rowsetBase64 { get; set; }
     }
 
     internal class ExecResponseRowType
