@@ -731,10 +731,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader = command.ExecuteReader();
                 Assert.IsFalse(reader.Read());
-
-                // Cleanup
-                command.CommandText = $"DROP TABLE IF EXISTS {TableName}";
-                command.ExecuteNonQuery();
             }
         }
 

@@ -568,8 +568,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"create or replace table {TableName}(c1 number)";
-                    command.ExecuteNonQuery();
+                    CreateOrReplaceTable(TableName, new []{"c1 NUMBER"});
 
                     command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
@@ -586,9 +585,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(6, affected);
 
                     command.CommandText = "drop stage if exists my_unload_stage";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = $"drop table if exists {TableName}";
                     command.ExecuteNonQuery();
                 }
                 conn.Close();
@@ -727,12 +723,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "SELECT * FROM " + tableName;
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists " + tableName;
-                    //cmd.ExecuteNonQuery();
-
                 }
-                //System.Threading.Thread.Sleep(2000); // wait for 2 seconds, in case other test still running.
                 conn.Close();
             }
         }
