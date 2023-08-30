@@ -165,8 +165,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(client => client.GetResponse())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(client => client.GetResponse())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return response.Object;
                 });
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
 
             // Act
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
@@ -206,8 +206,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestGetFileHeaderAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(client => client.GetResponseAsync())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(client => client.GetResponseAsync())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return Task.FromResult((WebResponse) response.Object);
                 });
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
 
             // Act
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
@@ -261,9 +261,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
-            mockWebRequest.Setup(client => client.GetResponse())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+            mockHttpWebRequest.Setup(client => client.GetResponse())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -277,9 +277,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return response.Object;
                 });
-            mockWebRequest.Setup(client => client.GetRequestStream())
+            mockHttpWebRequest.Setup(client => client.GetRequestStream())
                 .Returns(() => new MemoryStream());
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
             _fileMetadata.uploadSize = UploadFileSize;
 
             // Act
@@ -304,9 +304,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
-            mockWebRequest.Setup(client => client.GetResponseAsync())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+            mockHttpWebRequest.Setup(client => client.GetResponseAsync())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -320,9 +320,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return Task.FromResult((WebResponse)response.Object);
                 });
-            mockWebRequest.Setup(client => client.GetRequestStreamAsync())
+            mockHttpWebRequest.Setup(client => client.GetRequestStreamAsync())
                 .Returns(() => Task.FromResult((Stream) new MemoryStream()));
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
             _fileMetadata.uploadSize = UploadFileSize;
 
             // Act
@@ -357,8 +357,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(client => client.GetResponse())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(client => client.GetResponse())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -386,7 +386,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return response.Object;
                 });
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
 
             // Act
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
@@ -404,8 +404,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
-            var mockWebRequest = new Mock<WebRequest>();
-            mockWebRequest.Setup(client => client.GetResponseAsync())
+            var mockHttpWebRequest = new Mock<HttpWebRequest>();
+            mockHttpWebRequest.Setup(client => client.GetResponseAsync())
                 .Returns(() =>
                 {
                     var response = new Mock<HttpWebResponse>();
@@ -433,7 +433,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                     return Task.FromResult((WebResponse)response.Object);
                 });
-            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _client.SetCustomHttpWebRequest(mockHttpWebRequest.Object);
 
             // Act
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);

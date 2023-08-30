@@ -51,9 +51,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
 
         /// <summary>
-        /// The custom WebRequest.
+        /// The custom HttpWebRequest.
         /// </summary>
-        private WebRequest _customWebRequest = null;
+        private HttpWebRequest _customHttpWebRequest = null;
 
         /// <summary>
         /// GCS client with access token.
@@ -77,9 +77,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
-        internal void SetCustomWebRequest(WebRequest mockWebRequest)
+        internal void SetCustomHttpWebRequest(HttpWebRequest mockHttpWebRequest)
         {
-            _customWebRequest = mockWebRequest;
+            _customHttpWebRequest = mockHttpWebRequest;
         }
 
         /// <summary>
@@ -112,13 +112,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             };
         }
 
-        internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
+        internal HttpWebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
                 generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
                 fileMetadata.presignedUrl;
 
-            WebRequest request = WebRequest.Create(url);
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(url);
             request.Headers.Add("Authorization", $"Bearer {AccessToken}");
             request.Method = method;
 
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue a HEAD request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
+                HttpWebRequest request = _customHttpWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customHttpWebRequest;
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue a HEAD request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
+                HttpWebRequest request = _customHttpWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customHttpWebRequest;
 
                 using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+                HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
 
                 Stream dataStream = request.GetRequestStream();
                 fileBytesStream.Position = 0;
@@ -278,7 +278,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+                HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
 
                 Stream dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
                 fileByteStream.Position = 0;
@@ -297,10 +297,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
-        private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
+        private HttpWebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
-            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
+            HttpWebRequest request = _customHttpWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customHttpWebRequest;
 
             request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
+                HttpWebRequest request = _customHttpWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customHttpWebRequest;
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
@@ -386,7 +386,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
+                HttpWebRequest request = _customHttpWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customHttpWebRequest;
 
                 using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
