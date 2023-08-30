@@ -54,6 +54,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
+        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient blobServiceClientMock) : this(stageInfo)
+        {
+            // Inject the mock BlobServiceClient
+            blobServiceClient = blobServiceClientMock;
+        }
+
         /// <summary>
         /// Extract the bucket name and path from the stage location.
         /// </summary>
@@ -215,7 +221,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                await blobClient.UploadAsync(fileBytesStream, cancellationToken);
+                await blobClient.UploadAsync(fileBytesStream, cancellationToken).ConfigureAwait(false);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -289,8 +295,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                var task = blobClient.DownloadToAsync(fullDstPath);
-                task.Wait();
+                blobClient.DownloadTo(fullDstPath);
             }
             catch (RequestFailedException ex)
             {
@@ -346,7 +351,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             return fileMetadata;
         }
-        
+
         private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
             if (ex.Status == (int)HttpStatusCode.BadRequest)
