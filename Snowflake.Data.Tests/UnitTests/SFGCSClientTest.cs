@@ -14,6 +14,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     using System.Threading;
     using Snowflake.Data.Tests.Mock;
+    using Moq;
+    using System.Text;
 
     [TestFixture]
     class SFGCSClientTest : SFBaseTest
@@ -81,14 +83,6 @@ namespace Snowflake.Data.Tests.UnitTests
             // Do nothing;
         }
 
-        private void SetUpCustomWebRequest(string method)
-        {
-            string url = _client.generateFileURL(_fileMetadata.stageInfo.location, _fileMetadata.srcFileName);
-            var mockWebRequest = new MockGCSWebRequest(url);
-            mockWebRequest.Method = method;
-            _client.SetCustomWebRequest(mockWebRequest);
-        }
-
         [Test]
         public void TestConstructorWithoutGCSAccessToken()
         {
@@ -99,10 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractBucketNameAndPath()
         {
-            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
-
             // Split LOCATION based on the first '/' character
             string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
+
+            RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
             Assert.AreEqual(bucketAndKey[0], location.bucket);
             Assert.AreEqual(bucketAndKey[1], location.key);
@@ -115,13 +109,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup file metadata
             _fileMetadata.resultStatus = expectedResultStatus.ToString();
-            _fileMetadata.sha256Digest = MockGCSWebRequest.SFCDigest;
-            _fileMetadata.srcFileSize = MockGCSWebRequest.FileContentLength;
+            _fileMetadata.sha256Digest = MockGCSClient.SFCDigest;
+            _fileMetadata.srcFileSize = MockGCSClient.ContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
             {
-                iv = MockGCSWebRequest.GcsIV,
-                key = MockGCSWebRequest.GcsKey,
-                matDesc = MockGCSWebRequest.GcsMatdesc
+                iv = MockGCSClient.GcsIV,
+                key = MockGCSClient.GcsKey,
+                matDesc = MockGCSClient.GcsMatdesc
             };
 
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
@@ -136,13 +130,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Setup file metadata
             _fileMetadata.resultStatus = expectedResultStatus.ToString();
-            _fileMetadata.sha256Digest = MockGCSWebRequest.SFCDigest;
-            _fileMetadata.srcFileSize = MockGCSWebRequest.FileContentLength;
+            _fileMetadata.sha256Digest = MockGCSClient.SFCDigest;
+            _fileMetadata.srcFileSize = MockGCSClient.ContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
             {
-                iv = MockGCSWebRequest.GcsIV,
-                key = MockGCSWebRequest.GcsKey,
-                matDesc = MockGCSWebRequest.GcsMatdesc
+                iv = MockGCSClient.GcsIV,
+                key = MockGCSClient.GcsKey,
+                matDesc = MockGCSClient.GcsMatdesc
             };
 
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
@@ -152,11 +146,11 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private void AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(ResultStatus expectedResultStatus, FileHeader fileHeader)
         {
-            Assert.AreEqual(MockGCSWebRequest.FileContentLength, fileHeader.contentLength);
-            Assert.AreEqual(MockGCSWebRequest.SFCDigest, fileHeader.digest);
-            Assert.AreEqual(MockGCSWebRequest.GcsIV, fileHeader.encryptionMetadata.iv);
-            Assert.AreEqual(MockGCSWebRequest.GcsKey, fileHeader.encryptionMetadata.key);
-            Assert.AreEqual(MockGCSWebRequest.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
+            Assert.AreEqual(MockGCSClient.ContentLength, fileHeader.contentLength);
+            Assert.AreEqual(MockGCSClient.SFCDigest, fileHeader.digest);
+            Assert.AreEqual(MockGCSClient.GcsIV, fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual(MockGCSClient.GcsKey, fileHeader.encryptionMetadata.key);
+            Assert.AreEqual(MockGCSClient.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
@@ -170,12 +164,34 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Conflict, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            SetUpCustomWebRequest("HEAD");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(client => client.GetResponse())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
+                    if (httpStatusCode == HttpStatusCode.OK)
+                    {
+                        response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+                        response.Object.Headers.Add("content-length", MockGCSClient.ContentLength.ToString());
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
+                    }
+                    else
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
+
+                    return response.Object;
+                });
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+
+            // Act
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
 
+            // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
@@ -189,13 +205,34 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Conflict, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
         public async Task TestGetFileHeaderAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            SetUpCustomWebRequest("HEAD");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(client => client.GetResponseAsync())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
-            CancellationToken cancellationToken = new CancellationToken();
-            FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, cancellationToken).ConfigureAwait(false);
+                    if (httpStatusCode == HttpStatusCode.OK)
+                    {
+                        response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+                        response.Object.Headers.Add("content-length", MockGCSClient.ContentLength.ToString());
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
+                    }
+                    else
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
 
+                    return Task.FromResult((WebResponse) response.Object);
+                });
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+
+            // Act
+            FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
+
+            // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
@@ -203,8 +240,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockGCSWebRequest.FileContentLength, fileHeader.contentLength);
-                Assert.AreEqual(MockGCSWebRequest.SFCDigest, fileHeader.digest);
+                Assert.AreEqual(MockGCSClient.ContentLength, fileHeader.contentLength);
+                Assert.AreEqual(MockGCSClient.SFCDigest, fileHeader.digest);
             }
             else
             {
@@ -223,18 +260,37 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            _fileMetadata.uploadSize = UploadFileSize;
-            SetUpCustomWebRequest("PUT");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+            mockWebRequest.Setup(client => client.GetResponse())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
+                    if (httpStatusCode != HttpStatusCode.OK)
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
+
+                    return response.Object;
+                });
+            mockWebRequest.Setup(client => client.GetRequestStream())
+                .Returns(() => new MemoryStream());
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _fileMetadata.uploadSize = UploadFileSize;
+
+            // Act
             _client.UploadFile(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
-                iv = MockGCSWebRequest.GcsIV,
-                key = MockGCSWebRequest.GcsKey,
-                matDesc = MockGCSWebRequest.GcsMatdesc
+                iv = MockGCSClient.GcsIV,
+                key = MockGCSClient.GcsKey,
+                matDesc = MockGCSClient.GcsMatdesc
             });
 
+            // Assert
             AssertForUploadFileTests(expectedResultStatus);
         }
 
@@ -247,19 +303,38 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            _fileMetadata.uploadSize = UploadFileSize;
-            SetUpCustomWebRequest("PUT");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+            mockWebRequest.Setup(client => client.GetResponseAsync())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
+                    if (httpStatusCode != HttpStatusCode.OK)
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
+
+                    return Task.FromResult((WebResponse)response.Object);
+                });
+            mockWebRequest.Setup(client => client.GetRequestStreamAsync())
+                .Returns(() => Task.FromResult((Stream) new MemoryStream()));
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+            _fileMetadata.uploadSize = UploadFileSize;
+
+            // Act
             await _client.UploadFileAsync(_fileMetadata, new MemoryStream(), new SFEncryptionMetadata()
             {
-                iv = MockGCSWebRequest.GcsIV,
-                key = MockGCSWebRequest.GcsKey,
-                matDesc = MockGCSWebRequest.GcsMatdesc
+                iv = MockGCSClient.GcsIV,
+                key = MockGCSClient.GcsKey,
+                matDesc = MockGCSClient.GcsMatdesc
             },
             _cancellationToken).ConfigureAwait(false);
 
+            // Assert
             AssertForUploadFileTests(expectedResultStatus);
         }
 
@@ -281,12 +356,42 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            SetUpCustomWebRequest("GET");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(client => client.GetResponse())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
+                    if (httpStatusCode == HttpStatusCode.OK)
+                    {
+                        response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
+                            "{" +
+                            $"\"ContentEncryptionIV\": \"{MockGCSClient.GcsIV}\", " +
+                            $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{MockGCSClient.GcsKey}\"}}" +
+                            "}");
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, MockGCSClient.GcsMatdesc);
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
+                        response.Object.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, MockGCSClient.ContentLength.ToString());
+
+                        response.Setup(c => c.GetResponseStream()).Returns(new MemoryStream(Encoding.ASCII.GetBytes(MockGCSClient.GcsFileContent)));
+                    }
+                    else
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
+
+                    return response.Object;
+                });
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+
+            // Act
             _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
 
+            // Assert
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
@@ -298,12 +403,42 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
-            // Setup request
-            _fileMetadata.stageInfo.location = httpStatusCode.ToString();
-            SetUpCustomWebRequest("GET");
+            // Arrange
+            var mockWebRequest = new Mock<WebRequest>();
+            mockWebRequest.Setup(client => client.GetResponseAsync())
+                .Returns(() =>
+                {
+                    var response = new Mock<HttpWebResponse>();
 
+                    if (httpStatusCode == HttpStatusCode.OK)
+                    {
+                        response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
+                            "{" +
+                            $"\"ContentEncryptionIV\": \"{MockGCSClient.GcsIV}\", " +
+                            $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{MockGCSClient.GcsKey}\"}}" +
+                            "}");
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, MockGCSClient.GcsMatdesc);
+                        response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
+                        response.Object.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, MockGCSClient.ContentLength.ToString());
+
+                        response.Setup(c => c.GetResponseStream()).Returns(new MemoryStream(Encoding.ASCII.GetBytes(MockGCSClient.GcsFileContent)));
+                    }
+                    else
+                    {
+                        response.SetupGet(c => c.StatusCode)
+                            .Returns(httpStatusCode);
+                        throw new WebException("Mock GCS Error", null, 0, response.Object);
+                    }
+
+                    return Task.FromResult((WebResponse)response.Object);
+                });
+            _client.SetCustomWebRequest(mockWebRequest.Object);
+
+            // Act
             await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
+            // Assert
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
@@ -312,7 +447,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(DownloadFileName);
-                Assert.AreEqual(MockGCSWebRequest.GcsFileContent, text);
+                Assert.AreEqual(MockGCSClient.GcsFileContent, text);
                 File.Delete(DownloadFileName);
             }
 
