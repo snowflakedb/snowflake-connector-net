@@ -260,6 +260,17 @@ namespace Snowflake.Data.Core
         // Opaque information (object with a value of base64 encoded string).
         [JsonProperty(PropertyName = "context", NullValueHandling = NullValueHandling.Ignore)]
         public string Context { get; set; }
+
+        // default constructor for JSON converter
+        public ResponseQueryContextElement() { }
+
+        public ResponseQueryContextElement(QueryContextElement elem)
+        {
+            Id = elem.Id;
+            Priority = elem.Priority;
+            ReadTimestamp = elem.ReadTimestamp;
+            Context = elem.Context;
+        }
     }
 
     internal class ExecResponseRowType

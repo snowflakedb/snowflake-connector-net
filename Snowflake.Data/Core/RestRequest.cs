@@ -311,6 +311,25 @@ namespace Snowflake.Data.Core
         internal List<RequestQueryContextElement> Entries { get; set; }
     }
 
+    // The empty query context value in request
+    internal class QueryContextValueEmpty
+    {
+        // empty object with no filed
+    }
+
+    // The non-empty query context value in request
+    internal class QueryContextValue
+    {
+        // base64 encoded string of Opaque information
+        [JsonProperty(PropertyName = "base64Data")]
+        public string Base64Data { get; set; }
+
+        public QueryContextValue(string context)
+        {
+            Base64Data = context;
+        }
+    }
+
     // The query context in query response
     internal class RequestQueryContextElement
     {
@@ -328,7 +347,30 @@ namespace Snowflake.Data.Core
 
         // Opaque information (object with a value of base64 encoded string).
         [JsonProperty(PropertyName = "context")]
-        public object Context { get; set; }
+        public object Context{ get; set; }
+
+        public void SetContext(string context)
+        {
+            if (context != null)
+            {
+                Context = new QueryContextValue(context);
+            }
+            else
+            {
+                Context = new QueryContextValueEmpty();
+            }
+        }
+
+        // default constructor for JSON converter
+        public RequestQueryContextElement() { }
+
+        public RequestQueryContextElement(QueryContextElement elem)
+        {
+            Id = elem.Id;
+            Priority = elem.Priority;
+            ReadTimestamp = elem.ReadTimestamp;
+            SetContext(elem.Context);
+        }
     }
 
     class QueryCancelRequest

@@ -29,7 +29,7 @@ namespace Snowflake.Data.Core
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-        private const int DefaultQueryContextCacheSize = 5;
+        private const int _defaultQueryContextCacheSize = 5;
 
         internal string sessionId;
 
@@ -67,9 +67,9 @@ namespace Snowflake.Data.Core
         private long _startTime = 0;
         internal string connStr = null;
 
-        private QueryContextCache _queryContextCache = new QueryContextCache(DefaultQueryContextCacheSize);
+        private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
-        private int _queryContextCacheSize = DefaultQueryContextCacheSize;
+        private int _queryContextCacheSize = _defaultQueryContextCacheSize;
 
         private bool _disableQueryContextCache = false;
 
@@ -388,24 +388,21 @@ namespace Snowflake.Data.Core
                     stopHeartBeatForThisSession();
                 }
             }
-            if (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE))
+            if ((!_disableQueryContextCache) &&
+                (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
             {
                 string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
                 _queryContextCacheSize = Int32.Parse(val);
-                if (!_disableQueryContextCache)
-                {
-                    _queryContextCache.SetCapacity(_queryContextCacheSize);
-                }
+                _queryContextCache.SetCapacity(_queryContextCacheSize);
             }
         }
 
         internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
         {
-            if (_disableQueryContextCache)
+            if (!_disableQueryContextCache)
             {
-                return;
+                _queryContextCache.Update(queryContext);
             }
-            _queryContextCache.Update(queryContext);
         }
 
         internal RequestQueryContext GetQueryContextRequest()

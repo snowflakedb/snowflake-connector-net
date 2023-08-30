@@ -6,22 +6,6 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    internal class QueryContextValue
-    {
-        // base64 encoded string of Opaque information
-        [JsonProperty(PropertyName = "base64Data")]
-        public string Base64Data { get; set; }
-
-        public QueryContextValue(string context)
-        {
-            Base64Data = context;
-        }
-    }
-    internal class QueryContextValueEmpty
-    {
-        // empty object with no filed
-    }
-
     internal class QueryContextElement
     {
         // database id as key. (bigint)
@@ -36,13 +20,13 @@ namespace Snowflake.Data.Core
         // Opaque information (object with a value of base64 encoded string).
         public string Context { get; set; }
 
-        public QueryContextElement(long in_id, long in_timestamp,
-                            long in_pri, string in_context)
+        public QueryContextElement(long id, long timestamp,
+                            long pri, string context)
         {
-            Id = in_id;
-            ReadTimestamp = in_timestamp;
-            Priority = in_pri;
-            Context = in_context;
+            Id = id;
+            ReadTimestamp = timestamp;
+            Priority = pri;
+            Context = context;
         }
 
         public override bool Equals(Object obj)
@@ -105,6 +89,8 @@ namespace Snowflake.Data.Core
         {
             if (_idMap.ContainsKey(id))
             {
+                _logger.Debug(
+                    $"Merge with existing id in cache = {id}, priority = {priority}");
                 // ID found in the cache
                 QueryContextElement qce = _idMap[id];
                 if (readTimestamp > qce.ReadTimestamp)
@@ -136,6 +122,8 @@ namespace Snowflake.Data.Core
                 // new id
                 if (_priorityMap.ContainsKey(priority))
                 {
+                    _logger.Debug(
+                        $"Merge with existing priority in cache = {id}, priority = {priority}");
                     // Same priority with different id
                     QueryContextElement qce = _priorityMap[priority];
                     // Replace with new data
@@ -146,6 +134,8 @@ namespace Snowflake.Data.Core
                 {
                     // new priority
                     // Add new element in the cache
+                    _logger.Debug(
+                        $"Adding new QCC item with either id nor priority found in cache id = {id}, priority = {priority}");
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                     AddQCE(newQCE);
                 }
@@ -263,18 +253,7 @@ namespace Snowflake.Data.Core
             reqQCC.Entries = new List<RequestQueryContextElement>();
             foreach (QueryContextElement elem in _cacheSet)
             {
-                RequestQueryContextElement reqElem = new RequestQueryContextElement();
-                reqElem.Id = elem.Id;
-                reqElem.Priority = elem.Priority;
-                reqElem.ReadTimestamp = elem.ReadTimestamp;
-                if (elem.Context != null)
-                {
-                    reqElem.Context = new QueryContextValue(elem.Context);
-                }
-                else
-                {
-                    reqElem.Context = new QueryContextValueEmpty();
-                }
+                RequestQueryContextElement reqElem = new RequestQueryContextElement(elem);
                 reqQCC.Entries.Add(reqElem);
             }
 
@@ -291,11 +270,7 @@ namespace Snowflake.Data.Core
             rspQCC.Entries = new List<ResponseQueryContextElement>();
             foreach (QueryContextElement elem in _cacheSet)
             {
-                ResponseQueryContextElement rspElem = new ResponseQueryContextElement();
-                rspElem.Id = elem.Id;
-                rspElem.Priority = elem.Priority;
-                rspElem.ReadTimestamp = elem.ReadTimestamp;
-                rspElem.Context = elem.Context;
+                ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
                 rspQCC.Entries.Add(rspElem);
             }
 
