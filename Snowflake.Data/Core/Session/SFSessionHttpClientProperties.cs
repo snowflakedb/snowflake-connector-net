@@ -18,6 +18,7 @@ namespace Snowflake.Data.Core
         internal bool disableRetry;
         internal bool forceRetryOn404;
         internal int maxHttpRetries;
+        internal bool includeRetryReason;
         internal SFSessionHttpClientProxyProperties proxyProperties;
 
         internal void WarnOnTimeout()
@@ -50,7 +51,8 @@ namespace Snowflake.Data.Core
                 proxyProperties.nonProxyHosts,
                 disableRetry,
                 forceRetryOn404,
-                maxHttpRetries);
+                maxHttpRetries,
+                includeRetryReason);
         }
 
         internal Dictionary<SFSessionParameter, object> ToParameterMap()
@@ -86,6 +88,7 @@ namespace Snowflake.Data.Core
                     disableRetry = Boolean.Parse(propertiesDictionary[SFSessionProperty.DISABLERETRY]),
                     forceRetryOn404 = Boolean.Parse(propertiesDictionary[SFSessionProperty.FORCERETRYON404]),
                     maxHttpRetries = int.Parse(propertiesDictionary[SFSessionProperty.MAXHTTPRETRIES]),
+                    includeRetryReason = Boolean.Parse(propertiesDictionary[SFSessionProperty.INCLUDERETRYREASON]),
                     proxyProperties = proxyPropertiesExtractor.ExtractProperties(propertiesDictionary)
                 };
             }
