@@ -6,8 +6,8 @@ namespace Snowflake.Data.Core
 {
     public enum ResultFormat // TODO add tests for ResultFormat
     {
-        Json,
-        Arrow
+        JSON,
+        ARROW
     }
     
     public interface IResultChunk

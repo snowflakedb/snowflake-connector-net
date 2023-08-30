@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests
                         }).ToList(),
                 parameters = new List<NameValueParameter>(),
                 chunks = null, // TODO in SNOW-893835 - add tests with multiple chunks
-                queryResultFormat = ResultFormat.Arrow,
+                queryResultFormat = ResultFormat.ARROW,
                 rowsetBase64 = ConvertToBase64String(recordBatch)
             };
         }
