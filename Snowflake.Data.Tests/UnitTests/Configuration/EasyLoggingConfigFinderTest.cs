@@ -10,36 +10,47 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     [TestFixture]
     public class EasyLoggingConfigFinderTest
     {
-        private const string ConfigFilePath = "file_config.json";
-            
+        private const string InputConfigFilePath = "input_config.json";
+        private const string EnvironmentalConfigFilePath = "environmental_config.json";
+        private const string HomeDirectory = "/home/user";
+        private static readonly string s_driverConfigFilePath = Path.Combine(".", EasyLoggingConfigFinder.ClientConfigFileName);
+        private static readonly string s_homeConfigFilePath = Path.Combine(HomeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
+        private static readonly string s_tempConfigFilePath = Path.Combine(Path.GetTempPath(), EasyLoggingConfigFinder.ClientConfigFileName);
+
+        [ThreadStatic]
+        private static Mock<FileOperations> t_fileOperations;
+
+        [ThreadStatic]
+        private static Mock<EnvironmentOperations> t_environmentOperations;
+
+        [ThreadStatic]
+        private static EasyLoggingConfigFinder t_finder;
+
+        [SetUp]
+        public void Setup()
+        {
+            t_fileOperations = new Mock<FileOperations>();
+            t_environmentOperations = new Mock<EnvironmentOperations>();
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
+            mockHomeDirectory();
+        }
+        
         [Test]
         public void TestThatTakesFilePathFromTheInput()
         {
             // arrange
-            var finder = new EasyLoggingConfigFinder();
+            mockFileFromEnvironmentalVariable();
+            mockFileOnDriverPath();
+            mockFileOnHomePath();
+            mockFileOnTempPath();
             
             // act
-            var filePath = finder.FindConfigFilePath(ConfigFilePath);
+            var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
             
             // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-        }
-
-        [Test]
-        public void TestThatDoesNotExecuteOtherChecksWhenValueProvidedAsInputParameter()
-        {
-            // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            
-            // act
-            var filePath = mock.Object.FindConfigFilePath(ConfigFilePath);
-            
-            // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Never);
+            Assert.AreEqual(InputConfigFilePath, filePath);
+            t_fileOperations.VerifyNoOtherCalls();
+            t_environmentOperations.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -47,246 +58,112 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             [Values(null, "")] string inputFilePath)
         {
             // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            mock.Setup(finder => finder.GetFilePathEnvironmentVariable())
-                .Returns(ConfigFilePath);
+            mockFileFromEnvironmentalVariable();
+            mockFileOnDriverPath();
+            mockFileOnHomePath();
+            mockFileOnTempPath();
             
             // act
-            var filePath = mock.Object.FindConfigFilePath(inputFilePath);
+            var filePath = t_finder.FindConfigFilePath(inputFilePath);
             
             // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Never);            
+            Assert.AreEqual(EnvironmentalConfigFilePath, filePath);
         }
         
         [Test]
         public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
         {
             // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            mock.Setup(finder => finder.GetFilePathEnvironmentVariable())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromDriverLocation())
-                .Returns(ConfigFilePath);
-            
+            mockFileOnDriverPath();
+            mockFileOnHomePath();
+            mockFileOnTempPath();
+
             // act
-            var filePath = mock.Object.FindConfigFilePath(null);
+            var filePath = t_finder.FindConfigFilePath(null);
             
             // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Never);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Never);            
+            Assert.AreEqual(s_driverConfigFilePath, filePath);
         }
         
         [Test]
         public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
         {
             // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            mock.Setup(finder => finder.GetFilePathEnvironmentVariable())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromDriverLocation())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromHomeDirectory())
-                .Returns(ConfigFilePath);
+            mockFileOnHomePath();
+            mockFileOnTempPath();
             
             // act
-            var filePath = mock.Object.FindConfigFilePath(null);
+            var filePath = t_finder.FindConfigFilePath(null);
             
             // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Never);            
+            Assert.AreEqual(s_homeConfigFilePath, filePath);
         }
 
         [Test]
         public void TestThatTakesFilePathFromTempDirectoryWhenNoOtherWaysPossible()
         {
             // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            mock.Setup(finder => finder.GetFilePathEnvironmentVariable())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromDriverLocation())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromHomeDirectory())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromTempDirectory())
-                .Returns(ConfigFilePath);
+            mockFileOnTempPath();
             
             // act
-            var filePath = mock.Object.FindConfigFilePath(null);
+            var filePath = t_finder.FindConfigFilePath(null);
             
             // assert
-            Assert.AreEqual(ConfigFilePath, filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Once);  
+            Assert.AreEqual(s_tempConfigFilePath, filePath);
         }
-
+        
         [Test]
-        public void TestThatReturnsNullIfFilePathCannotBeObtained()
+        public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
-            // arrange
-            var mock = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            mock.Setup(finder => finder.GetFilePathEnvironmentVariable())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromDriverLocation())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromHomeDirectory())
-                .Returns((string) null);
-            mock.Setup(finder => finder.GetFilePathFromTempDirectory())
-                .Returns((string) null);
-            
             // act
-            var filePath = mock.Object.FindConfigFilePath(null);
+            var filePath = t_finder.FindConfigFilePath(null);
             
             // assert
             Assert.IsNull(filePath);
-            mock.Verify(finder => finder.GetFilePathEnvironmentVariable(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromDriverLocation(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromHomeDirectory(), Times.Once);
-            mock.Verify(finder => finder.GetFilePathFromTempDirectory(), Times.Once);  
         }
 
-        [Test]
-        public void TestThatGetsFilePathFromEnvironmentVariable()
+        private static void mockHomeDirectory()
         {
-            // arrange
-            var finder = new EasyLoggingConfigFinder();
-            var environmentVariableAtTheBeginning = Environment.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName);
-            var expectedFilePath = string.IsNullOrEmpty(environmentVariableAtTheBeginning) ? null : environmentVariableAtTheBeginning;
-            
-            // act
-            var filePath = finder.GetFilePathEnvironmentVariable();
-            
-            // assert
-            Assert.AreEqual(expectedFilePath, filePath);
-            
-            // arrange
-            var filePathToSet = "/Users/dotnetUser/config.json";
-            Environment.SetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName, filePathToSet);
-            
-            // act
-            var filePathWhenEnvIsSet = finder.GetFilePathEnvironmentVariable();
-            
-            // assert
-            Assert.AreEqual(filePathToSet, filePathWhenEnvIsSet);
-            
-            // cleanup
-            if (environmentVariableAtTheBeginning != filePathToSet)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Environment.SetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName, environmentVariableAtTheBeginning);
+                t_environmentOperations
+                    .Setup(e => e.ExpandEnvironmentVariables(EasyLoggingConfigFinder.WindowsHomePathExtractionTemplate))
+                    .Returns(HomeDirectory);
             }
-        }
-        
-        
-        [Test]
-        public void TestThatFindsFileInTempDirectory()
-        {
-            // arrange
-            var finder = new EasyLoggingConfigFinder();
-            var tempFilePath = Path.Combine(Path.GetTempPath(), EasyLoggingConfigFinder.ClientConfigFileName);
-            var fileExistedAtTheBeginning = File.Exists(tempFilePath);
-            var expectedFilePath = fileExistedAtTheBeginning ? tempFilePath : null;
-            
-            // act
-            var filePath = finder.GetFilePathFromTempDirectory();
-            
-            // assert
-            Assert.AreEqual(expectedFilePath, filePath);
-            
-            // arrange
-            CreateEmptyFileIfNotExists(tempFilePath);
-            
-            // act
-            var filePathWhenFileExists = finder.GetFilePathFromTempDirectory();
-            
-            // assert
-            Assert.AreEqual(tempFilePath, filePathWhenFileExists);
-            
-            // cleanup
-            if (!fileExistedAtTheBeginning)
+            else
             {
-                File.Delete(tempFilePath);
-            }
-        }
-        
-        [Test]
-        public void TestThatFindsFileInDriverDirectory()
-        {
-            // arrange
-            var finder = new EasyLoggingConfigFinder();
-            var driverFilePath = Path.Combine(".", EasyLoggingConfigFinder.ClientConfigFileName);
-            var fileExistedAtTheBeginning = File.Exists(driverFilePath);
-            var expectedFilePath = fileExistedAtTheBeginning ? driverFilePath : null;
-            
-            // act
-            var filePath = finder.GetFilePathFromDriverLocation();
-            
-            // assert
-            Assert.AreEqual(expectedFilePath, filePath);
-            
-            // arrange
-            CreateEmptyFileIfNotExists(driverFilePath);
-            
-            // act
-            var filePathWhenFileExists = finder.GetFilePathFromDriverLocation();
-            
-            // assert
-            Assert.AreEqual(driverFilePath, filePathWhenFileExists);
-            
-            // cleanup
-            if (!fileExistedAtTheBeginning)
-            {
-                File.Delete(driverFilePath);
-            }
-        }
-        
-        [Test]
-        public void TestThatFindsFileInHomeDirectory()
-        {
-            // arrange
-            var finder = new EasyLoggingConfigFinder();
-            var homeDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Environment.ExpandEnvironmentVariables(EasyLoggingConfigFinder.WindowsHomePathExtractionTemplate)
-                : Environment.GetEnvironmentVariable(EasyLoggingConfigFinder.UnixHomeEnvName);
-            var homeFilePath = Path.Combine(homeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
-            var fileExistedAtTheBeginning = File.Exists(homeFilePath);
-            var expectedFilePath = fileExistedAtTheBeginning ? homeFilePath : null;
-            
-            // act
-            var filePath = finder.GetFilePathFromHomeDirectory();
-            
-            // assert
-            Assert.AreEqual(expectedFilePath, filePath);
-            
-            // arrange
-            CreateEmptyFileIfNotExists(homeFilePath);
-            
-            // act
-            var filePathWhenFileExists = finder.GetFilePathFromHomeDirectory();
-            
-            // assert
-            Assert.AreEqual(homeFilePath, filePathWhenFileExists);
-            
-            // cleanup
-            if (!fileExistedAtTheBeginning)
-            {
-                File.Delete(homeFilePath);
+                t_environmentOperations
+                    .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.UnixHomeEnvName))
+                    .Returns(HomeDirectory);
             }
         }
 
-        private void CreateEmptyFileIfNotExists(string filePath)
+        private static void mockFileFromEnvironmentalVariable()
         {
-            using (var streamWriter = File.AppendText(filePath));
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName))
+                .Returns(EnvironmentalConfigFilePath);
+        }
+
+        private static void mockFileOnDriverPath()
+        {
+            t_fileOperations
+                .Setup(f => f.Exists(s_driverConfigFilePath))
+                .Returns(true);
+        }
+
+        private static void mockFileOnHomePath()
+        {
+            t_fileOperations
+                .Setup(f => f.Exists(s_homeConfigFilePath))
+                .Returns(true);
+        }
+
+        private static void mockFileOnTempPath()
+        {
+            t_fileOperations
+                .Setup(f => f.Exists(s_tempConfigFilePath))
+                .Returns(true);            
         }
     }
 }

@@ -9,6 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string ConfigFilePath = "../../../Resources/EasyLogging/config.json";
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string EmptyConfigFilePath = "../../../Resources/EasyLogging/empty_config.json";
+        private const string ConfigWithEmptyCommonSectionFilePath = "../../../Resources/EasyLogging/empty_common_config.json";
         private const string ConfigWithoutLogLevelFilePath = "../../../Resources/EasyLogging/config_without_log_level.json";
         private const string ConfigWithNullLogLevelFilePath = "../../../Resources/EasyLogging/config_with_null_log_level.json";
         private const string ConfigWithEmptyLogLevelFilePath = "../../../Resources/EasyLogging/config_with_empty_log_level.json";
@@ -47,6 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
         [Test]
         [TestCase(EmptyConfigFilePath)]
+        [TestCase(ConfigWithEmptyCommonSectionFilePath)]
         [TestCase(ConfigWithoutLogLevelFilePath)]
         [TestCase(ConfigWithNullLogLevelFilePath)]
         [TestCase(ConfigWithEmptyLogLevelFilePath)]

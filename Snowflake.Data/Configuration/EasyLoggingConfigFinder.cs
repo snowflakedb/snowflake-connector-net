@@ -9,7 +9,20 @@ namespace Snowflake.Data.Configuration
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
         internal const string UnixHomeEnvName = "HOME";
         internal const string WindowsHomePathExtractionTemplate = "%HOMEDRIVE%%HOMEPATH%";
-        
+
+        private readonly FileOperations _fileOperations;
+        private readonly EnvironmentOperations _environmentOperations;
+
+        public EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        {
+            _fileOperations = fileOperations;
+            _environmentOperations = environmentOperations;
+        }
+
+        internal EasyLoggingConfigFinder()
+        {
+        }
+
         public virtual string FindConfigFilePath(string configFilePathFromConnectionString)
         {
             return GetFilePathFromInputParameter(configFilePathFromConnectionString)
@@ -19,13 +32,13 @@ namespace Snowflake.Data.Configuration
                     ?? GetFilePathFromTempDirectory();
         }
         
-        internal virtual string GetFilePathEnvironmentVariable()
+        private string GetFilePathEnvironmentVariable()
         {
-            var filePath = Environment.GetEnvironmentVariable(ClientConfigEnvironmentName);
+            var filePath = _environmentOperations.GetEnvironmentVariable(ClientConfigEnvironmentName);
             return GetFilePathFromInputParameter(filePath);
         }
         
-        internal virtual string GetFilePathFromTempDirectory()
+        private string GetFilePathFromTempDirectory()
         {
             var tempDirectory = Path.GetTempPath();
             if (string.IsNullOrEmpty(tempDirectory))
@@ -33,10 +46,10 @@ namespace Snowflake.Data.Configuration
                 return null;
             }
             var tempFilePath = Path.Combine(tempDirectory, ClientConfigFileName);
-            return File.Exists(tempFilePath) ? tempFilePath : null;
+            return OnlyIfFileExists(tempFilePath);
         }
         
-        internal virtual string GetFilePathFromHomeDirectory()
+        private string GetFilePathFromHomeDirectory()
         {
             var homeDirectory = GetHomeDirectory();
             if (string.IsNullOrEmpty(homeDirectory))
@@ -44,7 +57,7 @@ namespace Snowflake.Data.Configuration
                 return null;
             }
             var homeFilePath = Path.Combine(homeDirectory, ClientConfigFileName);
-            return File.Exists(homeFilePath) ? homeFilePath : null;
+            return OnlyIfFileExists(homeFilePath);
         }
         
         private string GetFilePathFromInputParameter(string filePath)
@@ -57,16 +70,17 @@ namespace Snowflake.Data.Configuration
             var platform = Environment.OSVersion.Platform;
             if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
             {
-                return Environment.GetEnvironmentVariable(UnixHomeEnvName);
+                return _environmentOperations.GetEnvironmentVariable(UnixHomeEnvName);
             }
-
-            return Environment.ExpandEnvironmentVariables(WindowsHomePathExtractionTemplate);
+            return _environmentOperations.ExpandEnvironmentVariables(WindowsHomePathExtractionTemplate);
         }
 
-        internal virtual string GetFilePathFromDriverLocation()
+        private string GetFilePathFromDriverLocation()
         {
             var filePath = Path.Combine(".", ClientConfigFileName);
-            return File.Exists(filePath) ? filePath : null;
+            return OnlyIfFileExists(filePath);
         }
+
+        private string OnlyIfFileExists(string filePath) => _fileOperations.Exists(filePath) ? filePath : null;
     }
 }

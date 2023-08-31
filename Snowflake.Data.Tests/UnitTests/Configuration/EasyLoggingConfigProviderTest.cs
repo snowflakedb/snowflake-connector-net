@@ -14,8 +14,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatProvidesConfiguration()
         {
             // arrange
-            var configFinder = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            var configParser = new Mock<EasyLoggingConfigParser> { CallBase = true };
+            var configFinder = new Mock<EasyLoggingConfigFinder>();
+            var configParser = new Mock<EasyLoggingConfigParser>();
             var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
             var config = new EasyLoggingConfig();
             configFinder
@@ -36,8 +36,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatReturnsNullWhenNoConfigurationFound()
         {
             // arrange
-            var configFinder = new Mock<EasyLoggingConfigFinder> { CallBase = true };
-            var configParser = new Mock<EasyLoggingConfigParser> { CallBase = true };
+            var configFinder = new Mock<EasyLoggingConfigFinder>();
+            var configParser = new Mock<EasyLoggingConfigParser>();
             var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
             configFinder
                 .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
