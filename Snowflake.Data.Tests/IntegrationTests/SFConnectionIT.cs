@@ -1865,6 +1865,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
 		}
 
+#if NETCOREAPP3_0_OR_GREATER
+		[Test]
+		public void TestCloseAsync()
+		{
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+			// An application can call Close or CloseAsync more than one time. 
+			// No exception is generated.
+			using (var conn = new SnowflakeDbConnection())
+			{
+				conn.ConnectionString = ConnectionString;
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+				Task task = null;
+
+				// Close the connection. It's not opened yet, but it should not have any issue
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Open the connection
+				task = conn.OpenAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Open);
+
+				// Close the opened connection
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Close the connection again.
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+			}
+		}
+#endif
+
 		[Test]
         public void TestCloseAsyncFailure()
         {
