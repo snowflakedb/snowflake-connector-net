@@ -255,7 +255,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             GetObjectRequest request = new GetObjectRequest
             {
                 BucketName = location.bucket,
-                Key = location.key + fileMetadata.srcFileName
+                Key = location.key + fileMetadata.RemoteFileName()
             };
             return request;
         }
