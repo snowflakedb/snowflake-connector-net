@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []{"c INT"}, null, conn);
+                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
 
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
@@ -57,11 +57,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = ConnectionString;
             conn.Open();
             
-            CreateOrReplaceTable(TableName, new []
+            CreateOrReplaceTable(conn, TableName, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            }, null, conn);
+            });
             
             using (DbTransaction transaction = conn.BeginTransaction())
             {
@@ -108,11 +108,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = ConnectionString;
             conn.Open();
             
-            CreateOrReplaceTable(TableName, new []
+            CreateOrReplaceTable(conn, TableName, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            }, null, conn);
+            });
             
             using (DbTransaction transaction = conn.BeginTransaction())
             {

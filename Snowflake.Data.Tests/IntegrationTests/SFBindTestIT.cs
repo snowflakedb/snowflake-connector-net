@@ -34,11 +34,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []
+                CreateOrReplaceTable(conn, TableName, new []
                 {
                     "cola INTEGER",
                     "colb STRING"
-                }, null, conn);
+                });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 dbConnection.ConnectionString = ConnectionString;
                 dbConnection.Open();
-                CreateOrReplaceTable(TableName, new[]
+                CreateOrReplaceTable(dbConnection, TableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "timeData TIME",
                     "dateTimeData DATETIME",
                     "dateTimeWithTimeZone TIMESTAMP_TZ"
-                }, null, dbConnection);
+                });
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
@@ -210,7 +210,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 dbConnection.ConnectionString = ConnectionString;
                 dbConnection.Open();
                 
-                CreateOrReplaceTable(TableName, new[]
+                CreateOrReplaceTable(dbConnection, TableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "timeData TIME",
                     "dateTimeData DATETIME",
                     "dateTimeWithTimeZone TIMESTAMP_TZ"
-                }, null, dbConnection);
+                });
                 
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
@@ -383,7 +383,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             };
                         }
                         
-                        CreateOrReplaceTable(TableName, columns, null, dbConnection);
+                        CreateOrReplaceTable(dbConnection, TableName, columns);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
@@ -538,7 +538,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []
+                CreateOrReplaceTable(conn, TableName, new []
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -546,7 +546,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "cold TIME",
                     "cole TIMESTAMP_NTZ",
                     "colf TIMESTAMP_TZ" 
-                }, null, conn);
+                });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -674,12 +674,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []
+                CreateOrReplaceTable(conn, TableName, new []
                 {
                     "cola REAL",
                     "colb TEXT",
                     "colc NUMBER(38,0)"
-                }, null, conn);
+                });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -743,10 +743,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []
+                CreateOrReplaceTable(conn, TableName, new []
                 {
                     "cola INTEGER"
-                }, null, conn);
+                });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {

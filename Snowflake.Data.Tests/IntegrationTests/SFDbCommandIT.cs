@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []{"c1 NUMBER"}, null, conn);
+                CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
@@ -568,7 +568,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    CreateOrReplaceTable(TableName, new []{"c1 NUMBER"});
+                    CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                     command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
@@ -595,19 +595,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
-            CreateOrReplaceTable(TableName, new []
-            {
-                "cola INTEGER",
-                "colb STRING",
-                "colc DATE",
-                "cold TIME",
-                "cole TIMESTAMP_NTZ",
-                "colf TIMESTAMP_TZ"
-            });
             ArrayBindTest(ConnectionString, TableName, 15000);
         }
 
-        static void ArrayBindTest(string connstr, string tableName, int size)
+        private void ArrayBindTest(string connstr, string tableName, int size)
         {
         
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
@@ -615,6 +606,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = connstr;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, tableName, new []
+                {
+                    "cola INTEGER",
+                    "colb STRING",
+                    "colc DATE",
+                    "cold TIME",
+                    "cole TIMESTAMP_NTZ",
+                    "colf TIMESTAMP_TZ"
+                });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -733,24 +734,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var t1TableName = TableName + 1;
             var t2TableName = TableName + 2;
-            CreateOrReplaceTable(t1TableName, new []
-            {
-                "cola INTEGER",
-                "colb STRING",
-                "colc DATE",
-                "cold TIME",
-                "cole TIMESTAMP_NTZ",
-                "colf TIMESTAMP_TZ"
-            });
-            CreateOrReplaceTable(t2TableName, new []
-            {
-                "cola INTEGER",
-                "colb STRING",
-                "colc DATE",
-                "cold TIME",
-                "cole TIMESTAMP_NTZ",
-                "colf TIMESTAMP_TZ"
-            });
+
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString, t1TableName));
             Thread t2 = new Thread(() => ThreadProcess2(ConnectionString, t2TableName));
             //Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
@@ -764,22 +748,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t2.Join();
         }
 
-        static void ThreadProcess1(string connstr, string tableName)
+        private void ThreadProcess1(string connstr, string tableName)
         {
             ArrayBindTest(connstr, tableName, 15000);
         }
 
-        static void ThreadProcess2(string connstr, string tableName)
+        private void ThreadProcess2(string connstr, string tableName)
         {
             ArrayBindTest(connstr, tableName, 15000);
         }
 
-        static void ThreadProcess3(string connstr, string tableName)
+        private void ThreadProcess3(string connstr, string tableName)
         {
             ArrayBindTest(connstr, tableName, 20000);
         }
 
-        static void ThreadProcess4(string connstr, string tableName)
+        private void ThreadProcess4(string connstr, string tableName)
         {
             ArrayBindTest(connstr, tableName, 25000);
         }
@@ -793,7 +777,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(TableName, new []{"cola INTEGER"}, null, conn);
+                CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {

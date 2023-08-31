@@ -713,7 +713,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                CreateOrReplaceTable(TableName, new []{"c INT"}, null, conn);
+                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
                 var t1 = conn.BeginTransaction();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
