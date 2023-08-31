@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
 
     [TestFixture]
+    [SetCulture("en-US")]
     class FastParserTest
     {
         byte[] _byte;
