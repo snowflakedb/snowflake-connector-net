@@ -27,7 +27,8 @@ namespace Snowflake.Data.Core
             string noProxyList,
             bool disableRetry,
             bool forceRetryOn404,
-            int maxHttpRetries)
+            int maxHttpRetries,
+            bool includeRetryReason = true)
         {
             CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
@@ -38,6 +39,7 @@ namespace Snowflake.Data.Core
             DisableRetry = disableRetry;
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
+            IncludeRetryReason = includeRetryReason;
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -49,7 +51,8 @@ namespace Snowflake.Data.Core
                     noProxyList,
                     disableRetry.ToString(),
                     forceRetryOn404.ToString(),
-                    maxHttpRetries.ToString()});
+                    maxHttpRetries.ToString(),
+                    includeRetryReason.ToString()});
         }
 
         public readonly bool CrlCheckEnabled;
@@ -61,6 +64,7 @@ namespace Snowflake.Data.Core
         public readonly bool DisableRetry;
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
+        public readonly bool IncludeRetryReason;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -102,7 +106,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries))
+                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -202,7 +206,7 @@ namespace Snowflake.Data.Core
             }
 
             /// <summary>
-            /// RetryCoundRule would update the retryCount parameter
+            /// RetryCountRule would update the retryCount parameter
             /// </summary>
             class RetryCountRule : IRule
             {
@@ -238,10 +242,32 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            /// <summary>
+            /// RetryReasonRule would update the retryReason parameter
+            /// </summary>
+            class RetryReasonRule : IRule
+            {
+                int retryReason;
+
+                internal RetryReasonRule()
+                {
+                    retryReason = 0;
+                }
+
+                public void SetRetryReason(int reason)
+                {
+                    retryReason = reason;
+                }
+
+                void IRule.apply(NameValueCollection queryParams)
+                {
+                    queryParams.Set(RestParams.SF_QUERY_RETRY_REASON, retryReason.ToString());
+                }
+            }
 
             UriBuilder uriBuilder;
             List<IRule> rules;
-            internal UriUpdater(Uri uri)
+            internal UriUpdater(Uri uri, bool includeRetryReason = true)
             {
                 uriBuilder = new UriBuilder(uri);
                 rules = new List<IRule>();
@@ -249,6 +275,10 @@ namespace Snowflake.Data.Core
                 if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH))
                 {
                     rules.Add(new RetryCountRule());
+                    if (includeRetryReason)
+                    {
+                        rules.Add(new RetryReasonRule());
+                    }
                 }
 
                 if (uri.Query != null && uri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID))
@@ -257,7 +287,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            internal Uri Update()
+            internal Uri Update(int retryReason = 0)
             {
                 // Optimization to bypass parsing if there is no rules at all.
                 if (rules.Count == 0)
@@ -269,6 +299,10 @@ namespace Snowflake.Data.Core
 
                 foreach (IRule rule in rules)
                 {
+                    if (rule is RetryReasonRule)
+                    {
+                        ((RetryReasonRule)rule).SetRetryReason(retryReason);
+                    }
                     rule.apply(queryParams);
                 }
 
@@ -284,12 +318,14 @@ namespace Snowflake.Data.Core
             private bool disableRetry;
             private bool forceRetryOn404;
             private int maxRetry;
+            private bool includeRetryReason;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetry) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetry, bool includeRetryReason) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
                 this.maxRetry = maxRetry;
+                this.includeRetryReason = includeRetryReason;
             }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
@@ -315,7 +351,7 @@ namespace Snowflake.Data.Core
 
                 CancellationTokenSource childCts = null;
 
-                UriUpdater updater = new UriUpdater(requestMessage.RequestUri);
+                UriUpdater updater = new UriUpdater(requestMessage.RequestUri, includeRetryReason);
                 int retryCount = 0;
 
                 while (true)
@@ -357,6 +393,7 @@ namespace Snowflake.Data.Core
                         childCts.Dispose();
                     }
 
+                    int errorReason = 0;
                     if (response != null)
                     {
                         if (response.IsSuccessStatusCode)
@@ -375,6 +412,7 @@ namespace Snowflake.Data.Core
                                 return response;
                             }
                         }
+                        errorReason = (int)response.StatusCode;
                     }
                     else
                     {
@@ -395,7 +433,7 @@ namespace Snowflake.Data.Core
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
 
-                    requestMessage.RequestUri = updater.Update();
+                    requestMessage.RequestUri = updater.Update(errorReason);
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 

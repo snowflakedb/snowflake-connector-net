@@ -186,7 +186,16 @@ namespace Snowflake.Data.Core
                 {
                     return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
                 }
-                return new SFResultSet(response.data, this, cancellationToken);
+
+                if (response.data.queryResultFormat == ResultFormat.ARROW)
+                {
+                    return new ArrowResultSet(response.data, this, cancellationToken);
+                }
+                else
+                {
+                    // JSON result format
+                    return new SFResultSet(response.data, this, cancellationToken);
+                }
             }
 
             throw new SnowflakeDbException(response.data.sqlState,

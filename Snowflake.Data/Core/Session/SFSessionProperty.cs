@@ -81,7 +81,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "7")]
         MAXHTTPRETRIES,
         [SFSessionPropertyAttr(required = false)]
-        FILE_TRANSFER_MEMORY_THRESHOLD
+        FILE_TRANSFER_MEMORY_THRESHOLD,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        INCLUDERETRYREASON,
     }
 
     class SFSessionPropertyAttr : Attribute

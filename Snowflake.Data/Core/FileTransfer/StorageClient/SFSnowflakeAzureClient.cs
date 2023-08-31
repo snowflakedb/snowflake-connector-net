@@ -48,10 +48,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Get the Azure SAS token and create the client
             if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
             {
-                string blobEndpoint = string.Format("https://{0}.blob.core.windows.net", stageInfo.storageAccount);
+                string blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
                 blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
                     new AzureSasCredential(sasToken));
             }
+        }
+
+        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient blobServiceClientMock) : this(stageInfo)
+        {
+            // Inject the mock BlobServiceClient
+            blobServiceClient = blobServiceClientMock;
         }
 
         /// <summary>
@@ -96,7 +102,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
             BlobProperties response;
             try
@@ -125,7 +131,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
             BlobProperties response;
             try
@@ -215,7 +221,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                await blobClient.UploadAsync(fileBytesStream, cancellationToken);
+                await blobClient.UploadAsync(fileBytesStream, cancellationToken).ConfigureAwait(false);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -268,7 +274,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            return containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
+            return containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
         }
 
         /// <summary>
@@ -289,8 +295,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                var task = blobClient.DownloadToAsync(fullDstPath);
-                task.Wait();
+                blobClient.DownloadTo(fullDstPath);
             }
             catch (RequestFailedException ex)
             {
@@ -346,7 +351,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             return fileMetadata;
         }
-        
+
         private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
             if (ex.Status == (int)HttpStatusCode.BadRequest)

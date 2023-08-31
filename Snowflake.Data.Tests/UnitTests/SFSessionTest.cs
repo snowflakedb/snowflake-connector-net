@@ -19,5 +19,19 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             sfSession.close(); // no exception is raised.
         }
+
+        [Test]
+        public void TestUpdateDatabaseAndSchema()
+        {
+            string databaseName = "DB_TEST";
+            string schemaName = "SC_TEST";
+            
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            sfSession.UpdateDatabaseAndSchema(databaseName, schemaName);
+
+            Assert.AreEqual(databaseName, sfSession.database);
+            Assert.AreEqual(schemaName, sfSession.schema);
+        }
+
     }
 }

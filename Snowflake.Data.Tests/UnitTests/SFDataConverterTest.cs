@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Globalization;
 
     [TestFixture]
+    [SetCulture("en-US")]
     class SFDataConverterTest
     {
         [Test]

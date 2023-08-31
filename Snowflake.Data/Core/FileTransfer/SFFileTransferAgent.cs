@@ -590,7 +590,8 @@ namespace Snowflake.Data.Core
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
                         proxyCredentials = null,
-                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory()
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                        _operationType = CommandTypes.UPLOAD
                     };
 
                     /// The storage client used to upload data from files or streams
@@ -650,7 +651,8 @@ namespace Snowflake.Data.Core
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         parallel = TransferMetadata.parallel,
                         encryptionMaterial = TransferMetadata.encryptionMaterial[index],
-                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory()
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                        _operationType = CommandTypes.DOWNLOAD
                     };
 
                     /// The storage client used to download data from files or streams

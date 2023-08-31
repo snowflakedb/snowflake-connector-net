@@ -22,6 +22,8 @@ namespace Snowflake.Data.Core
 
         internal const string SF_QUERY_RETRY_COUNT = "retryCount";
 
+        internal const string SF_QUERY_RETRY_REASON = "retryReason";
+
         internal const string SF_QUERY_SESSION_DELETE = "delete";
     }
 
