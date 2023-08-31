@@ -1831,7 +1831,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCloseAsync()
+        public void TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -1863,9 +1863,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
-        }
+		}
 
-        [Test]
+		[Test]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
