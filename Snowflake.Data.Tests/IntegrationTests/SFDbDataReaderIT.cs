@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testGetFloat()
+        public void testGetDouble()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
