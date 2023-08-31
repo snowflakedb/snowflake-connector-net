@@ -377,6 +377,12 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
+        {
+            this.database = databaseName;
+            this.schema = schemaName;
+        }
+        
         internal void startHeartBeatForThisSession()
         {
             if (!this.isHeartBeatEnabled)

@@ -124,6 +124,18 @@ namespace Snowflake.Data.Core.FileTransfer
         public ProxyCredentials proxyCredentials { get; set; }
         
         public int MaxBytesInMemory { get; set; }
+        
+        internal CommandTypes _operationType;
+
+        internal string RemoteFileName()
+        {
+            if (_operationType == CommandTypes.UPLOAD)
+            {
+                return destFileName;
+            }
+
+            return srcFileName;
+        }
     }
 
     internal class FileTransferConfiguration

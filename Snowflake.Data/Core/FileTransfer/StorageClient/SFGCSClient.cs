@@ -115,7 +115,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName) :
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.RemoteFileName()) :
                 fileMetadata.presignedUrl;
 
             WebRequest request = WebRequest.Create(url);
@@ -353,7 +353,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the GET request
                 WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
-
+                
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
