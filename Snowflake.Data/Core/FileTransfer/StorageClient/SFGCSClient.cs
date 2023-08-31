@@ -3,17 +3,12 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
-using System.Linq;
-using Newtonsoft.Json.Linq;
 using System.Net;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -27,10 +22,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// GCS header values.
         /// </summary>
         private const string GCS_METADATA_PREFIX = "x-goog-meta-";
-        private const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
-        private const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
-        private const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
-        private const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
+        internal const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
+        internal const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
+        internal const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
+        internal const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
 
         /// <summary>
         /// The GCS access token.
@@ -53,6 +48,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private Google.Cloud.Storage.V1.StorageClient StorageClient;
 
         /// <summary>
+        /// The custom WebRequest.
+        /// </summary>
+        private WebRequest _customWebRequest = null;
+
+        /// <summary>
         /// GCS client with access token.
         /// </summary>
         /// <param name="stageInfo">The command stage info.</param>
@@ -72,6 +72,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
                 StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
             }
+        }
+
+        internal void SetCustomWebRequest(WebRequest mockWebRequest)
+        {
+            _customWebRequest = mockWebRequest;
         }
 
         /// <summary>
@@ -104,6 +109,19 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             };
         }
 
+        internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
+        {
+            string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.RemoteFileName()) :
+                fileMetadata.presignedUrl;
+
+            WebRequest request = WebRequest.Create(url);
+            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+            request.Method = method;
+
+            return request;
+        }
+
         /// <summary>
         /// Get the file header.
         /// </summary>
@@ -122,68 +140,33 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 };
             }
 
-            if (fileMetadata.presignedUrl != null)
+            try
             {
-                // Issue GET request to GCS file URL
-                try
-                {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                    {
-                        var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                        var contentLength = response.Headers.GetValues("content-length");
+                // Issue a HEAD request
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                        return new FileHeader
-                        {
-                            digest = digest[0],
-                            contentLength = Convert.ToInt64(contentLength[0])
-                        };
-                    }
-                }
-                catch (WebException ex)
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    HttpWebResponse response = (HttpWebResponse)ex.Response;
-                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
-                        response.StatusCode == HttpStatusCode.Forbidden ||
-                        response.StatusCode == HttpStatusCode.NotFound)
+                    var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
+                    var contentLength = response.Headers.GetValues("content-length");
+
+                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+
+                    return new FileHeader
                     {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                        return new FileHeader();
-                    }
+                        digest = digest[0],
+                        contentLength = Convert.ToInt64(contentLength[0])
+                    };
                 }
             }
-            else
+            catch (WebException ex)
             {
-                // Generate the file URL based on GCS location
-                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.RemoteFileName());
-                try
-                {
-                    // Issue a HEAD request
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                    request.Method = "HEAD";
-                    request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-
-                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                    {
-                        var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                        var contentLength = response.Headers.GetValues("content-length");
-
-                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                        return new FileHeader
-                        {
-                            digest = digest[0],
-                            contentLength = Convert.ToInt64(contentLength[0])
-                        };
-                    }
-                }
-                catch (WebException ex)
-                {
-                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
-                }
+                // GCS presigned urls have a different error handling for file headers
+                fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                       HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
+                       HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
             }
+
             return null;
         }
 
@@ -206,52 +189,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 };
             }
 
-            if (fileMetadata.presignedUrl != null)
+            try
             {
-                // Issue GET request to GCS file URL
-                try
-                {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                    using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
-                    {
-                        var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                        var contentLength = response.Headers.GetValues("content-length");
+                // Issue a HEAD request
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-                        fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                        return new FileHeader
-                        {
-                            digest = digest[0],
-                            contentLength = Convert.ToInt64(contentLength[0])
-                        };
-                    }
-                }
-                catch (WebException ex)
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
-                    HttpRequestException err = (HttpRequestException)ex.InnerException;
-                    if (err.Message.Contains(SFStorageClientUtil.UNAUTHORIZED_ERR) ||
-                        err.Message.Contains(SFStorageClientUtil.FORBIDDEN_ERR) ||
-                        err.Message.Contains(SFStorageClientUtil.NOT_FOUND_ERR))
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                        return new FileHeader();
-                    }
-                }
-            }
-            else
-            {
-                // Generate the file URL based on GCS location
-                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.RemoteFileName());
-                try
-                {
-                    // Issue a HEAD request
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                    request.Method = "HEAD";
-                    request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-
-                    WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
-                    HttpWebResponse response = (HttpWebResponse)webResponse;
-                    
                     var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
                     var contentLength = response.Headers.GetValues("content-length");
 
@@ -263,11 +207,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         contentLength = Convert.ToInt64(contentLength[0])
                     };
                 }
-                catch (WebException ex)
-                {
-                    fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
-                }
             }
+            catch (WebException ex)
+            {
+                // GCS presigned urls have a different error handling for file headers
+                fileMetadata = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+                       HandleFileHeaderErrForGeneratedUrls(ex, fileMetadata) :
+                       HandleFileHeaderErrForPresignedUrls(ex, fileMetadata);
+            }
+
             return null;
         }
 
@@ -293,10 +241,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
+
             try
             {
-                HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
-                
+                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+
                 Stream dataStream = request.GetRequestStream();
                 fileBytesStream.Position = 0;
                 fileBytesStream.CopyTo(dataStream);
@@ -311,7 +260,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (WebException ex)
             {
                 fileMetadata = HandleUploadFileErr(ex, fileMetadata);
-                return;
             }
         }
 
@@ -324,17 +272,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileByteStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             String encryptionData = GetUploadEncryptionData(encryptionMetadata);
+
             try
             {
-                HttpWebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
 
                 Stream dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
                 fileByteStream.Position = 0;
                 fileByteStream.CopyTo(dataStream);
                 dataStream.Close();
 
-                WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
-                using (HttpWebResponse response = (HttpWebResponse)webResponse)
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     fileMetadata.destFileSize = fileMetadata.uploadSize;
                     fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
@@ -343,32 +291,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (WebException ex)
             {
                 fileMetadata = HandleUploadFileErr(ex, fileMetadata);
-                return;
             }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
         }
-        
-        private HttpWebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
+
+        private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
         {
             // Issue the POST/PUT request
-            HttpWebRequest request;
-            if (fileMetadata.presignedUrl != null)
-            {
-                request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-            }
-            else
-            {
-                request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
-            }
+            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
 
-            request.Method = "PUT";
+            request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
+            request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
+            request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
 
-            request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-            request.Headers.Add("x-goog-meta-sfc-digest", fileMetadata.sha256Digest);
-            request.Headers.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
-            request.Headers.Add("x-goog-meta-encryptiondata", encryptionData);
             return request;
         }
 
@@ -415,17 +349,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                HttpWebRequest request;
-                if (fileMetadata.presignedUrl != null)
-                {
-                    request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                }
-                else
-                {
-                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.srcFileName));
-                }
-                request.Headers.Add("Authorization", $"Bearer {AccessToken}");
-
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;                
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
@@ -438,15 +362,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         }
                     }
                     HandleDownloadResponse(response, fileMetadata);
+                    fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
                 }
             }
             catch (WebException ex)
             {
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
-                return;
             }
-
-            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
         /// <summary>
@@ -460,20 +382,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                HttpWebRequest request;
-                if (fileMetadata.presignedUrl != null)
-                {
-                    request = (HttpWebRequest)WebRequest.Create(fileMetadata.presignedUrl);
-                }
-                else
-                {
-                    request = (HttpWebRequest)WebRequest.Create(generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName));
-                }
-                request.Headers.Add("Authorization", $"Bearer {AccessToken}");
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
-                WebResponse webResponse = await request.GetResponseAsync().ConfigureAwait(false);
-                
-                using (HttpWebResponse response = (HttpWebResponse)webResponse)
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     // Write to file
                     using (var fileStream = File.Create(fullDstPath))
@@ -485,15 +396,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                         }
                     }
                     HandleDownloadResponse(response, fileMetadata);
+                    fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
                 }
             }
             catch (WebException ex)
             {
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
-                return;
             }
-
-            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
         }
 
         /// <summary>
@@ -527,12 +436,37 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         }
 
         /// <summary>
-        /// Handle file header error.
+        /// Handle file header error for presigned urls.
         /// </summary>
         /// <param name="ex">The file header exception.</param>
         /// <param name="fileMetadata">The GCS file metadata.</param>
         /// <returns>File Metadata</returns>
-        private SFFileMetadata HandleFileHeaderErr(WebException ex, SFFileMetadata fileMetadata)
+        private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
+        {
+            fileMetadata.lastError = ex;
+
+            HttpWebResponse response = (HttpWebResponse)ex.Response;
+            if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                response.StatusCode == HttpStatusCode.Forbidden ||
+                response.StatusCode == HttpStatusCode.NotFound)
+            {
+                fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+            }
+            else
+            {
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+
+            return fileMetadata;
+        }
+
+        /// <summary>
+        /// Handle file header error for generated urls.
+        /// </summary>
+        /// <param name="ex">The file header exception.</param>
+        /// <param name="fileMetadata">The GCS file metadata.</param>
+        /// <returns>File Metadata</returns>
+        private SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
             // If file doesn't exist, GET request fails
             fileMetadata.lastError = ex;
@@ -544,7 +478,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else if (response.StatusCode == HttpStatusCode.Forbidden ||
                 response.StatusCode == HttpStatusCode.InternalServerError ||
-                response.StatusCode == HttpStatusCode.InternalServerError)
+                response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
