@@ -3,7 +3,13 @@
  */
 
 using Amazon.S3;
+using Amazon.S3.Model;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.Mock
 {
@@ -29,7 +35,7 @@ namespace Snowflake.Data.Tests.Mock
         internal const int ContentLength = 9999;
 
         // Create AWS exception for mock requests
-        static internal Exception CreateMockAwsResponseError(string errorCode, bool isAsync)
+        static Exception CreateMockAwsResponseError(string errorCode, bool isAsync)
         {
             AmazonS3Exception awsError = new AmazonS3Exception(S3ErrorMessage);
             awsError.ErrorCode = errorCode;
@@ -41,6 +47,56 @@ namespace Snowflake.Data.Tests.Mock
 
             Exception exceptionContainingS3Error = new Exception(S3ErrorMessage, awsError);
             return exceptionContainingS3Error;  // S3 places the AmazonS3Exception on the InnerException property on non-async calls
+        }
+
+        // Create mock response for GetFileHeader
+        static internal Task<GetObjectResponse> CreateResponseForGetFileHeader(string statusCode, bool isAsync)
+        {
+            if (statusCode == HttpStatusCode.OK.ToString())
+            {
+                var getObjectResponse = new GetObjectResponse();
+                getObjectResponse.ContentLength = MockS3Client.ContentLength;
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, MockS3Client.AmzIV);
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, MockS3Client.AmzKey);
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, MockS3Client.AmzMatdesc);
+                getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, MockS3Client.SfcDigest);
+
+                return Task.FromResult(getObjectResponse);
+            }
+            else
+            {
+                throw CreateMockAwsResponseError(statusCode, isAsync);
+            }
+        }
+
+        // Create mock response for UploadFile
+        static internal Task<PutObjectResponse> CreateResponseForUploadFile(string statusCode, bool isAsync)
+        {
+            if (statusCode == HttpStatusCode.OK.ToString())
+            {
+                return Task.FromResult(new PutObjectResponse());
+            }
+            else
+            {
+                throw CreateMockAwsResponseError(statusCode, isAsync);
+            }
+        }
+
+        // Create mock response for DownloadFile
+        static internal Task<GetObjectResponse> CreateResponseForDownloadFile(string statusCode, bool isAsync)
+        {
+            if (statusCode == HttpStatusCode.OK.ToString())
+            {
+                var getObjectResponse = new GetObjectResponse();
+                byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
+                getObjectResponse.ResponseStream = new MemoryStream(bytes);
+
+                return Task.FromResult(getObjectResponse);
+            }
+            else
+            {
+                throw CreateMockAwsResponseError(statusCode, isAsync);
+            }
         }
     }
 }

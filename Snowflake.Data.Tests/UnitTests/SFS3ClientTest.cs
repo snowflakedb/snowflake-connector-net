@@ -15,13 +15,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using Amazon;
     using System.Threading;
     using System.IO;
-    using System.Net.Http;
     using Moq;
     using Amazon.S3.Model;
-    using Org.BouncyCastle.Crypto.Digests;
-    using System.Net;
-    using System.Text;
-    using Amazon.Runtime;
 
     [TestFixture]
     class SFS3ClientTest : SFBaseTest
@@ -140,21 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        var getObjectResponse = new GetObjectResponse();
-                        getObjectResponse.ContentLength = MockS3Client.ContentLength;
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, MockS3Client.AmzIV);
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, MockS3Client.AmzKey);
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, MockS3Client.AmzMatdesc);
-                        getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, MockS3Client.SfcDigest);
-
-                        return Task.FromResult(getObjectResponse);
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, false);
-                    }
+                    return MockS3Client.CreateResponseForGetFileHeader(request.BucketName, false);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -179,21 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        var getObjectResponse = new GetObjectResponse();
-                        getObjectResponse.ContentLength = MockS3Client.ContentLength;
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, MockS3Client.AmzIV);
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, MockS3Client.AmzKey);
-                        getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, MockS3Client.AmzMatdesc);
-                        getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, MockS3Client.SfcDigest);
-
-                        return Task.FromResult(getObjectResponse);
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, true);
-                    }
+                    return MockS3Client.CreateResponseForGetFileHeader(request.BucketName, true);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -235,14 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<PutObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        return Task.FromResult(new PutObjectResponse());
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, false);
-                    }
+                    return MockS3Client.CreateResponseForUploadFile(request.BucketName, false);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -272,14 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<PutObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        return Task.FromResult(new PutObjectResponse());
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, true);
-                    }
+                    return MockS3Client.CreateResponseForUploadFile(request.BucketName, true);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -320,18 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        var getObjectResponse = new GetObjectResponse();
-                        byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
-                        getObjectResponse.ResponseStream = new MemoryStream(bytes);
-
-                        return Task.FromResult(getObjectResponse);
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, false);
-                    }
+                    return MockS3Client.CreateResponseForDownloadFile(request.BucketName, false);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -355,18 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
                 .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
                 {
-                    if (request.BucketName == HttpStatusCode.OK.ToString())
-                    {
-                        var getObjectResponse = new GetObjectResponse();
-                        byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
-                        getObjectResponse.ResponseStream = new MemoryStream(bytes);
-
-                        return Task.FromResult(getObjectResponse);
-                    }
-                    else
-                    {
-                        throw MockS3Client.CreateMockAwsResponseError(request.BucketName, true);
-                    }
+                    return MockS3Client.CreateResponseForDownloadFile(request.BucketName, true);
                 });
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
