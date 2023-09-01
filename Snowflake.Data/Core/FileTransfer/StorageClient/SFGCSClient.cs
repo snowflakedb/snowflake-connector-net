@@ -443,6 +443,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
+            Logger.Error("Failed to get file header for presigned url: " + ex.Message);
+
             fileMetadata.lastError = ex;
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
@@ -468,6 +470,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
+            Logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
+
             // If file doesn't exist, GET request fails
             fileMetadata.lastError = ex;
 
@@ -501,6 +505,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
+            Logger.Error("Failed to upload file: " + ex.Message);
+
             fileMetadata.lastError = ex;
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
@@ -529,6 +535,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
+            Logger.Error("Failed to download file: " + ex.Message);
+
             fileMetadata.lastError = ex;
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
