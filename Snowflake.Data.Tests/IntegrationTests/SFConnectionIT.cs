@@ -268,10 +268,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"use schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
-                cmd.CommandText = "create table test1 (col1 string, col2 int)";
+                cmd.CommandText = $"create table {TableName} (col1 string, col2 int)";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
-                cmd.CommandText = "insert into test1 Values ('test 1', 1);";
+                cmd.CommandText = $"insert into {TableName} Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
            
@@ -296,7 +296,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn1.Open();
                 using (IDbCommand cmd = conn1.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT count(*) FROM test1";
+                    cmd.CommandText = $"SELECT count(*) FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(1, reader.GetInt32(0));
@@ -710,19 +710,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionDispose()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
-                // Setup
-                conn.ConnectionString = ConnectionString;
                 conn.Open();
-                IDbCommand command = conn.CreateCommand();
-                command.CommandText = "create or replace table testConnDispose(c int)";
-                command.ExecuteNonQuery();
-
-                IDbTransaction t1 = conn.BeginTransaction();
-                IDbCommand t1c1 = conn.CreateCommand();
+                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
+                var t1 = conn.BeginTransaction();
+                var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
-                t1c1.CommandText = "insert into testConnDispose values (1)";
+                t1c1.CommandText = $"insert into {TableName} values (1)";
                 t1c1.ExecuteNonQuery();
             }
 
@@ -733,13 +728,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 IDbCommand command = conn.CreateCommand();
-                command.CommandText = "SELECT * FROM testConnDispose";
+                command.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader = command.ExecuteReader();
                 Assert.IsFalse(reader.Read());
-
-                // Cleanup
-                command.CommandText = "DROP TABLE IF EXISTS testConnDispose";
-                command.ExecuteNonQuery();
             }
         }
 

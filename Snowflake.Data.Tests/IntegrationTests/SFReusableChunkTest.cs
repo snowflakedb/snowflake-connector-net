@@ -26,22 +26,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
-                string createCommand = "create or replace table del_test (col string)";
-                cmd.CommandText = createCommand;
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = "select * from del_test";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
@@ -59,10 +56,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                 }
                 Assert.AreEqual(largeTableRowCount, rowCount);
-
-                cmd.CommandText = "drop table if exists del_test";
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
 
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
@@ -79,39 +72,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
-                string createCommand = "create or replace table car_sales(src variant)";
-                cmd.CommandText = createCommand;
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
-                string insertCommand = @"
+                string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
-insert into car_sales (
-select parse_json('{ 
+insert into {TableName} (
+select parse_json('{{ 
     ""date"" : ""2017 - 04 - 28"", 
     ""dealership"" : ""Valley View Auto Sales"",
-    ""salesperson"" : {
+    ""salesperson"" : {{
                     ""id"": ""55"",
       ""name"": ""Frank Beasley""
-    },
+    }},
     ""customer"" : [
-      { ""name"": ""Joyce Ridgely"", ""phone"": ""16504378889"", ""address"": ""San Francisco, CA""}
+      {{ ""name"": ""Joyce Ridgely"", ""phone"": ""16504378889"", ""address"": ""San Francisco, CA""}}
     ],
     ""vehicle"" : [
-       { ""make"": ""Honda"", ""model"": ""Civic"", ""year"": ""2017"", ""price"": ""20275"", ""extras"":[""ext warranty"", ""paint protection""]}
+       {{ ""make"": ""Honda"", ""model"": ""Civic"", ""year"": ""2017"", ""price"": ""20275"", ""extras"":[""ext warranty"", ""paint protection""]}}
     ]
-}') from table(generator(rowcount => 500))
+}}') from table(generator(rowcount => 500))
 )
 ";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(500, insertReader.RecordsAffected);
 
-                string selectCommand = "select * from car_sales";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
                 cmd.CommandType = System.Data.CommandType.Text;
 
@@ -126,10 +116,6 @@ select parse_json('{
                 }
                 Assert.AreEqual(500, rowCount);
 
-                cmd.CommandText = "drop table if exists car_sales";
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
@@ -141,27 +127,24 @@ select parse_json('{
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
-
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
-                string createCommand = "create or replace table del_test (col string)";
-                cmd.CommandText = createCommand;
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = "select * from del_test";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
@@ -180,10 +163,6 @@ select parse_json('{
                 }
                 Assert.AreEqual(largeTableRowCount, rowCount);
 
-                cmd.CommandText = "drop table if exists del_test";
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
@@ -196,26 +175,24 @@ select parse_json('{
         {            
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
+            
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
-                string createCommand = "create or replace table del_test (col string)";
-                cmd.CommandText = createCommand;
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
-
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into del_test(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand; 
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = "select * from del_test";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
@@ -236,10 +213,6 @@ select parse_json('{
                     }
                 });
                 Assert.AreNotEqual(largeTableRowCount, rowCount);
-
-                cmd.CommandText = "drop table if exists del_test";
-                rowCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, rowCount);
 
                 conn.Close();
             }

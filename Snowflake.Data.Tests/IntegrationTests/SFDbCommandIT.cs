@@ -137,28 +137,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test case takes too much time so run it manually")]
         public void TestRowsAffectedOverflowInt()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
-                conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = "create or replace table test_rows_affected_overflow(c1 number)";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "insert into test_rows_affected_overflow select seq4() from table(generator(rowcount=>2147484000))";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.AreEqual(-1, affected);
-
-                    command.CommandText = "drop table if exists test_rows_affected_overflow";
-                    command.ExecuteNonQuery();
                 }
                 conn.Close();
             }
         }
-
     }
 
     [TestFixture]
@@ -459,11 +453,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand command = conn.CreateCommand();
                 command.Transaction = tran;
-                command.CommandText = "create or replace table testtransaction(cola string)";
+                command.CommandText = $"create or replace table {TableName}(cola string)";
                 command.ExecuteNonQuery();
                 command.Transaction.Commit();
+                AddTableToRemoveList(TableName);
 
-                command.CommandText = "show tables like 'testtransaction'";
+                command.CommandText = $"show tables like '{TableName}'";
                 IDataReader reader = command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 Assert.IsFalse(reader.Read());
@@ -471,17 +466,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // start another transaction to test rollback
                 tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
                 command.Transaction = tran;
-                command.CommandText = "insert into testtransaction values('test')";
+                command.CommandText = $"insert into {TableName} values('test')";
 
                 command.ExecuteNonQuery();
-                command.CommandText = "select * from testtransaction";
+                command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
                 command.Transaction.Rollback();
 
                 // no value will be in table since it has been rollbacked
-                command.CommandText = "select * from testtransaction";
+                command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
                 Assert.IsFalse(reader.Read());
 
@@ -494,12 +489,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             String[] testCommands =
             {
-                "create or replace table test_rows_affected(cola int, colb string)",
-                "insert into test_rows_affected values(1, 'a'),(2, 'b')",
-                "merge into test_rows_affected using (select 1 as cola, 'c' as colb) m on " +
-                "test_rows_affected.cola = m.cola when matched then update set test_rows_affected.colb='update' " +
+                $"create or replace table {TableName}(cola int, colb string)",
+                $"insert into {TableName} values(1, 'a'),(2, 'b')",
+                $"merge into {TableName} using (select 1 as cola, 'c' as colb) m on " +
+                $"{TableName}.cola = m.cola when matched then update set {TableName}.colb='update' " +
                 "when not matched then insert (cola, colb) values (3, 'd')",
-                "drop table if exists test_rows_affected"
+                $"drop table if exists {TableName}"
             };
 
             int[] expectedResult =
@@ -573,10 +568,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = "create or replace table test_rows_affected_unload(c1 number)";
-                    command.ExecuteNonQuery();
+                    CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
-                    command.CommandText = "insert into test_rows_affected_unload values(1), (2), (3), (4), (5), (6)";
+                    command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
 
                     command.CommandText = "drop stage if exists my_unload_stage";
@@ -585,15 +579,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "create stage if not exists my_unload_stage";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = "copy into @my_unload_stage/unload/ from test_rows_affected_unload;";
+                    command.CommandText = $"copy into @my_unload_stage/unload/ from {TableName};";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.AreEqual(6, affected);
 
                     command.CommandText = "drop stage if exists my_unload_stage";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "drop table if exists test_rows_affected_unload";
                     command.ExecuteNonQuery();
                 }
                 conn.Close();
@@ -604,10 +595,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString, "testPutArrayBind", 15000);
+            ArrayBindTest(ConnectionString, TableName, 15000);
         }
 
-        static void ArrayBindTest(string connstr, string tableName, int size)
+        private void ArrayBindTest(string connstr, string tableName, int size)
         {
         
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
@@ -615,13 +606,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = connstr;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, tableName, new []
+                {
+                    "cola INTEGER",
+                    "colb STRING",
+                    "colc DATE",
+                    "cold TIME",
+                    "cole TIMESTAMP_NTZ",
+                    "colf TIMESTAMP_TZ"
+                });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table "+ tableName + " (cola integer, colb string, colc date, cold time, cole TIMESTAMP_NTZ, colf TIMESTAMP_TZ)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
-
                     string insertCommand = "insert into " + tableName + " values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
@@ -727,12 +724,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "SELECT * FROM " + tableName;
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
-
-                    //cmd.CommandText = "drop table if exists " + tableName;
-                    //cmd.ExecuteNonQuery();
-
                 }
-                System.Threading.Thread.Sleep(2000); // wait for 2 seconds, in case other test still running.
                 conn.Close();
             }
         }
@@ -740,9 +732,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBindAsyncMultiThreading()
         {
-            var connStr = ConnectionString + "";
-            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
-            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString));
+            var t1TableName = TableName + 1;
+            var t2TableName = TableName + 2;
+
+            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString, t1TableName));
+            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString, t2TableName));
             //Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
             //Thread t4 = new Thread(() => ThreadProcess4(ConnectionString));
 
@@ -750,26 +744,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t2.Start();
             //t3.Start();
             //t4.Start();
+            t1.Join();
+            t2.Join();
         }
 
-        static void ThreadProcess1(string connstr)
+        private void ThreadProcess1(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, "testPutArrayBind1", 15000);
+            ArrayBindTest(connstr, tableName, 15000);
         }
 
-        static void ThreadProcess2(string connstr)
+        private void ThreadProcess2(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, "testPutArrayBind2", 15000);
+            ArrayBindTest(connstr, tableName, 15000);
         }
 
-        static void ThreadProcess3(string connstr)
+        private void ThreadProcess3(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, "testPutArrayBind3", 20000);
+            ArrayBindTest(connstr, tableName, 20000);
         }
 
-        static void ThreadProcess4(string connstr)
+        private void ThreadProcess4(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, "testPutArrayBind4", 25000);
+            ArrayBindTest(connstr, tableName, 25000);
         }
 
         [Test]
@@ -780,13 +776,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                
+                CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "create or replace table testScalarAsync(cola integer)";
-                    int count = cmd.ExecuteNonQuery();
-
-                    string insertCommand = "insert into testScalarAsync values (?)";
+                    string insertCommand = $"insert into {TableName} values (?)";
                     cmd.CommandText = insertCommand;
                     int total = 1000;
 
@@ -800,16 +795,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p1.DbType = DbType.Int16;
                     p1.Value = arrint.ToArray();
                     cmd.Parameters.Add(p1);
-                    count = cmd.ExecuteNonQuery();
+                    cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = "SELECT COUNT(*) FROM testScalarAsync";
+                    cmd.CommandText = $"SELECT COUNT(*) FROM {TableName}";
                     Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
 
                     task.Wait();
                     Assert.AreEqual(total, task.Result);
-
-                    cmd.CommandText = "drop table if exists testScalarAsync";
-                    cmd.ExecuteNonQuery();
                 }
                 conn.Close();
             }
