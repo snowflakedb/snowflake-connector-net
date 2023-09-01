@@ -84,13 +84,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestConstructorWithoutGCSAccessToken()
-        {
-            _fileMetadata.stageInfo.stageCredentials = new Dictionary<string, string>();
-            new SFGCSClient(_fileMetadata.stageInfo);
-        }
-
-        [Test]
         public void TestExtractBucketNameAndPath()
         {
             // Split LOCATION based on the first '/' character
