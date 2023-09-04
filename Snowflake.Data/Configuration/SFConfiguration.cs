@@ -36,12 +36,12 @@ namespace Snowflake.Data.Configuration
 
         public int GetChunkParserVersion()
         {
-            return UseV2JsonParser ? 2 : ChunkParserVersion;
+            return ChunkParserVersion;
         }
 
         public int GetChunkDownloaderVersion()
         {
-            return UseV2ChunkDownloader ? 2 : ChunkDownloaderVersion;
+            return ChunkDownloaderVersion;
         }
     }
 }
