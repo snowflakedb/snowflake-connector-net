@@ -254,7 +254,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         /*
          * Disabled to make sure that configuration changes does not cause problems with appveyor
          */
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
@@ -283,7 +283,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV2ChunkDownloader()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;

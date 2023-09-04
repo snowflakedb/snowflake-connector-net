@@ -638,6 +638,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
                 }
 
+                conn.ChangeDatabase(testConfig.database);
                 conn.Close();
             }
 
