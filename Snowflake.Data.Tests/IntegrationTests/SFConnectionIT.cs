@@ -300,6 +300,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(1, reader.GetInt32(0));
+                    cmd.CommandText = "use schema " + testConfig.schema;
+                    cmd.ExecuteNonQuery();
                 }
                 conn1.Close();
 
@@ -311,7 +313,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 //cmd.CommandText = "drop database \"dlTest\"";
                 cmd.CommandText = $"drop schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database "+ testConfig.database;
+                cmd.CommandText = "use database " + testConfig.database;
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema " + testConfig.schema;
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
