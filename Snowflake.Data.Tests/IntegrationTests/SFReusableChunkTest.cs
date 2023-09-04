@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Client;
     using System.Threading.Tasks;
     
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
         [Test]

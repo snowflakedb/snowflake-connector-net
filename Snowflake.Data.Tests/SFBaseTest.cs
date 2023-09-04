@@ -48,6 +48,7 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
+    [Parallelizable(ParallelScope.All)]
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
@@ -151,9 +152,14 @@ namespace Snowflake.Data.Tests
 
         private static Dictionary<string, TimeSpan> s_testPerformance;
 
+        private static readonly object s_testPerformanceLock = new object();
+
         public static void RecordTestPerformance(string name, TimeSpan time)
         {
-            s_testPerformance.Add(name, time);
+            lock (s_testPerformanceLock)
+            {
+                s_testPerformance.Add(name, time);
+            }
         }
 
         [OneTimeSetUp]

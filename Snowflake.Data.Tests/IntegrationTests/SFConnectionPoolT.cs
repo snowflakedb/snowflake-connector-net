@@ -429,7 +429,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
