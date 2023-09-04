@@ -17,13 +17,11 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class ChunkParserFactoryTest
     {
-        bool UseV2JsonParserDefault = SFConfiguration.Instance().UseV2JsonParser;
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 
         [TearDown]
         public void AfterTest()
         {
-            SFConfiguration.Instance().UseV2JsonParser = UseV2JsonParserDefault; // Return to default version
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
@@ -35,10 +33,9 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestGetParser([Values(false, true)] bool useV2JsonParser, [Values(1, 2, 3, 4)] int chunkParserVersion)
+        public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
         {
             // Set configuration settings
-            SFConfiguration.Instance().UseV2JsonParser = useV2JsonParser;
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
 
             // Get parser using sample stream

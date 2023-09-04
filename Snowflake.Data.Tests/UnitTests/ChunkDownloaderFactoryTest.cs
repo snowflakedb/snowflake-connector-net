@@ -14,13 +14,11 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class ChunkDownloaderFactoryTest
     {
-        bool UseV2ChunkDownloaderDefault = SFConfiguration.Instance().UseV2ChunkDownloader;
         int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
 
         [TearDown]
         public void AfterTest()
         {
-            SFConfiguration.Instance().UseV2ChunkDownloader = UseV2ChunkDownloaderDefault; // Return to default version
             SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
         }
 
@@ -56,10 +54,9 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestGetDownloader([Values(false, true)] bool useV2ChunkDownloader, [Values(1, 2, 3, 4)] int chunkDownloaderVersion)
+        public void TestGetDownloader([Values(1, 2, 3, 4)] int chunkDownloaderVersion)
         {
             // Set configuration settings
-            SFConfiguration.Instance().UseV2ChunkDownloader = useV2ChunkDownloader;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
 
             CancellationToken token = new CancellationToken();
