@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core
                     s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
                     return new ReusableChunkParser(stream);
                 case 2:
-                    s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
+                    s_logger.Warn("V2 version of ChunkParser is deprecated. Using the V3 version.");
                     return new ReusableChunkParser(stream);
                 case 3:
                     return new ReusableChunkParser(stream);
