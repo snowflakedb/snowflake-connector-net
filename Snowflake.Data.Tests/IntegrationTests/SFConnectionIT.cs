@@ -846,7 +846,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
 
-                Task connectTask = conn.OpenAsync();
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
                 using (DbCommand command = conn.CreateCommand())
@@ -1734,7 +1734,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     try
                     {
-                        Task connectTask = conn.OpenAsync();
+                        Task connectTask = conn.OpenAsync(CancellationToken.None);
                         connectTask.Wait();
                     }
                     catch (AggregateException e)
@@ -1770,7 +1770,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync();
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                 }
                 catch (AggregateException e)
@@ -1806,7 +1806,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task connectTask = null;
                 try
                 {
-                    connectTask = conn.OpenAsync();
+                    connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                     Assert.Fail();
                 }
@@ -1840,7 +1840,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
-                task = conn.OpenAsync();
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -1867,7 +1867,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Open the connection
-                task = conn.OpenAsync();
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
