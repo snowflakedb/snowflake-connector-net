@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
@@ -6,7 +11,7 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     public class EasyLoggingConfigParserTest
     {
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
@@ -45,32 +50,72 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.AreEqual(LogPath, config.CommonProps.LogPath);
         }
 
-        [Test]
-        public void TestThatReturnsNullIfFileDoesNotExist(
-            [Values(null, "", NotExistingFilePath)]
-            string notExistingFilePath)
-        {
-            // arrange
-            var parser = new EasyLoggingConfigParser();
-
-            // act
-            var config = parser.Parse(notExistingFilePath);
-
-            // assert
-            Assert.IsNull(config);
-        }
-
-        [Test, TestCaseSource(nameof(WrongConfigFiles))]
-        public void TestThatReturnsNullIfMissingOrInvalidRequiredFields(string filePath)
+        [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]
+        public void TestThatParsesConfigFileWithNullValues(string filePath)
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
 
             // act
             var config = parser.Parse(filePath);
+            
+            // assert
+            Assert.IsNotNull(config);
+            Assert.IsNotNull(config.CommonProps);
+            Assert.IsNull(config.CommonProps.LogLevel);
+            Assert.IsNull(config.CommonProps.LogPath);            
+        }
 
+        [Test]
+        [TestCase(null)]
+        [TestCase("")]
+        public void TestThatReturnsNullWhenNothingToParse(string noFilePath)
+        {
+            // arrange
+            var parser = new EasyLoggingConfigParser();
+
+            // act
+            var config = parser.Parse(noFilePath);
+            
             // assert
             Assert.IsNull(config);
+        }
+        
+        [Test]
+        public void TestThatFailsWhenTheFileDoesNotExist()
+        {
+            // arrange
+            var parser = new EasyLoggingConfigParser();
+            
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(NotExistingFilePath));
+            
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.IsTrue(thrown.Message == "Finding easy logging configuration failed");
+        }
+
+        [Test, TestCaseSource(nameof(WrongConfigFiles))]
+        public void TestThatFailsIfMissingOrInvalidRequiredFields(string filePath)
+        {
+            // arrange
+            var parser = new EasyLoggingConfigParser();
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(filePath));
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.IsTrue(thrown.Message == "Parsing easy logging configuration failed");
+        }
+
+        public static IEnumerable<string> ConfigFilesWithoutValues()
+        {
+            BeforeAll();
+            return new[]
+            {
+                CreateConfigTempFile(EmptyCommonConfig),
+                CreateConfigTempFile(Config(null, null))
+            };
         }
 
         public static IEnumerable<string> WrongConfigFiles()
@@ -79,9 +124,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             return new[]
             {
                 CreateConfigTempFile(EmptyConfig),
-                CreateConfigTempFile(EmptyCommonConfig),
-                CreateConfigTempFile(Config(null, LogPath)),
-                CreateConfigTempFile(Config(LogLevel, null)),
                 CreateConfigTempFile(Config("unknown", LogPath)),
             };
         }

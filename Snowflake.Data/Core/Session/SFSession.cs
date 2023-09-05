@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Web;
@@ -14,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Core
 {
@@ -63,6 +65,8 @@ namespace Snowflake.Data.Core
         
         internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
             new SFSessionHttpClientProxyProperties.Extractor());
+
+        private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
         internal string connStr = null;
@@ -129,8 +133,18 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString, SecureString password)
+        internal SFSession(
+            String connectionString,
+            SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
         {
+        }
+
+        internal SFSession(
+            String connectionString,
+            SecureString password,
+            EasyLoggingStarter easyLoggingStarter)
+        {
+            _easyLoggingStarter = easyLoggingStarter;
             connStr = connectionString;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
@@ -145,6 +159,8 @@ namespace Snowflake.Data.Core
                 restRequester = new RestRequester(_HttpClient);
                 extractedProperties.WarnOnTimeout();
                 connectionTimeout = extractedProperties.TimeoutDuration();
+                properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
+                _easyLoggingStarter.Init(easyLoggingConfigFile);
             }
             catch (Exception e)
             {
@@ -155,7 +171,7 @@ namespace Snowflake.Data.Core
                             "Unable to connect");
             }
         }
-
+        
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern

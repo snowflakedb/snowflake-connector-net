@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
 namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigProvider
@@ -6,13 +10,19 @@ namespace Snowflake.Data.Configuration
 
         private readonly EasyLoggingConfigParser _configParser;
 
-        public EasyLoggingConfigProvider(EasyLoggingConfigFinder finder, EasyLoggingConfigParser configParser)
+        public static readonly EasyLoggingConfigProvider Instance = new EasyLoggingConfigProvider();
+
+        internal EasyLoggingConfigProvider() : this(EasyLoggingConfigFinder.Instance, EasyLoggingConfigParser.Instance)
+        {
+        }
+        
+        internal EasyLoggingConfigProvider(EasyLoggingConfigFinder finder, EasyLoggingConfigParser configParser)
         {
             _finder = finder;
             _configParser = configParser;
         }
 
-        public EasyLoggingConfig ProvideConfig(string configFilePathFromConnectionString)
+        public virtual ClientConfig ProvideConfig(string configFilePathFromConnectionString)
         {
             var filePath = _finder.FindConfigFilePath(configFilePathFromConnectionString);
             return filePath == null ? null : _configParser.Parse(filePath);
