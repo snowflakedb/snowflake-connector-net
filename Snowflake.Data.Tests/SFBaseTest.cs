@@ -10,8 +10,11 @@ using System.Reflection;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
+
+[assembly:LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {
