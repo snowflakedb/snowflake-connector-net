@@ -846,14 +846,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
 
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                Task connectTask = conn.OpenAsync();
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
-                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
-                    task.Wait(CancellationToken.None);
+                    Task<object> task = command.ExecuteScalarAsync();
+                    task.Wait();
                     Assert.AreEqual("QA", task.Result);
                 }
             }
@@ -1731,11 +1731,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-                    CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     try
                     {
-                        Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                        Task connectTask = conn.OpenAsync();
                         connectTask.Wait();
                     }
                     catch (AggregateException e)
@@ -1768,11 +1767,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    Task connectTask = conn.OpenAsync();
                     connectTask.Wait();
                 }
                 catch (AggregateException e)
@@ -1805,11 +1803,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = null;
                 try
                 {
-                    connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    connectTask = conn.OpenAsync();
                     connectTask.Wait();
                     Assert.Fail();
                 }
@@ -1838,22 +1835,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync();
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync();
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync();
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync();
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
@@ -1870,12 +1867,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync();
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync(new CancellationTokenSource().Token);
+                task =  conn.CloseAsync();
                 try
                 {
                     task.Wait();
