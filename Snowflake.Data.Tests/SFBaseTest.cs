@@ -14,7 +14,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 
-[assembly:LevelOfParallelism(8)]
+[assembly:LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {

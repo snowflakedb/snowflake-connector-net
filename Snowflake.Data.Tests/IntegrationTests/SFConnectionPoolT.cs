@@ -33,7 +33,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
             SnowflakeDbConnectionPool.SetTimeout(_timeout);
             SnowflakeDbConnectionPool.SetPooling(_pooling);
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
     }
     
@@ -48,12 +47,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [TearDown]
         public void AfterTest()
         {
             previousPoolConfig.Reset();
+        }
+
+        [OneTimeTearDown]
+        public void AfterAllTests()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Test]
@@ -344,7 +350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t2.Join();
         }
 
-        static void ThreadProcess1(string connstr)
+        void ThreadProcess1(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
@@ -355,7 +361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
         }
 
-        static void ThreadProcess2(string connstr)
+        void ThreadProcess2(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
@@ -450,6 +456,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void AfterTest()
         {
             previousPoolConfig.Reset();
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+        
+        [OneTimeTearDown]
+        public void AfterAllTests()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Test]
