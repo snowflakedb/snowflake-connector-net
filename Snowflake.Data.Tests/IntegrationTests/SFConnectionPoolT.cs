@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [OneTimeTearDown]
-        public void AfterAllTests()
+        public static void AfterAllTests()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -460,7 +460,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [OneTimeTearDown]
-        public void AfterAllTests()
+        public static void AfterAllTests()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
         }
