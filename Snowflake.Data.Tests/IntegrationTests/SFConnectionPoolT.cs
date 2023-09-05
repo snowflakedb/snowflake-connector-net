@@ -33,6 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
             SnowflakeDbConnectionPool.SetTimeout(_timeout);
             SnowflakeDbConnectionPool.SetPooling(_pooling);
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
     }
     
@@ -47,7 +48,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [TearDown]
