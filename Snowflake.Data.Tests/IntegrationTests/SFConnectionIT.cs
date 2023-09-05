@@ -1835,7 +1835,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
-                task = conn.CloseAsync();
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
@@ -1845,12 +1845,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task = conn.CloseAsync();
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
-                task = conn.CloseAsync();
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
@@ -1872,7 +1872,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync();
+                task =  conn.CloseAsync(CancellationToken.None);
                 try
                 {
                     task.Wait();
