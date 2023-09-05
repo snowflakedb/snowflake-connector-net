@@ -300,8 +300,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(1, reader.GetInt32(0));
-                    cmd.CommandText = "use schema " + testConfig.schema;
-                    cmd.ExecuteNonQuery();
                 }
                 conn1.Close();
 
