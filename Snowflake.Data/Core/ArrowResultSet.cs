@@ -67,7 +67,7 @@ namespace Snowflake.Data.Core
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Info("Get next chunk from chunk downloader");
+                s_logger.Debug("Get next chunk from chunk downloader");
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 return _currentChunk?.Next() ?? false;
             }
@@ -84,7 +84,7 @@ namespace Snowflake.Data.Core
             
             if (_totalChunkCount > 0)
             {
-                s_logger.Info("Get next chunk from chunk downloader");
+                s_logger.Debug("Get next chunk from chunk downloader");
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 return _currentChunk?.Next() ?? false;
             }
@@ -122,8 +122,12 @@ namespace Snowflake.Data.Core
 
             if (_currentChunk.Rewind())
                 return true;
-            
-            // cannot rewind to previous chunk
+
+            if (_currentChunk.ChunkIndex > 0)
+            {
+                s_logger.Warn("Unable to rewind to the previous chunk");
+            }
+
             return false;
         }
 

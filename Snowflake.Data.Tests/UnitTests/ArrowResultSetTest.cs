@@ -149,7 +149,7 @@ namespace Snowflake.Data.Tests.UnitTests
                             type = "TEXT"
                         }).ToList(),
                 parameters = new List<NameValueParameter>(),
-                chunks = null, // TODO in SNOW-893835 - add tests with multiple chunks
+                chunks = null,
                 queryResultFormat = ResultFormat.ARROW,
                 rowsetBase64 = ConvertToBase64String(recordBatch)
             };

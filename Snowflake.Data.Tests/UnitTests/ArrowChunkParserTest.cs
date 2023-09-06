@@ -31,17 +31,18 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestParseChunkReadsRecordBatches([Values(1, 2, 4)] int numberOfRecordBatch)
         {
             // Arrange
-            var recordBatch = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 10))))
-                .Build();
-
             MemoryStream stream = new MemoryStream();
-            ArrowStreamWriter writer = new ArrowStreamWriter(stream, recordBatch.Schema);
+            
             for (var i = 0; i < numberOfRecordBatch; i++)
             {
+                var numberOfRecordsInBatch = 10 * i;
+                var recordBatch = new RecordBatch.Builder()
+                    .Append("Col_Int32", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, numberOfRecordsInBatch))))
+                    .Build();
+
+                ArrowStreamWriter writer = new ArrowStreamWriter(stream, recordBatch.Schema, true);
                 writer.WriteRecordBatch(recordBatch);
             }
-            writer.WriteEnd();
             stream.Position = 0;
             
             var parser = new ArrowChunkParser(stream);
@@ -53,6 +54,11 @@ namespace Snowflake.Data.Tests.UnitTests
             
             // Assert
             Assert.AreEqual(numberOfRecordBatch, chunk.RecordBatch.Count);
+            for (var i = 0; i < numberOfRecordBatch; i++)
+            {
+                var numberOfRecordsInBatch = 10 * i;
+                Assert.AreEqual(numberOfRecordsInBatch, chunk.RecordBatch[i].Length);
+            }
         }
     }
 }

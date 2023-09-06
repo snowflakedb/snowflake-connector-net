@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
 {
     class SFResultSet : SFBaseResultSet
     {
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFResultSet>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFResultSet>();
         
         private readonly int _totalChunkCount;
         
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Core
             }
             catch(System.Exception ex)
             {
-                Logger.Error("Result set error queryId="+responseData.queryId, ex);
+                s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
             }
         }
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core
 
         internal void ResetChunkInfo(BaseResultChunk nextChunk)
         {
-            Logger.Debug($"Received chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}"); 
+            s_logger.Debug($"Received chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}"); 
             _currentChunk.RowSet = null;
             _currentChunk = nextChunk;
         }
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Core
             {
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
-                Logger.Info("Get next chunk from chunk downloader");
+                s_logger.Debug("Get next chunk from chunk downloader");
                 BaseResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 if (nextChunk != null)
                 {
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Core
 
             if (_chunkDownloader != null)
             {
-                Logger.Info("Get next chunk from chunk downloader");
+                s_logger.Debug("Get next chunk from chunk downloader");
                 BaseResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {

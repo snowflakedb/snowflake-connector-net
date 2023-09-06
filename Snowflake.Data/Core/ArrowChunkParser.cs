@@ -22,15 +22,14 @@ namespace Snowflake.Data.Core
 
         public async Task ParseChunk(BaseResultChunk chunk)
         {
-            ArrowResultChunk rc = (ArrowResultChunk)chunk; 
+            ArrowResultChunk resultChunk = (ArrowResultChunk)chunk; 
 
             using (var reader = new ArrowStreamReader(stream))
             {
-                var recordBatch = await reader.ReadNextRecordBatchAsync().ConfigureAwait(false);
-                while (recordBatch != null)
+                RecordBatch recordBatch;
+                while ((recordBatch = await reader.ReadNextRecordBatchAsync().ConfigureAwait(false)) != null)
                 {
-                    rc.AddRecordBatch(recordBatch);
-                    recordBatch = await reader.ReadNextRecordBatchAsync().ConfigureAwait(false);
+                    resultChunk.AddRecordBatch(recordBatch);
                 }
             }
         }

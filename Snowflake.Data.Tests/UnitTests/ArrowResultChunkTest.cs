@@ -15,10 +15,17 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         private const int RowCountBatchOne = 10;
         private const int RowCountBatchTwo = 20;
-        private RecordBatch _recordBatchOne;
-        private RecordBatch _recordBatchTwo;
+        private readonly RecordBatch _recordBatchOne = new RecordBatch.Builder()
+            .Append("Col_Int32", false, col => col.Int32(
+                array => array.AppendRange(Enumerable.Range(1, RowCountBatchOne))))
+            .Build();
+        private readonly RecordBatch _recordBatchTwo = new RecordBatch.Builder()
+            .Append("Col_Int32", false, col => col.Int32(
+                array => array.AppendRange(Enumerable.Range(1, RowCountBatchTwo))))
+            .Build();
         private ArrowResultChunk _chunk;
         
+
         [Test]
         [Ignore("ArrowResultChunkTest")]
         public void SFArrowResultChunkTestDone()
@@ -26,25 +33,10 @@ namespace Snowflake.Data.Tests.UnitTests
             // Do nothing - test progress marker
         }
         
-        [SetUp]
-        public void BeforeTest()
-        {
-            _recordBatchOne = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(
-                    array => array.AppendRange(Enumerable.Range(1, RowCountBatchOne))))
-                .Build();
-
-            _recordBatchTwo = new RecordBatch.Builder()
-                .Append("Col_Int32", false, col => col.Int32(
-                    array => array.AppendRange(Enumerable.Range(1, RowCountBatchTwo))))
-                .Build();
-            
-            _chunk = new ArrowResultChunk(_recordBatchOne);
-        }
-        
         [Test]
         public void TestAddRecordBatchAddsBatchTwo()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
             _chunk.AddRecordBatch(_recordBatchTwo);
 
             Assert.AreEqual(2, _chunk.RecordBatch.Count);
@@ -53,6 +45,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestNextIteratesThroughAllRecordsOfOneBatch()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+            
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
                 Assert.IsTrue(_chunk.Next());
@@ -63,6 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestNextIteratesThroughAllRecordsOfTwoBatches()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
             _chunk.AddRecordBatch(_recordBatchTwo);
             
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
@@ -73,13 +68,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestRewindIteratesThroughAllRecordsOfOneBatch()
+        public void TestRewindIteratesThroughAllRecordsOfBatchOne()
         {
-            for (var i = 0; i < RowCountBatchOne; ++i)
-            {
-                _chunk.Next();
-            }
-            _chunk.Next();
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+
+            // move to the end of the batch
+            while (_chunk.Next()) {}
             
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
@@ -89,15 +83,13 @@ namespace Snowflake.Data.Tests.UnitTests
         }
         
         [Test]
-        public void TestRewindIteratesThroughAllRecordsOfTwoBatch()
+        public void TestRewindIteratesThroughAllRecordsOfTwoBatches()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
             _chunk.AddRecordBatch(_recordBatchTwo);
             
-            for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
-            {
-                _chunk.Next();
-            }
-            _chunk.Next();
+            // move to the end of the batch
+            while (_chunk.Next()) {}
             
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
@@ -115,6 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 uncompressedSize = 100,
                 rowCount = 2
             };
+            _chunk = new ArrowResultChunk(_recordBatchOne);
             
             _chunk.Reset(chunkInfo, 0);
             
@@ -126,6 +119,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractCellReadsAllRows()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+
             var column = (Int32Array)_recordBatchOne.Column(0);
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
@@ -139,24 +134,27 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractCellThrowsOutOfRangeException()
         {
-            for (var i = 0; i < RowCountBatchOne; ++i)
-            {
-                _chunk.Next();
-            }
+            _chunk = new ArrowResultChunk(_recordBatchOne);
 
-            Assert.IsFalse(_chunk.Next());
+            // move to the end of the batch
+            while (_chunk.Next()) {}
+
             Assert.Throws<ArgumentOutOfRangeException>(() => _chunk.ExtractCell(0).SafeToString());
         }
         
         [Test]
         public void TestRowCountReturnsNumberOfRows()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+
             Assert.AreEqual(RowCountBatchOne, _chunk.RowCount);
         }
 
         [Test]
         public void TestGetChunkIndexReturnsFirstChunk()
         {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+
             Assert.AreEqual(0, _chunk.ChunkIndex);
         }
         

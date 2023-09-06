@@ -238,7 +238,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42), UUID_STRING() as Pierwsz_kolumna, UUID_STRING() as Druga_kolumna from table(generator(rowcount => 5000)) v order by 1";
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
                     int counter = 0;
@@ -326,6 +326,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
                 cmd.ExecuteNonQuery();
 
+                // 200000 - empirical value to return 3 additional chunks for both JSON and Arrow response
                 cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
 
                 IDataReader reader = cmd.ExecuteReader();

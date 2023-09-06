@@ -70,15 +70,11 @@ namespace Snowflake.Data.Core
 
             for (int i=0; i<prefetchSlot; i++)
             {
-                BaseResultChunk resultChunk;
-                if (resultFormat == ResultFormat.ARROW)
-                {
-                    resultChunk = new ArrowResultChunk(colCount);
-                }
-                else
-                {
-                    resultChunk = new SFReusableChunk(colCount);
-                }
+                BaseResultChunk resultChunk = 
+                    resultFormat == ResultFormat.ARROW ? (BaseResultChunk)
+                        new ArrowResultChunk(colCount) :
+                        new SFReusableChunk(colCount);
+                
                 resultChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
                 chunkDatas.Add(resultChunk);
 
@@ -139,7 +135,6 @@ namespace Snowflake.Data.Core
 
         private async Task<BaseResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
         {
-            //logger.Info($"Start downloading chunk #{downloadContext.chunkIndex}");
             BaseResultChunk chunk = downloadContext.chunk;
             int backOffInSec = 1;
             bool retry = false;

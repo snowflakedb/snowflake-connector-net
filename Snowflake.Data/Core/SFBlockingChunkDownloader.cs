@@ -110,7 +110,7 @@ namespace Snowflake.Data.Core
         
         private async Task<BaseResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
-            logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
+            logger.Info($"Start downloading chunk #{downloadContext.chunkIndex}");
             BaseResultChunk chunk = downloadContext.chunk;
 
             S3DownloadRequest downloadRequest = 
