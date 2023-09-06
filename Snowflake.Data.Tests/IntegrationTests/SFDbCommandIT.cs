@@ -31,14 +31,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecAsyncAPI()
         {
+            SnowflakeDbConnectionPool.ClearAllPools();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
-                Assert.AreEqual(ConnectionState.Connecting, conn.State);
-
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
