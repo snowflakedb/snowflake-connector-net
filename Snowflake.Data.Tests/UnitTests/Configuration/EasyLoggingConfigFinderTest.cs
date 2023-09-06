@@ -32,17 +32,17 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_fileOperations = new Mock<FileOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
             t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
-            mockHomeDirectory();
+            MockHomeDirectory();
         }
         
         [Test]
         public void TestThatTakesFilePathFromTheInput()
         {
             // arrange
-            mockFileFromEnvironmentalVariable();
-            mockFileOnDriverPath();
-            mockFileOnHomePath();
-            mockFileOnTempPath();
+            MockFileFromEnvironmentalVariable();
+            MockFileOnDriverPath();
+            MockFileOnHomePath();
+            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
@@ -58,10 +58,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             [Values(null, "")] string inputFilePath)
         {
             // arrange
-            mockFileFromEnvironmentalVariable();
-            mockFileOnDriverPath();
-            mockFileOnHomePath();
-            mockFileOnTempPath();
+            MockFileFromEnvironmentalVariable();
+            MockFileOnDriverPath();
+            MockFileOnHomePath();
+            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(inputFilePath);
@@ -74,9 +74,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
         {
             // arrange
-            mockFileOnDriverPath();
-            mockFileOnHomePath();
-            mockFileOnTempPath();
+            MockFileOnDriverPath();
+            MockFileOnHomePath();
+            MockFileOnTempPath();
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -89,8 +89,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
         {
             // arrange
-            mockFileOnHomePath();
-            mockFileOnTempPath();
+            MockFileOnHomePath();
+            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatTakesFilePathFromTempDirectoryWhenNoOtherWaysPossible()
         {
             // arrange
-            mockFileOnTempPath();
+            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNull(filePath);
         }
 
-        private static void mockHomeDirectory()
+        private static void MockHomeDirectory()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -138,28 +138,28 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
-        private static void mockFileFromEnvironmentalVariable()
+        private static void MockFileFromEnvironmentalVariable()
         {
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName))
                 .Returns(EnvironmentalConfigFilePath);
         }
 
-        private static void mockFileOnDriverPath()
+        private static void MockFileOnDriverPath()
         {
             t_fileOperations
                 .Setup(f => f.Exists(s_driverConfigFilePath))
                 .Returns(true);
         }
 
-        private static void mockFileOnHomePath()
+        private static void MockFileOnHomePath()
         {
             t_fileOperations
                 .Setup(f => f.Exists(s_homeConfigFilePath))
                 .Returns(true);
         }
 
-        private static void mockFileOnTempPath()
+        private static void MockFileOnTempPath()
         {
             t_fileOperations
                 .Setup(f => f.Exists(s_tempConfigFilePath))

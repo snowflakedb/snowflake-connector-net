@@ -1,6 +1,0 @@
-{
-  "common": {
-    "log_level": "somethingElse",
-    "log_path": "./test-logs/log_file.log"
-  }
-}

@@ -38,27 +38,9 @@ namespace Snowflake.Data.Configuration
             return GetFilePathFromInputParameter(filePath);
         }
         
-        private string GetFilePathFromTempDirectory()
-        {
-            var tempDirectory = Path.GetTempPath();
-            if (string.IsNullOrEmpty(tempDirectory))
-            {
-                return null;
-            }
-            var tempFilePath = Path.Combine(tempDirectory, ClientConfigFileName);
-            return OnlyIfFileExists(tempFilePath);
-        }
-        
-        private string GetFilePathFromHomeDirectory()
-        {
-            var homeDirectory = GetHomeDirectory();
-            if (string.IsNullOrEmpty(homeDirectory))
-            {
-                return null;
-            }
-            var homeFilePath = Path.Combine(homeDirectory, ClientConfigFileName);
-            return OnlyIfFileExists(homeFilePath);
-        }
+        private string GetFilePathFromTempDirectory() => SearchForConfigInDirectory(Path.GetTempPath());
+
+        private string GetFilePathFromHomeDirectory() => SearchForConfigInDirectory(GetHomeDirectory());
         
         private string GetFilePathFromInputParameter(string filePath)
         {
@@ -75,10 +57,16 @@ namespace Snowflake.Data.Configuration
             return _environmentOperations.ExpandEnvironmentVariables(WindowsHomePathExtractionTemplate);
         }
 
-        private string GetFilePathFromDriverLocation()
+        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(".");
+
+        private string SearchForConfigInDirectory(string directory)
         {
-            var filePath = Path.Combine(".", ClientConfigFileName);
-            return OnlyIfFileExists(filePath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                return null;
+            }
+            var filePath = Path.Combine(directory, ClientConfigFileName);
+            return OnlyIfFileExists(filePath);            
         }
 
         private string OnlyIfFileExists(string filePath) => _fileOperations.Exists(filePath) ? filePath : null;

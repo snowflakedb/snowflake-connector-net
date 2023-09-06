@@ -4,12 +4,12 @@ namespace Snowflake.Data.Configuration
 {
     internal enum EasyLoggingLogLevel
     {
-        OFF,
-        ERROR,
-        WARN,
-        INFO,
-        DEBUG,
-        TRACE
+        Off,
+        Error,
+        Warn,
+        Info,
+        Debug,
+        Trace
     }
 
     internal static class EasyLoggingLogLevelExtensions
