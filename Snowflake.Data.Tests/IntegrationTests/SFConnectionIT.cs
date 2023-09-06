@@ -852,8 +852,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
-                    Task<object> task = command.ExecuteScalarAsync();
-                    task.Wait();
+                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                    task.Wait(CancellationToken.None);
                     Assert.AreEqual("QA", task.Result);
                 }
             }
@@ -1822,7 +1822,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCloseAsync()
+        public void TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -1854,7 +1854,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
-        }
+		}
+
+#if NETCOREAPP3_0_OR_GREATER
+		[Test]
+		public void TestCloseAsync()
+		{
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+			// An application can call Close or CloseAsync more than one time. 
+			// No exception is generated.
+			using (var conn = new SnowflakeDbConnection())
+			{
+				conn.ConnectionString = ConnectionString;
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+				Task task = null;
+
+				// Close the connection. It's not opened yet, but it should not have any issue
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Open the connection
+				task = conn.OpenAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Open);
+
+				// Close the opened connection
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Close the connection again.
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+			}
+		}
+#endif
 
         [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
