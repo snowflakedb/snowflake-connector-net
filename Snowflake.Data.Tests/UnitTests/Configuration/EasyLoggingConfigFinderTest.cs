@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -124,18 +123,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
         private static void MockHomeDirectory()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                t_environmentOperations
-                    .Setup(e => e.ExpandEnvironmentVariables(EasyLoggingConfigFinder.WindowsHomePathExtractionTemplate))
-                    .Returns(HomeDirectory);
-            }
-            else
-            {
-                t_environmentOperations
-                    .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.UnixHomeEnvName))
-                    .Returns(HomeDirectory);
-            }
+            t_environmentOperations
+                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Returns(HomeDirectory);
         }
 
         private static void MockFileFromEnvironmentalVariable()

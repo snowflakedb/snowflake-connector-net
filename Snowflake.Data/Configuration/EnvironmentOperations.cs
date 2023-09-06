@@ -9,9 +9,9 @@ namespace Snowflake.Data.Configuration
             return Environment.GetEnvironmentVariable(variable);
         }
 
-        public virtual string ExpandEnvironmentVariables(string name)
+        public virtual string GetFolderPath(Environment.SpecialFolder folder)
         {
-            return Environment.ExpandEnvironmentVariables(name);
+            return Environment.GetFolderPath(folder);
         }
     }
 }

@@ -7,8 +7,6 @@ namespace Snowflake.Data.Configuration
     {
         internal const string ClientConfigFileName = "sf_client_config.json";
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
-        internal const string UnixHomeEnvName = "HOME";
-        internal const string WindowsHomePathExtractionTemplate = "%HOMEDRIVE%%HOMEPATH%";
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
@@ -42,20 +40,9 @@ namespace Snowflake.Data.Configuration
 
         private string GetFilePathFromHomeDirectory() => SearchForConfigInDirectory(GetHomeDirectory());
         
-        private string GetFilePathFromInputParameter(string filePath)
-        {
-            return string.IsNullOrEmpty(filePath) ? null : filePath;
-        }
+        private string GetFilePathFromInputParameter(string filePath) => string.IsNullOrEmpty(filePath) ? null : filePath;
 
-        private string GetHomeDirectory()
-        {
-            var platform = Environment.OSVersion.Platform;
-            if (platform == PlatformID.Unix || platform == PlatformID.MacOSX)
-            {
-                return _environmentOperations.GetEnvironmentVariable(UnixHomeEnvName);
-            }
-            return _environmentOperations.ExpandEnvironmentVariables(WindowsHomePathExtractionTemplate);
-        }
+        private string GetHomeDirectory() =>_environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(".");
 
