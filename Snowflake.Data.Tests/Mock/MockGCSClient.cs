@@ -32,8 +32,8 @@ namespace Snowflake.Data.Tests.Mock
             if (httpStatusCode == HttpStatusCode.OK)
             {
                 response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
-                response.Object.Headers.Add("content-length", MockGCSClient.ContentLength.ToString());
-                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
+                response.Object.Headers.Add("content-length", ContentLength.ToString());
+                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
             }
             else
             {
@@ -70,14 +70,14 @@ namespace Snowflake.Data.Tests.Mock
                 response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
                 response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
                     "{" +
-                    $"\"ContentEncryptionIV\": \"{MockGCSClient.GcsIV}\", " +
-                    $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{MockGCSClient.GcsKey}\"}}" +
+                    $"\"ContentEncryptionIV\": \"{GcsIV}\", " +
+                    $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{GcsKey}\"}}" +
                     "}");
-                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, MockGCSClient.GcsMatdesc);
-                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, MockGCSClient.SFCDigest);
-                response.Object.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, MockGCSClient.ContentLength.ToString());
+                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_MATDESC_KEY, GcsMatdesc);
+                response.Object.Headers.Add(SFGCSClient.GCS_METADATA_SFC_DIGEST, SFCDigest);
+                response.Object.Headers.Add(SFGCSClient.GCS_FILE_HEADER_CONTENT_LENGTH, ContentLength.ToString());
 
-                response.Setup(c => c.GetResponseStream()).Returns(new MemoryStream(Encoding.ASCII.GetBytes(MockGCSClient.GcsFileContent)));
+                response.Setup(c => c.GetResponseStream()).Returns(new MemoryStream(Encoding.ASCII.GetBytes(GcsFileContent)));
             }
             else
             {
