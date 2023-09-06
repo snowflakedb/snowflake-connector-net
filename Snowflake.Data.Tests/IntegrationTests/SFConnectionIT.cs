@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
