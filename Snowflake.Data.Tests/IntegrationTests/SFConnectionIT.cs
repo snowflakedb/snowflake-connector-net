@@ -419,7 +419,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -447,7 +447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Disable unstable test cases for now")]
         public void TestDefaultLoginTimeout()
         {
@@ -1669,7 +1669,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1717,7 +1717,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestAsyncLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -1757,7 +1757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1856,7 +1856,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
