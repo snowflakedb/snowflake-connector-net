@@ -311,7 +311,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
                                       "call p1();" +
                                       $"use role {testConfig.role}";
-                                      
+
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
                     stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";

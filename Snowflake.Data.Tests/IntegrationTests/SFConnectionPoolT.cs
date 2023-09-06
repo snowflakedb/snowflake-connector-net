@@ -456,7 +456,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void AfterTest()
         {
             previousPoolConfig.Reset();
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
         
         [OneTimeTearDown]
