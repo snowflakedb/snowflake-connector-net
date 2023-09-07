@@ -905,6 +905,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.IsTrue(reader2.Read());
                 Assert.AreEqual("test2", reader2.GetString(0));
 
+                // query id from failed query
+                command.CommandText = "select * from table_not_exists";
+                try
+                {
+                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(2003, e.ErrorCode);
+                }
+
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+
                 conn.Close();
             }
         }

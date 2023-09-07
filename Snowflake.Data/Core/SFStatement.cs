@@ -60,7 +60,7 @@ namespace Snowflake.Data.Core
 
         string _bindStage = null;
 
-        // the query id of the last succeeded query
+        // the query id of the last query
         string _lastQueryId = null;
 
         internal SFStatement(SFSession session)
@@ -183,9 +183,12 @@ namespace Snowflake.Data.Core
 
         private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
-            if (response.success)
+            if (response.data.queryId != null)
             {
                 _lastQueryId = response.data.queryId;
+            }
+            if (response.success)
+            {
                 if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
                 {
                     return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
