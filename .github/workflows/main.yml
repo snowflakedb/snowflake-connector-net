@@ -62,7 +62,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -76,12 +76,13 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
-  #disable Code coverage for now as codecov is deprecated
-  #https://docs.codecov.com/docs/deprecated-uploader-migration-guide#python-uploader
-  #      - name: Install Codecov
-  #        run: pip install codecov
-  #      - name: Run Codecoverage
-  #        run: codecov -f Snowflake.Data.Tests\${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml -t ffc6a21d-8176-4849-9047-e3a631dcd35a
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: true
+          files: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-linux:
     name: Tests on Linux
@@ -118,7 +119,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -132,6 +133,13 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: true
+          files: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-mac:
     name: Tests on MAC
@@ -168,7 +176,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -182,3 +190,10 @@ jobs:
         with:
           name: tests-performance
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: true
+          files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
