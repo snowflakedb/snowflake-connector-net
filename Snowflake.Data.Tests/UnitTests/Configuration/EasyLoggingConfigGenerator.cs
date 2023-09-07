@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             ""common"": {}
         }";
         
-        public static readonly string WorkingDirectory = Path.Combine(".", "easy_logging_test_configs");
+        public static readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
         
         public static string CreateConfigTempFile(string fileContent)
         {
