@@ -321,17 +321,17 @@ namespace Snowflake.Data.Client
                 cancellationToken);
         }
 
-        internal Mutex GetArrayBindingMutex()
+        public Mutex GetArrayBindingMutex()
         {
             return _arraybindingMutex;
         }
 
-        internal bool IsArrayBindStageCreated()
+        public bool IsArrayBindStageCreated()
         {
             return _isArrayBindStageCreated;
         }
 
-        internal void SetArrayBindStageCreated()
+        public void SetArrayBindStageCreated()
         {
             _isArrayBindStageCreated = true;
         }

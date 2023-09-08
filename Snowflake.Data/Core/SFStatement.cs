@@ -183,7 +183,7 @@ namespace Snowflake.Data.Core
 
         private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
-            if (response.data.queryId != null)
+            if ((response.data != null) && (response.data.queryId != null))
             {
                 _lastQueryId = response.data.queryId;
             }
