@@ -443,11 +443,6 @@ namespace Snowflake.Data.Core.FileTransfer
                         if (fileMetadata.presignedUrl != null)
                         {
                             fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-
-                            if (fileHeader != null)
-                            {
-                                fileMetadata.srcFileSize = fileHeader.contentLength;
-                            }
                         }
 
                         SFEncryptionMetadata encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
