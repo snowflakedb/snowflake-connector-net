@@ -73,12 +73,6 @@ namespace Snowflake.Data.Tests
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
-            
-            #if !SEQUENTIAL_TEST_RUN
-            Console.WriteLine("Parallell");
-            #else
-            Console.WriteLine("Sequential");
-            #endif
         }
 
         [TearDown]
