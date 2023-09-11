@@ -245,6 +245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     while (reader.Read())
                     {
                         Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                        // don't test the second column as it has random values just to increase the response size
                         counter++;
                     }
                 }
@@ -277,6 +278,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
@@ -306,6 +308,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
@@ -334,6 +337,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();

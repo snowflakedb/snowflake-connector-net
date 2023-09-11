@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
             RecordBatch = new List<RecordBatch>{recordBatch};
             
             RowCount = recordBatch.Length;
-            ColCount = recordBatch.ColumnCount;
+            ColumnCount = recordBatch.ColumnCount;
             ChunkIndex = 0;
         }
 
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Core
             RecordBatch = new List<RecordBatch>();
 
             RowCount = 0;
-            ColCount = columnCount;
+            ColumnCount = columnCount;
             ChunkIndex = 0;
         }
         

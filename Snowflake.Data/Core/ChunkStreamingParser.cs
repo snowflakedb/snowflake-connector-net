@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core
                     int row = 0;
                     int col = 0;
 
-                    var outputMatrix = new string[chunk.RowCount, chunk.ColCount];
+                    var outputMatrix = new string[chunk.RowCount, chunk.ColumnCount];
 
                     while (jr.Read())
                     {

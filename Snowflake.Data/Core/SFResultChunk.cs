@@ -16,13 +16,13 @@ namespace Snowflake.Data.Core
         {
             RowSet = rowSet;
             RowCount = rowSet.GetLength(0);
-            ColCount = rowSet.GetLength(1);
+            ColumnCount = rowSet.GetLength(1);
         }
 
-        public SFResultChunk(string url, int rowCount, int colCount, int index)
+        public SFResultChunk(string url, int rowCount, int columnCount, int index)
         {
             RowCount = rowCount;
-            ColCount = colCount;
+            ColumnCount = columnCount;
             Url = url;
             ChunkIndex = index;
         }

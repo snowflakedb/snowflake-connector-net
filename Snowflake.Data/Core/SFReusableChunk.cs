@@ -16,9 +16,9 @@ namespace Snowflake.Data.Core
 
         private int _currentRowIndex = -1;
 
-        internal SFReusableChunk(int colCount)
+        internal SFReusableChunk(int columnCount)
         {
-            ColCount = colCount;
+            ColumnCount = columnCount;
             data = new BlockResultData();
         }
 
@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core
         {
             base.Reset(chunkInfo, chunkIndex);
             _currentRowIndex = -1;
-            data.Reset(RowCount, ColCount, chunkInfo.uncompressedSize);
+            data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
         internal override void ResetForRetry()
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
         
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
-            return data.get(_currentRowIndex * ColCount + columnIndex);
+            return data.get(_currentRowIndex * ColumnCount + columnIndex);
         }
 
         public void AddCell(string val)

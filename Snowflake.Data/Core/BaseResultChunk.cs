@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core
         
         public int RowCount { get; protected set; }
         
-        public int ColCount { get; protected set; }
+        public int ColumnCount { get; protected set; }
         
         public int ChunkIndex { get; protected set; }
 
