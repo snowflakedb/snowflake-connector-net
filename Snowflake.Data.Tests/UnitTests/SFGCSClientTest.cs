@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const int Parallel = 0;
 
         // File name for download tests
-        [ThreadStatic] private static string t_downloadFileName = "mockFileName.txt";
+        [ThreadStatic] private static string t_downloadFileName;
 
         // Token for async tests
         CancellationToken _cancellationToken;
