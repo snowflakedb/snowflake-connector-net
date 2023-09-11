@@ -139,11 +139,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"c1 NUMBER"});
+                CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"INSERT INTO {TestNameWithWorker} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.AreEqual(-1, affected);
@@ -451,12 +451,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand command = conn.CreateCommand();
                 command.Transaction = tran;
-                command.CommandText = $"create or replace table {TestNameWithWorker}(cola string)";
+                command.CommandText = $"create or replace table {TableName}(cola string)";
                 command.ExecuteNonQuery();
                 command.Transaction.Commit();
-                AddTableToRemoveList(TestNameWithWorker);
+                AddTableToRemoveList(TableName);
 
-                command.CommandText = $"show tables like '{TestNameWithWorker}'";
+                command.CommandText = $"show tables like '{TableName}'";
                 IDataReader reader = command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 Assert.IsFalse(reader.Read());
@@ -464,17 +464,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // start another transaction to test rollback
                 tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
                 command.Transaction = tran;
-                command.CommandText = $"insert into {TestNameWithWorker} values('test')";
+                command.CommandText = $"insert into {TableName} values('test')";
 
                 command.ExecuteNonQuery();
-                command.CommandText = $"select * from {TestNameWithWorker}";
+                command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
                 command.Transaction.Rollback();
 
                 // no value will be in table since it has been rollbacked
-                command.CommandText = $"select * from {TestNameWithWorker}";
+                command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
                 Assert.IsFalse(reader.Read());
 
@@ -487,12 +487,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             String[] testCommands =
             {
-                $"create or replace table {TestNameWithWorker}(cola int, colb string)",
-                $"insert into {TestNameWithWorker} values(1, 'a'),(2, 'b')",
-                $"merge into {TestNameWithWorker} using (select 1 as cola, 'c' as colb) m on " +
-                $"{TestNameWithWorker}.cola = m.cola when matched then update set {TestNameWithWorker}.colb='update' " +
+                $"create or replace table {TableName}(cola int, colb string)",
+                $"insert into {TableName} values(1, 'a'),(2, 'b')",
+                $"merge into {TableName} using (select 1 as cola, 'c' as colb) m on " +
+                $"{TableName}.cola = m.cola when matched then update set {TableName}.colb='update' " +
                 "when not matched then insert (cola, colb) values (3, 'd')",
-                $"drop table if exists {TestNameWithWorker}"
+                $"drop table if exists {TableName}"
             };
 
             int[] expectedResult =
@@ -566,9 +566,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    CreateOrReplaceTable(conn, TestNameWithWorker, new []{"c1 NUMBER"});
+                    CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
-                    command.CommandText = $"insert into {TestNameWithWorker} values(1), (2), (3), (4), (5), (6)";
+                    command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
 
                     command.CommandText = "drop stage if exists my_unload_stage";
@@ -577,7 +577,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "create stage if not exists my_unload_stage";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"copy into @my_unload_stage/unload/ from {TestNameWithWorker};";
+                    command.CommandText = $"copy into @my_unload_stage/unload/ from {TableName};";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.AreEqual(6, affected);
@@ -593,7 +593,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString, TestNameWithWorker, 15000);
+            ArrayBindTest(ConnectionString, TableName, 15000);
         }
 
         private void ArrayBindTest(string connstr, string tableName, int size)
@@ -730,8 +730,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBindAsyncMultiThreading()
         {
-            var t1TableName = TestNameWithWorker + 1;
-            var t2TableName = TestNameWithWorker + 2;
+            var t1TableName = TableName + 1;
+            var t2TableName = TableName + 2;
 
             Thread t1 = new Thread(() => ThreadProcess1(ConnectionString, t1TableName));
             Thread t2 = new Thread(() => ThreadProcess2(ConnectionString, t2TableName));
@@ -775,11 +775,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"cola INTEGER"});
+                CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TestNameWithWorker} values (?)";
+                    string insertCommand = $"insert into {TableName} values (?)";
                     cmd.CommandText = insertCommand;
                     int total = 1000;
 
@@ -795,7 +795,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"SELECT COUNT(*) FROM {TestNameWithWorker}";
+                    cmd.CommandText = $"SELECT COUNT(*) FROM {TableName}";
                     Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
 
                     task.Wait();

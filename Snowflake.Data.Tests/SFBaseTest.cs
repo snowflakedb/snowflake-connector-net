@@ -60,8 +60,9 @@ namespace Snowflake.Data.Tests
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected readonly string TestName = TestContext.CurrentContext.Test.MethodName;
-
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+        protected string TableName => TestNameWithWorker;
+        
 
         private Stopwatch _stopwatch;
 

@@ -27,18 +27,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TestNameWithWorker}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TestNameWithWorker}";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
@@ -73,14 +73,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"src VARIANT"});
+                CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
                 string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
-insert into {TestNameWithWorker} (
+insert into {TableName} (
 select parse_json('{{ 
     ""date"" : ""2017 - 04 - 28"", 
     ""dealership"" : ""Valley View Auto Sales"",
@@ -101,7 +101,7 @@ select parse_json('{{
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(500, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TestNameWithWorker}";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
                 cmd.CommandType = System.Data.CommandType.Text;
 
@@ -133,18 +133,18 @@ select parse_json('{{
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TestNameWithWorker}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TestNameWithWorker}";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
@@ -181,18 +181,18 @@ select parse_json('{{
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
                 int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TestNameWithWorker}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand; 
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TestNameWithWorker}";
+                string selectCommand = $"select * from {TableName}";
                 cmd.CommandText = selectCommand;
 
                 rowCount = 0;
