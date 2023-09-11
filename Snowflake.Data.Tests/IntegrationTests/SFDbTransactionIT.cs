@@ -31,19 +31,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
-                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
+                CreateOrReplaceTable(conn, TestNameWithWorker, new []{"c INT"});
 
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     IDbCommand t1c1 = conn.CreateCommand();
                     t1c1.Transaction = t1;
-                    t1c1.CommandText = $"insert into {TableName} values (1)";
+                    t1c1.CommandText = $"insert into {TestNameWithWorker} values (1)";
                     t1c1.ExecuteNonQuery();
                 }
 
                 // Transaction t1 would be disposed and rollback at this point, tuple inserted is not visible
                 IDbCommand c2 = conn.CreateCommand();
-                c2.CommandText = $"SELECT * FROM {TableName}";
+                c2.CommandText = $"SELECT * FROM {TestNameWithWorker}";
                 IDataReader reader2 = c2.ExecuteReader();
                 Assert.IsFalse(reader2.Read());
             }
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = ConnectionString;
             conn.Open();
             
-            CreateOrReplaceTable(conn, TableName, new []
+            CreateOrReplaceTable(conn, TestNameWithWorker, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {TestNameWithWorker} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
 
@@ -78,13 +78,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand t1c3 = conn.CreateCommand();
                 t1c3.Transaction = transaction;
-                t1c3.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t1c3.CommandText = $"insert into {TestNameWithWorker} values (current_timestamp(), 4)";
                 t1c3.ExecuteNonQuery();
                 t1c3.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {TestNameWithWorker}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = ConnectionString;
             conn.Open();
             
-            CreateOrReplaceTable(conn, TableName, new []
+            CreateOrReplaceTable(conn, TestNameWithWorker, new []
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {TestNameWithWorker} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
             }
@@ -127,13 +127,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t2c2 = conn.CreateCommand();
                 t2c2.Transaction = transaction2;
-                t2c2.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t2c2.CommandText = $"insert into {TestNameWithWorker} values (current_timestamp(), 4)";
                 t2c2.ExecuteNonQuery();
                 t2c2.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {TestNameWithWorker}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
