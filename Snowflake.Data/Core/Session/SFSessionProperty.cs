@@ -84,6 +84,8 @@ namespace Snowflake.Data.Core
         FILE_TRANSFER_MEMORY_THRESHOLD,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         INCLUDERETRYREASON,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        DISABLEQUERYCONTEXTCACHE,
     }
 
     class SFSessionPropertyAttr : Attribute

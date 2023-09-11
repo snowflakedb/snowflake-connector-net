@@ -236,6 +236,7 @@ namespace Snowflake.Data.Core
             SFSession session = this.sfStatement.SfSession;
             session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
+            session.UpdateQueryContextCache(responseData.QueryContext);
         }
     }
 }
