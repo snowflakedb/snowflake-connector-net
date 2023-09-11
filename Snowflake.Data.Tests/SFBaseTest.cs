@@ -51,7 +51,9 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
+    #if !SEQUENTIAL_TEST_RUN
     [Parallelizable(ParallelScope.All)]
+    #endif
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
@@ -71,6 +73,12 @@ namespace Snowflake.Data.Tests
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
+            
+            #if !SEQUENTIAL_TEST_RUN
+            Console.WriteLine("Parallell");
+            #else
+            Console.WriteLine("Sequential");
+            #endif
         }
 
         [TearDown]

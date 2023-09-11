@@ -10,6 +10,7 @@
     <Copyright>Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.</Copyright>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <LangVersion>7.3</LangVersion>
+    <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
