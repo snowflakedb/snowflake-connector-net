@@ -56,6 +56,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             previousPoolConfig.Reset();
         }
 
+        [OneTimeTearDown]
+        public static void AfterAllTests()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
         [Test]
         [Ignore("dummy test case for showing test progress.")]
         public void ConnectionPoolTDone()
@@ -339,9 +345,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             t1.Start();
             t2.Start();
+
+            t1.Join();
+            t2.Join();
         }
 
-        static void ThreadProcess1(string connstr)
+        void ThreadProcess1(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
@@ -352,7 +361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
         }
 
-        static void ThreadProcess2(string connstr)
+        void ThreadProcess2(string connstr)
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
@@ -429,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
@@ -447,6 +456,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void AfterTest()
         {
             previousPoolConfig.Reset();
+        }
+        
+        [OneTimeTearDown]
+        public static void AfterAllTests()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Test]

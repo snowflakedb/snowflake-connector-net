@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"remove @%{TableName};" +
                                       "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
                                       "call p1();" +
-                                      "use role public";
+                                      $"use role {testConfig.role}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();

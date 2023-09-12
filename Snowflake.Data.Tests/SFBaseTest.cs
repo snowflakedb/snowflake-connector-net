@@ -10,8 +10,11 @@ using System.Reflection;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
+
+[assembly:LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {
@@ -48,14 +51,18 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
+    #if !SEQUENTIAL_TEST_RUN
+    [Parallelizable(ParallelScope.All)]
+    #endif
     public class SFBaseTestAsync
     {
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected readonly string TestName = TestContext.CurrentContext.Test.MethodName;
-
-        protected string TableName => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+        protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+        protected string TableName => TestNameWithWorker;
+        
 
         private Stopwatch _stopwatch;
 
@@ -151,9 +158,14 @@ namespace Snowflake.Data.Tests
 
         private static Dictionary<string, TimeSpan> s_testPerformance;
 
+        private static readonly object s_testPerformanceLock = new object();
+
         public static void RecordTestPerformance(string name, TimeSpan time)
         {
-            s_testPerformance.Add(name, time);
+            lock (s_testPerformanceLock)
+            {
+                s_testPerformance.Add(name, time);
+            }
         }
 
         [OneTimeSetUp]

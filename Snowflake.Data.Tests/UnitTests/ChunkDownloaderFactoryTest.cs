@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestGetDownloader([Values(false, true)] bool useV2ChunkDownloader, [Values(1, 2, 3, 4)] int chunkDownloaderVersion)
         {
             // Set configuration settings

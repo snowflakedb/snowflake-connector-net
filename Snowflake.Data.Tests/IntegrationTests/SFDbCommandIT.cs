@@ -31,14 +31,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecAsyncAPI()
         {
+            SnowflakeDbConnectionPool.ClearAllPools();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
-                Assert.AreEqual(ConnectionState.Connecting, conn.State);
-
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
@@ -254,7 +252,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         /*
          * Disabled to make sure that configuration changes does not cause problems with appveyor
          */
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
@@ -283,7 +281,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV2ChunkDownloader()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;

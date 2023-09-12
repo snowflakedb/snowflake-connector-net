@@ -311,7 +311,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 //cmd.CommandText = "drop database \"dlTest\"";
                 cmd.CommandText = $"drop schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database "+ testConfig.database;
+                cmd.CommandText = "use database " + testConfig.database;
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema " + testConfig.schema;
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
@@ -379,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -417,7 +419,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -445,7 +447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Disable unstable test cases for now")]
         public void TestDefaultLoginTimeout()
         {
@@ -638,6 +640,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
                 }
 
+                conn.ChangeDatabase(testConfig.database);
                 conn.Close();
             }
 
@@ -1666,7 +1669,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1714,7 +1717,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestAsyncLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -1728,11 +1731,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-                    CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     try
                     {
-                        Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                        Task connectTask = conn.OpenAsync(CancellationToken.None);
                         connectTask.Wait();
                     }
                     catch (AggregateException e)
@@ -1755,7 +1757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1765,11 +1767,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                 }
                 catch (AggregateException e)
@@ -1802,11 +1803,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = null;
                 try
                 {
-                    connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                     Assert.Fail();
                 }
@@ -1835,22 +1835,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
@@ -1893,7 +1893,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 		}
 #endif
 
-		[Test]
+        [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
@@ -1904,12 +1904,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync(new CancellationTokenSource().Token);
+                task =  conn.CloseAsync(CancellationToken.None);
                 try
                 {
                     task.Wait();
