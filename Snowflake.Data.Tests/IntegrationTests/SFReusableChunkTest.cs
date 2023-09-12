@@ -241,7 +241,7 @@ select parse_json('{{
 
         class ThrowingReusableChunkParser : IChunkParser
         {
-            public Task ParseChunk(BaseResultChunk chunk)
+            public Task ParseChunk(IResultChunk chunk)
             { 
                 throw new Exception("json parsing error.");
             }

@@ -1,16 +1,10 @@
 /*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
 namespace Snowflake.Data.Core
 {
-    public enum ResultFormat
-    {
-        JSON,
-        ARROW
-    }
-    
-    public abstract class BaseResultChunk
+    public abstract class BaseResultChunk : IResultChunk
     {
         internal abstract ResultFormat Format { get; }
         
@@ -23,6 +17,12 @@ namespace Snowflake.Data.Core
         internal string Url { get; set; }
 
         internal string[,] RowSet { get; set; }
+        
+        public int GetRowCount() => RowCount;
+
+        public int GetChunkIndex() => ChunkIndex;
+
+        public abstract UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
 
         public abstract UTF8Buffer ExtractCell(int columnIndex);
         

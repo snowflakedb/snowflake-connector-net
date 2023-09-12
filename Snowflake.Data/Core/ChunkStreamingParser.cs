@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public async Task ParseChunk(BaseResultChunk chunk)
+        public async Task ParseChunk(IResultChunk chunk)
         {
             await Task.Run(() =>
             {
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core
                     int row = 0;
                     int col = 0;
 
-                    var outputMatrix = new string[chunk.RowCount, chunk.ColumnCount];
+                    var outputMatrix = new string[chunk.GetRowCount(), ((SFResultChunk)chunk).ColumnCount];
 
                     while (jr.Read())
                     {
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core
                                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected token type: {jr.TokenType}");
                         }
                     }
-                    chunk.RowSet = outputMatrix;
+                    ((SFResultChunk)chunk).RowSet = outputMatrix;
                 }
             });
         }

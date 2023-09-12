@@ -12,6 +12,6 @@ namespace Snowflake.Data.Core
         ///     Parse source data stream, result will be store into SFResultChunk.rowset
         /// </summary>
         /// <param name="chunk"></param>
-        Task ParseChunk(BaseResultChunk chunk);
+        Task ParseChunk(IResultChunk chunk);
     }
 }

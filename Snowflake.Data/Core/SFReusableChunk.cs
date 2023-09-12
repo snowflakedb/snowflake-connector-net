@@ -34,6 +34,12 @@ namespace Snowflake.Data.Core
             data.ResetForRetry();
         }
         
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        {
+            _currentRowIndex = rowIndex;
+            return ExtractCell(columnIndex);
+        }
+
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
             return data.get(_currentRowIndex * ColumnCount + columnIndex);

@@ -27,6 +27,12 @@ namespace Snowflake.Data.Core
             ChunkIndex = index;
         }
 
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        {
+            _currentRowIndex = rowIndex;
+            return ExtractCell(columnIndex);
+        }
+
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
             // Convert string to UTF8Buffer. This makes this method a little slower, but this class is not used for large result sets

@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core
             this.stream = stream;
         }
 
-        public async Task ParseChunk(BaseResultChunk chunk)
+        public async Task ParseChunk(IResultChunk chunk)
         {
             ArrowResultChunk resultChunk = (ArrowResultChunk)chunk; 
 

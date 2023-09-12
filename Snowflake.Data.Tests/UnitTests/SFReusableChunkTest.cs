@@ -25,6 +25,21 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestExtractCellWithRowParameterReadsAllRows()
+        {
+            string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
+            var chunk = PrepareChunkAsync(data, 3, 2).Result;
+
+            Assert.AreEqual("1", chunk.ExtractCell(0,0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
+            
+            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+        }
+
+        [Test]
         public void TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";

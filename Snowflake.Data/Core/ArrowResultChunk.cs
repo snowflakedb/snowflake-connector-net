@@ -80,6 +80,19 @@ namespace Snowflake.Data.Core
             return false;
         }
         
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        {
+            _currentBatchIndex = 0;
+            _currentRecordIndex = rowIndex;
+            while (_currentRecordIndex >= RecordBatch[_currentBatchIndex].Length)
+            {
+                _currentRecordIndex -= RecordBatch[_currentBatchIndex].Length;
+                _currentBatchIndex += 1;
+            }
+
+            return ExtractCell(columnIndex);
+        }
+
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
             var column = RecordBatch[_currentBatchIndex].Column(columnIndex);

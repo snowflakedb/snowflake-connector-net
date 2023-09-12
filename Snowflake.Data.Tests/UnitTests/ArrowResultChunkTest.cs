@@ -117,6 +117,19 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestExtractCellWithRowParameterReadsAllRows()
+        {
+            _chunk = new ArrowResultChunk(_recordBatchOne);
+
+            var column = (Int32Array)_recordBatchOne.Column(0);
+            for (var i = 0; i < RowCountBatchOne; ++i)
+            {
+                var valueFromRecordBatch = column.GetValue(i).ToString();
+                Assert.AreEqual(valueFromRecordBatch, _chunk.ExtractCell(i, 0).SafeToString());
+            }
+        }
+
+        [Test]
         public void TestExtractCellReadsAllRows()
         {
             _chunk = new ArrowResultChunk(_recordBatchOne);
