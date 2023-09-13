@@ -23,13 +23,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("DbAdaptorIT")]
-        public void DbAdaptorITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestCreatingDataAdapterWithSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";

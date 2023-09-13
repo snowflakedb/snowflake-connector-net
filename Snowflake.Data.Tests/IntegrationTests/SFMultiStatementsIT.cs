@@ -19,13 +19,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFMultiStatementsIT : SFBaseTest
     {
         [Test]
-        [Ignore("MultiStatementsIT")]
-        public void MultiStatementsITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void testSelectWithoutBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

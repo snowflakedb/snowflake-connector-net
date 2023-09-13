@@ -47,13 +47,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             NAMED
         }
 
-        [Test]
-        [Ignore("PutGetTest")]
-        public void PutGetTestDone()
-        {
-            // Do nothing;
-        }
-
         [OneTimeSetUp]
         public static void OneTimeSetUp()
         {

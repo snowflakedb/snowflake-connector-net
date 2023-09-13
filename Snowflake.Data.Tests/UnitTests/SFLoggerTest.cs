@@ -33,13 +33,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("SFLoggerTest")]
-        public void SFLoggerTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestUsingDefaultLogger()
         {
             SFLoggerFactory.useDefaultLogger();

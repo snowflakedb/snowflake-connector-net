@@ -14,13 +14,6 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         IAuthenticator _authenticator;
 
-        [Test]
-        [Ignore("SFAuthenticatorFactory")]
-        public void SFAuthenticatorFactoryDone()
-        {
-            // Do nothing;
-        }
-
         private IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
         {
             string connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";

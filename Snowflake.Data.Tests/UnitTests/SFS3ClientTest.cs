@@ -102,12 +102,6 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
         }
-        [Test]
-        [Ignore("S3ClientTest")]
-        public void S3ClientTestDone()
-        {
-            // Do nothing;
-        }
 
         [Test]
         public void TestExtractBucketNameAndPath()

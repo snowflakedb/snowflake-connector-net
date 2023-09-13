@@ -21,13 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests
     class ArrowChunkParserTest
     {
         [Test]
-        [Ignore("ArrowChunkParserTest")]
-        public void ArrowChunkParserTestDone()
-        {
-            // Do nothing - test progress marker
-        }
-
-        [Test]
         public void TestParseChunkReadsRecordBatches([Values(1, 2, 4)] int numberOfRecordBatch)
         {
             // Arrange

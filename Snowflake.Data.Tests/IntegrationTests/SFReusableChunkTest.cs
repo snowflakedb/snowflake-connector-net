@@ -13,13 +13,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFReusableChunkTest : SFBaseTest
     {
         [Test]
-        [Ignore("ReusableChunkTest")]
-        public void ReusableChunkTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void testDelCharPr431()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

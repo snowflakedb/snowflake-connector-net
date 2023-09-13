@@ -63,13 +63,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("dummy test case for showing test progress.")]
-        public void ConnectionPoolTDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         // test connection pooling with concurrent connection
         public void TestConcurrentConnectionPooling()
         {

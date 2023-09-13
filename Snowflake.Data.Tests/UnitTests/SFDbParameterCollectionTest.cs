@@ -23,13 +23,6 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        [Ignore("DbParameterCollection")]
-        public void DbParameterCollectionDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestDefaultDbParameterCollection()
         {
             Assert.Zero(_parameterCollection.Count);

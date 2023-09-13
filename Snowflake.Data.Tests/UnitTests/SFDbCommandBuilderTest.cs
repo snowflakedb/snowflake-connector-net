@@ -19,13 +19,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("DbCommandBuilder")]
-        public void DbCommandBuilderDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestDefaultCommandBuilder()
         {
             Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);

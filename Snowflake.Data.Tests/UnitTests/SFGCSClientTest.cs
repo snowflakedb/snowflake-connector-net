@@ -80,13 +80,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("GCSClientTest")]
-        public void GCSClientTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestExtractBucketNameAndPath()
         {
             // Split LOCATION based on the first '/' character

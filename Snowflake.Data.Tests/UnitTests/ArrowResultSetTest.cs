@@ -22,13 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests
         private RecordBatch _recordBatch;
         private ArrowResultSet _arrowResultSet;
 
-        [Test]
-        [Ignore("ArrowResultSetTest")]
-        public void SFResultSetArrowTestDone()
-        {
-            // Do nothing - test progress marker
-        }
-        
         [SetUp]
         public void BeforeTest()
         {

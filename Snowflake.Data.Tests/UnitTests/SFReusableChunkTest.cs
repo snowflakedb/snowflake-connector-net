@@ -18,13 +18,6 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFReusableChunkTest
     {
         [Test]
-        [Ignore("ReusableChunkTest")]
-        public void ReusableChunkTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestExtractCellWithRowParameterReadsAllRows()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";

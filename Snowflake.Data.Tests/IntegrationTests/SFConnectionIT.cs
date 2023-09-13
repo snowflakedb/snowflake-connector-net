@@ -24,13 +24,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
-        [Ignore("ConnectionIT")]
-        public void ConnectionITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())

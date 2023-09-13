@@ -25,14 +25,6 @@ namespace Snowflake.Data.Tests.UnitTests
             .Build();
         private ArrowResultChunk _chunk;
         
-
-        [Test]
-        [Ignore("ArrowResultChunkTest")]
-        public void SFArrowResultChunkTestDone()
-        {
-            // Do nothing - test progress marker
-        }
-        
         [Test]
         public void TestAddRecordBatchAddsBatchTwo()
         {
