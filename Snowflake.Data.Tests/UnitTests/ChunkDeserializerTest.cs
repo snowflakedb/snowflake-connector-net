@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             byte[] bytes = Encoding.UTF8.GetBytes(data);
             Stream stream = new MemoryStream(bytes);
-            return ChunkParserFactory.Instance.GetParser(stream);
+            return ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
         }
 
         [Test]
@@ -54,10 +54,11 @@ namespace Snowflake.Data.Tests.UnitTests
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
             await parser.ParseChunk(chunk);
-
-            Assert.AreEqual(0, chunk.rowSet.GetLength(0)); // Check row length
-            Assert.AreEqual(0, chunk.rowSet.GetLength(1)); // Check col length
-            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0, 0).SafeToString());
+            chunk.Next();
+            
+            Assert.AreEqual(0, chunk.RowSet.GetLength(0)); // Check row length
+            Assert.AreEqual(0, chunk.RowSet.GetLength(1)); // Check col length
+            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0).SafeToString());
         }
 
         [Test]
@@ -70,10 +71,11 @@ namespace Snowflake.Data.Tests.UnitTests
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
             await parser.ParseChunk(chunk);
-
-            Assert.AreEqual(2, chunk.rowSet.GetLength(0)); // Check row length
-            Assert.AreEqual(0, chunk.rowSet.GetLength(1)); // Check col length
-            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0, 0).SafeToString());
+            chunk.Next();
+            
+            Assert.AreEqual(2, chunk.RowSet.GetLength(0)); // Check row length
+            Assert.AreEqual(0, chunk.RowSet.GetLength(1)); // Check col length
+            Assert.Throws<IndexOutOfRangeException>(() => chunk.ExtractCell(0).SafeToString());
         }
 
         [Test]
@@ -112,13 +114,16 @@ namespace Snowflake.Data.Tests.UnitTests
             SFResultChunk chunk = new SFResultChunk(new string[1, 1]);
 
             await parser.ParseChunk(chunk);
-
-            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("1", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("abcde", chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("5.678", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
         [Test]
@@ -132,12 +137,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
             await parser.ParseChunk(chunk);
 
-            Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(0, 2).SafeToString());
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            chunk.Next();
+            Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            
+            chunk.Next();
+            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
+            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
+            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
         }
     }
 }

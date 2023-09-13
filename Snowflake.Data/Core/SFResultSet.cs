@@ -12,28 +12,22 @@ namespace Snowflake.Data.Core
 {
     class SFResultSet : SFBaseResultSet
     {
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFResultSet>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFResultSet>();
         
-        private int _currentChunkRowIdx;
-
-        private int _currentChunkRowCount;
-
         private readonly int _totalChunkCount;
         
         private readonly IChunkDownloader _chunkDownloader;
 
-        private IResultChunk _currentChunk;
+        private BaseResultChunk _currentChunk;
 
         public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
             try
             {
                 columnCount = responseData.rowType.Count;
-                _currentChunkRowIdx = -1;
-                _currentChunkRowCount = responseData.rowSet.GetLength(0);
 
                 this.sfStatement = sfStatement;
-                updateSessionStatus(responseData);
+                UpdateSessionStatus(responseData);
 
                 if (responseData.chunks != null)
                 {
@@ -53,7 +47,7 @@ namespace Snowflake.Data.Core
             }
             catch(System.Exception ex)
             {
-                Logger.Error("Result set error queryId="+responseData.queryId, ex);
+                s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
             }
         }
@@ -69,9 +63,9 @@ namespace Snowflake.Data.Core
             ErrorDetails                      = 7
             }
 
-        public void initializePutGetRowType(List<ExecResponseRowType> rowType)
+        public void InitializePutGetRowType(List<ExecResponseRowType> rowType)
         {
-         foreach (PutGetResponseRowTypeInfo t in System.Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
+            foreach (PutGetResponseRowTypeInfo t in System.Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
             {
                 rowType.Add(new ExecResponseRowType()
                 {
@@ -84,11 +78,9 @@ namespace Snowflake.Data.Core
         public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
         {
             responseData.rowType = new List<ExecResponseRowType>();
-            initializePutGetRowType(responseData.rowType);
+            InitializePutGetRowType(responseData.rowType);
 
             columnCount = responseData.rowType.Count;
-            _currentChunkRowIdx = -1;
-            _currentChunkRowCount = responseData.rowSet.GetLength(0);
 
             this.sfStatement = sfStatement;
 
@@ -102,75 +94,54 @@ namespace Snowflake.Data.Core
             queryId = responseData.queryId;
         }
 
-        internal void resetChunkInfo(IResultChunk nextChunk)
+        internal void ResetChunkInfo(BaseResultChunk nextChunk)
         {
-            Logger.Debug($"Recieved chunk #{nextChunk.GetChunkIndex() + 1} of {_totalChunkCount}");
-            if (_currentChunk is SFResultChunk)
-            {
-                ((SFResultChunk)_currentChunk).rowSet = null;
-            }
+            s_logger.Debug($"Received chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}"); 
+            _currentChunk.RowSet = null;
             _currentChunk = nextChunk;
-            _currentChunkRowIdx = 0;
-            _currentChunkRowCount = _currentChunk.GetRowCount();
         }
 
         internal override async Task<bool> NextAsync()
         {
-            if (isClosed)
-            {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
+            ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
 
             if (_chunkDownloader != null)
             {
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
-                Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+                s_logger.Debug("Get next chunk from chunk downloader");
+                BaseResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 if (nextChunk != null)
                 {
-                    resetChunkInfo(nextChunk);
-                    return true;
-                }
-                else
-                {
-                    return false;
+                    ResetChunkInfo(nextChunk);
+                    return _currentChunk.Next();
                 }
             }
             
-           return false;
+            return false;
         }
 
         internal override bool Next()
         {
-            if (isClosed)
-            {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
+            ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
 
             if (_chunkDownloader != null)
             {
-                Logger.Info("Get next chunk from chunk downloader");
-                IResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+                s_logger.Debug("Get next chunk from chunk downloader");
+                BaseResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {
-                    resetChunkInfo(nextChunk);
-                    return true;
+                    ResetChunkInfo(nextChunk);
+                    return _currentChunk.Next();
                 }
             }
-           return false;
+            return false;
         }
 
         internal override bool NextResult()
@@ -185,12 +156,9 @@ namespace Snowflake.Data.Core
 
         internal override bool HasRows()
         {
-            if (isClosed)
-            {
-                return false;
-            }
+            ThrowIfClosed();
 
-            return _currentChunkRowCount > 0 || _totalChunkCount > 0;
+            return _currentChunk.RowCount > 0 || _totalChunkCount > 0;
         }
 
         /// <summary>
@@ -199,39 +167,24 @@ namespace Snowflake.Data.Core
         /// <returns>True if it works, false otherwise.</returns>
         internal override bool Rewind()
         {
-            if (isClosed)
-            {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
+            ThrowIfClosed();
 
-            if (_currentChunkRowIdx >= 0)
-            {
-                _currentChunkRowIdx--;
-                if (_currentChunkRowIdx >= _currentChunkRowCount)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return _currentChunk.Rewind();
         }
 
         internal override UTF8Buffer getObjectInternal(int columnIndex)
         {
-            if (isClosed)
-            {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
+            ThrowIfClosed();
 
             if (columnIndex < 0 || columnIndex >= columnCount)
             {
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
             }
 
-            return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
+            return _currentChunk.ExtractCell(columnIndex);
         }
 
-        private void updateSessionStatus(QueryExecResponseData responseData)
+        private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
             session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);

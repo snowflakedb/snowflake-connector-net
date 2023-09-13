@@ -230,7 +230,7 @@ select parse_json('{{
                 _exceptionsThrown = 0;
             }
             
-            public IChunkParser GetParser(Stream stream)
+            public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
                 if (++_exceptionsThrown <= _expectedExceptionsNumber)
                     return new ThrowingReusableChunkParser();

@@ -237,12 +237,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
-                IDataReader reader = cmd.ExecuteReader();
-                int counter = 0;
-                while (reader.Read())
+                using (IDataReader reader = cmd.ExecuteReader())
                 {
-                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
-                    counter++;
+                    int counter = 0;
+                    while (reader.Read())
+                    {
+                        Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                        // don't test the second column as it has random values just to increase the response size
+                        counter++;
+                    }
                 }
                 conn.Close();
             }
@@ -273,6 +276,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
@@ -302,12 +306,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
             }
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+        }
+
+        [Test]
+        [Parallelizable(ParallelScope.Children)]
+        public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
+                cmd.ExecuteNonQuery();
+
+                // 200000 - empirical value to return 3 additional chunks for both JSON and Arrow response
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
+                {
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
+                    counter++;
+                }
+                conn.Close();
+            }
         }
 
         [Test]
@@ -517,7 +549,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.AreEqual(expectedResult[i], rowsAffected);
                     }
                 }
-                conn.Close();
             }
         }
 

@@ -8,6 +8,6 @@ namespace Snowflake.Data.Core
 {
     interface IChunkDownloader
     {
-        Task<IResultChunk> GetNextChunkAsync();
+        Task<BaseResultChunk> GetNextChunkAsync();
     }
 }

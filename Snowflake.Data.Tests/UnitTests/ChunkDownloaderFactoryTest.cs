@@ -38,7 +38,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 rowSet = new string[,] { { } },
                 rowType = new List<ExecResponseRowType>(),
                 parameters = new List<NameValueParameter>(),
-                chunks = new List<ExecResponseChunk>()
+                chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
+                {
+                    url = "fake",
+                    uncompressedSize = 100,
+                    rowCount = 1
+                }}
             };
         }
 
