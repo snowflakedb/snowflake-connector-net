@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -419,7 +419,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -447,7 +447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         [Ignore("Disable unstable test cases for now")]
         public void TestDefaultLoginTimeout()
         {
@@ -1669,7 +1669,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1717,7 +1717,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestAsyncLoginTimeout()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -1757,7 +1757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1893,12 +1893,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 		}
 #endif
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
