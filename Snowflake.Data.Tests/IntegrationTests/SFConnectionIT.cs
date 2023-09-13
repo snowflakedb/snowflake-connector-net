@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Do nothing;
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -54,6 +54,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
+
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
 
         [Test]
@@ -1522,7 +1524,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
         public void TestEscapeChar()
         {
@@ -1547,9 +1549,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
+            
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
 
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
         public void TestEscapeChar1()
         {
@@ -1574,9 +1578,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
         
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
         {
@@ -1594,9 +1599,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             conn.Close();
             Assert.AreEqual(ConnectionState.Closed, conn.State);
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
 
-        [Test]
+        [Test, NonParallelizable]
         [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeatWithConnectionPool()
         {
@@ -1893,7 +1899,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 		}
 #endif
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
@@ -1922,6 +1928,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
 
         [Test]
