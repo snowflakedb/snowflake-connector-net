@@ -1898,6 +1898,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
+                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
