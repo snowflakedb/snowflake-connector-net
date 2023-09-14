@@ -88,14 +88,14 @@ The build solution file builds the connector and tests binaries. Issue the follo
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
-dotnet test -f netcoreapp6.0
+dotnet test -f net6.0 -l "console;verbosity=normal"
 ```
 
 
 Tests can also be run under code coverage:
 
 ```{r, engine='bash', code_block_name}
-OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -returntargetcode -targetargs:"test -f netcoreapp6.0" -register:user -filter:"+[Snowflake.Data]*" -output:"netcoreapp6.0_coverage.xml" -oldStyle 
+dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 You can run only specific suite of tests (integration or unit).
@@ -104,14 +104,14 @@ Running unit tests:
 
 ```bash
 cd Snowflake.Data.Tests
-dotnet test --filter FullyQualifiedName~UnitTests
+dotnet test -l "console;verbosity=normal" --filter FullyQualifiedName~UnitTests -l console;verbosity=normal
 ```
 
 Running integration tests:
 
 ```bash
 cd Snowflake.Data.Tests
-dotnet test --filter FullyQualifiedName~IntegrationTests
+dotnet test -l "console;verbosity=normal" --filter FullyQualifiedName~IntegrationTests
 ```
 
 Visual Studio 2017
@@ -707,9 +707,9 @@ dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
 dotnet build snowflake-connector-net.sln /p:DebugType=Full
 ```
 
-5. Run OpenCover on the .NET6 build
+5. Run dotnet-cover on the .NET6 build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_AWS_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_AWS_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 6. Build the project for .NET Framework
@@ -717,9 +717,9 @@ OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntarget
 msbuild snowflake-connector-net.sln -p:Configuration=Release
 ```
 
-7. Run OpenCover on the .NET Framework build
+7. Run dotnet-cover on the .NET Framework build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_AWS_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_AWS_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 <br />
@@ -730,14 +730,14 @@ For Azure:<br />
 
 3. Create parameters.json containing connection info for AZURE account and place inside the Snowflake.Data.Tests folder
 
-5. Run OpenCover on the .NET6 build
+5. Run dotnet-cover on the .NET6 build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_AZURE_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_AZURE_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
-7. Run OpenCover on the .NET Framework build
+7. Run dotnet-cover on the .NET Framework build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_AZURE_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_AZURE_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 <br />
@@ -745,14 +745,14 @@ For GCP:<br />
 
 3. Create parameters.json containing connection info for GCP account and place inside the Snowflake.Data.Tests folder
 
-5. Run OpenCover on the .NET6 build
+5. Run dotnet-cover on the .NET6 build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net6.0 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net6.0_GCP_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_GCP_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
-7. Run OpenCover on the .NET Framework build
+7. Run dotnet-cover on the .NET Framework build
 ```
-OpenCover.Console.exe -target:"C:\Program Files\dotnet\dotnet.exe" -returntargetcode -targetargs:"test -f net472 -v n" -register:user -filter:"+[Snowflake.Data]*" -output:"net472_GCP_coverage.xml" -oldStyle
+dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_GCP_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 Notice
