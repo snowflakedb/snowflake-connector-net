@@ -84,13 +84,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("AzureClientTest")]
-        public void AzureClientTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestExtractBucketNameAndPath()
         {
             // Arrange

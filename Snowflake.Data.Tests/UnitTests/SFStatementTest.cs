@@ -13,13 +13,6 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class SFStatementTest
     {
-        [Test]
-        [Ignore("StatementTest")]
-        public void StatementTestDone()
-        {
-            // Do nothing;
-        }
-
         // Mock test for session token renew
         [Test]
         public void TestSessionRenew()

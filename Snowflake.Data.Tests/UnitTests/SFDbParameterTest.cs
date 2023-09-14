@@ -15,13 +15,6 @@ namespace Snowflake.Data.Tests
         SnowflakeDbParameter _parameter;
 
         [Test]
-        [Ignore("DbParameter")]
-        public void DbParameterDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestDefaultDbParameter()
         {
             _parameter = new SnowflakeDbParameter();

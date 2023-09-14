@@ -20,14 +20,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
     {
-
-        [Test]
-        [Ignore("DbCommandITAsync")]
-        public void DbCommandITAsyncDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestExecAsyncAPI()
         {
@@ -103,14 +95,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandITSlow : SFBaseTest
     {
-
-        [Test]
-        [Ignore("DbCommandITSlow")]
-        public void DbCommandITSlowDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestLongRunningQuery()
         {
@@ -156,13 +140,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandIT : SFBaseTest
     {
-        [Test]
-        [Ignore("DbCommandIT")]
-        public void DbCommandITDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestSimpleCommand()
         {

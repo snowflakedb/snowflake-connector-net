@@ -30,13 +30,6 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [Test]
-        [Ignore("ChunkStreamingParserTest")]
-        public void ChunkStreamingParserTestDone()
-        {
-            // Do nothing;
-        }
-
         public IChunkParser getParser(string data)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(data);
