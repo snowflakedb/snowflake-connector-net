@@ -29,7 +29,7 @@ namespace Snowflake.Data.Log
                 var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
                 var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
                 rootLogger.Level = log4netLevel;
-                var appender = logsPath == "STDOUT"
+                var appender = string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase)
                     ? AddConsoleAppender(rootLogger)
                     : AddRollingFileAppender(rootLogger, logsPath);
                 RemoveOtherAppendersForEasyLogging(rootLogger, appender);
