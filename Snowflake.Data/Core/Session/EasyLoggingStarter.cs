@@ -130,7 +130,7 @@ namespace Snowflake.Data.Core
         
         public bool ShouldConfigureLogger { get; }
 
-        public EasyLoggingInitParameters(
+        private EasyLoggingInitParameters(
             string configFilePathFromConnectionString,
             EasyLoggingLogLevel? logLevel,
             string logPath,
