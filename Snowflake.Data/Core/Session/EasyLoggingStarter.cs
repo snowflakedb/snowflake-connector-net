@@ -49,16 +49,17 @@ namespace Snowflake.Data.Core
                     return;
                 }
                 var config = _easyLoggingConfigProvider.ProvideConfig(configFilePathFromConnectionString);
+                var previousInitParameters = _initParameters;
                 if (config == null)
                 {
-                    _initParameters = new EasyLoggingInitParameters(configFilePathFromConnectionString, null, null);
+                    _initParameters = EasyLoggingInitParameters.WhenConfigNotFound(configFilePathFromConnectionString);
                     return;
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
-                var logFilePath = GetLogPath(config.CommonProps.LogPath);
-                _easyLoggerManager.ReconfigureEasyLogging(logLevel, logFilePath);
-                _initParameters =
-                    new EasyLoggingInitParameters(configFilePathFromConnectionString, logLevel, logFilePath);
+                var logPath = GetLogPath(config.CommonProps.LogPath);
+                WarnWhenConfigureForTheSecondTime(previousInitParameters);
+                _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
+                _initParameters = EasyLoggingInitParameters.WhenConfigFound(configFilePathFromConnectionString, logLevel, logPath);
             }
         }
 
@@ -77,6 +78,18 @@ namespace Snowflake.Data.Core
         private bool TriedToInitializedWithoutConfigFileFromConnectionString()
         {
             return _initParameters != null && _initParameters.HasNoConfigFilePathFromConnectionString();
+        }
+
+        private void WarnWhenConfigureForTheSecondTime(EasyLoggingInitParameters previousInitParameters)
+        {
+            if (previousInitParameters == null)
+            {
+                return;
+            }
+            if (previousInitParameters.ShouldConfigureLogger && _initParameters.ShouldConfigureLogger)
+            {
+                s_logger.Warn("Easy logging will be configured once again because it's the first time where client config is provided in a connection string");
+            }
         }
         
         private EasyLoggingLogLevel GetLogLevel(string logLevel)
@@ -114,13 +127,26 @@ namespace Snowflake.Data.Core
         private readonly EasyLoggingLogLevel? _logLevel;
 
         private readonly string _logPath;
+        
+        public bool ShouldConfigureLogger { get; }
 
-        public EasyLoggingInitParameters(string configFilePathFromConnectionString, EasyLoggingLogLevel? logLevel, string logPath)
+        public EasyLoggingInitParameters(
+            string configFilePathFromConnectionString,
+            EasyLoggingLogLevel? logLevel,
+            string logPath,
+            bool shouldConfigureLogger)
         {
             _configFilePathFromConnectionString = configFilePathFromConnectionString;
             _logLevel = logLevel;
             _logPath = logPath;
+            ShouldConfigureLogger = shouldConfigureLogger;
         }
+
+        public static EasyLoggingInitParameters WhenConfigNotFound(string configFilePathFromConnectionString) =>
+            new EasyLoggingInitParameters(configFilePathFromConnectionString, null, null, false);
+        
+        public static EasyLoggingInitParameters WhenConfigFound(string configFilePathFromConnectionString, EasyLoggingLogLevel logLevel, string logPath) =>
+            new EasyLoggingInitParameters(configFilePathFromConnectionString, logLevel, logPath, true);
 
         public bool HasNoConfigFilePathFromConnectionString()
         {
