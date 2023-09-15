@@ -4,6 +4,7 @@
 
 using Moq;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
+using System;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -23,15 +24,15 @@ namespace Snowflake.Data.Tests.Mock
         internal const string ErrorMessage = "Mock GCS Remote Storage Error";
 
         // Variables for the encryption data
-        static Stream s_encryptedStream = null;
-        static string s_encryptedStreamIV = null;
-        static string s_encryptedStreamKey = null;
+        [ThreadStatic] static Stream t_encryptedStream = null;
+        [ThreadStatic] static string t_encryptedStreamIV = null;
+        [ThreadStatic] static string t_encryptedStreamKey = null;
 
         static internal void SetEncryptionData(Stream stream, string iv, string key)
         {
-            s_encryptedStream = stream;
-            s_encryptedStreamIV = iv;
-            s_encryptedStreamKey = key;
+            t_encryptedStream = stream;
+            t_encryptedStreamIV = iv;
+            t_encryptedStreamKey = key;
         }
 
         // Sets up the mock sequence when Remote Storage uploads a file
@@ -102,22 +103,22 @@ namespace Snowflake.Data.Tests.Mock
                 response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
 
                 // For downloads with encryption material
-                if (s_encryptedStream != null)
+                if (t_encryptedStream != null)
                 {
                     // Set the position to 0 and return the encrypted stream
-                    s_encryptedStream.Position = 0;
-                    response.Setup(c => c.GetResponseStream()).Returns(s_encryptedStream);
+                    t_encryptedStream.Position = 0;
+                    response.Setup(c => c.GetResponseStream()).Returns(t_encryptedStream);
 
                     // Set the iv and key to the ones used for encrypting the stream
                     response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
                         "{" +
-                        $"\"ContentEncryptionIV\": \"{s_encryptedStreamIV}\", " +
-                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{s_encryptedStreamKey}\"}}" +
+                        $"\"ContentEncryptionIV\": \"{t_encryptedStreamIV}\", " +
+                        $"\"WrappedContentKey\": {{\"EncryptedKey\":\"{t_encryptedStreamKey}\"}}" +
                         "}");
 
-                    s_encryptedStreamIV = null;
-                    s_encryptedStreamKey = null;
-                    s_encryptedStream = null;
+                    t_encryptedStreamIV = null;
+                    t_encryptedStreamKey = null;
+                    t_encryptedStream = null;
                 }
                 else // For unencrypted downloads
                 {

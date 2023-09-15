@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         const string StorageAccount = "mockStorageAccount";
 
-        const string RealSourceFilePath = "realSrcFilePath.txt";
+        [ThreadStatic] private static string t_realSourceFilePath;
 
         PutGetEncryptionMaterial EncryptionMaterial = new PutGetEncryptionMaterial()
         {
@@ -51,9 +51,8 @@ namespace Snowflake.Data.Tests.UnitTests
         const int Parallel = 0;
 
         // File name for mock test files
+        [ThreadStatic] private static string t_downloadFileName;
         const string LocalLocation = "./";
-        const string DownloadFileName = "mockDownloadFileName.txt";
-        const string DownloadFilePath = LocalLocation + DownloadFileName;
 
         // Mock upload file size
         const int UploadFileSize = 9999;
@@ -74,14 +73,17 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
+            t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
+            t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
+
             _fileMetadata = new SFFileMetadata()
             {
-                destFileName = DownloadFileName,
+                destFileName = t_downloadFileName,
                 localLocation = LocalLocation,
                 MaxBytesInMemory = 1024,
                 memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(MockRemoteStorageClient.FileContent)),
                 parallel = Parallel,
-                realSrcFilePath = RealSourceFilePath,
+                realSrcFilePath = t_realSourceFilePath,
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = EndPoint,
@@ -129,9 +131,9 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // Delete temporary files from download
-            if (File.Exists(DownloadFilePath))
+            if (File.Exists(t_downloadFileName))
             {
-                File.Delete(DownloadFilePath);
+                File.Delete(t_downloadFileName);
             }
         }
 
@@ -426,7 +428,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(_fileMetadata.localLocation + _fileMetadata.destFileName);
+                string text = File.ReadAllText(t_downloadFileName);
                 Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
             }
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -446,7 +448,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(_fileMetadata.localLocation + _fileMetadata.destFileName);
+                string text = File.ReadAllText(t_downloadFileName);
                 Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
             }
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -521,12 +523,12 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileMetadata.encryptionMaterial = EncryptionMaterial;
 
             // Write file to encrypt
-            File.WriteAllText(DownloadFilePath, MockRemoteStorageClient.FileContent);
+            File.WriteAllText(t_downloadFileName, MockRemoteStorageClient.FileContent);
 
             // Get encrypted stream from file
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
             Stream stream = EncryptionProvider.EncryptFile(
-                DownloadFilePath,
+                t_downloadFileName,
                 _fileMetadata.encryptionMaterial,
                 encryptionMetadata,
                 FileTransferConfiguration.FromFileMetadata(_fileMetadata));
@@ -547,7 +549,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.DownloadOneFile(_fileMetadata);
 
             // Assert
-            string text = File.ReadAllText(DownloadFilePath);
+            string text = File.ReadAllText(t_downloadFileName);
             Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
@@ -564,7 +566,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            string text = File.ReadAllText(DownloadFilePath);
+            string text = File.ReadAllText(t_downloadFileName);
             Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
