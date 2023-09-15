@@ -49,46 +49,49 @@ namespace Snowflake.Data.Core
                     return;
                 }
                 var config = _easyLoggingConfigProvider.ProvideConfig(configFilePathFromConnectionString);
-                var previousInitParameters = _initParameters;
                 if (config == null)
                 {
-                    _initParameters = EasyLoggingInitParameters.WhenConfigNotFound(configFilePathFromConnectionString);
+                    _initParameters = EasyLoggingInitParameters.CreateWhenConfigNotFound(configFilePathFromConnectionString);
                     return;
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
-                WarnWhenConfigureForTheSecondTime(previousInitParameters);
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
-                _initParameters = EasyLoggingInitParameters.WhenConfigFound(configFilePathFromConnectionString, logLevel, logPath);
+                _initParameters = EasyLoggingInitParameters.CreateWhenConfigFound(configFilePathFromConnectionString, logLevel, logPath);
             }
         }
 
         private bool AllowedToInitialize(string configFilePathFromConnectionString)
         {
-            return NeverTriedToInitialize() ||
-                   (TriedToInitializedWithoutConfigFileFromConnectionString() &&
+            var isAllowed = NeverTriedToInitialize() ||
+                   (TriedToInitializeWithoutConfigFileFromConnectionString() &&
                     !string.IsNullOrEmpty(configFilePathFromConnectionString));
-        }
+            if (!isAllowed)
+            {
+                WarnWhyNotAllowed(configFilePathFromConnectionString);
+            }
 
+            return isAllowed;
+        }
+        
         private bool NeverTriedToInitialize()
         {
             return _initParameters == null;
         }
 
-        private bool TriedToInitializedWithoutConfigFileFromConnectionString()
+        private bool TriedToInitializeWithoutConfigFileFromConnectionString()
         {
             return _initParameters != null && _initParameters.HasNoConfigFilePathFromConnectionString();
         }
 
-        private void WarnWhenConfigureForTheSecondTime(EasyLoggingInitParameters previousInitParameters)
+        private void WarnWhyNotAllowed(string configFilePath)
         {
-            if (previousInitParameters == null)
+            var isDifferentConfigPath = _initParameters.ConfigFilePathFromConnectionString != null
+                   && configFilePath != null
+                   && _initParameters.ConfigFilePathFromConnectionString != configFilePath;
+            if (isDifferentConfigPath)
             {
-                return;
-            }
-            if (previousInitParameters.ShouldConfigureLogger && _initParameters.ShouldConfigureLogger)
-            {
-                s_logger.Warn("Easy logging will be configured once again because it's the first time where client config is provided in a connection string");
+                s_logger.Warn($"Easy logging will not be configured for CLIENT_CONFIG_FILE={configFilePath} because it was previously configured for a different client config");
             }
         }
         
@@ -122,35 +125,31 @@ namespace Snowflake.Data.Core
 
     internal class EasyLoggingInitParameters
     {
-        private readonly string _configFilePathFromConnectionString;
+        public string ConfigFilePathFromConnectionString { get; }
 
         private readonly EasyLoggingLogLevel? _logLevel;
 
         private readonly string _logPath;
-        
-        public bool ShouldConfigureLogger { get; }
 
         private EasyLoggingInitParameters(
             string configFilePathFromConnectionString,
             EasyLoggingLogLevel? logLevel,
-            string logPath,
-            bool shouldConfigureLogger)
+            string logPath)
         {
-            _configFilePathFromConnectionString = configFilePathFromConnectionString;
+            ConfigFilePathFromConnectionString = configFilePathFromConnectionString;
             _logLevel = logLevel;
             _logPath = logPath;
-            ShouldConfigureLogger = shouldConfigureLogger;
         }
 
-        public static EasyLoggingInitParameters WhenConfigNotFound(string configFilePathFromConnectionString) =>
-            new EasyLoggingInitParameters(configFilePathFromConnectionString, null, null, false);
+        public static EasyLoggingInitParameters CreateWhenConfigNotFound(string configFilePathFromConnectionString) =>
+            new EasyLoggingInitParameters(configFilePathFromConnectionString, null, null);
         
-        public static EasyLoggingInitParameters WhenConfigFound(string configFilePathFromConnectionString, EasyLoggingLogLevel logLevel, string logPath) =>
-            new EasyLoggingInitParameters(configFilePathFromConnectionString, logLevel, logPath, true);
+        public static EasyLoggingInitParameters CreateWhenConfigFound(string configFilePathFromConnectionString, EasyLoggingLogLevel logLevel, string logPath) =>
+            new EasyLoggingInitParameters(configFilePathFromConnectionString, logLevel, logPath);
 
         public bool HasNoConfigFilePathFromConnectionString()
         {
-            return string.IsNullOrEmpty(_configFilePathFromConnectionString);
+            return string.IsNullOrEmpty(ConfigFilePathFromConnectionString);
         }
     }
 }
