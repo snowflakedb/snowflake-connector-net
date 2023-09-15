@@ -153,7 +153,7 @@ namespace Snowflake.Data.Client
             {
                 var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
-                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
+                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Client
                 {
                     var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
-                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.addSession(SfSession))
+                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
@@ -246,7 +246,7 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return;
             }
-            SfSession = SnowflakeDbConnectionPool.getSession(this.ConnectionString);
+            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
             if (SfSession != null)
             {
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
@@ -289,7 +289,7 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
-            SfSession = SnowflakeDbConnectionPool.getSession(this.ConnectionString);
+            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
             if (SfSession != null)
             {
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");

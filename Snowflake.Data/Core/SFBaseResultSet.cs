@@ -6,6 +6,7 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -85,5 +86,13 @@ namespace Snowflake.Data.Core
             isClosed = true;
         }
         
+        internal void ThrowIfClosed()
+        {
+            if (isClosed)
+            {
+                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+            }
+        }
+
     }
 }

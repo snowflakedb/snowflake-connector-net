@@ -299,6 +299,78 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "parameters")]
         internal Dictionary<string, string> parameters { get; set; }
+
+        [JsonProperty(PropertyName = "queryContextDTO", NullValueHandling = NullValueHandling.Ignore)]
+        internal RequestQueryContext QueryContextDTO { get; set; }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContext
+    {
+        [JsonProperty(PropertyName = "entries")]
+        internal List<RequestQueryContextElement> Entries { get; set; }
+    }
+
+    // The empty query context value in request
+    internal class QueryContextValueEmpty
+    {
+        // empty object with no filed
+    }
+
+    // The non-empty query context value in request
+    internal class QueryContextValue
+    {
+        // base64 encoded string of Opaque information
+        [JsonProperty(PropertyName = "base64Data")]
+        public string Base64Data { get; set; }
+
+        public QueryContextValue(string context)
+        {
+            Base64Data = context;
+        }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContextElement
+    {
+        // database id as key. (bigint)
+        [JsonProperty(PropertyName = "id")]
+        public long Id { get; set; }
+
+        // When the query context read (bigint). Compare for same id.
+        [JsonProperty(PropertyName = "timestamp")]
+        public long ReadTimestamp { get; set; }
+
+        // Priority of the query context (bigint). Compare for different ids.
+        [JsonProperty(PropertyName = "priority")]
+        public long Priority { get; set; }
+
+        // Opaque information (object with a value of base64 encoded string).
+        [JsonProperty(PropertyName = "context")]
+        public object Context{ get; set; }
+
+        public void SetContext(string context)
+        {
+            if (context != null)
+            {
+                Context = new QueryContextValue(context);
+            }
+            else
+            {
+                Context = new QueryContextValueEmpty();
+            }
+        }
+
+        // default constructor for JSON converter
+        public RequestQueryContextElement() { }
+
+        public RequestQueryContextElement(QueryContextElement elem)
+        {
+            Id = elem.Id;
+            Priority = elem.Priority;
+            ReadTimestamp = elem.ReadTimestamp;
+            SetContext(elem.Context);
+        }
     }
 
     class QueryCancelRequest

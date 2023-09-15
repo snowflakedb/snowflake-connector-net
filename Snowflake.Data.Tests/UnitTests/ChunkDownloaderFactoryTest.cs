@@ -24,13 +24,6 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
         }
 
-        [Test]
-        [Ignore("ChunkDownloaderFactoryTest")]
-        public void ChunkDownloaderFactoryTestDone()
-        {
-            // Do nothing;
-        }
-
         private QueryExecResponseData mockQueryRequestData()
         {
             return new QueryExecResponseData
@@ -38,7 +31,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 rowSet = new string[,] { { } },
                 rowType = new List<ExecResponseRowType>(),
                 parameters = new List<NameValueParameter>(),
-                chunks = new List<ExecResponseChunk>()
+                chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
+                {
+                    url = "fake",
+                    uncompressedSize = 100,
+                    rowCount = 1
+                }}
             };
         }
 
@@ -55,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestGetDownloader([Values(false, true)] bool useV2ChunkDownloader, [Values(1, 2, 3, 4)] int chunkDownloaderVersion)
         {
             // Set configuration settings

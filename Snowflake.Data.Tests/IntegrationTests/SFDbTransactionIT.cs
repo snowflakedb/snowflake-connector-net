@@ -16,13 +16,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]
-        [Ignore("DbTransactionIT")]
-        public void DbTransactionITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {

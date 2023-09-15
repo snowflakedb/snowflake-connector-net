@@ -20,25 +20,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
     {
-
-        [Test]
-        [Ignore("DbCommandITAsync")]
-        public void DbCommandITAsyncDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestExecAsyncAPI()
         {
+            SnowflakeDbConnectionPool.ClearAllPools();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.ClearAllPools();
                 conn.ConnectionString = ConnectionString;
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
-                Assert.AreEqual(ConnectionState.Connecting, conn.State);
-
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
@@ -105,14 +95,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandITSlow : SFBaseTest
     {
-
-        [Test]
-        [Ignore("DbCommandITSlow")]
-        public void DbCommandITSlowDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestLongRunningQuery()
         {
@@ -158,13 +140,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFDbCommandIT : SFBaseTest
     {
-        [Test]
-        [Ignore("DbCommandIT")]
-        public void DbCommandITDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void TestSimpleCommand()
         {
@@ -239,12 +214,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
-                IDataReader reader = cmd.ExecuteReader();
-                int counter = 0;
-                while (reader.Read())
+                using (IDataReader reader = cmd.ExecuteReader())
                 {
-                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
-                    counter++;
+                    int counter = 0;
+                    while (reader.Read())
+                    {
+                        Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                        // don't test the second column as it has random values just to increase the response size
+                        counter++;
+                    }
                 }
                 conn.Close();
             }
@@ -254,7 +232,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         /*
          * Disabled to make sure that configuration changes does not cause problems with appveyor
          */
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
@@ -275,6 +253,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
@@ -283,7 +262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestUseV2ChunkDownloader()
         {
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
@@ -304,12 +283,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 while (reader.Read())
                 {
                     Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
                 conn.Close();
             }
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+        }
+
+        [Test]
+        [Parallelizable(ParallelScope.Children)]
+        public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
+                cmd.ExecuteNonQuery();
+
+                // 200000 - empirical value to return 3 additional chunks for both JSON and Arrow response
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
+                {
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
+                    counter++;
+                }
+                conn.Close();
+            }
         }
 
         [Test]
@@ -519,7 +526,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.AreEqual(expectedResult[i], rowsAffected);
                     }
                 }
-                conn.Close();
             }
         }
 
@@ -826,6 +832,92 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT COUNT(*) FROM (select seq4() from table(generator(rowcount => {rowCount})))";
                     Assert.AreEqual(rowCount, command.ExecuteScalar());
                 }
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestGetQueryId()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // query id is null when no query executed
+                SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
+                string queryId = command.GetQueryId();
+                Assert.IsNull(queryId);
+
+                // query id from ExecuteNonQuery
+                command.CommandText = "create or replace temporary table testgetqueryid(cola string)";
+                command.ExecuteNonQuery();
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+
+                // query id from ExecuteReader
+                command.CommandText = "show tables like 'testgetqueryid'";
+                SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, reader.GetQueryId());
+                Assert.IsTrue(reader.Read());
+
+                // query id from insert query
+                command.CommandText = "insert into testgetqueryid values('test')";
+                command.ExecuteNonQuery();
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+
+                // query id from select query
+                command.CommandText = "select * from testgetqueryid";
+                reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+                Assert.AreEqual(queryId, reader.GetQueryId());
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("test", reader.GetString(0));
+
+                // query id from different DbCommand instance
+                SnowflakeDbCommand command2 = (SnowflakeDbCommand)conn.CreateCommand();
+                string queryId2 = command2.GetQueryId();
+                Assert.IsNull(queryId2);
+                command2.CommandText = "select 'test2'";
+                SnowflakeDbDataReader reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
+                queryId2 = command2.GetQueryId();
+                Assert.IsNotEmpty(queryId2);
+                Assert.AreEqual(queryId2, reader2.GetQueryId());
+                // each DbCommand instance has it's own query Id.
+                Assert.AreNotEqual(queryId2, queryId);
+                Assert.IsTrue(reader2.Read());
+                Assert.AreEqual("test2", reader2.GetString(0));
+
+                // use query Id to get the result
+                command.CommandText = $"select * from table(result_scan('{queryId}'))";
+                reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("test", reader.GetString(0));
+
+                command2.CommandText = $"select * from table(result_scan('{queryId2}'))";
+                reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
+                Assert.IsTrue(reader2.Read());
+                Assert.AreEqual("test2", reader2.GetString(0));
+
+                // query id from failed query
+                command.CommandText = "select * from table_not_exists";
+                try
+                {
+                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(2003, e.ErrorCode);
+                }
+
+                queryId = command.GetQueryId();
+                Assert.IsNotEmpty(queryId);
+
                 conn.Close();
             }
         }

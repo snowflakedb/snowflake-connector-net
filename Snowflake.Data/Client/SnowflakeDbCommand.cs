@@ -238,6 +238,15 @@ namespace Snowflake.Data.Client
             throw new NotImplementedException();
         }
 
+        public string GetQueryId()
+        {
+            if (sfStatement != null)
+            {
+                return sfStatement.GetQueryId();
+            }
+            return null;
+        }
+
         protected override DbParameter CreateDbParameter()
         {
             return new SnowflakeDbParameter();

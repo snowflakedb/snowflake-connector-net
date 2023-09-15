@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
@@ -38,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const int Parallel = 0;
 
         // File name for download tests
-        const string DownloadFileName = "mockFileName.txt";
+        [ThreadStatic] private static string t_downloadFileName;
 
         // Token for async tests
         CancellationToken _cancellationToken;
@@ -53,6 +55,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
+            t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
+            
             _fileMetadata = new SFFileMetadata()
             {
                 stageInfo = new PutGetStageInfo()
@@ -73,13 +77,6 @@ namespace Snowflake.Data.Tests.UnitTests
             _client = new SFGCSClient(_fileMetadata.stageInfo);
 
             _cancellationToken = new CancellationToken();
-        }
-
-        [Test]
-        [Ignore("GCSClientTest")]
-        public void GCSClientTestDone()
-        {
-            // Do nothing;
         }
 
         [Test]
@@ -310,7 +307,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
 
             // Act
-            _client.DownloadFile(_fileMetadata, DownloadFileName, Parallel);
+            _client.DownloadFile(_fileMetadata, t_downloadFileName, Parallel);
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
@@ -334,7 +331,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
 
             // Act
-            await _client.DownloadFileAsync(_fileMetadata, DownloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
+            await _client.DownloadFileAsync(_fileMetadata, t_downloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
@@ -344,9 +341,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(DownloadFileName);
+                string text = File.ReadAllText(t_downloadFileName);
                 Assert.AreEqual(MockGCSClient.GcsFileContent, text);
-                File.Delete(DownloadFileName);
+                File.Delete(t_downloadFileName);
             }
 
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);

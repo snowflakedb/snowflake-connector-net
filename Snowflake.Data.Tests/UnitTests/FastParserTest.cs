@@ -23,13 +23,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("FastParserTest")]
-        public void FastParserTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestFastParseInt64WithLongMaxValue()
         {
             long expectedLongValue = long.MaxValue;

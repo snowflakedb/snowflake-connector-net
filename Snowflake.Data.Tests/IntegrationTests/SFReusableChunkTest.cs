@@ -9,16 +9,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Client;
     using System.Threading.Tasks;
     
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
-        [Test]
-        [Ignore("ReusableChunkTest")]
-        public void ReusableChunkTestDone()
-        {
-            // Do nothing;
-        }
-
         [Test]
         public void testDelCharPr431()
         {
@@ -230,7 +223,7 @@ select parse_json('{{
                 _exceptionsThrown = 0;
             }
             
-            public IChunkParser GetParser(Stream stream)
+            public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
                 if (++_exceptionsThrown <= _expectedExceptionsNumber)
                     return new ThrowingReusableChunkParser();

@@ -16,13 +16,6 @@ namespace Snowflake.Data.Tests.UnitTests
     [SetCulture("en-US")]
     class SFDataConverterTest
     {
-        [Test]
-        [Ignore("DataConverterTest")]
-        public void DataConverterTestDone()
-        {
-            // Do nothing;
-        }
-
         // Method with the same signature as before the performance work
         // Used by unit tests only
         private UTF8Buffer ConvertToUTF8Buffer(string srcVal)

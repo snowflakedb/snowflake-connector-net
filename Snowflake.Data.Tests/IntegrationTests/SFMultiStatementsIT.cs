@@ -19,13 +19,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFMultiStatementsIT : SFBaseTest
     {
         [Test]
-        [Ignore("MultiStatementsIT")]
-        public void MultiStatementsITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void testSelectWithoutBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -310,7 +303,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"remove @%{TableName};" +
                                       "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
                                       "call p1();" +
-                                      "use role public";
+                                      $"use role {testConfig.role}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
