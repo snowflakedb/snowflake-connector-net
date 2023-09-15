@@ -23,6 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public PoolConfig()
         {
+            var connectionPoolManagerBase = SnowflakeDbConnectionPool.Instance; // TODO: check why necessary
             _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
             _timeout = SnowflakeDbConnectionPool.GetTimeout();
             _pooling = SnowflakeDbConnectionPool.GetPooling();

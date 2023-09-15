@@ -26,7 +26,7 @@ namespace Snowflake.Data.Client
         
         internal int _connectionTimeout;
 
-        private bool disposed = false;
+        private bool _disposed = false;
 
         private static Mutex _arraybindingMutex = new Mutex();
 
@@ -151,9 +151,9 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+                var transactionRollbackStatus = GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
-                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
+                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(ConnectionString, Password, SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Client
         // Adding an override for CloseAsync will prevent the need for casting to SnowflakeDbConnection to call CloseAsync(CancellationToken).
         public override async Task CloseAsync()
         {
-            await CloseAsync(CancellationToken.None);
+            await CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 #endif
 
@@ -189,9 +189,9 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+                    var transactionRollbackStatus = GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
-                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
+                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(ConnectionString, Password, SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
@@ -234,51 +234,34 @@ namespace Snowflake.Data.Client
 
         private bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
-            return SnowflakeDbConnectionPool.GetPooling() && 
+            return GetPooling() && 
                    transactionRollbackStatus == TransactionRollbackStatus.Success;
         }
         
+        private bool GetPooling()
+        {
+            return SnowflakeDbConnectionPool.GetPool(ConnectionString, Password).GetPooling();
+        }
+
         public override void Open()
         {
             logger.Debug("Open Connection.");
             if (_connectionState != ConnectionState.Closed)
             {
-                logger.Debug($"Open with a connection already opened: {_connectionState}");
+                logger.Warn($"Opening a connection already opened: {_connectionState}");
                 return;
             }
-            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
-            if (SfSession != null)
+
+            try
             {
-                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                OnSessionOpen();
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
+                OnSessionEstablished();
             }
-            else
+            catch (Exception e)
             {
-                SetSession();
-                try
-                {
-                    SfSession.Open();
-                }
-                catch (Exception e)
-                {
-                    // Otherwise when Dispose() is called, the close request would timeout.
-                    _connectionState = ConnectionState.Closed;
-                    logger.Error("Unable to connect", e);
-                    if (!(e.GetType() == typeof(SnowflakeDbException)))
-                    {
-                        throw
-                           new SnowflakeDbException(
-                               e,
-                               SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                               SFError.INTERNAL_ERROR,
-                               "Unable to connect. " + e.Message);
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                RethrowOnSessionOpenFailure(e);
             }
-            OnSessionEstablished();
         }
 
         public override Task OpenAsync(CancellationToken cancellationToken)
@@ -286,34 +269,18 @@ namespace Snowflake.Data.Client
             logger.Debug("Open Connection Async.");
             if (_connectionState != ConnectionState.Closed)
             {
-                logger.Debug($"Open with a connection already opened: {_connectionState}");
-                return Task.CompletedTask;
-            }
-            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
-            if (SfSession != null)
-            {
-                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
-                OnSessionEstablished();
+                logger.Warn($"Opening a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
 
-            registerConnectionCancellationCallback(cancellationToken);
-            SetSession();
-
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(
-                previousTask =>
+            OnSessionOpen();
+            return SnowflakeDbConnectionPool.GetSessionAsync(ConnectionString, Password, cancellationToken)
+                .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)
                     {
                         // Exception from SfSession.OpenAsync
-                        Exception sfSessionEx = previousTask.Exception;
-                        _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx);
-                        throw new SnowflakeDbException(
-                           sfSessionEx,
-                           SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                           SFError.INTERNAL_ERROR,
-                           "Unable to connect");
+                        RethrowOnSessionOpenFailure(previousTask.Exception);
                     }
                     else if (previousTask.IsCanceled)
                     {
@@ -322,7 +289,7 @@ namespace Snowflake.Data.Client
                     }
                     else
                     {
-                        logger.Debug("All good");
+                        logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();
                     }
@@ -344,23 +311,42 @@ namespace Snowflake.Data.Client
         {
             _isArrayBindStageCreated = true;
         }
-
-        /// <summary>
-        /// Create a new SFsession with the connection string settings.
-        /// </summary>
-        /// <exception cref="SnowflakeDbException">If the connection string can't be processed</exception>
-        private void SetSession()
+        
+        private void OnSessionOpen()
         {
-            SfSession = new SFSession(ConnectionString, Password);
-            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+            logger.Debug("Opening session");
             _connectionState = ConnectionState.Connecting;
         }
 
         private void OnSessionEstablished()
         {
+            if (SfSession == null)
+            {
+                logger.Error("Error during opening session");
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unable to establish a session");
+            }
+            logger.Debug("Session established");
             _connectionState = ConnectionState.Open;
+            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+            logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
         }
 
+        private void RethrowOnSessionOpenFailure(Exception exception)
+        {
+            // Otherwise when Dispose() is called, the close request would timeout.
+            _connectionState = ConnectionState.Closed;
+            logger.Error("Unable to connect: ", exception);
+            if (exception != null && exception is SnowflakeDbException dbException)
+                throw dbException;
+
+            var errorMessage = "Unable to connect. " + (exception != null ? exception.Message : "");
+            throw new SnowflakeDbException(
+                exception,
+                SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                SFError.INTERNAL_ERROR,
+                errorMessage);
+        }
+        
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             // Parameterless BeginTransaction() method of the super class calls this method with IsolationLevel.Unspecified,
@@ -382,12 +368,12 @@ namespace Snowflake.Data.Client
 
         protected override void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
                 return;
 
             try
             {
-                this.Close();
+                Close();
             } 
             catch (Exception ex)
             {
@@ -395,7 +381,7 @@ namespace Snowflake.Data.Client
                 logger.Error("Unable to close connection", ex);
             }
 
-            disposed = true;
+            _disposed = true;
 
             base.Dispose(disposing);
         }
@@ -406,7 +392,7 @@ namespace Snowflake.Data.Client
         ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
         /// </summary>
         /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-        internal void registerConnectionCancellationCallback(CancellationToken externalCancellationToken)
+        internal void RegisterConnectionCancellationCallback(CancellationToken externalCancellationToken)
         {
             if (!externalCancellationToken.IsCancellationRequested)
             {

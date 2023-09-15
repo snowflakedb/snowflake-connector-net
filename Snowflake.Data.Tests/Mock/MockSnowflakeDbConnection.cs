@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            registerConnectionCancellationCallback(cancellationToken);
+            RegisterConnectionCancellationCallback(cancellationToken);
 
             SetMockSession();
 
