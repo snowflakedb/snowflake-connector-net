@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             
             // assert
             Assert.IsNotNull(thrown);
-            Assert.IsTrue(thrown.Message == "Finding easy logging configuration failed");
+            Assert.AreEqual("Finding easy logging configuration failed", thrown.Message);
         }
 
         [Test, TestCaseSource(nameof(WrongConfigFiles))]

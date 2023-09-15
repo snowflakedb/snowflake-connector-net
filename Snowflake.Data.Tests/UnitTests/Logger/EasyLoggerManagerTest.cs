@@ -77,17 +77,17 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath);
             
             // act
-            logger.Info(InfoMessage);
             logger.Debug(DebugMessage);
+            logger.Info(InfoMessage);
             logger.Warn(WarnMessage);
             logger.Error(ErrorMessage);
             logger.Fatal(FatalMessage);
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains(DebugMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(InfoMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(WarnMessage)));
-            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains(DebugMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(ErrorMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
         }

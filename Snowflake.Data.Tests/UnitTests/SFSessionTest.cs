@@ -39,6 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         [TestCase(null)]
         [TestCase("/some-path/config.json")]
+        [TestCase("C:\\some-path\\config.json")]
         public void TestThatConfiguresEasyLogging(string configPath)
         {
             // arrange

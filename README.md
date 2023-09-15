@@ -697,8 +697,8 @@ Easy logging
 The Easy logging feature allows you to change log level of all driver's classes and add extra file appender for logs from driver's classes in runtime.
 This feature was introduced to make tracing of driver's logs easier.
 The feature is activated by a config file which can be:
-1. provided in connection string as `CLIENT_CONFIG_FILE` parameter (eg. `ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=/some-path/client_config.json;`)
-2. provided as environmental variable called `SF_CLIENT_CONFIG_FILE` (eg. `export SF_CLIENT_CONFIG_FILE=/some-path/client_config.json`)
+1. provided in connection string as `CLIENT_CONFIG_FILE` parameter (eg. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
+2. provided as environmental variable called `SF_CLIENT_CONFIG_FILE` (eg. `SET SF_CLIENT_CONFIG_FILE=C:\some-path\client_config.json`)
 3. found in the driver location by searching for `sf_client_config.json` file
 4. found in the home location by searching for `sf_client_config.json` file
 5. found in temp directory location by searching for `sf_client_config.json` file
@@ -714,13 +714,13 @@ The example of the configuration file is:
 {
   "common": {
     "log_level": "INFO",
-    "log_path": "/some-path/some-directory"
+    "log_path": "c:\\some-path\\some-directory"
   }
 }
 ```
 Available log levels are: `OFF`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`. The log levels are case insensitive.
 
-The extra logs land into `dotnet` subfolder of given directory `/some-path/some-directory` so in this example: `/some-path/some-directory/dotnet`.
+The extra logs land into `dotnet` subfolder of given directory `C:\some-path\some-directory` so in this example: `C:\some-path\some-directory\dotnet`.
 
 If the client uses log4net library for logging in their application enabling easy logging affect the log level in their logs as well.
 
