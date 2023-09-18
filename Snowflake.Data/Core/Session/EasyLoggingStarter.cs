@@ -105,7 +105,7 @@ namespace Snowflake.Data.Core
 
     internal class EasyLoggingInitTrialParameters
     {
-        private string _configFilePathFromConnectionString { get; }
+        private readonly string _configFilePathFromConnectionString;
 
         public EasyLoggingInitTrialParameters(
             string configFilePathFromConnectionString)
