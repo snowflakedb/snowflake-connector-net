@@ -32,17 +32,17 @@ namespace Snowflake.Data.Log
                 var appender = string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase)
                     ? AddConsoleAppender(rootLogger)
                     : AddRollingFileAppender(rootLogger, logsPath);
-                RemoveOtherAppendersForEasyLogging(rootLogger, appender);
+                RemoveOtherEasyLoggingAppenders(rootLogger, appender);
                 repository.RaiseConfigurationChanged(EventArgs.Empty);
             }
         }
         
-        private static void RemoveOtherAppendersForEasyLogging(log4net.Repository.Hierarchy.Logger logger, IAppender appender)
+        private static void RemoveOtherEasyLoggingAppenders(log4net.Repository.Hierarchy.Logger logger, IAppender appender)
         {
             var existingAppenders = logger.Appenders.ToArray();
             foreach (var existingAppender in existingAppenders)
             {
-                if (IsAppenderCreatedForEasyLogging(existingAppender) && existingAppender != appender)
+                if (IsEasyLoggingAppender(existingAppender) && existingAppender != appender)
                 {
                     logger.RemoveAppender(existingAppender);
                 }
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Log
             return appender;
         }
 
-        private static bool IsAppenderCreatedForEasyLogging(IAppender appender)
+        private static bool IsEasyLoggingAppender(IAppender appender)
         {
             if (appender.GetType() == typeof(ConsoleAppender))
             {
