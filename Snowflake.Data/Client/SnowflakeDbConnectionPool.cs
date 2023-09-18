@@ -3,6 +3,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.ConnectionPool;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
@@ -85,10 +86,12 @@ namespace Snowflake.Data.Client
 
         private static ConnectionPoolManagerBase ProvideConnectionPoolManager()
         {
-            if (s_poolVersion == PoolManagerVersion.Version1)
-                return new ConnectionPoolManagerV1();
-
-            throw new NotSupportedException("Pool version not supported");
+            switch (s_poolVersion)
+            {
+                case PoolManagerVersion.Version1: return new ConnectionPoolManagerV1();
+                case PoolManagerVersion.Version2: return new ConnectionPoolManagerV2();
+                default: throw new NotSupportedException("Pool version not supported");
+            }
         }
 
         internal static SFSession GetSession(string connectionString, SecureString password)
