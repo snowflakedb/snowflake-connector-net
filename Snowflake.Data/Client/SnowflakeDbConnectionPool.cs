@@ -108,7 +108,10 @@ namespace Snowflake.Data.Client
             s_logger.Debug("SnowflakeDbConnectionPool::AddSession");
             return Instance.AddSession(connectionString, password, session);
         }
-
-
+        
+        internal static PoolManagerVersion GetVersion()
+        {
+            return s_poolVersion;
+        }
     }
 }

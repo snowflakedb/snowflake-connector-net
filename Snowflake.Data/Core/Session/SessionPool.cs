@@ -36,6 +36,7 @@ namespace Snowflake.Data.Core.Session
             lock (s_sessionPoolLock)
             {
                 _sessionPool = new List<SFSession>();
+                _busySessions = 0;
                 _maxPoolSize = MaxPoolSize;
                 _timeout = Timeout;
                 // _minPoolSize = MinPoolSize; // TODO:
@@ -321,23 +322,36 @@ namespace Snowflake.Data.Core.Session
                 return false;
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (session.IsNotOpen() || session.IsExpired(_timeout, timeNow))
-                return false; // TODO: fix because it is counted in the pool 
+            {
+                s_logger.Warn($"Session returning to the pool in an undesired state: {session.sessionId}");
+                // TODO: fix because it is counted in the pool 
+                // TODO: lock
+                if (_busySessions > 0)
+                _busySessions--; 
+                return false; 
+            }
 
+            if (_sessionPool.Count >= _maxPoolSize)
+                CleanExpiredSessions();
+            
             lock (s_sessionPoolLock)
             {
                 if (_sessionPool.Count >= _maxPoolSize)
                 {
-                    CleanExpiredSessions();
-                }
-                if (_sessionPool.Count >= _maxPoolSize)
-                {
-                    // pool is full
+                    s_logger.Warn($"Pool is full, cannot add session with sid {session.sessionId}"); 
                     return false;
                 }
 
-                s_logger.Debug($"pool connection with sid {session.sessionId}");
-                _sessionPool.Add(session);
-                return true;
+                if (_busySessions > 0)
+                {
+                    _busySessions--;
+                    s_logger.Debug($"Connection returned to the pool with sid {session.sessionId}");
+                    _sessionPool.Add(session);
+                    return true;
+                }
+                
+                s_logger.Warn($"Unexpected session with sid {session.sessionId} was not returned to the pool"); // or clear pool was called and session was created before
+                return false;
             }
         }
 
@@ -351,6 +365,7 @@ namespace Snowflake.Data.Core.Session
                     session.close();
                 }
                 _sessionPool.Clear();
+                _busySessions = 0; // TODO: check test TestConnectionPoolIsFull
             }
         }
 
@@ -376,7 +391,13 @@ namespace Snowflake.Data.Core.Session
 
         public int GetCurrentPoolSize()
         {
-            return _sessionPool.Count + _busySessions;
+            switch (SnowflakeDbConnectionPool.GetVersion())
+            {
+                case PoolManagerVersion.Version1: return _sessionPool.Count;
+                case PoolManagerVersion.Version2: return _sessionPool.Count + _busySessions;
+            }
+            throw new NotSupportedException("Unknown pool version");
+
         }
 
         public bool SetPooling(bool isEnable)
