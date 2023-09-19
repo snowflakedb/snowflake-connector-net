@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(false, true)]
         [TestCase(true, false)]
         [TestCase(true, true)]
-        public void TestGetFileBytes(bool containsEncryptionMaterial, bool useMemoryStream)
+        public void TestUploadFileOrStreamWithAndWithoutEncryption(bool containsEncryptionMaterial, bool useMemoryStream)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
