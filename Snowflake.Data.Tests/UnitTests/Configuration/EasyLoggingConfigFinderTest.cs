@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
 using System;
 using System.IO;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {

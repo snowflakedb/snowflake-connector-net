@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
 using System;
 using System.IO;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Configuration
 {
@@ -10,8 +15,10 @@ namespace Snowflake.Data.Configuration
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
+        
+        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentOperations.Instance);
 
-        public EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        internal EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
             _environmentOperations = environmentOperations;

@@ -86,6 +86,8 @@ namespace Snowflake.Data.Core
         INCLUDERETRYREASON,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLEQUERYCONTEXTCACHE,
+        [SFSessionPropertyAttr(required = false)]
+        CLIENT_CONFIG_FILE
     }
 
     class SFSessionPropertyAttr : Attribute
