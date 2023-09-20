@@ -377,6 +377,11 @@ namespace Snowflake.Data.Core.FileTransfer
                     fileMetadata.destFileSize = fileInfo.Length;
                     return;
                 }
+                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    return;
+                }
                 else
                 {
                     HandleDownloadFileErr(ref fileMetadata, ref maxConcurrency, ref lastErr, retry, maxRetry);
@@ -410,12 +415,6 @@ namespace Snowflake.Data.Core.FileTransfer
             }
 
             ISFRemoteStorageClient client = fileMetadata.client;
-            FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-
-            if (fileHeader != null)
-            {
-                fileMetadata.srcFileSize = fileHeader.contentLength;
-            }
 
             int maxConcurrency = fileMetadata.parallel;
             Exception lastErr = null;
@@ -440,15 +439,18 @@ namespace Snowflake.Data.Core.FileTransfer
                           * One example of this is the utils that use presigned url
                           * for upload / download and not the storage client library.
                           **/
+                        FileHeader fileHeader = null;
                         if (fileMetadata.presignedUrl != null)
                         {
                             fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
                         }
 
+                        SFEncryptionMetadata encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
+
                         string tmpDstName = EncryptionProvider.DecryptFile(
                           fullDstPath,
                           fileMetadata.encryptionMaterial,
-                          fileHeader.encryptionMetadata,
+                          encryptionMetadata,
                           FileTransferConfiguration.FromFileMetadata(fileMetadata));
 
                         File.Delete(fullDstPath);
@@ -462,6 +464,11 @@ namespace Snowflake.Data.Core.FileTransfer
 
                     FileInfo fileInfo = new FileInfo(fullDstPath);
                     fileMetadata.destFileSize = fileInfo.Length;
+                    return;
+                }
+                else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
                     return;
                 }
                 else
@@ -490,12 +497,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="maxRetry">The max retry</param>
         private static void HandleDownloadFileErr(ref SFFileMetadata fileMetadata, ref int maxConcurrency, ref Exception lastErr, int retry, int maxRetry)
         {
-            if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-            {
-                return;
-            }
-            else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+            if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
             {
                 lastErr = fileMetadata.lastError;
                 // Failed to download file, retrying with max concurrency
