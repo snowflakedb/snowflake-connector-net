@@ -595,7 +595,11 @@ namespace Snowflake.Data.Core
                     };
 
                     /// The storage client used to upload data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    /// This is only needed for remote storage types
+                    if (TransferMetadata.stageInfo.locationType != LOCAL_FS)
+                    {
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    }
 
                     if (!fileMetadata.requireCompress)
                     {
@@ -656,13 +660,18 @@ namespace Snowflake.Data.Core
                     };
 
                     /// The storage client used to download data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
-                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
-
-                    if (fileHeader != null)
+                    /// This is only needed for remote storage types
+                    if (TransferMetadata.stageInfo.locationType != LOCAL_FS)
                     {
-                        fileMetadata.srcFileSize = fileHeader.contentLength;
-                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+
+                        FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                        if (fileHeader != null)
+                        {
+                            fileMetadata.srcFileSize = fileHeader.contentLength;
+                            fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        }
                     }
 
                     FilesMetas.Add(fileMetadata);
@@ -785,6 +794,12 @@ namespace Snowflake.Data.Core
             {
                 if (ContainsWildcard(part))
                 {
+                    // Directory containing the wildcard is the first one in the path
+                    if (resolvedPaths.Count == 0)
+                    {
+                        resolvedPaths.Add("./");
+                    }
+
                     var tempPaths = new List<string>();
                     foreach (var location in resolvedPaths)
                     {
