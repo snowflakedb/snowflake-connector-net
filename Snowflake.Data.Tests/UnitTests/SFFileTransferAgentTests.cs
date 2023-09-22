@@ -149,10 +149,6 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Download teardown
             // Delete local directory recursively
-            if (Directory.Exists(t_locationStage))
-            {
-                Directory.Delete(t_locationStage, true);
-            }
             if (Directory.Exists(t_localLocation))
             {
                 Directory.Delete(t_localLocation, true);
