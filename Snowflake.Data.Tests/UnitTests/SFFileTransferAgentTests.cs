@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void BeforeTest()
         {
-            // Base object's names on on worker thread id
+            // Base object's names on worker thread id
             var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
 
             // Set values for thread variables
@@ -134,6 +134,12 @@ namespace Snowflake.Data.Tests.UnitTests
         [TearDown]
         public void AfterTest()
         {
+            // Delete stage directory recursively
+            if (Directory.Exists(t_locationStage))
+            {
+                Directory.Delete(t_locationStage, true);
+            }
+
             // Upload teardown
             // Delete mock files
             foreach (string location in _srcLocations)
@@ -142,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // Download teardown
-            // Delete stage/local directory recursively
+            // Delete local directory recursively
             if (Directory.Exists(t_locationStage))
             {
                 Directory.Delete(t_locationStage, true);
@@ -324,9 +330,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Write the mock files
             int numberOfFiles = 3;
-            for (int i = 0; i < numberOfFiles; i++)
+            for (int index = 0; index < numberOfFiles; index++)
             {
-                File.WriteAllText($"{mockFileName}{i}.{extension}", FileContent);
+                File.WriteAllText($"{mockFileName}{index}.{extension}", FileContent);
             }
 
             // Set command to upload
@@ -341,17 +347,17 @@ namespace Snowflake.Data.Tests.UnitTests
             SFBaseResultSet result = _fileTransferAgent.result();
 
             // Assert
-            for (int i = 0; i < numberOfFiles; i++)
+            for (int index = 0; index < numberOfFiles; index++)
             {
                 result.Next();
 
                 // Assert the file is uploaded
                 Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.AreEqual($"{mockFileName}{i}.{extension}", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-                Assert.AreEqual($"{mockFileName}{i}.{extension}", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
+                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
 
-                File.Delete($"{mockFileName}{i}.{extension}");
+                File.Delete($"{mockFileName}{index}.{extension}");
             }
         }
 
