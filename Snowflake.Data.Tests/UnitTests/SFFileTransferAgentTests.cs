@@ -24,13 +24,16 @@ namespace Snowflake.Data.Tests.UnitTests
         const string LocationTables = "tables";
         const string LocationKey = "mock-key";
         const string LocationPath = LocationTables + "/" + LocationKey + "/";
-        string _location;
+        [ThreadStatic] private static string t_location;
 
         // Connection string for mock session
         const string ConnectionStringMock = "user=user;password=password;account=account;";
 
         // File name for the mock file
         [ThreadStatic] private static string t_realSourceFilePath;
+
+        // Temp directory for the files to be uploaded
+        [ThreadStatic] private static string t_mockUploadRootDirectory;
 
         // File size of the mock file
         long _sourceFileSize;
@@ -48,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         // Mock response data properties
         [ThreadStatic] private static string t_localLocation;
-        List<string> _srcLocations;
+        [ThreadStatic] private static List<string> t_srcLocations;
         const string AutoDetect = "auto_detect";
         const int Parallel = 1;
 
@@ -61,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
         SFSession _session;
 
         // Mock PUT/GET queries
-        string _putQuery;
+        [ThreadStatic] private static string t_putQuery;
         const string GetQuery = "GET @DB.SCHEMA.%MOCKTABLE file://;";
 
         // Mock file content
@@ -74,14 +77,12 @@ namespace Snowflake.Data.Tests.UnitTests
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_localLocation = TestNameWithWorker + "mockLocalLocation";
             t_locationStage = TestNameWithWorker + "mock-customer-stage";
-
-            // Set values for members that depend on thread variables
-            _srcLocations = new List<string>()
+            t_srcLocations = new List<string>()
             {
                 t_realSourceFilePath
             };
-            _putQuery = "PUT file://" + t_realSourceFilePath + " @DB.SCHEMA.%MOCKTABLE;";
-            _location = t_locationStage + "/" + LocationId + "/" + LocationPath;
+            t_putQuery = "PUT file://" + t_realSourceFilePath + " @DB.SCHEMA.%MOCKTABLE;";
+            t_location = t_locationStage + "/" + LocationId + "/" + LocationPath;
 
             _responseData = new PutGetResponseData()
             {
@@ -97,10 +98,10 @@ namespace Snowflake.Data.Tests.UnitTests
                 rowType = null,
                 sourceCompression = AutoDetect,
                 sqlState = null,
-                src_locations = _srcLocations,
+                src_locations = t_srcLocations,
                 stageInfo = new PutGetStageInfo()
                 {
-                    location = _location,
+                    location = t_location,
                     locationType = SFRemoteStorageUtil.LOCAL_FS, // Use local storage for testing
                     path = LocationPath,
                     presignedUrl = null,
@@ -116,16 +117,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Upload setup
             // Write mock file to upload
-            File.WriteAllText(_srcLocations[0], FileContent);
-            _sourceFileSize = new FileInfo(_srcLocations[0]).Length;
+            File.WriteAllText(t_srcLocations[0], FileContent);
+            _sourceFileSize = new FileInfo(t_srcLocations[0]).Length;
 
             // Download setup
             // Write mock file in the local location to download
-            if (!Directory.Exists(_location))
+            if (!Directory.Exists(t_location))
             {
-                Directory.CreateDirectory(_location);
+                Directory.CreateDirectory(t_location);
             }
-            File.WriteAllText(_location + t_realSourceFilePath, FileContent);
+            File.WriteAllText(t_location + t_realSourceFilePath, FileContent);
         }
 
         [TearDown]
@@ -133,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Upload teardown
             // Delete mock files
-            foreach (string location in _srcLocations)
+            foreach (string location in t_srcLocations)
             {
                 File.Delete(location);
             }
@@ -168,7 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -194,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -222,7 +223,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
 
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 ref memoryStream,
@@ -253,7 +254,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
 
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 ref memoryStream,
@@ -284,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.autoCompress = true;
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -328,7 +329,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -358,25 +359,25 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             // Create the mock directory and files
             string mockFileName = "testUploadWithMultipleDirectory.txt";
-            string tempUploadRootDirectory = "mockDirectoryWithWildcardInRootDirectory";
+            t_mockUploadRootDirectory = TestNameWithWorker + "mockDirectoryWithWildcardInRootDirectory";
             int numberOfDirectories = 3;
 
             for (int i = 0; i < numberOfDirectories; i++)
             {
-                Directory.CreateDirectory($"{tempUploadRootDirectory}{i}");
-                File.WriteAllText($"{tempUploadRootDirectory}{i}/{mockFileName}", FileContent);
+                Directory.CreateDirectory($"{t_mockUploadRootDirectory}{i}");
+                File.WriteAllText($"{t_mockUploadRootDirectory}{i}/{mockFileName}", FileContent);
             }
 
             // Create source location with wildcard in its filename
             _responseData.src_locations = new List<string>()
             {
                 // Add wildcard in the source location
-                $"{tempUploadRootDirectory}*/{mockFileName}",
+                $"{t_mockUploadRootDirectory}*/{mockFileName}",
             };
 
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -396,7 +397,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
                 Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
 
-                Directory.Delete($"{tempUploadRootDirectory}{i}", true);
+                Directory.Delete($"{t_mockUploadRootDirectory}{i}", true);
             }
         }
 
@@ -406,26 +407,26 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             // Create the mock directory and files
             string mockFileName = "testUploadWithMultipleDirectory.txt";
-            string tempUploadRootDirectory = "mockDirectoryWithWildcardInDirectoryPath";
-            string mockPath = $"{tempUploadRootDirectory}/mockDirectory";
+            t_mockUploadRootDirectory = TestNameWithWorker + "mockDirectoryWithWildcardInDirectoryPath";
+            string mockDirectory = "mockDirectory";
             int numberOfDirectories = 3;
 
             for (int i = 0; i < numberOfDirectories; i++)
             {
-                Directory.CreateDirectory($"{mockPath}{i}");
-                File.WriteAllText($"{mockPath}{i}/{mockFileName}", FileContent);
+                Directory.CreateDirectory($"{t_mockUploadRootDirectory}/{mockDirectory}{i}");
+                File.WriteAllText($"{t_mockUploadRootDirectory}/{mockDirectory}{i}/{mockFileName}", FileContent);
             }
 
             // Create source location with wildcard in its filename
             _responseData.src_locations = new List<string>()
             {
                 // Add wildcard in the source location
-                $"{mockPath}*/{mockFileName}",
+                $"{t_mockUploadRootDirectory}/{mockDirectory}*/{mockFileName}",
             };
 
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+            _fileTransferAgent = new SFFileTransferAgent(t_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
@@ -445,7 +446,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             }
 
-            Directory.Delete(tempUploadRootDirectory, true);
+            Directory.Delete(t_mockUploadRootDirectory, true);
         }
 
         [Test]
@@ -524,9 +525,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             // Delete the directory to trigger the directory error
-            if (Directory.Exists(_location))
+            if (Directory.Exists(t_location))
             {
-                Directory.Delete(_location, true);
+                Directory.Delete(t_location, true);
             }
 
             // Set command to download
