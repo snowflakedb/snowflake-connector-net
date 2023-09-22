@@ -596,7 +596,7 @@ namespace Snowflake.Data.Core
 
                     /// The storage client used to upload data from files or streams
                     /// This is only needed for remote storage types
-                    if (TransferMetadata.stageInfo.locationType != LOCAL_FS)
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
                         fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
                     }
@@ -661,7 +661,7 @@ namespace Snowflake.Data.Core
 
                     /// The storage client used to download data from files or streams
                     /// This is only needed for remote storage types
-                    if (TransferMetadata.stageInfo.locationType != LOCAL_FS)
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
                         fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
 

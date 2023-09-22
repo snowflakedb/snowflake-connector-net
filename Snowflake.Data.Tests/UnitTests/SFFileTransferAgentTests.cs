@@ -8,7 +8,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
     using System.Collections.Generic;
-    using Snowflake.Data.Tests.Mock;
     using System.Threading.Tasks;
     using System.Threading;
     using System.IO;
