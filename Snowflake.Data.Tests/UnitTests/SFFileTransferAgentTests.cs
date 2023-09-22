@@ -312,19 +312,22 @@ namespace Snowflake.Data.Tests.UnitTests
             // The file name used for creating multiple files
             string mockFileName = "testUploadWithMultipleFiles";
             string extension = "txt";
+            t_mockUploadRootDirectory = TestNameWithWorker + "t_mockUploadRootDirectory";
+
+            Directory.CreateDirectory($"{t_mockUploadRootDirectory}");
 
             // Create source location with wildcard in its filename
             _responseData.src_locations = new List<string>()
             {
                 // Add wildcard in the source location
-                $"{mockFileName}*.{extension}",
+                $"{t_mockUploadRootDirectory}/{mockFileName}*.{extension}",
             };
 
             // Write the mock files
             int numberOfFiles = 3;
             for (int i = 0; i < numberOfFiles; i++)
             {
-                File.WriteAllText($"{mockFileName}{i}.{extension}", FileContent);
+                File.WriteAllText($"{t_mockUploadRootDirectory}/{mockFileName}{i}.{extension}", FileContent);
             }
 
             // Set command to upload
@@ -348,9 +351,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 // Check the name of the source file and destination file are the same
                 Assert.AreEqual($"{mockFileName}{i}.{extension}", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
                 Assert.AreEqual($"{mockFileName}{i}.{extension}", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
-
-                File.Delete($"{mockFileName}{i}.{extension}");
             }
+
+            Directory.Delete($"{t_mockUploadRootDirectory}", true);
         }
 
         [Test]
