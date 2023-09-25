@@ -154,13 +154,6 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
-        [Ignore("FileTransferAgentTest")]
-        public void FileTransferAgentTestDone()
-        {
-            // Do nothing;
-        }
-
         private string GetResultValue(SFBaseResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
         {
             return result.getObjectInternal((int)typeInfo).ToString();
