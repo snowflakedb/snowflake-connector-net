@@ -115,19 +115,6 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
 
             _session = new SFSession(ConnectionStringMock, null);
-
-            // Upload setup
-            // Write mock file to upload
-            File.WriteAllText(_srcLocations[0], FileContent);
-            _sourceFileSize = new FileInfo(_srcLocations[0]).Length;
-
-            // Download setup
-            // Write mock file in the local location to download
-            if (!Directory.Exists(_location))
-            {
-                Directory.CreateDirectory(_location);
-            }
-            File.WriteAllText(_location + t_realSourceFilePath, FileContent);
         }
 
         [TearDown]
@@ -154,6 +141,15 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
+        private void UploadSetUpFile()
+        {
+            // Upload setup
+            // Write mock file to upload
+            File.WriteAllText(_srcLocations[0], FileContent);
+            _sourceFileSize = new FileInfo(_srcLocations[0]).Length;
+
+        }
+
         private string GetResultValue(SFBaseResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
         {
             return result.getObjectInternal((int)typeInfo).ToString();
@@ -163,6 +159,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadUsingFilepath()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
@@ -189,6 +187,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestUploadAsyncUsingFilepath()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
@@ -215,6 +215,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadUsingMemoryStream()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
             MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
@@ -246,6 +248,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestUploadAsyncUsingMemoryStream()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
             MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
@@ -277,6 +281,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadWithGZIPCompression()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Compresses the file with GZIP by default
             _responseData.autoCompress = true;
             // Set command to upload
@@ -305,6 +311,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadWithWilcardInTheFilename()
         {
             // Arrange
+            UploadSetUpFile();
+
             // The file name used for creating multiple files
             string mockFileName = "testUploadWithMultipleFiles";
             string extension = "txt";
@@ -353,6 +361,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadWithWildcardInTheRootDirectory()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Create the mock directory and files
             string mockFileName = "testUploadWithMultipleDirectory.txt";
             string tempUploadRootDirectory = "mockDirectoryWithWildcardInRootDirectory";
@@ -401,6 +411,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUploadWithWildcardInTheDirectoryPath()
         {
             // Arrange
+            UploadSetUpFile();
+
             // Create the mock directory and files
             string mockFileName = "testUploadWithMultipleDirectory.txt";
             string tempUploadRootDirectory = "mockDirectoryWithWildcardInDirectoryPath";
@@ -445,10 +457,23 @@ namespace Snowflake.Data.Tests.UnitTests
             Directory.Delete(tempUploadRootDirectory, true);
         }
 
+        private void DownloadSetUpFile()
+        {
+            // Download setup
+            // Write mock file in the local location to download
+            if (!Directory.Exists(_location))
+            {
+                Directory.CreateDirectory(_location);
+            }
+            File.WriteAllText(_location + t_realSourceFilePath, FileContent);
+        }
+
         [Test]
         public void TestDownload()
         {
             // Arrange
+            DownloadSetUpFile();
+
             // Set command to download
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
@@ -472,6 +497,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestDownloadAsync()
         {
             // Arrange
+            DownloadSetUpFile();
+
             // Set command to download
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
@@ -495,6 +522,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDownloadThrowsErrorFileNotFound()
         {
             // Arrange
+            DownloadSetUpFile();
+
             // Use a fake file name to trigger the file error
             _responseData.src_locations = new List<string>()
             {
@@ -520,6 +549,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDownloadThrowsErrorDirectoryNotFound()
         {
             // Arrange
+            DownloadSetUpFile();
+
             // Delete the directory to trigger the directory error
             if (Directory.Exists(_location))
             {
