@@ -457,6 +457,53 @@ namespace Snowflake.Data.Tests.UnitTests
             Directory.Delete(tempUploadRootDirectory, true);
         }
 
+        [Test]
+        public void TestUploadThrowsArgumentExceptionForMissingRootDirectoryWithWildcard()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            // Create the mock directory and files
+            string mockFileName = "testUploadWithMultipleDirectory.txt";
+            string tempUploadRootDirectory = "mockRootDirectoryWithWildcard";
+            string tempUploadSecondDirectory = "secondDirectoryWithWilcard";
+            int numberOfDirectories = 3;
+
+            // Do not create the root directory
+
+            // Create the second directory and write to file but the test should still fail
+            for (int i = 0; i < numberOfDirectories; i++)
+            {
+                Directory.CreateDirectory($"{tempUploadSecondDirectory}{i}");
+                File.WriteAllText($"{tempUploadSecondDirectory}{i}/{mockFileName}", FileContent);
+            }
+
+            // Create source location with wildcard in its filename
+            _responseData.src_locations = new List<string>()
+            {
+                // Add wildcard in the source location
+                $"{tempUploadRootDirectory}*/{tempUploadSecondDirectory}*/{mockFileName}",
+            };
+
+            // Set command to upload
+            _responseData.command = CommandTypes.UPLOAD.ToString();
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                _cancellationToken);
+
+            // Act
+            Exception ex = Assert.Throws<ArgumentException>(() => _fileTransferAgent.execute());
+
+            // Assert
+            Assert.That(ex.Message, Does.Match($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}"));
+
+            for (int i = 0; i < numberOfDirectories; i++)
+            {
+                Directory.Delete($"{tempUploadSecondDirectory}{i}", true);
+            }
+        }
+
         private void DownloadSetUpFile()
         {
             // Download setup

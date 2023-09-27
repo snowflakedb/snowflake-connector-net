@@ -790,14 +790,16 @@ namespace Snowflake.Data.Core
             var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
             var resolvedPaths = new List<string>();
 
+            bool firstPass = true;
+
             foreach (var part in pathParts)
             {
                 if (ContainsWildcard(part))
                 {
                     // Directory containing the wildcard is the first one in the path
-                    if (resolvedPaths.Count == 0)
+                    if (firstPass)
                     {
-                        resolvedPaths.Add("./");
+                        resolvedPaths.Add(Directory.GetCurrentDirectory());
                     }
 
                     var tempPaths = new List<string>();
@@ -830,6 +832,8 @@ namespace Snowflake.Data.Core
                         resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
                     }
                 }
+
+                firstPass = false;
             }
 
             return resolvedPaths;
