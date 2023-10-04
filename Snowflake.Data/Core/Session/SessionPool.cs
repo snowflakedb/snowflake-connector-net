@@ -10,6 +10,12 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
+    public enum SessionPickAlgorithm
+    {
+        MatchConnectionString,
+        PickOldest
+    }
+    
     public class SessionPool : IDisposable
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
@@ -31,6 +37,7 @@ namespace Snowflake.Data.Core.Session
         private string _connectionString;
         private SecureString _password;
         private bool _allowExceedMaxPoolSize; // backward compatibility flag
+        private SessionPickAlgorithm _sessionPick; // backward compatibility flag
 
         internal SessionPool(string connectionString, SecureString password)
         {
@@ -80,7 +87,7 @@ namespace Snowflake.Data.Core.Session
             if (!_pooling)
                 return OpenNewSession(connectionString, password);
             CleanExpiredSessions();
-            // AsyncEnsureMinPoolSize();
+            // EnsureMinPoolSizeAsync();
             return ProvidePooledSession(connectionString, password);
         }
 
@@ -89,60 +96,10 @@ namespace Snowflake.Data.Core.Session
             if (!_pooling)
                 return OpenNewSessionAsync(connectionString, password, cancellationToken);
             CleanExpiredSessions();
-            // AsyncEnsureMinPoolSizeAsync();
+            // EnsureMinPoolSizeAsync();
             return ProvidePooledSessionAsync(connectionString, password, cancellationToken);
         }
         
-    /*    
-        /// <summary>
-        /// Creates and opens a new SFSession with the connection string settings of the pool.
-        /// </summary>
-        /// <exception cref="SnowflakeDbException">If the session cannot be established</exception>
-        internal SFSession GetSession(string connectionString, SecureString password)
-        {
-            s_logger.Debug("SessionPool::GetSession");
-            SFSession session = null;
-            if (!_pooling)
-            {
-                session = OpenNewSession(connectionString, password);
-                s_logger.Info($"create non-poolable session with sid {session.sessionId}");
-                return session;
-            }   
-            
-            CleanExpiredSessions();
-            // EnsureMinPoolSizeAsync(); // TODO:
-            if (session == null && !_allowExceedMaxPoolSize)
-                session = WaitForPooledSession(CancellationToken.None);
-            return session;
-        }
-
-        /// <summary>
-        /// Creates a request to open a new SFSession with the connection string settings of the pool.
-        /// </summary>
-        /// <exception cref="SnowflakeDbException">If the connection string can't be processed</exception>
-        internal Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
-        {
-            s_logger.Debug("SessionPool::GetSessionAsync");
-            var session = GetSessionInternal(connectionString, password);
-            if (session == null && !_allowExceedMaxPoolSize)
-                session = WaitForPooledSessionAsync(cancellationToken);
-            return session;
-        }
-
-        internal SFSession GetSessionInternal(string connectionString, SecureString password)
-        {
-            if (!_pooling)
-            {
-                var session = OpenNewSession(connectionString, password);
-                s_logger.Info($"create non-poolable session with sid {session.sessionId}");
-                return session;
-            }
-
-            CleanExpiredSessions();
-            // EnsureMinPoolSizeAsync(); // TODO:
-            return ProvidePooledSession(connectionString, password);
-        }
-*/
         private SFSession ProvidePooledSession(string connectionString, SecureString password)
         {
             if (!_pooling)
@@ -152,11 +109,14 @@ namespace Snowflake.Data.Core.Session
             {
                 if (GetIdleSessionsSize() > 0)
                 {
-                    var sessionFromPool = _sessionPool[0]; // oldest idle
-                    _sessionPool.Remove(sessionFromPool);
-                    _busySessions++;
-                    s_logger.Debug($"Reused pooled session with sid {sessionFromPool.sessionId}");
-                    return sessionFromPool;
+                    var sessionFromPool = PickSession(connectionString); // oldest idle // TODO: 
+                    if (sessionFromPool != null)
+                    {
+                        _sessionPool.Remove(sessionFromPool);
+                        _busySessions++;
+                        s_logger.Debug($"Reused pooled session with sid {sessionFromPool.sessionId}");
+                        return sessionFromPool;
+                    }
                 }
 
                 if (GetCurrentPoolSize() < MaxPoolSize)
@@ -177,7 +137,6 @@ namespace Snowflake.Data.Core.Session
 
             return WaitForPooledSession(CancellationToken.None);
         }
-
         
         private Task<SFSession> ProvidePooledSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
@@ -188,11 +147,14 @@ namespace Snowflake.Data.Core.Session
             {
                 if (GetIdleSessionsSize() > 0)
                 {
-                    var sessionFromPool = _sessionPool[0]; // oldest idle
-                    _sessionPool.Remove(sessionFromPool);
-                    _busySessions++;
-                    s_logger.Debug($"Reused pooled session with sid {sessionFromPool.sessionId}");
-                    return Task.FromResult(sessionFromPool);
+                    var sessionFromPool = PickSession(connectionString);
+                    if (sessionFromPool != null)
+                    {
+                        _sessionPool.Remove(sessionFromPool);
+                        _busySessions++;
+                        s_logger.Debug($"Reused pooled session with sid {sessionFromPool.sessionId}");
+                        return Task.FromResult(sessionFromPool);
+                    }
                 }
 
                 if (GetCurrentPoolSize() < MaxPoolSize)
@@ -228,19 +190,18 @@ namespace Snowflake.Data.Core.Session
                 if (cancellationToken.IsCancellationRequested)
                     cancellationToken.ThrowIfCancellationRequested();
 
-                if (GetIdleSessionsSize() > 0)
+                lock (s_sessionPoolLock)
                 {
-                    lock (s_sessionPoolLock)
+                    session = PickSession(_connectionString);
+                    if (session != null)
                     {
-                        session = _sessionPool[0];
                         _sessionPool.Remove(session);
                         _busySessions++;
                         return session;
                     }
                 }
-                
-                Thread.Sleep(_openSessionSleepTimeout);  
 
+                Thread.Sleep(_openSessionSleepTimeout);
                 long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 if (start + _openSessionTimeout < now)
                     throw new SnowflakeDbException(
@@ -248,6 +209,28 @@ namespace Snowflake.Data.Core.Session
                         SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                         SFError.INTERNAL_ERROR, 
                         "Unable to connect.");
+            }
+
+            return session;
+        }
+
+        // TODO: inject 
+        SFSession PickSession(string connectionString)
+        {
+            SFSession session = null;
+            lock (s_sessionPoolLock)
+            {
+                switch (_sessionPick)
+                {
+                    case SessionPickAlgorithm.MatchConnectionString:
+                        session =  _sessionPool.FirstOrDefault(it => it.connStr.Equals(connectionString));
+                        break;
+                    case SessionPickAlgorithm.PickOldest:
+                        session = _sessionPool.Any() ? _sessionPool[0] : null;
+                        break;
+                }
+                if (session != null)
+                    _sessionPool.Remove(session);
             }
 
             return session;
@@ -335,7 +318,7 @@ namespace Snowflake.Data.Core.Session
                 // TODO: fix because it is counted in the pool 
                 // TODO: lock
                 if (_busySessions > 0)
-                _busySessions--; 
+                    _busySessions--; 
                 return false; 
             }
 
@@ -351,14 +334,12 @@ namespace Snowflake.Data.Core.Session
                 }
 
                 if (_busySessions > 0)
-                {
                     _busySessions--;
-                    s_logger.Debug($"Connection returned to the pool with sid {session.sessionId}");
-                    _sessionPool.Add(session);
-                    return true;
-                }
+                s_logger.Debug($"Connection returned to the pool with sid {session.sessionId}");
+                _sessionPool.Add(session);
+                return true;
                 
-                s_logger.Warn($"Unexpected session with sid {session.sessionId} was not returned to the pool"); // or clear pool was called and session was created before
+                // s_logger.Warn($"Unexpected session with sid {session.sessionId} was not returned to the pool"); // or clear pool was called and session was created before
                 return false;
             }
         }
@@ -438,6 +419,11 @@ namespace Snowflake.Data.Core.Session
         public void SetAllowExceedMaxPoolSize(bool allowExceedMaxPoolSize)
         {
             _allowExceedMaxPoolSize = allowExceedMaxPoolSize;
+        }
+
+        public void SetSessionPickAlgorithm(SessionPickAlgorithm sessionPicking)
+        {
+            _sessionPick = sessionPicking;
         }
     }
 

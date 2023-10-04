@@ -8,6 +8,7 @@ namespace Snowflake.Data.Core.ConnectionPool
         private const bool AllowExceedMaxPoolSizeDefault = false;
         // private const int MinPoolSizeDefault = 0; // TODO: SNOW-902610
         private const int MaxPoolSizeDefault = 10;
+        private const SessionPickAlgorithm SessionPicking = SessionPickAlgorithm.PickOldest;
 
         protected override PoolManagerVersion GetVersion() => PoolManagerVersion.Version2;
 
@@ -16,6 +17,7 @@ namespace Snowflake.Data.Core.ConnectionPool
             pool.SetAllowExceedMaxPoolSize(AllowExceedMaxPoolSizeDefault);
             // pool.SetMinPoolSize(MinPoolSizeDefault); // TODO: SNOW-902610
             pool.SetMaxPoolSize(MaxPoolSizeDefault);
+            pool.SetSessionPickAlgorithm(SessionPicking);
         }
 
         public new int GetCurrentPoolSize()

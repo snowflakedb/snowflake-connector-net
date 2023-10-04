@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core.Session
 
         protected virtual string GetPoolKey(string connectionString) => connectionString;
 
-        public virtual SessionPool GetPool(string connectionString, SecureString password)
+        public SessionPool GetPool(string connectionString, SecureString password)
         {
             string poolKey = GetPoolKey(connectionString);
             if (Pools.ContainsKey(poolKey))

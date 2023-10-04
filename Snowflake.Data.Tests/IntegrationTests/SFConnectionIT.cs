@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     try
                     {
                         conn.Open();
-                        s_logger.Debug("{appName}");
+                        s_logger.Debug($"{appName}");
                         Assert.Fail();
 
                     }

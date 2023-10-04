@@ -6,13 +6,16 @@ namespace Snowflake.Data.Core.Session
     sealed class ConnectionPoolManagerV1 : ConnectionPoolManagerBase
     {
         private const bool AllowExceedMaxPoolSizeDefault = true;
+        // private const int MinPoolSizeDefault = 0; // TODO: SNOW-902610
         private const int MaxPoolSizeDefault = 10;
         private const string SinglePoolKeyForAllDataSources = "CONNECTION_CACHE";
+        private const SessionPickAlgorithm SessionPicking = SessionPickAlgorithm.MatchConnectionString;
         
         protected override void ApplyPoolDefaults(SessionPool pool)
         {
             pool.SetAllowExceedMaxPoolSize(AllowExceedMaxPoolSizeDefault);
             pool.SetMaxPoolSize(MaxPoolSizeDefault);
+            pool.SetSessionPickAlgorithm(SessionPicking);
         }
         protected override PoolManagerVersion GetVersion() => PoolManagerVersion.Version1;
         // Same pool for any connection string (backward compatible solution)

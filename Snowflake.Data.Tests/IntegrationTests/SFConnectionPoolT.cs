@@ -321,6 +321,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn3.Open();
             Assert.AreEqual(ConnectionState.Open, conn3.State);
 
+            Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
             var conn4 = new SnowflakeDbConnection();
             conn4.ConnectionString = ConnectionString + "  retryCount=3";
             conn4.Open();
