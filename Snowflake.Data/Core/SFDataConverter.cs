@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
 
     static class SFDataConverter
     {
-        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        internal static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType)
         {

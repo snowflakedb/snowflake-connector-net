@@ -16,18 +16,19 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class ChunkStreamingParserTest
     {
-        int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
+        int _chunkParserVersionDefault;
 
         [SetUp]
         public void BeforeTest()
         {
+            _chunkParserVersionDefault = SFConfiguration.Instance().ChunkParserVersion;
             SFConfiguration.Instance().ChunkParserVersion = 1; // ChunkStreamingParser
         }
 
         [TearDown]
         public void AfterTest()
         {
-            SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
+            SFConfiguration.Instance().ChunkParserVersion = _chunkParserVersionDefault; // Return to default version
         }
 
         public IChunkParser getParser(string data)

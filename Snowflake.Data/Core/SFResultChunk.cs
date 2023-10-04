@@ -2,13 +2,14 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Text;
 
 namespace Snowflake.Data.Core
 {
     internal class SFResultChunk : BaseResultChunk
     {
-        internal override ResultFormat Format => ResultFormat.JSON;
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
         private int _currentRowIndex = -1;
 
@@ -27,6 +28,7 @@ namespace Snowflake.Data.Core
             ChunkIndex = index;
         }
 
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
             _currentRowIndex = rowIndex;

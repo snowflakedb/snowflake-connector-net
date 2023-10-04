@@ -28,25 +28,25 @@ namespace Snowflake.Data.Core
                     resultSet.Next();
                     for (int i = 0; i < resultSet.columnCount; i++)
                     {
-                        updateCount += resultSet.GetValue<long>(i);
+                        updateCount += resultSet.GetInt64(i);
                     }
 
                     break;
                 case SFStatementType.COPY:
-                    var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
+                    var index = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_loaded");
                     if (index >= 0)
                     {
                         resultSet.Next();
-                        updateCount = resultSet.GetValue<long>(index);
+                        updateCount = resultSet.GetInt64(index);
                         resultSet.Rewind();
                     }
                     break;
                 case SFStatementType.COPY_UNLOAD:
-                    var rowIndex = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_unloaded");
+                    var rowIndex = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_unloaded");
                     if (rowIndex >= 0)
                     {
                         resultSet.Next();
-                        updateCount = resultSet.GetValue<long>(rowIndex);
+                        updateCount = resultSet.GetInt64(rowIndex);
                         resultSet.Rewind();
                     }
                     break;

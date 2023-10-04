@@ -13,6 +13,8 @@ namespace Snowflake.Data.Core
 
     abstract class SFBaseResultSet
     {
+        internal abstract ResultFormat ResultFormat { get; }
+        
         internal SFStatement sfStatement;
 
         internal SFResultSetMetaData sfResultSetMetaData;
@@ -33,8 +35,6 @@ namespace Snowflake.Data.Core
 
         internal abstract bool HasRows();
 
-        internal abstract UTF8Buffer getObjectInternal(int columnIndex);
-
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
@@ -44,43 +44,41 @@ namespace Snowflake.Data.Core
         protected SFBaseResultSet()
         {
         }
+        
+        internal abstract bool IsDBNull(int ordinal);
 
-        internal T GetValue<T>(int columnIndex)
-        {
-            UTF8Buffer val = getObjectInternal(columnIndex);
-            var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
-        }
+        internal abstract object GetValue(int ordinal);
 
-        internal string GetString(int columnIndex)
-        {
-            var type = sfResultSetMetaData.getColumnTypeByIndex(columnIndex);
-            switch (type)
-            {
-                case SFDataType.DATE:
-                    var val = GetValue(columnIndex);
-                    if (val == DBNull.Value)
-                        return null;
-                    return SFDataConverter.toDateString((DateTime)val, 
-                        sfResultSetMetaData.dateOutputFormat);
-                //TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
-                default:
-                    return getObjectInternal(columnIndex).SafeToString(); 
-            }
-        }
+        internal abstract bool GetBoolean(int ordinal);
 
-        internal object GetValue(int columnIndex)
-        {
-            UTF8Buffer val = getObjectInternal(columnIndex);
-            var types = sfResultSetMetaData.GetTypesByIndex(columnIndex);
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
-        }
+        internal abstract byte GetByte(int ordinal);
 
-        internal bool IsDBNull(int ordinal)
-        {
-            return (null == getObjectInternal(ordinal));
-        }
+        internal abstract long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length);
 
+        internal abstract char GetChar(int ordinal);
+
+        internal abstract long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length);
+
+        internal abstract DateTime GetDateTime(int ordinal);
+
+        internal abstract TimeSpan GetTimeSpan(int ordinal);
+
+        internal abstract decimal GetDecimal(int ordinal);
+
+        internal abstract double GetDouble(int ordinal);
+
+        internal abstract float GetFloat(int ordinal);
+
+        internal abstract Guid GetGuid(int ordinal);
+
+        internal abstract short GetInt16(int ordinal);
+
+        internal abstract int GetInt32(int ordinal);
+
+        internal abstract long GetInt64(int ordinal);
+
+        internal abstract string GetString(int ordinal);
+        
         internal void close()
         {
             isClosed = true;
@@ -89,9 +87,13 @@ namespace Snowflake.Data.Core
         internal void ThrowIfClosed()
         {
             if (isClosed)
-            {
                 throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
-            }
+        }
+
+        internal void ThrowIfOutOfBounds(int ordinal)
+        {
+            if (ordinal < 0 || ordinal >= columnCount)
+                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, ordinal);
         }
 
     }

@@ -176,7 +176,7 @@ namespace Snowflake.Data.Client
         }
 #endif
 
-        public Task CloseAsync(CancellationToken cancellationToken)
+        public virtual Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
             TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();

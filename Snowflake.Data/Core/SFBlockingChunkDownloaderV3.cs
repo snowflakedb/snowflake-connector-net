@@ -217,7 +217,7 @@ namespace Snowflake.Data.Core
         
         private async Task ParseStreamIntoChunk(Stream content, BaseResultChunk resultChunk)
         {
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.Format, content);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
             await parser.ParseChunk(resultChunk);
         }
     }

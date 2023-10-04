@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core
 {
     class SFReusableChunk : BaseResultChunk
     {
-        internal override ResultFormat Format => ResultFormat.JSON;
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
         
         private readonly BlockResultData data;
 
@@ -34,6 +34,7 @@ namespace Snowflake.Data.Core
             data.ResetForRetry();
         }
         
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
             _currentRowIndex = rowIndex;

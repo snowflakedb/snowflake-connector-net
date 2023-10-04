@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
         {
             rowTypes = queryExecResponseData.rowType;
             columnCount = rowTypes.Count;
-            statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
+            statementType = FindStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
             
             foreach (NameValueParameter parameter in queryExecResponseData.parameters)
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
         {
             rowTypes = putGetResponseData.rowType;
             columnCount = rowTypes.Count;
-            statementType = findStatementTypeById(putGetResponseData.statementTypeId);
+            statementType = FindStatementTypeById(putGetResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
         }
 
@@ -83,10 +83,9 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// </summary>
         /// <returns>index of column given a name, -1 if no column names are found</returns>
-        internal int getColumnIndexByName(string targetColumnName)
+        internal int GetColumnIndexByName(string targetColumnName)
         {
-            int resultIndex;
-            if (columnNameToIndexCache.TryGetValue(targetColumnName, out resultIndex))
+            if (columnNameToIndexCache.TryGetValue(targetColumnName, out var resultIndex))
             {
                 return resultIndex;
             }
@@ -95,9 +94,9 @@ namespace Snowflake.Data.Core
                 int indexCounter = 0;
                 foreach (ExecResponseRowType rowType in rowTypes)
                 {
-                    if (String.Compare(rowType.name, targetColumnName, false ) == 0 )
+                    if (String.Compare(rowType.name, targetColumnName, false) == 0 )
                     {
-                        logger.Info($"Found colun name {targetColumnName} under index {indexCounter}");
+                        logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
@@ -107,24 +106,19 @@ namespace Snowflake.Data.Core
             return -1;
         }
         
-        internal SFDataType getColumnTypeByIndex(int targetIndex)
+        internal SFDataType GetColumnTypeByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
             return columnTypes[targetIndex].Item1;
         }
 
         internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
             return columnTypes[targetIndex];
+        }
+
+        internal long GetScaleByIndex(int targetIndex)
+        {
+            return rowTypes[targetIndex].scale;
         }
 
         private SFDataType GetSFDataType(string type)
@@ -167,33 +161,17 @@ namespace Snowflake.Data.Core
             }
         }
         
-        internal Type getCSharpTypeByIndex(int targetIndex)
+        internal Type GetCSharpTypeByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
-            SFDataType sfType = getColumnTypeByIndex(targetIndex);
-            return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);  
+            return columnTypes[targetIndex].Item2;  
         }
 
-        internal string getColumnNameByIndex(int targetIndex)
+        internal string GetColumnNameByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
             return rowTypes[targetIndex].name;
         }
 
-        internal DataTable toDataTable()
-        {
-            return null;
-        }
-
-        private SFStatementType findStatementTypeById(long id)
+        private SFStatementType FindStatementTypeById(long id)
         {
             foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))
             {

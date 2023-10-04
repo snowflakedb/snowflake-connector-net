@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
-        protected readonly string TestName = TestContext.CurrentContext.Test.MethodName;
+        protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
         protected string TableName => TestNameWithWorker;
         
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests
             // Snowflake.Data.Tests/bin/debug/{.net_version}/
             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
-        
+
         private static string s_connectionString => string.Format(ConnectionStringFmt,
             TestConfig.protocol,
             TestConfig.host,

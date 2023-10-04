@@ -14,14 +14,21 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class ChunkDownloaderFactoryTest
     {
-        bool UseV2ChunkDownloaderDefault = SFConfiguration.Instance().UseV2ChunkDownloader;
-        int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
+        bool _useV2ChunkDownloaderDefault;
+        int _chunkDownloaderVersionDefault;
+
+        [SetUp]
+        public void BeforeTest()
+        {
+            _useV2ChunkDownloaderDefault = SFConfiguration.Instance().UseV2ChunkDownloader;
+            _chunkDownloaderVersionDefault = SFConfiguration.Instance().ChunkDownloaderVersion;
+        }
 
         [TearDown]
         public void AfterTest()
         {
-            SFConfiguration.Instance().UseV2ChunkDownloader = UseV2ChunkDownloaderDefault; // Return to default version
-            SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
+            SFConfiguration.Instance().UseV2ChunkDownloader = _useV2ChunkDownloaderDefault; // Return to default version
+            SFConfiguration.Instance().ChunkDownloaderVersion = _chunkDownloaderVersionDefault; // Return to default version
         }
 
         private QueryExecResponseData mockQueryRequestData()

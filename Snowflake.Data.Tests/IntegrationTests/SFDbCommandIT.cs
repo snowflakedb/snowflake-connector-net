@@ -227,8 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-
-
+        
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
