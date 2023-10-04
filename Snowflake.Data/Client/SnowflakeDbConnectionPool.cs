@@ -14,7 +14,7 @@ namespace Snowflake.Data.Client
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
         private static readonly Object s_instanceLock = new Object();
         private static ConnectionPoolManagerBase s_connectionPoolManager;
-        private static readonly PoolManagerVersion s_poolVersion = PoolManagerVersion.Version1;
+        private static PoolManagerVersion s_poolVersion = PoolManagerVersion.Version2;
         
         public static ConnectionPoolManagerBase Instance
         {
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Client
             return Instance.GetSession(connectionString, password);
         }
         
-        internal static Task GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::GetSessionAsync");
             return Instance.GetSessionAsync(connectionString, password, cancellationToken);
@@ -112,6 +112,17 @@ namespace Snowflake.Data.Client
             return Instance.AddSession(connectionString, password, session);
         }
 
-
+        public static void InternalTogglePreviousPool()
+        {
+            s_logger.Debug("ClearAllPools");
+            if (Instance.GetCurrentPoolSize() > 0)
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Switch pool version before connections are established!");
+            ClearAllPools();
+            lock (s_instanceLock)
+            {
+                s_poolVersion = PoolManagerVersion.Version1;
+                s_connectionPoolManager = ProvideConnectionPoolManager();
+            }
+        }
     }
 }

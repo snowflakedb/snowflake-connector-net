@@ -280,6 +280,7 @@ namespace Snowflake.Data.Client
                     if (previousTask.IsFaulted)
                     {
                         // Exception from SfSession.OpenAsync
+                        _connectionState = ConnectionState.Closed;
                         RethrowOnSessionOpenFailure(previousTask.Exception);
                     }
                     else if (previousTask.IsCanceled)
@@ -289,6 +290,7 @@ namespace Snowflake.Data.Client
                     }
                     else
                     {
+                        SfSession = previousTask.Result; 
                         logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         // Only continue if the session was opened successfully
                         OnSessionEstablished();

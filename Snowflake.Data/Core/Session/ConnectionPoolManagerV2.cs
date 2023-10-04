@@ -1,3 +1,4 @@
+using System.Linq;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core.ConnectionPool
@@ -15,6 +16,11 @@ namespace Snowflake.Data.Core.ConnectionPool
             pool.SetAllowExceedMaxPoolSize(AllowExceedMaxPoolSizeDefault);
             // pool.SetMinPoolSize(MinPoolSizeDefault); // TODO: SNOW-902610
             pool.SetMaxPoolSize(MaxPoolSizeDefault);
+        }
+
+        public new int GetCurrentPoolSize()
+        {
+            return Pools.Values.Sum(sessionPool => sessionPool.GetCurrentPoolSize());
         }
     }
 }
