@@ -313,7 +313,12 @@ namespace Snowflake.Data.Core.Session
                         Debug.Assert(previousTask.Exception != null, "previousTask.Exception != null");
                         throw previousTask.Exception;
                     }
-                
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                    
                     return session;
                 }, cancellationToken);
         }
