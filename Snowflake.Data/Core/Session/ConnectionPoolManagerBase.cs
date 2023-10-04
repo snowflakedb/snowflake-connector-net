@@ -31,23 +31,25 @@ namespace Snowflake.Data.Core.Session
 
         protected virtual string GetPoolKey(string connectionString) => connectionString;
 
+        public virtual SessionPool GetPool(string connectionString, SecureString password)
+        {
+            string poolKey = GetPoolKey(connectionString);
+            if (Pools.ContainsKey(poolKey))
+                return Pools[poolKey];
+            lock (PoolsLock)
+            {
+                var pool = CreateSessionPool(connectionString, password);
+                ApplyPoolDefaults(pool);
+                Pools.Add(poolKey, pool);
+                return pool;
+            }
+        }
+
         public void ClearAllPools()
         {
             Pools.Values.ToList().ForEach(pool => pool.ClearAllPools());
         }
-        
-        public virtual SessionPool GetPool(string connectionString, SecureString password)
-        {
-            string poolKey = GetPoolKey(connectionString);
-            if (Pools.TryGetValue(poolKey, out var pool))
-                return pool;
-            
-            pool = CreateSessionPool(connectionString, password);
-            ApplyPoolDefaults(pool); 
-            Pools.Add(poolKey, pool);
-            return pool;
-        }
-        
+
         public virtual void SetMaxPoolSize(int size) => throw FeatureNotAvailableForPoolVersion();
         public virtual int GetMaxPoolSize() => throw FeatureNotAvailableForPoolVersion();
         public virtual void SetTimeout(long time) => throw FeatureNotAvailableForPoolVersion();
