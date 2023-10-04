@@ -14,7 +14,7 @@ namespace Snowflake.Data.Client
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
         private static readonly Object s_instanceLock = new Object();
         private static ConnectionPoolManagerBase s_connectionPoolManager;
-        private static PoolManagerVersion s_poolVersion = PoolManagerVersion.Version2;
+        private static PoolManagerVersion s_poolVersion = PoolManagerVersion.Version1;
         
         public static ConnectionPoolManagerBase Instance
         {
