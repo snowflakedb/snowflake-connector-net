@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Threading;
@@ -83,7 +84,7 @@ namespace Snowflake.Data.Core.Session
             return ProvidePooledSession(connectionString, password);
         }
 
-        internal Task GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             if (!_pooling)
                 return OpenNewSessionAsync(connectionString, password, cancellationToken);
@@ -149,16 +150,8 @@ namespace Snowflake.Data.Core.Session
 
             lock (s_sessionPoolLock)
             {
-                if (GetCurrentPoolSize() < _maxPoolSize)
+                if (GetIdleSessionsSize() > 0)
                 {
-                    if (GetIdleSessionsSize() == 0)
-                    {
-                        var newSession = OpenNewSession(connectionString, password);
-                        _busySessions++;
-                        s_logger.Info($"Created new pooled session with sid {newSession.sessionId}");
-                        return newSession;
-                    }
-
                     var sessionFromPool = _sessionPool[0]; // oldest idle
                     _sessionPool.Remove(sessionFromPool);
                     _busySessions++;
@@ -166,6 +159,13 @@ namespace Snowflake.Data.Core.Session
                     return sessionFromPool;
                 }
 
+                if (GetCurrentPoolSize() < MaxPoolSize)
+                {
+                    var newSession = OpenNewSession(connectionString, password);
+                    _busySessions++;
+                    s_logger.Info($"Created new pooled session with sid {newSession.sessionId}");
+                    return newSession;
+                }
                 s_logger.Debug($"Pool size {_maxPoolSize} reached, no free idle connections");
             }
 
@@ -179,28 +179,28 @@ namespace Snowflake.Data.Core.Session
         }
 
         
-        private Task ProvidePooledSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        private Task<SFSession> ProvidePooledSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             if (!_pooling)
                 return null;
 
             lock (s_sessionPoolLock)
             {
-                if (GetCurrentPoolSize() < _maxPoolSize)
+                if (GetIdleSessionsSize() > 0)
                 {
-                    if (GetIdleSessionsSize() == 0)
-                    {
-                        var session = OpenNewSessionAsync(connectionString, password, cancellationToken);
-                        _busySessions++;
-                        s_logger.Info($"Creating new pooled session");
-                        return session;
-                    }
-
                     var sessionFromPool = _sessionPool[0]; // oldest idle
                     _sessionPool.Remove(sessionFromPool);
                     _busySessions++;
                     s_logger.Debug($"Reused pooled session with sid {sessionFromPool.sessionId}");
                     return Task.FromResult(sessionFromPool);
+                }
+
+                if (GetCurrentPoolSize() < MaxPoolSize)
+                {
+                    var session = OpenNewSessionAsync(connectionString, password, cancellationToken);
+                    _busySessions++;
+                    s_logger.Info($"Creating new pooled session");
+                    return session;
                 }
 
                 s_logger.Debug($"Pool size {_maxPoolSize} reached, no free idle connections");
@@ -301,18 +301,21 @@ namespace Snowflake.Data.Core.Session
             return session;
         }
 
-        internal Task OpenNewSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal Task<SFSession> OpenNewSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             SFSession session = new SFSession(connectionString, password);
-            try
-            {
-                return session.OpenAsync(cancellationToken);
-            }
-            catch (Exception e)
-            {
-                s_logger.Error("Unable to connect", e);
-                return Task.FromException(e);
-            }
+            return session
+                .OpenAsync(cancellationToken)
+                .ContinueWith(previousTask =>
+                {
+                    if (previousTask.IsFaulted)
+                    {
+                        Debug.Assert(previousTask.Exception != null, "previousTask.Exception != null");
+                        throw previousTask.Exception;
+                    }
+                
+                    return session;
+                }, cancellationToken);
         }
 
         internal bool AddSession(SFSession session)

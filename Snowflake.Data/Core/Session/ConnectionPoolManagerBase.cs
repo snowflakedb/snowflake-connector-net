@@ -65,7 +65,7 @@ namespace Snowflake.Data.Core.Session
             return sessionPool.GetSession(connectionString, password); 
         }
 
-        internal Task GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             return GetPool(connectionString, password).GetSessionAsync(connectionString, password, cancellationToken); 
         }
