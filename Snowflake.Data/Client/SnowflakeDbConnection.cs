@@ -246,39 +246,21 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return;
             }
-            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
-            if (SfSession != null)
+            try
             {
+                OnSessionConnecting();
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
+                if (SfSession == null)
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                OnSessionEstablished();
             }
-            else
+            catch (Exception e)
             {
-                SetSession();
-                try
-                {
-                    SfSession.Open();
-                }
-                catch (Exception e)
-                {
-                    // Otherwise when Dispose() is called, the close request would timeout.
-                    _connectionState = ConnectionState.Closed;
-                    logger.Error("Unable to connect", e);
-                    if (!(e.GetType() == typeof(SnowflakeDbException)))
-                    {
-                        throw
-                           new SnowflakeDbException(
-                               e,
-                               SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                               SFError.INTERNAL_ERROR,
-                               "Unable to connect. " + e.Message);
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                _connectionState = ConnectionState.Closed;
+                logger.Error(e.Message);
+                throw;
             }
-            OnSessionEstablished();
         }
 
         public override Task OpenAsync(CancellationToken cancellationToken)
@@ -289,19 +271,11 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
-            SfSession = SnowflakeDbConnectionPool.GetSession(this.ConnectionString);
-            if (SfSession != null)
-            {
-                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
-                OnSessionEstablished();
-                return Task.CompletedTask;
-            }
-
             registerConnectionCancellationCallback(cancellationToken);
-            SetSession();
-
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(
-                previousTask =>
+            OnSessionConnecting();
+            return SnowflakeDbConnectionPool
+                .GetSessionAsync(ConnectionString, Password, cancellationToken)
+                .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)
                     {
@@ -322,8 +296,9 @@ namespace Snowflake.Data.Client
                     }
                     else
                     {
-                        logger.Debug("All good");
                         // Only continue if the session was opened successfully
+                        SfSession = previousTask.Result;
+                        logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
                     }
                 },
@@ -349,15 +324,15 @@ namespace Snowflake.Data.Client
         /// Create a new SFsession with the connection string settings.
         /// </summary>
         /// <exception cref="SnowflakeDbException">If the connection string can't be processed</exception>
-        private void SetSession()
+        private void OnSessionConnecting()
         {
-            SfSession = new SFSession(ConnectionString, Password);
-            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+            // SfSession = new SFSession(ConnectionString, Password);
             _connectionState = ConnectionState.Connecting;
         }
 
         private void OnSessionEstablished()
         {
+            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
             _connectionState = ConnectionState.Open;
         }
 
