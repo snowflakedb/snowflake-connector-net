@@ -198,7 +198,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("AuthenticatorRequestData {{ACCOUNT_NANM: {0} }}",
+            return String.Format("AuthenticatorRequestData {{ACCOUNT_NAME: {0} }}",
                 AccountName.ToString());
         }
     }
