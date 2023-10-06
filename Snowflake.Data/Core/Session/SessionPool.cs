@@ -145,7 +145,7 @@ namespace Snowflake.Data.Core.Session
             catch (Exception e)
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
-                if (!(e is SnowflakeDbException))
+                if (e is SnowflakeDbException)
                     throw;
                 throw new SnowflakeDbException(
                     e,
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Core.Session
             }
             catch (Exception e)
             {
-                if (!(e is SnowflakeDbException))
+                if (e is SnowflakeDbException)
                     throw;
                 throw new SnowflakeDbException(
                     e,
