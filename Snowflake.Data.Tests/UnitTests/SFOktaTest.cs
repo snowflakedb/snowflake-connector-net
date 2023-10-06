@@ -73,11 +73,14 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestLoginRequestToString()
         {
+            // Arrange
             string expectedOktaAccount = "mockOktaAccount";
             string expectedOktaUser = "mockOktaUser";
             string expectedOktaUrl = "mockOktaUrl";
 
             LoginRequestClientEnv loginRequestClientEnv = new LoginRequestClientEnv();
+
+            // Act
             LoginRequest loginRequest = new LoginRequest()
             {
                 data = new LoginRequestData()
@@ -90,6 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
+            // Assert
             Assert.AreEqual($"LoginRequest {{data: LoginRequestData {{ClientAppVersion: {SFEnvironment.DriverVersion},\n " +
                 $"AccountName: {expectedOktaAccount},\n " +
                 $"loginName: {expectedOktaUser},\n " +
@@ -106,7 +110,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestAuthenticatorRequestToString()
         {
+            // Arrange
             string expectedOktaAccount = "mockOktaAccount";
+
+            // Act
             AuthenticatorRequest authenticatorRequest = new AuthenticatorRequest()
             {
                 Data = new AuthenticatorRequestData()
@@ -115,6 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
+            // Assert
             Assert.AreEqual($"AuthenticatorRequest {{data: AuthenticatorRequestData {{ACCOUNT_NAME: {expectedOktaAccount} }} }}",
                 authenticatorRequest.ToString());
         }
