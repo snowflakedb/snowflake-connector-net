@@ -58,6 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
+                SnowflakeDbConnectionPool.SetPooling(pooling);
             }
         }
 
