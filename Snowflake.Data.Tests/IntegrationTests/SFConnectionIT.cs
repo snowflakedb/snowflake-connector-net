@@ -1765,6 +1765,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestAsyncDefaultLoginTimeout()
         {
+            SnowflakeDbConnectionPool.SetPooling(false);
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // unlimited retry count to trigger the timeout
