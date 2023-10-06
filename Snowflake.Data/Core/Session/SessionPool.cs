@@ -108,7 +108,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession");
             if (!_pooling)
-                return Task.FromResult(NewSession(connStr, password));
+                return NewSessionAsync(connStr, password, cancellationToken);
             lock (s_sessionPoolLock)
             {
                 for (int i = 0; i < _sessionPool.Count; i++)
