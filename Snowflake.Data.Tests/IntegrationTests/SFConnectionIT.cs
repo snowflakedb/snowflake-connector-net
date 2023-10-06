@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFConnectionIT : SFBaseTest
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
@@ -28,6 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
+                bool pooling = SnowflakeDbConnectionPool.GetPooling();
                 SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
@@ -46,6 +47,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
+                SnowflakeDbConnectionPool.SetPooling(pooling);
             }
         }
 
