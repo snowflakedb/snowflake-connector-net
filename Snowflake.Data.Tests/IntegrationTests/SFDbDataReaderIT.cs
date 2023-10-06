@@ -563,6 +563,47 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void testGetByte()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 BINARY",
+                });
+
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+
+                IDbCommand cmd = conn.CreateCommand();
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+
+                cmd.Parameters.Add(p1);
+                cmd.CommandText = $"insert into {TableName} values (?)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    int index = 0;
+                    while (reader.Read())
+                    {
+                        // Assert
+                        Assert.AreEqual(testBytes[index++], reader.GetByte(0));
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void testGetBinary()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -702,6 +743,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
 
                 conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetChar()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 VARCHAR(50)",
+                });
+
+                char testChar = 'T';
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"insert into {TableName} values ('{testChar}')";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.IsTrue(testChar.Equals(reader.GetChar(0)));
+
+                }
             }
         }
 
@@ -847,6 +920,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
 
                 conn.Close();
+            }
+        }
+
+        [Test]
+        public void testGetDataTypeName()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 VARCHAR(50)",
+                    "col2 BINARY",
+                    "col3 DOUBLE"
+                });
+
+                string testChars = "TEST_GET_CHARS";
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+                double testDouble = 1.2345678;
+
+                IDbCommand cmd = conn.CreateCommand();
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+
+                cmd.Parameters.Add(p1);
+                cmd.CommandText = $"insert into {TableName} values ('{testChars}', ?, {testDouble.ToString()})";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
+                {
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual("TEXT", reader.GetDataTypeName(0));
+                    Assert.AreEqual("BINARY", reader.GetDataTypeName(1));
+                    Assert.AreEqual("REAL", reader.GetDataTypeName(2));
+                }
             }
         }
 
