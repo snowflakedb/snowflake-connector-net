@@ -164,9 +164,6 @@ namespace Snowflake.Data.Core.Session
                     .OpenAsync(cancellationToken)
                     .ContinueWith(previousTask =>
                     {
-                        if (previousTask.IsCanceled)
-                            cancellationToken.ThrowIfCancellationRequested();
-
                         if (previousTask.IsFaulted && previousTask.Exception != null)
                             throw previousTask.Exception;
 
@@ -174,10 +171,10 @@ namespace Snowflake.Data.Core.Session
                             throw new SnowflakeDbException(
                                 SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                                 SFError.INTERNAL_ERROR,
-                                "Async open on connection failure");
+                                "Failure while opening session async");
 
                         return session;
-                    }, cancellationToken);
+                    }, TaskContinuationOptions.NotOnCanceled);
             }
             catch (Exception e)
             {

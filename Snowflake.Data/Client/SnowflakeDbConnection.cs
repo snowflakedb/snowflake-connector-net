@@ -257,9 +257,18 @@ namespace Snowflake.Data.Client
             }
             catch (Exception e)
             {
+                // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
-                logger.Error(e.Message);
-                throw;
+                logger.Error("Unable to connect: ", e);
+                if (e is SnowflakeDbException)
+                {
+                    throw;
+                }
+                throw new SnowflakeDbException(
+                        e,
+                        SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                        SFError.INTERNAL_ERROR,
+                        "Unable to connect. " + e.Message);
             }
         }
 
