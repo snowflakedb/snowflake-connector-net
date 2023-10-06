@@ -1755,6 +1755,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestAsyncDefaultLoginTimeout()
         {
+            SnowflakeDbConnectionPool.SetPooling(false);
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // unlimited retry count to trigger the timeout
@@ -1891,9 +1892,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
         {
+            SnowflakeDbConnectionPool.SetPooling(false);
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
-                // SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
