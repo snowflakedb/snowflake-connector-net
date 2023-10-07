@@ -44,8 +44,14 @@ namespace Snowflake.Data.Core
             statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
 
-            dateOutputFormat = session.ParameterMap[SFSessionParameter.DATE_OUTPUT_FORMAT].ToString();
-            timeOutputFormat = session.ParameterMap[SFSessionParameter.TIME_OUTPUT_FORMAT].ToString();
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.DATE_OUTPUT_FORMAT))
+            {
+                dateOutputFormat = session.ParameterMap[SFSessionParameter.DATE_OUTPUT_FORMAT].ToString();
+            }
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.TIME_OUTPUT_FORMAT))
+            {
+                timeOutputFormat = session.ParameterMap[SFSessionParameter.TIME_OUTPUT_FORMAT].ToString();
+            }
         }
 
         internal SFResultSetMetaData(PutGetResponseData putGetResponseData)
