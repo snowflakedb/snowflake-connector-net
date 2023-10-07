@@ -174,6 +174,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
             testGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
+        [Test]
+        public void TestDateOutputFormat()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='MM/DD/YYYY'";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = $"select TO_DATE('2013-05-17')";
+                IDataReader reader = cmd.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("05/17/2013", reader.GetString(0));
+
+                reader.Close();
+                conn.Close();
+            }
+        }
 
         [Test]
         [TestCase(null, null)]

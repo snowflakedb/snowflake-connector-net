@@ -380,6 +380,13 @@ namespace Snowflake.Data.Core
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
+            // with HTAP parameter removal parameters might not returned
+            // query response
+            if (parameterList is null)
+            {
+                return;
+            }
+
             foreach (NameValueParameter parameter in parameterList)
             {
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
@@ -432,8 +439,16 @@ namespace Snowflake.Data.Core
 
         internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
         {
-            this.database = databaseName;
-            this.schema = schemaName;
+            // with HTAP session metadata removal database/schema
+            // might be not returened in query result
+            if (databaseName != null)
+            {
+                this.database = databaseName;
+            }
+            if (schemaName != null)
+            {
+                this.schema = schemaName;
+            }
         }
         
         internal void startHeartBeatForThisSession()

@@ -34,6 +34,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.AreEqual(databaseName, sfSession.database);
             Assert.AreEqual(schemaName, sfSession.schema);
+
+            // when database or schema name is missing in the response,
+            // the cached value should keep unchanged
+            sfSession.UpdateDatabaseAndSchema(null, null);
+            Assert.AreEqual(databaseName, sfSession.database);
+            Assert.AreEqual(schemaName, sfSession.schema);
         }
 
         [Test]
