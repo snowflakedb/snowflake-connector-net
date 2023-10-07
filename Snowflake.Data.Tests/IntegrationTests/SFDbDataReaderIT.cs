@@ -193,6 +193,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual("05/17/2013", reader.GetString(0));
 
                 reader.Close();
+
+                // set format back to default to avoid impact other test cases
+                cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='YYYY-MM-DD'";
+                cmd.ExecuteNonQuery();
+
                 conn.Close();
             }
         }
