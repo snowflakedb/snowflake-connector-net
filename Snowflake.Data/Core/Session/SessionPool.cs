@@ -145,35 +145,22 @@ namespace Snowflake.Data.Core.Session
         private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
-            try
-            {
-                var session = new SFSession(connectionString, password);
-                return session
-                    .OpenAsync(cancellationToken)
-                    .ContinueWith(previousTask =>
-                    {
-                        if (previousTask.IsFaulted && previousTask.Exception != null)
-                            throw previousTask.Exception;
+            var session = new SFSession(connectionString, password);
+            return session
+                .OpenAsync(cancellationToken)
+                .ContinueWith(previousTask =>
+                {
+                    if (previousTask.IsFaulted && previousTask.Exception != null)
+                        throw previousTask.Exception;
 
-                        if (previousTask.IsFaulted)
-                            throw new SnowflakeDbException(
-                                SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                                SFError.INTERNAL_ERROR,
-                                "Failure while opening session async");
+                    if (previousTask.IsFaulted)
+                        throw new SnowflakeDbException(
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                            SFError.INTERNAL_ERROR,
+                            "Failure while opening session async");
 
-                        return session;
-                    }, TaskContinuationOptions.NotOnCanceled);
-            }
-            catch (Exception e)
-            {
-                if (e is SnowflakeDbException)
-                    throw;
-                throw new SnowflakeDbException(
-                    e,
-                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    SFError.INTERNAL_ERROR,
-                    "Unable to connect. " + e.Message);
-            }
+                    return session;
+                }, TaskContinuationOptions.NotOnCanceled);
         }
 
         internal bool AddSession(SFSession session)

@@ -21,6 +21,4 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetPooling(_pooling);
         }
     }
-
-
 }
