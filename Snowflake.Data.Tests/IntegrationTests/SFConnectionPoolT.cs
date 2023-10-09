@@ -16,26 +16,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data.Common;
     using Moq;
 
-        public PoolConfig()
-        {
-            _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
-            _timeout = SnowflakeDbConnectionPool.GetTimeout();
-            _pooling = SnowflakeDbConnectionPool.GetPooling();
-        }
-
-        public void Reset()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
-            SnowflakeDbConnectionPool.SetTimeout(_timeout);
-            SnowflakeDbConnectionPool.SetPooling(_pooling);
-        }
-    }
-
     [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
         private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
-        
+
         [SetUp]
         public void BeforeTest()
         {
