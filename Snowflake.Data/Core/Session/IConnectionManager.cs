@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Session
 {
-    public interface IConnectionManager
+    internal interface IConnectionManager
     {
         SFSession GetSession(string connectionString, SecureString password);
         Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken);
