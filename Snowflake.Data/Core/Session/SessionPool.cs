@@ -135,7 +135,7 @@ namespace Snowflake.Data.Core.Session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
                 {
-                        if (previousTask.IsFaulted && previousTask.Exception != null)
+                    if (previousTask.IsFaulted && previousTask.Exception != null)
                         throw previousTask.Exception;
 
                     if (previousTask.IsFaulted)
