@@ -22,13 +22,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionIT : SFBaseTest
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static readonly PoolConfigRestorer s_previousPoolConfig = new PoolConfigRestorer();
 
+        [SetUp]
+        public void BeforeTest()
+        {
+            s_previousPoolConfig.Reset();
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            s_previousPoolConfig.Reset();
+        }
         [Test]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                bool pooling = SnowflakeDbConnectionPool.GetPooling();
                 SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
@@ -47,7 +59,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Close();
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                SnowflakeDbConnectionPool.SetPooling(pooling);
             }
         }
 
@@ -1755,7 +1766,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestAsyncDefaultLoginTimeout()
         {
-            SnowflakeDbConnectionPool.SetPooling(false);
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // unlimited retry count to trigger the timeout

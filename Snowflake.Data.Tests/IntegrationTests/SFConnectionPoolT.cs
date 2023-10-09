@@ -15,37 +15,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Data.Common;
     using Moq;
-    
-    class PoolConfig {
-        private readonly bool _pooling;
-        private readonly long _timeout;
-        private readonly int _maxPoolSize;
 
-        public PoolConfig()
-        {
-            _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
-            _timeout = SnowflakeDbConnectionPool.GetTimeout();
-            _pooling = SnowflakeDbConnectionPool.GetPooling();
-        }
-
-        public void Reset()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
-            SnowflakeDbConnectionPool.SetTimeout(_timeout);
-            SnowflakeDbConnectionPool.SetPooling(_pooling);
-        }
-    }
-    
     [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
-        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
+        private static readonly PoolConfigRestorer s_previousPoolConfig = new PoolConfigRestorer();
 
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -53,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public void AfterTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfig.Reset();
         }
 
         [OneTimeTearDown]
@@ -435,12 +414,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
+        private static readonly PoolConfigRestorer s_previousPoolConfigRestorer = new PoolConfigRestorer();
 
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfigRestorer.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -448,7 +427,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public void AfterTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfigRestorer.Reset();
         }
         
         [OneTimeTearDown]
