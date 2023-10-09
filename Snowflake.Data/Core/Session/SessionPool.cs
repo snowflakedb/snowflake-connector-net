@@ -9,10 +9,9 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
-    sealed class SessionPoolSingleton : IDisposable
+    sealed class SessionPool : IDisposable
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPoolSingleton>();
-        private static SessionPoolSingleton s_instance = null;
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private static readonly object s_sessionPoolLock = new object();
 
         private readonly List<SFSession> _sessionPool;
@@ -22,7 +21,7 @@ namespace Snowflake.Data.Core.Session
         private const long Timeout = 3600;
         private bool _pooling = true;
 
-        SessionPoolSingleton()
+        internal SessionPool()
         {
             lock (s_sessionPoolLock)
             {
@@ -31,7 +30,8 @@ namespace Snowflake.Data.Core.Session
                 _timeout = Timeout;
             }
         }
-        ~SessionPoolSingleton()
+        
+        ~SessionPool()
         {
             ClearAllPools();
         }
@@ -39,21 +39,6 @@ namespace Snowflake.Data.Core.Session
         public void Dispose()
         {
             ClearAllPools();
-        }
-
-        public static SessionPoolSingleton Instance
-        {
-            get
-            {
-                lock (s_sessionPoolLock)
-                {
-                    if(s_instance == null)
-                    {
-                        s_instance = new SessionPoolSingleton();
-                    }
-                    return s_instance;
-                }
-            }
         }
 
         private void CleanExpiredSessions()

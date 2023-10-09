@@ -10,63 +10,72 @@ namespace Snowflake.Data.Client
     public class SnowflakeDbConnectionPool
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
-
-        internal static SFSession GetSession(string connStr, SecureString password)
+        private static readonly IConnectionManager s_connectionManager = new ConnectionManagerV1();
+        
+        internal static SFSession GetSession(string connectionString, SecureString password)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::GetSession");
-            return SessionPoolSingleton.Instance.GetSession(connStr, password);
+            return s_connectionManager.GetSession(connectionString, password);
         }
         
-        internal static Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
+        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
-            return SessionPoolSingleton.Instance.GetSessionAsync(connStr, password, cancellationToken);
+            s_logger.Debug("SnowflakeDbConnectionPool::GetSessionAsync");
+            return s_connectionManager.GetSessionAsync(connectionString, password, cancellationToken);
         }
         
         internal static bool AddSession(SFSession session)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::AddSession");
-            return SessionPoolSingleton.Instance.AddSession(session);
+            return s_connectionManager.AddSession(session);
         }
 
         public static void ClearAllPools()
         {
             s_logger.Debug("SnowflakeDbConnectionPool::ClearAllPools");
-            SessionPoolSingleton.Instance.ClearAllPools();
+            s_connectionManager.ClearAllPools();
         }
 
         public static void SetMaxPoolSize(int size)
         {
-            SessionPoolSingleton.Instance.SetMaxPoolSize(size);
+            s_logger.Debug("SnowflakeDbConnectionPool::SetMaxPoolSize");
+            s_connectionManager.SetMaxPoolSize(size);
         }
 
         public static int GetMaxPoolSize()
         {
-            return SessionPoolSingleton.Instance.GetMaxPoolSize();
+            s_logger.Debug("SnowflakeDbConnectionPool::GetMaxPoolSize");
+            return s_connectionManager.GetMaxPoolSize();
         }
 
         public static void SetTimeout(long time)
         {
-            SessionPoolSingleton.Instance.SetTimeout(time);
+            s_logger.Debug("SnowflakeDbConnectionPool::SetTimeout");
+            s_connectionManager.SetTimeout(time);
         }
         
         public static long GetTimeout()
         {
-            return SessionPoolSingleton.Instance.GetTimeout();
+            s_logger.Debug("SnowflakeDbConnectionPool::GetTimeout");
+            return s_connectionManager.GetTimeout();
         }
 
         public static int GetCurrentPoolSize()
         {
-            return SessionPoolSingleton.Instance.GetCurrentPoolSize();
+            s_logger.Debug("SnowflakeDbConnectionPool::GetCurrentPoolSize");
+            return s_connectionManager.GetCurrentPoolSize();
         }
 
         public static bool SetPooling(bool isEnable)
         {
-            return SessionPoolSingleton.Instance.SetPooling(isEnable);
+            s_logger.Debug("SnowflakeDbConnectionPool::SetPooling");
+            return s_connectionManager.SetPooling(isEnable);
         }
 
         public static bool GetPooling()
         {
-            return SessionPoolSingleton.Instance.GetPooling();
+            s_logger.Debug("SnowflakeDbConnectionPool::GetPooling");
+            return s_connectionManager.GetPooling();
         }
     }
 }
