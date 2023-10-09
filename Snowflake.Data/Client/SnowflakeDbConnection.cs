@@ -329,13 +329,8 @@ namespace Snowflake.Data.Client
             _isArrayBindStageCreated = true;
         }
 
-        /// <summary>
-        /// Create a new SFsession with the connection string settings.
-        /// </summary>
-        /// <exception cref="SnowflakeDbException">If the connection string can't be processed</exception>
         private void OnSessionConnecting()
         {
-            // SfSession = new SFSession(ConnectionString, Password);
             _connectionState = ConnectionState.Connecting;
         }
 
