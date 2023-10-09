@@ -18,30 +18,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
 
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-        private static readonly PoolConfigRestorer s_previousPoolConfig = new PoolConfigRestorer();
 
-        [SetUp]
-        public void BeforeTest()
-        {
-            s_previousPoolConfig.Reset();
-            SnowflakeDbConnectionPool.ClearAllPools();
-        }
-
-        [TearDown]
-        public void AfterTest()
-        {
-            s_previousPoolConfig.Reset();
-        }
         [Test]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -150,7 +136,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(false)]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");
@@ -1902,7 +1887,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestCloseAsyncFailure()
         {
-            SnowflakeDbConnectionPool.SetPooling(false);
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
                 conn.ConnectionString = ConnectionString;
