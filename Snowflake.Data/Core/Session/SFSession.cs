@@ -229,7 +229,7 @@ namespace Snowflake.Data.Core
 
         internal async Task OpenAsync(CancellationToken cancellationToken)
         {
-            logger.Debug("Open Session");
+            logger.Debug("Open Session Async");
 
             if (authenticator == null)
             {

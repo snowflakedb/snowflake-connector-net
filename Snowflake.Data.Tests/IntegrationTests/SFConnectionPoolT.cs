@@ -35,17 +35,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetPooling(_pooling);
         }
     }
-    
+
     [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolT>();
-        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
-
+        private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
+        
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -53,7 +52,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public void AfterTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfig.Reset();
         }
 
         [OneTimeTearDown]
@@ -435,12 +434,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private static readonly PoolConfig previousPoolConfig = new PoolConfig();
+        private static readonly PoolConfig s_previousPoolConfigRestorer = new PoolConfig();
 
         [SetUp]
         public void BeforeTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfigRestorer.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -448,7 +447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public void AfterTest()
         {
-            previousPoolConfig.Reset();
+            s_previousPoolConfigRestorer.Reset();
         }
         
         [OneTimeTearDown]

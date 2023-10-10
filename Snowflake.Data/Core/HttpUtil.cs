@@ -364,7 +364,10 @@ namespace Snowflake.Data.Core
                         if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan))
                         {
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                            childCts.CancelAfter(httpTimeout);
+                            if (httpTimeout.Ticks == 0)
+                                childCts.Cancel();
+                            else
+                                childCts.CancelAfter(httpTimeout);                        
                         }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
