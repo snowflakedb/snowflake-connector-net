@@ -1,4 +1,7 @@
-﻿using Snowflake.Data.Core;
+﻿using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
@@ -8,12 +11,17 @@ namespace Snowflake.Data.Client
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
 
-        internal static SFSession GetSession(string connStr)
+        internal static SFSession GetSession(string connStr, SecureString password)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::GetSession");
-            return SessionPoolSingleton.Instance.GetSession(connStr);
+            return SessionPoolSingleton.Instance.GetSession(connStr, password);
         }
-
+        
+        internal static Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
+        {
+            return SessionPoolSingleton.Instance.GetSessionAsync(connStr, password, cancellationToken);
+        }
+        
         internal static bool AddSession(SFSession session)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::AddSession");
