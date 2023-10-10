@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
-        private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
+        private static readonly PoolConfigRestorer s_previousPoolConfig = new PoolConfigRestorer();
 
         [SetUp]
         public void BeforeTest()
@@ -414,7 +414,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private static readonly PoolConfig s_previousPoolConfigRestorer = new PoolConfig();
+        private static readonly PoolConfigRestorer s_previousPoolConfigRestorer = new PoolConfigRestorer();
 
         [SetUp]
         public void BeforeTest()
