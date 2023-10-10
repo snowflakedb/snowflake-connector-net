@@ -41,7 +41,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -150,7 +149,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(false)]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");

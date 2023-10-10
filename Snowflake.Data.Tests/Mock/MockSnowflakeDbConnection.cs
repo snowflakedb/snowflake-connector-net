@@ -92,5 +92,10 @@ namespace Snowflake.Data.Tests.Mock
         {
             _connectionState = ConnectionState.Open;
         }
+        
+        protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+        {
+            return false;
+        }
     }
 }

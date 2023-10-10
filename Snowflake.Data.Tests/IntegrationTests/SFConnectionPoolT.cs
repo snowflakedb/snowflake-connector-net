@@ -16,11 +16,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data.Common;
     using Moq;
 
+        public PoolConfig()
+        {
+            _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
+            _timeout = SnowflakeDbConnectionPool.GetTimeout();
+            _pooling = SnowflakeDbConnectionPool.GetPooling();
+        }
+
+        public void Reset()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
+            SnowflakeDbConnectionPool.SetTimeout(_timeout);
+            SnowflakeDbConnectionPool.SetPooling(_pooling);
+        }
+    }
+
     [TestFixture, NonParallelizable]
     class SFConnectionPoolT : SFBaseTest
     {
-        private static readonly PoolConfigRestorer s_previousPoolConfig = new PoolConfigRestorer();
-
+        private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
+        
         [SetUp]
         public void BeforeTest()
         {
@@ -414,7 +429,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
-        private static readonly PoolConfigRestorer s_previousPoolConfigRestorer = new PoolConfigRestorer();
+        private static readonly PoolConfig s_previousPoolConfigRestorer = new PoolConfig();
 
         [SetUp]
         public void BeforeTest()

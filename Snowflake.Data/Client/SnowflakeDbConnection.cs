@@ -37,7 +37,7 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
-        private enum TransactionRollbackStatus
+        protected enum TransactionRollbackStatus
         {
             Undefined, // used to indicate ignored transaction status when pool disabled
             Success,
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Client
             return taskCompletionSource.Task;
         }
 
-        private bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+        protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
             return SnowflakeDbConnectionPool.GetPooling() && 
                    transactionRollbackStatus == TransactionRollbackStatus.Success;
