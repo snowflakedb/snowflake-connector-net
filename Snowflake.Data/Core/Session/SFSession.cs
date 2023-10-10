@@ -441,11 +441,11 @@ namespace Snowflake.Data.Core
         {
             // with HTAP session metadata removal database/schema
             // might be not returened in query result
-            if (databaseName != null)
+            if (!String.IsNullOrEmpty(databaseName))
             {
                 this.database = databaseName;
             }
-            if (schemaName != null)
+            if (!String.IsNullOrEmpty(schemaName))
             {
                 this.schema = schemaName;
             }

@@ -182,21 +182,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='MM/DD/YYYY'";
-                cmd.ExecuteNonQuery();
+                try
+                {
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='MM/DD/YYYY'";
+                    cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"select TO_DATE('2013-05-17')";
-                IDataReader reader = cmd.ExecuteReader();
+                    cmd.CommandText = $"select TO_DATE('2013-05-17')";
+                    IDataReader reader = cmd.ExecuteReader();
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual("05/17/2013", reader.GetString(0));
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual("05/17/2013", reader.GetString(0));
 
-                reader.Close();
-
-                // set format back to default to avoid impact other test cases
-                cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='YYYY-MM-DD'";
-                cmd.ExecuteNonQuery();
+                    reader.Close();
+                }
+                finally
+                {
+                    // set format back to default to avoid impact other test cases
+                    cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='YYYY-MM-DD'";
+                    cmd.ExecuteNonQuery();
+                }
 
                 conn.Close();
             }
