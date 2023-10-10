@@ -261,9 +261,7 @@ namespace Snowflake.Data.Client
                 _connectionState = ConnectionState.Closed;
                 logger.Error("Unable to connect: ", e);
                 if (e is SnowflakeDbException)
-                {
                     throw;
-                }
                 throw new SnowflakeDbException(
                         e,
                         SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
