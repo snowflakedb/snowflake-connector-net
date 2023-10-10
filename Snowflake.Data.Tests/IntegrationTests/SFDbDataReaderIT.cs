@@ -181,10 +181,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                IDbCommand cmd = conn.CreateCommand();
 
                 try
                 {
-                    IDbCommand cmd = conn.CreateCommand();
                     cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='MM/DD/YYYY'";
                     cmd.ExecuteNonQuery();
 
