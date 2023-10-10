@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
@@ -29,7 +30,9 @@ namespace Snowflake.Data.Core.Session
         }
         ~SessionPoolSingleton()
         {
-            ClearAllPools();
+            // Use async for the finalizer due to possible deadlock
+            // when waiting for the CloseResponse task while closing the session
+            ClearAllPoolsAsync();
         }
 
         public void Dispose()
@@ -137,6 +140,16 @@ namespace Snowflake.Data.Core.Session
                 }
                 _sessionPool.Clear();
             }
+        }
+
+        internal async void ClearAllPoolsAsync()
+        {
+            s_logger.Debug("SessionPool::ClearAllPoolsAsync");
+            foreach (SFSession session in _sessionPool)
+            {
+                await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            _sessionPool.Clear();
         }
 
         public void SetMaxPoolSize(int size)
