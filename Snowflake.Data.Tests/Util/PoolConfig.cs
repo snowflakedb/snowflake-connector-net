@@ -3,6 +3,7 @@
  */
 
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -11,16 +12,19 @@ namespace Snowflake.Data.Tests.Util
         private readonly bool _pooling;
         private readonly long _timeout;
         private readonly int _maxPoolSize;
+        private readonly ConnectionPoolType _connectionPoolType;
 
         public PoolConfig()
         {
             _maxPoolSize = SnowflakeDbConnectionPool.GetMaxPoolSize();
             _timeout = SnowflakeDbConnectionPool.GetTimeout();
             _pooling = SnowflakeDbConnectionPool.GetPooling();
+            _connectionPoolType = SnowflakeDbConnectionPool.GetConnectionPoolVersion();
         }
 
         public void Reset()
         {
+            SnowflakeDbConnectionPool.SetConnectionPoolVersion(_connectionPoolType);
             SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);
             SnowflakeDbConnectionPool.SetTimeout(_timeout);
             SnowflakeDbConnectionPool.SetPooling(_pooling);

@@ -183,4 +183,7 @@
   <data name="BROWSER_RESPONSE_TIMEOUT" xml:space="preserve">
     <value>Browser response timed out after {0} seconds.</value>
   </data>
+  <data name="INCONSISTENT_RESULT_ERROR" xml:space="preserve">
+    <value>Cannot return result set as a scalar value: {0}</value>
+  </data>
 </root>

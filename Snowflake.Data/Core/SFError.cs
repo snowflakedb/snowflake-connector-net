@@ -78,6 +78,9 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270057)]
         BROWSER_RESPONSE_TIMEOUT,
+        
+        [SFErrorAttr(errorCode = 270058)]
+        INCONSISTENT_RESULT_ERROR,
     }
 
     class SFErrorAttr : Attribute
