@@ -27,6 +27,7 @@ namespace Snowflake.Data.Core.Session
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
         private bool _pooling = true;
+        private int _busySessions;
         private bool _allowExceedMaxPoolSize = true;
 
         private SessionPool()
@@ -36,6 +37,7 @@ namespace Snowflake.Data.Core.Session
                 _idleSessions = new List<SFSession>();
                 _maxPoolSize = MaxPoolSize;
                 _timeout = Timeout;
+                _busySessions = 0;
             }
         }
 
@@ -143,6 +145,7 @@ namespace Snowflake.Data.Core.Session
             try
             {
                 var session = s_sessionFactory.NewSession(connectionString, password);
+                _busySessions++;
                 session.Open();
                 return session;
             }
@@ -163,6 +166,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
             var session = s_sessionFactory.NewSession(connectionString, password);
+            _busySessions++;
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
@@ -187,15 +191,19 @@ namespace Snowflake.Data.Core.Session
                 return false;
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (session.IsNotOpen() || session.IsExpired(_timeout, timeNow))
+            {
+                lock (s_sessionPoolLock)
+                {
+                    _busySessions = Math.Max(_busySessions - 1, 0);
+                }
                 return false;
+            }
 
             lock (s_sessionPoolLock)
             {
-                if (_idleSessions.Count >= _maxPoolSize)
-                {
-                    CleanExpiredSessions();
-                }
-                if (_idleSessions.Count >= _maxPoolSize)
+                _busySessions = Math.Max(_busySessions - 1, 0);
+                CleanExpiredSessions();
+                if (GetCurrentPoolSize() >= _maxPoolSize)
                 {
                     s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId}");
                     return false;
@@ -252,6 +260,8 @@ namespace Snowflake.Data.Core.Session
 
         public int GetCurrentPoolSize()
         {
+            if (!_allowExceedMaxPoolSize)
+                return _idleSessions.Count + _busySessions;
             return _idleSessions.Count;
         }
 
