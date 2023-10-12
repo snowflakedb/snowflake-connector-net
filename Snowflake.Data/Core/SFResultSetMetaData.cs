@@ -37,24 +37,20 @@ namespace Snowflake.Data.Core
         /// </summary>
         private Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
 
-        internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
+        internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData, SFSession session)
         {
             rowTypes = queryExecResponseData.rowType;
             columnCount = rowTypes.Count;
             statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
-            
-            foreach (NameValueParameter parameter in queryExecResponseData.parameters)
+
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.DATE_OUTPUT_FORMAT))
             {
-                switch(parameter.name)
-                {
-                    case "DATE_OUTPUT_FORMAT":
-                        dateOutputFormat = parameter.value;
-                        break;
-                    case "TIME_OUTPUT_FORMAT":
-                        timeOutputFormat = parameter.value;
-                        break;
-                }
+                dateOutputFormat = session.ParameterMap[SFSessionParameter.DATE_OUTPUT_FORMAT].ToString();
+            }
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.TIME_OUTPUT_FORMAT))
+            {
+                timeOutputFormat = session.ParameterMap[SFSessionParameter.TIME_OUTPUT_FORMAT].ToString();
             }
         }
 

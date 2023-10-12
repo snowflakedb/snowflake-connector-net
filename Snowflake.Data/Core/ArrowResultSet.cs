@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core
 
                 responseData.rowSet = null;
 
-                sfResultSetMetaData = new SFResultSetMetaData(responseData);
+                sfResultSetMetaData = new SFResultSetMetaData(responseData, this.sfStatement.SfSession);
 
                 isClosed = false;
 

@@ -12,5 +12,7 @@ namespace Snowflake.Data.Core
         CLIENT_STAGE_ARRAY_BINDING_THRESHOLD,
         CLIENT_SESSION_KEEP_ALIVE,
         QUERY_CONTEXT_CACHE_SIZE,
+        DATE_OUTPUT_FORMAT,
+        TIME_OUTPUT_FORMAT,
     }
 }
