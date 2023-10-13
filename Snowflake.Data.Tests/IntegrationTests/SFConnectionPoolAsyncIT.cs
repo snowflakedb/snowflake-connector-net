@@ -3,29 +3,35 @@
  */
 
 using Snowflake.Data.Tests.Util;
+using System;
+using System.Data;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Mock;
+using Moq;
+using NUnit.Framework;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using System;
-    using System.Data;
-    using System.Data.Common;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using NUnit.Framework;
-    using Moq;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Tests.Mock;
-
     [TestFixture, NonParallelizable]
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
-        private static readonly PoolConfig s_previousPoolConfigRestorer = new PoolConfig();
+        private static PoolConfig s_previousPoolConfigRestorer;
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
+
+        [OneTimeSetUp]
+        public void BeforeAllTests()
+        {
+            s_previousPoolConfigRestorer = new PoolConfig();
+        }
 
         [SetUp]
         public new void BeforeTest()
         {
-            s_previousPoolConfigRestorer.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -48,11 +54,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new MockSnowflakeDbConnection())
             {
                 SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-                SnowflakeDbConnectionPool.ClearAllPools();
 
                 int timeoutSec = 0;
-                string infiniteLoginTimeOut = String.Format("" + ";connection_timeout={0}",
-                    timeoutSec);
+                string infiniteLoginTimeOut = $";connection_timeout={timeoutSec}";
 
                 conn.ConnectionString = infiniteLoginTimeOut;
 
@@ -65,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException ex)
                 {
-                    Console.WriteLine("connection failed:" + ex);
+                    s_logger.Error("connection failed:" + ex);
                     conn.CloseAsync(connectionCancelToken.Token);
                 }
 
@@ -231,7 +235,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestFailureOfTransactionRollbackOnConnectionClosePreventsAddingToPool()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>();
             commandThrowingExceptionOnlyForRollback.CallBase = true;
@@ -273,9 +276,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const int PoolTimeout = 3;
 
             // reset to default settings in case it changed by other test cases
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 
             var tasks = new Task[TaskNum + 1];
@@ -338,7 +339,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection(connectionString))
                 {
-                    // intentially not using await so the connection
+                    // intentionally not using await so the connection
                     // will be disposed with invalid underlying session
                     conn.OpenAsync();
                 };

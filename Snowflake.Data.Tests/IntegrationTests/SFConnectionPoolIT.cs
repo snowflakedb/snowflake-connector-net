@@ -3,27 +3,33 @@
  */
 
 using Snowflake.Data.Tests.Util;
+using System;
+using System.Data;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Core;
+using Snowflake.Data.Client;
+using Snowflake.Data.Log;
+using NUnit.Framework;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using System;
-    using System.Data;
-    using System.Data.Common;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Client;
-
     [TestFixture, NonParallelizable]
     class SFConnectionPoolIT : SFBaseTest
     {
-        private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
+        private static PoolConfig s_previousPoolConfig;
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
+
+        [OneTimeSetUp]
+        public void BeforeAllTests()
+        {
+            s_previousPoolConfig = new PoolConfig();
+        }
         
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
-            s_previousPoolConfig.Reset();
             SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
@@ -69,9 +75,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const int PoolTimeout = 3;
 
             // reset to default settings in case it changed by other test cases
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 
             var threads = new Task[ThreadNum];
@@ -129,9 +133,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestBasicConnectionPool()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-            SnowflakeDbConnectionPool.ClearAllPools();
 
             var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
@@ -145,7 +147,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPool()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
@@ -168,8 +169,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolIsFull()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
@@ -203,11 +202,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
-            Thread.Sleep(10000); // wait for 10 seconds, in case other test still running.
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(10);
-            SnowflakeDbConnectionPool.SetPooling(true);
 
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
@@ -235,7 +231,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolClean()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
@@ -269,9 +264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolFull()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
-            SnowflakeDbConnectionPool.SetPooling(true);
 
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
@@ -351,7 +344,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolDisable()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(false);
 
             var conn1 = new SnowflakeDbConnection();
@@ -367,9 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolWithDispose()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-            SnowflakeDbConnectionPool.ClearAllPools();
 
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = "";
@@ -379,7 +369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             catch (SnowflakeDbException ex)
             {
-                Console.WriteLine("connection failed:" + ex);
+                s_logger.Error("connection failed:" + ex);
                 conn1.Close();
             }
 
