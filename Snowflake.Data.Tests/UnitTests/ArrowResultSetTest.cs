@@ -34,6 +34,25 @@ namespace Snowflake.Data.Tests.UnitTests
         }
         
         [Test]
+        public void TestResultFormatIsArrow()
+        {
+            Assert.AreEqual(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
+        }
+
+        [Test]
+        public void TestNextReturnsFalseIfNoData()
+        {
+            var responseData = PrepareResponseData(_recordBatch, SFDataType.FIXED, 0);
+            var sfStatement = PrepareStatement();
+
+            // if there are no results int the response, rowserBaset64 is empty
+            responseData.rowsetBase64 = "";
+            var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+
+            Assert.IsFalse(arrowResultSet.Next());
+        }
+
+        [Test]
         public void TestNextReturnsTrueUntilRowsExist()
         {
             for (var i = 0; i < RowCount; ++i)
@@ -110,6 +129,19 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsTrue(_arrowResultSet.Rewind());
             Assert.IsFalse(_arrowResultSet.Rewind());
+        }
+
+        [Test]
+        public void TestGetValueReturnsNull()
+        {
+            var responseData = PrepareResponseData(ArrowResultChunkTest.RecordBatchWithNullValue, SFDataType.FIXED, 0);
+            var sfStatement = PrepareStatement();
+            var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+
+            arrowResultSet.Next();
+            
+            Assert.AreEqual(true, arrowResultSet.IsDBNull(0));
+            Assert.AreEqual(DBNull.Value, arrowResultSet.GetValue(0));
         }
 
         [Test]
@@ -449,6 +481,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private string ConvertToBase64String(RecordBatch recordBatch)
         {
+            if (recordBatch == null)
+                return "";
+            
             using (var stream = new MemoryStream())
             {
                 using (var writer = new ArrowStreamWriter(stream, recordBatch.Schema))

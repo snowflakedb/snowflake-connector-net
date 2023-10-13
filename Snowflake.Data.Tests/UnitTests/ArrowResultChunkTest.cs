@@ -26,7 +26,18 @@ namespace Snowflake.Data.Tests.UnitTests
             .Append("Col_Int32", false, col => col.Int32(
                 array => array.AppendRange(Enumerable.Range(1, RowCountBatchTwo))))
             .Build();
+        internal static readonly RecordBatch RecordBatchWithNullValue = new RecordBatch.Builder()
+            .Append("Col_Int32", false, col => col.Int32(array => array.AppendNull()))
+            .Build();
         
+        [Test]
+        public void TestResultFormatIsArrow()
+        {
+            var chunk = new ArrowResultChunk(_recordBatchOne);
+
+            Assert.AreEqual(ResultFormat.ARROW, chunk.ResultFormat);
+        }
+
         [Test]
         public void TestAddRecordBatchAddsBatchTwo()
         {
@@ -34,6 +45,13 @@ namespace Snowflake.Data.Tests.UnitTests
             chunk.AddRecordBatch(_recordBatchTwo);
 
             Assert.AreEqual(2, chunk.RecordBatch.Count);
+        }
+
+        [Test]
+        public void TestNextReturnsFalseIfNoData()
+        {
+            var chunk = new ArrowResultChunk(0);
+            Assert.IsFalse(chunk.Next());
         }
 
         [Test]
@@ -135,6 +153,24 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, 0));
         }
         
+        [Test]
+        public void TestExtractCellReturnsNull()
+        {
+            var chunk = new ArrowResultChunk(RecordBatchWithNullValue);
+            chunk.Next();
+            
+            Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, SFDataType.FIXED, 0));
+        }
+
+        [Test]
+        public void TestExtractCellThrowsExceptionForNoneType()
+        {
+            var chunk = new ArrowResultChunk(_recordBatchOne);
+            chunk.Next();
+            
+            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0));
+        }
+
         [Test]
         public void TestExtractCellReturnsDecimal()
         {
@@ -283,7 +319,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
             var sfType = SFDataType.TIME;
             
-            for (var scale = 0; scale <= 7; ++scale)
+            for (var scale = 0; scale <= 8; ++scale)
             {
                 var values = TruncateValues(testValues, scale);
                 TestExtractCell(values, sfType, scale);

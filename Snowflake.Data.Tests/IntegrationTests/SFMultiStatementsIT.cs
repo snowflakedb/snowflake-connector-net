@@ -3,11 +3,9 @@
  */
 
 using System;
-using System.Linq;
-using System.Data.Common;
 using System.Data;
-using System.Globalization;
-using System.Text;
+using System.Data.Common;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -19,8 +17,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFMultiStatementsIT : SFBaseTest
     {
         [Test]
-        public void testSelectWithoutBinding()
+        public void TestSelectWithoutBinding()
         {
+            var testDate = "2020-03-11 12:34:56 +0000";
+            var testTime = "12:34:56";
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
@@ -30,13 +30,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var param = cmd.CreateParameter();
                 param.ParameterName = "MULTI_STATEMENT_COUNT";
                 param.DbType = DbType.Int16;
-                param.Value = 3;
+                param.Value = 5;
                 cmd.Parameters.Add(param);
-                cmd.CommandText = "select 1; select 2, 3; select 4, 5, 6";
+                cmd.CommandText = "select 1; select 2, 3; select 4, 5, 6;select true, false, null;" +
+                                  $"select '{testDate}'::DATETIME, '{testDate}'::TIMESTAMP_TZ, '{testTime}'::TIME";
                 IDataReader reader = cmd.ExecuteReader();
 
                 Assert.IsTrue(reader.Read());
+                Assert.AreEqual(1, reader.GetDouble(0));
+                Assert.AreEqual(1, reader.GetFloat(0));
+                Assert.AreEqual(1, reader.GetInt64(0));
                 Assert.AreEqual(1, reader.GetInt32(0));
+                Assert.AreEqual(1, reader.GetInt16(0));
+                Assert.AreEqual(1, reader.GetByte(0));
+                Assert.AreEqual(1, reader.GetValue(0));
                 Assert.IsFalse(reader.Read());
 
                 Assert.IsTrue(reader.NextResult());
@@ -52,15 +59,74 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(6, reader.GetInt32(2));
                 Assert.IsFalse(reader.Read());
 
+                Assert.IsTrue(reader.NextResult());
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(true, reader.GetBoolean(0));
+                Assert.AreEqual(false, reader.GetBoolean(1));
+                Assert.AreEqual(DBNull.Value, reader.GetValue(2));
+                Assert.IsFalse(reader.IsDBNull(0));
+                Assert.IsFalse(reader.IsDBNull(1));
+                Assert.IsTrue(reader.IsDBNull(2));
+                Assert.IsFalse(reader.Read());
+
+                Assert.IsTrue(reader.NextResult());
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(DateTime.Parse(testDate).ToUniversalTime(), reader.GetDateTime(0));
+                Assert.AreEqual(DateTimeOffset.Parse(testDate).ToUniversalTime(), ((SnowflakeDbDataReader)reader).GetValue(1));
+                Assert.AreEqual(TimeSpan.Parse(testTime), ((SnowflakeDbDataReader)reader).GetTimeSpan(2));
+                Assert.IsFalse(reader.Read());
+
                 Assert.IsFalse(reader.NextResult());
+                Assert.IsFalse(reader.Read());
 
                 reader.Close();
                 conn.Close();
             }
         }
-
+        
         [Test]
-        public void testSelectWithBinding()
+        public async Task TestSelectAsync()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                DbCommand cmd = conn.CreateCommand();
+                var param = cmd.CreateParameter();
+                param.ParameterName = "MULTI_STATEMENT_COUNT";
+                param.DbType = DbType.Int16;
+                param.Value = 2;
+                cmd.Parameters.Add(param);
+                cmd.CommandText = "select 1; select 2, 3";
+                DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.AreEqual(1, reader.GetDouble(0));
+                Assert.AreEqual(1, reader.GetFloat(0));
+                Assert.AreEqual(1, reader.GetInt64(0));
+                Assert.AreEqual(1, reader.GetInt32(0));
+                Assert.AreEqual(1, reader.GetInt16(0));
+                Assert.AreEqual(1, reader.GetByte(0));
+                Assert.AreEqual(1, reader.GetValue(0));
+                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+
+                Assert.IsTrue(await reader.NextResultAsync().ConfigureAwait(false));
+                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.AreEqual(2, reader.GetInt32(0));
+                Assert.AreEqual(3, reader.GetInt32(1));
+                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+
+                Assert.IsFalse(await reader.NextResultAsync().ConfigureAwait(false));
+                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+
+                reader.Close();
+                conn.Close();
+            }
+        }
+        
+        [Test]
+        public void TestSelectWithBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -112,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testMixedQueryTypeWithBinding()
+        public void TestMixedQueryTypeWithBinding()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -216,7 +282,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testWithExecuteNonQuery()
+        public void TestWithExecuteNonQuery()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -284,7 +350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testWithAllQueryTypes()
+        public void TestWithAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -384,7 +450,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testWithMultipleStatementSetting()
+        public void TestWithMultipleStatementSetting()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {

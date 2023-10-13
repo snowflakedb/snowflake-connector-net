@@ -170,8 +170,6 @@ namespace Snowflake.Data.Core
                     var value = column.Data.DataType.TypeId == ArrowTypeId.Int32
                         ? ((Int32Array)column).GetValue(_currentRecordIndex)
                         : ((Int64Array)column).GetValue(_currentRecordIndex);
-                    if (value == null)
-                        return null;
                     if (scale == 0)
                         return DateTimeOffset.FromUnixTimeSeconds(value.Value).DateTime;
                     if (scale <= 3)
@@ -186,8 +184,6 @@ namespace Snowflake.Data.Core
                     {
                         var value = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var timezone = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        if (value == null || timezone == null)
-                            return null;
                         var epoch = ExtractEpoch(value.Value, scale);
                         var fraction = ExtractFraction(value.Value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone.Value - 1440));
@@ -197,8 +193,6 @@ namespace Snowflake.Data.Core
                         var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
                         var timezone = ((Int32Array)((StructArray)column).Fields[2]).GetValue(_currentRecordIndex);
-                        if (epoch == null || fraction == null || timezone == null)
-                            return null;
                         return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).ToOffset(TimeSpan.FromMinutes(timezone.Value - 1440));
                     }
 
@@ -207,15 +201,11 @@ namespace Snowflake.Data.Core
                     {
                         var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        if (epoch == null || fraction == null)
-                            return null;
                         return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).ToLocalTime();
                     }
                     else
                     {
                         var value = ((Int64Array)column).GetValue(_currentRecordIndex);
-                        if (value == null)
-                            return null;
                         var epoch = ExtractEpoch(value.Value, scale);
                         var fraction = ExtractFraction(value.Value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
@@ -226,22 +216,17 @@ namespace Snowflake.Data.Core
                     {
                         var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        if (epoch == null || fraction == null)
-                            return null;
                         return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).DateTime;
                     }
                     else
                     {
                         var value = ((Int64Array)column).GetValue(_currentRecordIndex);
-                        if (value == null)
-                            return null;
                         var epoch = ExtractEpoch(value.Value, scale);
                         var fraction = ExtractFraction(value.Value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).DateTime;
                     }
             }
-
-            return null;
+            throw new NotSupportedException($"Type {srcType} is not supported.");
         }
         
         private long ExtractEpoch(long value, long scale)
