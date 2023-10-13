@@ -19,10 +19,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionPoolIT : SFBaseTest
     {
         private static PoolConfig s_previousPoolConfig;
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionPoolITAsync>();
 
         [OneTimeSetUp]
-        public void BeforeAllTests()
+        public static void BeforeAllTests()
         {
             s_previousPoolConfig = new PoolConfig();
         }
@@ -369,7 +368,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             catch (SnowflakeDbException ex)
             {
-                s_logger.Error("connection failed:" + ex);
                 conn1.Close();
             }
 

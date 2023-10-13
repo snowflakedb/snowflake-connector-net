@@ -14,7 +14,7 @@ namespace Snowflake.Data.Client
     public class SnowflakeDbConnectionPool
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
-        private static readonly IConnectionManager s_connectionManager = new ConnectionManagerV1();
+        private static readonly IConnectionManager s_connectionManager = new ConnectionCacheManager();
         
         internal static SFSession GetSession(string connectionString, SecureString password)
         {

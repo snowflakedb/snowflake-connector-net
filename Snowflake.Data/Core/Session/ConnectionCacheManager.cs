@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Session
 {
-    internal sealed class ConnectionManagerV1 : IConnectionManager
+    internal sealed class ConnectionCacheManager : IConnectionManager
     {
         private readonly SessionPool _sessionPool = new SessionPool();
         public SFSession GetSession(string connectionString, SecureString password) => _sessionPool.GetSession(connectionString, password);
