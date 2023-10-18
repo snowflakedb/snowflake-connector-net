@@ -772,7 +772,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Assert
                     Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(testChar, reader.GetValue(0));
+                    Assert.AreEqual(testChar, reader.GetChar(0));
                 }
             }
         }
