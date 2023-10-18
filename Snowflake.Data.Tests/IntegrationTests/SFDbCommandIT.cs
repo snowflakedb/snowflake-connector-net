@@ -228,6 +228,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+
         /*
          * Disabled to make sure that configuration changes does not cause problems with appveyor
          */
