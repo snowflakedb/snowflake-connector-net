@@ -11,29 +11,29 @@ namespace Snowflake.Data.Core.FileTransfer
 {
     internal class WrappedContentInfo
     {
-        public string KeyId { get; set; }
-        public string EncryptedKey { get; set; }
-        public string Algorithm { get; set; }
+        public string KeyId;
+        public string EncryptedKey;
+        public string Algorithm;
     }
 
     internal class EncryptionAgentInfo
     {
-        public string Protocol { get; set; }
-        public string EncryptionAlgorithm { get; set; }
+        public string Protocol;
+        public string EncryptionAlgorithm;
     }
 
     internal class KeyWrappingMetadataInfo
     {
-        public string EncryptionLibrary { get; set; }
+        public string EncryptionLibrary;
     }
 
     internal class EncryptionData
     {
-        public string EncryptionMode { get; set; }
-        public WrappedContentInfo WrappedContentKey { get; set; }
-        public EncryptionAgentInfo EncryptionAgent { get; set; }
-        public string ContentEncryptionIV { get; set; }
-        public KeyWrappingMetadataInfo KeyWrappingMetadata { get; set; }
+        public string EncryptionMode;
+        public WrappedContentInfo WrappedContentKey;
+        public EncryptionAgentInfo EncryptionAgent;
+        public string ContentEncryptionIV;
+        public KeyWrappingMetadataInfo KeyWrappingMetadata;
     }
 
     internal class RemoteLocation
