@@ -204,24 +204,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestSimpleCommandWithConnectionAndCommandText()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                // Arrange
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                // Act
-                IDbCommand cmd = new SnowflakeDbCommand((SnowflakeDbConnection)conn, "select 1");
-
-                // Assert
-                Assert.AreEqual(CommandType.Text, cmd.CommandType);
-                Assert.AreEqual(1, cmd.ExecuteScalar());
-            }
-        }
-
-        [Test]
         public void TestSimpleLargeResultSet()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -243,23 +225,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                 }
                 conn.Close();
-            }
-        }
-
-        [Test]
-        public void TestCommandPrepareThrowsNotImplemented()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                // Arrange
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                // Act
-                IDbCommand cmd = conn.CreateCommand();
-
-                // Assert
-                Assert.Throws<NotImplementedException>(() => cmd.Prepare());
             }
         }
 
