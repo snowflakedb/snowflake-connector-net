@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
@@ -12,6 +13,8 @@ namespace Snowflake.Data.Core
 {
     class SFResultSet : SFBaseResultSet
     {
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFResultSet>();
         
         private readonly int _totalChunkCount;
@@ -172,16 +175,12 @@ namespace Snowflake.Data.Core
             return _currentChunk.Rewind();
         }
 
-        internal override UTF8Buffer getObjectInternal(int columnIndex)
+        internal UTF8Buffer GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
+            ThrowIfOutOfBounds(ordinal);
 
-            if (columnIndex < 0 || columnIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
-            }
-
-            return _currentChunk.ExtractCell(columnIndex);
+            return _currentChunk.ExtractCell(ordinal);
         }
 
         private void UpdateSessionStatus(QueryExecResponseData responseData)
@@ -190,6 +189,183 @@ namespace Snowflake.Data.Core
             session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
             session.UpdateQueryContextCache(responseData.QueryContext);
+        }
+        
+        internal override bool IsDBNull(int ordinal)
+        {
+            return (null == GetObjectInternal(ordinal));
+        }
+
+        internal override bool GetBoolean(int ordinal)
+        {
+            return GetValue<bool>(ordinal);
+        }
+        
+        internal override byte GetByte(int ordinal)
+        {
+            return GetValue<byte>(ordinal);
+        }
+
+        internal override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
+        {
+            return ReadSubset<byte>(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override char GetChar(int ordinal)
+        {
+            string val = GetString(ordinal);
+            return val[0];
+        }
+        
+        internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
+        {
+            return ReadSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override DateTime GetDateTime(int ordinal)
+        {
+            return GetValue<DateTime>(ordinal);
+        }
+
+        internal override TimeSpan GetTimeSpan(int ordinal)
+        {
+            return GetValue<TimeSpan>(ordinal);
+        }
+
+        internal override decimal GetDecimal(int ordinal)
+        {
+            return GetValue<decimal>(ordinal);
+        }
+
+        internal override double GetDouble(int ordinal)
+        {
+            return GetValue<double>(ordinal);
+        }
+
+        internal override float GetFloat(int ordinal)
+        {
+            return GetValue<float>(ordinal);
+        }
+
+        internal override Guid GetGuid(int ordinal)
+        {
+            return GetValue<Guid>(ordinal);
+        }
+
+        internal override short GetInt16(int ordinal)
+        {
+            return GetValue<short>(ordinal);
+        }
+
+        internal override int GetInt32(int ordinal)
+        {
+            return GetValue<int>(ordinal);
+        }
+
+        internal override long GetInt64(int ordinal)
+        {
+            return GetValue<long>(ordinal);
+        }
+        
+        internal override string GetString(int ordinal)
+        {
+            ThrowIfOutOfBounds(ordinal);
+            
+            var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
+            switch (type)
+            {
+                case SFDataType.DATE:
+                    var val = GetValue(ordinal);
+                    if (val == DBNull.Value)
+                        return null;
+                    return SFDataConverter.toDateString((DateTime)val, sfResultSetMetaData.dateOutputFormat);
+                
+                default:
+                    return GetObjectInternal(ordinal).SafeToString(); 
+            }
+        }
+
+        internal override object GetValue(int ordinal) 
+        {
+            UTF8Buffer val = GetObjectInternal(ordinal);
+            var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
+            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+        }
+        
+        private T GetValue<T>(int ordinal)
+        {
+            UTF8Buffer val = GetObjectInternal(ordinal);
+            var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
+            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
+        }
+
+        //
+        // Summary:
+        //     Reads a subset of data starting at location indicated by dataOffset into the buffer,
+        //     starting at the location indicated by bufferOffset.
+        //
+        // Parameters:
+        //   ordinal:
+        //     The zero-based column ordinal.
+        //
+        //   dataOffset:
+        //     The index within the data from which to begin the read operation.
+        //
+        //   buffer:
+        //     The buffer into which to copy the data.
+        //
+        //   bufferOffset:
+        //     The index with the buffer to which the data will be copied.
+        //
+        //   length:
+        //     The maximum number of elements to read.
+        //
+        // Returns:
+        //     The actual number of elements read.
+        private long ReadSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length) where T : struct
+        {
+            if (dataOffset < 0)
+            {
+                throw new ArgumentOutOfRangeException("dataOffset", "Non negative number is required.");
+            }
+
+            if (bufferOffset < 0)
+            {
+                throw new ArgumentOutOfRangeException("bufferOffset", "Non negative number is required.");
+            }
+
+            if ((null != buffer) && (bufferOffset > buffer.Length))
+            {
+                throw new System.ArgumentException("Destination buffer is not long enough. " +
+                    "Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
+            }
+
+            T[] data = GetValue<T[]>(ordinal);
+
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getchars?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetChars returns the length of the field in characters.
+            if (null == buffer)
+            {
+                return data.Length;
+            }
+
+            if (dataOffset > data.Length)
+            {
+                throw new System.ArgumentException("Source data is not long enough. " +
+                    "Check the data offset, length, and the data's lower bounds." ,"dataOffset");
+            }
+            else
+            {
+                // How much data is available after the offset
+                long dataLength = data.Length - dataOffset;
+                // How much data to read
+                long elementsRead = Math.Min(length, dataLength);
+                Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
+
+                return elementsRead;
+            }
         }
     }
 }

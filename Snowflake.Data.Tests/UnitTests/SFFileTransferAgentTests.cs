@@ -150,9 +150,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
         }
 
-        private string GetResultValue(SFBaseResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
+        private string GetResultValue(SFResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
         {
-            return result.getObjectInternal((int)typeInfo).ToString();
+            return result.GetObjectInternal((int)typeInfo).ToString();
         }
 
         [Test]
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -340,7 +340,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
 
             // Assert
             for (int index = 0; index < numberOfFiles; index++)
@@ -390,7 +390,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
 
             // Assert
             for (int i = 0; i < numberOfDirectories; i++)
@@ -441,7 +441,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
 
             // Assert
             for (int i = 0; i < numberOfDirectories; i++)
@@ -530,7 +530,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _fileTransferAgent.execute();
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
@@ -555,7 +555,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
-            SFBaseResultSet result = _fileTransferAgent.result();
+            SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert

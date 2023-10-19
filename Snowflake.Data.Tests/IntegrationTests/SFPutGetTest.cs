@@ -19,6 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Core.FileTransfer;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.Children)]
     class SFPutGetTest : SFBaseTest
     {
         private const int NumberOfRows = 4;
@@ -337,7 +338,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
-        [Parallelizable(ParallelScope.All)]
         public void TestPutGetCommand(
             [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
             [Values] StageType stageType,
@@ -358,7 +358,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
         [Test]
         [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AWS", "AZURE" })]
-        [Parallelizable(ParallelScope.All)]
         public void TestPutGetGcsDownscopedCredential(
             [Values] StageType stageType,
             [Values("", "/TEST_PATH")] string stagePath)

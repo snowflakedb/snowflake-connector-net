@@ -2,11 +2,13 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+
 namespace Snowflake.Data.Core
 {
     public abstract class BaseResultChunk : IResultChunk
     {
-        internal abstract ResultFormat Format { get; }
+        internal abstract ResultFormat ResultFormat { get; }
         
         public int RowCount { get; protected set; }
         
@@ -22,6 +24,7 @@ namespace Snowflake.Data.Core
 
         public int GetChunkIndex() => ChunkIndex;
 
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public abstract UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
 
         public abstract UTF8Buffer ExtractCell(int columnIndex);

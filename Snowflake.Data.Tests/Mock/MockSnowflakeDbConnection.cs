@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.Mock
                 cancellationToken);
 
         }
-
+        
         private void SetMockSession()
         {
             SfSession = new SFSession(ConnectionString, Password, _restRequester);

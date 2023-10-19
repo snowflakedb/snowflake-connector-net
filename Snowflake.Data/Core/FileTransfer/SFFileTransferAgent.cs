@@ -275,7 +275,7 @@ namespace Snowflake.Data.Core
         /// Generate the result set based on the file metadata.
         /// </summary>
         /// <returns>The result set containing file status and info</returns>
-        public SFBaseResultSet result()
+        public SFResultSet result()
         {
             // Set the row count using the number of metadata in the result metas
             TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];

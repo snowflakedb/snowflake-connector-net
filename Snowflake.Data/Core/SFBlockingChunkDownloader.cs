@@ -161,7 +161,7 @@ namespace Snowflake.Data.Core
 
             Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
 
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.Format, concatStream);
+            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, concatStream);
             parser.ParseChunk(resultChunk);
         }
     }
