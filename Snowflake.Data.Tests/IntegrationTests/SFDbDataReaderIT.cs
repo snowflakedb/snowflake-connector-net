@@ -615,22 +615,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 CreateOrReplaceTable(conn, TableName, new[]
                 {
-                    "col1 BINARY",
+                    "col1 NUMBER(3)",
                 });
 
-                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+                short[] testBytes = { 0, 10, 150, 200, 255 };
 
                 IDbCommand cmd = conn.CreateCommand();
 
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
-                p1.DbType = DbType.Binary;
+                p1.DbType = DbType.Byte;
                 p1.Value = testBytes;
 
                 cmd.Parameters.Add(p1);
                 cmd.CommandText = $"insert into {TableName} values (?)";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {TableName} order by 1";
 
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
