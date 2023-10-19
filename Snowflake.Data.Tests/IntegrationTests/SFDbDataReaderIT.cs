@@ -183,6 +183,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
             TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
+        [Test]
+        public void TestDateOutputFormat()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+                IDbCommand cmd = conn.CreateCommand();
+
+                try
+                {
+                    cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='MM/DD/YYYY'";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = $"select TO_DATE('2013-05-17')";
+                    IDataReader reader = cmd.ExecuteReader();
+
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual("05/17/2013", reader.GetString(0));
+
+                    reader.Close();
+                }
+                finally
+                {
+                    // set format back to default to avoid impact other test cases
+                    cmd.CommandText = "alter session set DATE_OUTPUT_FORMAT='YYYY-MM-DD'";
+                    cmd.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+        }
 
         [Test]
         [TestCase(null, null)]
@@ -573,6 +605,47 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestGetByte()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 BINARY",
+                });
+
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+
+                IDbCommand cmd = conn.CreateCommand();
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+
+                cmd.Parameters.Add(p1);
+                cmd.CommandText = $"insert into {TableName} values (?)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    int index = 0;
+                    while (reader.Read())
+                    {
+                        // Assert
+                        Assert.AreEqual(testBytes[index++], reader.GetByte(0));
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void TestGetBinary()
         {
             using (var conn = CreateAndOpenConnection())
@@ -711,6 +784,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
 
                 CloseConnection(conn);
+            }
+        }
+
+        [Test]
+        public void TestGetChar()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 VARCHAR(50)",
+                });
+
+                char testChar = 'T';
+
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"insert into {TableName} values ('{testChar}')";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (IDataReader reader = cmd.ExecuteReader())
+                {
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual(testChar, reader.GetChar(0));
+                }
             }
         }
 
@@ -855,6 +959,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
 
                 CloseConnection(conn);
+            }
+        }
+
+        [Test]
+        public void TestGetDataTypeName()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "col1 VARCHAR(50)",
+                    "col2 BINARY",
+                    "col3 DOUBLE"
+                });
+
+                string testChars = "TEST_GET_CHARS";
+                byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+                double testDouble = 1.2345678;
+
+                IDbCommand cmd = conn.CreateCommand();
+
+                var p1 = cmd.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.Binary;
+                p1.Value = testBytes;
+
+                cmd.Parameters.Add(p1);
+                cmd.CommandText = $"insert into {TableName} values ('{testChars}', ?, {testDouble.ToString()})";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = $"select * from {TableName}";
+
+                // Act
+                using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
+                {
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual("TEXT", reader.GetDataTypeName(0));
+                    Assert.AreEqual("BINARY", reader.GetDataTypeName(1));
+                    Assert.AreEqual("REAL", reader.GetDataTypeName(2));
+                }
             }
         }
 

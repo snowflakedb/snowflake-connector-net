@@ -16,6 +16,42 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]
+        public void TestTransactionDbConnection()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Act
+                using (IDbTransaction t1 = conn.BeginTransaction())
+                {
+                    // Assert
+                    Assert.AreEqual(conn, t1.Connection);
+                }
+            }
+        }
+
+        [Test]
+        public void TestTransactionIsolationLevel()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Act
+                using (IDbTransaction t1 = conn.BeginTransaction())
+                {
+                    // Assert
+                    Assert.AreEqual(IsolationLevel.ReadCommitted, t1.IsolationLevel);
+                }
+            }
+        }
+
+        [Test]
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {

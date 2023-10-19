@@ -69,5 +69,62 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
+
+        [Test]
+        public void TestLoginRequestToString()
+        {
+            // Arrange
+            string expectedOktaAccount = "mockOktaAccount";
+            string expectedOktaUser = "mockOktaUser";
+            string expectedOktaUrl = "mockOktaUrl";
+
+            LoginRequestClientEnv loginRequestClientEnv = new LoginRequestClientEnv();
+
+            // Act
+            LoginRequest loginRequest = new LoginRequest()
+            {
+                data = new LoginRequestData()
+                {
+                    loginName = expectedOktaUser,
+                    accountName = expectedOktaAccount,
+                    clientAppVersion = SFEnvironment.DriverVersion,
+                    clientEnv = loginRequestClientEnv,
+                    Authenticator = expectedOktaUrl,
+                }
+            };
+
+            // Assert
+            Assert.AreEqual($"LoginRequest {{data: LoginRequestData {{ClientAppVersion: {SFEnvironment.DriverVersion},\n " +
+                $"AccountName: {expectedOktaAccount},\n " +
+                $"loginName: {expectedOktaUser},\n " +
+                $"ClientEnv: {{ " +
+                $"APPLICATION: , " +
+                $"OS_VERSION: , " +
+                $"NET_RUNTIME: , " +
+                $"NET_VERSION: , " +
+                $"INSECURE_MODE:  }},\n " +
+                $"authenticator: {expectedOktaUrl} }} }}",
+                loginRequest.ToString());
+        }
+
+        [Test]
+        public void TestAuthenticatorRequestToString()
+        {
+            // Arrange
+            string expectedOktaAccount = "mockOktaAccount";
+
+            // Act
+            AuthenticatorRequest authenticatorRequest = new AuthenticatorRequest()
+            {
+                Data = new AuthenticatorRequestData()
+                {
+                    AccountName = expectedOktaAccount,
+                }
+            };
+
+            // Assert
+            Assert.AreEqual($"AuthenticatorRequest {{data: AuthenticatorRequestData {{ACCOUNT_NAME: {expectedOktaAccount} }} }}",
+                authenticatorRequest.ToString());
+        }
     }
 }

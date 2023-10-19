@@ -42,7 +42,7 @@ namespace Snowflake.Data.Core
                 _currentChunk = new SFResultChunk(responseData.rowSet);
                 responseData.rowSet = null;
 
-                sfResultSetMetaData = new SFResultSetMetaData(responseData);
+                sfResultSetMetaData = new SFResultSetMetaData(responseData, this.sfStatement.SfSession);
 
                 isClosed = false;
 

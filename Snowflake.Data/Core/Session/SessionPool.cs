@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,29 +13,28 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
-    sealed class SessionPoolSingleton : IDisposable
+    sealed class SessionPool : IDisposable
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPoolSingleton>();
-        private static SessionPoolSingleton s_instance = null;
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private static readonly object s_sessionPoolLock = new object();
-
-        private readonly List<SFSession> _sessionPool;
+        private readonly List<SFSession> _sessions;
         private int _maxPoolSize;
         private long _timeout;
         private const int MaxPoolSize = 10;
         private const long Timeout = 3600;
         private bool _pooling = true;
 
-        SessionPoolSingleton()
+        internal SessionPool()
         {
             lock (s_sessionPoolLock)
             {
-                _sessionPool = new List<SFSession>();
+                _sessions = new List<SFSession>();
                 _maxPoolSize = MaxPoolSize;
                 _timeout = Timeout;
             }
         }
-        ~SessionPoolSingleton()
+        
+        ~SessionPool()
         {
             ClearAllPools();
         }
@@ -41,21 +44,6 @@ namespace Snowflake.Data.Core.Session
             ClearAllPools();
         }
 
-        public static SessionPoolSingleton Instance
-        {
-            get
-            {
-                lock (s_sessionPoolLock)
-                {
-                    if(s_instance == null)
-                    {
-                        s_instance = new SessionPoolSingleton();
-                    }
-                    return s_instance;
-                }
-            }
-        }
-
         private void CleanExpiredSessions()
         {
             s_logger.Debug("SessionPool::CleanExpiredSessions");
@@ -63,11 +51,11 @@ namespace Snowflake.Data.Core.Session
             {
                 long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                foreach (var item in _sessionPool.ToList())
+                foreach (var item in _sessions.ToList())
                 {
                     if (item.IsExpired(_timeout, timeNow))
                     {
-                        _sessionPool.Remove(item);
+                        _sessions.Remove(item);
                         item.close();
                     }
                 }
@@ -97,12 +85,12 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::GetIdleSession");
             lock (s_sessionPoolLock)
             {
-                for (int i = 0; i < _sessionPool.Count; i++)
+                for (int i = 0; i < _sessions.Count; i++)
                 {
-                    if (_sessionPool[i].connStr.Equals(connStr))
+                    if (_sessions[i].connStr.Equals(connStr))
                     {
-                        SFSession session = _sessionPool[i];
-                        _sessionPool.RemoveAt(i);
+                        SFSession session = _sessions[i];
+                        _sessions.RemoveAt(i);
                         long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                         if (session.IsExpired(_timeout, timeNow))
                         {
@@ -174,18 +162,18 @@ namespace Snowflake.Data.Core.Session
 
             lock (s_sessionPoolLock)
             {
-                if (_sessionPool.Count >= _maxPoolSize)
+                if (_sessions.Count >= _maxPoolSize)
                 {
                     CleanExpiredSessions();
                 }
-                if (_sessionPool.Count >= _maxPoolSize)
+                if (_sessions.Count >= _maxPoolSize)
                 {
                     // pool is full
                     return false;
                 }
 
                 s_logger.Debug($"pool connection with sid {session.sessionId}");
-                _sessionPool.Add(session);
+                _sessions.Add(session);
                 return true;
             }
         }
@@ -195,11 +183,11 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::ClearAllPools");
             lock (s_sessionPoolLock)
             {
-                foreach (SFSession session in _sessionPool)
+                foreach (SFSession session in _sessions)
                 {
                     session.close();
                 }
-                _sessionPool.Clear();
+                _sessions.Clear();
             }
         }
 
@@ -225,7 +213,7 @@ namespace Snowflake.Data.Core.Session
 
         public int GetCurrentPoolSize()
         {
-            return _sessionPool.Count;
+            return _sessions.Count;
         }
 
         public bool SetPooling(bool isEnable)
@@ -246,5 +234,4 @@ namespace Snowflake.Data.Core.Session
             return _pooling;
         }
     }
-
 }
