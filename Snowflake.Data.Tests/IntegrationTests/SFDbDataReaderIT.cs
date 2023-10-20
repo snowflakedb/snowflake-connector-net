@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDateOutputFormat()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = CreateAndOpenConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
@@ -199,6 +199,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     cmd.CommandText = $"select TO_DATE('2013-05-17')";
                     IDataReader reader = cmd.ExecuteReader();
+
+                    ValidateResultFormat(reader);
 
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("05/17/2013", reader.GetString(0));
@@ -607,7 +609,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestGetByte()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = CreateAndOpenConnection())
             {
                 // Arrange
                 conn.ConnectionString = ConnectionString;
@@ -635,6 +637,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
+                    ValidateResultFormat(reader);
+
                     int index = 0;
                     while (reader.Read())
                     {
@@ -790,7 +794,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestGetChar()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = CreateAndOpenConnection())
             {
                 // Arrange
                 conn.ConnectionString = ConnectionString;
@@ -811,6 +815,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
+                    ValidateResultFormat(reader);
+
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(testChar, reader.GetChar(0));
@@ -965,7 +971,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestGetDataTypeName()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (IDbConnection conn = CreateAndOpenConnection())
             {
                 // Arrange
                 conn.ConnectionString = ConnectionString;
@@ -997,6 +1003,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
                 {
+                    ValidateResultFormat(reader);
+
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("TEXT", reader.GetDataTypeName(0));
