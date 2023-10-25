@@ -254,6 +254,47 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
+        // presigned url is enabled on CI so we need to disable the test
+        // it should be enabled when downscoped credential is the default option
+        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP" })]
+        public void TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
+        {
+            // Set the PUT query variables
+            t_inputFilePath = $"{Guid.NewGuid()}.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+            
+            PrepareFileData(t_inputFilePath);
+
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
+                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+                PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
+            }
+        }
+        
+        [Test]
+        public void TestPutFileWithOverwriteFlagRunsSecondUpload()
+        {
+            var overwriteAttribute = "OVERWRITE=TRUE";
+            
+            // Set the PUT query variables
+            t_inputFilePath = $"{Guid.NewGuid()}.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+            
+            PrepareFileData(t_inputFilePath);
+            
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
+                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+                PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
+            }
+        }
+        
+        [Test]
         public void TestPutDirectoryAsteriskWildcard()
         {
             // Prepare the data files to be copied
@@ -418,13 +459,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         // PUT - upload file from local directory to the stage
-        private void PutFile(SnowflakeDbConnection conn)
+        void PutFile(
+            SnowflakeDbConnection conn, 
+            String additionalAttribute = "", 
+            ResultStatus expectedStatus = ResultStatus.UPLOADED)
         {
             using (var command = conn.CreateCommand())
             {
                 // Prepare PUT query
                 string putQuery =
-                    $"PUT file://{t_inputFilePath} {t_internalStagePath} AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}";
+                    $"PUT file://{t_inputFilePath} {t_internalStagePath}" +
+                    $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" +
+                    $" {additionalAttribute}";
 
                 // Upload file
                 command.CommandText = putQuery;
@@ -432,7 +478,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.IsTrue(reader.Read());
 
                 // Check file status
-                Assert.AreEqual(ResultStatus.UPLOADED.ToString(),
+                Assert.AreEqual(expectedStatus.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check source and destination compression type
                 if (t_autoCompress)
@@ -449,6 +495,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
+                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
         }
 

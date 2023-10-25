@@ -444,9 +444,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
             Logger.Error("Failed to get file header for presigned url: " + ex.Message);
-
-            fileMetadata.lastError = ex;
-
+            
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized ||
                 response.StatusCode == HttpStatusCode.Forbidden ||
@@ -457,6 +455,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             else
             {
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+                fileMetadata.lastError = ex;
             }
 
             return fileMetadata;
@@ -472,19 +471,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             Logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
 
-            // If file doesn't exist, GET request fails
-            fileMetadata.lastError = ex;
-
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                fileMetadata.lastError = ex;
             }
             else if (response.StatusCode == HttpStatusCode.Forbidden ||
                 response.StatusCode == HttpStatusCode.InternalServerError ||
                 response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                fileMetadata.lastError = ex;
             }
             else if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -493,6 +491,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             else
             {
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+                fileMetadata.lastError = ex;
             }
             return fileMetadata;
         }
