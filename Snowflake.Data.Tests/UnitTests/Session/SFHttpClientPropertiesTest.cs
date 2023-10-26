@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = false,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -152,21 +152,35 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = true,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     maxHttpRetries = 7
                 }
             };
-            var propertiesWithTimeoutChanged = new PropertiesTestCase()
+            var propertiesWithTimeoutChangedToAValueAbove300 = new PropertiesTestCase()
+            {
+                conectionString = "account=test;user=test;password=test;connection_timeout=600",
+                expectedProperties = new SFSessionHttpClientProperties()
+                {
+                    validateDefaultParameters = true,
+                    clientSessionKeepAlive = false,
+                    timeoutInSec = 600,
+                    insecureMode = false,
+                    disableRetry = false,
+                    forceRetryOn404 = false,
+                    maxHttpRetries = 7
+                }
+            };
+            var propertiesWithTimeoutChangedToAValueBelow300 = new PropertiesTestCase()
             {
                 conectionString = "account=test;user=test;password=test;connection_timeout=15",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = 15,
+                    timeoutInSec = 300,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -180,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = true,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -194,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = true,
                     forceRetryOn404 = false,
@@ -208,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = true,
@@ -222,7 +236,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -234,7 +248,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 defaultProperties,
                 propertiesWithValidateDefaultParametersChanged,
                 propertiesWithClientSessionKeepAliveChanged,
-                propertiesWithTimeoutChanged,
+                propertiesWithTimeoutChangedToAValueAbove300,
+                propertiesWithTimeoutChangedToAValueBelow300,
                 propertiesWithInsecureModeChanged,
                 propertiesWithDisableRetryChanged,
                 propertiesWithForceRetryOn404Changed,

@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -379,7 +379,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (IDbConnection conn = new MockSnowflakeDbConnection())
                 {
-                    int timeoutSec = 5;
+                    // Connection timeout can only be increased
+                    int timeoutSec = 5 + SFSessionProperties.s_connectionTimeoutDefault;
                     string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
                         timeoutSec);
 
@@ -395,17 +396,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     catch (AggregateException e)
                     {
-                        Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
+                        // Jitter can cause the request to reach max number of retries before reaching the timeout
+                        Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                            SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                             ((SnowflakeDbException)e.InnerException).ErrorCode);
                     }
                     stopwatch.Stop();
                     int detla = 10; //in case server time slower.
 
-                    //Should timeout before the default timeout (120 sec) * 1000
-                    Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                    // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - detla);
-                    Assert.AreEqual(5, conn.ConnectionTimeout);
+                    // Should timeout after the minimum possible timeout with jitter: 14 seconds (50% of 4 * 2) after 7 retries
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 14 * 1000);
+                    // Should timeout before the defined connection timeout
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + detla);
+                    Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
                 }
             }
         }
@@ -426,15 +429,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch
+                catch (Exception e)
                 {
+                    // Jitter can cause the request to reach max number of retries before reaching the timeout
+                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
-                // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                // retry 5 times with starting backoff of 4 seconds with jitter
+                // but should not delay more than the default connection timeout of 300 seconds
+                // and should not take less time than 10 (with max negative jitter for 5 retries) seconds
+                Assert.Less(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 10 * 1000);
             }
         }
 
@@ -1665,8 +1673,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
-                // No timeout
-                int timeoutSec = 0;
+                // Add 10 seconds to default timeout
+                int timeoutSec = 10 + SFSessionProperties.s_connectionTimeoutDefault;
                 string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
@@ -1678,12 +1686,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 //Assert.AreEqual(120, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);                
+                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for 130 sec (more than the default connection timeout and the httpclient 
-                // timeout to make sure there are no false positive )
-                Thread.Sleep(130*1000);
-           
+                // Sleep for the specified timeout minus 10 seconds (just before the actual timeout is reached)
+                Thread.Sleep((timeoutSec - 10) * 1000);
+
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
                 // Cancel the connection because it will never succeed since there is no 
@@ -1704,7 +1711,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(0, conn.ConnectionTimeout);
+                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
@@ -1715,7 +1722,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new MockSnowflakeDbConnection())
                 {
-                    int timeoutSec = 5;
+                    // Connection timeout can only be increased
+                    int timeoutSec = 5 + SFSessionProperties.s_connectionTimeoutDefault;
                     string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
                         timeoutSec);
                     conn.ConnectionString = loginTimeOut5sec;
@@ -1737,13 +1745,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stopwatch.Stop();
                     int detla = 10; //in case server time slower.
 
-                    // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
-                    // But never more than 1 sec (max backoff) after the default timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
+                    // Should timeout after the minimum possible timeout with jitter: 14 seconds (50% of 4 * 2) after 7 retries
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 14 * 1000);
+                    // Should timeout before the defined connection timeout
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + detla);
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
-                    Assert.AreEqual(5, conn.ConnectionTimeout);
+                    Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
                 }
             }
         }
@@ -1772,13 +1780,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 stopwatch.Stop();
                 int detla = 10; //in case server time slower.
 
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
-                // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                // Should timeout after the default timeout (300 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000 - detla);
+                // But never more because there's no connection timeout remaining
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000 + detla);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
             }
         }
 

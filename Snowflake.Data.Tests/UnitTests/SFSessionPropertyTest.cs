@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defHost = "testaccount.snowflakecomputing.com";
             string defAuthenticator = "snowflake";
             string defScheme = "https";
-            string defConnectionTimeout = "120";
+            string defConnectionTimeout = "300";
             string defBrowserResponseTime = "120";
             string defPassword = "123";
             string defPort = "443";

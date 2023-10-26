@@ -16,6 +16,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Diagnostics;
     using System.Collections.Generic;
     using System.Globalization;
+    using Snowflake.Data.Tests.Mock;
+    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
@@ -90,6 +92,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestExecuteAsyncWithMaxRetryReached()
+        {
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
+            {
+                _forceTimeoutForNonLoginRequestsOnly = true
+            };
+
+            using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+
+                conn.ConnectionString = maxRetryConnStr;
+                conn.Open();
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    using (DbCommand command = conn.CreateCommand())
+                    {
+                        command.CommandText = "select 1;";
+                        Task<object> t = command.ExecuteScalarAsync();
+                        t.Wait();
+                    }
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+                }
+                stopwatch.Stop();
+
+                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                // but should not delay more than another 16 seconds
+                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+            }
+        }
     }
 
     [TestFixture]
@@ -541,6 +581,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DBNull.Value, val);
                 }
                 conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestExecuteWithMaxRetryReached()
+        {
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
+            {
+                _forceTimeoutForNonLoginRequestsOnly = true
+            };
+
+            using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+
+                conn.ConnectionString = maxRetryConnStr;
+                conn.Open();
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    using (IDbCommand command = conn.CreateCommand())
+                    {
+                        command.CommandText = "select 1;";
+                        command.ExecuteScalar();
+                    }
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+                }
+                stopwatch.Stop();
+
+                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                // but should not delay more than another 16 seconds
+                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
             }
         }
 
