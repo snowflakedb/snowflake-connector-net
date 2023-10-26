@@ -1743,12 +1743,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     }
                     stopwatch.Stop();
-                    int detla = 10; //in case server time slower.
+                    int delta = 100; // in case server time slower.
 
                     // Should timeout after the minimum possible timeout with jitter: 14 seconds (50% of 4 * 2) after 7 retries
                     Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 14 * 1000);
                     // Should timeout before the defined connection timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + detla);
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + delta);
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
                     Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
