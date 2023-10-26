@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "120")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "300")]
         CONNECTION_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,
@@ -100,6 +100,7 @@ namespace Snowflake.Data.Core
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
+        internal static readonly int s_connectionTimeoutDefault = 300;
 
         // Connection string properties to obfuscate in the log
         static private List<SFSessionProperty> secretProps =
@@ -266,6 +267,11 @@ namespace Snowflake.Data.Core
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
+            // The login timeout can only be increased
+            if (int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]) < s_connectionTimeoutDefault)
+            {
+                properties[SFSessionProperty.CONNECTION_TIMEOUT] = s_connectionTimeoutDefault.ToString();
+            }
 
             return properties;
         }

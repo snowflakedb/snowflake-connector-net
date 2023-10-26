@@ -13,6 +13,7 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -73,7 +74,17 @@ namespace Snowflake.Data.Core
     public sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
+        private static readonly int s_baseBackOffTime = 1;
+        private static readonly int s_baseLoginBackOffTime = 4;
+        private static readonly int s_exponentialFactor = 2;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+
+        private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
+        {
+            RestPath.SF_LOGIN_PATH,
+            RestPath.SF_AUTHENTICATOR_REQUEST_PATH,
+            RestPath.SF_TOKEN_REQUEST_PATH
+        };
 
         private HttpUtil()
         {
@@ -332,7 +343,8 @@ namespace Snowflake.Data.Core
                 CancellationToken cancellationToken)
             {
                 HttpResponseMessage response = null;
-                int backOffInSec = 1;
+                bool isLoginRequest = IsLoginEndpoint(requestMessage.RequestUri.AbsolutePath);
+                int backOffInSec = isLoginRequest ? s_baseLoginBackOffTime : s_baseBackOffTime;
                 int totalRetryTime = 0;
 
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
@@ -438,20 +450,29 @@ namespace Snowflake.Data.Core
 
                     requestMessage.RequestUri = updater.Update(errorReason);
 
-                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
-
-                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
-                    totalRetryTime += backOffInSec;
-                    // Set next backoff time
-                    backOffInSec = backOffInSec >= MAX_BACKOFF ?
-                            MAX_BACKOFF : backOffInSec * 2;
+                    // Add jitter for login requests
+                    if (isLoginRequest)
+                    {
+                        backOffInSec += (int)GetJitter(backOffInSec);
+                    }
 
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
-                        // use a smaller one to give the Rest request a chance to timeout early
-                        backOffInSec = Math.Max(1, (int)restTimeout.TotalSeconds - totalRetryTime - 1);
+                        // then use the remaining connection timeout
+                        backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime);
+                    }
+
+                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
+
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
+                    totalRetryTime += backOffInSec;
+
+                    // Set next backoff time
+                    if (isLoginRequest || !isLoginRequest && backOffInSec < MAX_BACKOFF)
+                    {
+                        backOffInSec *= s_exponentialFactor;
                     }
                 }
             }
@@ -473,6 +494,41 @@ namespace Snowflake.Data.Core
             (statusCode == 408) ||
             // Too many requests
             (statusCode == 429);
+        }
+
+        /// <summary>
+        /// Get the jitter amount based on current wait time.
+        /// </summary>
+        /// <param name="curWaitTime">The current retry backoff time.</param>
+        /// <returns>The new jitter amount.</returns>
+        static internal double GetJitter(double curWaitTime)
+        {
+            double multiplicationFactor = ChooseRandom(-1, 1);
+            double jitterAmount = 0.5 * curWaitTime * multiplicationFactor;
+            return jitterAmount;
+        }
+
+        /// <summary>
+        /// Randomly generates a number between a given range.
+        /// </summary>
+        /// <param name="min">The min range (inclusive).</param>
+        /// <param name="max">The max range (inclusive).</param>
+        /// <returns>The random number.</returns>
+        static double ChooseRandom(int min, int max)
+        {
+            var next = new Random().NextDouble();
+
+            return min + (next * (max - min));
+        }
+
+        /// <summary>
+        /// Checks if the endpoint is a login request.
+        /// </summary>
+        /// <param name="endpoint">The endpoint to check.</param>
+        /// <returns>True if the endpoint is a login request, false otherwise.</returns>
+        static internal bool IsLoginEndpoint(string endpoint)
+        {
+            return null != s_supportedEndpointsForRetryPolicy.FirstOrDefault(ep => endpoint.Equals(ep));
         }
     }
 }
