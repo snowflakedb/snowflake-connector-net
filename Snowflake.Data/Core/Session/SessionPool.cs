@@ -36,7 +36,9 @@ namespace Snowflake.Data.Core.Session
         
         ~SessionPool()
         {
-            ClearAllPools();
+            // Use async for the finalizer due to possible deadlock
+            // when waiting for the CloseResponse task while closing the session
+            ClearAllPoolsAsync();
         }
 
         public void Dispose()
@@ -189,6 +191,16 @@ namespace Snowflake.Data.Core.Session
                 }
                 _sessions.Clear();
             }
+        }
+
+        internal async void ClearAllPoolsAsync()
+        {
+            s_logger.Debug("SessionPool::ClearAllPoolsAsync");
+            foreach (SFSession session in _sessionPool)
+            {
+                await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            _sessionPool.Clear();
         }
 
         public void SetMaxPoolSize(int size)
