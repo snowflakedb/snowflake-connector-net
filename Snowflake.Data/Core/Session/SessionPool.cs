@@ -196,11 +196,11 @@ namespace Snowflake.Data.Core.Session
         internal async void ClearAllPoolsAsync()
         {
             s_logger.Debug("SessionPool::ClearAllPoolsAsync");
-            foreach (SFSession session in _sessionPool)
+            foreach (SFSession session in _sessions)
             {
                 await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
-            _sessionPool.Clear();
+            _sessions.Clear();
         }
 
         public void SetMaxPoolSize(int size)
