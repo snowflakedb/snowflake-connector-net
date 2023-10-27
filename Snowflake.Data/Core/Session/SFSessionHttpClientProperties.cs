@@ -8,7 +8,7 @@ namespace Snowflake.Data.Core
 
     internal class SFSessionHttpClientProperties
     {
-        private static int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
+        internal static readonly int s_connectionTimeoutDefault = 300;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
 
         internal bool validateDefaultParameters;
@@ -23,10 +23,13 @@ namespace Snowflake.Data.Core
 
         internal void WarnOnTimeout()
         {
-            if (timeoutInSec < recommendedMinTimeoutSec)
+            if (timeoutInSec < s_connectionTimeoutDefault)
             {
-                logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
-                            $" {recommendedMinTimeoutSec}");
+                logger.Warn($"Connection timeout provided is less than the allowed minimum value of" +
+                            $" {s_connectionTimeoutDefault}");
+
+                // The login timeout can only be increased from the default value
+                timeoutInSec = s_connectionTimeoutDefault;
             }
 
             if (timeoutInSec < 0)

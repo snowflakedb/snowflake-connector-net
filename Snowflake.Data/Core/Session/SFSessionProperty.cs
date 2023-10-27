@@ -100,7 +100,6 @@ namespace Snowflake.Data.Core
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
-        internal static readonly int s_connectionTimeoutDefault = 300;
 
         // Connection string properties to obfuscate in the log
         static private List<SFSessionProperty> secretProps =
@@ -266,12 +265,6 @@ namespace Snowflake.Data.Core
             // because the login request data does not expect region and cloud information to be 
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
-
-            // The login timeout can only be increased
-            if (int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]) < s_connectionTimeoutDefault)
-            {
-                properties[SFSessionProperty.CONNECTION_TIMEOUT] = s_connectionTimeoutDefault.ToString();
-            }
 
             return properties;
         }

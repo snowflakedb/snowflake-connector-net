@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(SFSessionProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -380,7 +380,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbConnection conn = new MockSnowflakeDbConnection())
                 {
                     // Connection timeout can only be increased
-                    int timeoutSec = 5 + SFSessionProperties.s_connectionTimeoutDefault;
+                    int timeoutSec = 5 + SFSessionHttpClientProperties.s_connectionTimeoutDefault;
                     string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
                         timeoutSec);
 
@@ -441,7 +441,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // retry 5 times with starting backoff of 4 seconds with jitter
                 // but should not delay more than the default connection timeout of 300 seconds
                 // and should not take less time than 10 (with max negative jitter for 5 retries) seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000);
+                Assert.Less(stopwatch.ElapsedMilliseconds, SFSessionHttpClientProperties.s_connectionTimeoutDefault * 1000);
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 10 * 1000);
             }
         }
@@ -1674,7 +1674,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // Add 10 seconds to default timeout
-                int timeoutSec = 10 + SFSessionProperties.s_connectionTimeoutDefault;
+                int timeoutSec = 10 + SFSessionHttpClientProperties.s_connectionTimeoutDefault;
                 string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
@@ -1723,7 +1723,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new MockSnowflakeDbConnection())
                 {
                     // Connection timeout can only be increased
-                    int timeoutSec = 5 + SFSessionProperties.s_connectionTimeoutDefault;
+                    int timeoutSec = 5 + SFSessionHttpClientProperties.s_connectionTimeoutDefault;
                     string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
                         timeoutSec);
                     conn.ConnectionString = loginTimeOut5sec;
@@ -1781,12 +1781,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 100; // in case server time slower.
 
                 // Should timeout after the default timeout (300 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000 - delta);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, SFSessionHttpClientProperties.s_connectionTimeoutDefault * 1000 - delta);
                 // But never more because there's no connection timeout remaining
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, SFSessionProperties.s_connectionTimeoutDefault * 1000 + delta);
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, SFSessionHttpClientProperties.s_connectionTimeoutDefault * 1000 + delta);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(SFSessionProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_connectionTimeoutDefault, conn.ConnectionTimeout);
             }
         }
 

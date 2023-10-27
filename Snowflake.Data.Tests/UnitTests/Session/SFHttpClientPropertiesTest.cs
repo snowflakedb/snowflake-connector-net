@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
-                timeoutInSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT,
+                timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                 insecureMode = false,
                 disableRetry = false,
                 forceRetryOn404 = false,
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = false,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = true,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = true,
                     disableRetry = false,
                     forceRetryOn404 = false,
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = true,
                     forceRetryOn404 = false,
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = true,
@@ -236,7 +236,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionProperties.s_connectionTimeoutDefault,
+                    timeoutInSec = SFSessionHttpClientProperties.s_connectionTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
