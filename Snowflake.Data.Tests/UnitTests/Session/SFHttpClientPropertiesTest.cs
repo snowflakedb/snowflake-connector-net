@@ -102,6 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // when
             var extractedProperties = extractor.ExtractProperties(properties);
+            extractedProperties.CheckTimeoutIsValid();
 
             // then
             Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);

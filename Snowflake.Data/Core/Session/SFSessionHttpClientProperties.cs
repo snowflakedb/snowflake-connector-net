@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core
         internal bool includeRetryReason;
         internal SFSessionHttpClientProxyProperties proxyProperties;
 
-        internal void WarnOnTimeout()
+        internal void CheckTimeoutIsValid()
         {
             if (timeoutInSec < s_connectionTimeoutDefault)
             {
