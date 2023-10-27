@@ -201,12 +201,18 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 Assert.AreEqual(MockGCSClient.ContentLength, fileHeader.contentLength);
                 Assert.AreEqual(MockGCSClient.SFCDigest, fileHeader.digest);
+                Assert.IsNull(_fileMetadata.lastError);
+            }
+            else if (expectedResultStatus == ResultStatus.NOT_FOUND_FILE)
+            {
+                Assert.IsNull(fileHeader);
+                Assert.IsNull(_fileMetadata.lastError);
             }
             else
             {
                 Assert.IsNull(fileHeader);
+                Assert.IsNotNull(_fileMetadata.lastError);
             }
-
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
