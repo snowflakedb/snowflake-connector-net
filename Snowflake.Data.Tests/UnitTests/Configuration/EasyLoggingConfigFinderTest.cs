@@ -126,11 +126,53 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNull(filePath);
         }
 
+        [Test]
+        public void TestThatDoesNotFailWhenSearchForOneOfDirectoriesFails()
+        {
+            // arrange
+            MockHomeDirectoryFails();
+
+            // act
+            var filePath = t_finder.FindConfigFilePath(null);
+            
+            // assert
+            Assert.IsNull(filePath);
+            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+        }
+        
+        [Test]
+        public void TestThatDoesNotFailWhenOneOfDirectoriesNotDefined()
+        {
+            // arrange
+            MockHomeDirectoryReturnsNull();
+
+            // act
+            var filePath = t_finder.FindConfigFilePath(null);
+            
+            // assert
+            Assert.IsNull(filePath);
+            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+        }
+
         private static void MockHomeDirectory()
         {
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns(HomeDirectory);
+        }
+
+        private static void MockHomeDirectoryFails()
+        {
+            t_environmentOperations
+                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Throws(() => new Exception("No home directory"));
+        }
+
+        private static void MockHomeDirectoryReturnsNull()
+        {
+            t_environmentOperations
+                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Returns((string) null);
         }
 
         private static void MockFileFromEnvironmentalVariable()

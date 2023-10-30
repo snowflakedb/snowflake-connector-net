@@ -5,11 +5,14 @@
 using System;
 using System.IO;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigFinder
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigFinder>();
+        
         internal const string ClientConfigFileName = "sf_client_config.json";
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
 
@@ -43,24 +46,34 @@ namespace Snowflake.Data.Configuration
             return GetFilePathFromInputParameter(filePath);
         }
         
-        private string GetFilePathFromTempDirectory() => SearchForConfigInDirectory(Path.GetTempPath());
+        private string GetFilePathFromTempDirectory() => SearchForConfigInDirectory(Path.GetTempPath, "temp");
 
-        private string GetFilePathFromHomeDirectory() => SearchForConfigInDirectory(GetHomeDirectory());
+        private string GetFilePathFromHomeDirectory() => SearchForConfigInDirectory(GetHomeDirectory, "home");
         
         private string GetFilePathFromInputParameter(string filePath) => string.IsNullOrEmpty(filePath) ? null : filePath;
 
         private string GetHomeDirectory() =>_environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(".");
+        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => ".", "driver");
 
-        private string SearchForConfigInDirectory(string directory)
+        private string SearchForConfigInDirectory(Func<string> directoryProvider, string directoryDescription)
         {
-            if (string.IsNullOrEmpty(directory))
+            try
             {
+                var directory = directoryProvider.Invoke();
+                if (string.IsNullOrEmpty(directory))
+                {
+                    return null;
+                }
+
+                var filePath = Path.Combine(directory, ClientConfigFileName);
+                return OnlyIfFileExists(filePath);
+            }
+            catch (Exception e)
+            {
+                s_logger.Error($"Error while searching for the client config in {directoryDescription} directory: {e}");
                 return null;
             }
-            var filePath = Path.Combine(directory, ClientConfigFileName);
-            return OnlyIfFileExists(filePath);            
         }
 
         private string OnlyIfFileExists(string filePath) => _fileOperations.Exists(filePath) ? filePath : null;
