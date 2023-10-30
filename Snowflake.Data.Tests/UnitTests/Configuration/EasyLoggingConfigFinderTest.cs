@@ -137,6 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             
             // assert
             Assert.IsNull(filePath);
+            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
         
         [Test]
@@ -150,6 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             
             // assert
             Assert.IsNull(filePath);
+            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
         private static void MockHomeDirectory()
