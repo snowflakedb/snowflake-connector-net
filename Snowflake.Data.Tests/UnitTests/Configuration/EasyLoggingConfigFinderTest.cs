@@ -126,6 +126,21 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNull(filePath);
         }
 
+        [Test]
+        public void TestThatReturnsNullIfDirectoryBasedSearchFailsWithUnexpectedError()
+        {
+            // arrange
+            t_environmentOperations
+                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Throws(() => new Exception("No home directory"));
+            
+            // act
+            var filePath = t_finder.FindConfigFilePath(null);
+            
+            // assert
+            Assert.IsNull(filePath);
+        }
+
         private static void MockHomeDirectory()
         {
             t_environmentOperations
