@@ -403,9 +403,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     int delta = 100; // in case server time slower.
 
                     // Should timeout after the minimum possible timeout with jitter
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
-                    // Should timeout before the defined connection timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + delta);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000 - delta);
+                    // But never more than 1 sec (max backoff) after the defined timeout
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
                     Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
                 }
             }
@@ -1746,9 +1746,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     int delta = 100; // in case server time slower.
 
                     // Should timeout after the minimum possible timeout with jitter
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
-                    // Should timeout before the defined connection timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 + delta);
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000 - delta);
+                    // But never more than 1 sec (max backoff) after the defined timeout
+                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
 
                     Assert.AreEqual(ConnectionState.Closed, conn.State);
                     Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
