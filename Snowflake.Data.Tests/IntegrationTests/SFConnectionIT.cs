@@ -380,7 +380,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbConnection conn = new MockSnowflakeDbConnection())
                 {
                     int timeoutSec = 5;
-                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
+                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                         timeoutSec);
 
                     conn.ConnectionString = loginTimeOut5sec;
@@ -404,8 +404,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Should timeout before the defined timeout plus 1 (buffer time)
                     Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
-                    // Should timeout after the minimum possible timeout with jitter
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000 - delta);
+                    // Should timeout after the defined timeout since retry count is infinite
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
 
                     Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
                 }
@@ -1724,7 +1724,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new MockSnowflakeDbConnection())
                 {
                     int timeoutSec = 5;
-                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
+                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                         timeoutSec);
                     conn.ConnectionString = loginTimeOut5sec;
 
@@ -1745,8 +1745,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stopwatch.Stop();
                     int delta = 10; // in case server time slower.
 
-                    // Should timeout after the minimum possible timeout with jitter
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000 - delta);
+                    // Should timeout after the defined timeout since retry count is infinite
+                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
                     // But never more than 1 sec (buffer time) after the defined timeout
                     Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
 
