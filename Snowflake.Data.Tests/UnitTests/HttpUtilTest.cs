@@ -96,6 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "localhost", 
                 false,
                 false,
+                300,
                 7
             );
             
@@ -120,6 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 null, 
                 false,
                 false,
+                300,
                 0
             );
             
