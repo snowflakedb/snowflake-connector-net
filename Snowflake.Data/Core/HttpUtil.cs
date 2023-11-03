@@ -459,23 +459,26 @@ namespace Snowflake.Data.Core
 
                     requestMessage.RequestUri = updater.Update(errorReason);
 
-                    if (retryCount > 1)
-                    {
-                        var jitter = GetJitter(backOffInSec);
 
-                        // Set backoff time
-                        if (isLoginRequest)
-                        {
-                            // Choose between previous sleep time and new base sleep time for login requests
-                            backOffInSec = (int)ChooseRandom(
-                                backOffInSec + jitter,
-                                Math.Pow(s_exponentialFactor, retryCount) + jitter);
-                        }
-                        else if (backOffInSec < MAX_BACKOFF)
-                        {
-                            // Multiply sleep by 2 for non-login requests
-                            backOffInSec *= 2;
-                        }
+                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
+
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
+                    totalRetryTime += backOffInSec;
+
+                    var jitter = GetJitter(backOffInSec);
+
+                    // Set backoff time
+                    if (isLoginRequest)
+                    {
+                        // Choose between previous sleep time and new base sleep time for login requests
+                        backOffInSec = (int)ChooseRandom(
+                            backOffInSec + jitter,
+                            Math.Pow(s_exponentialFactor, retryCount) + jitter);
+                    }
+                    else if (backOffInSec < MAX_BACKOFF)
+                    {
+                        // Multiply sleep by 2 for non-login requests
+                        backOffInSec *= 2;
                     }
 
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
@@ -485,11 +488,6 @@ namespace Snowflake.Data.Core
                         // then use the remaining connection timeout
                         backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime);
                     }
-
-                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
-
-                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
-                    totalRetryTime += backOffInSec;
                 }
             }
         }
