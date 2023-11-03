@@ -1689,9 +1689,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for the default timeout minus 10 seconds (just before the actual timeout is reached)
-                // to make sure there are no false positive
-                Thread.Sleep((SFSessionHttpClientProperties.s_retryTimeoutDefault - 10) * 1000);
+                // Sleep for more than the default timeout to make sure there are no false positive)
+                Thread.Sleep((SFSessionHttpClientProperties.s_retryTimeoutDefault + 10) * 1000);
 
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
