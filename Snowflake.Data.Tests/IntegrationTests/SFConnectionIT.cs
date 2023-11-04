@@ -443,6 +443,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+        {
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
+            {
+                int connectionTimeout = 600;
+                int retryTimeout = 350;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                    connectionTimeout, retryTimeout);
+
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    // Jitter can cause the request to reach max number of retries before reaching the timeout
+                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout before the defined timeout plus 1 (buffer time)
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 1) * 1000);
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+
+                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
         [Ignore("Disable unstable test cases for now")]
         public void TestDefaultLoginTimeout()
         {
@@ -1747,6 +1785,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
+        public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                int connectionTimeout = 600;
+                int retryTimeout = 350;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                    connectionTimeout, retryTimeout);
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
+                    connectTask.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+                // But never more than 1 sec (buffer time) after the defined timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 1) * 1000);
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
             }
         }
 

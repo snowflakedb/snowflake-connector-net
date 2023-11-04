@@ -87,7 +87,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
             Assert.AreEqual(properties.disableRetry, config.DisableRetry);
             Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
-            Assert.AreEqual(properties.retryTimeout, config.RetryTimeout);
             Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
@@ -264,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    timeoutInSec = 0,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,

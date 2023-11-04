@@ -28,7 +28,6 @@ namespace Snowflake.Data.Core
             string noProxyList,
             bool disableRetry,
             bool forceRetryOn404,
-            int retryTimeout,
             int maxHttpRetries,
             bool includeRetryReason = true)
         {
@@ -40,7 +39,6 @@ namespace Snowflake.Data.Core
             NoProxyList = noProxyList;
             DisableRetry = disableRetry;
             ForceRetryOn404 = forceRetryOn404;
-            RetryTimeout = retryTimeout;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
 
@@ -54,7 +52,6 @@ namespace Snowflake.Data.Core
                     noProxyList,
                     disableRetry.ToString(),
                     forceRetryOn404.ToString(),
-                    retryTimeout.ToString(),
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString()});
         }
@@ -67,7 +64,6 @@ namespace Snowflake.Data.Core
         public readonly string NoProxyList;
         public readonly bool DisableRetry;
         public readonly bool ForceRetryOn404;
-        public readonly int RetryTimeout;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
 
@@ -120,7 +116,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.RetryTimeout, config.MaxHttpRetries, config.IncludeRetryReason))
+                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -331,15 +327,13 @@ namespace Snowflake.Data.Core
 
             private bool disableRetry;
             private bool forceRetryOn404;
-            private int retryTimeout;
             private int maxRetryCount;
             private bool includeRetryReason;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int retryTimeout, int maxRetryCount, bool includeRetryReason) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount, bool includeRetryReason) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
-                this.retryTimeout = retryTimeout;
                 this.maxRetryCount = maxRetryCount;
                 this.includeRetryReason = includeRetryReason;
             }
@@ -358,10 +352,7 @@ namespace Snowflake.Data.Core
                 p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
-                // Use the lower timeout value between rest timeout and max retry timeout
-                TimeSpan restTimeout = ((TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY]).TotalSeconds < retryTimeout ?
-                    (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY] :
-                    TimeSpan.FromSeconds(retryTimeout);
+                TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
 
                 if (logger.IsDebugEnabled())
                 {

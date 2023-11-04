@@ -48,6 +48,12 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Max retry timeout provided is 0. Timeout will be infinite");
             }
 
+            // Use the shorter timeout between CONNECTION_TIMEOUT and RETRY_TIMEOUT
+            if (retryTimeout < timeoutInSec)
+            {
+                timeoutInSec = retryTimeout;
+            }
+
             if (maxHttpRetries > 0 && maxHttpRetries < s_maxHttpRetriesDefault)
             {
                 logger.Warn($"Max retry count provided is less than the allowed minimum value of" +
@@ -77,7 +83,6 @@ namespace Snowflake.Data.Core
                 proxyProperties.nonProxyHosts,
                 disableRetry,
                 forceRetryOn404,
-                retryTimeout,
                 maxHttpRetries,
                 includeRetryReason);
         }
