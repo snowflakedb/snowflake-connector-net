@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defHost = "testaccount.snowflakecomputing.com";
             string defAuthenticator = "snowflake";
             string defScheme = "https";
-            string defConnectionTimeout = "120";
+            string defConnectionTimeout = "300";
             string defBrowserResponseTime = "120";
             string defPassword = "123";
             string defPort = "443";
@@ -57,6 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defProxyPort = "1234";
             string defNonProxyHosts = "localhost";
 
+            string defRetryTimeout = "300";
             string defMaxHttpRetries = "7";
             string defIncludeRetryReason = "true";
             string defDisableQueryContextCache = "false";
@@ -82,6 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
@@ -107,6 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "180" },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
@@ -135,6 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
@@ -165,6 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
@@ -193,6 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
@@ -220,6 +226,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, "false" },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
@@ -245,6 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" }

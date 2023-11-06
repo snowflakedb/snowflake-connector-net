@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using RichardSzalay.MockHttp;
     using System.Threading.Tasks;
     using System.Net;
+    using System;
 
     [TestFixture]
     class HttpUtilTest
@@ -37,6 +38,49 @@ namespace Snowflake.Data.Tests.UnitTests
             bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
             Assert.AreEqual(expectedIsRetryable, actualIsRetryable);
+        }
+
+        // Parameters: request url, expected value
+        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", true)]
+        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", true)]
+        [TestCase("https://test.snowflakecomputing.com/session/token-request", true)]
+        [TestCase("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
+        [Test]
+        public void TestIsLoginUrl(string requestUrl, bool expectedIsLoginEndpoint)
+        {
+            // given
+            var uri = new Uri(requestUrl);
+
+            // when
+            bool isLoginEndpoint = HttpUtil.IsLoginEndpoint(uri.AbsolutePath);
+
+            // then
+            Assert.AreEqual(expectedIsLoginEndpoint, isLoginEndpoint);
+        }
+
+        // Parameters: time in seconds
+        [TestCase(4)]
+        [TestCase(8)]
+        [TestCase(16)]
+        [TestCase(32)]
+        [TestCase(64)]
+        [TestCase(128)]
+        [Test]
+        public void TestGetJitter(int seconds)
+        {
+            // given
+            var lowerBound = -(seconds / 2);
+            var upperBound = seconds / 2;
+
+            double jitter;
+            for (var i = 0; i < 10; i++)
+            {
+                // when
+                jitter = HttpUtil.GetJitter(seconds);
+
+                // then
+                Assert.IsTrue(jitter >= lowerBound && jitter <= upperBound);
+            }
         }
 
         [Test]

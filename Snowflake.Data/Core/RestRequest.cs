@@ -108,6 +108,9 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
+        private const string ClientAppId = "CLIENT_APP_ID";
+        private const string ClientAppVersion = "CLIENT_APP_VERSION";
+
         internal SFRestRequest() : base()
         {
             RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
@@ -123,6 +126,8 @@ namespace Snowflake.Data.Core
         internal String serviceName { get; set; }
 
         internal bool isPutGet { get; set; }
+
+        internal bool _isLogin { get; set; }
 
         public override string ToString()
         {
@@ -156,6 +161,12 @@ namespace Snowflake.Data.Core
             else
             {
                 message.Headers.Accept.Add(applicationSnowflake);
+            }
+
+            if (_isLogin)
+            {
+                message.Headers.Add(ClientAppId, SFEnvironment.DriverName);
+                message.Headers.Add(ClientAppVersion, SFEnvironment.DriverVersion);
             }
 
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));

@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core
                 InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
-                extractedProperties.WarnOnTimeout();
+                extractedProperties.CheckPropertiesAreValid();
                 connectionTimeout = extractedProperties.TimeoutDuration();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
@@ -362,7 +362,8 @@ namespace Snowflake.Data.Core
                 jsonBody = postBody,
                 Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                RestTimeout = Timeout.InfiniteTimeSpan
+                RestTimeout = Timeout.InfiniteTimeSpan,
+                _isLogin = true
             };
         }
 
@@ -374,6 +375,7 @@ namespace Snowflake.Data.Core
                 Url = uri,
                 authorizationToken = SF_AUTHORIZATION_BASIC,
                 RestTimeout = connectionTimeout,
+                _isLogin = true
             };
         }
 
