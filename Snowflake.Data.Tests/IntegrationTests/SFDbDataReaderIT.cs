@@ -15,8 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    // TODO: enable tests for Arrow
-    //[TestFixture(ResultFormat.ARROW)]
+    [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
     class SFDbDataReaderIT : SFBaseTest
     {
@@ -201,7 +200,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
 
                     ValidateResultFormat(reader);
-
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("05/17/2013", reader.GetString(0));
 
@@ -637,12 +635,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
-                    ValidateResultFormat(reader);
-
                     int index = 0;
                     while (reader.Read())
                     {
                         // Assert
+                        ValidateResultFormat(reader);
                         Assert.AreEqual(testBytes[index++], reader.GetByte(0));
                     }
                 }
@@ -815,9 +812,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
-                    ValidateResultFormat(reader);
-
                     // Assert
+                    ValidateResultFormat(reader);
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(testChar, reader.GetChar(0));
                 }
@@ -1003,9 +999,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Act
                 using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
                 {
-                    ValidateResultFormat(reader);
-
                     // Assert
+                    ValidateResultFormat(reader);
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("TEXT", reader.GetDataTypeName(0));
                     Assert.AreEqual("BINARY", reader.GetDataTypeName(1));
