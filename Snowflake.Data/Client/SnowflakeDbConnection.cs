@@ -26,7 +26,7 @@ namespace Snowflake.Data.Client
         
         internal int _connectionTimeout;
 
-        private bool disposed = false;
+        private bool _disposed = false;
 
         private static Mutex _arraybindingMutex = new Mutex();
 
@@ -361,20 +361,29 @@ namespace Snowflake.Data.Client
 
         protected override void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-
-            try
+            if (!_disposed)
             {
-                this.Close();
-            } 
-            catch (Exception ex)
-            {
-                // Prevent an exception from being thrown when disposing of this object
-                logger.Error("Unable to close connection", ex);
+                if (disposing)
+                {
+                    try
+                    {
+                        Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Prevent an exception from being thrown when disposing of this object
+                        logger.Error("Unable to close connection", ex);
+                    }
+                }
+                else
+                {
+                    SfSession?.close();
+                    SfSession = null;
+                    _connectionState = ConnectionState.Closed;
+                }
+                
+                _disposed = true;
             }
-
-            disposed = true;
 
             base.Dispose(disposing);
         }
