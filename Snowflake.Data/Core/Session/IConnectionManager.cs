@@ -21,5 +21,6 @@ namespace Snowflake.Data.Core.Session
         int GetCurrentPoolSize();
         bool SetPooling(bool poolingEnabled);
         bool GetPooling();
+        SessionPool GetPool(string connectionString);
     }
 }

@@ -85,6 +85,18 @@ public class ExampleClass
 }
 ```
 
+#### Property
+
+Use PascalCase, eg. `SomeProperty`.
+
+```csharp
+public ExampleProperty
+{
+    get;
+    set;
+}
+```
+
 ### Local variables
 
 Use camelCase, eg. `someVariable`.

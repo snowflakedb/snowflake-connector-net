@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -15,7 +15,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Core
 {
@@ -69,7 +68,8 @@ namespace Snowflake.Data.Core
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
-        internal string connStr = null;
+        internal string ConnectionString { get; }
+        internal SecureString Password { get; }
 
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
@@ -145,8 +145,9 @@ namespace Snowflake.Data.Core
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
-            connStr = connectionString;
-            properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            ConnectionString = connectionString;
+            Password = password;
+            properties = SFSessionProperties.parseConnectionString(ConnectionString, Password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             ValidateApplicationName(properties);
             try
@@ -215,7 +216,7 @@ namespace Snowflake.Data.Core
             return uriBuilder.Uri;
         }
 
-        internal void Open()
+        internal virtual void Open()
         {
             logger.Debug("Open Session");
 
@@ -227,7 +228,7 @@ namespace Snowflake.Data.Core
             authenticator.Authenticate();
         }
 
-        internal async Task OpenAsync(CancellationToken cancellationToken)
+        internal virtual async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session Async");
 
@@ -557,12 +558,12 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal bool IsNotOpen()
+        internal virtual bool IsNotOpen()
         {
             return _startTime == 0;
         }
 
-        internal bool IsExpired(long timeoutInSeconds, long utcTimeInSeconds)
+        internal virtual bool IsExpired(long timeoutInSeconds, long utcTimeInSeconds)
         {
             return _startTime + timeoutInSeconds <= utcTimeInSeconds;
         }
