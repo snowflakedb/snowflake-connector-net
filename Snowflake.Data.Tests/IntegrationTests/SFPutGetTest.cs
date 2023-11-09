@@ -19,7 +19,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Core.FileTransfer;
 
     [TestFixture]
-    [Parallelizable(ParallelScope.Children)]
     class SFPutGetTest : SFBaseTest
     {
         private const int NumberOfRows = 4;
