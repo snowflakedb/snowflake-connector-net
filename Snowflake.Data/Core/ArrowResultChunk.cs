@@ -6,11 +6,14 @@ using System;
 using System.Collections.Generic;
 using Apache.Arrow;
 using Apache.Arrow.Types;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     internal class ArrowResultChunk : BaseResultChunk
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultChunk>();
+
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
@@ -28,10 +31,31 @@ namespace Snowflake.Data.Core
             1000000000
         };
 
+        private const long TicksPerDay = (long)24 * 60 * 60 * 1000 * 10000;
+
         public List<RecordBatch> RecordBatch { get; set; }
+
+        private sbyte[][] _sbyte;
+        private short[][] _short;
+        private int[][] _int;
+        private long[][] _long;
+
+        private byte[][] _byte;
+        private double[][] _double;
+        
 
         private int _currentBatchIndex = 0;
         private int _currentRecordIndex = -1;
+
+        private void ResetTempTables()
+        {
+            _sbyte = new sbyte[ColumnCount][];
+            _short = new short[ColumnCount][];
+            _int = new int[ColumnCount][];
+            _long = new long[ColumnCount][];
+            _byte = new byte[ColumnCount][];
+            _double = new double[ColumnCount][];
+        }
 
         public ArrowResultChunk(RecordBatch recordBatch)
         {
@@ -39,7 +63,9 @@ namespace Snowflake.Data.Core
 
             RowCount = recordBatch.Length;
             ColumnCount = recordBatch.ColumnCount;
-            ChunkIndex = 0;
+            ChunkIndex = -1;
+            
+            ResetTempTables();
         }
 
         public ArrowResultChunk(int columnCount)
@@ -48,21 +74,25 @@ namespace Snowflake.Data.Core
 
             RowCount = 0;
             ColumnCount = columnCount;
-            ChunkIndex = 0;
+            ChunkIndex = -1;
+
+            ResetTempTables();
         }
 
         public void AddRecordBatch(RecordBatch recordBatch)
         {
             RecordBatch.Add(recordBatch);
         }
-
+        
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
             base.Reset(chunkInfo, chunkIndex);
-
+            
             _currentBatchIndex = 0;
             _currentRecordIndex = -1;
             RecordBatch.Clear();
+
+            ResetTempTables();
         }
 
         internal override bool Next()
@@ -76,6 +106,8 @@ namespace Snowflake.Data.Core
 
             _currentBatchIndex += 1;
             _currentRecordIndex = 0;
+
+            ResetTempTables();
 
             return _currentBatchIndex < RecordBatch.Count;
         }
@@ -94,6 +126,8 @@ namespace Snowflake.Data.Core
             if (_currentBatchIndex >= 0)
             {
                 _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
+
+                ResetTempTables();
                 return true;
             }
 
@@ -111,6 +145,14 @@ namespace Snowflake.Data.Core
             throw new NotSupportedException();
         }
 
+        public string GetMetadata()
+        {
+            if (RecordBatch.Count == 0)
+                return $"No data";
+
+            return $"batches: {RecordBatch.Count}";
+        }
+
         public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
         {
             var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
@@ -126,45 +168,76 @@ namespace Snowflake.Data.Core
                     switch (column.Data.DataType.TypeId)
                     {
                         case ArrowTypeId.Int8:
+                            if (_sbyte[columnIndex] == null)
+                                _sbyte[columnIndex] = ((Int8Array)column).Values.ToArray();
                             if (scale == 0)
-                                return ((Int8Array)column).GetValue(_currentRecordIndex);
+                                return _sbyte[columnIndex][_currentRecordIndex];
                             else
-                                return ((Int8Array)column).GetValue(_currentRecordIndex) / (decimal)s_powersOf10[scale];
+                                return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+
                         case ArrowTypeId.Int16:
+                            if (_short[columnIndex] == null)
+                                _short[columnIndex] = ((Int16Array)column).Values.ToArray();
                             if (scale == 0)
-                                return ((Int16Array)column).GetValue(_currentRecordIndex);
+                                return _short[columnIndex][_currentRecordIndex];
                             else
-                                return ((Int16Array)column).GetValue(_currentRecordIndex) / (decimal)s_powersOf10[scale];
+                                return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                        
                         case ArrowTypeId.Int32:
+                            if (_int[columnIndex] == null)
+                                _int[columnIndex] = ((Int32Array)column).Values.ToArray();
                             if (scale == 0)
-                                return ((Int32Array)column).GetValue(_currentRecordIndex);
+                                return _int[columnIndex][_currentRecordIndex];
                             else
-                                return ((Int32Array)column).GetValue(_currentRecordIndex) / (decimal)s_powersOf10[scale];
+                                return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+
                         case ArrowTypeId.Int64:
+                            if (_long[columnIndex] == null)
+                                _long[columnIndex] = ((Int64Array)column).Values.ToArray();
                             if (scale == 0)
-                                return ((Int64Array)column).GetValue(_currentRecordIndex);
+                                return _long[columnIndex][_currentRecordIndex];
                             else
-                                return ((Int64Array)column).GetValue(_currentRecordIndex) / (decimal)s_powersOf10[scale];
+                                return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                        
                         case ArrowTypeId.Decimal128:
                             return ((Decimal128Array)column).GetValue(_currentRecordIndex);
                     }
                     break;
 
                 case SFDataType.BOOLEAN:
-                    return ((BooleanArray)column).GetValue(_currentRecordIndex);
+                    if (_byte[columnIndex] == null)
+                        _byte[columnIndex] = ((BooleanArray)column).Values.ToArray();
+                    return _byte[columnIndex][_currentRecordIndex] == 1;
+
                 case SFDataType.REAL:
                     // Snowflake data types that are floating-point numbers will fall in this category
                     // e.g. FLOAT/REAL/DOUBLE
-                    return ((DoubleArray)column).GetValue(_currentRecordIndex);
+                    if (_double[columnIndex] == null)
+                        _double[columnIndex] = ((DoubleArray)column).Values.ToArray();
+                    return _double[columnIndex][_currentRecordIndex];
+
                 case SFDataType.TEXT:
                 case SFDataType.ARRAY:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                    return ((StringArray)column).GetString(_currentRecordIndex);
+                    if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                    {
+                        _byte[columnIndex] = ((StringArray)column).Values.ToArray();
+                        _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                    }
+                    return StringArray.DefaultEncoding.GetString(
+                        _byte[columnIndex], 
+                        _int[columnIndex][_currentRecordIndex], 
+                        _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
+                    
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
+                
                 case SFDataType.DATE:
-                    return ((Date32Array)column).GetDateTime(_currentRecordIndex);
+                    if (_int[columnIndex] == null)
+                        _int[columnIndex] = ((Date32Array)column).Values.ToArray();
+                    return SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay);
+                
                 case SFDataType.TIME:
                 {
                     var value = column.Data.DataType.TypeId == ArrowTypeId.Int32

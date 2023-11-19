@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Snowflake.Data.Core
 {
@@ -127,6 +128,9 @@ namespace Snowflake.Data.Core
             return false;
         }
 
+        private long _compressedSize = 0;
+        private long _uncompressedSize = 0;
+
         internal override bool Next()
         {
             ThrowIfClosed();
@@ -137,12 +141,17 @@ namespace Snowflake.Data.Core
             if (_chunkDownloader != null)
             {
                 s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Error($"StopWatch: {_stopWatch.ElapsedMilliseconds}, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}," +
+                               $" rows: {_currentChunk.RowCount}, size: {_currentChunk.CompressedSize} {_currentChunk.UncompressedSize}");
+                _compressedSize += _currentChunk.CompressedSize;
+                _uncompressedSize += _currentChunk.UncompressedSize;
                 BaseResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {
                     ResetChunkInfo(nextChunk);
                     return _currentChunk.Next();
                 }
+                s_logger.Error($"CompressedSize: {_compressedSize}, UncompressedSize: {_uncompressedSize}");
             }
             return false;
         }
@@ -285,11 +294,16 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private Stopwatch _stopWatch = new Stopwatch();
+
         internal override object GetValue(int ordinal) 
         {
+            _stopWatch.Start();
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+            var x = SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+            _stopWatch.Stop();
+            return x;
         }
         
         private T GetValue<T>(int ordinal)

@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -28,22 +29,6 @@ namespace Snowflake.Data.Core
             columnCount = responseData.rowType.Count;
             try
             {
-                if (responseData.rowsetBase64.Length > 0)
-                {
-                    using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
-                    {
-                        using (var reader = new ArrowStreamReader(stream))
-                        {
-                            var recordBatch = reader.ReadNextRecordBatch();
-                            _currentChunk = new ArrowResultChunk(recordBatch);
-                        }
-                    }
-                }
-                else
-                {
-                    _currentChunk = new ArrowResultChunk(columnCount);
-                }
-
                 this.sfStatement = sfStatement;
                 UpdateSessionStatus(responseData);
 
@@ -60,6 +45,26 @@ namespace Snowflake.Data.Core
                 isClosed = false;
 
                 queryId = responseData.queryId;
+                
+                if (responseData.rowsetBase64.Length > 0)
+                {
+                    using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
+                    {
+                        using (var reader = new ArrowStreamReader(stream))
+                        {
+                            var recordBatch = reader.ReadNextRecordBatch();
+                            _currentChunk = new ArrowResultChunk(recordBatch);
+                            while ((recordBatch = reader.ReadNextRecordBatch()) != null)
+                            {
+                                ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _currentChunk = new ArrowResultChunk(columnCount);
+                }
             }
             catch(System.Exception ex)
             {
@@ -85,6 +90,9 @@ namespace Snowflake.Data.Core
             return false;
         }
 
+        private long _compressedSize = 0;
+        private long _uncompressedSize = 0;
+        
         internal override bool Next()
         {
             ThrowIfClosed();
@@ -95,7 +103,14 @@ namespace Snowflake.Data.Core
             if (_totalChunkCount > 0)
             {
                 s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Error($"StopWatch: {_stopWatch.ElapsedMilliseconds}, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}," +
+                               $" rows: {_currentChunk.RowCount}, size: {_currentChunk.CompressedSize} {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
+                _compressedSize += _currentChunk.CompressedSize;
+                _uncompressedSize += _currentChunk.UncompressedSize;
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+
+                if (_currentChunk == null)
+                    s_logger.Error($"CompressedSize: {_compressedSize}, UncompressedSize: {_uncompressedSize}");
                 return _currentChunk?.Next() ?? false;
             }
 
@@ -141,6 +156,8 @@ namespace Snowflake.Data.Core
             return false;
         }
 
+        private Stopwatch _stopWatch = new Stopwatch();
+        
         private object GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
@@ -157,16 +174,42 @@ namespace Snowflake.Data.Core
         
         internal override object GetValue(int ordinal)
         {
+            _stopWatch.Start();
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
+            {
+                _stopWatch.Stop();
                 return value;
+            }
             
-            if (value is decimal ret)
-                return ret;
-            
-            var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+            object obj;
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: obj =  ret;
+                        break;
+                    case long ret: obj =  ret;
+                        break;
+                    case int ret: obj =  (long)ret;
+                        break;
+                    case short ret: obj =  (long)ret;
+                        break;
+                    case sbyte ret: obj =  (long)ret;
+                        break;
+                    case string ret: obj =  ret;
+                        break;
+                    default:
+                    {
+                        var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                        obj = Convert.ChangeType(value, dstType);
+                        break;
+                    }
+                }
+            }
 
-            return Convert.ChangeType(value, dstType);
+            _stopWatch.Stop();
+            return obj;
         }
 
         internal override bool IsDBNull(int ordinal)

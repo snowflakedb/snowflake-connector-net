@@ -16,6 +16,10 @@ namespace Snowflake.Data.Core
         
         public int ChunkIndex { get; protected set; }
 
+        internal int CompressedSize;
+        
+        internal int UncompressedSize;
+
         internal string Url { get; set; }
 
         internal string[,] RowSet { get; set; }
@@ -32,12 +36,16 @@ namespace Snowflake.Data.Core
         internal abstract bool Next();
         
         internal abstract bool Rewind();
-
+        
         internal virtual void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
             RowCount = chunkInfo.rowCount;
             Url = chunkInfo.url;
             ChunkIndex = chunkIndex;
+            
+            CompressedSize = chunkInfo.compressedSize;
+            UncompressedSize = chunkInfo.uncompressedSize;
+
         }
 
         internal virtual void ResetForRetry()
