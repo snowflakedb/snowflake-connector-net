@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -33,7 +34,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestNewConnectionPoolFull()
+        public void TestReuseSessionInConnectionPool() // old name: TestConnectionPool
+        {
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = ConnectionString;
+            conn2.Open();
+            Assert.AreEqual(ConnectionState.Open, conn2.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+
+            conn2.Close();
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(ConnectionState.Closed, conn2.State);
+        }
+        
+        [Test]
+        public void TestReuseSessionInConnectionPoolReachingMaxConnections() // old name: TestConnectionPoolFull
         {
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
             pool.SetMaxPoolSize(2);
@@ -48,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn2.Open();
             Assert.AreEqual(ConnectionState.Open, conn2.State);
             
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.AreEqual(2, pool.GetCurrentPoolSize());
             conn1.Close();
             conn2.Close();
             Assert.AreEqual(2, pool.GetCurrentPoolSize());
@@ -64,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Open, conn4.State);
 
             conn3.Close();
-            Assert.AreEqual(1, pool.GetCurrentPoolSize()); // TODO: when SNOW-937189 complete should be 2 
+            Assert.AreEqual(2, pool.GetCurrentPoolSize());
             conn4.Close();
             Assert.AreEqual(2, pool.GetCurrentPoolSize());
 
@@ -74,6 +96,62 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn4.State);
         }
         
+        [Test]
+        public void TestBusyAndIdleConnectionsCountedInPoolSize()
+        {
+            // arrange
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            pool.SetMaxPoolSize(2);
+            var connection = new SnowflakeDbConnection();
+            connection.ConnectionString = ConnectionString;
+            
+            // act
+            connection.Open();
+            
+            // assert
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            
+            // act
+            connection.Close();
+            
+            // assert
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+        }
+
+        [Test]
+        public void TestConnectionPoolNotPossibleToDisableForAllPools()
+        {
+            // act
+            var thrown = Assert.Throws<Exception>(() => SnowflakeDbConnectionPool.SetPooling(false));
+            
+            // assert
+            Assert.IsNotNull(thrown);
+        }
+        
+        [Test]
+        public void TestConnectionPoolDisable() 
+        {
+            // arrange
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            pool.SetPooling(false);
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+            
+            // act
+            conn1.Open();
+            
+            // assert
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            
+            // act
+            conn1.Close();
+
+            // assert
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+        }
+
         [Test]
         public void TestNewConnectionPoolClean()
         {

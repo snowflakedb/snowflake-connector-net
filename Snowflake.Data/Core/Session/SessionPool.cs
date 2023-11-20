@@ -27,7 +27,8 @@ namespace Snowflake.Data.Core.Session
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
         private bool _pooling = true;
-        private bool _allowExceedMaxPoolSize = true;
+        private readonly ICounter _busySessionsCounter;
+        private readonly bool _allowExceedMaxPoolSize = true;
 
         private SessionPool()
         {
@@ -36,14 +37,22 @@ namespace Snowflake.Data.Core.Session
                 _idleSessions = new List<SFSession>();
                 _maxPoolSize = MaxPoolSize;
                 _timeout = Timeout;
+                _busySessionsCounter = new FixedZeroCounter();
             }
         }
 
-        private SessionPool(string connectionString, SecureString password) : this()
+        private SessionPool(string connectionString, SecureString password)
         {
-            ConnectionString = connectionString;
-            Password = password;
-            _allowExceedMaxPoolSize = false; // TODO: SNOW-937190
+            lock (s_sessionPoolLock)
+            {
+                _idleSessions = new List<SFSession>();
+                _maxPoolSize = MaxPoolSize;
+                _timeout = Timeout;
+                _busySessionsCounter = new NonNegativeCounter();
+                ConnectionString = connectionString;
+                Password = password;
+                _allowExceedMaxPoolSize = false; // TODO: SNOW-937190
+            }
         }
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
@@ -129,6 +138,7 @@ namespace Snowflake.Data.Core.Session
                         else
                         {
                             s_logger.Debug($"reuse pooled session with sid {session.sessionId}");
+                            _busySessionsCounter.Increase();
                             return session;
                         }
                     }
@@ -143,6 +153,8 @@ namespace Snowflake.Data.Core.Session
             try
             {
                 var session = s_sessionFactory.NewSession(connectionString, password);
+                if (_pooling)
+                    _busySessionsCounter.Increase();
                 session.Open();
                 return session;
             }
@@ -163,6 +175,8 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
             var session = s_sessionFactory.NewSession(connectionString, password);
+            if (_pooling)
+                _busySessionsCounter.Increase();
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
@@ -187,15 +201,19 @@ namespace Snowflake.Data.Core.Session
                 return false;
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (session.IsNotOpen() || session.IsExpired(_timeout, timeNow))
+            {
+                lock (s_sessionPoolLock)
+                {
+                    _busySessionsCounter.Decrease();
+                }
                 return false;
+            }
 
             lock (s_sessionPoolLock)
             {
-                if (_idleSessions.Count >= _maxPoolSize)
-                {
-                    CleanExpiredSessions();
-                }
-                if (_idleSessions.Count >= _maxPoolSize)
+                _busySessionsCounter.Decrease();
+                CleanExpiredSessions();
+                if (GetCurrentPoolSize() >= _maxPoolSize)
                 {
                     s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId}");
                     return false;
@@ -252,7 +270,7 @@ namespace Snowflake.Data.Core.Session
 
         public int GetCurrentPoolSize()
         {
-            return _idleSessions.Count;
+            return _idleSessions.Count + _busySessionsCounter.Count();
         }
 
         public bool SetPooling(bool isEnable)

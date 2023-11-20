@@ -102,6 +102,9 @@ namespace Snowflake.Data.Core.Session
 
         public bool SetPooling(bool poolingEnabled)
         {
+            if (!poolingEnabled)
+                throw new Exception(
+                    "Could not disable pooling for all connections. You could disable pooling by given connection string instead.");
             s_logger.Debug("ConnectionPoolManager::SetPooling for all pools");
             return _pools.Values
                 .Select(pool => pool.SetPooling(poolingEnabled))
