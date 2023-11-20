@@ -23,12 +23,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
-        private static PoolConfig s_previousPoolConfig;
+        private readonly PoolConfig _previousPoolConfig;
 
         public ConnectionPoolCommonIT(ConnectionPoolType connectionPoolTypeUnderTest)
         {
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;
-            s_previousPoolConfig = new PoolConfig();
+            _previousPoolConfig = new PoolConfig();
         }
 
         [SetUp]
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public new void AfterTest()
         {
-            s_previousPoolConfig.Reset();
+            _previousPoolConfig.Reset();
         }
 
         [OneTimeTearDown]

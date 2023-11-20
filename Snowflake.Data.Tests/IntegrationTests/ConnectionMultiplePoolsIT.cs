@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [NonParallelizable]
     public class ConnectionMultiplePoolsIT: SFBaseTest
     {
-        private static readonly PoolConfig s_previousPoolConfig = new PoolConfig();
+        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         
         [SetUp]
         public new void BeforeTest()
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TearDown]
         public new void AfterTest()
         {
-            s_previousPoolConfig.Reset();
+            _previousPoolConfig.Reset();
         }
         
         [OneTimeTearDown]
