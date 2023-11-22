@@ -281,10 +281,13 @@ namespace Snowflake.Data.Core
         {
             ResponseQueryContext rspQCC = new ResponseQueryContext();
             rspQCC.Entries = new List<ResponseQueryContextElement>();
-            foreach (QueryContextElement elem in _cacheSet)
+            lock (_qccLock)
             {
-                ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
-                rspQCC.Entries.Add(rspElem);
+                foreach (QueryContextElement elem in _cacheSet)
+                {
+                    ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
+                    rspQCC.Entries.Add(rspElem);
+                }
             }
 
             return rspQCC;
