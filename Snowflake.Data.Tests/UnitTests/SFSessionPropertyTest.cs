@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFSessionPropertyTest
     {
 
-        [Test, TestCaseSource("ConnectionStringTestCases")]
+        [Test, TestCaseSource(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // act
@@ -29,7 +29,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
-        public void TestThatItFailsForWrongFileTransferMaxBytesInMemoryParameter(string connectionString, string expectedErrorMessagePart)
+        [TestCase("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
+        [TestCase("ACCOUNT=complicated.long.testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value complicated.long.testaccount? for ACCOUNT")]
+        [TestCase("ACCOUNT=?testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value ?testaccount for ACCOUNT")]
+        public void TestThatItFailsForWrongConnectionParameter(string connectionString, string expectedErrorMessagePart)
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
@@ -260,6 +263,34 @@ namespace Snowflake.Data.Tests.UnitTests
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
             };
+            var complicatedAccount = $"{defAccount}.region-name.host-name";
+            var testCaseComplicatedAccountName = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={complicatedAccount};USER={defUser};PASSWORD={defPassword};",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"{complicatedAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                }
+            };
             return new TestCase[]
             {
                 simpleTestCase,
@@ -268,7 +299,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseThatDefaultForUseProxyIsFalse,
                 testCaseWithFileTransferMaxBytesInMemory,
                 testCaseWithIncludeRetryReason,
-                testCaseWithDisableQueryContextCache
+                testCaseWithDisableQueryContextCache,
+                testCaseComplicatedAccountName
             };
         }
         
