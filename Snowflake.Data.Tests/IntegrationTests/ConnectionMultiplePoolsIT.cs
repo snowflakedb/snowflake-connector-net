@@ -1,5 +1,7 @@
 using System;
 using System.Data;
+using System.Diagnostics;
+using System.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
@@ -95,6 +97,72 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn3.State);
             Assert.AreEqual(ConnectionState.Closed, conn4.State);
         }
+
+        [Test]
+        public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
+        {
+            // arrange
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            pool.SetMaxPoolSize(2);
+            pool.SetWaitingTimeout(1000);
+            var conn1 = OpenedConnection();
+            var conn2 = OpenedConnection();
+            var watch = new Stopwatch();
+            
+            // act
+            watch.Start();
+            var thrown = Assert.Throws<SnowflakeDbException>(() => OpenedConnection());
+            watch.Stop();
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
+            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
+            Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
+
+            // cleanup
+            conn1.Close();
+            conn2.Close();
+        }
+
+        [Test]
+        public void TestWaitInAQueueForAnIdleSession()
+        {
+            // arrange
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            pool.SetMaxPoolSize(2);
+            pool.SetWaitingTimeout(3000);
+            var threads = new ConnectingThreads(ConnectionString)
+                .NewThread("A", 0, 2000, true)
+                .NewThread("B", 50, 2000, true)
+                .NewThread("C", 100, 0, true)
+                .NewThread("D", 150, 0, true);
+            var watch = new Stopwatch();
+            
+            // act
+            watch.Start();
+            threads.StartAll().JoinAll();
+            watch.Stop();
+
+            // assert
+            var events = threads.Events().ToList();
+            Assert.AreEqual(4, events.Count);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    Tuple.Create("A", "CONNECTED"),
+                    Tuple.Create("B", "CONNECTED"),
+                    Tuple.Create("C", "CONNECTED"),
+                    Tuple.Create("D", "CONNECTED")
+                },
+                events.Select(e => Tuple.Create(e.ThreadName, e.EventName)));
+            Assert.LessOrEqual(events[0].Duration, 1000);
+            Assert.LessOrEqual(events[1].Duration, 1000);
+            Assert.GreaterOrEqual(events[2].Duration, 2000);
+            Assert.LessOrEqual(events[2].Duration, 3100);
+            Assert.GreaterOrEqual(events[3].Duration, 2000);
+            Assert.LessOrEqual(events[3].Duration, 3100);
+        }
         
         [Test]
         public void TestBusyAndIdleConnectionsCountedInPoolSize()
@@ -185,6 +253,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
             Assert.AreEqual(ConnectionState.Closed, conn3.State);
+        }
+
+        private SnowflakeDbConnection OpenedConnection()
+        {
+            var connection = new SnowflakeDbConnection();
+            connection.ConnectionString = ConnectionString;
+            connection.Open();
+            return connection;
         }
     }
 }

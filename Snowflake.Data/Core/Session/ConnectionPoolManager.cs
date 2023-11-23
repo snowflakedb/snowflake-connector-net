@@ -144,7 +144,7 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, null);
         }
 
-        // TODO: SNOW-937188 
+        // TODO: SNOW-937188
         private string GetPoolKey(string connectionString)
         {
             return connectionString;
