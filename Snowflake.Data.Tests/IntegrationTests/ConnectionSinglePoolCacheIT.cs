@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestConnectionPoolDisableFromHighLevel()
+        public void TestConnectionPoolDisableFromPoolManagerLevel()
         {
             // arrange
             SnowflakeDbConnectionPool.SetPooling(false);

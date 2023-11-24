@@ -119,6 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Ignore("Enable when disabling pooling in connection string enabled - SNOW-902632")]
         public void TestConnectionPoolNotPossibleToDisableForAllPools()
         {
             // act
