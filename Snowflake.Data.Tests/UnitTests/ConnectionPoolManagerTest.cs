@@ -2,6 +2,7 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Security;
 using System.Threading;
@@ -160,30 +161,17 @@ namespace Snowflake.Data.Tests.UnitTests
         }         
         
         [Test]
-        public void TestSetPoolingDisabledForAllPools()
+        [Ignore("Enable when disabling pooling in connection string enabled - SNOW-902632")]
+        public void TestSetPoolingDisabledForAllPoolsNotPossible()
         {
             // Arrange
-            var sessionPool1 = _connectionPoolManager.GetPool(ConnectionString1, _password);
+            _connectionPoolManager.GetPool(ConnectionString1, _password);
 
             // Act
-            _connectionPoolManager.SetPooling(false);
+            var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetPooling(false));
             
             // Assert
-            Assert.AreEqual(false, sessionPool1.GetPooling());
-        }
-        
-        [Test]
-        public void TestSetPoolingEnabledBack()
-        {
-            // Arrange
-            var sessionPool1 = _connectionPoolManager.GetPool(ConnectionString1, _password);
-            _connectionPoolManager.SetPooling(false);
-          
-            // Act
-            _connectionPoolManager.SetPooling(true);
-            
-            // Assert
-            Assert.AreEqual(true, sessionPool1.GetPooling());
+            Assert.IsNotNull(thrown);
         }
 
         [Test]

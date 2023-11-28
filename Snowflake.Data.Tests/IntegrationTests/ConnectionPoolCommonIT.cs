@@ -151,27 +151,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestConnectionPool()
-        {
-            var conn1 = new SnowflakeDbConnection(ConnectionString);
-            conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            conn1.Close();
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
-
-            var conn2 = new SnowflakeDbConnection();
-            conn2.ConnectionString = ConnectionString;
-            conn2.Open();
-            Assert.AreEqual(ConnectionState.Open, conn2.State);
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
-
-            conn2.Close();
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(ConnectionState.Closed, conn2.State);
-        }
-
-        [Test]
         public void TestConnectionPoolIsFull()
         {
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
@@ -273,25 +252,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn1.Close();
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetMaxPoolSize(0);
-            SnowflakeDbConnectionPool.SetPooling(false);
+            SnowflakeDbConnectionPool.SetPooling(true);
         }
-
-        [Test]
-        public void TestConnectionPoolDisable()
-        {
-            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
-            pool.SetPooling(false);
-
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
-            conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            conn1.Close();
-
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
-        }
-
+        
         [Test]
         public void TestConnectionPoolWithDispose()
         {
@@ -304,23 +267,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(conn1.ConnectionString).GetCurrentPoolSize());
-        }
-
-        [Test]
-        public void TestConnectionPoolTurnOff()
-        {
-            SnowflakeDbConnectionPool.SetPooling(false);
-            SnowflakeDbConnectionPool.SetPooling(true);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
-            conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            conn1.Close();
-
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
     }
 }
