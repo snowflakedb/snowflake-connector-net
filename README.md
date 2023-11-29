@@ -448,6 +448,29 @@ The .NET driver supports the following mappings from .NET to Snowflake data type
 | `byte` | `BINARY` |
 | `datetime` | `DATE` |
 
+Arrow data format
+-----------------
+
+The .NET connector starting from v2.1.3 supports the Arrow data format for data transfers
+between Snowflake and the .NET client. The Arrow data format avoids extra
+conversions between binary and textual representations of the data. The Arrow
+data format can improve performance and reduce memory consumption in clients.
+
+The data format is controlled by the parameter
+DOTNET_QUERY_RESULT_FORMAT. To use Arrow format, execute:
+
+```snowflake
+-- at the session level
+ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+-- or at the user level
+ALTER USER SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+-- or at the account level
+ALTER ACCOUNT SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+```
+The valid values for the parameter are:
+
+- ARROW
+- JSON (default)
 
 Run a Query and Read Data
 -------------------------
