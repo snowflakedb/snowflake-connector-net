@@ -451,13 +451,13 @@ The .NET driver supports the following mappings from .NET to Snowflake data type
 Arrow data format
 -----------------
 
-The .NET connector starting from v2.1.3 supports the Arrow data format for data transfers
-between Snowflake and the .NET client. The Arrow data format avoids extra
+The .NET connector, starting with v2.1.3, supports the [Arrow data format](https://arrow.apache.org/) for data transfers
+between Snowflake and a .NET client. The Arrow data format avoids extra
 conversions between binary and textual representations of the data. The Arrow
 data format can improve performance and reduce memory consumption in clients.
 
-The data format is controlled by the parameter
-DOTNET_QUERY_RESULT_FORMAT. To use Arrow format, execute:
+The data format is controlled by the
+DOTNET_QUERY_RESULT_FORMAT parameter. To use Arrow format, execute:
 
 ```snowflake
 -- at the session level
