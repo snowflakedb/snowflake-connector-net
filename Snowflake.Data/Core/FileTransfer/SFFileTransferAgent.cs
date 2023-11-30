@@ -185,46 +185,60 @@ namespace Snowflake.Data.Core
         /// </summary>
         public void execute()
         {
-            // Initialize the encryption metadata
-            initEncryptionMaterial();
-
-            if (CommandTypes.UPLOAD == CommandType)
+            try
             {
-                initFileMetadataForUpload();
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                initFileMetadata(TransferMetadata.src_locations);
+                // Initialize the encryption metadata
+                initEncryptionMaterial();
 
-                Directory.CreateDirectory(TransferMetadata.localLocation);
-            }
-
-            // Update the file metadata with GCS presigned URL
-            updatePresignedUrl();
-
-            foreach (SFFileMetadata fileMetadata in FilesMetas)
-            {
-                // If the file is larger than the threshold, add it to the large files list
-                // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                if (CommandTypes.UPLOAD == CommandType)
                 {
-                    LargeFilesMetas.Add(fileMetadata);
+                    initFileMetadataForUpload();
                 }
-                else
+                else if (CommandTypes.DOWNLOAD == CommandType)
                 {
-                    SmallFilesMetas.Add(fileMetadata);
+                    initFileMetadata(TransferMetadata.src_locations);
+
+                    Directory.CreateDirectory(TransferMetadata.localLocation);
+                }
+
+                // Update the file metadata with GCS presigned URL
+                updatePresignedUrl();
+
+                foreach (SFFileMetadata fileMetadata in FilesMetas)
+                {
+                    // If the file is larger than the threshold, add it to the large files list
+                    // Otherwise add it to the small files list
+                    if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                    {
+                        LargeFilesMetas.Add(fileMetadata);
+                    }
+                    else
+                    {
+                        SmallFilesMetas.Add(fileMetadata);
+                    }
+                }
+
+                // Check command type
+                if (CommandTypes.UPLOAD == CommandType)
+                {
+                    upload();
+                }
+                else if (CommandTypes.DOWNLOAD == CommandType)
+                {
+                    download();
                 }
             }
-
-            // Check command type
-            if (CommandTypes.UPLOAD == CommandType)
+            catch (FileNotFoundException e)
             {
-                upload();
+                Logger.Error("File not found while transferring file(s): " + e.Message);
+                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
-            else if (CommandTypes.DOWNLOAD == CommandType)
+            catch (IOException e)
             {
-                download();
+                Logger.Error("IO operation error while transferring file(s): " + e.Message);
+                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
+            
         }
 
         public async Task executeAsync(CancellationToken cancellationToken)
