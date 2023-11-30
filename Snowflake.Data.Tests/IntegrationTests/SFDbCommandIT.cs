@@ -61,6 +61,51 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestExecAsyncAPIParallel()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                Task[] taskArray = new Task[5];
+                for (int i = 0; i < taskArray.Length; i++)
+                {
+                    taskArray[i] = Task.Factory.StartNew(() =>
+                    {
+                        using (DbCommand cmd = conn.CreateCommand())
+                        {
+                            long queryResult = 0;
+                            cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
+                            Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
+                            Task readCallback = execution.ContinueWith((t) =>
+                            {
+                                using (DbDataReader reader = t.Result)
+                                {
+                                    Assert.IsTrue(reader.Read());
+                                    queryResult = reader.GetInt64(0);
+                                    Assert.IsFalse(reader.Read());
+                                }
+                            });
+                            // query is not finished yet, result is still 0;
+                            Assert.AreEqual(0, queryResult);
+                            // block till query finished
+                            readCallback.Wait();
+                            // queryResult should be updated by callback
+                            Assert.AreNotEqual(0, queryResult);
+                        }
+                    });
+                }
+                Task.WaitAll(taskArray);
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void TestCancelExecuteAsync()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
