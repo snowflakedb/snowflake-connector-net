@@ -337,12 +337,13 @@ namespace Snowflake.Data.Core
         /** Debugging purpose, log the all entries in the cache. */
         private void LogCacheEntries()
         {
-#if DEBUG
-            foreach (QueryContextElement elem in _cacheSet)
+            if (_logger.IsDebugEnabled())
             {
-                _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                foreach (QueryContextElement elem in _cacheSet)
+                {
+                    _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                }
             }
-#endif
         }
     }
 }
