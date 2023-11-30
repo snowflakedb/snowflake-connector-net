@@ -208,7 +208,49 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
+                
+        [Test]
+        public void TestPutFileProvidesQueryIdOnFailure()
+        {
+            // Arrange
+            // Set the PUT query variables but do not create a file
+            t_inputFilePath = "unexisting_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var queryId = PutFile(conn);
+                
+                // Assert
+                Assert.IsNotNull(queryId);
+                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+            }
+        }
         
+        [Test]
+        public void TestPutFileProvidesQueryIdOnSuccess()
+        {
+            // Arrange
+            // Set the PUT query variables
+            t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+            PrepareFileData(t_inputFilePath);
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var queryId = PutFile(conn);
+                
+                // Assert
+                Assert.IsNotNull(queryId);
+                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+            }
+        }
+
         [Test]
         public void TestPutFileRelativePathWithDirectory()
         {
@@ -459,11 +501,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         // PUT - upload file from local directory to the stage
-        void PutFile(
+        string PutFile(
             SnowflakeDbConnection conn, 
             String additionalAttribute = "", 
             ResultStatus expectedStatus = ResultStatus.UPLOADED)
         {
+            String queryId;
             using (var command = conn.CreateCommand())
             {
                 // Prepare PUT query
@@ -474,29 +517,41 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Upload file
                 command.CommandText = putQuery;
-                var reader = command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
-
-                // Check file status
-                Assert.AreEqual(expectedStatus.ToString(),
-                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-                // Check source and destination compression type
-                if (t_autoCompress)
+                try
                 {
-                    Assert.AreEqual(t_sourceCompressionType,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(t_destCompressionType,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                    var reader = command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+                    // Checking query id when reader succeeded
+                    queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
+                    // Checking if query Id is provided on the command level as well
+                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    // Check file status
+                    Assert.AreEqual(expectedStatus.ToString(),
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                    // Check source and destination compression type
+                    if (t_autoCompress)
+                    {
+                        Assert.AreEqual(t_sourceCompressionType,
+                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                        Assert.AreEqual(t_destCompressionType,
+                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                    }
+                    else
+                    {
+                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                    }
+                    Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
                 }
-                else
+                catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                    queryId = e.QueryId;
+                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
                 }
-                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
+            return queryId;
         }
 
         // COPY INTO - Copy data from the stage into temp table

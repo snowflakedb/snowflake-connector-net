@@ -40,35 +40,42 @@ namespace Snowflake.Data.Client
         public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
             : base(FormatExceptionMessage(errorMessage, vendorCode, sqlState, queryId))
         {
-            this.SqlState = sqlState;
-            this.VendorCode = vendorCode;
-            this.QueryId = queryId;
+            SqlState = sqlState;
+            VendorCode = vendorCode;
+            QueryId = queryId;
+        }
+
+        public SnowflakeDbException(SFError error, string queryId, params object[] args)
+            : base(FormatExceptionMessage(error, args, string.Empty, queryId))
+        {
+            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            QueryId = queryId;
         }
 
         public SnowflakeDbException(SFError error, params object[] args)
             : base(FormatExceptionMessage(error, args, string.Empty, string.Empty))
         {
-            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
         public SnowflakeDbException(string sqlState, SFError error, params object[] args)
             : base(FormatExceptionMessage(error, args, sqlState, string.Empty))
         {
-            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-            this.SqlState = sqlState;
+            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            SqlState = sqlState;
         }
 
         public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
             : base(FormatExceptionMessage(error, args, string.Empty, string.Empty), innerException)
         {
-            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         }
 
         public SnowflakeDbException(Exception innerException, string sqlState, SFError error, params object[] args)
             : base(FormatExceptionMessage(error, args, sqlState, string.Empty), innerException)
         {
-            this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-            this.SqlState = sqlState;
+            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+            SqlState = sqlState;
         }
 
         static string FormatExceptionMessage(SFError error,
