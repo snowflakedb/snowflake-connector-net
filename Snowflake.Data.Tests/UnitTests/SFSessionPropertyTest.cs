@@ -43,6 +43,20 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
             Assert.IsTrue(exception.Message.Contains(expectedErrorMessagePart));
         }
+
+        [Test]
+        [TestCase("ACCOUNT=;USER=testuser;PASSWORD=testpassword")]
+        [TestCase("USER=testuser;PASSWORD=testpassword")]
+        public void TestThatItFailsIfNoAccountSpecified(string connectionString)
+        {
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(
+                () => SFSessionProperties.parseConnectionString(connectionString, null)
+            );
+            
+            // assert
+            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+        }
         
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
