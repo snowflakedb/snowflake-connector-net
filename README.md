@@ -512,6 +512,8 @@ With version 2.0.18 and later of the .NET connector, you can send
 a batch of SQL statements, separated by semicolons,
 to be executed in a single request.
 
+**Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
+
 ---
 **Note**
 
@@ -578,6 +580,8 @@ using (DbCommand cmd = conn.CreateCommand())
 
 Bind Parameter
 --------------
+
+**Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
 
 This example shows how bound parameters are converted from C# data types to
 Snowflake data types. For example, if the data type of the Snowflake column
