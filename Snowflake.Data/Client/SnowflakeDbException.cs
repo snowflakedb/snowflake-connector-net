@@ -45,8 +45,8 @@ namespace Snowflake.Data.Client
             QueryId = queryId;
         }
 
-        public SnowflakeDbException(SFError error, string queryId, params object[] args)
-            : base(FormatExceptionMessage(error, args, string.Empty, queryId))
+        public SnowflakeDbException(SFError error, string queryId, Exception innerException)
+            : base(FormatExceptionMessage(error, new object[] {innerException.Message}, string.Empty, queryId))
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             QueryId = queryId;
