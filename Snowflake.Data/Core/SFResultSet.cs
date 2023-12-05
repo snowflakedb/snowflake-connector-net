@@ -298,11 +298,11 @@ namespace Snowflake.Data.Core
 
         internal override object GetValue(int ordinal) 
         {
-            _stopWatch.Start();
+            //_stopWatch.Start();
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
             var x = SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
-            _stopWatch.Stop();
+            //_stopWatch.Stop();
             return x;
         }
         

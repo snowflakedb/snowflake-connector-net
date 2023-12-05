@@ -174,11 +174,11 @@ namespace Snowflake.Data.Core
         
         internal override object GetValue(int ordinal)
         {
-            _stopWatch.Start();
+            //_stopWatch.Start();
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
             {
-                _stopWatch.Stop();
+                //_stopWatch.Stop();
                 return value;
             }
             
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            _stopWatch.Stop();
+            //_stopWatch.Stop();
             return obj;
         }
 
