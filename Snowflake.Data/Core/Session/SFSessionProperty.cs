@@ -11,6 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Data.Common;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
@@ -101,10 +102,10 @@ namespace Snowflake.Data.Core
 
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
         // Connection string properties to obfuscate in the log
-        static private List<SFSessionProperty> secretProps =
+        private static List<SFSessionProperty> secretProps =
             new List<SFSessionProperty>{
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
@@ -112,6 +113,8 @@ namespace Snowflake.Data.Core
                 SFSessionProperty.PRIVATE_KEY_PWD,
                 SFSessionProperty.PROXYPASSWORD,
             };
+        
+        private const string AccountRegexString = "^\\w[\\w.-]+\\w$";
 
         public override bool Equals(object obj)
         {
@@ -251,7 +254,8 @@ namespace Snowflake.Data.Core
 
             checkSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
-
+            ValidateAccountDomain(properties);
+            
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
@@ -269,6 +273,22 @@ namespace Snowflake.Data.Core
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
             return properties;
+        }
+
+        private static void ValidateAccountDomain(SFSessionProperties properties)
+        {
+            var account = properties[SFSessionProperty.ACCOUNT];
+            if (string.IsNullOrEmpty(account))
+                return;
+            var match = Regex.Match(account, AccountRegexString, RegexOptions.IgnoreCase);
+            if (match.Success)
+                return;
+            logger.Error($"Invalid account {account}");
+            throw new SnowflakeDbException(
+                new Exception("Invalid account"),
+                SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                account,
+                SFSessionProperty.ACCOUNT);
         }
 
         private static void checkSessionProperties(SFSessionProperties properties)

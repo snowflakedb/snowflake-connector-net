@@ -448,6 +448,30 @@ The .NET driver supports the following mappings from .NET to Snowflake data type
 | `byte` | `BINARY` |
 | `datetime` | `DATE` |
 
+Arrow data format
+-----------------
+
+The .NET connector, starting with v2.1.3, supports the [Arrow data format](https://arrow.apache.org/) 
+as a [preview](https://docs.snowflake.com/en/release-notes/preview-features) feature for data transfers
+between Snowflake and a .NET client. The Arrow data format avoids extra
+conversions between binary and textual representations of the data. The Arrow
+data format can improve performance and reduce memory consumption in clients.
+
+The data format is controlled by the
+DOTNET_QUERY_RESULT_FORMAT parameter. To use Arrow format, execute:
+
+```snowflake
+-- at the session level
+ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+-- or at the user level
+ALTER USER SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+-- or at the account level
+ALTER ACCOUNT SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
+```
+The valid values for the parameter are:
+
+- ARROW
+- JSON (default)
 
 Run a Query and Read Data
 -------------------------
@@ -487,6 +511,8 @@ Executing a Batch of SQL Statements (Multi-Statement Support)
 With version 2.0.18 and later of the .NET connector, you can send
 a batch of SQL statements, separated by semicolons,
 to be executed in a single request.
+
+**Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
 
 ---
 **Note**
@@ -554,6 +580,8 @@ using (DbCommand cmd = conn.CreateCommand())
 
 Bind Parameter
 --------------
+
+**Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
 
 This example shows how bound parameters are converted from C# data types to
 Snowflake data types. For example, if the data type of the Snowflake column

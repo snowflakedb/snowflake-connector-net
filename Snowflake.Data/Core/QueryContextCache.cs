@@ -69,6 +69,7 @@ namespace Snowflake.Data.Core
 
     internal class QueryContextCache
     {
+        private readonly object _qccLock;
         private int _capacity; // Capacity of the cache
         private Dictionary<long, QueryContextElement> _idMap; // Map for id and QCC
         private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
@@ -78,6 +79,7 @@ namespace Snowflake.Data.Core
 
         public QueryContextCache(int capacity)
         {
+            _qccLock = new object();
             _capacity = capacity;
             _idMap = new Dictionary<long, QueryContextElement>();
             _priorityMap = new Dictionary<long, QueryContextElement>();
@@ -192,11 +194,16 @@ namespace Snowflake.Data.Core
             // check without locking first for performance reason
             if (_capacity == cap)
                 return;
+            lock (_qccLock)
+            {
+                if (_capacity == cap)
+                    return;
 
-            _logger.Debug($"set capacity from {_capacity} to {cap}");
-            _capacity = cap;
-            CheckCacheCapacity();
-            LogCacheEntries();
+                _logger.Debug($"set capacity from {_capacity} to {cap}");
+                _capacity = cap;
+                CheckCacheCapacity();
+                LogCacheEntries();
+            }
         }
 
         /**
@@ -221,26 +228,29 @@ namespace Snowflake.Data.Core
          */
         public void Update(ResponseQueryContext queryContext)
         {
-            // Log existing cache entries
-            LogCacheEntries();
-
-            if (queryContext == null || queryContext.Entries == null)
+            lock(_qccLock)
             {
-                // Clear the cache
-                ClearCache();
-                return;
-            }
-            foreach (ResponseQueryContextElement entry in queryContext.Entries)
-            {
-                Merge(entry.Id, entry.ReadTimestamp, entry.Priority, entry.Context);
-            }
+                // Log existing cache entries
+                LogCacheEntries();
 
-            SyncPriorityMap();
+                if (queryContext == null || queryContext.Entries == null)
+                {
+                    // Clear the cache
+                    ClearCache();
+                    return;
+                }
+                foreach (ResponseQueryContextElement entry in queryContext.Entries)
+                {
+                    Merge(entry.Id, entry.ReadTimestamp, entry.Priority, entry.Context);
+                }
 
-            // After merging all entries, truncate to capacity
-            CheckCacheCapacity();
-            // Log existing cache entries
-            LogCacheEntries();
+                SyncPriorityMap();
+
+                // After merging all entries, truncate to capacity
+                CheckCacheCapacity();
+                // Log existing cache entries
+                LogCacheEntries();
+            }
         }
 
         /**
@@ -251,10 +261,13 @@ namespace Snowflake.Data.Core
         {
             RequestQueryContext reqQCC = new RequestQueryContext();
             reqQCC.Entries = new List<RequestQueryContextElement>();
-            foreach (QueryContextElement elem in _cacheSet)
+            lock(_qccLock)
             {
-                RequestQueryContextElement reqElem = new RequestQueryContextElement(elem);
-                reqQCC.Entries.Add(reqElem);
+                foreach (QueryContextElement elem in _cacheSet)
+                {
+                    RequestQueryContextElement reqElem = new RequestQueryContextElement(elem);
+                    reqQCC.Entries.Add(reqElem);
+                }
             }
 
             return reqQCC;
@@ -268,10 +281,13 @@ namespace Snowflake.Data.Core
         {
             ResponseQueryContext rspQCC = new ResponseQueryContext();
             rspQCC.Entries = new List<ResponseQueryContextElement>();
-            foreach (QueryContextElement elem in _cacheSet)
+            lock (_qccLock)
             {
-                ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
-                rspQCC.Entries.Add(rspElem);
+                foreach (QueryContextElement elem in _cacheSet)
+                {
+                    ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
+                    rspQCC.Entries.Add(rspElem);
+                }
             }
 
             return rspQCC;
@@ -321,12 +337,13 @@ namespace Snowflake.Data.Core
         /** Debugging purpose, log the all entries in the cache. */
         private void LogCacheEntries()
         {
-#if DEBUG
-            foreach (QueryContextElement elem in _cacheSet)
+            if (_logger.IsDebugEnabled())
             {
-                _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                foreach (QueryContextElement elem in _cacheSet)
+                {
+                    _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                }
             }
-#endif
         }
     }
 }
