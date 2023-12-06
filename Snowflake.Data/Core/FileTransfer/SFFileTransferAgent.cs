@@ -231,15 +231,7 @@ namespace Snowflake.Data.Core
             catch (Exception e)
             {
                 Logger.Error("Error while transferring file(s): " + e.Message);
-                if (e is SnowflakeDbException snowflakeException)
-                {
-                    if (snowflakeException.QueryId == null)
-                    {
-                        snowflakeException.QueryId = TransferMetadata.queryId;
-                    }
-                    throw snowflakeException;
-                }
-                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
+                throw;
             }
             
         }

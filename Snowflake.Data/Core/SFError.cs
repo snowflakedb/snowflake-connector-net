@@ -78,9 +78,6 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270057)]
         BROWSER_RESPONSE_TIMEOUT,
-
-        [SFErrorAttr(errorCode = 270058)]
-        IO_ERROR_ON_GETPUT_COMMAND
     }
 
     class SFErrorAttr : Attribute

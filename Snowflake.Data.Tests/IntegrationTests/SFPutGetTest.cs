@@ -545,10 +545,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
                 }
-                catch (SnowflakeDbException e)
+                catch (Exception e)
                 {
-                    queryId = e.QueryId;
-                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    queryId = ((SnowflakeDbCommand)command).GetQueryId();
                 }
             }
             return queryId;

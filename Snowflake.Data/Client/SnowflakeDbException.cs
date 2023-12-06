@@ -27,7 +27,7 @@ namespace Snowflake.Data.Client
 
         private int VendorCode;
 
-        public string QueryId { get; set; }
+        public string QueryId { get; }
 
         public override int ErrorCode
         {
@@ -42,13 +42,6 @@ namespace Snowflake.Data.Client
         {
             SqlState = sqlState;
             VendorCode = vendorCode;
-            QueryId = queryId;
-        }
-
-        public SnowflakeDbException(SFError error, string queryId, Exception innerException)
-            : base(FormatExceptionMessage(error, new object[] {innerException.Message}, string.Empty, queryId), innerException)
-        {
-            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             QueryId = queryId;
         }
 

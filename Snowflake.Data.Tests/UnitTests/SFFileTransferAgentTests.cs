@@ -2,9 +2,6 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
-using Amazon.S3.Transfer;
-using Snowflake.Data.Client;
-
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
@@ -490,17 +487,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Set command to upload
             _responseData.command = CommandTypes.UPLOAD.ToString();
-            _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
 
             // Act
-            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+            Exception ex = Assert.Throws<ArgumentException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
             Assert.That(ex.Message, Does.Match($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}"));
 
             for (int i = 0; i < numberOfDirectories; i++)
@@ -584,21 +579,17 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Set command to download
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
-            _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
 
             // Act
-            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+            Exception ex = Assert.Throws<AggregateException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
-            var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<FileNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find file .*"));
+            Assert.IsInstanceOf<FileNotFoundException>(ex.InnerException);
+            Assert.That(ex.InnerException.Message, Does.Match("Could not find file .*"));
         }
 
         [Test]
@@ -615,21 +606,17 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Set command to download
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
-            _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
                 _responseData,
                 _cancellationToken);
 
             // Act
-            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+            Exception ex = Assert.Throws<AggregateException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
-            var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
+            Assert.IsInstanceOf<DirectoryNotFoundException>(ex.InnerException);
+            Assert.That(ex.InnerException.Message, Does.Match("Could not find a part of the path .*"));
         }
     }
 }

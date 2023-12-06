@@ -357,15 +357,15 @@ namespace Snowflake.Data.Core
                              describeOnly);
 
                     logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
+                    
+                    if (response.data != null)
+                        _lastQueryId = response.data.queryId;
 
                     SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
 
                     // Start the file transfer
                     fileTransferAgent.execute();
-
-                    if (response.data != null)
-                        _lastQueryId = response.data.queryId;
 
                     // Get the results of the upload/download
                     return fileTransferAgent.result();
@@ -412,11 +412,6 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
-                if (ex is SnowflakeDbException)
-                {
-                    var snowflakeDbException = (SnowflakeDbException)ex;
-                    this._lastQueryId = snowflakeDbException.QueryId;
-                }
                 throw;
             }
             finally
