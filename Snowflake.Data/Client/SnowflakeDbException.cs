@@ -27,7 +27,7 @@ namespace Snowflake.Data.Client
 
         private int VendorCode;
 
-        public string QueryId { get; }
+        public string QueryId { get; set; }
 
         public override int ErrorCode
         {

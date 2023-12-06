@@ -356,8 +356,7 @@ namespace Snowflake.Data.Core
                              bindings,
                              describeOnly);
 
-                    if (logger.IsDebugEnabled())
-                        logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
+                    logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
 
                     SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
