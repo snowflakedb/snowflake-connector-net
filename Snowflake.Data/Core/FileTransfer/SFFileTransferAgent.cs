@@ -228,16 +228,6 @@ namespace Snowflake.Data.Core
                     download();
                 }
             }
-            catch (FileNotFoundException e)
-            {
-                Logger.Error("File not found while transferring file(s): " + e.Message);
-                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
-            }
-            catch (IOException e)
-            {
-                Logger.Error("IO operation error while transferring file(s): " + e.Message);
-                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
-            }
             catch (Exception e)
             {
                 Logger.Error("Error while transferring file(s): " + e.Message);
