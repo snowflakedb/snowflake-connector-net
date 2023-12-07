@@ -517,38 +517,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Upload file
                 command.CommandText = putQuery;
+                DbDataReader reader;
                 try
                 {
-                    var reader = command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-                    // Checking query id when reader succeeded
-                    queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
-                    // Checking if query Id is provided on the command level as well
-                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
-                    // Check file status
-                    Assert.AreEqual(expectedStatus.ToString(),
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-                    // Check source and destination compression type
-                    if (t_autoCompress)
-                    {
-                        Assert.AreEqual(t_sourceCompressionType,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual(t_destCompressionType,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                    }
-                    else
-                    {
-                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                    }
-                    Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
+                    reader = command.ExecuteReader();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     queryId = ((SnowflakeDbCommand)command).GetQueryId();
+                    return queryId;
+                }                    
+                // Checking query id when reader succeeded
+                Assert.IsTrue(reader.Read());
+                queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
+                // Checking if query Id is provided on the command level as well
+                Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                // Check file status
+                Assert.AreEqual(expectedStatus.ToString(),
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                // Check source and destination compression type
+                if (t_autoCompress)
+                {
+                    Assert.AreEqual(t_sourceCompressionType,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                    Assert.AreEqual(t_destCompressionType,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
+                else
+                {
+                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                }
+                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
             return queryId;
         }
