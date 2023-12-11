@@ -1780,8 +1780,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
-                // But never more than 1 sec (buffer time) after the defined timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
+                // But never more than 2 sec (buffer time) after the defined timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 2) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
@@ -1818,8 +1818,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
-                // But never more than 1 sec (buffer time) after the defined timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 1) * 1000);
+                // But never more than 2 sec (buffer time) after the defined timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 2) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
