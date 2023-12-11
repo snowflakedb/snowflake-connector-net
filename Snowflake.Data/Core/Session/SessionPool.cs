@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core.Session
             {
                 foreach (SFSession session in _sessions)
                 {
-                    Task.Run(() => session.close());
+                    session.close(); // it is left synchronously here because too much async tasks slows down testing
                 }
                 _sessions.Clear();
             }
