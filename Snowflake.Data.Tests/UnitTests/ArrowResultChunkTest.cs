@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
 
-            Assert.AreEqual(0, chunk.ChunkIndex);
+            Assert.AreEqual(-1, chunk.ChunkIndex);
         }
         
         [Test]

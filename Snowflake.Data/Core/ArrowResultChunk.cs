@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using Apache.Arrow;
-using Apache.Arrow.Types;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
@@ -165,49 +164,47 @@ namespace Snowflake.Data.Core
                 case SFDataType.FIXED:
                     // Snowflake data types that are fixed-point numbers will fall into this category
                     // e.g. NUMBER, DECIMAL/NUMERIC, INT/INTEGER
-                    switch (column.Data.DataType.TypeId)
+                    switch (column)
                     {
-                        case ArrowTypeId.Int8:
+                        case Int8Array array:
                             if (_sbyte[columnIndex] == null)
-                                _sbyte[columnIndex] = ((Int8Array)column).Values.ToArray();
+                                _sbyte[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _sbyte[columnIndex][_currentRecordIndex];
                             else
                                 return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
 
-                        case ArrowTypeId.Int16:
+                        case Int16Array array:
                             if (_short[columnIndex] == null)
-                                _short[columnIndex] = ((Int16Array)column).Values.ToArray();
+                                _short[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _short[columnIndex][_currentRecordIndex];
                             else
                                 return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
                         
-                        case ArrowTypeId.Int32:
+                        case Int32Array array:
                             if (_int[columnIndex] == null)
-                                _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                                _int[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _int[columnIndex][_currentRecordIndex];
                             else
                                 return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
 
-                        case ArrowTypeId.Int64:
+                        case Int64Array array:
                             if (_long[columnIndex] == null)
-                                _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                                _long[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _long[columnIndex][_currentRecordIndex];
                             else
                                 return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
                         
-                        case ArrowTypeId.Decimal128:
-                            return ((Decimal128Array)column).GetValue(_currentRecordIndex);
+                        case Decimal128Array array:
+                            return array.GetValue(_currentRecordIndex);
                     }
                     break;
 
                 case SFDataType.BOOLEAN:
-                    if (_byte[columnIndex] == null)
-                        _byte[columnIndex] = ((BooleanArray)column).Values.ToArray();
-                    return _byte[columnIndex][_currentRecordIndex] == 1;
+                    return ((BooleanArray)column).GetValue(_currentRecordIndex);
 
                 case SFDataType.REAL:
                     // Snowflake data types that are floating-point numbers will fall in this category
@@ -240,7 +237,7 @@ namespace Snowflake.Data.Core
                 
                 case SFDataType.TIME:
                 {
-                    var value = column.Data.DataType.TypeId == ArrowTypeId.Int32
+                    var value = column.GetType() == typeof(Int32Array)
                         ? ((Int32Array)column).GetValue(_currentRecordIndex)
                         : ((Int64Array)column).GetValue(_currentRecordIndex);
                     if (scale == 0)
@@ -270,7 +267,7 @@ namespace Snowflake.Data.Core
                     }
 
                 case SFDataType.TIMESTAMP_LTZ:
-                    if (column.Data.DataType.TypeId == ArrowTypeId.Struct)
+                    if (column.GetType() == typeof(StructArray))
                     {
                         var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
@@ -285,7 +282,7 @@ namespace Snowflake.Data.Core
                     }
 
                 case SFDataType.TIMESTAMP_NTZ:
-                    if (column.Data.DataType.TypeId == ArrowTypeId.Struct)
+                    if (column.GetType() == typeof(StructArray))
                     {
                         var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
                         var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);

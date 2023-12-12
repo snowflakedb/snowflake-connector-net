@@ -199,6 +199,8 @@ namespace Snowflake.Data.Core
                         break;
                     case string ret: obj =  ret;
                         break;
+                    case bool ret: obj = ret;
+                        break;
                     default:
                     {
                         var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
