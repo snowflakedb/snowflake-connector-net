@@ -238,61 +238,61 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIME:
                 {
                     var value = column.GetType() == typeof(Int32Array)
-                        ? ((Int32Array)column).GetValue(_currentRecordIndex)
-                        : ((Int64Array)column).GetValue(_currentRecordIndex);
+                        ? ((Int32Array)column).Values[_currentRecordIndex]
+                        : ((Int64Array)column).Values[_currentRecordIndex];
                     if (scale == 0)
-                        return DateTimeOffset.FromUnixTimeSeconds(value.Value).DateTime;
+                        return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
                     if (scale <= 3)
-                        return DateTimeOffset.FromUnixTimeMilliseconds(value.Value * s_powersOf10[3 - scale])
+                        return DateTimeOffset.FromUnixTimeMilliseconds(value * s_powersOf10[3 - scale])
                             .DateTime;
                     if (scale <= 7)
-                        return s_epochDate.AddTicks(value.Value * s_powersOf10[7 - scale]).DateTime;
-                    return s_epochDate.AddTicks(value.Value / s_powersOf10[scale - 7]).DateTime;
+                        return s_epochDate.AddTicks(value * s_powersOf10[7 - scale]).DateTime;
+                    return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
                 }
                 case SFDataType.TIMESTAMP_TZ:
                     if (((StructArray)column).Fields.Count == 2)
                     {
-                        var value = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
-                        var timezone = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        var epoch = ExtractEpoch(value.Value, scale);
-                        var fraction = ExtractFraction(value.Value, scale);
-                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone.Value - 1440));
+                        var value = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
+                        var timezone = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        var epoch = ExtractEpoch(value, scale);
+                        var fraction = ExtractFraction(value, scale);
+                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone - 1440));
                     }
                     else
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        var timezone = ((Int32Array)((StructArray)column).Fields[2]).GetValue(_currentRecordIndex);
-                        return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).ToOffset(TimeSpan.FromMinutes(timezone.Value - 1440));
+                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
+                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        var timezone = ((Int32Array)((StructArray)column).Fields[2]).Values[_currentRecordIndex];
+                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone - 1440));
                     }
 
                 case SFDataType.TIMESTAMP_LTZ:
                     if (column.GetType() == typeof(StructArray))
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).ToLocalTime();
+                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
+                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
                     }
                     else
                     {
-                        var value = ((Int64Array)column).GetValue(_currentRecordIndex);
-                        var epoch = ExtractEpoch(value.Value, scale);
-                        var fraction = ExtractFraction(value.Value, scale);
+                        var value = ((Int64Array)column).Values[_currentRecordIndex];
+                        var epoch = ExtractEpoch(value, scale);
+                        var fraction = ExtractFraction(value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
                     }
 
                 case SFDataType.TIMESTAMP_NTZ:
                     if (column.GetType() == typeof(StructArray))
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).GetValue(_currentRecordIndex);
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).GetValue(_currentRecordIndex);
-                        return s_epochDate.AddSeconds(epoch.Value).AddTicks(fraction.Value / 100).DateTime;
+                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
+                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).DateTime;
                     }
                     else
                     {
-                        var value = ((Int64Array)column).GetValue(_currentRecordIndex);
-                        var epoch = ExtractEpoch(value.Value, scale);
-                        var fraction = ExtractFraction(value.Value, scale);
+                        var value = ((Int64Array)column).Values[_currentRecordIndex];
+                        var epoch = ExtractEpoch(value, scale);
+                        var fraction = ExtractFraction(value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).DateTime;
                     }
             }
