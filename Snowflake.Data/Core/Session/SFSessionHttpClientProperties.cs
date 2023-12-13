@@ -75,7 +75,7 @@ namespace Snowflake.Data.Core
         internal HttpClientConfig BuildHttpClientConfig()
         {
             return new HttpClientConfig(
-                insecureMode,
+                !insecureMode,
                 proxyProperties.proxyHost,
                 proxyProperties.proxyPort,
                 proxyProperties.proxyUser,

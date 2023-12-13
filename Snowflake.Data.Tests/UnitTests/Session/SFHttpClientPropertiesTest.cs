@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = properties.BuildHttpClientConfig();
 
             // then
-            Assert.AreEqual(properties.insecureMode, config.CrlCheckEnabled);
+            Assert.AreEqual(!properties.insecureMode, config.CrlCheckEnabled);
             Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
             Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
             Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
