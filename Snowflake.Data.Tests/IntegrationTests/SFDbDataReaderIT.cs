@@ -15,7 +15,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    // TODO: enable tests for Arrow
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
     class SFDbDataReaderIT : SFBaseTest
