@@ -82,16 +82,15 @@ namespace Snowflake.Data.Core
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size decompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 return _currentChunk?.Next() ?? false;
             }
 
             return false;
         }
-
-        private long _compressedSize = 0;
-        private long _uncompressedSize = 0;
         
         internal override bool Next()
         {
@@ -102,15 +101,11 @@ namespace Snowflake.Data.Core
             
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug("Get next chunk from chunk downloader");
-                s_logger.Error($"StopWatch: {_stopWatch.ElapsedMilliseconds}, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}," +
-                               $" rows: {_currentChunk.RowCount}, size: {_currentChunk.CompressedSize} {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
-                _compressedSize += _currentChunk.CompressedSize;
-                _uncompressedSize += _currentChunk.UncompressedSize;
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size decompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
-
-                if (_currentChunk == null)
-                    s_logger.Error($"CompressedSize: {_compressedSize}, UncompressedSize: {_uncompressedSize}");
+                
                 return _currentChunk?.Next() ?? false;
             }
 
@@ -155,8 +150,6 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-
-        private Stopwatch _stopWatch = new Stopwatch();
         
         private object GetObjectInternal(int ordinal)
         {
@@ -174,11 +167,9 @@ namespace Snowflake.Data.Core
         
         internal override object GetValue(int ordinal)
         {
-            //_stopWatch.Start();
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
             {
-                //_stopWatch.Stop();
                 return value;
             }
             
@@ -210,7 +201,6 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            //_stopWatch.Stop();
             return obj;
         }
 
