@@ -409,12 +409,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var session = conn1.SfSession;
             conn1.Close();
             Assert.IsTrue(session.IsEstablished());
-            Thread.Sleep(SessionTimeoutSeconds * 1000);
+            Thread.Sleep(SessionTimeoutSeconds * 1000); // wait until the session is expired
             var conn2 = new SnowflakeDbConnection(ConnectionString);
                 
             // act
             conn2.Open(); // it gets a session from the caching pool firstly closing session of conn1 in background
-            Thread.Sleep(TimeForBackgroundSessionCloseMillis);
+            Thread.Sleep(TimeForBackgroundSessionCloseMillis); // wait for closing expired session
             
             // assert
             Assert.IsFalse(session.IsEstablished());
