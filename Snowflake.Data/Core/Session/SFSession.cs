@@ -242,7 +242,7 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -274,7 +274,7 @@ namespace Snowflake.Data.Core
         internal async Task CloseAsync(CancellationToken cancellationToken)
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -302,6 +302,8 @@ namespace Snowflake.Data.Core
             // Just in case the session won't be closed twice
             sessionToken = null;
         }
+
+        internal bool IsEstablished() => sessionToken != null;
 
         internal void renewSession()
         {
@@ -504,7 +506,7 @@ namespace Snowflake.Data.Core
             logger.Debug("heartbeat");
 
             bool retry = false;
-            if (sessionToken != null)
+            if (IsEstablished())
             {
                 do
                 {
