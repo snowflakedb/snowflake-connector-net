@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core
                 // So put this piece of code in a seperate task
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size decompressed: {_currentChunk.UncompressedSize}");
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 BaseResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 if (nextChunk != null)
                 {
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size decompressed: {_currentChunk.UncompressedSize}");
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 BaseResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {
@@ -294,8 +294,7 @@ namespace Snowflake.Data.Core
         {
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
-            var x = SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
-            return x;
+            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
         }
         
         private T GetValue<T>(int ordinal)

@@ -84,7 +84,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size decompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
+                               $" size uncompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 return _currentChunk?.Next() ?? false;
             }
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size decompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
+                               $" size uncompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 
                 return _currentChunk?.Next() ?? false;
