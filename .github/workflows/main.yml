@@ -152,8 +152,6 @@ jobs:
         dotnet: ['net6.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
-      - name: Sync clock
-        run: sudo sntp -sS time.windows.com
       - uses: actions/checkout@v3
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
