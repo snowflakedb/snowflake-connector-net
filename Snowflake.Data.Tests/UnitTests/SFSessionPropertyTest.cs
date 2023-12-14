@@ -305,6 +305,33 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
                 }
             };
+            var testCaseUnderscoredAccountName = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT=prefix_{defAccount};USER={defUser};PASSWORD={defPassword};",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"prefix_{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"prefix-{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                }
+            };
             return new TestCase[]
             {
                 simpleTestCase,
@@ -314,7 +341,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithFileTransferMaxBytesInMemory,
                 testCaseWithIncludeRetryReason,
                 testCaseWithDisableQueryContextCache,
-                testCaseComplicatedAccountName
+                testCaseComplicatedAccountName,
+                testCaseUnderscoredAccountName
             };
         }
         

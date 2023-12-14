@@ -260,7 +260,8 @@ namespace Snowflake.Data.Core
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
-                string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                string compliantAccountName = properties[SFSessionProperty.ACCOUNT].Replace('_','-');
+                string hostName = String.Format("{0}.snowflakecomputing.com", compliantAccountName);
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
