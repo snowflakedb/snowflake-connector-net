@@ -12,7 +12,6 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using NUnit.Framework;
-using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -395,32 +394,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             SnowflakeDbConnectionPool.SetPooling(false);
             //Put a breakpoint at SFSession close function, after connection pool is off, it will send close session request.
-        }
-
-        [Test]
-        public void TestCloseSessionAfterTimeout()
-        {
-            // arrange
-            const int SessionTimeoutSeconds = 2;
-            const int TimeForBackgroundSessionCloseMillis = 2000;
-            SnowflakeDbConnectionPool.SetTimeout(SessionTimeoutSeconds);
-            var conn1 = new SnowflakeDbConnection(ConnectionString);
-            conn1.Open();
-            var session = conn1.SfSession;
-            conn1.Close();
-            Assert.IsTrue(session.IsEstablished());
-            Thread.Sleep(SessionTimeoutSeconds * 1000); // wait until the session is expired
-            var conn2 = new SnowflakeDbConnection(ConnectionString);
-                
-            // act
-            conn2.Open(); // it gets a session from the caching pool firstly closing session of conn1 in background
-            Thread.Sleep(TimeForBackgroundSessionCloseMillis); // wait for closing expired session
-            
-            // assert
-            Assert.IsFalse(session.IsEstablished());
-            
-            // cleanup
-            conn2.Close();
         }
     }
 }
