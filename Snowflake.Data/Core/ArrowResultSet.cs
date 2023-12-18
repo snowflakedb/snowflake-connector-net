@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -24,7 +23,7 @@ namespace Snowflake.Data.Core
         private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
 
-        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
         {
             columnCount = responseData.rowType.Count;
             try
@@ -66,7 +65,7 @@ namespace Snowflake.Data.Core
                     _currentChunk = new ArrowResultChunk(columnCount);
                 }
             }
-            catch(System.Exception ex)
+            catch(Exception ex)
             {
                 s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
@@ -84,7 +83,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size uncompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 return _currentChunk?.Next() ?? false;
             }
@@ -103,7 +102,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size uncompressed: {_currentChunk.UncompressedSize}, "  + ((ArrowResultChunk)_currentChunk).GetMetadata());
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 
                 return _currentChunk?.Next() ?? false;

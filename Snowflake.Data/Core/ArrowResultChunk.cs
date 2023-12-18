@@ -5,14 +5,11 @@
 using System;
 using System.Collections.Generic;
 using Apache.Arrow;
-using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     internal class ArrowResultChunk : BaseResultChunk
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultChunk>();
-
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
@@ -37,13 +34,14 @@ namespace Snowflake.Data.Core
         private sbyte[][] _sbyte;
         private short[][] _short;
         private int[][] _int;
+        private int[][] _fraction;
         private long[][] _long;
 
         private byte[][] _byte;
         private double[][] _double;
-        
 
-        private int _currentBatchIndex = 0;
+
+        private int _currentBatchIndex;
         private int _currentRecordIndex = -1;
 
         private void ResetTempTables()
@@ -51,6 +49,7 @@ namespace Snowflake.Data.Core
             _sbyte = new sbyte[ColumnCount][];
             _short = new short[ColumnCount][];
             _int = new int[ColumnCount][];
+            _fraction = new int[ColumnCount][];
             _long = new long[ColumnCount][];
             _byte = new byte[ColumnCount][];
             _double = new double[ColumnCount][];
@@ -139,17 +138,10 @@ namespace Snowflake.Data.Core
             throw new NotSupportedException();
         }
 
+        [Obsolete("ExtractCell with columnIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
             throw new NotSupportedException();
-        }
-
-        public string GetMetadata()
-        {
-            if (RecordBatch.Count == 0)
-                return $"No data";
-
-            return $"batches: {RecordBatch.Count}";
         }
 
         public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
@@ -171,32 +163,28 @@ namespace Snowflake.Data.Core
                                 _sbyte[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _sbyte[columnIndex][_currentRecordIndex];
-                            else
-                                return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
 
                         case Int16Array array:
                             if (_short[columnIndex] == null)
                                 _short[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _short[columnIndex][_currentRecordIndex];
-                            else
-                                return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
                         
                         case Int32Array array:
                             if (_int[columnIndex] == null)
                                 _int[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _int[columnIndex][_currentRecordIndex];
-                            else
-                                return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
 
                         case Int64Array array:
                             if (_long[columnIndex] == null)
                                 _long[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _long[columnIndex][_currentRecordIndex];
-                            else
-                                return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
                         
                         case Decimal128Array array:
                             return array.GetValue(_currentRecordIndex);
@@ -237,9 +225,27 @@ namespace Snowflake.Data.Core
                 
                 case SFDataType.TIME:
                 {
-                    var value = column.GetType() == typeof(Int32Array)
-                        ? ((Int32Array)column).Values[_currentRecordIndex]
-                        : ((Int64Array)column).Values[_currentRecordIndex];
+                    long value;
+                    
+                    if (column.GetType() == typeof(Int32Array))
+                    {
+                        if (_int[columnIndex] == null)
+                        {
+                            _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                        }
+
+                        value = _int[columnIndex][_currentRecordIndex];
+                    }
+                    else
+                    {
+                        if (_long[columnIndex] == null)
+                        {
+                            _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                        }
+
+                        value = _long[columnIndex][_currentRecordIndex];
+                    }
+                    
                     if (scale == 0)
                         return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
                     if (scale <= 3)
@@ -250,32 +256,50 @@ namespace Snowflake.Data.Core
                     return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
                 }
                 case SFDataType.TIMESTAMP_TZ:
-                    if (((StructArray)column).Fields.Count == 2)
+                    var structCol = (StructArray)column;
+                    if (_long[columnIndex] == null)
+                        _long[columnIndex] = ((Int64Array)structCol.Fields[0]).Values.ToArray();
+                    
+                    if (structCol.Fields.Count == 2)
                     {
-                        var value = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
-                        var timezone = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        if (_int[columnIndex] == null)
+                            _int[columnIndex] = ((Int32Array)structCol.Fields[1]).Values.ToArray();
+                        var value = _long[columnIndex][_currentRecordIndex];
+                        var timezone = _int[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone - 1440));
                     }
                     else
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
-                        var timezone = ((Int32Array)((StructArray)column).Fields[2]).Values[_currentRecordIndex];
+                        if (_fraction[columnIndex] == null)
+                            _fraction[columnIndex] = ((Int32Array)structCol.Fields[1]).Values.ToArray();
+                        if (_int[columnIndex] == null)
+                            _int[columnIndex] = ((Int32Array)structCol.Fields[2]).Values.ToArray();
+                        
+                        var epoch = _long[columnIndex][_currentRecordIndex];
+                        var fraction = _fraction[columnIndex][_currentRecordIndex];
+                        var timezone = _int[columnIndex][_currentRecordIndex];
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToOffset(TimeSpan.FromMinutes(timezone - 1440));
                     }
 
                 case SFDataType.TIMESTAMP_LTZ:
                     if (column.GetType() == typeof(StructArray))
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        if (_long[columnIndex] == null)
+                            _long[columnIndex] = ((Int64Array)((StructArray)column).Fields[0]).Values.ToArray();
+                        if (_fraction[columnIndex] == null)
+                            _fraction[columnIndex] = ((Int32Array)((StructArray)column).Fields[1]).Values.ToArray();
+                        var epoch = _long[columnIndex][_currentRecordIndex];
+                        var fraction = _fraction[columnIndex][_currentRecordIndex];
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
                     }
                     else
                     {
-                        var value = ((Int64Array)column).Values[_currentRecordIndex];
+                        if (_long[columnIndex] == null)
+                            _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                            
+                        var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
@@ -284,13 +308,20 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIMESTAMP_NTZ:
                     if (column.GetType() == typeof(StructArray))
                     {
-                        var epoch = ((Int64Array)((StructArray)column).Fields[0]).Values[_currentRecordIndex];
-                        var fraction = ((Int32Array)((StructArray)column).Fields[1]).Values[_currentRecordIndex];
+                        if (_long[columnIndex] == null)
+                            _long[columnIndex] = ((Int64Array)((StructArray)column).Fields[0]).Values.ToArray();
+                        if (_fraction[columnIndex] == null)
+                            _fraction[columnIndex] = ((Int32Array)((StructArray)column).Fields[1]).Values.ToArray();
+                        var epoch = _long[columnIndex][_currentRecordIndex];
+                        var fraction = _fraction[columnIndex][_currentRecordIndex];
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).DateTime;
                     }
                     else
                     {
-                        var value = ((Int64Array)column).Values[_currentRecordIndex];
+                        if (_long[columnIndex] == null)
+                            _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                            
+                        var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
                         return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).DateTime;
