@@ -103,6 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             pool.SetMaxPoolSize(2);
             pool.SetWaitingTimeout(1000);
             var conn1 = OpenedConnection();
@@ -130,6 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             pool.SetMaxPoolSize(2);
             pool.SetWaitingTimeout(3000);
             var threads = new ConnectingThreads(ConnectionString)
