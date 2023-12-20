@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // act
             watch.Start();
-            var thrown = Assert.Throws<SnowflakeDbException>(() => OpenedConnection());
+            var thrown = Assert.Throws<SnowflakeDbException>(() => OpenedConnection(connectionString));
             watch.Stop();
 
             // assert
