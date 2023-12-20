@@ -102,12 +102,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
         {
             // arrange
-            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            var connectionString = ConnectionString + "application=TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit";
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             pool.SetMaxPoolSize(2);
             pool.SetWaitingTimeout(1000);
-            var conn1 = OpenedConnection();
-            var conn2 = OpenedConnection();
+            var conn1 = OpenedConnection(connectionString);
+            var conn2 = OpenedConnection(connectionString);
             var watch = new Stopwatch();
             
             // act
@@ -130,11 +131,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestWaitInAQueueForAnIdleSession()
         {
             // arrange
-            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            var connectionString = ConnectionString + "application=TestWaitInAQueueForAnIdleSession";
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             pool.SetMaxPoolSize(2);
             pool.SetWaitingTimeout(3000);
-            var threads = new ConnectingThreads(ConnectionString)
+            var threads = new ConnectingThreads(connectionString)
                 .NewThread("A", 0, 2000, true)
                 .NewThread("B", 50, 2000, true)
                 .NewThread("C", 100, 0, true)
@@ -257,10 +259,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn3.State);
         }
 
-        private SnowflakeDbConnection OpenedConnection()
+        private SnowflakeDbConnection OpenedConnection(string connectionString)
         {
             var connection = new SnowflakeDbConnection();
-            connection.ConnectionString = ConnectionString;
+            connection.ConnectionString = connectionString;
             connection.Open();
             return connection;
         }
