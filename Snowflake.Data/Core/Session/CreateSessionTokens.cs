@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core.Session
 {

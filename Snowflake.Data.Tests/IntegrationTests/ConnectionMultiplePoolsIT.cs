@@ -2,6 +2,8 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
@@ -102,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
         {
             // arrange
-            var connectionString = ConnectionString + "application=TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit";
+            var connectionString = ConnectionString;
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             pool.SetMaxPoolSize(2);
@@ -118,6 +120,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
+            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
+            Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
+
+            // cleanup
+            conn1.Close();
+            conn2.Close();
+        }
+        
+        [Test]
+        public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimitAsync()
+        {
+            // arrange
+            var connectionString = ConnectionString;
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
+            pool.SetMaxPoolSize(2);
+            pool.SetWaitingTimeout(1000);
+            var conn1 = OpenedConnection(connectionString);
+            var conn2 = OpenedConnection(connectionString);
+            var watch = new Stopwatch();
+            
+            // act
+            watch.Start();
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => OpenedConnectionAsync(connectionString));
+            watch.Stop();
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Unable to connect"));
+            Assert.IsTrue(thrown.InnerException is AggregateException);
+            var nextedException = ((AggregateException)thrown.InnerException).InnerException;
+            Assert.That(nextedException.Message, Does.Contain("Could not obtain a connection from the pool within a given timeout"));
             Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
             Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
@@ -264,6 +298,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection();
             connection.ConnectionString = connectionString;
             connection.Open();
+            return connection;
+        }
+        
+        private async Task<SnowflakeDbConnection> OpenedConnectionAsync(string connectionString)
+        {
+            var connection = new SnowflakeDbConnection();
+            connection.ConnectionString = connectionString;
+            await connection.OpenAsync().ConfigureAwait(false);
             return connection;
         }
     }

@@ -2,7 +2,9 @@ namespace Snowflake.Data.Core.Session
 {
     internal class NotCountingCreateSessionTokens: ICreateSessionTokens
     {
-        public CreateSessionToken BeginCreate() => new CreateSessionToken(0);
+        private const int IrrelevantCreateSessionTimeout = 0;
+        
+        public CreateSessionToken BeginCreate() => new CreateSessionToken(IrrelevantCreateSessionTimeout);
 
         public void EndCreate(CreateSessionToken token)
         {

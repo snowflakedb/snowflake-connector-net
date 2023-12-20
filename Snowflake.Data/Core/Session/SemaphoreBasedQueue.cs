@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core.Session
             {
                 return _semaphore.Wait(millisecondsTimeout, cancellationToken);
             }
-            catch (OperationCanceledException exception)
+            catch (OperationCanceledException)
             {
                 return false;
             }

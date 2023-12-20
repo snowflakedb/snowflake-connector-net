@@ -22,6 +22,7 @@ namespace Snowflake.Data.Core.Session
         private readonly List<SFSession> _idleSessions;
         private readonly IWaitingQueue _waitingQueue;
         private readonly ICreateSessionTokens _createSessionTokens;
+        private readonly ICreateSessionTokens _noPoolingCreateSessionTokens = new NotCountingCreateSessionTokens();
         private int _maxPoolSize;
         private long _timeout;
         private const int MaxPoolSize = 10;
@@ -100,20 +101,18 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession");
             if (!_pooling)
-                return NewSession(connStr, password, new CreateSessionToken(0));
+                return NewSession(connStr, password, _noPoolingCreateSessionTokens.BeginCreate());
             var sessionOrCreateToken = GetIdleSession(connStr);
             return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.CreateToken);
         }
         
-        internal Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
+        internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync");
             if (!_pooling)
-                return NewSessionAsync(connStr, password, new CreateSessionToken(0), cancellationToken);
+                return await NewSessionAsync(connStr, password, _noPoolingCreateSessionTokens.BeginCreate(), cancellationToken).ConfigureAwait(false);
             var sessionOrCreateToken = GetIdleSession(connStr);
-            return sessionOrCreateToken.Session != null
-                ? Task.FromResult(sessionOrCreateToken.Session)
-                : NewSessionAsync(connStr, password, sessionOrCreateToken.CreateToken, cancellationToken);
+            return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.CreateToken, cancellationToken).ConfigureAwait(false);
         }
 
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
