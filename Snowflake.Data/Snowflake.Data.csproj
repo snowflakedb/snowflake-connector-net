@@ -38,6 +38,12 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Release'">
+    <InternalsVisibleTo Include="Snowflake.Data.Tests" />
+    <!--needed by Moq to be able to mock internal interfaces-->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
