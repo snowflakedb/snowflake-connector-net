@@ -184,20 +184,22 @@ namespace Snowflake.Data.Core.Session
             {
                 var timeoutLeft = beforeWaitingTime + timeout - nowTime;
                 var successful = _waitingQueue.Wait((int) timeoutLeft, CancellationToken.None);
-                if (!successful)
+                if (successful)
+                {
+                    s_logger.Warn($"SessionPool::WaitForSession - woken with a session granted for: {debugApplicationName}");
+                    lock (_sessionPoolLock)
+                    {
+                        var session = ExtractIdleSession(connStr);
+                        if (session != null)
+                        {
+                            s_logger.Warn($"SessionPool::WaitForSession - a session was extracted from idle sessions for: {debugApplicationName}");
+                            return session;
+                        }
+                    }
+                }
+                else 
                 {
                     s_logger.Warn($"SessionPool::WaitForSession - woken without a session granted for: {debugApplicationName}");
-                    throw WaitingFailedException();
-                }
-                s_logger.Warn($"SessionPool::WaitForSession - woken with a session granted for: {debugApplicationName}");
-                lock (_sessionPoolLock)
-                {
-                    var session = ExtractIdleSession(connStr);
-                    if (session != null)
-                    {
-                        s_logger.Warn($"SessionPool::WaitForSession - a session was extracted from idle sessions for: {debugApplicationName}");
-                        return session;
-                    }
                 }
                 nowTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             }
