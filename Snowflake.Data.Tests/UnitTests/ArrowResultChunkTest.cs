@@ -178,8 +178,10 @@ namespace Snowflake.Data.Tests.UnitTests
                 { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Timestamp_NTZ", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.TIMESTAMP_NTZ },
             };
 
-            foreach (var (chunk, type) in cases)
+            foreach (var pair in cases)
             {
+                var chunk = pair.Key;
+                var type = pair.Value;
                 chunk.Next();
                 Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0), $"Expected DBNull.Value for SFDataType: {type}");
             }
