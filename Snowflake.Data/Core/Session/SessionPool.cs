@@ -170,7 +170,7 @@ namespace Snowflake.Data.Core.Session
         {
             var timeout = _waitingQueue.GetWaitingTimeoutMillis();
             s_logger.Warn($"SessionPool::WaitForSession for {timeout} millis timeout");
-            var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             string debugApplicationName = "";
             if (connStr.EndsWith("application=TestWaitForMaxSize1"))
                 debugApplicationName = "TestWaitForMaxSize1";
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     s_logger.Warn($"SessionPool::WaitForSession - woken without a session granted for: {debugApplicationName}");
                 }
-                nowTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                nowTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
             s_logger.Warn($"SessionPool::WaitForSession - could not find any idle session available withing a given timeout for: {debugApplicationName} at: {nowTime}");
             throw WaitingFailedException();
