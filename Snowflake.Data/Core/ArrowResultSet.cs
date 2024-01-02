@@ -45,30 +45,35 @@ namespace Snowflake.Data.Core
 
                 queryId = responseData.queryId;
                 
-                if (responseData.rowsetBase64.Length > 0)
-                {
-                    using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
-                    {
-                        using (var reader = new ArrowStreamReader(stream))
-                        {
-                            var recordBatch = reader.ReadNextRecordBatch();
-                            _currentChunk = new ArrowResultChunk(recordBatch);
-                            while ((recordBatch = reader.ReadNextRecordBatch()) != null)
-                            {
-                                ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    _currentChunk = new ArrowResultChunk(columnCount);
-                }
+                ReadChunk(responseData);
             }
             catch(Exception ex)
             {
                 s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
+            }
+        }
+
+        private void ReadChunk(QueryExecResponseData responseData)
+        {
+            if (responseData.rowsetBase64.Length > 0)
+            {
+                using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
+                {
+                    using (var reader = new ArrowStreamReader(stream))
+                    {
+                        var recordBatch = reader.ReadNextRecordBatch();
+                        _currentChunk = new ArrowResultChunk(recordBatch);
+                        while ((recordBatch = reader.ReadNextRecordBatch()) != null)
+                        {
+                            ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _currentChunk = new ArrowResultChunk(columnCount);
             }
         }
 

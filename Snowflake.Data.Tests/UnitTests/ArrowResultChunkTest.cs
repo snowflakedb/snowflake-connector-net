@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Types;
@@ -156,10 +157,32 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractCellReturnsNull()
         {
-            var chunk = new ArrowResultChunk(RecordBatchWithNullValue);
-            chunk.Next();
-            
-            Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, SFDataType.FIXED, 0));
+            var cases = new Dictionary<ArrowResultChunk, SFDataType>
+            {
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Int8", false, col => col.Int8(array => array.AppendNull())).Build()), SFDataType.FIXED },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Int16", false, col => col.Int16(array => array.AppendNull())).Build()), SFDataType.FIXED },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Int32", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.FIXED },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Int64", false, col => col.Int64(array => array.AppendNull())).Build()), SFDataType.FIXED },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Decimal128", false, col => col.Decimal128(new Decimal128Type(0, 0), array => array.AppendNull())).Build()), SFDataType.FIXED },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Boolean", false, col => col.Boolean(array => array.AppendNull())).Build()), SFDataType.BOOLEAN },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Real", false, col => col.Double(array => array.AppendNull())).Build()), SFDataType.REAL },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Text", false, col => col.String(array => array.AppendNull())).Build()), SFDataType.TEXT },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Array", false, col => col.String(array => array.AppendNull())).Build()), SFDataType.ARRAY },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Variant", false, col => col.String(array => array.AppendNull())).Build()), SFDataType.VARIANT },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Object", false, col => col.String(array => array.AppendNull())).Build()), SFDataType.OBJECT },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Binary", false, col => col.Binary(array => array.AppendNull())).Build()), SFDataType.BINARY },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Date", false, col => col.Date32(array => array.AppendNull())).Build()), SFDataType.DATE },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Time", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.TIME },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Timestamp_TZ", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.TIMESTAMP_TZ },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Timestamp_LTZ", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.TIMESTAMP_LTZ },
+                { new ArrowResultChunk(new RecordBatch.Builder().Append("Col_Timestamp_NTZ", false, col => col.Int32(array => array.AppendNull())).Build()), SFDataType.TIMESTAMP_NTZ },
+            };
+
+            foreach (var (chunk, type) in cases)
+            {
+                chunk.Next();
+                Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0), $"Expected DBNull.Value for SFDataType: {type}");
+            }
         }
 
         [Test]

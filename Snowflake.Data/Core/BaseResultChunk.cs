@@ -42,10 +42,8 @@ namespace Snowflake.Data.Core
             RowCount = chunkInfo.rowCount;
             Url = chunkInfo.url;
             ChunkIndex = chunkIndex;
-            
             CompressedSize = chunkInfo.compressedSize;
             UncompressedSize = chunkInfo.uncompressedSize;
-
         }
 
         internal virtual void ResetForRetry()
