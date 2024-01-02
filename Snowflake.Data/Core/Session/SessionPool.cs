@@ -186,7 +186,7 @@ namespace Snowflake.Data.Core.Session
                 var successful = _waitingQueue.Wait((int) timeoutLeft, CancellationToken.None);
                 if (successful)
                 {
-                    s_logger.Warn($"SessionPool::WaitForSession - woken with a session granted for: {debugApplicationName}");
+                    s_logger.Warn($"SessionPool::WaitForSession - woken with a session granted for: {debugApplicationName} at: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
                     lock (_sessionPoolLock)
                     {
                         var session = ExtractIdleSession(connStr);
