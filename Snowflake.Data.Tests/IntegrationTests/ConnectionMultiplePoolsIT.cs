@@ -1,8 +1,6 @@
 using System;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -113,7 +111,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             pool.SetWaitingTimeout(1000);
             var conn1 = OpenedConnection(connectionString);
             var conn2 = OpenedConnection(connectionString);
-            var watch = new Stopwatch();
+            var watch = new StopWatch();
             
             // act
             watch.Start();
@@ -145,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             pool.SetWaitingTimeout(1000);
             var conn1 = OpenedConnection(connectionString);
             var conn2 = OpenedConnection(connectionString);
-            var watch = new Stopwatch();
+            var watch = new StopWatch();
             
             // act
             watch.Start();
@@ -180,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 .NewThread("B", 50, 2000, true)
                 .NewThread("C", 100, 0, true)
                 .NewThread("D", 150, 0, true);
-            var watch = new Stopwatch();
+            var watch = new StopWatch();
             
             // act
             watch.Start();
