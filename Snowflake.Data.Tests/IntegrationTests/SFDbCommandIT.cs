@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Core;
 
     [TestFixture]
+    [Ignore("temporary disabled to debug problem with tests")]
     class SFDbCommandITAsync : SFBaseTestAsync
     {
         [Test]

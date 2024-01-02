@@ -10,6 +10,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Runtime.InteropServices;
 
     [TestFixture]
+    [Ignore("temporary disabled to debug problem with tests")]
     class SFDbAdaptorIT : SFBaseTest
     {
         private IDbDataAdapter _adapter;

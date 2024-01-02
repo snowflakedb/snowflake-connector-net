@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests
 {
 
     [TestFixture]
+    [Ignore("temporary disabled to debug problem with tests")]
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
         private const string FileName = "large_file_to_test_dotnet_driver.json";

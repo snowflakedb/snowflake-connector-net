@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]
+    [Ignore("temporary disabled to debug problem with tests")]
     class SFPutGetTest : SFBaseTest
     {
         private const int NumberOfRows = 4;

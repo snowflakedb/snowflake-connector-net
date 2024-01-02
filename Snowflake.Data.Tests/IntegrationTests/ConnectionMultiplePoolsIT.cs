@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             watch.Stop();
             
             // assert
-            s_logger.Debug($"TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit - start at: {start}, stop at: {stop}");
+            s_logger.Warn($"TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit - start at: {start}, stop at: {stop}");
             Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
             Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
