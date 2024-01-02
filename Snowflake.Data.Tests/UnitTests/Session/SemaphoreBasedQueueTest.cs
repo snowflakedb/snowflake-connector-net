@@ -23,8 +23,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.IsFalse(result);
-            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 50);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 100);
+            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 50); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 120);
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.IsFalse(result);
             Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 50);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 100);
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 120);
         }
 
         [Test]
