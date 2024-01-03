@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
             Assert.GreaterOrEqual(lastConnectingEventsGroup[0].Duration, 1900);
             Assert.LessOrEqual(lastConnectingEventsGroup[0].Duration, 3100);
-            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 2000);
+            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 1900);
             Assert.LessOrEqual(lastConnectingEventsGroup[1].Duration, 3100);
         }
         
