@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -50,6 +51,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         public IEnumerable<ThreadEvent> Events() => _events.ToArray().OfType<ThreadEvent>();
+
+        public void Enqueue(ThreadEvent threadEvent) => _events.Enqueue(threadEvent);
     }
     
     class ConnectingThread
@@ -65,6 +68,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private long _waitAfterConnectMillis;
 
         private bool _closeOnExit;
+        
+        internal const string NamePrefix = "thread_";
         
         public ConnectingThread(
             string name,
@@ -85,7 +90,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public Thread Build()
         {
             var thread = new Thread(Execute);
-            thread.Name = "thread_" + _name;
+            thread.Name = NamePrefix + _name;
             return thread;
         }
 
@@ -94,7 +99,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection();
             connection.ConnectionString = _connectionString;
             Sleep(_waitBeforeConnectMillis);
-            var watch = new Stopwatch();
+            var watch = new StopWatch();
             watch.Start();
             var connected = false;
             try
@@ -125,7 +130,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 return;
             }
-            System.Threading.Thread.Sleep((int) millis);
+            Thread.Sleep((int) millis);
         }
     }
 
@@ -141,6 +146,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public long Duration { get; set; }
 
+        private const string Connected = "CONNECTED";
+        private const string WaitingForSession = "WAITING_FOR_SESSION";
+        private const string FailedToConnect = "FAILED_TO_CONNECT";
+
         public ThreadEvent(string threadName, string eventName, Exception error, long duration)
         {
             ThreadName = threadName;
@@ -149,11 +158,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             Duration = duration;
         }
+
+        public bool IsConnectedEvent() => EventName.Equals(Connected);
+
+        public bool IsWaitingEvent() => EventName.Equals(WaitingForSession);
         
         public static ThreadEvent EventConnected(string threadName, long duration) =>
-            new ThreadEvent(threadName, "CONNECTED", null, duration);
+            new ThreadEvent(threadName, Connected, null, duration);
 
         public static ThreadEvent EventConnectingFailed(string threadName, Exception exception, long duration) =>
-            new ThreadEvent(threadName, "FAILED_TO_CONNECT", exception, duration);
+            new ThreadEvent(threadName, FailedToConnect, exception, duration);
+
+        public static ThreadEvent EventWaitingForSessionStarted(string threadName) =>
+            new ThreadEvent(threadName, WaitingForSession, null, 0);
+    }
+
+    class SessionPoolThreadEventHandler: SessionPoolEventHandler
+    {
+        private readonly ConnectingThreads _connectingThreads;
+
+        public SessionPoolThreadEventHandler(ConnectingThreads connectingThreads)
+        {
+            _connectingThreads = connectingThreads;
+        }
+
+        public override void OnWaitingForSessionStarted(SessionPool sessionPool)
+        {
+            var threadName = Thread.CurrentThread.Name;
+            var realThreadName = threadName.StartsWith(ConnectingThread.NamePrefix)
+                ? threadName.Substring(ConnectingThread.NamePrefix.Length) : threadName;
+            var waitingStartedEvent = ThreadEvent.EventWaitingForSessionStarted(realThreadName);
+            _connectingThreads.Enqueue(waitingStartedEvent);
+        }
     }
 }

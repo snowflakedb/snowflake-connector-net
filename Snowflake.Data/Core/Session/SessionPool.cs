@@ -31,6 +31,7 @@ namespace Snowflake.Data.Core.Session
         internal SecureString Password { get; }
         private bool _pooling = true;
         private readonly ICounter _busySessionsCounter;
+        private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
 
         private SessionPool()
         {
@@ -103,6 +104,10 @@ namespace Snowflake.Data.Core.Session
             if (!_pooling)
                 return NewSession(connStr, password, _noPoolingCreateSessionTokens.BeginCreate());
             var sessionOrCreateToken = GetIdleSession(connStr);
+            if (sessionOrCreateToken.Session != null)
+            {
+                _sessionPoolEventHandler.OnSessionProvided(this);
+            }
             return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.CreateToken);
         }
         
@@ -112,6 +117,10 @@ namespace Snowflake.Data.Core.Session
             if (!_pooling)
                 return await NewSessionAsync(connStr, password, _noPoolingCreateSessionTokens.BeginCreate(), cancellationToken).ConfigureAwait(false);
             var sessionOrCreateToken = GetIdleSession(connStr);
+            if (sessionOrCreateToken.Session != null)
+            {
+                _sessionPoolEventHandler.OnSessionProvided(this);
+            }
             return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.CreateToken, cancellationToken).ConfigureAwait(false);
         }
 
@@ -120,6 +129,11 @@ namespace Snowflake.Data.Core.Session
         internal Task<SFSession> GetSessionAsync(CancellationToken cancellationToken) =>
             GetSessionAsync(ConnectionString, Password, cancellationToken);
 
+        internal void SetSessionPoolEventHandler(ISessionPoolEventHandler sessionPoolEventHandler)
+        {
+            _sessionPoolEventHandler = sessionPoolEventHandler;
+        }
+        
         private SessionOrCreateToken GetIdleSession(string connStr)
         {
             s_logger.Debug("SessionPool::GetIdleSession");
@@ -170,6 +184,7 @@ namespace Snowflake.Data.Core.Session
         {
             var timeout = _waitingQueue.GetWaitingTimeoutMillis();
             s_logger.Warn($"SessionPool::WaitForSession for {timeout} millis timeout");
+            _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             string debugApplicationName = "";
             if (connStr.EndsWith("application=TestWaitForMaxSize1"))
@@ -251,6 +266,8 @@ namespace Snowflake.Data.Core.Session
                         _busySessionsCounter.Increase();
                     }
                 }
+                _sessionPoolEventHandler.OnNewSessionCreated(this);
+                _sessionPoolEventHandler.OnSessionProvided(this);
                 s_logger.Warn($"SessionPool::NewSession - finish: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"); // TODO: remove !!!
                 return session;
             }
@@ -298,7 +315,8 @@ namespace Snowflake.Data.Core.Session
                             _busySessionsCounter.Increase();
                         }
                     }
-
+                    _sessionPoolEventHandler.OnNewSessionCreated(this);
+                    _sessionPoolEventHandler.OnSessionProvided(this);
                     return session;
                 }, TaskContinuationOptions.None); // previously it was NotOnCanceled but we would like to execute it even in case of cancellation to properly update counters 
         }

@@ -175,34 +175,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
             pool.SetWaitingTimeout(3000);
             var threads = new ConnectingThreads(connectionString)
                 .NewThread("A", 0, 2000, true)
-                .NewThread("B", 50, 2000, true)
+                .NewThread("B", 0, 2000, true)
                 .NewThread("C", 100, 0, true)
-                .NewThread("D", 150, 0, true);
-            var watch = new StopWatch();
+                .NewThread("D", 100, 0, true);
+            pool.SetSessionPoolEventHandler(new SessionPoolThreadEventHandler(threads));
             
             // act
-            watch.Start();
             threads.StartAll().JoinAll();
-            watch.Stop();
 
             // assert
             var events = threads.Events().ToList();
-            Assert.AreEqual(4, events.Count);
-            CollectionAssert.AreEqual(
-                new[]
-                {
-                    Tuple.Create("A", "CONNECTED"),
-                    Tuple.Create("B", "CONNECTED"),
-                    Tuple.Create("C", "CONNECTED"),
-                    Tuple.Create("D", "CONNECTED")
-                },
-                events.Select(e => Tuple.Create(e.ThreadName, e.EventName)));
-            Assert.LessOrEqual(events[0].Duration, 1000);
-            Assert.LessOrEqual(events[1].Duration, 1000);
-            Assert.GreaterOrEqual(events[2].Duration, 2000);
-            Assert.LessOrEqual(events[2].Duration, 3100);
-            Assert.GreaterOrEqual(events[3].Duration, 2000);
-            Assert.LessOrEqual(events[3].Duration, 3100);
+            Assert.AreEqual(6, events.Count);
+            var waitingEvents = events.Where(e => e.IsWaitingEvent()).ToList();
+            Assert.AreEqual(2, waitingEvents.Count);
+            CollectionAssert.AreEquivalent(new[] { "C", "D" }, waitingEvents.Select(e => e.ThreadName)); // equivalent = in any order
+            var connectedEvents = events.Where(e => e.IsConnectedEvent()).ToList();
+            Assert.AreEqual(4, connectedEvents.Count);
+            var firstConnectedEventsGroup = connectedEvents.GetRange(0, 2);
+            CollectionAssert.AreEquivalent(new[] { "A", "B" }, firstConnectedEventsGroup.Select(e => e.ThreadName));
+            var lastConnectingEventsGroup = connectedEvents.GetRange(2, 2);
+            CollectionAssert.AreEquivalent(new[] { "C", "D" }, lastConnectingEventsGroup.Select(e => e.ThreadName));
+            Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, 1000);
+            Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, 1000);
+            // first to wait from C and D should first to connect, because we won't create a new session, we just reuse sessions returned by A and B threads
+            Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
+            Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
+            Assert.GreaterOrEqual(lastConnectingEventsGroup[0].Duration, 1900);
+            Assert.LessOrEqual(lastConnectingEventsGroup[0].Duration, 3100);
+            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 2000);
+            Assert.LessOrEqual(lastConnectingEventsGroup[1].Duration, 3100);
         }
         
         [Test]
