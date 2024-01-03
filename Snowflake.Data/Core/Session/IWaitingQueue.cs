@@ -8,8 +8,6 @@ namespace Snowflake.Data.Core.Session
 
         void OnResourceIncrease();
 
-        void OnResourceDecrease();
-
         bool IsAnyoneWaiting();
 
         bool IsWaitingEnabled();

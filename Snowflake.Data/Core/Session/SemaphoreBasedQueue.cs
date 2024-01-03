@@ -1,24 +1,30 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
     public class SemaphoreBasedQueue: IWaitingQueue
     {
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0, 1000); // TODO: how not to set it? 
-        private readonly object _lock = new object();
-        private int _waitingCount = 0;
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private long _waitingTimeoutMillis = 30000; // 30 seconds as default
-
+        private readonly List<SemaphoreSlim> _queue= new List<SemaphoreSlim>();
+        
         public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken)
         {
-            lock (_lock)
+            var semaphore = new SemaphoreSlim(0, 1);
+            _lock.EnterWriteLock();
+            try
             {
-                _waitingCount++;
+                _queue.Add(semaphore);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
             try
             {
-                return _semaphore.Wait(millisecondsTimeout, cancellationToken);
+                return semaphore.Wait(millisecondsTimeout, cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -26,24 +32,53 @@ namespace Snowflake.Data.Core.Session
             }
             finally
             {
-                lock (_lock)
+                bool removed = false;
+                _lock.EnterWriteLock();
+                try
                 {
-                    _waitingCount--;
+                    removed = _queue.Remove(semaphore);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+                if (!removed && semaphore.CurrentCount > 0) // that means that it was removed by OnResourceIncrease() and not consumed by this waiting because of timeout
+                {
+                    OnResourceIncrease();
                 }
             }
         }
 
         public void OnResourceIncrease()
         {
-            _semaphore.Release(1);
+            SemaphoreSlim semaphore = null;
+            _lock.EnterWriteLock();
+            try
+            {
+                if (_queue.Count > 0)
+                {
+                    semaphore = _queue[0];
+                    _queue.RemoveAt(0);
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+            semaphore?.Release();
         }
 
-        public void OnResourceDecrease()
-        {
-            _semaphore.Wait(0, CancellationToken.None);
+        public bool IsAnyoneWaiting() {
+            _lock.EnterReadLock();
+            try
+            {
+                return _queue.Count > 0;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
-
-        public bool IsAnyoneWaiting() => _waitingCount > 0;
 
         public bool IsWaitingEnabled() => true;
 

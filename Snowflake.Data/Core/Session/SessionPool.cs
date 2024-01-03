@@ -91,7 +91,6 @@ namespace Snowflake.Data.Core.Session
                     if (item.IsExpired(_timeout, timeNow))
                     {
                         _idleSessions.Remove(item);
-                        _waitingQueue.OnResourceDecrease();
                         item.close();
                     }
                 }
@@ -149,7 +148,6 @@ namespace Snowflake.Data.Core.Session
                     if (session != null)
                     {
                         s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for a session, a session was extracted from idle sessions");
-                        _waitingQueue.OnResourceDecrease();
                         return new SessionOrCreateToken(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for session, but could not find any idle session available");
@@ -231,12 +229,11 @@ namespace Snowflake.Data.Core.Session
                 if (_idleSessions[i].ConnectionString.Equals(connStr))
                 {
                     SFSession session = _idleSessions[i];
-                    _idleSessions.RemoveAt(i); // we don't do _waitingQueue.OnResourceDecrease() here because it happens in GetIdleSession()
+                    _idleSessions.RemoveAt(i);
                     long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     if (session.IsExpired(_timeout, timeNow))
                     {
                         session.close(); // TODO: change to session required
-                        _waitingQueue.OnResourceDecrease();
                         i--;
                     }
                     else
@@ -362,7 +359,6 @@ namespace Snowflake.Data.Core.Session
                 {
                     session.close();
                 }
-                _idleSessions.ForEach(session => _waitingQueue.OnResourceDecrease());
                 _idleSessions.Clear();
             }
         }
@@ -374,7 +370,6 @@ namespace Snowflake.Data.Core.Session
             lock (_sessionPoolLock)
             {
                 idleSessionsCopy = _idleSessions.Select(session => session);
-                _idleSessions.ForEach(session => _waitingQueue.OnResourceDecrease());
                 _idleSessions.Clear();
             }
             foreach (SFSession session in idleSessionsCopy)

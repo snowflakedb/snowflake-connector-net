@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.IsFalse(result);
-            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 50); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 45); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 150);
         }
 
@@ -114,26 +114,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             
             // assert
             Assert.IsTrue(isAnyoneWaiting);
-        }
-
-        [Test]
-        public void TestDecreaseResources()
-        {
-            // arrange
-            var queue = new SemaphoreBasedQueue();
-            queue.OnResourceIncrease();
-            var watch = new Stopwatch();
-            
-            // act
-            queue.OnResourceDecrease();
-            watch.Start();
-            var result = queue.Wait(50, CancellationToken.None);
-            watch.Stop();
-            
-            // assert
-            Assert.IsFalse(result);
-            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 45); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 500);
         }
     }
 }
