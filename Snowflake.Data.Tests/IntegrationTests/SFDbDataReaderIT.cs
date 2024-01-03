@@ -15,8 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    // TODO: enable tests for Arrow
-    //[TestFixture(ResultFormat.ARROW)]
+    [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
     class SFDbDataReaderIT : SFBaseTest
     {
@@ -571,7 +570,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestGetBoolean()
+        public void TestGetBoolean([Values]bool value)
         {
             using (var conn = CreateAndOpenConnection())
             {
@@ -585,7 +584,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
                 p1.DbType = DbType.Boolean;
-                p1.Value = true;
+                p1.Value = value;
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
@@ -597,7 +596,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 ValidateResultFormat(reader);
                 
                 Assert.IsTrue(reader.Read());
-                Assert.IsTrue(reader.GetBoolean(0));
+                Assert.AreEqual(value, reader.GetBoolean(0));
                 reader.Close();
 
                 CloseConnection(conn);

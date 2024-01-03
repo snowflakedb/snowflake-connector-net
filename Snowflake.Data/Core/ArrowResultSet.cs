@@ -23,27 +23,11 @@ namespace Snowflake.Data.Core
         private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
 
-        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
         {
             columnCount = responseData.rowType.Count;
             try
             {
-                if (responseData.rowsetBase64.Length > 0)
-                {
-                    using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
-                    {
-                        using (var reader = new ArrowStreamReader(stream))
-                        {
-                            var recordBatch = reader.ReadNextRecordBatch();
-                            _currentChunk = new ArrowResultChunk(recordBatch);
-                        }
-                    }
-                }
-                else
-                {
-                    _currentChunk = new ArrowResultChunk(columnCount);
-                }
-
                 this.sfStatement = sfStatement;
                 UpdateSessionStatus(responseData);
 
@@ -60,11 +44,36 @@ namespace Snowflake.Data.Core
                 isClosed = false;
 
                 queryId = responseData.queryId;
+                
+                ReadChunk(responseData);
             }
-            catch(System.Exception ex)
+            catch(Exception ex)
             {
                 s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
+            }
+        }
+
+        private void ReadChunk(QueryExecResponseData responseData)
+        {
+            if (responseData.rowsetBase64.Length > 0)
+            {
+                using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
+                {
+                    using (var reader = new ArrowStreamReader(stream))
+                    {
+                        var recordBatch = reader.ReadNextRecordBatch();
+                        _currentChunk = new ArrowResultChunk(recordBatch);
+                        while ((recordBatch = reader.ReadNextRecordBatch()) != null)
+                        {
+                            ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _currentChunk = new ArrowResultChunk(columnCount);
             }
         }
 
@@ -77,14 +86,16 @@ namespace Snowflake.Data.Core
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 return _currentChunk?.Next() ?? false;
             }
 
             return false;
         }
-
+        
         internal override bool Next()
         {
             ThrowIfClosed();
@@ -94,8 +105,11 @@ namespace Snowflake.Data.Core
             
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+                
                 return _currentChunk?.Next() ?? false;
             }
 
@@ -140,7 +154,7 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-
+        
         private object GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
@@ -159,14 +173,39 @@ namespace Snowflake.Data.Core
         {
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
+            {
                 return value;
+            }
             
-            if (value is decimal ret)
-                return ret;
-            
-            var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+            object obj;
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: obj =  ret;
+                        break;
+                    case long ret: obj =  ret;
+                        break;
+                    case int ret: obj =  (long)ret;
+                        break;
+                    case short ret: obj =  (long)ret;
+                        break;
+                    case sbyte ret: obj =  (long)ret;
+                        break;
+                    case string ret: obj =  ret;
+                        break;
+                    case bool ret: obj = ret;
+                        break;
+                    default:
+                    {
+                        var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                        obj = Convert.ChangeType(value, dstType);
+                        break;
+                    }
+                }
+            }
 
-            return Convert.ChangeType(value, dstType);
+            return obj;
         }
 
         internal override bool IsDBNull(int ordinal)
