@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 .NewThread("A", 0, 2000, true)
                 .NewThread("B", 0, 2000, true)
                 .NewThread("C", 100, 0, true)
-                .NewThread("D", 100, 0, true);
+                .NewThread("D", 200, 0, true);
             pool.SetSessionPoolEventHandler(new SessionPoolThreadEventHandler(threads));
             
             // act
@@ -202,8 +202,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
             Assert.GreaterOrEqual(lastConnectingEventsGroup[0].Duration, 1900);
             Assert.LessOrEqual(lastConnectingEventsGroup[0].Duration, 3100);
-            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 1900);
-            Assert.LessOrEqual(lastConnectingEventsGroup[1].Duration, 3100);
+            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 1800);
+            Assert.LessOrEqual(lastConnectingEventsGroup[1].Duration, 3000);
         }
         
         [Test]
