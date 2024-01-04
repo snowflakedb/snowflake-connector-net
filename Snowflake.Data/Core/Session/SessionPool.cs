@@ -241,12 +241,12 @@ namespace Snowflake.Data.Core.Session
 
         private SFSession NewSession(String connectionString, SecureString password, CreateSessionToken createSessionToken)
         {
-            s_logger.Warn("SessionPool::NewSession"); // TODO: change to debug !!!
+            s_logger.Debug("SessionPool::NewSession");
             try
             {
                 var session = s_sessionFactory.NewSession(connectionString, password);
                 session.Open();
-                s_logger.Warn("SessionPool::NewSession - opened"); // TODO: change to debug !!!
+                s_logger.Debug("SessionPool::NewSession - opened");
                 if (_pooling)
                 {
                     lock (_sessionPoolLock)
@@ -257,7 +257,6 @@ namespace Snowflake.Data.Core.Session
                 }
                 _sessionPoolEventHandler.OnNewSessionCreated(this);
                 _sessionPoolEventHandler.OnSessionProvided(this);
-                s_logger.Warn($"SessionPool::NewSession - finish: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"); // TODO: remove !!!
                 return session;
             }
             catch (Exception e)

@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
-    public class SemaphoreBasedQueue: IWaitingQueue
+    internal class SemaphoreBasedQueue: IWaitingQueue
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private long _waitingTimeoutMillis = 30000; // 30 seconds as default
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core.Session
             }
             finally
             {
-                bool removed = false;
+                bool removed;
                 _lock.EnterWriteLock();
                 try
                 {

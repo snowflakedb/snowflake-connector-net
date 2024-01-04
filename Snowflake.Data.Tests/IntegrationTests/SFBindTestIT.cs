@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Globalization;
     using System.Collections.Generic;
 
-    [TestFixture]
+    [TestFixture]    
     class SFBindTestIT : SFBaseTest
     {
         [Test]

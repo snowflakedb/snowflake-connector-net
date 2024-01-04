@@ -1,5 +1,3 @@
-using Snowflake.Data.Core.Session;
-
 namespace Snowflake.Data.Core.Session
 {
     internal interface ICreateSessionTokens

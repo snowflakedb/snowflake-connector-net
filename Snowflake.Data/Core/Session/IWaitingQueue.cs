@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
-    public interface IWaitingQueue
+    internal interface IWaitingQueue
     {
         bool Wait(int millisecondsTimeout, CancellationToken cancellationToken);
 
