@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
@@ -8,35 +9,51 @@ namespace Snowflake.Data.Core.Session
         internal long _timeout { get; set; }  = Timeout;
         private const long Timeout = 30000; // 30 seconds as default
         private readonly object _tokenLock = new object();
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly List<CreateSessionToken> _tokens = new List<CreateSessionToken>();
-        private int _tokenCount = 0;
         
         public CreateSessionToken BeginCreate()
         {
-            lock (_tokenLock)
+            _lock.EnterWriteLock();
+            try
             {
                 var token = new CreateSessionToken(_timeout);
                 _tokens.Add(token);
                 var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 _tokens.RemoveAll(t => t.IsExpired(now));
-                _tokenCount = _tokens.Count;
                 return token;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
         public void EndCreate(CreateSessionToken token)
         {
-            lock (_tokenLock)
+            _lock.EnterWriteLock();
+            try
             {
                 var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 _tokens.RemoveAll(t => token.Id == t.Id || t.IsExpired(now));
-                _tokenCount = _tokens.Count;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
         public int Count()
         {
-            return _tokenCount;
+            _lock.EnterReadLock();
+            try
+            {
+                return _tokens.Count;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
     }
 }
