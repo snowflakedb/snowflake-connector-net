@@ -11,7 +11,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Threading.Tasks;
     
     [TestFixture, NonParallelizable]
-    [Ignore("temporary disabled to debug problem with tests")]
     class SFReusableChunkTest : SFBaseTest
     {
         [Test]

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -15,7 +14,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionMultiplePoolsIT: SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionMultiplePoolsIT>();
         
         [SetUp]
         public new void BeforeTest()
@@ -121,7 +119,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             watch.Stop();
             
             // assert
-            s_logger.Warn($"TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit - start at: {start}, stop at: {stop}");
             Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
             Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);

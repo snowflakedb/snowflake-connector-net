@@ -181,17 +181,9 @@ namespace Snowflake.Data.Core.Session
         private SFSession WaitForSession(string connStr)
         {
             var timeout = _waitingQueue.GetWaitingTimeoutMillis();
-            s_logger.Warn($"SessionPool::WaitForSession for {timeout} millis timeout");
+            s_logger.Debug($"SessionPool::WaitForSession for {timeout} millis timeout");
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            string debugApplicationName = "";
-            if (connStr.EndsWith("application=TestWaitForMaxSize1"))
-                debugApplicationName = "TestWaitForMaxSize1";
-            if (connStr.EndsWith("application=TestWaitForMaxSize2"))
-                debugApplicationName = "TestWaitForMaxSize2";
-            if (connStr.EndsWith("application=TestWaitForMaxSize3"))
-                debugApplicationName = "TestWaitForMaxSize3";
-            s_logger.Warn($"Wait for session started at: {beforeWaitingTime} for: {debugApplicationName}");
             long nowTime = beforeWaitingTime;
             while (nowTime < beforeWaitingTime + timeout) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
             {
@@ -199,24 +191,24 @@ namespace Snowflake.Data.Core.Session
                 var successful = _waitingQueue.Wait((int) timeoutLeft, CancellationToken.None);
                 if (successful)
                 {
-                    s_logger.Warn($"SessionPool::WaitForSession - woken with a session granted for: {debugApplicationName} at: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+                    s_logger.Debug($"SessionPool::WaitForSession - woken with a session granted");
                     lock (_sessionPoolLock)
                     {
                         var session = ExtractIdleSession(connStr);
                         if (session != null)
                         {
-                            s_logger.Warn($"SessionPool::WaitForSession - a session was extracted from idle sessions for: {debugApplicationName}");
+                            s_logger.Debug($"SessionPool::WaitForSession - a session was extracted from idle sessions");
                             return session;
                         }
                     }
                 }
                 else 
                 {
-                    s_logger.Warn($"SessionPool::WaitForSession - woken without a session granted for: {debugApplicationName}");
+                    s_logger.Debug($"SessionPool::WaitForSession - woken without a session granted");
                 }
                 nowTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            s_logger.Warn($"SessionPool::WaitForSession - could not find any idle session available withing a given timeout for: {debugApplicationName} at: {nowTime}");
+            s_logger.Debug($"SessionPool::WaitForSession - could not find any idle session available withing a given timeout");
             throw WaitingFailedException();
         }
 

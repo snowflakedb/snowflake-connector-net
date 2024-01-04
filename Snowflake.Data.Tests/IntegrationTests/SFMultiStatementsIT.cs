@@ -14,7 +14,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using NUnit.Framework;
 
     [TestFixture]
-    [Ignore("temporary disabled to debug problem with tests")]
     class SFMultiStatementsIT : SFBaseTest
     {
         [Test]

@@ -13,7 +13,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Threading.Tasks;
 
     [TestFixture]
-    [Ignore("temporary disabled to debug problem with tests")]
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]

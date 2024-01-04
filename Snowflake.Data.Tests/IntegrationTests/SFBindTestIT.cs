@@ -16,7 +16,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Collections.Generic;
 
     [TestFixture]
-    [Ignore("temporary disabled to debug problem with tests")]
     class SFBindTestIT : SFBaseTest
     {
         [Test]

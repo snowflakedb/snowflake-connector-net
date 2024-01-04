@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data.Common;
 
     [TestFixture]
-    [Ignore("temporary disabled to debug problem with tests")]
     class SFDbFactoryIT : SFBaseTest
     {
         DbProviderFactory _factory;
