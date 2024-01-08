@@ -21,8 +21,8 @@ namespace Snowflake.Data.Core.Session
 
         private readonly List<SFSession> _idleSessions;
         private readonly IWaitingQueue _waitingForSessionToReuseQueue;
-        private readonly ICreateSessionTokens _createSessionTokens;
-        private readonly ICreateSessionTokens _noPoolingCreateSessionTokens = new NotCountingCreateSessionTokens();
+        private readonly ISessionCreationTokenCounter _sessionCreationTokenCounter;
+        private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         private int _maxPoolSize;
         private long _timeout;
         private long _createSessionTimeoutMillis = CreateSessionTimeout30SecAsMillis; // TODO: in further PR make operation fail after 
@@ -42,8 +42,8 @@ namespace Snowflake.Data.Core.Session
             _maxPoolSize = MaxPoolSize;
             _timeout = Timeout;
             _busySessionsCounter = new FixedZeroCounter();
-            _waitingForSessionToReuseQueue = new NoOneWaiting();
-            _createSessionTokens = new NotCountingCreateSessionTokens();
+            _waitingForSessionToReuseQueue = new NonWaitingQueue();
+            _sessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         }
 
         private SessionPool(string connectionString, SecureString password)
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Core.Session
             ConnectionString = connectionString;
             Password = password;
             _waitingForSessionToReuseQueue = new SemaphoreBasedQueue();
-            _createSessionTokens = new CreateSessionTokens(_createSessionTimeoutMillis);
+            _sessionCreationTokenCounter = new SessionCreationTokenCounter(_createSessionTimeoutMillis);
         }
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
@@ -103,26 +103,26 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession");
             if (!_pooling)
-                return NewSession(connStr, password, _noPoolingCreateSessionTokens.BeginCreate());
+                return NewSession(connStr, password, _noPoolingSessionCreationTokenCounter.NewToken());
             var sessionOrCreateToken = GetIdleSession(connStr);
             if (sessionOrCreateToken.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.CreateToken);
+            return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.SessionCreationToken);
         }
         
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync");
             if (!_pooling)
-                return await NewSessionAsync(connStr, password, _noPoolingCreateSessionTokens.BeginCreate(), cancellationToken).ConfigureAwait(false);
+                return await NewSessionAsync(connStr, password, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken).ConfigureAwait(false);
             var sessionOrCreateToken = GetIdleSession(connStr);
             if (sessionOrCreateToken.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.CreateToken, cancellationToken).ConfigureAwait(false);
+            return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.SessionCreationToken, cancellationToken).ConfigureAwait(false);
         }
 
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Core.Session
             _sessionPoolEventHandler = sessionPoolEventHandler;
         }
         
-        private SessionOrCreateToken GetIdleSession(string connStr)
+        private SessionOrCreationToken GetIdleSession(string connStr)
         {
             s_logger.Debug("SessionPool::GetIdleSession");
             lock (_sessionPoolLock)
@@ -150,17 +150,17 @@ namespace Snowflake.Data.Core.Session
                     if (session != null)
                     {
                         s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for a session, a session was extracted from idle sessions");
-                        return new SessionOrCreateToken(session);
+                        return new SessionOrCreationToken(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for session, but could not find any idle session available");
                     if (IsAllowedToCreateNewSession())
                     {
                         // there is no need to wait for a session since we can create a new one
-                        return new SessionOrCreateToken(_createSessionTokens.BeginCreate());
+                        return new SessionOrCreationToken(_sessionCreationTokenCounter.NewToken());
                     }
                 }
             }
-            return new SessionOrCreateToken(WaitForSession(connStr));
+            return new SessionOrCreationToken(WaitForSession(connStr));
         }
 
         private bool IsAllowedToCreateNewSession()
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Core.Session
             return null;
         }
 
-        private SFSession NewSession(String connectionString, SecureString password, CreateSessionToken createSessionToken)
+        private SFSession NewSession(String connectionString, SecureString password, SessionCreationToken sessionCreationToken)
         {
             s_logger.Debug("SessionPool::NewSession");
             try
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     lock (_sessionPoolLock)
                     {
-                        _createSessionTokens.EndCreate(createSessionToken);
+                        _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                         _busySessionsCounter.Increase();
                     }
                 }
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Core.Session
             catch (Exception e)
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
-                _createSessionTokens.EndCreate(createSessionToken);
+                _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                 if (e is SnowflakeDbException)
                     throw;
                 throw new SnowflakeDbException(
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, CreateSessionToken createSessionToken, CancellationToken cancellationToken)
+        private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
             var session = s_sessionFactory.NewSession(connectionString, password);
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     if (previousTask.IsFaulted)
                     {
-                        _createSessionTokens.EndCreate(createSessionToken);
+                        _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                     }
                         
                     if (previousTask.IsFaulted && previousTask.Exception != null)
@@ -301,7 +301,7 @@ namespace Snowflake.Data.Core.Session
                     {
                         lock (_sessionPoolLock)
                         {
-                            _createSessionTokens.EndCreate(createSessionToken);
+                            _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                             _busySessionsCounter.Increase();
                         }
                     }
@@ -393,7 +393,7 @@ namespace Snowflake.Data.Core.Session
 
         public int GetCurrentPoolSize()
         {
-            return _idleSessions.Count + _busySessionsCounter.Count() + _createSessionTokens.Count();
+            return _idleSessions.Count + _busySessionsCounter.Count() + _sessionCreationTokenCounter.Count();
         }
 
         public bool SetPooling(bool isEnable)
@@ -414,6 +414,6 @@ namespace Snowflake.Data.Core.Session
             return _pooling;
         }
 
-        public void SetWaitingTimeout(long timeoutMillis) => _waitingForSessionToReuseQueue.SetWaitingTimeout(timeoutMillis);
+        public void SetWaitingForSessionToReuseTimeout(long timeoutMillis) => _waitingForSessionToReuseQueue.SetWaitingTimeout(timeoutMillis);
     }
 }

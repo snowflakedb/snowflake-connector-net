@@ -5,15 +5,15 @@ using Snowflake.Data.Core.Session;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
-    public class CreateSessionTokenTest
+    public class SessionCreationTokenTest
     {
-        private const long Timeout = 30000; // 30 seconds in millis
+        private const long Timeout30SecondsAsMillis = 30000;
         
         [Test]
         public void TestTokenIsNotExpired()
         {
             // arrange
-            var token = new CreateSessionToken(Timeout);
+            var token = new SessionCreationToken(Timeout30SecondsAsMillis);
 
             // act
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -26,10 +26,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestTokenIsExpired()
         {
             // arrange
-            var token = new CreateSessionToken(Timeout);
+            var token = new SessionCreationToken(Timeout30SecondsAsMillis);
 
             // act
-            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + Timeout + 1);
+            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + Timeout30SecondsAsMillis + 1);
 
             // assert
             Assert.IsTrue(isExpired);

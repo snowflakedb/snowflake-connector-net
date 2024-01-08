@@ -4,16 +4,16 @@ using Snowflake.Data.Core.Session;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
-    public class NotCountingCreateSessionTokensTest
+    public class NonCountingSessionCreationTokenCounterTest
     {
         [Test]
         public void TestGrantSessionCreation()
         {
             // arrange
-            var tokens = new NotCountingCreateSessionTokens();
+            var tokens = new NonCountingSessionCreationTokenCounter();
             
             // act
-            tokens.BeginCreate();
+            tokens.NewToken();
             
             // assert
             Assert.AreEqual(0, tokens.Count());
@@ -23,11 +23,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteSessionCreation()
         {
             // arrange
-            var tokens = new NotCountingCreateSessionTokens();
-            var token = tokens.BeginCreate();
+            var tokens = new NonCountingSessionCreationTokenCounter();
+            var token = tokens.NewToken();
             
             // act
-            tokens.EndCreate(token);
+            tokens.RemoveToken(token);
             
             // assert
             Assert.AreEqual(0, tokens.Count());
@@ -37,12 +37,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
-            var tokens = new NotCountingCreateSessionTokens();
-            tokens.BeginCreate();
-            var unknownToken = new CreateSessionToken(0);
+            var tokens = new NonCountingSessionCreationTokenCounter();
+            tokens.NewToken();
+            var unknownToken = new SessionCreationToken(0);
             
             // act
-            tokens.EndCreate(unknownToken);
+            tokens.RemoveToken(unknownToken);
 
             // assert
             Assert.AreEqual(0, tokens.Count());

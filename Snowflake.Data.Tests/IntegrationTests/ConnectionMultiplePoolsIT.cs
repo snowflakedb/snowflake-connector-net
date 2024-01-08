@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             pool.SetMaxPoolSize(2);
-            pool.SetWaitingTimeout(1000);
+            pool.SetWaitingForSessionToReuseTimeout(1000);
             var conn1 = OpenedConnection(connectionString);
             var conn2 = OpenedConnection(connectionString);
             var watch = new StopWatch();
@@ -120,8 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // assert
             Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
-            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(1000, 1500));
             Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
 
             // cleanup
@@ -137,7 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             pool.SetMaxPoolSize(2);
-            pool.SetWaitingTimeout(1000);
+            pool.SetWaitingForSessionToReuseTimeout(1000);
             var conn1 = OpenedConnection(connectionString);
             var conn2 = OpenedConnection(connectionString);
             var watch = new StopWatch();
@@ -152,8 +151,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.IsTrue(thrown.InnerException is AggregateException);
             var nextedException = ((AggregateException)thrown.InnerException).InnerException;
             Assert.That(nextedException.Message, Does.Contain("Could not obtain a connection from the pool within a given timeout"));
-            Assert.GreaterOrEqual(watch.ElapsedMilliseconds, 1000);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 1500);
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(1000, 1500));
             Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
 
             // cleanup
@@ -169,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             pool.SetMaxPoolSize(2);
-            pool.SetWaitingTimeout(3000);
+            pool.SetWaitingForSessionToReuseTimeout(3000);
             var threads = new ConnectingThreads(connectionString)
                 .NewThread("A", 0, 2000, true)
                 .NewThread("B", 0, 2000, true)
@@ -197,10 +195,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // first to wait from C and D should first to connect, because we won't create a new session, we just reuse sessions returned by A and B threads
             Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
-            Assert.GreaterOrEqual(lastConnectingEventsGroup[0].Duration, 1900);
-            Assert.LessOrEqual(lastConnectingEventsGroup[0].Duration, 3100);
-            Assert.GreaterOrEqual(lastConnectingEventsGroup[1].Duration, 1800);
-            Assert.LessOrEqual(lastConnectingEventsGroup[1].Duration, 3000);
+            Assert.That(lastConnectingEventsGroup[0].Duration, Is.InRange(1900, 3100));
+            Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(1800, 3000));
         }
         
         [Test]

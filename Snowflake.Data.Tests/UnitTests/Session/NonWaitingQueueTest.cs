@@ -6,18 +6,18 @@ using Snowflake.Data.Core.Session;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
-    public class NoOneWaitingTest
+    public class NonWaitingQueueTest
     {
         [Test]
         public void TestWaitDoesNotHangAndReturnsFalse()
         {
             // arrange
-            var noOneWaiting = new NoOneWaiting();
+            var nonWaitingQueue = new NonWaitingQueue();
             var watch = new Stopwatch();
             
             // act
             watch.Start();
-            var result = noOneWaiting.Wait(10000, CancellationToken.None);
+            var result = nonWaitingQueue.Wait(10000, CancellationToken.None);
             watch.Stop();
             
             // assert
@@ -29,11 +29,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestNoOneIsWaiting()
         {
             // arrange
-            var noOneWaiting = new NoOneWaiting();
-            noOneWaiting.Wait(10000, CancellationToken.None);
+            var nonWaitingQueue = new NonWaitingQueue();
+            nonWaitingQueue.Wait(10000, CancellationToken.None);
             
             // act
-            var isAnyoneWaiting = noOneWaiting.IsAnyoneWaiting();
+            var isAnyoneWaiting = nonWaitingQueue.IsAnyoneWaiting();
             
             // assert
             Assert.IsFalse(isAnyoneWaiting);
@@ -43,10 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestWaitingDisabled()
         {
             // arrange
-            var noOneWaiting = new NoOneWaiting();
+            var nonWaitingQueue = new NonWaitingQueue();
 
             // act
-            var isWaitingEnabled = noOneWaiting.IsWaitingEnabled();
+            var isWaitingEnabled = nonWaitingQueue.IsWaitingEnabled();
             
             // assert
             Assert.IsFalse(isWaitingEnabled);
