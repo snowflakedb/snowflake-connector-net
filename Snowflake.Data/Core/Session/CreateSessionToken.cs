@@ -6,15 +6,15 @@ namespace Snowflake.Data.Core.Session
     {
         public Guid Id { get; }
         private readonly long _grantedAtAsEpocMillis;
-        private readonly long _timeout;
+        private readonly long _timeoutMillis;
 
-        public CreateSessionToken(long timeout)
+        public CreateSessionToken(long timeoutMillis)
         {
             Id = Guid.NewGuid();
             _grantedAtAsEpocMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            _timeout = timeout;
+            _timeoutMillis = timeoutMillis;
         }
 
-        public bool IsExpired(long nowMillis) => nowMillis > _grantedAtAsEpocMillis + _timeout;
+        public bool IsExpired(long nowMillis) => nowMillis > _grantedAtAsEpocMillis + _timeoutMillis;
     }
 }

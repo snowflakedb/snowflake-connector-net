@@ -7,11 +7,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class CreateSessionTokensTest
     {
+        private const long LongTimeAsMillis = 30000;
+        private const long ShortTimeAsMillis = 50;
+        
         [Test]
         public void TestGrantSessionCreation()
         {
             // arrange
-            var tokens = new CreateSessionTokens();
+            var tokens = new CreateSessionTokens(LongTimeAsMillis);
             
             // act
             tokens.BeginCreate();
@@ -30,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteSessionCreation()
         {
             // arrange
-            var tokens = new CreateSessionTokens();
+            var tokens = new CreateSessionTokens(LongTimeAsMillis);
             var token1 = tokens.BeginCreate();
             var token2 = tokens.BeginCreate();
             
@@ -51,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
-            var tokens = new CreateSessionTokens();
+            var tokens = new CreateSessionTokens(LongTimeAsMillis);
             tokens.BeginCreate();
             var unknownToken = new CreateSessionToken(0);
             
@@ -66,12 +69,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteCleansExpiredTokens()
         {
             // arrange
-            var tokens = new CreateSessionTokens();
-            tokens._timeout = 50;
+            var tokens = new CreateSessionTokens(ShortTimeAsMillis);
             var token = tokens.BeginCreate();
             tokens.BeginCreate(); // this token will be cleaned because of expiration
             Assert.AreEqual(2, tokens.Count());
-            Thread.Sleep((int) tokens._timeout + 5);
+            Thread.Sleep((int) ShortTimeAsMillis + 5);
 
             // act
             tokens.EndCreate(token);

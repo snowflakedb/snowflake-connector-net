@@ -6,18 +6,21 @@ namespace Snowflake.Data.Core.Session
 {
     internal class CreateSessionTokens: ICreateSessionTokens
     {
-        internal long _timeout { get; set; }  = Timeout;
-        private const long Timeout = 30000; // 30 seconds as default
-        private readonly object _tokenLock = new object();
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly long _timeoutMillis;
+        private readonly ReaderWriterLockSlim _tokenLock = new ReaderWriterLockSlim();
         private readonly List<CreateSessionToken> _tokens = new List<CreateSessionToken>();
-        
+
+        public CreateSessionTokens(long timeoutMillis)
+        {
+            _timeoutMillis = timeoutMillis;
+        }
+
         public CreateSessionToken BeginCreate()
         {
-            _lock.EnterWriteLock();
+            _tokenLock.EnterWriteLock();
             try
             {
-                var token = new CreateSessionToken(_timeout);
+                var token = new CreateSessionToken(_timeoutMillis);
                 _tokens.Add(token);
                 var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 _tokens.RemoveAll(t => t.IsExpired(now));
@@ -25,13 +28,13 @@ namespace Snowflake.Data.Core.Session
             }
             finally
             {
-                _lock.ExitWriteLock();
+                _tokenLock.ExitWriteLock();
             }
         }
 
         public void EndCreate(CreateSessionToken token)
         {
-            _lock.EnterWriteLock();
+            _tokenLock.EnterWriteLock();
             try
             {
                 var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -39,20 +42,20 @@ namespace Snowflake.Data.Core.Session
             }
             finally
             {
-                _lock.ExitWriteLock();
+                _tokenLock.ExitWriteLock();
             }
         }
 
         public int Count()
         {
-            _lock.EnterReadLock();
+            _tokenLock.EnterReadLock();
             try
             {
                 return _tokens.Count;
             }
             finally
             {
-                _lock.ExitReadLock();
+                _tokenLock.ExitReadLock();
             }
         }
     }

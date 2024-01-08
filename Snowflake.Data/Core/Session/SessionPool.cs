@@ -20,13 +20,15 @@ namespace Snowflake.Data.Core.Session
         private static ISessionFactory s_sessionFactory = new SessionFactory();
 
         private readonly List<SFSession> _idleSessions;
-        private readonly IWaitingQueue _waitingQueue;
+        private readonly IWaitingQueue _waitingForSessionToReuseQueue;
         private readonly ICreateSessionTokens _createSessionTokens;
         private readonly ICreateSessionTokens _noPoolingCreateSessionTokens = new NotCountingCreateSessionTokens();
         private int _maxPoolSize;
         private long _timeout;
+        private long _createSessionTimeoutMillis = CreateSessionTimeout30SecAsMillis; // TODO: in further PR make operation fail after 
         private const int MaxPoolSize = 10;
         private const long Timeout = 3600;
+        private const long CreateSessionTimeout30SecAsMillis = 30000;
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
         private bool _pooling = true;
@@ -40,7 +42,7 @@ namespace Snowflake.Data.Core.Session
             _maxPoolSize = MaxPoolSize;
             _timeout = Timeout;
             _busySessionsCounter = new FixedZeroCounter();
-            _waitingQueue = new NoOneWaiting();
+            _waitingForSessionToReuseQueue = new NoOneWaiting();
             _createSessionTokens = new NotCountingCreateSessionTokens();
         }
 
@@ -53,8 +55,8 @@ namespace Snowflake.Data.Core.Session
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
             Password = password;
-            _waitingQueue = new SemaphoreBasedQueue();
-            _createSessionTokens = new CreateSessionTokens();
+            _waitingForSessionToReuseQueue = new SemaphoreBasedQueue();
+            _createSessionTokens = new CreateSessionTokens(_createSessionTimeoutMillis);
         }
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
@@ -138,7 +140,7 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::GetIdleSession");
             lock (_sessionPoolLock)
             {
-                if (_waitingQueue.IsAnyoneWaiting())
+                if (_waitingForSessionToReuseQueue.IsAnyoneWaiting())
                 {
                     s_logger.Debug("SessionPool::GetIdleSession - someone is already waiting for a session, request is going to be queued");
                 }
@@ -163,7 +165,7 @@ namespace Snowflake.Data.Core.Session
 
         private bool IsAllowedToCreateNewSession()
         {
-            if (!_waitingQueue.IsWaitingEnabled())
+            if (!_waitingForSessionToReuseQueue.IsWaitingEnabled())
             {
                 s_logger.Debug($"SessionPool - new session creation granted");
                 return true;
@@ -180,7 +182,7 @@ namespace Snowflake.Data.Core.Session
         
         private SFSession WaitForSession(string connStr)
         {
-            var timeout = _waitingQueue.GetWaitingTimeoutMillis();
+            var timeout = _waitingForSessionToReuseQueue.GetWaitingTimeoutMillis();
             s_logger.Debug($"SessionPool::WaitForSession for {timeout} millis timeout");
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -188,7 +190,7 @@ namespace Snowflake.Data.Core.Session
             while (nowTime < beforeWaitingTime + timeout) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
             {
                 var timeoutLeft = beforeWaitingTime + timeout - nowTime;
-                var successful = _waitingQueue.Wait((int) timeoutLeft, CancellationToken.None);
+                var successful = _waitingForSessionToReuseQueue.Wait((int) timeoutLeft, CancellationToken.None);
                 if (successful)
                 {
                     s_logger.Debug($"SessionPool::WaitForSession - woken with a session granted");
@@ -225,7 +227,7 @@ namespace Snowflake.Data.Core.Session
                     long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     if (session.IsExpired(_timeout, timeNow))
                     {
-                        session.close(); // TODO: change to session required
+                        session.close(); // TODO: cherry-pick SNOW-984600
                         i--;
                     }
                     else
@@ -336,7 +338,7 @@ namespace Snowflake.Data.Core.Session
 
                 s_logger.Debug($"pool connection with sid {session.sessionId}");
                 _idleSessions.Add(session);
-                _waitingQueue.OnResourceIncrease();
+                _waitingForSessionToReuseQueue.OnResourceIncrease();
                 return true;
             }
         }
@@ -412,6 +414,6 @@ namespace Snowflake.Data.Core.Session
             return _pooling;
         }
 
-        public void SetWaitingTimeout(long timeoutMillis) => _waitingQueue.SetWaitingTimeout(timeoutMillis);
+        public void SetWaitingTimeout(long timeoutMillis) => _waitingForSessionToReuseQueue.SetWaitingTimeout(timeoutMillis);
     }
 }
