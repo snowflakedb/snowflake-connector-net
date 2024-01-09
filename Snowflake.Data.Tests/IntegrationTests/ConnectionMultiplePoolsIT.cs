@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
             Assert.That(lastConnectingEventsGroup[0].Duration, Is.InRange(1900, 3100));
-            Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(1900, 3100));
+            Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(1500, 2700));
         }
         
         [Test]
