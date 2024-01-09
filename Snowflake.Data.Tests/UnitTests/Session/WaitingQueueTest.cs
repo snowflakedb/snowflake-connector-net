@@ -7,13 +7,13 @@ using Snowflake.Data.Core.Session;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
-    public class SemaphoreBasedQueueTest
+    public class WaitingQueueTest
     {
         [Test]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             var watch = new Stopwatch();
             
             // act
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             var cancellationSource = new CancellationTokenSource(50);
             var watch = new Stopwatch();
 
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             var watch = new Stopwatch();
             Task.Run(() =>
             {
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestWaitingEnabled()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             
             // act
             var isWaitingEnabled = queue.IsWaitingEnabled();
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestNoOneIsWaiting()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             
             // act
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestSomeoneIsWaiting()
         {
             // arrange
-            var queue = new SemaphoreBasedQueue();
+            var queue = new WaitingQueue();
             var syncThreadsSemaphore = new SemaphoreSlim(0, 1);
             Task.Run(() =>
             {

@@ -55,7 +55,7 @@ namespace Snowflake.Data.Core.Session
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
             Password = password;
-            _waitingForSessionToReuseQueue = new SemaphoreBasedQueue();
+            _waitingForSessionToReuseQueue = new WaitingQueue();
             _sessionCreationTokenCounter = new SessionCreationTokenCounter(_createSessionTimeoutMillis);
         }
 
