@@ -183,7 +183,7 @@ namespace Snowflake.Data.Core.Session
         private SFSession WaitForSession(string connStr)
         {
             var timeout = _waitingForSessionToReuseQueue.GetWaitingTimeoutMillis();
-            s_logger.Debug($"SessionPool::WaitForSession for {timeout} millis timeout");
+            s_logger.Info($"SessionPool::WaitForSession for {timeout} millis timeout");
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTime = beforeWaitingTime;
@@ -210,7 +210,7 @@ namespace Snowflake.Data.Core.Session
                 }
                 nowTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            s_logger.Debug($"SessionPool::WaitForSession - could not find any idle session available withing a given timeout");
+            s_logger.Info($"SessionPool::WaitForSession - could not find any idle session available withing a given timeout");
             throw WaitingFailedException();
         }
 
