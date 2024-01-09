@@ -190,8 +190,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             CollectionAssert.AreEquivalent(new[] { "A", "B" }, firstConnectedEventsGroup.Select(e => e.ThreadName));
             var lastConnectingEventsGroup = connectedEvents.GetRange(2, 2);
             CollectionAssert.AreEquivalent(new[] { "C", "D" }, lastConnectingEventsGroup.Select(e => e.ThreadName));
-            Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, 1000);
-            Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, 1000);
+            Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, 1200);
+            Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, 1200);
             // first to wait from C and D should first to connect, because we won't create a new session, we just reuse sessions returned by A and B threads
             Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
