@@ -10,6 +10,14 @@ namespace Snowflake.Data.Core.Session
         {
         }
 
+        public virtual void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft)
+        {
+        }
+
+        public virtual void OnWaitingForSessionSuccessful(SessionPool sessionPool)
+        {
+        }
+        
         public virtual void OnSessionProvided(SessionPool sessionPool)
         {
         }

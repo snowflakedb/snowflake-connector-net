@@ -190,10 +190,12 @@ namespace Snowflake.Data.Core.Session
             while (nowTime < beforeWaitingTime + timeout) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
             {
                 var timeoutLeft = beforeWaitingTime + timeout - nowTime;
+                _sessionPoolEventHandler.OnWaitingForSessionStarted(this, timeoutLeft);
                 var successful = _waitingForSessionToReuseQueue.Wait((int) timeoutLeft, CancellationToken.None);
                 if (successful)
                 {
                     s_logger.Debug($"SessionPool::WaitForSession - woken with a session granted");
+                    _sessionPoolEventHandler.OnWaitingForSessionSuccessful(this);
                     lock (_sessionPoolLock)
                     {
                         var session = ExtractIdleSession(connStr);

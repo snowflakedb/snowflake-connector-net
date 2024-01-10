@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1000)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1500)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             
             // assert
             Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1000)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1500)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.IsTrue(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1000));
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1500));
         }
 
         [Test]

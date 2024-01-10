@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -175,6 +176,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SessionPoolThreadEventHandler: SessionPoolEventHandler
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be 
         private readonly ConnectingThreads _connectingThreads;
 
         public SessionPoolThreadEventHandler(ConnectingThreads connectingThreads)
@@ -187,8 +189,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var threadName = Thread.CurrentThread.Name;
             var realThreadName = threadName.StartsWith(ConnectingThread.NamePrefix)
                 ? threadName.Substring(ConnectingThread.NamePrefix.Length) : threadName;
+            s_logger.Warn($"Thread is going to wait for an available session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
             var waitingStartedEvent = ThreadEvent.EventWaitingForSessionStarted(realThreadName);
             _connectingThreads.Enqueue(waitingStartedEvent);
+        }
+        
+        public override void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft)
+        {
+            s_logger.Warn($"Thread is going to wait with milliseconds timeout of {millisLeft}. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+        }
+
+        public override void OnWaitingForSessionSuccessful(SessionPool sessionPool)
+        {
+            s_logger.Warn($"Thread has been woken with a session granted. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+        }
+
+        public override void OnSessionProvided(SessionPool sessionPool)
+        {
+            s_logger.Warn($"Thread has got a session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
         }
     }
 }
