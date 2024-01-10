@@ -168,11 +168,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             pool.SetMaxPoolSize(2);
             pool.SetWaitingForSessionToReuseTimeout(3000);
+            const long ADelay = 0;
+            const long BDelay = 400;
+            const long CDelay = 2 * BDelay;
+            const long DDelay = 3 * BDelay;
+            const long ABDelayAfterConnect = 2000;
+            const long ConnectPessimisticEstimate = 1300;
+            const long StartDelayPessimisticEstimate = 300;
+            const long AMinConnectionReleaseTime = ADelay + ABDelayAfterConnect; // 2000
+            const long AMaxConnectionReleaseTime = ADelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 3600
+            const long BMinConnectionReleaseTime = BDelay + ABDelayAfterConnect; // 2400
+            const long BMaxConnectionReleaseTime = BDelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 4000
+            const long CMinConnectDuration = AMinConnectionReleaseTime - CDelay - StartDelayPessimisticEstimate; // 2000 - 800 - 300 = 900
+            const long CMaxConnectDuration = AMaxConnectionReleaseTime - CDelay; // 3600 - 800 = 2800
+            const long DMinConnectDuration = BMinConnectionReleaseTime - DDelay - StartDelayPessimisticEstimate; // 2400 - 1200 - 300 = 900
+            const long DMaxConnectDuration = BMaxConnectionReleaseTime - DDelay; // 3600 - 800 = 2800
+            
             var threads = new ConnectingThreads(connectionString)
-                .NewThread("A", 0, 2000, true)
-                .NewThread("B", 0, 2000, true)
-                .NewThread("C", 100, 0, true)
-                .NewThread("D", 500, 0, true);
+                .NewThread("A", ADelay, ABDelayAfterConnect, true)
+                .NewThread("B", BDelay, ABDelayAfterConnect, true)
+                .NewThread("C", CDelay, 0, true)
+                .NewThread("D", DDelay, 0, true);
             pool.SetSessionPoolEventHandler(new SessionPoolThreadEventHandler(threads));
             
             // act
@@ -190,13 +206,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             CollectionAssert.AreEquivalent(new[] { "A", "B" }, firstConnectedEventsGroup.Select(e => e.ThreadName));
             var lastConnectingEventsGroup = connectedEvents.GetRange(2, 2);
             CollectionAssert.AreEquivalent(new[] { "C", "D" }, lastConnectingEventsGroup.Select(e => e.ThreadName));
-            Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, 1300);
-            Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, 1300);
+            Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, ConnectPessimisticEstimate);
+            Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, ConnectPessimisticEstimate);
             // first to wait from C and D should first to connect, because we won't create a new session, we just reuse sessions returned by A and B threads
             Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
             Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
-            Assert.That(lastConnectingEventsGroup[0].Duration, Is.InRange(1900, 3100));
-            Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(1500, 2700));
+            Assert.That(lastConnectingEventsGroup[0].Duration, Is.InRange(CMinConnectDuration, CMaxConnectDuration)); 
+            Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(DMinConnectDuration, DMaxConnectDuration));
         }
         
         [Test]
