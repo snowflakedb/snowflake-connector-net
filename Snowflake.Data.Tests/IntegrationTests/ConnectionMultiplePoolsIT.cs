@@ -176,13 +176,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const long ConnectPessimisticEstimate = 1300;
             const long StartDelayPessimisticEstimate = 350;
             const long AMinConnectionReleaseTime = ADelay + ABDelayAfterConnect; // 2000
-            const long AMaxConnectionReleaseTime = ADelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 3600
+            const long AMaxConnectionReleaseTime = ADelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 3650
             const long BMinConnectionReleaseTime = BDelay + ABDelayAfterConnect; // 2400
-            const long BMaxConnectionReleaseTime = BDelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 4000
-            const long CMinConnectDuration = AMinConnectionReleaseTime - CDelay - StartDelayPessimisticEstimate; // 2000 - 800 - 300 = 900
-            const long CMaxConnectDuration = AMaxConnectionReleaseTime - CDelay; // 3600 - 800 = 2800
-            const long DMinConnectDuration = BMinConnectionReleaseTime - DDelay - StartDelayPessimisticEstimate; // 2400 - 1200 - 300 = 900
-            const long DMaxConnectDuration = BMaxConnectionReleaseTime - DDelay; // 3600 - 800 = 2800
+            const long BMaxConnectionReleaseTime = BDelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 4050
+            const long CMinConnectDuration = AMinConnectionReleaseTime - CDelay - StartDelayPessimisticEstimate; // 2000 - 800 - 350 = 850
+            const long CMaxConnectDuration = AMaxConnectionReleaseTime - CDelay; // 3650 - 800 = 2850
+            const long DMinConnectDuration = BMinConnectionReleaseTime - DDelay - StartDelayPessimisticEstimate; // 2400 - 1200 - 350 = 850
+            const long DMaxConnectDuration = BMaxConnectionReleaseTime - DDelay; // 3650 - 800 = 2850
             
             var threads = new ConnectingThreads(connectionString)
                 .NewThread("A", ADelay, ABDelayAfterConnect, true)
