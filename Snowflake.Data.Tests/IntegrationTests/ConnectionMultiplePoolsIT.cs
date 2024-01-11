@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const long DDelay = 3 * BDelay;
             const long ABDelayAfterConnect = 2000;
             const long ConnectPessimisticEstimate = 1300;
-            const long StartDelayPessimisticEstimate = 300;
+            const long StartDelayPessimisticEstimate = 350;
             const long AMinConnectionReleaseTime = ADelay + ABDelayAfterConnect; // 2000
             const long AMaxConnectionReleaseTime = ADelay + StartDelayPessimisticEstimate + ConnectPessimisticEstimate + ABDelayAfterConnect; // 3600
             const long BMinConnectionReleaseTime = BDelay + ABDelayAfterConnect; // 2400
