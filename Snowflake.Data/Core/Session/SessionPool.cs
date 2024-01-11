@@ -25,10 +25,10 @@ namespace Snowflake.Data.Core.Session
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         private int _maxPoolSize;
         private long _timeout;
-        private long _createSessionTimeoutMillis = CreateSessionTimeout30SecAsMillis; // TODO: in further PR make operation fail after 
+        private long _sessionCreationTimeoutMillis = SessionCreationTimeout30SecAsMillis; // TODO: in further PR make operation fail after 
         private const int MaxPoolSize = 10;
         private const long Timeout = 3600;
-        private const long CreateSessionTimeout30SecAsMillis = 30000;
+        private const long SessionCreationTimeout30SecAsMillis = 30000;
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
         private bool _pooling = true;
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Core.Session
             ConnectionString = connectionString;
             Password = password;
             _waitingForSessionToReuseQueue = new WaitingQueue();
-            _sessionCreationTokenCounter = new SessionCreationTokenCounter(_createSessionTimeoutMillis);
+            _sessionCreationTokenCounter = new SessionCreationTokenCounter(_sessionCreationTimeoutMillis);
         }
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
