@@ -78,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defMaxHttpRetries = "7";
             string defIncludeRetryReason = "true";
             string defDisableQueryContextCache = "false";
+            string defAllowUnderscoresInHost = "false";
 
             var simpleTestCase = new TestCase()
             {
@@ -103,7 +104,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithBrowserResponseTimeout = new TestCase()
@@ -129,7 +131,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -158,7 +161,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -189,7 +193,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -219,7 +224,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithIncludeRetryReason = new TestCase()
@@ -246,7 +252,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, "false" },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithDisableQueryContextCache = new TestCase()
@@ -272,7 +279,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
@@ -302,7 +310,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseUnderscoredAccountName = new TestCase()
@@ -329,7 +338,36 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
-                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache }
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+            var testCaseUnderscoredAccountNameWithEnabledAllowUnderscores = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT=prefix_{defAccount};USER={defUser};PASSWORD={defPassword};allowUnderscoresInHost=true;",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"prefix_{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"prefix_{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
             return new TestCase[]
@@ -342,7 +380,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithIncludeRetryReason,
                 testCaseWithDisableQueryContextCache,
                 testCaseComplicatedAccountName,
-                testCaseUnderscoredAccountName
+                testCaseUnderscoredAccountName,
+                testCaseUnderscoredAccountNameWithEnabledAllowUnderscores
             };
         }
         

@@ -90,7 +90,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLEQUERYCONTEXTCACHE,
         [SFSessionPropertyAttr(required = false)]
-        CLIENT_CONFIG_FILE
+        CLIENT_CONFIG_FILE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOWUNDERSCORESINHOST
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -255,13 +257,30 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
+
+            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            if (properties.ContainsKey(SFSessionProperty.ALLOWUNDERSCORESINHOST))
+            {
+                try
+                {
+                    allowUnderscoresInHost = bool.Parse(properties[SFSessionProperty.ALLOWUNDERSCORESINHOST]);
+                }
+                catch (Exception e)
+                {
+                    logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
+                }
+            }
             
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
-                string compliantAccountName = properties[SFSessionProperty.ACCOUNT].Replace('_','-');
-                string hostName = String.Format("{0}.snowflakecomputing.com", compliantAccountName);
+                var compliantAccountName = properties[SFSessionProperty.ACCOUNT];
+                if (!allowUnderscoresInHost)
+                {
+                    compliantAccountName = compliantAccountName.Replace('_', '-');
+                }
+                var hostName = $"{compliantAccountName}.snowflakecomputing.com";
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
