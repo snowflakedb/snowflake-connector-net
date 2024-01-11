@@ -1,10 +1,12 @@
+using System;
+
 namespace Snowflake.Data.Core.Session
 {
     internal class NonCountingSessionCreationTokenCounter: ISessionCreationTokenCounter
     {
-        private const int IrrelevantCreateSessionTimeout = 0; // in case of old caching pool or pooling disabled we do not remove expired ones nor even store them 
+        private static readonly TimeSpan s_irrelevantCreateSessionTimeout = SFSessionHttpClientProperties.DefaultConnectionTimeout; // in case of old caching pool or pooling disabled we do not remove expired ones nor even store them 
         
-        public SessionCreationToken NewToken() => new SessionCreationToken(IrrelevantCreateSessionTimeout);
+        public SessionCreationToken NewToken() => new SessionCreationToken(s_irrelevantCreateSessionTimeout);
 
         public void RemoveToken(SessionCreationToken creationToken)
         {

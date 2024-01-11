@@ -7,8 +7,7 @@ namespace Snowflake.Data.Core.Session
     internal class WaitingQueue: IWaitingQueue
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-        private long _waitingTimeoutMillis = 30000; // 30 seconds as default
-        private readonly List<SemaphoreSlim> _queue= new List<SemaphoreSlim>();
+        private readonly List<SemaphoreSlim> _queue = new List<SemaphoreSlim>();
         
         public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken)
         {
@@ -81,9 +80,5 @@ namespace Snowflake.Data.Core.Session
         }
 
         public bool IsWaitingEnabled() => true;
-
-        public long GetWaitingTimeoutMillis() => _waitingTimeoutMillis;
-
-        public void SetWaitingTimeout(long timeoutMillis) => _waitingTimeoutMillis = timeoutMillis;
     }
 }

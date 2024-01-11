@@ -14,5 +14,7 @@ namespace Snowflake.Data.Core.Session
         {
             _value = Math.Max(_value - 1, 0);
         }
+
+        public void Reset() => _value = 0;
     }
 }

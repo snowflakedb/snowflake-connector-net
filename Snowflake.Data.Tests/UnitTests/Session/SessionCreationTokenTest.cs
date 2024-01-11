@@ -7,13 +7,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class SessionCreationTokenTest
     {
-        private const long Timeout30SecondsAsMillis = 30000;
+        private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
         
         [Test]
         public void TestTokenIsNotExpired()
         {
             // arrange
-            var token = new SessionCreationToken(Timeout30SecondsAsMillis);
+            var token = new SessionCreationToken(s_timeout30Seconds);
 
             // act
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -26,10 +26,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestTokenIsExpired()
         {
             // arrange
-            var token = new SessionCreationToken(Timeout30SecondsAsMillis);
+            var token = new SessionCreationToken(s_timeout30Seconds);
+            var timeout30SecondsAsMillis = (long) s_timeout30Seconds.TotalMilliseconds;
 
             // act
-            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + Timeout30SecondsAsMillis + 1);
+            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + timeout30SecondsAsMillis + 1);
 
             // assert
             Assert.IsTrue(isExpired);

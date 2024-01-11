@@ -50,7 +50,7 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");
             foreach (var sessionPool in _pools.Values)
             {
-                sessionPool.ClearIdleSessions();       
+                sessionPool.ClearSessions();       
             }
             _pools.Clear();
         }
@@ -102,9 +102,9 @@ namespace Snowflake.Data.Core.Session
 
         public bool SetPooling(bool poolingEnabled)
         {
-            // if (!poolingEnabled) // TODO: enable when disabling pooling in connection string completed SNOW-902632
-            //     throw new Exception(
-            //         "Could not disable pooling for all connections. You could disable pooling by given connection string instead.");
+            if (!poolingEnabled)
+                throw new Exception(
+                    "Could not disable pooling for all connections. You could disable pooling by given connection string instead.");
             s_logger.Debug("ConnectionPoolManager::SetPooling for all pools");
             return _pools.Values
                 .Select(pool => pool.SetPooling(poolingEnabled))

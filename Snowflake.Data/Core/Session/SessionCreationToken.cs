@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Session
 {
@@ -6,15 +7,16 @@ namespace Snowflake.Data.Core.Session
     {
         public Guid Id { get; }
         private readonly long _grantedAtAsEpochMillis;
-        private readonly long _timeoutMillis;
+        private readonly TimeSpan _timeout;
 
-        public SessionCreationToken(long timeoutMillis)
+        public SessionCreationToken(TimeSpan timeout)
         {
             Id = Guid.NewGuid();
             _grantedAtAsEpochMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            _timeoutMillis = timeoutMillis;
+            _timeout = timeout;
         }
 
-        public bool IsExpired(long nowMillis) => nowMillis > _grantedAtAsEpochMillis + _timeoutMillis;
+        public bool IsExpired(long nowMillis) =>
+            TimeoutHelper.IsExpired(_grantedAtAsEpochMillis, nowMillis, _timeout);
     }
 }

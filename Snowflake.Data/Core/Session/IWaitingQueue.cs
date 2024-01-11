@@ -11,9 +11,5 @@ namespace Snowflake.Data.Core.Session
         bool IsAnyoneWaiting();
 
         bool IsWaitingEnabled();
-
-        long GetWaitingTimeoutMillis();
-        
-        void SetWaitingTimeout(long timeoutMillis);
     }
 }

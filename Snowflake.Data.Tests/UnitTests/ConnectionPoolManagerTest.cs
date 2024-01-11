@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,10 +33,16 @@ namespace Snowflake.Data.Tests.UnitTests
         }
         
         [OneTimeTearDown]
-        public void AfterAllTests()
+        public static void AfterAllTests()
         {
             s_poolConfig.Reset();
             SessionPool.SessionFactory = new SessionFactory();
+        }
+
+        [SetUp]
+        public void BeforeEach()
+        {
+            _connectionPoolManager.ClearAllPools();
         }
 
         [Test]
@@ -105,7 +110,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("Enable after completion of SNOW-937189")] // TODO: 
         public void TestCountingOfSessionProvidedByPool()
         {
             // Act
@@ -161,7 +165,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }         
         
         [Test]
-        [Ignore("Enable when disabling pooling in connection string enabled - SNOW-902632")]
         public void TestSetPoolingDisabledForAllPoolsNotPossible()
         {
             // Arrange
@@ -279,19 +282,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var sessionPool = _connectionPoolManager.GetPool(connectionString, _password);
             sessionPool.SetMaxPoolSize(requiredCurrentSize);
-            var busySessions = new List<SFSession>();
             for (var i = 0; i < requiredCurrentSize; i++)
             {
-                var sfSession = _connectionPoolManager.GetSession(connectionString, _password);
-                busySessions.Add(sfSession);
+                _connectionPoolManager.GetSession(connectionString, _password);
             }
-
-            foreach (var session in busySessions) // TODO: remove after SNOW-937189 since sessions will be already counted by GetCurrentPool size
-            {
-                session.close();
-                _connectionPoolManager.AddSession(session);
-            }
-            
             Assert.AreEqual(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
         }
     }
@@ -304,7 +298,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockSfSession.Setup(x => x.Open()).Verifiable();
             mockSfSession.Setup(x => x.OpenAsync(default)).Returns(Task.FromResult(this));
             mockSfSession.Setup(x => x.IsNotOpen()).Returns(false);
-            mockSfSession.Setup(x => x.IsExpired(It.IsAny<long>(), It.IsAny<long>())).Returns(false);
+            mockSfSession.Setup(x => x.IsExpired(It.IsAny<TimeSpan>(), It.IsAny<long>())).Returns(false);
             return mockSfSession.Object;
         }
     }
