@@ -523,7 +523,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
@@ -549,7 +549,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
                 conn.ConnectionString = invalidConnectionString;
 
@@ -1866,7 +1866,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
