@@ -221,10 +221,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                var queryId = PutFile(conn);
-                
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(()=>PutFile(conn));
+                var queryId = snowflakeDbException.QueryId;
+
                 // Assert
-                Assert.IsNotNull(queryId);
+                Assert.IsNotEmpty(queryId);
                 Assert.DoesNotThrow(()=>Guid.Parse(queryId));
             }
         }
@@ -514,42 +515,42 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     $"PUT file://{t_inputFilePath} {t_internalStagePath}" +
                     $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" +
                     $" {additionalAttribute}";
-
                 // Upload file
                 command.CommandText = putQuery;
+                var reader = command.ExecuteReader();
                 try
                 {
-                    var reader = command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
-                    // Checking query id when reader succeeded
-                    queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
-                    // Checking if query Id is provided on the command level as well
-                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
-                    // Check file status
-                    Assert.AreEqual(expectedStatus.ToString(),
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-                    // Check source and destination compression type
-                    if (t_autoCompress)
-                    {
-                        Assert.AreEqual(t_sourceCompressionType,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual(t_destCompressionType,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                    }
-                    else
-                    {
-                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                        Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
-                            reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                    }
-                    Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
                 }
                 catch (SnowflakeDbException e)
                 {
-                    queryId = e.QueryId;
-                    Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    // to make sure in a failure case command was set properly with a failed QueryId
+                    Assert.AreEqual(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    throw;
                 }
+                // Checking query id when reader succeeded
+                queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
+                // Checking if query Id is provided on the command level as well
+                Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                // Check file status
+                Assert.AreEqual(expectedStatus.ToString(),
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                // Check source and destination compression type
+                if (t_autoCompress)
+                {
+                    Assert.AreEqual(t_sourceCompressionType,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                    Assert.AreEqual(t_destCompressionType,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                }
+                else
+                {
+                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+                }
+                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
             return queryId;
         }

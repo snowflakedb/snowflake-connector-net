@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const string FileContent = "FTAFileContent";
 
         [SetUp]
-        public void BeforeTest()
+        public void BeforeEachTest()
         {
             // Base object's names on worker thread id
             var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TearDown]
-        public void AfterTest()
+        public void AfterEachTest()
         {
             // Delete stage directory recursively
             if (Directory.Exists(t_locationStage))

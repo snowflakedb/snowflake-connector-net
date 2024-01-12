@@ -23,7 +23,7 @@ namespace Snowflake.Data.Client
         static private ResourceManager rm = new ResourceManager("Snowflake.Data.Core.ErrorMessages",
             typeof(SnowflakeDbException).Assembly);
 
-        public string SqlState { get; private set; }
+        public new string SqlState { get; private set; }
 
         private int VendorCode;
 
