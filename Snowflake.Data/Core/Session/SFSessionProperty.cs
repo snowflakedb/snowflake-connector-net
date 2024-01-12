@@ -258,18 +258,7 @@ namespace Snowflake.Data.Core
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
 
-            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
-            if (properties.ContainsKey(SFSessionProperty.ALLOWUNDERSCORESINHOST))
-            {
-                try
-                {
-                    allowUnderscoresInHost = bool.Parse(properties[SFSessionProperty.ALLOWUNDERSCORESINHOST]);
-                }
-                catch (Exception e)
-                {
-                    logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
-                }
-            }
+            var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
             
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
@@ -398,6 +387,23 @@ namespace Snowflake.Data.Core
             {
                 return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
+        }
+
+        private static bool ParseAllowUnderscoresInHost(SFSessionProperties properties)
+        {
+            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            if (!properties.TryGetValue(SFSessionProperty.ALLOWUNDERSCORESINHOST, out var property))
+                return allowUnderscoresInHost;
+            try
+            {
+                allowUnderscoresInHost = bool.Parse(property);
+            }
+            catch (Exception e)
+            {
+                logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
+            }
+
+            return allowUnderscoresInHost;
         }
     }
 
