@@ -276,9 +276,10 @@ namespace Snowflake.Data.Core
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
                 var compliantAccountName = properties[SFSessionProperty.ACCOUNT];
-                if (!allowUnderscoresInHost)
+                if (!allowUnderscoresInHost && compliantAccountName.Contains('_'))
                 {
                     compliantAccountName = compliantAccountName.Replace('_', '-');
+                    logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
                 }
                 var hostName = $"{compliantAccountName}.snowflakecomputing.com";
                 // Remove in case it's here but empty
