@@ -18,6 +18,7 @@ namespace Snowflake.Data.Core
             RowSet = rowSet;
             RowCount = rowSet.GetLength(0);
             ColumnCount = rowSet.GetLength(1);
+            ChunkIndex = -1;
         }
 
         public SFResultChunk(string url, int rowCount, int columnCount, int index)

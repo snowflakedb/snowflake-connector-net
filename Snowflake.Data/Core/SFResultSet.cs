@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Snowflake.Data.Core
 {
@@ -115,7 +116,9 @@ namespace Snowflake.Data.Core
             {
                 // GetNextChunk could be blocked if download result is not done yet. 
                 // So put this piece of code in a seperate task
-                s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 BaseResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
                 if (nextChunk != null)
                 {
@@ -136,7 +139,9 @@ namespace Snowflake.Data.Core
 
             if (_chunkDownloader != null)
             {
-                s_logger.Debug("Get next chunk from chunk downloader");
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
                 BaseResultChunk nextChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
                 if (nextChunk != null)
                 {
@@ -284,7 +289,7 @@ namespace Snowflake.Data.Core
                     return GetObjectInternal(ordinal).SafeToString(); 
             }
         }
-
+        
         internal override object GetValue(int ordinal) 
         {
             UTF8Buffer val = GetObjectInternal(ordinal);

@@ -90,7 +90,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLEQUERYCONTEXTCACHE,
         [SFSessionPropertyAttr(required = false)]
-        CLIENT_CONFIG_FILE
+        CLIENT_CONFIG_FILE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOWUNDERSCORESINHOST
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -255,12 +257,20 @@ namespace Snowflake.Data.Core
             checkSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
+
+            var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
             
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
-                string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                var compliantAccountName = properties[SFSessionProperty.ACCOUNT];
+                if (!allowUnderscoresInHost && compliantAccountName.Contains('_'))
+                {
+                    compliantAccountName = compliantAccountName.Replace('_', '-');
+                    logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
+                }
+                var hostName = $"{compliantAccountName}.snowflakecomputing.com";
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
@@ -377,6 +387,23 @@ namespace Snowflake.Data.Core
             {
                 return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
+        }
+
+        private static bool ParseAllowUnderscoresInHost(SFSessionProperties properties)
+        {
+            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            if (!properties.TryGetValue(SFSessionProperty.ALLOWUNDERSCORESINHOST, out var property))
+                return allowUnderscoresInHost;
+            try
+            {
+                allowUnderscoresInHost = bool.Parse(property);
+            }
+            catch (Exception e)
+            {
+                logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
+            }
+
+            return allowUnderscoresInHost;
         }
     }
 
