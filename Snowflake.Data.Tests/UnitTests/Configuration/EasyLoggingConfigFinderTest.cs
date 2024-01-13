@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     {
         private const string InputConfigFilePath = "input_config.json";
         private const string EnvironmentalConfigFilePath = "environmental_config.json";
-        private const string HomeDirectory = "/home/user";
+        private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string s_driverConfigFilePath = Path.Combine(".", EasyLoggingConfigFinder.ClientConfigFileName);
         private static readonly string s_homeConfigFilePath = Path.Combine(HomeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
         private static readonly string s_tempConfigFilePath = Path.Combine(Path.GetTempPath(), EasyLoggingConfigFinder.ClientConfigFileName);
@@ -104,7 +104,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatTakesFilePathFromTempDirectoryWhenNoOtherWaysPossible()
+        public void TestThatTakesFilePathFromHomeDirectoryWhenNoOtherWaysPossible()
+        {
+            // arrange
+            MockFileOnHomePath();
+
+            // act
+            var filePath = t_finder.FindConfigFilePath(null);
+
+            // assert
+            Assert.AreEqual(s_homeConfigFilePath, filePath);
+        }
+
+        [Test]
+        public void TestThatDoesNotTakeFilePathFromTempDirectoryWhenNoOtherWaysPossible()
         {
             // arrange
             MockFileOnTempPath();
@@ -113,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
             
             // assert
-            Assert.AreEqual(s_tempConfigFilePath, filePath);
+            Assert.Null(filePath);
         }
         
         [Test]

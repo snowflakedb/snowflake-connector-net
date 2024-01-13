@@ -2,7 +2,12 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -42,6 +47,15 @@ namespace Snowflake.Data.Core
 
         public virtual void Init(string configFilePathFromConnectionString)
         {
+            if (string.IsNullOrEmpty(configFilePathFromConnectionString))
+            {
+                s_logger.Info($"Attempting to enable easy logging without a config file specified from connection string");
+            }
+            else
+            {
+                s_logger.Info($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
+            }
+
             lock (_lockForExclusiveInit)
             {
                 if (!AllowedToInitialize(configFilePathFromConnectionString))
@@ -56,6 +70,8 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
+                s_logger.Info($"LogLevel set to {logLevel}");
+                s_logger.Info($"LogPath set to {logPath}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
@@ -90,13 +106,33 @@ namespace Snowflake.Data.Core
             var logPathOrDefault = logPath;
             if (string.IsNullOrEmpty(logPath))
             {
-                s_logger.Warn("LogPath in client config not found. Using temporary directory as a default value");
-                logPathOrDefault = Path.GetTempPath();
+                s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
+                logPathOrDefault = EnvironmentOperations.Instance.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (string.IsNullOrEmpty(logPathOrDefault))
+                {
+                    throw new SnowflakeDbException(
+                        SFError.INTERNAL_ERROR,
+                        "No log path found for easy logging. Home directory is not configured and log path is not provided.");
+                }
             }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
             {
                 _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
+
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
+                    string dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {pathWithDotnetSubdirectory}");
+                    if (int.Parse(dirPermissions) > umask)
+                    {
+                        EasyLoggerUtil.CallBash($"chmod -R {EasyLoggerUtil.AllUserPermissions} {pathWithDotnetSubdirectory}");
+                    }
+                    if (int.Parse(dirPermissions) != EasyLoggerUtil.AllUserPermissions)
+                    {
+                        s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
+                    }
+                }
             }
 
             return pathWithDotnetSubdirectory;

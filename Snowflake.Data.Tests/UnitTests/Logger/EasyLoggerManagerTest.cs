@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -92,6 +93,25 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
         }
         
+        [Test]
+        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestThatPermissionsFollowUmask()
+        {
+            // Note: To test with a different value than the default umask, it will have to be set before running this test
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // arrange
+                EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
+
+                // act
+                var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
+                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {t_directoryLogPath}");
+
+                // assert
+                Assert.IsTrue(umask >= int.Parse(dirPermissions));
+            }
+        }
+
         private static string RandomLogsDirectoryPath()
         {
             var randomName = Path.GetRandomFileName();
