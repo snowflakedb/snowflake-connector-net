@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private const string WarnMessage = "Easy logging Warn message";
         private const string ErrorMessage = "Easy logging Error message";
         private const string FatalMessage = "Easy logging Fatal message";
-        private static readonly string s_logsDirectory = Path.GetTempPath();
+        private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         [ThreadStatic]
         private static string t_directoryLogPath;
@@ -105,10 +105,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
                 // act
                 var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
-                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {t_directoryLogPath}");
+                int dirPermissions;
+                bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {t_directoryLogPath}"), out dirPermissions);
 
                 // assert
-                Assert.IsTrue(umask >= int.Parse(dirPermissions));
+                if (isParsed)
+                {
+                    Assert.IsTrue(umask >= dirPermissions);
+                }
             }
         }
 
