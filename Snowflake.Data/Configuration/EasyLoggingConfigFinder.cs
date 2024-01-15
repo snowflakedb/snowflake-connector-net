@@ -111,8 +111,9 @@ namespace Snowflake.Data.Configuration
         private void CheckIfValidPermissions(string filePath)
         {
             // Check if others have permissions to modify the file and fail if so
-            string filePermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {filePath}");
-            if (int.Parse(filePermissions) > EasyLoggerUtil.OnlyUserHasPermissionToWrite)
+            int filePermissions;
+            bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {filePath}"), out filePermissions);
+            if (isParsed && filePermissions > EasyLoggerUtil.OnlyUserHasPermissionToWrite)
             {
                 s_logger.Error($"Error due to other users having permission to modify the config file");
                 throw new SnowflakeDbException(

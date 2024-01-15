@@ -5,8 +5,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
@@ -123,12 +121,13 @@ namespace Snowflake.Data.Core
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
-                    string dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {pathWithDotnetSubdirectory}");
-                    if (int.Parse(dirPermissions) > umask)
+                    int dirPermissions;
+                    bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {pathWithDotnetSubdirectory}"), out dirPermissions);
+                    if (isParsed && dirPermissions > umask)
                     {
                         EasyLoggerUtil.CallBash($"chmod -R {EasyLoggerUtil.AllUserPermissions} {pathWithDotnetSubdirectory}");
                     }
-                    if (int.Parse(dirPermissions) != EasyLoggerUtil.AllUserPermissions)
+                    if (isParsed && dirPermissions != EasyLoggerUtil.AllUserPermissions)
                     {
                         s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
                     }
