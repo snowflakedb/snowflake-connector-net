@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
 
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatDirectoryPermissionsFollowUmask()
         {
             // Note: To test with a different value than the default umask, it will have to be set before running this test
