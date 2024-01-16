@@ -17,8 +17,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class EasyLoggingStarterTest
     {
-
-        private const string LogPath = "/some-logs-path/some-folder";
+        private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        private static readonly string LogPath = Path.Combine(HomeDirectory, "/some-logs-path/some-folder");
         private const string ConfigPath = "/some-path/config.json";
         private const string AnotherConfigPath = "/another/path";
         private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
