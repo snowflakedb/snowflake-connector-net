@@ -896,6 +896,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
         
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAndDisableConsoleLogin()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                    task.Wait(CancellationToken.None);
+                    Assert.AreEqual("QA", task.Result);
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionTimeoutAfter10s()
         {
             // Do not log in by external browser - timeout after 10s should happen 
