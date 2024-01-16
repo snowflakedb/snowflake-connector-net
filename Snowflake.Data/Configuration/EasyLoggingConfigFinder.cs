@@ -112,7 +112,8 @@ namespace Snowflake.Data.Configuration
         {
             // Check if others have permissions to modify the file and fail if so
             int filePermissions;
-            bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {filePath}"), out filePermissions);
+            string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
+            bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat {commandParameters} {filePath}"), out filePermissions);
             if (isParsed && filePermissions > EasyLoggerUtil.OnlyUserHasPermissionToWrite)
             {
                 var errorMessage = "Error due to other users having permission to modify the config file";

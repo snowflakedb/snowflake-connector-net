@@ -94,10 +94,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
                 var dirPermissions = EasyLoggerUtil.CallBash($"stat {commandParameters} {s_expectedLogPath}");
 
-                Console.WriteLine("umask:" + umask);
-                Console.WriteLine("s_expectedLogPath:" + s_expectedLogPath);
-                Console.WriteLine("dirPermissions:" + dirPermissions);
-
                 // assert
                 Assert.IsTrue(umask >= int.Parse(dirPermissions));
 
