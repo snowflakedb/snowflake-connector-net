@@ -22,21 +22,25 @@ namespace Snowflake.Data.Core
 
         private readonly DirectoryOperations _directoryOperations;
 
+        private readonly EnvironmentOperations _environmentOperations;
+
         private readonly object _lockForExclusiveInit = new object();
         
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
-            EasyLoggerManager.Instance, DirectoryOperations.Instance);
+            EasyLoggerManager.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
         
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
-            DirectoryOperations directoryOperations)
+            DirectoryOperations directoryOperations,
+            EnvironmentOperations environmentOperations)
         {
             _easyLoggingConfigProvider = easyLoggingConfigProvider;
             _easyLoggerManager = easyLoggerManager;
             _directoryOperations = directoryOperations;
+            _environmentOperations = environmentOperations;
         }
 
         internal EasyLoggingStarter()
@@ -105,7 +109,7 @@ namespace Snowflake.Data.Core
             if (string.IsNullOrEmpty(logPath))
             {
                 s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
-                logPathOrDefault = EnvironmentOperations.Instance.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                logPathOrDefault = _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 if (string.IsNullOrEmpty(logPathOrDefault))
                 {
                     throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");

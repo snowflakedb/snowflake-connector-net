@@ -59,6 +59,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private static Mock<DirectoryOperations> t_directoryOperations;
 
         [ThreadStatic]
+        private static Mock<EnvironmentOperations> t_environmentOperations;
+
+        [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
         
         [SetUp]
@@ -67,11 +70,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
             t_easyLoggerManager = new Mock<EasyLoggerManager>();
             t_directoryOperations = new Mock<DirectoryOperations>();
-            t_easyLoggerStarter = new EasyLoggingStarter(t_easyLoggingProvider.Object, t_easyLoggerManager.Object, t_directoryOperations.Object);
+            t_environmentOperations = new Mock<EnvironmentOperations>();
+            t_easyLoggerStarter = new EasyLoggingStarter(t_easyLoggingProvider.Object, t_easyLoggerManager.Object, t_directoryOperations.Object, t_environmentOperations.Object);
         }
 
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatCreatedDirectoryPermissionsFollowUmask()
         {
             // Note: To test with a different value than the default umask, it will have to be set before running this test
@@ -103,24 +106,22 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
         {
-            // Note: The user home directory needs to be reconfigured to null for the test to pass
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // arrange
-                t_easyLoggingProvider
-                    .Setup(provider => provider.ProvideConfig(ConfigPath))
-                    .Returns(s_configWithNoLogPath);
+            // arrange
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithNoLogPath);
+            t_environmentOperations
+                .Setup(provider => provider.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Returns("");
 
-                // act
-                var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+            // act
+            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
-                // assert
-                Assert.IsNotNull(thrown);
-                Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
-            }
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
         }
 
         [Test]

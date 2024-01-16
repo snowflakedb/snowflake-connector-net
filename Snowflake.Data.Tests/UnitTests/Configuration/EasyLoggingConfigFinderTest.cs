@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
-            // Note: The umask needs to manually be set to allow other users to modify the created config file
+            // Note: In order to trigger the error, the config file permissions should allow other users to modify the file
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 // arrange
