@@ -317,7 +317,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
-                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, "false" }
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, "false" },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
@@ -377,6 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -405,6 +407,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
