@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     public class EasyLoggingStarterTest
     {
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        private static readonly string LogPath = Path.Combine(HomeDirectory, "/some-logs-path/some-folder");
+        private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
         private const string ConfigPath = "/some-path/config.json";
         private const string AnotherConfigPath = "/another/path";
         private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
@@ -74,8 +74,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatCreatedDirectoryPermissionsFollowUmask()
         {
-            Console.WriteLine("HomeDirectory: " + HomeDirectory);
-            Console.WriteLine("LogPath: " + LogPath);
             // Note: To test with a different value than the default umask, it will have to be set before running this test
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
