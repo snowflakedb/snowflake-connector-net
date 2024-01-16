@@ -94,8 +94,39 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
         
         [Test]
+        public void TestThatUnknownFieldsAreLogged()
+        {
+            // arrange
+            string ConfigWithUnknownFields = @"{
+                    ""common"": {
+                        ""log_level"": """ + EasyLoggingLogLevel.Warn.ToString() + @""",
+                        ""log_path"": """ + t_directoryLogPath + @""",
+                        ""fake_log_field_1"": ""abc"",
+                        ""fake_log_field_2"": ""123""
+                    }
+                }";
+            var configFilePath = Guid.NewGuid().ToString() + ".json";
+            using (var writer = File.CreateText(configFilePath))
+            {
+                writer.Write(ConfigWithUnknownFields.Replace("\\", "\\\\"));
+            }
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+
+            // act
+            var parser = new EasyLoggingConfigParser();
+            var config = parser.Parse(configFilePath);
+
+            // assert
+            var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: ")));
+
+            // cleanup
+            File.Delete(configFilePath);
+        }
+
+        [Test]
         //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
-        public void TestThatPermissionsFollowUmask()
+        public void TestThatDirectoryPermissionsFollowUmask()
         {
             // Note: To test with a different value than the default umask, it will have to be set before running this test
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -105,14 +136,10 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
                 // act
                 var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
-                int dirPermissions;
-                bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {t_directoryLogPath}"), out dirPermissions);
+                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {t_directoryLogPath}");
 
                 // assert
-                if (isParsed)
-                {
-                    Assert.IsTrue(umask >= dirPermissions);
-                }
+                Assert.IsTrue(umask >= int.Parse(dirPermissions));
             }
         }
 

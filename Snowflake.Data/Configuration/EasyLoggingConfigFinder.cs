@@ -115,10 +115,9 @@ namespace Snowflake.Data.Configuration
             bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat -c '%a' {filePath}"), out filePermissions);
             if (isParsed && filePermissions > EasyLoggerUtil.OnlyUserHasPermissionToWrite)
             {
-                s_logger.Error($"Error due to other users having permission to modify the config file");
-                throw new SnowflakeDbException(
-                    SFError.INTERNAL_ERROR,
-                    "The config file is modifiable by other users and will not be used.");
+                var errorMessage = "Error due to other users having permission to modify the config file";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
             }
         }
     }

@@ -4,10 +4,12 @@
 
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
+using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
@@ -114,6 +116,26 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.AreEqual(s_homeConfigFilePath, filePath);
+        }
+
+        [Test]
+        public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // arrange
+                var configFilePath = CreateConfigTempFile(Config(EasyLoggingLogLevel.Warn.ToString(), InputConfigFilePath));
+
+                // act
+                var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(configFilePath));
+
+                // assert
+                Assert.IsNotNull(thrown);
+                Assert.AreEqual(thrown.Message, "Error due to other users having permission to modify the config file");
+
+                // cleanup
+                File.Delete(configFilePath);
+            }
         }
 
         [Test]
