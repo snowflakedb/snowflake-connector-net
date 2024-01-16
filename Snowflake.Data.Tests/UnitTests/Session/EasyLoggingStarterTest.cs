@@ -91,6 +91,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 // act
                 t_easyLoggerStarter.Init(ConfigPath);
                 var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
+
+                Console.WriteLine("s_expectedLogPath:" + s_expectedLogPath);
+
                 var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {s_expectedLogPath}");
 
                 // assert
