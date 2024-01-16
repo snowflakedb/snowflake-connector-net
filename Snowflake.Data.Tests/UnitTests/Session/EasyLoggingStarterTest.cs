@@ -41,6 +41,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
         };
 
+        private static readonly ClientConfig s_configWithNoLogPath = new ClientConfig
+        {
+            CommonProps = new ClientConfigCommonProps
+            {
+                LogLevel = "Info"
+            }
+        };
+
         [ThreadStatic]
         private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
         
@@ -63,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatCreatedDirectoryPermissionsFollowUmask()
         {
             // Note: To test with a different value than the default umask, it will have to be set before running this test
@@ -90,6 +98,26 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
                 // cleanup
                 Directory.Delete(s_expectedLogPath);
+            }
+        }
+
+        [Test]
+        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // arrange
+                t_easyLoggingProvider
+                    .Setup(provider => provider.ProvideConfig(ConfigPath))
+                    .Returns(s_configWithNoLogPath);
+
+                // act
+                var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+
+                // assert
+                Assert.IsNotNull(thrown);
+                Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
             }
         }
 
