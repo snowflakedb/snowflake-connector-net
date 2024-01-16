@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 LogPath = LogPath
             }
         };
-        
+
         [ThreadStatic]
         private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
         
@@ -60,7 +61,38 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_directoryOperations = new Mock<DirectoryOperations>();
             t_easyLoggerStarter = new EasyLoggingStarter(t_easyLoggingProvider.Object, t_easyLoggerManager.Object, t_directoryOperations.Object);
         }
-        
+
+        [Test]
+        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestThatCreatedDirectoryPermissionsFollowUmask()
+        {
+            // Note: To test with a different value than the default umask, it will have to be set before running this test
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // arrange
+                t_easyLoggingProvider
+                    .Setup(provider => provider.ProvideConfig(ConfigPath))
+                    .Returns(s_configWithInfoLevel);
+                t_directoryOperations
+                    .Setup(provider => provider.Exists(ConfigPath))
+                    .Returns(Directory.Exists(ConfigPath));
+                t_directoryOperations
+                    .Setup(provider => provider.CreateDirectory(s_expectedLogPath))
+                    .Returns(Directory.CreateDirectory(s_expectedLogPath));
+
+                // act
+                t_easyLoggerStarter.Init(ConfigPath);
+                var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
+                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {s_expectedLogPath}");
+
+                // assert
+                Assert.IsTrue(umask >= int.Parse(dirPermissions));
+
+                // cleanup
+                Directory.Delete(s_expectedLogPath);
+            }
+        }
+
         [Test]
         public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
         {

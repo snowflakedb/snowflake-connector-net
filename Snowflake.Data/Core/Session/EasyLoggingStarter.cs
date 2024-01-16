@@ -126,11 +126,12 @@ namespace Snowflake.Data.Core
                     if (isParsed && dirPermissions != EasyLoggerUtil.AllUserPermissions)
                     {
                         s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
-                    }
-                    if (isParsed && dirPermissions != umask)
-                    {
-                        s_logger.Warn($"Setting access permission for the logs directory from {dirPermissions} to {EasyLoggerUtil.AllUserPermissions}");
-                        EasyLoggerUtil.CallBash($"chmod -R {EasyLoggerUtil.AllUserPermissions} {pathWithDotnetSubdirectory}");
+
+                        if (dirPermissions != umask)
+                        {
+                            s_logger.Warn($"Setting access permission for the logs directory from {dirPermissions} to {EasyLoggerUtil.AllUserPermissions}");
+                            EasyLoggerUtil.CallBash($"chmod -R {EasyLoggerUtil.AllUserPermissions} {pathWithDotnetSubdirectory}");
+                        }
                     }
                 }
             }
