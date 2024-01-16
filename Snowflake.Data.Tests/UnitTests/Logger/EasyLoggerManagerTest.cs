@@ -99,8 +99,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             // arrange
             string ConfigWithUnknownFields = @"{
                     ""common"": {
-                        ""log_level"": ""log_level"",
-                        ""log_path"": ""log_path"",
+                        ""log_level"": ""warn"",
+                        ""log_path"": ""path"",
                         ""fake_log_field_1"": ""abc"",
                         ""fake_log_field_2"": ""123""
                     }
