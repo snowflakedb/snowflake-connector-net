@@ -71,9 +71,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatCreatedDirectoryPermissionsFollowUmask()
         {
+            Console.WriteLine("HomeDirectory: " + HomeDirectory);
+            Console.WriteLine("LogPath: " + LogPath);
             // Note: To test with a different value than the default umask, it will have to be set before running this test
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -102,9 +104,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
         {
+            // Note: The user home directory needs to be reconfigured to null for the test to pass
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 // arrange
