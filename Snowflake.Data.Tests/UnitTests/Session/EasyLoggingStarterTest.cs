@@ -91,10 +91,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 // act
                 t_easyLoggerStarter.Init(ConfigPath);
                 var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
+                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {s_expectedLogPath}");
 
                 Console.WriteLine("s_expectedLogPath:" + s_expectedLogPath);
-
-                var dirPermissions = EasyLoggerUtil.CallBash($"stat -c '%a' {s_expectedLogPath}");
+                Console.WriteLine("dirPermissions:" + dirPermissions);
 
                 // assert
                 Assert.IsTrue(umask >= int.Parse(dirPermissions));
