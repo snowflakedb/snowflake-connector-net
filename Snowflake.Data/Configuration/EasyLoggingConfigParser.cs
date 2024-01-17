@@ -81,7 +81,7 @@ namespace Snowflake.Data.Configuration
                 .Cast<JProperty>()
                 .Where(property => knownProperties.Contains(property.Name))
                 .ToList()
-                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey}"));
+                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
         }
     }
 }
