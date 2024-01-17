@@ -3,7 +3,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -46,7 +48,7 @@ namespace Snowflake.Data.Configuration
             try {
                 var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
                 Validate(config);
-                CheckForUnknownFields(fileContent, config);
+                CheckForUnknownFields(fileContent);
                 return config;
             }
             catch (Exception e)
@@ -65,29 +67,21 @@ namespace Snowflake.Data.Configuration
             }
         }
 
-        private void CheckForUnknownFields(string fileContent, ClientConfig config)
+        private void CheckForUnknownFields(string fileContent)
         {
             // Parse the specified config file and get the key-value pairs from the "common" section
-            JObject obj = (JObject)(JObject.Parse(fileContent).First.First);
-            bool isUnknownField = true;
-            foreach (var keyValuePair in obj)
+            List<string> knownProperties = new List<string>();
+            foreach (var property in typeof(ClientConfigCommonProps).GetProperties())
             {
-                foreach(var property in config.CommonProps.GetType().GetProperties())
-                {
-                    var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
-                    if (keyValuePair.Key.Equals(jsonPropertyAttribute.PropertyName))
-                    {
-                        isUnknownField = false;
-                        break;
-                    }
-                }
-                if (isUnknownField)
-                {
-                    s_logger.Warn($"Unknown field from config: {keyValuePair.Key}");
-                }
-
-                isUnknownField = true;
+                var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
+                knownProperties.Add(jsonPropertyAttribute.PropertyName);
             }
+
+            JObject.Parse(fileContent).GetValue("common")
+                .Cast<JProperty>()
+                .Where(property => knownProperties.Contains(property.Name))
+                .ToList()
+                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey}"));
         }
     }
 }

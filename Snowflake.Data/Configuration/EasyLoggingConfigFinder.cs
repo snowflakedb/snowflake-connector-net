@@ -5,8 +5,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -36,10 +34,15 @@ namespace Snowflake.Data.Configuration
 
         public virtual string FindConfigFilePath(string configFilePathFromConnectionString)
         {
-            return GetFilePathFromInputParameter(configFilePathFromConnectionString, "connection string")
-                    ?? GetFilePathEnvironmentVariable()
-                    ?? GetFilePathFromDriverLocation()
-                    ?? GetFilePathFromHomeDirectory();
+            var configFilePath = GetFilePathFromInputParameter(configFilePathFromConnectionString, "connection string")
+                              ?? GetFilePathEnvironmentVariable()
+                              ?? GetFilePathFromDriverLocation()
+                              ?? GetFilePathFromHomeDirectory();
+            if (configFilePath != null)
+            {
+                CheckIfValidPermissions(configFilePath);
+            }
+            return configFilePath;
         }
         
         private string GetFilePathEnvironmentVariable()
@@ -52,19 +55,12 @@ namespace Snowflake.Data.Configuration
 
         private string GetFilePathFromInputParameter(string filePath, string inputDescription)
         {
-            if (!string.IsNullOrEmpty(filePath))
-            {
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    CheckIfValidPermissions(filePath);
-                }
-                s_logger.Info($"Using config file specified from {inputDescription}");
-                return filePath;
-            }
-            else
+            if (string.IsNullOrEmpty(filePath))
             {
                 return null;
             }
+            s_logger.Info($"Using config file specified from {inputDescription}");
+            return filePath;
         }
 
         private string GetHomeDirectory() =>_environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -95,21 +91,17 @@ namespace Snowflake.Data.Configuration
         {
             if (_fileOperations.Exists(filePath))
             {
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    CheckIfValidPermissions(filePath);
-                }
                 s_logger.Info($"Using config file specified from {directoryDescription} directory");
                 return filePath;
             }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         private void CheckIfValidPermissions(string filePath)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
+
             // Check if others have permissions to modify the file and fail if so
             int filePermissions;
             string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
