@@ -241,7 +241,6 @@ namespace Snowflake.Data.Core
                 }
                 throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
-            
         }
 
         public async Task executeAsync(CancellationToken cancellationToken)

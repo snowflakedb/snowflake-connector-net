@@ -4,6 +4,7 @@
 
 using Amazon.S3.Transfer;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -311,7 +312,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestUploadWithWilcardInTheFilename()
+        public void TestUploadWithWildcardInTheFilename()
         {
             // Arrange
             UploadSetUpFile();
@@ -461,7 +462,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestUploadThrowsArgumentExceptionForMissingRootDirectoryWithWildcard()
+        public void TestUploadThrowsExceptionForMissingRootDirectoryWithWildcard()
         {
             // Arrange
             UploadSetUpFile();
@@ -501,6 +502,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             Assert.That(ex.Message, Does.Match($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}"));
 
             for (int i = 0; i < numberOfDirectories; i++)
@@ -595,6 +597,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             Assert.IsInstanceOf<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
             Assert.IsInstanceOf<FileNotFoundException>(innerException);
@@ -626,6 +629,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             Assert.IsInstanceOf<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
             Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);

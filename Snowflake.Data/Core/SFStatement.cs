@@ -412,9 +412,8 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
-                if (ex is SnowflakeDbException)
+                if (ex is SnowflakeDbException snowflakeDbException)
                 {
-                    var snowflakeDbException = (SnowflakeDbException)ex;
                     this._lastQueryId = snowflakeDbException.QueryId;
                 }
                 throw;

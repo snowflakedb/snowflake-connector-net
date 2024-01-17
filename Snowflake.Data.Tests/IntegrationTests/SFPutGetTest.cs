@@ -7,6 +7,8 @@ using System.Data;
 using System.Data.Common;
 using System.IO.Compression;
 using System.Text;
+using Castle.Components.DictionaryAdapter;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -227,6 +229,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Assert
                 Assert.IsNotEmpty(queryId);
                 Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
+            }
+        }
+        
+        [Test]
+        public void TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
+        {
+            // Arrange
+            // Set the PUT query variables but do not create a file
+            t_inputFilePath = "unexisting_file.csv SOME CODE FORCING SYNTAX ERROR";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(()=>PutFile(conn));
+                var queryId = snowflakeDbException.QueryId;
+
+                // Assert
+                Assert.IsNotEmpty(queryId);
+                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                Assert.That(snowflakeDbException.ErrorCode, Is.EqualTo(1003));
+                Assert.That(snowflakeDbException.InnerException, Is.Null);
             }
         }
         
