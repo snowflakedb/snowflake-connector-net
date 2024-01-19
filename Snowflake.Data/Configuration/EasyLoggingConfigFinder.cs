@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Mono.Unix;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -103,10 +104,10 @@ namespace Snowflake.Data.Configuration
                 return;
 
             // Check if others have permissions to modify the file and fail if so
-            int filePermissions;
-            string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
-            bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat {commandParameters} {filePath}"), out filePermissions);
-            if (isParsed && filePermissions > EasyLoggerUtil.OnlyUserHasPermissionToWrite)
+            var fileInfo = new UnixFileInfo(filePath);
+            if (fileInfo.Exists &&
+                ((fileInfo.FileAccessPermissions & FileAccessPermissions.GroupWrite) != 0 ||
+                (fileInfo.FileAccessPermissions & FileAccessPermissions.OtherWrite) != 0))
             {
                 var errorMessage = "Error due to other users having permission to modify the config file";
                 s_logger.Error(errorMessage);

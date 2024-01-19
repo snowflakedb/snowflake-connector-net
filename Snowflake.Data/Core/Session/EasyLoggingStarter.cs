@@ -5,7 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Snowflake.Data.Client;
+using Mono.Unix;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -123,17 +123,16 @@ namespace Snowflake.Data.Core
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
-                    int dirPermissions;
-                    string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
-                    bool isParsed = int.TryParse(EasyLoggerUtil.CallBash($"stat {commandParameters} {pathWithDotnetSubdirectory}"), out dirPermissions);
-                    if (isParsed && dirPermissions != EasyLoggerUtil.AllUserPermissions)
+                    var dirInfo = new UnixDirectoryInfo(pathWithDotnetSubdirectory);
+                    if (dirInfo.Exists && dirInfo.FileAccessPermissions != FileAccessPermissions.UserReadWriteExecute)
                     {
-                        s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
+                        var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
 
+                        s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
                         if (dirPermissions != umask)
                         {
                             s_logger.Warn($"Setting access permission for the logs directory from {dirPermissions} to {EasyLoggerUtil.AllUserPermissions}");
-                            EasyLoggerUtil.CallBash($"chmod -R {EasyLoggerUtil.AllUserPermissions} {pathWithDotnetSubdirectory}");
+                            dirInfo.FileAccessPermissions = Mono.Unix.FileAccessPermissions.UserReadWriteExecute;
                         }
                     }
                 }
