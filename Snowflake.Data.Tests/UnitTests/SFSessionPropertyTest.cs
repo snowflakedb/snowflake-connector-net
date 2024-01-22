@@ -422,7 +422,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithDisableQueryContextCache,
                 testCaseWithDisableConsoleLogin,
                 testCaseComplicatedAccountName,
-                testCaseComplicatedAccountName,
                 testCaseUnderscoredAccountName,
                 testCaseUnderscoredAccountNameWithEnabledAllowUnderscores
             };
