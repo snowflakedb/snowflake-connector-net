@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using Mono.Unix;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -96,11 +97,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(provider => provider.CreateDirectory(s_expectedLogPath))
                 .Returns(Directory.CreateDirectory(s_expectedLogPath));
 
+            var expectedDirPermissions = AllPermissions - int.Parse(CallBash("umask"));
+
             // act
             t_easyLoggerStarter.Init(ConfigPath);
-            var expectedDirPermissions = AllPermissions - int.Parse(CallBash("umask"));
-            string commandParameters = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "-c '%a'" : "-f %A";
-            var dirPermissions = int.Parse(CallBash($"stat {commandParameters} {s_expectedLogPath}"));
+            var dirInfo = new UnixDirectoryInfo(s_expectedLogPath);
+            var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
 
             // assert
             Assert.AreEqual(expectedDirPermissions, dirPermissions);
