@@ -185,7 +185,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static void MockDirectoriesExist()
         {
             t_directoryOperations
-                .Setup(d => d.Exists(It.IsAny<string>()))
+                .Setup(d => d.Exists(
+                    It.Is<string>(dir => dir.Equals(DriverDirectory) || dir.Equals(HomeDirectory))))
                 .Returns(true);
         }
 
