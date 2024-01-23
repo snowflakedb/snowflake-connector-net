@@ -91,6 +91,8 @@ namespace Snowflake.Data.Core
         DISABLEQUERYCONTEXTCACHE,
         [SFSessionPropertyAttr(required = false)]
         CLIENT_CONFIG_FILE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        DISABLE_CONSOLE_LOGIN,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOWUNDERSCORESINHOST
     }

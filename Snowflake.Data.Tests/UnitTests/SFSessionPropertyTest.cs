@@ -78,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defMaxHttpRetries = "7";
             string defIncludeRetryReason = "true";
             string defDisableQueryContextCache = "false";
+            string defDisableConsoleLogin = "true";
             string defAllowUnderscoresInHost = "false";
 
             var simpleTestCase = new TestCase()
@@ -105,6 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -132,6 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -162,6 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
@@ -194,6 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
@@ -225,6 +230,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -253,6 +259,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, "false" },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -280,10 +287,41 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
+            };
+            var testCaseWithDisableConsoleLogin = new TestCase()
+            {
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, "false" },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                },
+                ConnectionString =
+                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
             };
             var complicatedAccount = $"{defAccount}.region-name.host-name";
             var testCaseComplicatedAccountName = new TestCase()
@@ -311,6 +349,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -339,6 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
@@ -367,6 +407,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
@@ -379,6 +420,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithFileTransferMaxBytesInMemory,
                 testCaseWithIncludeRetryReason,
                 testCaseWithDisableQueryContextCache,
+                testCaseWithDisableConsoleLogin,
                 testCaseComplicatedAccountName,
                 testCaseUnderscoredAccountName,
                 testCaseUnderscoredAccountNameWithEnabledAllowUnderscores
