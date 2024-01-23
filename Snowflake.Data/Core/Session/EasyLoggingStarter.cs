@@ -109,10 +109,19 @@ namespace Snowflake.Data.Core
             if (string.IsNullOrEmpty(logPath))
             {
                 s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
-                logPathOrDefault = _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                if (string.IsNullOrEmpty(logPathOrDefault))
+                try
                 {
-                    throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
+                    logPathOrDefault = _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    if (string.IsNullOrEmpty(logPathOrDefault))
+                    {
+                        throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
+                    }
+                }
+                catch(Exception e)
+                {
+                    var errorMessage = $"Error while trying to retrieve the home directory: {e}";
+                    s_logger.Error(errorMessage);
+                    throw new Exception(errorMessage, e);
                 }
             }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
@@ -120,25 +129,23 @@ namespace Snowflake.Data.Core
             {
                 _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
 
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    var umask = EasyLoggerUtil.AllPermissions - int.Parse(EasyLoggerUtil.CallBash("umask"));
-                    var dirInfo = new UnixDirectoryInfo(pathWithDotnetSubdirectory);
-                    if (dirInfo.Exists && dirInfo.FileAccessPermissions != FileAccessPermissions.UserReadWriteExecute)
-                    {
-                        var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
-
-                        s_logger.Warn($"Access permission for the logs directory is {dirPermissions}");
-                        if (dirPermissions != umask)
-                        {
-                            s_logger.Warn($"Setting access permission for the logs directory from {dirPermissions} to {EasyLoggerUtil.AllUserPermissions}");
-                            dirInfo.FileAccessPermissions = Mono.Unix.FileAccessPermissions.UserReadWriteExecute;
-                        }
-                    }
-                }
+                CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
             }
 
             return pathWithDotnetSubdirectory;
+        }
+
+        private void CheckDirPermissionsOnlyAllowUser(string dirPath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
+
+            var dirInfo = new UnixDirectoryInfo(dirPath);
+            if (dirInfo.Exists && dirInfo.FileAccessPermissions != FileAccessPermissions.UserReadWriteExecute)
+            {
+                var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
+                s_logger.Warn($"Access permission for the logs directory is currently {dirPermissions}");
+            }
         }
     }
 

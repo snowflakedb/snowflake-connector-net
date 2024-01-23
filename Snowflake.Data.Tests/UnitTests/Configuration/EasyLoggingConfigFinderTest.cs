@@ -18,13 +18,16 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     {
         private const string InputConfigFilePath = "input_config.json";
         private const string EnvironmentalConfigFilePath = "environmental_config.json";
-        private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        private static readonly string s_driverConfigFilePath = Path.Combine(".", EasyLoggingConfigFinder.ClientConfigFileName);
+        private const string HomeDirectory = "/home/user";
+        private const string DriverDirectory = ".";
+        private static readonly string s_driverConfigFilePath = Path.Combine(DriverDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
         private static readonly string s_homeConfigFilePath = Path.Combine(HomeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
-        private static readonly string s_tempConfigFilePath = Path.Combine(Path.GetTempPath(), EasyLoggingConfigFinder.ClientConfigFileName);
 
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
+
+        [ThreadStatic]
+        private static Mock<DirectoryOperations> t_directoryOperations;
 
         [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
@@ -36,8 +39,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
+            t_directoryOperations = new Mock<DirectoryOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_directoryOperations.Object, t_environmentOperations.Object);
+            MockDirectoriesExist();
             MockHomeDirectory();
         }
         
@@ -48,7 +53,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockFileFromEnvironmentalVariable();
             MockFileOnDriverPath();
             MockFileOnHomePath();
-            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
@@ -67,7 +71,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockFileFromEnvironmentalVariable();
             MockFileOnDriverPath();
             MockFileOnHomePath();
-            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(inputFilePath);
@@ -82,7 +85,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // arrange
             MockFileOnDriverPath();
             MockFileOnHomePath();
-            MockFileOnTempPath();
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -96,7 +98,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             // arrange
             MockFileOnHomePath();
-            MockFileOnTempPath();
             
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -119,38 +120,26 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("TODO: modify the test and remove Ignore")]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
-            // Note: In order to trigger the error, the config file permissions should allow other users to modify the file
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // arrange
-                var configFilePath = CreateConfigTempFile(Config(EasyLoggingLogLevel.Warn.ToString(), InputConfigFilePath));
-
-                // act
-                var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(configFilePath));
-
-                // assert
-                Assert.IsNotNull(thrown);
-                Assert.AreEqual(thrown.Message, "Error due to other users having permission to modify the config file");
-
-                // cleanup
-                File.Delete(configFilePath);
+                Assert.Ignore("skip test on Windows");
             }
-        }
 
-        [Test]
-        public void TestThatDoesNotTakeFilePathFromTempDirectoryWhenNoOtherWaysPossible()
-        {
             // arrange
-            MockFileOnTempPath();
-            
+            var configFilePath = CreateConfigTempFile(Config(EasyLoggingLogLevel.Warn.ToString(), InputConfigFilePath));
+
             // act
-            var filePath = t_finder.FindConfigFilePath(null);
-            
+            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(configFilePath));
+
             // assert
-            Assert.Null(filePath);
+            Assert.IsNotNull(thrown);
+            Assert.AreEqual(thrown.Message, "Error due to other users having permission to modify the config file");
+
+            // cleanup
+            File.Delete(configFilePath);
         }
         
         [Test]
@@ -176,12 +165,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
-        
+
         [Test]
-        public void TestThatDoesNotFailWhenOneOfDirectoriesNotDefined()
+        public void TestThatDoesNotFailWhenHomeDirectoryDoesNotExist()
         {
             // arrange
-            MockHomeDirectoryReturnsNull();
+            MockFileOnHomePath();
+            MockHomeDirectoryDoesNotExist();
+            MockFileOnHomePathDoesNotExist();
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
@@ -189,6 +180,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // assert
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+        }
+
+        private static void MockDirectoriesExist()
+        {
+            t_directoryOperations
+                .Setup(d => d.Exists(It.IsAny<string>()))
+                .Returns(true);
         }
 
         private static void MockHomeDirectory()
@@ -203,6 +201,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Throws(() => new Exception("No home directory"));
+        }
+
+        private static void MockHomeDirectoryDoesNotExist()
+        {
+            t_directoryOperations
+                .Setup(d => d.Exists(HomeDirectory))
+                .Returns(false);
+        }
+
+        private static void MockFileOnHomePathDoesNotExist()
+        {
+            t_fileOperations
+                .Setup(f => f.Exists(s_homeConfigFilePath))
+                .Returns(false);
         }
 
         private static void MockHomeDirectoryReturnsNull()
@@ -231,13 +243,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_fileOperations
                 .Setup(f => f.Exists(s_homeConfigFilePath))
                 .Returns(true);
-        }
-
-        private static void MockFileOnTempPath()
-        {
-            t_fileOperations
-                .Setup(f => f.Exists(s_tempConfigFilePath))
-                .Returns(true);            
         }
     }
 }

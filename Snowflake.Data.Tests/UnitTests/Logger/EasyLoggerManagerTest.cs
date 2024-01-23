@@ -94,17 +94,18 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
         
         [Test]
-        public void TestThatUnknownFieldsAreLogged()
+        public void TestThatOnlyUnknownFieldsAreLogged()
         {
             // arrange
-            string ConfigWithUnknownFields = @"{
-                    ""common"": {
-                        ""log_level"": ""warn"",
-                        ""log_path"": ""path"",
-                        ""fake_log_field_1"": ""abc"",
-                        ""fake_log_field_2"": ""123""
-                    }
-                }";
+            string expectedFakeLogField = "fake_log_field";
+            string ConfigWithUnknownFields = $@"{{
+                    ""common"": {{
+                        ""LOG_LEVEL"": ""warn"",
+                        ""lOg_PaTh"": ""path"",
+                        ""{expectedFakeLogField}_1"": ""abc"",
+                        ""{expectedFakeLogField}_2"": ""123""
+                    }}
+                }}";
             var configFilePath = Guid.NewGuid().ToString() + ".json";
             using (var writer = File.CreateText(configFilePath))
             {
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
-            Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: ")));
+            Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
 
             // cleanup
             File.Delete(configFilePath);

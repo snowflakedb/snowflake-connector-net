@@ -19,13 +19,15 @@ namespace Snowflake.Data.Configuration
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
 
         private readonly FileOperations _fileOperations;
+        private readonly DirectoryOperations _directoryOperations;
         private readonly EnvironmentOperations _environmentOperations;
         
-        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
 
-        internal EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        internal EasyLoggingConfigFinder(FileOperations fileOperations, DirectoryOperations directoryOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
+            _directoryOperations = directoryOperations;
             _environmentOperations = environmentOperations;
         }
 
@@ -60,7 +62,7 @@ namespace Snowflake.Data.Configuration
             {
                 return null;
             }
-            s_logger.Info($"Using config file specified from {inputDescription}");
+            s_logger.Info($"Using config file specified from {inputDescription}: {filePath}");
             return filePath;
         }
 
@@ -73,9 +75,13 @@ namespace Snowflake.Data.Configuration
             try
             {
                 var directory = directoryProvider.Invoke();
-                if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                if (string.IsNullOrEmpty(directory))
                 {
                     return null;
+                }
+                if (!_directoryOperations.Exists(directory))
+                {
+                    s_logger.Warn($"Searching for a config file in the {directoryDescription} directory that does not exist: {directory}");
                 }
 
                 var filePath = Path.Combine(directory, ClientConfigFileName);
@@ -92,7 +98,7 @@ namespace Snowflake.Data.Configuration
         {
             if (_fileOperations.Exists(filePath))
             {
-                s_logger.Info($"Using config file specified from {directoryDescription} directory");
+                s_logger.Info($"Using config file specified from {directoryDescription} directory: {filePath}");
                 return filePath;
             }
             return null;
@@ -109,7 +115,7 @@ namespace Snowflake.Data.Configuration
                 ((fileInfo.FileAccessPermissions & FileAccessPermissions.GroupWrite) != 0 ||
                 (fileInfo.FileAccessPermissions & FileAccessPermissions.OtherWrite) != 0))
             {
-                var errorMessage = "Error due to other users having permission to modify the config file";
+                var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
                 s_logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }

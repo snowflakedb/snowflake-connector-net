@@ -10,12 +10,6 @@ namespace Snowflake.Data.Log
 {
     internal class EasyLoggerUtil
     {
-        internal static int AllPermissions = 777;
-
-        internal static int AllUserPermissions = 700;
-
-        internal static int OnlyUserHasPermissionToWrite = 644;
-
         internal static int ConvertFileAccessPermissionsToInt(FileAccessPermissions permissions)
         {
             int userPermission = 0;
@@ -53,29 +47,6 @@ namespace Snowflake.Data.Log
             groupPermission /= 8;
 
             return Convert.ToInt32(string.Format("{0}{1}{2}", userPermission, groupPermission, otherPermission));
-        }
-
-        internal static bool OnlyUserHasAllPermissions(FileAccessPermissions permissions)
-        {
-            return permissions == FileAccessPermissions.UserReadWriteExecute;
-        }
-
-        internal static bool OnlyUserCanWrite(FileAccessPermissions permissions)
-        {
-            return permissions == FileAccessPermissions.UserWrite;
-        }
-
-        internal static string CallBash(string command)
-        {
-            using (Process process = new Process())
-            {
-                process.StartInfo.FileName = "/bin/bash";
-                process.StartInfo.Arguments = $"-c \"{command}\"";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-                return process.StandardOutput.ReadToEnd().Replace("\n", string.Empty);
-            }
         }
     }
 }

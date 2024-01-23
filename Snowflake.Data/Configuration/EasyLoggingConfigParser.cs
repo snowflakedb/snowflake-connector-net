@@ -70,16 +70,22 @@ namespace Snowflake.Data.Configuration
         private void CheckForUnknownFields(string fileContent)
         {
             // Parse the specified config file and get the key-value pairs from the "common" section
-            List<string> knownProperties = new List<string>();
-            foreach (var property in typeof(ClientConfigCommonProps).GetProperties())
-            {
+            HashSet<string> knownProperties = new HashSet<string>();
+#if NET471
+           foreach (var property in typeof(ClientConfigCommonProps).GetProperties())
+           {
                 var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
                 knownProperties.Add(jsonPropertyAttribute.PropertyName);
-            }
+           }
+#else
+            knownProperties = typeof(ClientConfigCommonProps).GetProperties()
+                .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
+                .ToHashSet();
+#endif
 
-            JObject.Parse(fileContent).GetValue("common")
+            JObject.Parse(fileContent).GetValue("common", StringComparison.OrdinalIgnoreCase)?
                 .Cast<JProperty>()
-                .Where(property => knownProperties.Contains(property.Name))
+                .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
                 .ToList()
                 .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
         }
