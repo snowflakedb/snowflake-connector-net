@@ -10,7 +10,6 @@ using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
-using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
@@ -28,6 +27,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static Mock<FileOperations> t_fileOperations;
 
         [ThreadStatic]
+        private static Mock<UnixFileOperations> t_unixFileOperations;
+
+        [ThreadStatic]
         private static Mock<DirectoryOperations> t_directoryOperations;
 
         [ThreadStatic]
@@ -40,9 +42,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
+            t_unixFileOperations = new Mock<UnixFileOperations>();
             t_directoryOperations = new Mock<DirectoryOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_directoryOperations.Object, t_environmentOperations.Object);
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixFileOperations.Object, t_directoryOperations.Object, t_environmentOperations.Object);
             MockDirectoriesExist();
             MockHomeDirectory();
         }
@@ -204,8 +207,11 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
         private static void MockHasFlagReturnsTrue()
         {
-            t_fileOperations
-                .Setup(f => f.HasFlag(It.IsAny<FileAccessPermissions>()))
+            t_unixFileOperations
+                .Setup(f => f.HasFlag(
+                    It.Is<FileAccessPermissions>(p =>
+                    p.Equals(FileAccessPermissions.GroupWrite) ||
+                    p.Equals(FileAccessPermissions.OtherWrite))))
                 .Returns(true);
         }
 
