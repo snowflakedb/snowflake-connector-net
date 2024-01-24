@@ -120,7 +120,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        [Ignore("TODO: modify the test and remove Ignore")]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -130,6 +129,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // arrange
             var configFilePath = CreateConfigTempFile(Config(EasyLoggingLogLevel.Warn.ToString(), InputConfigFilePath));
+            var fileInfo = new Mono.Unix.UnixFileInfo(InputConfigFilePath);
+            fileInfo.Create(Mono.Unix.FileAccessPermissions.AllPermissions);
 
             // act
             var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(configFilePath));
@@ -161,6 +162,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // act
             var filePath = t_finder.FindConfigFilePath(null);
             
+            // assert
+            Assert.IsNull(filePath);
+            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+        }
+
+        [Test]
+        public void TestThatDoesNotFailWhenHomeDirectoryReturnsNull()
+        {
+            // arrange
+            MockHomeDirectoryReturnsNull();
+
+            // act
+            var filePath = t_finder.FindConfigFilePath(null);
+
             // assert
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
