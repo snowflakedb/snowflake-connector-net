@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Diagnostics;
 using Mono.Unix;
 
 namespace Snowflake.Data.Log
