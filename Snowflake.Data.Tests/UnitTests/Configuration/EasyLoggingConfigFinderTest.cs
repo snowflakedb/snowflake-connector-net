@@ -209,9 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             t_unixFileOperations
                 .Setup(f => f.HasFlag(
-                    It.Is<FileAccessPermissions>(p =>
-                    p.Equals(FileAccessPermissions.GroupWrite) ||
-                    p.Equals(FileAccessPermissions.OtherWrite))))
+                    It.Is<FileAccessPermissions>(p =>  p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
                 .Returns(true);
         }
 
