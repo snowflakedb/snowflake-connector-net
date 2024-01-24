@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Mono.Unix;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -120,7 +121,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        [Ignore("TODO: modify the test and remove Ignore")]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -129,19 +129,15 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
 
             // arrange
-            var configFilePath = CreateConfigTempFile(Config(EasyLoggingLogLevel.Warn.ToString(), InputConfigFilePath));
-            var fileInfo = new Mono.Unix.UnixFileInfo(configFilePath);
-            fileInfo.Create(Mono.Unix.FileAccessPermissions.AllPermissions);
+            MockFileOnHomePath();
+            MockHasFlagReturnsTrue();
 
             // act
-            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(configFilePath));
+            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(null));
 
             // assert
             Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, "Error due to other users having permission to modify the config file");
-
-            // cleanup
-            File.Delete(configFilePath);
+            Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
         }
         
         [Test]
@@ -203,6 +199,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_directoryOperations
                 .Setup(d => d.Exists(
                     It.Is<string>(dir => dir.Equals(DriverDirectory) || dir.Equals(HomeDirectory))))
+                .Returns(true);
+        }
+
+        private static void MockHasFlagReturnsTrue()
+        {
+            t_fileOperations
+                .Setup(f => f.HasFlag(It.IsAny<FileAccessPermissions>()))
                 .Returns(true);
         }
 

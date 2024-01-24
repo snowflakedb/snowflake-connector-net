@@ -110,10 +110,9 @@ namespace Snowflake.Data.Configuration
                 return;
 
             // Check if others have permissions to modify the file and fail if so
-            var fileInfo = new UnixFileInfo(filePath);
-            if (fileInfo.Exists &&
-                ((fileInfo.FileAccessPermissions & FileAccessPermissions.GroupWrite) != 0 ||
-                (fileInfo.FileAccessPermissions & FileAccessPermissions.OtherWrite) != 0))
+            _fileOperations.SetUnixFileInfo(filePath);
+            if (_fileOperations.HasFlag(FileAccessPermissions.GroupWrite) ||
+                _fileOperations.HasFlag(FileAccessPermissions.OtherWrite))
             {
                 var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
                 s_logger.Error(errorMessage);
