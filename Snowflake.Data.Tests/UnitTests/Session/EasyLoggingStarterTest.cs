@@ -3,10 +3,10 @@
  */
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
+using Mono.Unix.Native;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -19,7 +19,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class EasyLoggingStarterTest
     {
-        private static readonly int AllPermissions = 777;
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
         private const string ConfigPath = "/some-path/config.json";
@@ -59,6 +58,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private static Mock<EasyLoggerManager> t_easyLoggerManager;
         
         [ThreadStatic]
+        private static Mock<UnixOperations> t_unixOperations;
+
+        [ThreadStatic]
         private static Mock<DirectoryOperations> t_directoryOperations;
 
         [ThreadStatic]
@@ -72,43 +74,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
             t_easyLoggerManager = new Mock<EasyLoggerManager>();
+            t_unixOperations = new Mock<UnixOperations>();
             t_directoryOperations = new Mock<DirectoryOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_easyLoggerStarter = new EasyLoggingStarter(t_easyLoggingProvider.Object, t_easyLoggerManager.Object, t_directoryOperations.Object, t_environmentOperations.Object);
-        }
-
-        [Test]
-        public void TestThatCreatedDirectoryPermissionsFollowUmask()
-        {
-            // Note: To test with a different value than the default umask, it will have to be set before running this test
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithInfoLevel);
-            t_directoryOperations
-                .Setup(provider => provider.Exists(ConfigPath))
-                .Returns(Directory.Exists(ConfigPath));
-            t_directoryOperations
-                .Setup(provider => provider.CreateDirectory(s_expectedLogPath))
-                .Returns(Directory.CreateDirectory(s_expectedLogPath));
-
-            var expectedDirPermissions = AllPermissions - int.Parse(CallBash("umask"));
-
-            // act
-            t_easyLoggerStarter.Init(ConfigPath);
-            var dirInfo = new UnixDirectoryInfo(s_expectedLogPath);
-            var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
-
-            // assert
-            Assert.AreEqual(expectedDirPermissions, dirPermissions);
-
-            // cleanup
-            Directory.Delete(s_expectedLogPath);
+            t_easyLoggerStarter = new EasyLoggingStarter(
+                t_easyLoggingProvider.Object,
+                t_easyLoggerManager.Object,
+                t_unixOperations.Object,
+                t_directoryOperations.Object,
+                t_environmentOperations.Object);
         }
 
         [Test]
@@ -148,6 +122,34 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.IsNotNull(thrown);
             Assert.AreEqual(thrown.Message, $"Error while trying to retrieve the home directory: {ex}");
+        }
+
+        [Test]
+        public void TestThatDoesNotFailWhenDirectoryPermissionIsNot700()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+
+            // arrange
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithInfoLevel);
+            t_directoryOperations
+                .Setup(provider => provider.Exists(ConfigPath))
+                .Returns(false);
+            t_unixOperations
+                .Setup(provider => provider.GetDirPermissions())
+                .Returns(FileAccessPermissions.AllPermissions);
+
+            // act
+            t_easyLoggerStarter.Init(ConfigPath);
+
+            // assert
+            t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+            t_unixOperations.Verify(u => u.SetDirInfo(s_expectedLogPath), Times.Once);
         }
 
         [Test]
@@ -221,19 +223,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
             t_easyLoggerManager.VerifyNoOtherCalls();
-        }
-
-        private static string CallBash(string command)
-        {
-            using (Process process = new Process())
-            {
-                process.StartInfo.FileName = "/bin/bash";
-                process.StartInfo.Arguments = $"-c \"{command}\"";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-                return process.StandardOutput.ReadToEnd().Replace("\n", string.Empty);
-            }
         }
     }
 }

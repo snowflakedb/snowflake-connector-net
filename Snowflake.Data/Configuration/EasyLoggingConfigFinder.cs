@@ -19,16 +19,16 @@ namespace Snowflake.Data.Configuration
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
 
         private readonly FileOperations _fileOperations;
-        private readonly UnixFileOperations _unixFileOperations;
+        private readonly UnixOperations _unixOperations;
         private readonly DirectoryOperations _directoryOperations;
         private readonly EnvironmentOperations _environmentOperations;
         
-        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, UnixFileOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
 
-        internal EasyLoggingConfigFinder(FileOperations fileOperations, UnixFileOperations unixFileOperations, DirectoryOperations directoryOperations, EnvironmentOperations environmentOperations)
+        internal EasyLoggingConfigFinder(FileOperations fileOperations, UnixOperations unixFileOperations, DirectoryOperations directoryOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
-            _unixFileOperations = unixFileOperations;
+            _unixOperations = unixFileOperations;
             _directoryOperations = directoryOperations;
             _environmentOperations = environmentOperations;
         }
@@ -112,8 +112,8 @@ namespace Snowflake.Data.Configuration
                 return;
 
             // Check if others have permissions to modify the file and fail if so
-            _unixFileOperations.SetUnixFileInfo(filePath);
-            if (_unixFileOperations.HasFlag(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
+            _unixOperations.SetFileInfo(filePath);
+            if (_unixOperations.CheckFileHasPermissions(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
             {
                 var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
                 s_logger.Error(errorMessage);

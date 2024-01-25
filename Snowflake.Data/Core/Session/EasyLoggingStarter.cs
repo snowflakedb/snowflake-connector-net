@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
+using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -20,6 +21,8 @@ namespace Snowflake.Data.Core
 
         private readonly EasyLoggerManager _easyLoggerManager;
 
+        private readonly UnixOperations _unixOperations;
+
         private readonly DirectoryOperations _directoryOperations;
 
         private readonly EnvironmentOperations _environmentOperations;
@@ -29,16 +32,18 @@ namespace Snowflake.Data.Core
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
-            EasyLoggerManager.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
+            EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
         
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
+            UnixOperations unixOperations,
             DirectoryOperations directoryOperations,
             EnvironmentOperations environmentOperations)
         {
             _easyLoggingConfigProvider = easyLoggingConfigProvider;
             _easyLoggerManager = easyLoggerManager;
+            _unixOperations = unixOperations;
             _directoryOperations = directoryOperations;
             _environmentOperations = environmentOperations;
         }
@@ -127,9 +132,16 @@ namespace Snowflake.Data.Core
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
             {
-                _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
-
-                CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
+                }
+                else
+                {
+                    _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
+                        FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
+                }
             }
 
             return pathWithDotnetSubdirectory;
@@ -140,11 +152,12 @@ namespace Snowflake.Data.Core
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return;
 
-            var dirInfo = new UnixDirectoryInfo(dirPath);
-            if (dirInfo.Exists && dirInfo.FileAccessPermissions != FileAccessPermissions.UserReadWriteExecute)
+            _unixOperations.SetDirInfo(dirPath);
+            var dirPermissions = _unixOperations.GetDirPermissions();
+            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
             {
-                var dirPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirInfo.FileAccessPermissions);
-                s_logger.Warn($"Access permission for the logs directory is currently {dirPermissions}");
+                s_logger.Warn($"Access permission for the logs directory is currently " +
+                    $"{EasyLoggerUtil.ConvertFileAccessPermissionsToInt(dirPermissions)}");
             }
         }
     }
