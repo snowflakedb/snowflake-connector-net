@@ -7,7 +7,7 @@ using Mono.Unix;
 
 namespace Snowflake.Data.Log
 {
-    internal class EasyLoggerUtil
+    internal class UnixFilePermissionsConverter
     {
         internal static int ConvertFileAccessPermissionsToInt(FileAccessPermissions permissions)
         {

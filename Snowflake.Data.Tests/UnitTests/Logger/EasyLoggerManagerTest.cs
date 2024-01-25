@@ -109,13 +109,13 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var configFilePath = Guid.NewGuid().ToString() + ".json";
             using (var writer = File.CreateText(configFilePath))
             {
-                writer.Write(ConfigWithUnknownFields.Replace("\\", "\\\\"));
+                writer.Write(ConfigWithUnknownFields);
             }
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            var parser = new EasyLoggingConfigParser();
 
             // act
-            var parser = new EasyLoggingConfigParser();
-            var config = parser.Parse(configFilePath);
+            parser.Parse(configFilePath);
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));

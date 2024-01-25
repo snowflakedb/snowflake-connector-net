@@ -1,17 +1,16 @@
 /*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using Mono.Unix;
 using NUnit.Framework;
 using Snowflake.Data.Log;
-using System;
 using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     [TestFixture]
-    public class EasyLoggerUtilTest
+    public class UnixFilePermissionsConverterTest
     {
         [Test]
         public void TestConversionForAllPermissionCombinations(
@@ -24,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var expectedPermissions = userTestCase.expectedPermissions + groupTestCase.expectedPermissions + otherTestCase.expectedPermissions;
 
             // act
-            var convertedPermissions = EasyLoggerUtil.ConvertFileAccessPermissionsToInt(permissions);
+            var convertedPermissions = UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(permissions);
 
             // assert
             Assert.AreEqual(expectedPermissions, convertedPermissions);
