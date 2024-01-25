@@ -141,6 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // assert
             Assert.IsNotNull(thrown);
             Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
+            t_unixOperations.Verify(u => u.SetFileInfo(s_homeConfigFilePath), Times.Once);
         }
         
         [Test]

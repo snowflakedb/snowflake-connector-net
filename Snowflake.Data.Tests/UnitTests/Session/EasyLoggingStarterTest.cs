@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithNoLogPath);
             t_environmentOperations
-                .Setup(provider => provider.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns("");
 
             // act
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithNoLogPath);
             t_environmentOperations
-                .Setup(provider => provider.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Throws(() => ex);
 
             // act
@@ -137,10 +137,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithInfoLevel);
             t_directoryOperations
-                .Setup(provider => provider.Exists(ConfigPath))
+                .Setup(dir => dir.Exists(ConfigPath))
                 .Returns(false);
             t_unixOperations
-                .Setup(provider => provider.GetDirPermissions())
+                .Setup(unix => unix.GetDirPermissions())
                 .Returns(FileAccessPermissions.AllPermissions);
 
             // act
