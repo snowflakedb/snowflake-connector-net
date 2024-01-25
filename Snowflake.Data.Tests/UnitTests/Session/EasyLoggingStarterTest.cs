@@ -170,7 +170,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
             
             // assert
-            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            }
+            else
+            {
+                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+            }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
             
             // act
@@ -195,7 +203,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(null);
 
             // assert
-            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            }
+            else
+            {
+                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+            }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
 
@@ -214,7 +230,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(null);
             
             // assert
-            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
+            }
+            else
+            {
+                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+            }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
             // act
