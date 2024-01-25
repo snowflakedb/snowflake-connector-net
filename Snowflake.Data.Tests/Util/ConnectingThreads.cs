@@ -54,10 +54,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public IEnumerable<ThreadEvent> Events() => _events.ToArray().OfType<ThreadEvent>();
 
         public void Enqueue(ThreadEvent threadEvent) => _events.Enqueue(threadEvent);
+
+        public static SFLogger Logger() => SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
     }
     
     class ConnectingThread
     {
+        private static readonly SFLogger s_logger = ConnectingThreads.Logger();
+
         private string _name;
         
         private ConcurrentQueue<ThreadEvent> _events;
@@ -99,18 +103,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var connection = new SnowflakeDbConnection();
             connection.ConnectionString = _connectionString;
+            s_logger.Debug($"Execution started, will sleep for {_waitBeforeConnectMillis} ms");
             Sleep(_waitBeforeConnectMillis);
             var watch = new StopWatch();
             watch.Start();
             var connected = false;
             try
             {
+                s_logger.Debug("Opening the connection");
                 connection.Open();
                 connected = true;
             }
             catch (Exception exception)
             {
                 watch.Stop();
+                s_logger.Error($"Execution failed because of the error: {exception}");
                 _events.Enqueue(ThreadEvent.EventConnectingFailed(_name, exception, watch.ElapsedMilliseconds));
             }
             if (connected)
@@ -121,6 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Sleep(_waitAfterConnectMillis);
             if (_closeOnExit)
             {
+                s_logger.Debug($"Closing the connection");
                 connection.Close();
             }
         }
@@ -176,7 +184,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SessionPoolThreadEventHandler: SessionPoolEventHandler
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be 
+        private static readonly SFLogger s_logger = ConnectingThreads.Logger();
         private readonly ConnectingThreads _connectingThreads;
 
         public SessionPoolThreadEventHandler(ConnectingThreads connectingThreads)

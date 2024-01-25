@@ -25,7 +25,7 @@ namespace Snowflake.Data.Core.Session
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         private int _maxPoolSize;
         private long _timeout;
-        private long _sessionCreationTimeoutMillis = SessionCreationTimeout30SecAsMillis; // TODO: in further PR make operation fail after 
+        private long _sessionCreationTimeoutMillis = SessionCreationTimeout30SecAsMillis; // TODO: in further PR (SNOW-1003113) make operation fail after
         private const int MaxPoolSize = 10;
         private const long Timeout = 3600;
         private const long SessionCreationTimeout30SecAsMillis = 30000;
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession");
             if (!_pooling)
-                return NewSession(connStr, password, _noPoolingSessionCreationTokenCounter.NewToken());
+                return NewNonPoolingSession(connStr, password);
             var sessionOrCreateToken = GetIdleSession(connStr);
             if (sessionOrCreateToken.Session != null)
             {
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSessionAsync");
             if (!_pooling)
-                return await NewSessionAsync(connStr, password, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken).ConfigureAwait(false);
+                return await NewNonPoolingSessionAsync(connStr, password, cancellationToken).ConfigureAwait(false);
             var sessionOrCreateToken = GetIdleSession(connStr);
             if (sessionOrCreateToken.Session != null)
             {
@@ -149,10 +149,10 @@ namespace Snowflake.Data.Core.Session
                     var session = ExtractIdleSession(connStr);
                     if (session != null)
                     {
-                        s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for a session, a session was extracted from idle sessions");
+                        s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, an idle session was retrieved from the pool");
                         return new SessionOrCreationToken(session);
                     }
-                    s_logger.Debug("SessionPool::GetIdleSession - no one was waiting for session, but could not find any idle session available");
+                    s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool");
                     if (IsAllowedToCreateNewSession())
                     {
                         // there is no need to wait for a session since we can create a new one
@@ -167,23 +167,23 @@ namespace Snowflake.Data.Core.Session
         {
             if (!_waitingForSessionToReuseQueue.IsWaitingEnabled())
             {
-                s_logger.Debug($"SessionPool - new session creation granted");
+                s_logger.Debug($"SessionPool - creating of new sessions is not limited");
                 return true;
             }
             var currentSize = GetCurrentPoolSize();
             if (currentSize < _maxPoolSize)
             {
-                s_logger.Debug($"SessionPool - new session creation granted because current size is {currentSize} out of {_maxPoolSize}");
+                s_logger.Debug($"SessionPool - allowed to create a session, current pool size is {currentSize} out of {_maxPoolSize}");
                 return true;
             }
-            s_logger.Debug($"SessionPool - could not grant new session creation because current size is {currentSize} out of {_maxPoolSize}");
+            s_logger.Debug($"SessionPool - not allowed to create a session, current pool size is {currentSize} out of {_maxPoolSize}");
             return false;
         }
         
         private SFSession WaitForSession(string connStr)
         {
             var timeout = _waitingForSessionToReuseQueue.GetWaitingTimeoutMillis();
-            s_logger.Info($"SessionPool::WaitForSession for {timeout} millis timeout");
+            s_logger.Info($"SessionPool::WaitForSession for {timeout} ms timeout");
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTime = beforeWaitingTime;
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Core.Session
                         var session = ExtractIdleSession(connStr);
                         if (session != null)
                         {
-                            s_logger.Debug($"SessionPool::WaitForSession - a session was extracted from idle sessions");
+                            s_logger.Debug($"SessionPool::WaitForSession - provided an idle session");
                             return session;
                         }
                     }
@@ -243,6 +243,9 @@ namespace Snowflake.Data.Core.Session
             return null;
         }
 
+        private SFSession NewNonPoolingSession(String connectionString, SecureString password) =>
+            NewSession(connectionString, password, _noPoolingSessionCreationTokenCounter.NewToken());
+
         private SFSession NewSession(String connectionString, SecureString password, SessionCreationToken sessionCreationToken)
         {
             s_logger.Debug("SessionPool::NewSession");
@@ -277,6 +280,12 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
+        private Task<SFSession> NewNonPoolingSessionAsync(
+            String connectionString,
+            SecureString password,
+            CancellationToken cancellationToken) =>
+            NewSessionAsync(connectionString, password, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
+        
         private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
