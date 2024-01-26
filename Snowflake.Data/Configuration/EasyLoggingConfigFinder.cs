@@ -68,7 +68,7 @@ namespace Snowflake.Data.Configuration
             return filePath;
         }
 
-        private string GetHomeDirectory() =>_environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        private string GetHomeDirectory() => HomeDirectoryProvider.HomeDirectory(_environmentOperations);
 
         private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => ".", "driver");
 

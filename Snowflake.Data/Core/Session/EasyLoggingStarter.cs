@@ -114,19 +114,10 @@ namespace Snowflake.Data.Core
             if (string.IsNullOrEmpty(logPath))
             {
                 s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
-                try
+                logPathOrDefault = HomeDirectoryProvider.HomeDirectory(_environmentOperations);
+                if (string.IsNullOrEmpty(logPathOrDefault))
                 {
-                    logPathOrDefault = _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                    if (string.IsNullOrEmpty(logPathOrDefault))
-                    {
-                        throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
-                    }
-                }
-                catch(Exception e)
-                {
-                    var errorMessage = $"Error while trying to retrieve the home directory: {e}";
-                    s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage, e);
+                    throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
                 }
             }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
