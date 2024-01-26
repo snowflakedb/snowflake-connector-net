@@ -294,6 +294,10 @@ namespace Snowflake.Data.Core.Session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
                 {
+                    _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
+                }, TaskContinuationOptions.OnlyOnCanceled)
+                .ContinueWith(previousTask =>
+                {
                     if (previousTask.IsFaulted)
                     {
                         _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
@@ -319,7 +323,7 @@ namespace Snowflake.Data.Core.Session
                     _sessionPoolEventHandler.OnNewSessionCreated(this);
                     _sessionPoolEventHandler.OnSessionProvided(this);
                     return session;
-                }, TaskContinuationOptions.None); // previously it was NotOnCanceled but we would like to execute it even in case of cancellation to properly update counters 
+                }, TaskContinuationOptions.NotOnCanceled); 
         }
 
         internal bool AddSession(SFSession session)
