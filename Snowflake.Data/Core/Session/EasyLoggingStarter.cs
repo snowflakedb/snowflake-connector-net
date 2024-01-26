@@ -154,7 +154,8 @@ namespace Snowflake.Data.Core
 
             _unixOperations.SetDirInfo(dirPath);
             var dirPermissions = _unixOperations.GetDirPermissions();
-            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
+            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute &&
+                dirPermissions != (FileAccessPermissions.UserRead | FileAccessPermissions.UserExecute))
             {
                 s_logger.Warn($"Access permission for the logs directory is currently " +
                     $"{UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(dirPermissions)}");

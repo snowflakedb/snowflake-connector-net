@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestThatDoesNotFailWhenDirectoryPermissionIsNot700()
+        public void TestThatDoesNotFailWhenDirectoryPermissionIsNot600Or700()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
