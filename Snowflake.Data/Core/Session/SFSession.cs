@@ -77,6 +77,8 @@ namespace Snowflake.Data.Core
 
         private bool _disableQueryContextCache = false;
 
+        internal bool _disableConsoleLogin;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -148,6 +150,7 @@ namespace Snowflake.Data.Core
             connStr = connectionString;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
+            _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             ValidateApplicationName(properties);
             try
             {
