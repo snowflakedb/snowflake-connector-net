@@ -294,15 +294,11 @@ namespace Snowflake.Data.Core.Session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
                 {
-                    _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
-                }, TaskContinuationOptions.OnlyOnCanceled)
-                .ContinueWith(previousTask =>
-                {
-                    if (previousTask.IsFaulted)
+                    if (previousTask.IsFaulted || previousTask.IsCanceled)
                     {
                         _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                     }
-                        
+
                     if (previousTask.IsFaulted && previousTask.Exception != null)
                         throw previousTask.Exception;
 
@@ -312,16 +308,20 @@ namespace Snowflake.Data.Core.Session
                             SFError.INTERNAL_ERROR,
                             "Failure while opening session async");
 
-                    if (_pooling)
+                    if (!previousTask.IsCanceled)
                     {
-                        lock (_sessionPoolLock)
+                        if (_pooling)
                         {
-                            _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
-                            _busySessionsCounter.Increase();
+                            lock (_sessionPoolLock)
+                            {
+                                _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
+                                _busySessionsCounter.Increase();
+                            }
                         }
+
+                        _sessionPoolEventHandler.OnNewSessionCreated(this);
+                        _sessionPoolEventHandler.OnSessionProvided(this);
                     }
-                    _sessionPoolEventHandler.OnNewSessionCreated(this);
-                    _sessionPoolEventHandler.OnSessionProvided(this);
                     return session;
                 }, TaskContinuationOptions.NotOnCanceled); 
         }
