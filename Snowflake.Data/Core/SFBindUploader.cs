@@ -297,7 +297,7 @@ namespace Snowflake.Data.Core
                     {
                         session.SetArrayBindStageThreshold(0);
                         logger.Error("Failed to create temporary stage for array binds.", e);
-                        throw e;
+                        throw;
                     }
                 }
             }
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Core
                 {
                     session.SetArrayBindStageThreshold(0);
                     logger.Error("Failed to create temporary stage for array binds.", e);
-                    throw e;
+                    throw;
                 }
             }
         }

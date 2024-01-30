@@ -709,8 +709,9 @@ namespace Snowflake.Data.Core
             {
                 return int.Parse(maxBytesInMemoryString);
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
                 return FileTransferConfiguration.DefaultMaxBytesInMemory;
             }
         }
@@ -1278,7 +1279,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1315,7 +1317,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1352,7 +1355,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {

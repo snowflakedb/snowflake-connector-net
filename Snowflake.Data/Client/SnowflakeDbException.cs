@@ -23,8 +23,9 @@ namespace Snowflake.Data.Client
         static private ResourceManager rm = new ResourceManager("Snowflake.Data.Core.ErrorMessages",
             typeof(SnowflakeDbException).Assembly);
 
-        public string SqlState { get; private set; }
-
+        private string _sqlState;
+        public override string SqlState => _sqlState;
+        
         private int VendorCode;
 
         public string QueryId { get; set; }
@@ -40,7 +41,7 @@ namespace Snowflake.Data.Client
         public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
             : base(FormatExceptionMessage(errorMessage, vendorCode, sqlState, queryId))
         {
-            SqlState = sqlState;
+            _sqlState = sqlState;
             VendorCode = vendorCode;
             QueryId = queryId;
         }
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Client
             : base(FormatExceptionMessage(error, args, sqlState, string.Empty))
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-            SqlState = sqlState;
+            _sqlState = sqlState;
         }
 
         public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Client
             : base(FormatExceptionMessage(error, args, sqlState, string.Empty), innerException)
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-            SqlState = sqlState;
+            _sqlState = sqlState;
         }
 
         static string FormatExceptionMessage(SFError error,
