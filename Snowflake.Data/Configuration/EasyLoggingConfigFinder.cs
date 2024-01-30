@@ -79,11 +79,8 @@ namespace Snowflake.Data.Configuration
                 var directory = directoryProvider.Invoke();
                 if (string.IsNullOrEmpty(directory))
                 {
+                    s_logger.Warn($"The {directoryDescription} directory could not be determined and will be skipped");
                     return null;
-                }
-                if (!_directoryOperations.Exists(directory))
-                {
-                    s_logger.Warn($"Searching for a config file in the {directoryDescription} directory that does not exist: {directory}");
                 }
 
                 var filePath = Path.Combine(directory, ClientConfigFileName);
@@ -112,8 +109,7 @@ namespace Snowflake.Data.Configuration
                 return;
 
             // Check if others have permissions to modify the file and fail if so
-            _unixOperations.SetFileInfo(filePath);
-            if (_unixOperations.CheckFileHasPermissions(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
+            if (_unixOperations.CheckFileHasPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
             {
                 var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
                 s_logger.Error(errorMessage);
