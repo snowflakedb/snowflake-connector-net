@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <param name="session">Session which created this authenticator</param>
         internal OAuthAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
-            this.session = session;
+            this.Session = session;
         }
 
         /// <see cref="IAuthenticator.Authenticate"/>
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             // Add the token to the Data attribute
-            data.Token = session.properties[SFSessionProperty.TOKEN];
+            data.Token = Session.properties[SFSessionProperty.TOKEN];
             // Remove the login name for an OAuth session
             data.loginName = "";
         }

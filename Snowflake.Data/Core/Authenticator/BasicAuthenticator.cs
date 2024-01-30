@@ -33,7 +33,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             // Only need to add the password to Data for basic authentication
-            data.password = session.properties[SFSessionProperty.PASSWORD];
+            data.password = Session.properties[SFSessionProperty.PASSWORD];
         }
     }
 

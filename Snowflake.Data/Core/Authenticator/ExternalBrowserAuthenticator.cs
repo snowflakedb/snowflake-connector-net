@@ -56,11 +56,11 @@ namespace Snowflake.Data.Core.Authenticator
 
                 logger.Debug("Get IdpUrl and ProofKey");
                 string loginUrl;
-                if (session._disableConsoleLogin)
+                if (Session._disableConsoleLogin)
                 {
                     var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
                     var authenticatorRestResponse =
-                        await session.restRequester.PostAsync<AuthenticatorResponse>(
+                        await Session.restRequester.PostAsync<AuthenticatorResponse>(
                             authenticatorRestRequest,
                             cancellationToken
                         ).ConfigureAwait(false);
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Core.Authenticator
                 logger.Debug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
                 httpListener.BeginGetContext(GetContextCallback, httpListener);
-                var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+                var timeoutInSec = int.Parse(Session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
                     logger.Warn("Browser response timeout");
@@ -107,10 +107,10 @@ namespace Snowflake.Data.Core.Authenticator
 
                 logger.Debug("Get IdpUrl and ProofKey");
                 string loginUrl;
-                if (session._disableConsoleLogin)
+                if (Session._disableConsoleLogin)
                 {
                     var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                    var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+                    var authenticatorRestResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
                     authenticatorRestResponse.FilterFailedResponse();
 
                     loginUrl = authenticatorRestResponse.data.ssoUrl;
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Core.Authenticator
                 logger.Debug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
                 httpListener.BeginGetContext(GetContextCallback, httpListener);
-                var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+                var timeoutInSec = int.Parse(Session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
                     logger.Warn("Browser response timeout");
@@ -246,17 +246,17 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SFRestRequest BuildAuthenticatorRestRequest(int port)
         {
-            var fedUrl = session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
+            var fedUrl = Session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
             var data = new AuthenticatorRequestData()
             {
-                AccountName = session.properties[SFSessionProperty.ACCOUNT],
+                AccountName = Session.properties[SFSessionProperty.ACCOUNT],
                 Authenticator = AUTH_NAME,
                 BrowserModeRedirectPort = port.ToString(),
             };
 
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+            int connectionTimeoutSec = int.Parse(Session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-            return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
+            return Session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
@@ -271,11 +271,11 @@ namespace Snowflake.Data.Core.Authenticator
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>()
             {
-                { "login_name", session.properties[SFSessionProperty.USER]},
+                { "login_name", Session.properties[SFSessionProperty.USER]},
                 { "proof_key", proofKey },
                 { "browser_mode_redirect_port", localPort.ToString() }
             };
-            Uri loginUrl = session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
+            Uri loginUrl = Session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
             return loginUrl.ToString();
         }
 

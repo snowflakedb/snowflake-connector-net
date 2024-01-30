@@ -44,34 +44,30 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal abstract class BaseAuthenticator
     {
-        // The logger.
-        private static readonly SFLogger logger =
-            SFLoggerFactory.GetLogger<BaseAuthenticator>();
-
         // The name of the authenticator.
-        protected string authName;
+        private readonly string _authName;
 
         // The session which created this authenticator.
-        protected SFSession session;
+        protected SFSession Session;
 
         // The client environment properties
-        protected LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+        private readonly LoginRequestClientEnv _clientEnv = SFEnvironment.ClientEnv;
 
         /// <summary>
         /// The abstract base for all authenticators.
         /// </summary>
         /// <param name="session">The session which created the authenticator.</param>
-        public BaseAuthenticator(SFSession session, string authName)
+        protected BaseAuthenticator(SFSession session, string authName)
         {
-            this.session = session;
-            this.authName = authName;
+            this.Session = session;
+            this._authName = authName;
             // Update the value for insecureMode because it can be different for each session
-            ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
+            _clientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
             {
                 // If an application name has been specified in the connection setting, use it
                 // Otherwise, it will default to the running process name
-                ClientEnv.application = applicationName;
+                _clientEnv.application = applicationName;
             }
         }
 
@@ -80,9 +76,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+            var response = await Session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
-            session.ProcessLoginResponse(response);
+            Session.ProcessLoginResponse(response);
         }
 
         /// <see cref="IAuthenticator.Authenticate"/>
@@ -90,9 +86,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = session.restRequester.Post<LoginResponse>(loginRequest);
+            var response = Session.restRequester.Post<LoginResponse>(loginRequest);
 
-            session.ProcessLoginResponse(response);
+            Session.ProcessLoginResponse(response);
         }
 
         /// <summary>
@@ -110,22 +106,22 @@ namespace Snowflake.Data.Core.Authenticator
         private SFRestRequest BuildLoginRequest()
         {
             // build uri
-            var loginUrl = session.BuildLoginUrl();
+            var loginUrl = Session.BuildLoginUrl();
 
-            LoginRequestData data = new LoginRequestData()
+            var data = new LoginRequestData()
             {
-                loginName = session.properties[SFSessionProperty.USER],
-                accountName = session.properties[SFSessionProperty.ACCOUNT],
+                loginName = Session.properties[SFSessionProperty.USER],
+                accountName = Session.properties[SFSessionProperty.ACCOUNT],
                 clientAppId = SFEnvironment.DriverName,
                 clientAppVersion = SFEnvironment.DriverVersion,
-                clientEnv = ClientEnv,
-                SessionParameters = session.ParameterMap,
-                Authenticator = authName,
+                clientEnv = _clientEnv,
+                SessionParameters = Session.ParameterMap,
+                Authenticator = _authName,
             };
 
             SetSpecializedAuthenticatorData(ref data);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return Session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
     }
 
@@ -170,27 +166,30 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new KeyPairAuthenticator(session);
             }
-            else if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else
             {
-                // Get private key path or private key from connection settings
-                if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
+                if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    // There is no TOKEN defined, can't authenticate with oauth
-                    string invalidStringDetail =
-                        "Missing required TOKEN for Oauth authentication";
-                    var error = new SnowflakeDbException(
-                        SFError.INVALID_CONNECTION_STRING,
-                        new object[] { invalidStringDetail });
-                    logger.Error(error.Message, error);
-                    throw error;
-                }
+                    // Get private key path or private key from connection settings
+                    if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
+                    {
+                        // There is no TOKEN defined, can't authenticate with oauth
+                        string invalidStringDetail =
+                            "Missing required TOKEN for Oauth authentication";
+                        var error = new SnowflakeDbException(
+                            SFError.INVALID_CONNECTION_STRING,
+                            new object[] { invalidStringDetail });
+                        logger.Error(error.Message, error);
+                        throw error;
+                    }
 
-                return new OAuthAuthenticator(session);
-            }
-            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
-            else if (type.Contains("okta") && type.StartsWith("https://"))
-            {
-                return new OktaAuthenticator(session, type);
+                    return new OAuthAuthenticator(session);
+                }
+                // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
+                if (type.Contains("okta") && type.StartsWith("https://"))
+                {
+                    return new OktaAuthenticator(session, type);
+                }
             }
 
             var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);

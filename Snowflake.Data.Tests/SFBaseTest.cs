@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests
         protected TestConfig testConfig { get; }
     }
     
-    [SetUpFixture]
+    // [SetUpFixture]
     public class TestEnvironment
     {
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
