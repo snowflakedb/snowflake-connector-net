@@ -129,6 +129,10 @@ namespace Snowflake.Data.Core
                 }
                 else
                 {
+                    if (!Directory.Exists(logPathOrDefault))
+                    {
+                        Directory.CreateDirectory(logPathOrDefault);
+                    }
                     _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
                         FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
                     CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
@@ -143,8 +147,7 @@ namespace Snowflake.Data.Core
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return;
 
-            _unixOperations.SetDirInfo(dirPath);
-            var dirPermissions = _unixOperations.GetDirPermissions();
+            var dirPermissions = _unixOperations.GetDirPermissions(dirPath);
             if (dirPermissions != FileAccessPermissions.UserReadWriteExecute &&
                 dirPermissions != (FileAccessPermissions.UserRead | FileAccessPermissions.UserExecute))
             {

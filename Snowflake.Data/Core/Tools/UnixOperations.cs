@@ -4,7 +4,6 @@
 
 using Mono.Unix;
 using Mono.Unix.Native;
-using System.IO;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -12,37 +11,21 @@ namespace Snowflake.Data.Core.Tools
     {
         public static readonly UnixOperations Instance = new UnixOperations();
 
-        private UnixFileInfo _unixFileInfo;
-        private UnixDirectoryInfo _unixDirInfo;
-
-        public virtual void SetDirInfo(string path)
-        {
-            _unixDirInfo = new UnixDirectoryInfo(path);
-        }
-
         public virtual void CreateDirectoryWithPermissions(string path, FilePermissions permissions)
         {
-            string subPath = Path.GetDirectoryName(path);
-            if (!Directory.Exists(subPath))
-            {
-                Directory.CreateDirectory(subPath);
-            }
             Syscall.mkdir(path, permissions);
         }
 
-        public virtual FileAccessPermissions GetDirPermissions()
+        public virtual FileAccessPermissions GetDirPermissions(string path)
         {
-            return _unixDirInfo.FileAccessPermissions;
+            var dirInfo = new UnixDirectoryInfo(path);
+            return dirInfo.FileAccessPermissions;
         }
 
-        public virtual void SetFileInfo(string path)
+        public virtual bool CheckFileHasPermissions(string path, FileAccessPermissions permissions)
         {
-            _unixFileInfo = new UnixFileInfo(path);
-        }
-
-        public virtual bool CheckFileHasPermissions(FileAccessPermissions permissions)
-        {
-            return _unixFileInfo.FileAccessPermissions.HasFlag(permissions);
+            var fileInfo = new UnixFileInfo(path);
+            return fileInfo.FileAccessPermissions.HasFlag(permissions);
         }
     }
 }

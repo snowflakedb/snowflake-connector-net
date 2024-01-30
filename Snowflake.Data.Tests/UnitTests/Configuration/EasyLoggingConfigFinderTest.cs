@@ -141,7 +141,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // assert
             Assert.IsNotNull(thrown);
             Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
-            t_unixOperations.Verify(u => u.SetFileInfo(s_homeConfigFilePath), Times.Once);
         }
         
         [Test]
@@ -209,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static void MockHasFlagReturnsTrue()
         {
             t_unixOperations
-                .Setup(f => f.CheckFileHasPermissions(
+                .Setup(f => f.CheckFileHasPermissions(s_homeConfigFilePath,
                     It.Is<FileAccessPermissions>(p =>  p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
                 .Returns(true);
         }

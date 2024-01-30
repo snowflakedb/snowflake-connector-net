@@ -70,8 +70,7 @@ namespace Snowflake.Data.Configuration
         private void CheckForUnknownFields(string fileContent)
         {
             // Parse the specified config file and get the key-value pairs from the "common" section
-            List<string> knownProperties = new List<string>();
-            knownProperties = typeof(ClientConfigCommonProps).GetProperties()
+            List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
                 .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
                 .ToList();
 
