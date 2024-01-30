@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestThatDoesNotFailWhenDirectoryPermissionIsNot600Or700()
+        public void TestThatDoesNotFailWhenExistingDirectoryContainsUnexpectedPermissions()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -137,8 +137,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithInfoLevel);
             t_directoryOperations
-                .Setup(dir => dir.Exists(ConfigPath))
-                .Returns(false);
+                .Setup(dir => dir.Exists(s_expectedLogPath))
+                .Returns(true);
             t_unixOperations
                 .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
                 .Returns(FileAccessPermissions.AllPermissions);
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+                FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Never);
         }
 
         [Test]

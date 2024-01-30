@@ -135,8 +135,11 @@ namespace Snowflake.Data.Core
                     }
                     _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
                         FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
-                    CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
                 }
+            }
+            else
+            {
+                CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
             }
 
             return pathWithDotnetSubdirectory;
