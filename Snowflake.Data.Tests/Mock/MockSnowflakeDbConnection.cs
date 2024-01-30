@@ -9,6 +9,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock
 {

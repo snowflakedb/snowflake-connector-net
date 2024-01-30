@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Core.Session;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Snowflake.Data.Core;

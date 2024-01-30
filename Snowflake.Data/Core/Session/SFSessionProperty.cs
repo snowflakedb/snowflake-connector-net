@@ -4,16 +4,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Security;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
 using System.Data.Common;
 using System.Linq;
+using System.Net;
+using System.Security;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
     internal enum SFSessionProperty
     {

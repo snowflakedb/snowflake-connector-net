@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {

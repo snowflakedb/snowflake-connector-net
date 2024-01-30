@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.Session;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;

@@ -13,6 +13,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core.Authenticator
 {

@@ -19,6 +19,8 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.X509;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Snowflake.Data.Core.Session;
+
 namespace Snowflake.Data.Core.Authenticator
 {
     /// <summary>

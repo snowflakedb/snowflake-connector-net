@@ -13,6 +13,7 @@ using Apache.Arrow;
 using Apache.Arrow.Ipc;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests

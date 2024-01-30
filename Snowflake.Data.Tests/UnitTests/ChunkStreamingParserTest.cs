@@ -2,12 +2,13 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Core;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
-    using Snowflake.Data.Client;
+    using Client;
     using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
     using System;
     using System.IO;
     using System.Text;
@@ -31,19 +32,12 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkParserVersion = _chunkParserVersionDefault; // Return to default version
         }
 
-        public IChunkParser getParser(string data)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            Stream stream = new MemoryStream(bytes);
-            return ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
-        }
-
         [Test]
         public async Task TestParsingEmptyChunk()
         {
             // Create sample data for parser
             string data = "[ ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[0, 0]);
 
@@ -60,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create sample data for parser
             string data = "[ [],  [] ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[2, 0]);
 
@@ -77,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create a sample data using data not contained in an array
             string data = "[ \"1\", \"1.234\", \"abcde\" ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 3]);
 
@@ -95,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create a sample data using non-array data and an array
             string data = "[ \"1\", \"1.234\", \"abcde\", [\"2\", \"5.678\", \"fghi\"] ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[1, 3]);
 
@@ -108,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create a sample data using JSON objects instead
             string data = "[ {\"1\", \"1.234\", \"abcde\"},  {\"2\", \"5.678\", \"fghi\"} ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[2, 3]);
 
@@ -122,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create sample data for parser
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[2, 3]);
 
@@ -144,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Create sample data that contain null values
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-            IChunkParser parser = getParser(data);
+            IChunkParser parser = GetParser(data);
 
             SFResultChunk chunk = new SFResultChunk(new string[2, 3]);
 
@@ -159,6 +153,13 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
+        }
+        
+        private static IChunkParser GetParser(string data)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            Stream stream = new MemoryStream(bytes);
+            return ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
         }
     }
 }

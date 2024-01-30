@@ -2,13 +2,14 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
-{
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using System.Data;
+using System.Data;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 
+namespace Snowflake.Data.Tests.UnitTests
+{
     [TestFixture]
     class SFDbParameterTest
     {

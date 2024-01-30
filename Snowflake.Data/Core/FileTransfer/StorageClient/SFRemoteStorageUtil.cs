@@ -2,13 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
     /// <summary>
     /// The class containing file header information. 

@@ -4,7 +4,7 @@
 
 using System.IO;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
     /// <summary>
     /// The storage client for local upload/download.

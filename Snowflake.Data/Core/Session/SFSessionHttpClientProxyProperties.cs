@@ -1,7 +1,7 @@
 using System;
 using System.Web;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
 
     internal class SFSessionHttpClientProxyProperties

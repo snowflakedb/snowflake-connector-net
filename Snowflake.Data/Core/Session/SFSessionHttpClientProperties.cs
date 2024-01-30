@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
 
     internal class SFSessionHttpClientProperties

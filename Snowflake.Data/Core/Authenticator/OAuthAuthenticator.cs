@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core.Authenticator
 {

@@ -9,6 +9,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
 {

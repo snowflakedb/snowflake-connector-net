@@ -2,6 +2,7 @@
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Net.Http;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {

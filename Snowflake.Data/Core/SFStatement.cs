@@ -3,8 +3,6 @@
  */
 
 using System;
-using System.Web;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,6 +12,7 @@ using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
 {

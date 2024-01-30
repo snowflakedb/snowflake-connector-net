@@ -21,19 +21,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
     class SFS3Client : ISFRemoteStorageClient
     {
         /// <summary>
-        /// The metadata of the S3 file.
-        /// </summary>
-        internal class S3Metadata
-        {
-            public string HTTP_HEADER_CONTENT_TYPE { get; set; }
-            public string SFC_DIGEST { get; set; }
-            public string AMZ_IV { get; set; }
-            public string AMZ_KEY { get; set; }
-            public string AMZ_MATDESC { get; set; }
-
-        }
-
-        /// <summary>
         /// The metadata header keys.
         /// </summary>
         private const string AMZ_META_PREFIX = "x-amz-meta-";

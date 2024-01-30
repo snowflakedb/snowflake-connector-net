@@ -7,6 +7,7 @@ using Snowflake.Data.Core.Authenticator;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Authenticator.Okta.Models;
 
 namespace Snowflake.Data.Tests.Mock
 {

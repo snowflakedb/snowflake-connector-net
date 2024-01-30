@@ -3,6 +3,7 @@
  */
 
 using System;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {

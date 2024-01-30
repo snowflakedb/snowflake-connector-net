@@ -4,20 +4,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security;
-using System.Web;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System.Text.RegularExpressions;
-using Snowflake.Data.Configuration;
+using System.Web;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
     public class SFSession
     {

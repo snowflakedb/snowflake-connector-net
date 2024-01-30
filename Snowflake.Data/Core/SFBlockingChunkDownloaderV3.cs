@@ -16,6 +16,7 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using Newtonsoft.Json.Serialization;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
