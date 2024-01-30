@@ -8,6 +8,8 @@ using Snowflake.Data.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.IO;
 using System.Linq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -27,16 +29,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int SmallSize = 16;
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
+        private static string s_outputDirectory;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
         [ThreadStatic] private static string t_tableName;
         [ThreadStatic] private static string t_insertQuery;
         [ThreadStatic] private static string t_positionalBindingInsertQuery;
         [ThreadStatic] private static string t_namedBindingInsertQuery;
         [ThreadStatic] private static string t_selectQuery;
+        [ThreadStatic] private static string t_fileName;
+        [ThreadStatic] private static string t_inputFilePath;
+        [ThreadStatic] private static string t_outputFilePath;
+        [ThreadStatic] private static List<string> t_filesToDelete;
+        [ThreadStatic] private static string[] t_colData;
 
         public MaxLobSizeIT(ResultFormat resultFormat)
         {
             _resultFormat = resultFormat;
+        }
+
+        [OneTimeSetUp]
+        public static void OneTimeSetUp()
+        {
+            // Create temp output directory for downloaded files
+            s_outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(s_outputDirectory);
+        }
+
+        [OneTimeTearDown]
+        public static void OneTimeTearDown()
+        {
+            // Delete temp output directory and downloaded files
+            Directory.Delete(s_outputDirectory, true);
         }
 
         [SetUp]
@@ -51,6 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_positionalBindingInsertQuery = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
             t_namedBindingInsertQuery = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
             t_selectQuery = $"SELECT * FROM {t_tableName}";
+            t_filesToDelete = new List<string>();
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -61,14 +85,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var columnNamesWithTypes = $"{s_colName[0]} VARCHAR, {s_colName[1]} VARCHAR, {s_colName[2]} INT";
                     command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName} ({columnNamesWithTypes})";
                     command.ExecuteNonQuery();
-
-                    // Alter session result format
-                    command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
-                    command.ExecuteNonQuery();
-
-                    // Alter session max lob
-                    //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
-                    //command.ExecuteNonQuery();
                 }
             }
         }
@@ -84,6 +100,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Drop temp table
                     command.CommandText = $"DROP TABLE IF EXISTS {t_tableName}";
                     command.ExecuteNonQuery();
+                }
+            }
+
+            if (t_filesToDelete != null)
+            {
+                foreach (var file in t_filesToDelete)
+                {
+                    File.Delete(file);
                 }
             }
         }
@@ -111,17 +135,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestLiteralInsert(int lobSize)
         {
             // arrange
-            string C1 = GenerateRandomString(lobSize);
-            string C2 = GenerateRandomString(lobSize);
-            int C3 = new Random().Next(LobRandomRange);
+            var c1 = GenerateRandomString(lobSize);
+            var c2 = GenerateRandomString(lobSize);
+            var c3 = new Random().Next(LobRandomRange);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                AlterSessionSettings(conn);
+
                 using (var command = conn.CreateCommand())
                 {
                     // act
-                    command.CommandText = $"{t_insertQuery} ('{C1}', '{C2}', '{C3}')";
+                    command.CommandText = $"{t_insertQuery} ('{c1}', '{c2}', '{c3}')";
                     command.ExecuteNonQuery();
 
                     command.CommandText = t_selectQuery;
@@ -129,9 +155,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(C1, reader.GetString(0));
-                    Assert.AreEqual(C2, reader.GetString(1));
-                    Assert.AreEqual(C3, reader.GetInt64(2));
+                    Assert.AreEqual(c1, reader.GetString(0));
+                    Assert.AreEqual(c2, reader.GetString(1));
+                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    CheckColumnMetadata(reader);
                 }
             }
         }
@@ -140,13 +167,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestPositionalInsert(int lobSize)
         {
             // arrange
-            string C1 = GenerateRandomString(lobSize);
-            string C2 = GenerateRandomString(lobSize);
-            int C3 = new Random().Next(LobRandomRange);
+            var c1 = GenerateRandomString(lobSize);
+            var c2 = GenerateRandomString(lobSize);
+            var c3 = new Random().Next(LobRandomRange);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                AlterSessionSettings(conn);
+
                 using (var command = conn.CreateCommand())
                 {
                     // act
@@ -155,19 +184,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var p1 = command.CreateParameter();
                     p1.ParameterName = "1";
                     p1.DbType = DbType.String;
-                    p1.Value = C1;
+                    p1.Value = c1;
                     command.Parameters.Add(p1);
 
                     var p2 = command.CreateParameter();
                     p2.ParameterName = "2";
                     p2.DbType = DbType.String;
-                    p2.Value = C2;
+                    p2.Value = c2;
                     command.Parameters.Add(p2);
 
                     var p3 = command.CreateParameter();
                     p3.ParameterName = "3";
                     p3.DbType = DbType.UInt32;
-                    p3.Value = C3;
+                    p3.Value = c3;
                     command.Parameters.Add(p3);
 
                     command.ExecuteNonQuery();
@@ -177,9 +206,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(C1, reader.GetString(0));
-                    Assert.AreEqual(C2, reader.GetString(1));
-                    Assert.AreEqual(C3, reader.GetInt64(2));
+                    Assert.AreEqual(c1, reader.GetString(0));
+                    Assert.AreEqual(c2, reader.GetString(1));
+                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    CheckColumnMetadata(reader);
                 }
             }
         }
@@ -189,13 +219,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestNamedInsert(int lobSize)
         {
             // arrange
-            string C1 = GenerateRandomString(lobSize);
-            string C2 = GenerateRandomString(lobSize);
-            int C3 = new Random().Next(LobRandomRange);
+            var c1 = GenerateRandomString(lobSize);
+            var c2 = GenerateRandomString(lobSize);
+            var c3 = new Random().Next(LobRandomRange);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
+                AlterSessionSettings(conn);
+
                 using (var command = conn.CreateCommand())
                 {
                     // act
@@ -204,19 +236,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var p1 = command.CreateParameter();
                     p1.ParameterName = "1";
                     p1.DbType = DbType.String;
-                    p1.Value = C1;
+                    p1.Value = c1;
                     command.Parameters.Add(p1);
 
                     var p2 = command.CreateParameter();
                     p2.ParameterName = "2";
                     p2.DbType = DbType.String;
-                    p2.Value = C2;
+                    p2.Value = c2;
                     command.Parameters.Add(p2);
 
                     var p3 = command.CreateParameter();
                     p3.ParameterName = "3";
                     p3.DbType = DbType.UInt32;
-                    p3.Value = C3;
+                    p3.Value = c3;
                     command.Parameters.Add(p3);
 
                     command.ExecuteNonQuery();
@@ -226,10 +258,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(C1, reader.GetString(0));
-                    Assert.AreEqual(C2, reader.GetString(1));
-                    Assert.AreEqual(C3, reader.GetInt64(2));
+                    Assert.AreEqual(c1, reader.GetString(0));
+                    Assert.AreEqual(c2, reader.GetString(1));
+                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    CheckColumnMetadata(reader);
                 }
+            }
+        }
+
+        [Test, TestCaseSource(nameof(LobSizeTestCases))]
+        public void TestPutGetCommand(int lobSize)
+        {
+            // arrange
+            var c1 = GenerateRandomString(lobSize);
+            var c2 = GenerateRandomString(lobSize);
+            var c3 = new Random().Next(LobRandomRange);
+            t_colData = new string[]{ c1, c2, c3.ToString() };
+
+            PrepareTest();
+
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                AlterSessionSettings(conn);
+
+                PutFile(conn);
+                CopyIntoTable(conn);
+                GetFile(conn);
             }
         }
 
@@ -242,6 +297,118 @@ namespace Snowflake.Data.Tests.IntegrationTests
             MaxLobSize
         };
 
+        void PrepareTest()
+        {
+            t_fileName = $"{Guid.NewGuid()}.csv";
+            t_inputFilePath = Path.GetTempPath() + t_fileName;
+
+            var data = $"{t_colData[0]},{t_colData[1]},{t_colData[2]}";
+            File.WriteAllText(t_inputFilePath, data);
+
+            t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
+            t_filesToDelete.Add(t_inputFilePath);
+            t_filesToDelete.Add(t_outputFilePath);
+        }
+
+        void PutFile(SnowflakeDbConnection conn)
+        {
+            using (var command = conn.CreateCommand())
+            {
+                // arrange
+                command.CommandText = $"PUT file://{t_inputFilePath} @%{t_tableName} AUTO_COMPRESS=FALSE";
+
+                // act
+                var reader = command.ExecuteReader();
+
+                // assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(ResultStatus.UPLOADED.ToString(),
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            }
+        }
+
+        private void CopyIntoTable(SnowflakeDbConnection conn)
+        {
+            using (var command = conn.CreateCommand())
+            {
+                // arrange
+                command.CommandText = $"COPY INTO {t_tableName}";
+                // act
+                command.ExecuteNonQuery();
+
+                command.CommandText = $"SELECT * FROM {t_tableName}";
+                var reader = command.ExecuteReader();
+
+                // assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(t_colData[0], reader.GetString(0));
+                Assert.AreEqual(t_colData[1], reader.GetString(1));
+                Assert.AreEqual(t_colData[2], reader.GetString(2));
+                CheckColumnMetadata(reader);
+            }
+        }
+
+        private void GetFile(DbConnection conn)
+        {
+            using (var command = conn.CreateCommand())
+            {
+                // arrange
+                command.CommandText = $"GET @%{t_tableName}/{t_fileName} file://{s_outputDirectory}";
+
+                // act
+                var reader = command.ExecuteReader();
+
+                // assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+
+                // arrange
+                var content = File.ReadAllText(t_outputFilePath).Split(',');
+
+                // assert
+                Assert.AreEqual(t_colData[0], content[0]);
+                Assert.AreEqual(t_colData[1], content[1]);
+                Assert.AreEqual(t_colData[2], content[2]);
+            }
+        }
+
+        private void AlterSessionSettings(SnowflakeDbConnection conn)
+        {
+            using (var command = conn.CreateCommand())
+            {
+                // Alter session result format
+                command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
+                command.ExecuteNonQuery();
+
+                //// Alter session max lob
+                //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
+                //command.ExecuteNonQuery();
+            }
+        }
+
+        private void CheckColumnMetadata(DbDataReader reader)
+        {
+            var dataTable = reader.GetSchemaTable();
+
+            DataRow row = dataTable.Rows[0];
+            Assert.AreEqual(s_colName[0], row[SchemaTableColumn.ColumnName]);
+            Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.AreEqual(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+            Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+
+            row = dataTable.Rows[1];
+            Assert.AreEqual(s_colName[1], row[SchemaTableColumn.ColumnName]);
+            Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.AreEqual(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+            Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+
+            row = dataTable.Rows[2];
+            Assert.AreEqual(s_colName[2], row[SchemaTableColumn.ColumnName]);
+            Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.AreEqual(0, row[SchemaTableColumn.ColumnSize]);
+            Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+        }
         private static string GenerateRandomString(int sizeInBytes)
         {
             int bufferSize = sizeInBytes / 2;
