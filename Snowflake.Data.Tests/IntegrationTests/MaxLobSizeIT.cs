@@ -333,10 +333,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // arrange
                 command.CommandText = $"COPY INTO {t_tableName}";
+
                 // act
                 command.ExecuteNonQuery();
 
+                // arrange
                 command.CommandText = $"SELECT * FROM {t_tableName}";
+
+                // act
                 var reader = command.ExecuteReader();
 
                 // assert
@@ -409,6 +413,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(0, row[SchemaTableColumn.ColumnSize]);
             Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
         }
+
         private static string GenerateRandomString(int sizeInBytes)
         {
             int bufferSize = sizeInBytes / 2;
