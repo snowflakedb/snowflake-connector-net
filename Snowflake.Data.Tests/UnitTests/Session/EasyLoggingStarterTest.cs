@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestThatDoesNotFailWhenExistingDirectoryContainsUnexpectedPermissions()
+        public void TestThatDoesNotFailWhenLogDirectoryPermissionIsNot700()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {

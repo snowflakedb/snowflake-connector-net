@@ -137,10 +137,7 @@ namespace Snowflake.Data.Core
                         FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
                 }
             }
-            else
-            {
-                CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
-            }
+            CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
 
             return pathWithDotnetSubdirectory;
         }
@@ -151,8 +148,7 @@ namespace Snowflake.Data.Core
                 return;
 
             var dirPermissions = _unixOperations.GetDirPermissions(dirPath);
-            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute &&
-                dirPermissions != (FileAccessPermissions.UserRead | FileAccessPermissions.UserExecute))
+            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
             {
                 s_logger.Warn($"Access permission for the logs directory is currently " +
                     $"{UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(dirPermissions)}");

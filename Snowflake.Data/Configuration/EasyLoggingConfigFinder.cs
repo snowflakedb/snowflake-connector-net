@@ -20,7 +20,6 @@ namespace Snowflake.Data.Configuration
 
         private readonly FileOperations _fileOperations;
         private readonly UnixOperations _unixOperations;
-        private readonly DirectoryOperations _directoryOperations;
         private readonly EnvironmentOperations _environmentOperations;
         
         public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
