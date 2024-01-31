@@ -22,13 +22,12 @@ namespace Snowflake.Data.Configuration
         private readonly UnixOperations _unixOperations;
         private readonly EnvironmentOperations _environmentOperations;
         
-        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
 
-        internal EasyLoggingConfigFinder(FileOperations fileOperations, UnixOperations unixFileOperations, DirectoryOperations directoryOperations, EnvironmentOperations environmentOperations)
+        internal EasyLoggingConfigFinder(FileOperations fileOperations, UnixOperations unixFileOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
             _unixOperations = unixFileOperations;
-            _directoryOperations = directoryOperations;
             _environmentOperations = environmentOperations;
         }
 

@@ -30,9 +30,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static Mock<UnixOperations> t_unixOperations;
 
         [ThreadStatic]
-        private static Mock<DirectoryOperations> t_directoryOperations;
-
-        [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
 
         [ThreadStatic]
@@ -43,10 +40,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             t_fileOperations = new Mock<FileOperations>();
             t_unixOperations = new Mock<UnixOperations>();
-            t_directoryOperations = new Mock<DirectoryOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixOperations.Object, t_directoryOperations.Object, t_environmentOperations.Object);
-            MockDirectoriesExist();
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
             MockHomeDirectory();
         }
         
@@ -186,7 +181,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             // arrange
             MockFileOnHomePath();
-            MockHomeDirectoryDoesNotExist();
             MockFileOnHomePathDoesNotExist();
 
             // act
@@ -195,14 +189,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // assert
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
-        }
-
-        private static void MockDirectoriesExist()
-        {
-            t_directoryOperations
-                .Setup(d => d.Exists(
-                    It.Is<string>(dir => dir.Equals(DriverDirectory) || dir.Equals(HomeDirectory))))
-                .Returns(true);
         }
 
         private static void MockHasFlagReturnsTrue()
@@ -225,13 +211,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Throws(() => new Exception("No home directory"));
-        }
-
-        private static void MockHomeDirectoryDoesNotExist()
-        {
-            t_directoryOperations
-                .Setup(d => d.Exists(HomeDirectory))
-                .Returns(false);
         }
 
         private static void MockFileOnHomePathDoesNotExist()
