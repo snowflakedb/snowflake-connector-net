@@ -18,6 +18,8 @@ namespace Snowflake.Data.Core.Authenticator.Okta
     /// </summary>
     internal class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
+
+        private ISamlRestRequestFactory _samlRestRequestFactory;
         private static readonly SFLogger _logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
 
         /// <summary>
@@ -33,9 +35,10 @@ namespace Snowflake.Data.Core.Authenticator.Okta
         /// </summary>
         /// <param name="session"></param>
         /// <param name="oktaUriString"></param>
-        internal OktaAuthenticator(SFSession session, string oktaUriString) : 
+        internal OktaAuthenticator(SFSession session, string oktaUriString, ISamlRestRequestFactory samlRestRequestFactory) : 
             base(session, oktaUriString)
         {
+            _samlRestRequestFactory = samlRestRequestFactory;
             _oktaUrl = new Uri(oktaUriString);
         }
 

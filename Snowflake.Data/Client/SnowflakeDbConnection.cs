@@ -160,7 +160,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    SfSession.close();
+                    SfSession.Close();
                 }
                 SfSession = null;
             }
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    SfSession?.close();
+                    SfSession?.Close();
                     SfSession = null;
                     _connectionState = ConnectionState.Closed;
                 }

@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var proxyExtractorMock = new Moq.Mock<SFSessionHttpClientProxyProperties.IExtractor>();
             var extractor = new SFSessionHttpClientProperties.Extractor(proxyExtractorMock.Object);
-            var properties = SFSessionProperties.parseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
             var proxyProperties = new SFSessionHttpClientProxyProperties();
             proxyExtractorMock
                 .Setup(e => e.ExtractProperties(properties))

@@ -57,7 +57,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     if (item.IsExpired(_timeout, timeNow))
                     {
-                        Task.Run(() => item.close());
+                        Task.Run(() => item.Close());
                         _sessions.Remove(item);
                     }
                 }
@@ -89,14 +89,14 @@ namespace Snowflake.Data.Core.Session
             {
                 for (int i = 0; i < _sessions.Count; i++)
                 {
-                    if (_sessions[i].connStr.Equals(connStr))
+                    if (_sessions[i].ConnStr.Equals(connStr))
                     {
                         SFSession session = _sessions[i];
                         _sessions.RemoveAt(i);
                         long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                         if (session.IsExpired(_timeout, timeNow))
                         {
-                            Task.Run(() => session.close());
+                            Task.Run(() => session.Close());
                             i--;
                         }
                         else
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core.Session
             {
                 foreach (SFSession session in _sessions)
                 {
-                    session.close(); // it is left synchronously here because too much async tasks slows down testing
+                    session.Close(); // it is left synchronously here because too much async tasks slows down testing
                 }
                 _sessions.Clear();
             }

@@ -182,7 +182,7 @@ namespace Snowflake.Data.Core.Authenticator
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             if (type.Contains("okta") && type.StartsWith("https://"))
             {
-                return new OktaAuthenticator(session, type);
+                return new OktaAuthenticator(session, type, new SamlRestRequestFactory());
             }
 
             var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);

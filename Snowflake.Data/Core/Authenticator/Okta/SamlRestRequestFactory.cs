@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Authenticator.Okta.Models;
 
 namespace Snowflake.Data.Core.Authenticator.Okta
 {
-    internal class SamlRestRequestFactory : ISamlRestRequestFactory
+    internal sealed class SamlRestRequestFactory : ISamlRestRequestFactory
     {
         public SamlRestRequest Create(Uri ssoUrl, string onetimeToken, TimeSpan timeout)
         {
