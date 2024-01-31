@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestGetAuthenticatorBasic()
         {
-            _authenticator = GetAuthenticator(BasicAuthenticator.AUTH_NAME);
+            _authenticator = GetAuthenticator(BasicAuthenticator.AuthName);
             Assert.IsInstanceOf<BasicAuthenticator>(_authenticator);
         }
 

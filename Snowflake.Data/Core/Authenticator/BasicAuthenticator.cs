@@ -11,23 +11,23 @@ namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "snowflake";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
+        public const string AuthName = "snowflake";
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
 
-        internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
+        internal BasicAuthenticator(SFSession session) : base(session, AuthName)
         {
         }
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
-            await base.LoginAsync(cancellationToken);
+            await LoginAsync(cancellationToken);
         }
 
         /// <see cref="IAuthenticator.Authenticate"/>
         void IAuthenticator.Authenticate()
         {
-             base.Login();
+             Login();
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>

@@ -9,9 +9,9 @@ namespace Snowflake.Data.Core.Authenticator
     /// <summary>
     /// Authenticator Factory to build authenticators
     /// </summary>
-    internal class AuthenticatorFactory
+    internal sealed class AuthenticatorFactory
     {
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>
@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core.Authenticator
         internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
-            if (type.Equals(BasicAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            if (type.Equals(BasicAuthenticator.AuthName, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new BasicAuthenticator(session);
             }
@@ -38,12 +38,12 @@ namespace Snowflake.Data.Core.Authenticator
                     !session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
                 {
                     // There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
-                    string invalidStringDetail =
+                    var invalidStringDetail =
                         "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication";
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    logger.Error(error.Message, error);
+                    s_logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    logger.Error(error.Message, error);
+                    s_logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
 
-            logger.Error("Unknown authenticator", e);
+            s_logger.Error("Unknown authenticator", e);
 
             throw e;
         }
