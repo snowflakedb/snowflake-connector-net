@@ -34,14 +34,6 @@ namespace Snowflake.Data.Core.Authenticator
     }
 
     /// <summary>
-    /// Types of authenticators
-    /// </summary>
-    internal enum SFAuthenticatorType
-    {
-        SNOWFLAKE,
-        OKTA,
-    }
-    /// <summary>
     /// A base implementation for all authenticators to create and send a login request.
     /// </summary>
     internal abstract class BaseAuthenticator
@@ -146,11 +138,13 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new BasicAuthenticator(session);
             }
-            else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+
+            if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new ExternalBrowserAuthenticator(session);
             }
-            else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+
+            if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 // Get private key path or private key from connection settings
                 if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) &&
@@ -168,30 +162,27 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new KeyPairAuthenticator(session);
             }
-            else
+            if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
-                if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+                // Get private key path or private key from connection settings
+                if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
                 {
-                    // Get private key path or private key from connection settings
-                    if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
-                    {
-                        // There is no TOKEN defined, can't authenticate with oauth
-                        string invalidStringDetail =
-                            "Missing required TOKEN for Oauth authentication";
-                        var error = new SnowflakeDbException(
-                            SFError.INVALID_CONNECTION_STRING,
-                            new object[] { invalidStringDetail });
-                        logger.Error(error.Message, error);
-                        throw error;
-                    }
+                    // There is no TOKEN defined, can't authenticate with oauth
+                    string invalidStringDetail =
+                        "Missing required TOKEN for Oauth authentication";
+                    var error = new SnowflakeDbException(
+                        SFError.INVALID_CONNECTION_STRING,
+                        new object[] { invalidStringDetail });
+                    logger.Error(error.Message, error);
+                    throw error;
+                }
 
-                    return new OAuthAuthenticator(session);
-                }
-                // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
-                if (type.Contains("okta") && type.StartsWith("https://"))
-                {
-                    return new OktaAuthenticator(session, type);
-                }
+                return new OAuthAuthenticator(session);
+            }
+            // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
+            if (type.Contains("okta") && type.StartsWith("https://"))
+            {
+                return new OktaAuthenticator(session, type);
             }
 
             var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
