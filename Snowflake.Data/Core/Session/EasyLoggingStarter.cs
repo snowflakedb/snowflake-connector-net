@@ -54,20 +54,19 @@ namespace Snowflake.Data.Core
 
         public virtual void Init(string configFilePathFromConnectionString)
         {
-            if (string.IsNullOrEmpty(configFilePathFromConnectionString))
-            {
-                s_logger.Info($"Attempting to enable easy logging without a config file specified from connection string");
-            }
-            else
-            {
-                s_logger.Info($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
-            }
-
             lock (_lockForExclusiveInit)
             {
                 if (!AllowedToInitialize(configFilePathFromConnectionString))
                 {
                     return;
+                }
+                if (string.IsNullOrEmpty(configFilePathFromConnectionString))
+                {
+                    s_logger.Info($"Attempting to enable easy logging without a config file specified from connection string");
+                }
+                else
+                {
+                    s_logger.Info($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
                 }
                 var config = _easyLoggingConfigProvider.ProvideConfig(configFilePathFromConnectionString);
                 if (config == null)
