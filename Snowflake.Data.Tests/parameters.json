@@ -1,6 +1,6 @@
 {
     "testconnection": {
-        "SNOWFLAKE_TEST_HOST": "snowflake.reg.local.snowflakecomputing.com",
+        "SNOWFLAKE_TEST_HOST": "snowflake.reg.local",
         "SNOWFLAKE_TEST_PROTOCOL":  "http",
         "SNOWFLAKE_TEST_PORT":      "8082",
         "SNOWFLAKE_TEST_USER":      "snowman",
