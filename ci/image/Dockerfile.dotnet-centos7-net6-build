@@ -1,5 +1,4 @@
 FROM centos:7
-# Dockerfile.dotnet-centos7-net6-test is equal to Dockerfile.dotnet-centos7-net6-build
 
 USER root
 WORKDIR /
