@@ -351,14 +351,26 @@ namespace Snowflake.Data.Client
 
         private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
         {
+            CheckIfCommandTextIsSet();
             SetStatement();
             return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
         }
 
         private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
         {
+            CheckIfCommandTextIsSet();
             SetStatement();
             return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+        }
+
+        private void CheckIfCommandTextIsSet()
+        {
+            if (string.IsNullOrEmpty(CommandText))
+            {
+                var errorMessage = "Unable to execute command due to command text not being set";
+                logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
         }
     }
 }

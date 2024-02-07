@@ -35,6 +35,19 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
+        {
+            // Arrange
+            SnowflakeDbConnection conn = new SnowflakeDbConnection();
+
+            // Act
+            var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
+
+            // Assert
+            Assert.AreEqual(thrown.Message, "Unable to execute command due to command text not being set");
+        }
+
+        [Test]
         public void TestCommandPrepareThrowsNotImplemented()
         {
             Assert.Throws<NotImplementedException>(() => command.Prepare());
