@@ -22,10 +22,10 @@ namespace Snowflake.Data.Core.Tools
             return dirInfo.FileAccessPermissions;
         }
 
-        public virtual bool CheckFileHasPermissions(string path, FileAccessPermissions permissions)
+        public virtual bool CheckFileHasAnyOfPermissions(string path, FileAccessPermissions permissions)
         {
             var fileInfo = new UnixFileInfo(path);
-            return fileInfo.FileAccessPermissions.HasFlag(permissions);
+            return (permissions & fileInfo.FileAccessPermissions) != 0;
         }
     }
 }

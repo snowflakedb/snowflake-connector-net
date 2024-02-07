@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static void MockHasFlagReturnsTrue()
         {
             t_unixOperations
-                .Setup(f => f.CheckFileHasPermissions(s_homeConfigFilePath,
+                .Setup(f => f.CheckFileHasAnyOfPermissions(s_homeConfigFilePath,
                     It.Is<FileAccessPermissions>(p =>  p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
                 .Returns(true);
         }
