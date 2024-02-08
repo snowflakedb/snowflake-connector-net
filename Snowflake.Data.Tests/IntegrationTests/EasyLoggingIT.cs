@@ -14,19 +14,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture, NonParallelizable]
     public class EasyLoggingIT: SFBaseTest
     {
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
+
         [OneTimeSetUp]
         public static void BeforeAll()
         {
-            if (!Directory.Exists(WorkingDirectory))
+            if (!Directory.Exists(s_workingDirectory))
             {
-                Directory.CreateDirectory(WorkingDirectory);
+                Directory.CreateDirectory(s_workingDirectory);
             }
         }
         
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            Directory.Delete(WorkingDirectory, true);
+            Directory.Delete(s_workingDirectory, true);
         }
 
         [TearDown]
@@ -39,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestEnableEasyLogging()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(Config("WARN", WorkingDirectory));
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -56,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile("random config content");
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, "random config content");
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -79,7 +81,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             
             // arrange
-            var configFilePath = CreateConfigTempFile(Config("WARN", WorkingDirectory));
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
             using (IDbConnection conn = new SnowflakeDbConnection())
             {

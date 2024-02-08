@@ -13,15 +13,16 @@ namespace Snowflake.Data.Tests.Tools
     public class UnixOperationsTest
     {
         private static UnixOperations s_unixOperations;
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
         
         [OneTimeSetUp]
         public static void BeforeAll()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return;
-            if (!Directory.Exists(WorkingDirectory))
+            if (!Directory.Exists(s_workingDirectory))
             {
-                Directory.CreateDirectory(WorkingDirectory);
+                Directory.CreateDirectory(s_workingDirectory);
             }
             s_unixOperations = new UnixOperations();
         }
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests.Tools
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return;
-            Directory.Delete(WorkingDirectory, true);
+            Directory.Delete(s_workingDirectory, true);
         }
         
         [Test]
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Tests.Tools
             }
             
             // arrange
-            var filePath = CreateConfigTempFile("random text");
+            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var readWriteUserPermissions = FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, filePermissions);
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.Tools
                 Assert.Ignore("skip test on Windows");
             }
             
-            var filePath = CreateConfigTempFile("random text");
+            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, filePermissions);
             
