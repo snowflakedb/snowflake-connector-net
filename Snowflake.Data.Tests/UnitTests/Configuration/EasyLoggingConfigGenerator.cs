@@ -37,9 +37,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                     ""log_path"": {logPath}
                 }
             }"
-                .Replace("\\", "\\\\")
                 .Replace("{logLevel}", SerializeParameter(logLevel))
-                .Replace("{logPath}", SerializeParameter(logPath));
+                .Replace("{logPath}", SerializeParameter(logPath))
+                .Replace("\\", "\\\\");
         }
 
         private static string SerializeParameter(string parameter)
