@@ -83,6 +83,15 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal void Reset(EasyLoggingLogLevel logLevel)
+        {
+            lock (_lockForExclusiveInit)
+            {
+                _initTrialParameters = null;
+                _easyLoggerManager.ResetEasyLogging(logLevel);
+            }
+        }
+        
         private bool AllowedToInitialize(string configFilePathFromConnectionString)
         {
             var everTriedToInitialize = _initTrialParameters != null;
