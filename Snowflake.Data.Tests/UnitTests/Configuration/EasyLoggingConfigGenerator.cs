@@ -12,9 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public const string EmptyCommonConfig = @"{
             ""common"": {}
         }";
-        
-        // public static readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
-        
+
         public static string CreateConfigTempFile(string workingDirectory, string fileContent)
         {
             var filePath = NewConfigFilePath(workingDirectory);
@@ -39,6 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                     ""log_path"": {logPath}
                 }
             }"
+                .Replace("\\", "\\\\")
                 .Replace("{logLevel}", SerializeParameter(logLevel))
                 .Replace("{logPath}", SerializeParameter(logPath));
         }
