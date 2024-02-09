@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Authenticator;
 using System.Net.Http;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -33,6 +34,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestMissingPostbackUrl()
         {
+            const int retryCount = 1;
+            const int retryTimeout = 1;
+            noPostbackContent.Headers.Add(OktaAuthenticator.RetryCountHeader, retryCount.ToString());
+            noPostbackContent.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, retryTimeout.ToString());
             try
             {
                 var restRequester = new Mock.MockOktaRestRequester()
@@ -41,13 +46,16 @@ namespace Snowflake.Data.Tests.UnitTests
                     SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
                     ResponseContent = noPostbackContent,
                 };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;" +
+                    $"host=test;MAXHTTPRETRIES={retryCount};RETRY_TIMEOUT={retryTimeout};", null, restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
             } catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
+            noPostbackContent.Headers.Remove(OktaAuthenticator.RetryCountHeader);
+            noPostbackContent.Headers.Remove(OktaAuthenticator.TimeoutElapsedHeader);
         }
 
         [Test]
