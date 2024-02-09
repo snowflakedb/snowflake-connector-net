@@ -2132,7 +2132,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
                     Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
-                    Assert.IsTrue(e.InnerException.InnerException.Message.Contains(
+                    Exception oktaException;
+#if NETFRAMEWORK
+                    oktaException = e.InnerException.InnerException.InnerException;
+#else
+                    oktaException = e.InnerException.InnerException;
+#endif
+                    Assert.IsTrue(oktaException.Message.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
                         "while trying to authenticate through Okta"));
