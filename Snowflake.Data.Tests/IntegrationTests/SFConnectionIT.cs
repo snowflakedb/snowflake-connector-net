@@ -818,6 +818,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
@@ -2093,6 +2094,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
+        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestAsyncOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
