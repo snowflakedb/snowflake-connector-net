@@ -17,20 +17,21 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string LogLevel = "info";
         private const string LogPath = "./test-logs/log_file.log";
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
 
         [OneTimeSetUp]
         public static void BeforeAll()
         {
-            if (!Directory.Exists(WorkingDirectory))
+            if (!Directory.Exists(s_workingDirectory))
             {
-                Directory.CreateDirectory(WorkingDirectory);
+                Directory.CreateDirectory(s_workingDirectory);
             }
         }
 
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            Directory.Delete(WorkingDirectory, true);
+            Directory.Delete(s_workingDirectory, true);
         }
         
         [Test]
@@ -38,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
-            var configFilePath = CreateConfigTempFile(Config(LogLevel, LogPath));
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath));
 
             // act
             var config = parser.Parse(configFilePath);
@@ -113,8 +114,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             BeforeAll();
             return new[]
             {
-                CreateConfigTempFile(EmptyCommonConfig),
-                CreateConfigTempFile(Config(null, null))
+                CreateConfigTempFile(s_workingDirectory, EmptyCommonConfig),
+                CreateConfigTempFile(s_workingDirectory, Config(null, null))
             };
         }
 
@@ -123,8 +124,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             BeforeAll();
             return new[]
             {
-                CreateConfigTempFile(EmptyConfig),
-                CreateConfigTempFile(Config("unknown", LogPath)),
+                CreateConfigTempFile(s_workingDirectory, EmptyConfig),
+                CreateConfigTempFile(s_workingDirectory, Config("unknown", LogPath)),
             };
         }
     }

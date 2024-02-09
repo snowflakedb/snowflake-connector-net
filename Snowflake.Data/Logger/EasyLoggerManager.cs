@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using log4net;
 using log4net.Appender;
 using log4net.Layout;
@@ -35,6 +36,26 @@ namespace Snowflake.Data.Log
                 RemoveOtherEasyLoggingAppenders(rootLogger, appender);
                 repository.RaiseConfigurationChanged(EventArgs.Empty);
             }
+        }
+
+        internal void ResetEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel)
+        {
+            var log4netLevel = _levelMapper.ToLog4NetLevel(easyLoggingLogLevel);
+            lock (_lockForExclusiveConfigure)
+            {
+                var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
+                var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
+                rootLogger.Level = log4netLevel;
+                RemoveOtherEasyLoggingAppenders(rootLogger, null);
+                repository.RaiseConfigurationChanged(EventArgs.Empty);
+            }
+        }
+
+        internal static bool HasEasyLoggingAppender()
+        {
+            var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
+            var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
+            return rootLogger.Appenders.ToArray().Any(IsEasyLoggingAppender);
         }
         
         private static void RemoveOtherEasyLoggingAppenders(log4net.Repository.Hierarchy.Logger logger, IAppender appender)
