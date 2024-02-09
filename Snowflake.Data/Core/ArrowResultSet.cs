@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Apache.Arrow.Ipc;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core

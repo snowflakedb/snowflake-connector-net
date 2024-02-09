@@ -6,6 +6,7 @@ using System;
 using System.Data.Common;
 using System.Resources;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Client
 {

@@ -2,20 +2,20 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfer;
-using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
     /// The status of the file to be uploaded/downloaded.

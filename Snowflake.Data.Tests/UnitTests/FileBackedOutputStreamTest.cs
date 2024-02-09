@@ -7,7 +7,7 @@ using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Core.FileTransfer;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.UnitTests
 {
     public class FileBackedOutputStreamTest
     {

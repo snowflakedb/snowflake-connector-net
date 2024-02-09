@@ -8,6 +8,7 @@ using System.Security;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -18,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // act
-            var properties = SFSessionProperties.parseConnectionString(
+            var properties = SFSessionProperties.ParseConnectionString(
                 testcase.ConnectionString,
                 testcase.SecurePassword);
 
@@ -36,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert
@@ -51,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert

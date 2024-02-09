@@ -4,16 +4,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Security;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
 using System.Data.Common;
 using System.Linq;
+using System.Net;
+using System.Security;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
     internal enum SFSessionProperty
     {
@@ -128,11 +128,11 @@ namespace Snowflake.Data.Core
                 SFSessionProperties prop = (SFSessionProperties)obj;
                 foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
                 {
-                    if (this.ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
+                    if (ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
                     {
                         return false;
                     }
-                    if (!this.ContainsKey(sessionProperty))
+                    if (!ContainsKey(sessionProperty))
                     {
                         continue;
                     }
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
             DbConnectionStringBuilder builder = new DbConnectionStringBuilder();
@@ -170,10 +170,10 @@ namespace Snowflake.Data.Core
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
             }
-            SFSessionProperties properties = new SFSessionProperties();
+            var properties = new SFSessionProperties();
 
-            string[] keys = new string[builder.Keys.Count];
-            string[] values = new string[builder.Values.Count];
+            var keys = new string[builder.Keys.Count];
+            var values = new string[builder.Values.Count];
             builder.Keys.CopyTo(keys, 0);
             builder.Values.CopyTo(values,0);
 

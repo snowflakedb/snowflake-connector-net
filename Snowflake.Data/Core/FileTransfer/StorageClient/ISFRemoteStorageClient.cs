@@ -2,12 +2,11 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
     internal class WrappedContentInfo
     {

@@ -4,20 +4,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security;
-using System.Web;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System.Text.RegularExpressions;
-using Snowflake.Data.Configuration;
+using System.Web;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
     public class SFSession
     {
@@ -55,29 +53,29 @@ namespace Snowflake.Data.Core
 
         internal bool InsecureMode;
 
-        internal bool isHeartBeatEnabled;
+        private bool _isHeartBeatEnabled;
 
-        private HttpClient _HttpClient;
+        private readonly HttpClient _httpClient;
 
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
-        internal int masterValidityInSeconds = 0;
-        
-        internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
+        private int masterValidityInSeconds = 0;
+
+        private static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
             new SFSessionHttpClientProxyProperties.Extractor());
 
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
-        internal string connStr = null;
+        internal readonly string ConnStr = null;
 
-        private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
+        private readonly QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
         private int _queryContextCacheSize = _defaultQueryContextCacheSize;
 
-        private bool _disableQueryContextCache = false;
+        private readonly bool _disableQueryContextCache = false;
 
-        internal bool _disableConsoleLogin;
+        internal readonly bool _disableConsoleLogin;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -100,7 +98,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                SnowflakeDbException e = new SnowflakeDbException
+                var e = new SnowflakeDbException
                     (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                     authnResponse.code,
                     authnResponse.message,
@@ -116,14 +114,10 @@ namespace Snowflake.Data.Core
         internal Uri BuildLoginUrl()
         {
             var queryParams = new Dictionary<string, string>();
-            string warehouseValue;
-            string dbValue;
-            string schemaValue;
-            string roleName;
-            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
-            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
+            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
+            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
+            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
@@ -136,19 +130,19 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
-            String connectionString,
+            string connectionString,
             SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
         {
         }
 
         internal SFSession(
-            String connectionString,
+            string connectionString,
             SecureString password,
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
-            connStr = connectionString;
-            properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            ConnStr = connectionString;
+            properties = SFSessionProperties.ParseConnectionString(connectionString, password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             ValidateApplicationName(properties);
@@ -158,8 +152,8 @@ namespace Snowflake.Data.Core
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;
-                _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
-                restRequester = new RestRequester(_HttpClient);
+                _httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+                restRequester = new RestRequester(_httpClient);
                 extractedProperties.CheckPropertiesAreValid();
                 connectionTimeout = extractedProperties.TimeoutDuration();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
@@ -193,7 +187,7 @@ namespace Snowflake.Data.Core
         internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
         {
             // Inject the HttpClient to use with the Mock requester
-            restRequester.setHttpClient(_HttpClient);
+            restRequester.setHttpClient(_httpClient);
             // Override the Rest requester with the mock for testing
             this.restRequester = restRequester;
         }
@@ -242,7 +236,7 @@ namespace Snowflake.Data.Core
             await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        internal void close()
+        internal void Close()
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
@@ -460,7 +454,7 @@ namespace Snowflake.Data.Core
         
         internal void startHeartBeatForThisSession()
         {
-            if (!this.isHeartBeatEnabled)
+            if (!this._isHeartBeatEnabled)
             {
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
                 if (this.masterValidityInSeconds == 0)
@@ -470,16 +464,16 @@ namespace Snowflake.Data.Core
                     this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
                 }
                 heartBeatBg.addConnection(this, this.masterValidityInSeconds);
-                this.isHeartBeatEnabled = true;
+                this._isHeartBeatEnabled = true;
             }
         }
         internal void stopHeartBeatForThisSession()
         {
-            if (this.isHeartBeatEnabled)
+            if (this._isHeartBeatEnabled)
             {
                 HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
                 heartBeatBg.removeConnection(this);
-                this.isHeartBeatEnabled = false;
+                this._isHeartBeatEnabled = false;
             }
 
         }

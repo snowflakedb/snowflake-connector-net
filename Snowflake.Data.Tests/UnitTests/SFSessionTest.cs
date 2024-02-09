@@ -3,6 +3,7 @@
  */
 
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Mock.MockCloseSessionGone restRequester = new Mock.MockCloseSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
-            sfSession.close(); // no exception is raised.
+            sfSession.Close(); // no exception is raised.
         }
 
         [Test]

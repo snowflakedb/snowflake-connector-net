@@ -8,6 +8,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
 {
@@ -15,7 +16,7 @@ namespace Snowflake.Data.Core
     {
         HttpRequestMessage ToRequestMessage(HttpMethod method);
         TimeSpan GetRestTimeout();
-        string getSid();
+        string GetSid();
     }
 
     /// <summary>
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Core
             return RestTimeout;
         }
 
-        string IRestRequest.getSid()
+        string IRestRequest.GetSid()
         {
             return sid;
         }

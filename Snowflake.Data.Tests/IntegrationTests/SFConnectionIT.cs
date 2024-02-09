@@ -3,6 +3,7 @@
  */
 
 using System.Data.Common;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

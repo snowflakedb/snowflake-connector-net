@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
 {

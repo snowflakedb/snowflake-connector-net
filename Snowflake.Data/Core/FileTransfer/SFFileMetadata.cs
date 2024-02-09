@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
 
 namespace Snowflake.Data.Core.FileTransfer

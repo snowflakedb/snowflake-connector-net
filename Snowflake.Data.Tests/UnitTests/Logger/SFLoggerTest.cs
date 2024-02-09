@@ -2,13 +2,12 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Log;
-    
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {

@@ -94,7 +94,7 @@ namespace Snowflake.Data.Core
                                                           CancellationToken externalCancellationToken)
         {
             HttpRequestMessage message = request.ToRequestMessage(method);
-            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid()).ConfigureAwait(false);
+            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.GetSid()).ConfigureAwait(false);
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,

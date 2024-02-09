@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class FastMemoryStreamTest
     {
-        FastMemoryStream _fastMemoryStream;
+        private FastMemoryStream _fastMemoryStream;
 
         [SetUp]
         public void BeforeTest()

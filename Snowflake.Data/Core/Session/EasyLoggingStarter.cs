@@ -11,7 +11,7 @@ using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Session
 {
     internal class EasyLoggingStarter
     {

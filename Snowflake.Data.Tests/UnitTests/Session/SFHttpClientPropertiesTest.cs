@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var proxyExtractorMock = new Moq.Mock<SFSessionHttpClientProxyProperties.IExtractor>();
             var extractor = new SFSessionHttpClientProperties.Extractor(proxyExtractorMock.Object);
-            var properties = SFSessionProperties.parseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
             var proxyProperties = new SFSessionHttpClientProxyProperties();
             proxyExtractorMock
                 .Setup(e => e.ExtractProperties(properties))

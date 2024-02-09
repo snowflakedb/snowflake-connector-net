@@ -19,6 +19,8 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.X509;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Snowflake.Data.Core.Session;
+
 namespace Snowflake.Data.Core.Authenticator
 {
     /// <summary>
@@ -46,7 +48,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <param name="session">Session which created this authenticator</param>
         internal KeyPairAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
-            this.session = session;
+            this.Session = session;
             this.rsaProvider = new RSACryptoServiceProvider();
         }
 
@@ -86,10 +88,10 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Info("Key-pair Authentication");
 
             bool hasPkPath = 
-                session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
+                Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
             bool hasPkContent = 
-                session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
-            session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
+                Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
+            Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
             // Extract the public key from the private key to generate the fingerprints
             RSAParameters rsaParams;
@@ -169,9 +171,9 @@ namespace Snowflake.Data.Core.Authenticator
              * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
             */
             String accountUser = 
-                session.properties[SFSessionProperty.ACCOUNT].ToUpper() + 
+                Session.properties[SFSessionProperty.ACCOUNT].ToUpper() + 
                 "." + 
-                session.properties[SFSessionProperty.USER].ToUpper();
+                Session.properties[SFSessionProperty.USER].ToUpper();
             String issuer = accountUser + "." + publicKeyFingerPrint;
             var claims = new[] {
                         new Claim(

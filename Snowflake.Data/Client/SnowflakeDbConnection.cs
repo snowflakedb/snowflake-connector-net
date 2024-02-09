@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading.Tasks;
 using System.Data;
 using System.Threading;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -159,7 +160,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    SfSession.close();
+                    SfSession.Close();
                 }
                 SfSession = null;
             }
@@ -377,7 +378,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    SfSession?.close();
+                    SfSession?.Close();
                     SfSession = null;
                     _connectionState = ConnectionState.Closed;
                 }
