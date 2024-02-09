@@ -47,18 +47,45 @@ namespace Snowflake.Data.Tests.Mock
         {
             if (postRequest is SFRestRequest)
             {
-                // authenticator
-                var authnResponse = new AuthenticatorResponse 
+                if (((SFRestRequest)postRequest).jsonBody is AuthenticatorRequest)
                 {
-                    success = true,
-                    data = new AuthenticatorResponseData 
+                    // authenticator
+                    var authnResponse = new AuthenticatorResponse
                     {
-                        tokenUrl = TokenUrl,
-                        ssoUrl = SSOUrl,
-                    }
-                };
+                        success = true,
+                        data = new AuthenticatorResponseData
+                        {
+                            tokenUrl = TokenUrl,
+                            ssoUrl = SSOUrl,
+                        }
+                    };
 
-                return Task.FromResult<T>((T)(object)authnResponse);
+                    return Task.FromResult<T>((T)(object)authnResponse);
+                }
+                else
+                {
+                    // login
+                    var loginResponse = new LoginResponse
+                    {
+                        success = true,
+                        data = new LoginResponseData
+                        {
+                            sessionId = "",
+                            token = "",
+                            masterToken = "",
+                            masterValidityInSeconds = 0,
+                            authResponseSessionInfo = new SessionInfo
+                            {
+                                databaseName = "",
+                                schemaName = "",
+                                roleName = "",
+                                warehouseName = "",
+                            }
+                        }
+                    };
+
+                    return Task.FromResult<T>((T)(object)loginResponse);
+                }
             }
             else
             {

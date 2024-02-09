@@ -88,7 +88,7 @@ namespace Snowflake.Data.Core.Authenticator
 
                     logger.Debug("step 6: send SAML reponse to snowflake to login");
                     await base.LoginAsync(cancellationToken).ConfigureAwait(false);
-                    break;
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Core.Authenticator
 
                     logger.Debug("step 6: send SAML reponse to snowflake to login");
                     base.Login();
-                    break;
+                    return;
                 }
                 catch(Exception ex)
                 {
