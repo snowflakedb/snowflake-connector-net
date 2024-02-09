@@ -44,6 +44,12 @@ namespace Snowflake.Data.Core
         internal const string SF_CONSOLE_LOGIN = "/console/login";
     }
 
+    internal static class OktaUrl
+    {
+        internal const string DOMAIN = "okta.com";
+        internal const string SSO_SAML_PATH = "/sso/saml";
+    }
+
     internal class SFEnvironment
     {
         static SFEnvironment()
