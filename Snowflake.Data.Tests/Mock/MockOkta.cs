@@ -16,6 +16,8 @@ namespace Snowflake.Data.Tests.Mock
         public string TokenUrl { get; set; }
         public string SSOUrl { get; set; }
         public StringContent ResponseContent { get; set; }
+        public int MaxRetryCount { get; set; }
+        public int MaxRetryTimeout { get; set; }
 
         public T Get<T>(IRestRequest request)
         {
@@ -31,6 +33,8 @@ namespace Snowflake.Data.Tests.Mock
         {
             var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
             response.Content = ResponseContent;
+            response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, MaxRetryCount.ToString());
+            response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, MaxRetryTimeout.ToString());
             return Task.FromResult(response);
         }
 

@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
+    using System.Net.Http;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -818,12 +819,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
             var expectedMaxConnectionTimeout = 450;
-            var mockRestRequester = new MockOktaRetryMaxTimeout(expectedMaxRetryCount, expectedMaxConnectionTimeout);
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
                 try
@@ -831,10 +839,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     conn.ConnectionString
                         = ConnectionStringWithoutAuth
                         + String.Format(
-                            ";authenticator={0};user={1};password={2};MAXHTTPRETRIES={3};RETRY_TIMEOUT={4};",
-                            testConfig.oktaUrl,
-                            testConfig.oktaUser,
-                            testConfig.oktaPassword,
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
                             expectedMaxRetryCount,
                             expectedMaxConnectionTimeout);
                     conn.Open();
@@ -2094,27 +2100,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
-        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestAsyncOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
             var expectedMaxConnectionTimeout = 450;
-            var mockRestRequester = new MockOktaRetryMaxTimeout(expectedMaxRetryCount, expectedMaxConnectionTimeout);
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                Task connectTask = null;
                 try
                 {
                     conn.ConnectionString
                         = ConnectionStringWithoutAuth
                         + String.Format(
-                            ";authenticator={0};user={1};password={2};MAXHTTPRETRIES={3};RETRY_TIMEOUT={4};",
-                            testConfig.oktaUrl,
-                            testConfig.oktaUser,
-                            testConfig.oktaPassword,
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
                             expectedMaxRetryCount,
                             expectedMaxConnectionTimeout);
-                    connectTask = conn.OpenAsync(CancellationToken.None);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                     Assert.Fail();
                 }

@@ -153,7 +153,6 @@ namespace Snowflake.Data.Core.Authenticator
                     logger.Debug("step 5: verify postback url in SAML reponse");
                     VerifyPostbackUrl();
 
-
                     logger.Debug("step 6: send SAML reponse to snowflake to login");
                     base.Login();
                     break;
