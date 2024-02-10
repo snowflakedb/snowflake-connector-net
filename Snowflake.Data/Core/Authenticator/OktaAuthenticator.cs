@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core.Authenticator
                     lastRetryException = ex;
                     if (IsPostbackUrlNotFound(lastRetryException))
                     {
-                        logger.Info("Refreshing token for Okta re-authentication and starting from step 3 again");
+                        logger.Debug("Refreshing token for Okta re-authentication and starting from step 3 again");
 
                         // Get the current retry count and timeout elapsed from the response headers
                         retryCount += int.Parse(samlRawResponse.Content.Headers.GetValues(RetryCountHeader).First());
