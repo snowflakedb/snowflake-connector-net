@@ -3,6 +3,7 @@
 set -o pipefail
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$(cd "${THIS_DIR}/.." && pwd)"
+export WORKSPACE=${WORKSPACE:-/tmp}
 
 source $THIS_DIR/_init.sh
 source $THIS_DIR/scripts/login_internal_docker.sh
@@ -49,4 +50,5 @@ for name in "${!TARGET_TEST_IMAGES[@]}"; do
         -e BUILD_NUMBER \
         ${TEST_IMAGE_NAMES[$name]} \
         /mnt/host/ci/container/test_component.sh
+        echo "[INFO] Test Results: $WORKSPACE/junit-dotnet.xml"
 done
