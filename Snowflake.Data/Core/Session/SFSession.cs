@@ -79,6 +79,10 @@ namespace Snowflake.Data.Core
 
         internal bool _disableConsoleLogin;
 
+        internal int _maxRetryCount;
+
+        internal int _maxRetryTimeout;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -164,6 +168,8 @@ namespace Snowflake.Data.Core
                 connectionTimeout = extractedProperties.TimeoutDuration();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
+                _maxRetryCount = extractedProperties.maxHttpRetries;
+                _maxRetryTimeout = extractedProperties.retryTimeout;
             }
             catch (Exception e)
             {

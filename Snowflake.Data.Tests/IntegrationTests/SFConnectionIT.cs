@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
+    using System.Net.Http;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -814,6 +815,46 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.oktaPassword);
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        public void TestOktaConnectionUntilMaxTimeout()
+        {
+            var expectedMaxRetryCount = 15;
+            var expectedMaxConnectionTimeout = 450;
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
+            using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                try
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
+                            expectedMaxRetryCount,
+                            expectedMaxConnectionTimeout);
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e);
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e).ErrorCode);
+                    Assert.IsTrue(e.Message.Contains(
+                        $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
+                        $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
+                        "while trying to authenticate through Okta"));
+                }
             }
         }
 
@@ -2054,6 +2095,54 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 
                 conn.BeginTransaction().Commit();
                 Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            }
+        }
+
+
+        [Test]
+        public void TestAsyncOktaConnectionUntilMaxTimeout()
+        {
+            var expectedMaxRetryCount = 15;
+            var expectedMaxConnectionTimeout = 450;
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
+            using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                try
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
+                            expectedMaxRetryCount,
+                            expectedMaxConnectionTimeout);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
+                    connectTask.Wait();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Exception oktaException;
+#if NETFRAMEWORK
+                    oktaException = e.InnerException.InnerException.InnerException;
+#else
+                    oktaException = e.InnerException.InnerException;
+#endif
+                    Assert.IsTrue(oktaException.Message.Contains(
+                        $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
+                        $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
+                        "while trying to authenticate through Okta"));
+                }
             }
         }
     }
