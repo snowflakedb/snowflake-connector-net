@@ -7,6 +7,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using System;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     [TestFixture]
     class SFDbCommandTest
@@ -45,6 +47,20 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(thrown.Message, "Unable to execute command due to command text not being set");
+        }
+
+        [Test]
+        public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
+        {
+            // Arrange
+            SnowflakeDbConnection conn = new SnowflakeDbConnection();
+            Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
+
+            // Act
+            var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
+
+            // Assert
+            Assert.AreEqual(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
         }
 
         [Test]
