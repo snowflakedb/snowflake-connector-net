@@ -701,7 +701,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     }
 ```
-In case of a failure a SnowflakeDbException will be thrown and will provide QueryId.
+In case of a failure a SnowflakeDbException will be thrown with the affected QueryId.
 Inner exception (if applicable) will provide some details on the failure cause and
 it will be for example: FileNotFoundException, DirectoryNotFoundException.
 
