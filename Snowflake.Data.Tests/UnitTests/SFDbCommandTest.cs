@@ -39,9 +39,6 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
         {
-            // Arrange
-            SnowflakeDbConnection conn = new SnowflakeDbConnection();
-
             // Act
             var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
 
@@ -53,7 +50,6 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Arrange
-            SnowflakeDbConnection conn = new SnowflakeDbConnection();
             Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
 
             // Act
