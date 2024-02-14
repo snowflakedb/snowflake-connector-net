@@ -26,13 +26,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("ChunkParserFactoryTest")]
-        public void ChunkParserFactoryTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
         {
             // Set configuration settings

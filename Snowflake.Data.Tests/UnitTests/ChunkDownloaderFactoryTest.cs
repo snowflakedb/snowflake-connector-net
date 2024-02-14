@@ -22,13 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
         }
 
-        [Test]
-        [Ignore("ChunkDownloaderFactoryTest")]
-        public void ChunkDownloaderFactoryTestDone()
-        {
-            // Do nothing;
-        }
-
         private QueryExecResponseData mockQueryRequestData()
         {
             return new QueryExecResponseData
