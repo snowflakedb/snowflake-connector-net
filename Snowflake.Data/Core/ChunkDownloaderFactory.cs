@@ -25,7 +25,8 @@ namespace Snowflake.Data.Core
                         responseData.qrmk,
                         responseData.chunkHeaders,
                         cancellationToken,
-                        resultSet);
+                        resultSet,
+                        responseData.queryResultFormat);
                 case 2:
                     s_logger.Warn("V2 version of ChunkDownloader is deprecated. Using the V3 version.");
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
@@ -33,7 +34,8 @@ namespace Snowflake.Data.Core
                         responseData.qrmk,
                         responseData.chunkHeaders,
                         cancellationToken,
-                        resultSet);
+                        resultSet,
+                        responseData.queryResultFormat);
                 case 3:
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                         responseData.chunks,
