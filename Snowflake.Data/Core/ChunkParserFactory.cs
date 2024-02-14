@@ -14,8 +14,11 @@ namespace Snowflake.Data.Core
         private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
         public static IChunkParserFactory Instance = new ChunkParserFactory();
 
-        public IChunkParser GetParser(Stream stream)
+        public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
         {
+            if (resultFormat == ResultFormat.ARROW)
+                return new ArrowChunkParser(stream);
+            
             switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
                 case 1:

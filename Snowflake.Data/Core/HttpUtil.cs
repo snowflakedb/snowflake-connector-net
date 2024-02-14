@@ -13,6 +13,8 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Runtime.InteropServices;
+using System.Linq;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
@@ -73,7 +75,16 @@ namespace Snowflake.Data.Core
     public sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
+        private static readonly int s_baseBackOffTime = 1;
+        private static readonly int s_exponentialFactor = 2;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+
+        private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
+        {
+            RestPath.SF_LOGIN_PATH,
+            RestPath.SF_AUTHENTICATOR_REQUEST_PATH,
+            RestPath.SF_TOKEN_REQUEST_PATH
+        };
 
         private HttpUtil()
         {
@@ -317,14 +328,14 @@ namespace Snowflake.Data.Core
 
             private bool disableRetry;
             private bool forceRetryOn404;
-            private int maxRetry;
+            private int maxRetryCount;
             private bool includeRetryReason;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetry, bool includeRetryReason) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount, bool includeRetryReason) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
-                this.maxRetry = maxRetry;
+                this.maxRetryCount = maxRetryCount;
                 this.includeRetryReason = includeRetryReason;
             }
 
@@ -332,7 +343,10 @@ namespace Snowflake.Data.Core
                 CancellationToken cancellationToken)
             {
                 HttpResponseMessage response = null;
-                int backOffInSec = 1;
+                string absolutePath = requestMessage.RequestUri.AbsolutePath;
+                bool isLoginRequest = IsLoginEndpoint(absolutePath);
+                bool isOktaSSORequest = IsOktaSSORequest(requestMessage.RequestUri.Host, absolutePath);
+                int backOffInSec = s_baseBackOffTime;
                 int totalRetryTime = 0;
 
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
@@ -364,7 +378,10 @@ namespace Snowflake.Data.Core
                         if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan))
                         {
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                            childCts.CancelAfter(httpTimeout);
+                            if (httpTimeout.Ticks == 0)
+                                childCts.Cancel();
+                            else
+                                childCts.CancelAfter(httpTimeout);                        
                         }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
@@ -394,8 +411,15 @@ namespace Snowflake.Data.Core
                     }
 
                     int errorReason = 0;
+
                     if (response != null)
                     {
+                        if (isOktaSSORequest)
+                        {
+                            response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, retryCount.ToString());
+                            response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, totalRetryTime.ToString());
+                        }
+
                         if (response.IsSuccessStatusCode)
                         {
                             logger.Debug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
@@ -420,14 +444,14 @@ namespace Snowflake.Data.Core
                     }
 
                     retryCount++;
-                    if ((maxRetry > 0) && (retryCount > maxRetry))
+                    if ((maxRetryCount > 0) && (retryCount > maxRetryCount))
                     {
-                        logger.Debug($"stop retry as maxHttpRetries {maxRetry} reached");
+                        logger.Debug($"stop retry as maxHttpRetries {maxRetryCount} reached");
                         if (response != null)
                         {
                             return response;
                         }
-                        throw new OperationCanceledException($"http request failed and max retry {maxRetry} reached");
+                        throw new OperationCanceledException($"http request failed and max retry {maxRetryCount} reached");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
@@ -439,16 +463,29 @@ namespace Snowflake.Data.Core
 
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
                     totalRetryTime += backOffInSec;
-                    // Set next backoff time
-                    backOffInSec = backOffInSec >= MAX_BACKOFF ?
-                            MAX_BACKOFF : backOffInSec * 2;
+
+                    var jitter = GetJitter(backOffInSec);
+
+                    // Set backoff time
+                    if (isLoginRequest)
+                    {
+                        // Choose between previous sleep time and new base sleep time for login requests
+                        backOffInSec = (int)ChooseRandom(
+                            backOffInSec + jitter,
+                            Math.Pow(s_exponentialFactor, retryCount) + jitter);
+                    }
+                    else if (backOffInSec < MAX_BACKOFF)
+                    {
+                        // Multiply sleep by 2 for non-login requests
+                        backOffInSec *= 2;
+                    }
 
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
-                        // use a smaller one to give the Rest request a chance to timeout early
-                        backOffInSec = Math.Max(1, (int)restTimeout.TotalSeconds - totalRetryTime - 1);
+                        // then use the remaining connection timeout
+                        backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime);
                     }
                 }
             }
@@ -470,6 +507,52 @@ namespace Snowflake.Data.Core
             (statusCode == 408) ||
             // Too many requests
             (statusCode == 429);
+        }
+
+        /// <summary>
+        /// Get the jitter amount based on current wait time.
+        /// </summary>
+        /// <param name="curWaitTime">The current retry backoff time.</param>
+        /// <returns>The new jitter amount.</returns>
+        static internal double GetJitter(double curWaitTime)
+        {
+            double multiplicationFactor = ChooseRandom(-1, 1);
+            double jitterAmount = 0.5 * curWaitTime * multiplicationFactor;
+            return jitterAmount;
+        }
+
+        /// <summary>
+        /// Randomly generates a number between a given range.
+        /// </summary>
+        /// <param name="min">The min range (inclusive).</param>
+        /// <param name="max">The max range (inclusive).</param>
+        /// <returns>The random number.</returns>
+        static double ChooseRandom(double min, double max)
+        {
+            var next = new Random().NextDouble();
+
+            return min + (next * (max - min));
+        }
+
+        /// <summary>
+        /// Checks if the endpoint is a login request.
+        /// </summary>
+        /// <param name="endpoint">The endpoint to check.</param>
+        /// <returns>True if the endpoint is a login request, false otherwise.</returns>
+        static internal bool IsLoginEndpoint(string endpoint)
+        {
+            return null != s_supportedEndpointsForRetryPolicy.FirstOrDefault(ep => endpoint.Equals(ep));
+        }
+
+        /// <summary>
+        /// Checks if request is for Okta and an SSO SAML endpoint.
+        /// </summary>
+        /// <param name="host">The host url to check.</param>
+        /// <param name="endpoint">The endpoint to check.</param>
+        /// <returns>True if the endpoint is an okta sso saml request, false otherwise.</returns>
+        static internal bool IsOktaSSORequest(string host, string endpoint)
+        {
+            return host.Contains(OktaUrl.DOMAIN) && endpoint.Contains(OktaUrl.SSO_SAML_PATH);
         }
     }
 }

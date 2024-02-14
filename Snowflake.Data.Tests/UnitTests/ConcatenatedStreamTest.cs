@@ -29,13 +29,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("ConcatenatedStreamTest")]
-        public void ConcatenatedStreamTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestCanRead()
         {
             Assert.IsTrue(_concatStream.CanRead);

@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Diagnostics;
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
+    using System.Net.Http;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -24,23 +25,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
-        [Ignore("ConnectionIT")]
-        public void ConnectionITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -144,7 +137,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(false)]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");
@@ -311,7 +303,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 //cmd.CommandText = "drop database \"dlTest\"";
                 cmd.CommandText = $"drop schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database "+ testConfig.database;
+                cmd.CommandText = "use database " + testConfig.database;
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "use schema " + testConfig.schema;
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
@@ -382,38 +376,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestLoginTimeout()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
-                using (IDbConnection conn = new MockSnowflakeDbConnection())
+                int timeoutSec = 5;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+                    timeoutSec);
+
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
                 {
-                    int timeoutSec = 5;
-                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
-                        timeoutSec);
-
-                    conn.ConnectionString = loginTimeOut5sec;
-
-                    Assert.AreEqual(conn.State, ConnectionState.Closed);
-                    Stopwatch stopwatch = Stopwatch.StartNew();
-                    try
-                    {
-                        conn.Open();
-                        Assert.Fail();
-
-                    }
-                    catch (AggregateException e)
-                    {
-                        Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
-                            ((SnowflakeDbException)e.InnerException).ErrorCode);
-                    }
-                    stopwatch.Stop();
-                    int detla = 10; //in case server time slower.
-
-                    //Should timeout before the default timeout (120 sec) * 1000
-                    Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                    // Should timeout after the defined connection timeout
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - detla);
-                    Assert.AreEqual(5, conn.ConnectionTimeout);
+                    conn.Open();
+                    Assert.Fail();
                 }
+                catch (AggregateException e)
+                {
+                    // Jitter can cause the request to reach max number of retries before reaching the timeout
+                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout before the defined timeout plus 1 (buffer time)
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
+
+                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
@@ -433,15 +426,58 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     conn.Open();
                     Assert.Fail();
                 }
-                catch
+                catch (Exception e)
                 {
+                    // Jitter can cause the request to reach max number of retries before reaching the timeout
+                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
-                // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                // retry 5 times with starting backoff of 1 second
+                // but should not delay more than the max possible seconds after 5 retries
+                // and should not take less time than the minimum possible seconds after 5 retries
+                Assert.Less(stopwatch.ElapsedMilliseconds, 79 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
+            }
+        }
+
+        [Test]
+        public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+        {
+            using (IDbConnection conn = new MockSnowflakeDbConnection())
+            {
+                int connectionTimeout = 600;
+                int retryTimeout = 350;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                    connectionTimeout, retryTimeout);
+
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    // Jitter can cause the request to reach max number of retries before reaching the timeout
+                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout before the defined timeout plus 1 (buffer time)
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 1) * 1000);
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+
+                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
             }
         }
 
@@ -453,8 +489,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
 
-                // Default timeout is 120 sec
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                // Default timeout is 300 sec
+                Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -471,10 +507,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
 
                         stopwatch.Stop();
-                        // Should timeout after the default timeout (120 sec)
-                        Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-                        // But never more than 16 sec (max backoff) after the default timeout
-                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                        int delta = 10; // in case server time slower.
+
+                        // Should timeout after the default timeout (300 sec)
+                        Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
+                        // But never more because there's no connection timeout remaining
+                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 1) * 1000);
                     }
                 }
             }
@@ -486,7 +524,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
@@ -512,7 +550,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
                 conn.ConnectionString = invalidConnectionString;
 
@@ -638,6 +676,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
                 }
 
+                conn.ChangeDatabase(testConfig.database);
                 conn.Close();
             }
 
@@ -780,6 +819,46 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestOktaConnectionUntilMaxTimeout()
+        {
+            var expectedMaxRetryCount = 15;
+            var expectedMaxConnectionTimeout = 450;
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
+            using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                try
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
+                            expectedMaxRetryCount,
+                            expectedMaxConnectionTimeout);
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e);
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e).ErrorCode);
+                    Assert.IsTrue(e.Message.Contains(
+                        $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
+                        $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
+                        "while trying to authenticate through Okta"));
+                }
+            }
+        }
+
+        [Test]
         [Ignore("This test requires manual setup and therefore cannot be run in CI")]
         public void TestOkta2ConnectionsFollowingEachOther()
         {
@@ -856,6 +935,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAndDisableConsoleLogin()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                    + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                    task.Wait(CancellationToken.None);
+                    Assert.AreEqual("QA", task.Result);
+                }
+            }
+        }
+
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionTimeoutAfter10s()
@@ -1530,7 +1653,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -1557,7 +1680,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
                 // Data source is empty string for now
                 Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
@@ -1681,15 +1804,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 // At this point the connection string has not been parsed, it will return the 
                 // default value
-                //Assert.AreEqual(120, conn.ConnectionTimeout);
+                //Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);                
+                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for 130 sec (more than the default connection timeout and the httpclient 
-                // timeout to make sure there are no false positive )
-                Thread.Sleep(130*1000);
-           
+                // Sleep for more than the default timeout to make sure there are no false positive)
+                Thread.Sleep((SFSessionHttpClientProperties.s_retryTimeoutDefault + 10) * 1000);
+
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
                 // Cancel the connection because it will never succeed since there is no 
@@ -1710,48 +1832,82 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(0, conn.ConnectionTimeout);
+                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
         [Test]
         public void TestAsyncLoginTimeout()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            using (var conn = new MockSnowflakeDbConnection())
             {
-                using (var conn = new MockSnowflakeDbConnection())
+                int timeoutSec = 5;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+                    timeoutSec);
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
                 {
-                    int timeoutSec = 5;
-                    string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
-                        timeoutSec);
-                    conn.ConnectionString = loginTimeOut5sec;
-
-                    Assert.AreEqual(conn.State, ConnectionState.Closed);
-
-                    CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-                    Stopwatch stopwatch = Stopwatch.StartNew();
-                    try
-                    {
-                        Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
-                        connectTask.Wait();
-                    }
-                    catch (AggregateException e)
-                    {
-                        Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                            ((SnowflakeDbException)e.InnerException).ErrorCode);
-
-                    }
-                    stopwatch.Stop();
-                    int detla = 10; //in case server time slower.
-
-                    // Should timeout after 5sec
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - detla);
-                    // But never more than 1 sec (max backoff) after the default timeout
-                    Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
-
-                    Assert.AreEqual(ConnectionState.Closed, conn.State);
-                    Assert.AreEqual(5, conn.ConnectionTimeout);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
+                    connectTask.Wait();
                 }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
+                // But never more than 3 sec (buffer time) after the defined timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 3) * 1000);
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+            }
+        }
+
+        [Test]
+        public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+        {
+            using (var conn = new MockSnowflakeDbConnection())
+            {
+                int connectionTimeout = 600;
+                int retryTimeout = 350;
+                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                    connectionTimeout, retryTimeout);
+                conn.ConnectionString = loginTimeOut5sec;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
+                    connectTask.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+
+                }
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+                // But never more than 2 sec (buffer time) after the defined timeout
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 2) * 1000);
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
             }
         }
 
@@ -1765,11 +1921,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                 }
                 catch (AggregateException e)
@@ -1778,15 +1933,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
-                int detla = 10; //in case server time slower.
+                int delta = 10; // in case server time slower.
 
-                // Should timeout after the default timeout (120 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000 - detla);
-                // But never more than 16 sec (max backoff) after the default timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
+                // Should timeout after the default timeout (300 sec)
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
+                // But never more because there's no connection timeout remaining
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 1) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(120, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
             }
         }
 
@@ -1796,17 +1951,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=docs.microsoft.com;"
+                string invalidConnectionString = "host=learn.microsoft.com;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = null;
                 try
                 {
-                    connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                    connectTask = conn.OpenAsync(CancellationToken.None);
                     connectTask.Wait();
                     Assert.Fail();
                 }
@@ -1822,7 +1976,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCloseAsync()
+        public void TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -1835,44 +1989,80 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
-                task = conn.CloseAsync(new CancellationTokenSource().Token);
+                task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
-        }
+		}
+
+#if NETCOREAPP3_0_OR_GREATER
+		[Test]
+		public void TestCloseAsync()
+		{
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+			// An application can call Close or CloseAsync more than one time. 
+			// No exception is generated.
+			using (var conn = new SnowflakeDbConnection())
+			{
+				conn.ConnectionString = ConnectionString;
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+				Task task = null;
+
+				// Close the connection. It's not opened yet, but it should not have any issue
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Open the connection
+				task = conn.OpenAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Open);
+
+				// Close the opened connection
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+				// Close the connection again.
+				task = conn.CloseAsync();
+				task.Wait();
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+			}
+		}
+#endif
 
         [Test]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
                 conn.ConnectionString = ConnectionString;
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Task task = null;
 
                 // Open the connection
-                task = conn.OpenAsync(new CancellationTokenSource().Token);
+                task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync(new CancellationTokenSource().Token);
+                task =  conn.CloseAsync(CancellationToken.None);
                 try
                 {
                     task.Wait();
@@ -1905,6 +2095,54 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 
                 conn.BeginTransaction().Commit();
                 Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            }
+        }
+
+
+        [Test]
+        public void TestAsyncOktaConnectionUntilMaxTimeout()
+        {
+            var expectedMaxRetryCount = 15;
+            var expectedMaxConnectionTimeout = 450;
+            var oktaUrl = "https://test.okta.com";
+            var mockRestRequester = new MockOktaRestRequester()
+            {
+                TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+                SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+                ResponseContent = new StringContent("<form=error}"),
+                MaxRetryCount = expectedMaxRetryCount,
+                MaxRetryTimeout = expectedMaxConnectionTimeout
+            };
+            using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                try
+                {
+                    conn.ConnectionString
+                        = ConnectionStringWithoutAuth
+                        + String.Format(
+                            ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                            oktaUrl,
+                            expectedMaxRetryCount,
+                            expectedMaxConnectionTimeout);
+                    Task connectTask = conn.OpenAsync(CancellationToken.None);
+                    connectTask.Wait();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
+                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Exception oktaException;
+#if NETFRAMEWORK
+                    oktaException = e.InnerException.InnerException.InnerException;
+#else
+                    oktaException = e.InnerException.InnerException;
+#endif
+                    Assert.IsTrue(oktaException.Message.Contains(
+                        $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
+                        $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
+                        "while trying to authenticate through Okta"));
+                }
             }
         }
     }

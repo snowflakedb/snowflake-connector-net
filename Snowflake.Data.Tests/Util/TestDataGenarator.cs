@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -16,6 +17,11 @@ namespace Snowflake.Data.Tests.Util
         private static string s_digitChars = "0" + s_nonZeroDigits;
         private static string s_letterChars = s_lowercaseChars + s_uppercaseChars;
         private static string s_alphanumericChars = s_letterChars + s_digitChars;
+
+        public static string AsciiCodes => new String(Enumerable.Range(0, 256).Select(ch => (char)ch).ToArray());
+        public static char SnowflakeUnicode => '\u2744';
+        public static string EmojiUnicode => "\uD83D\uDE00";
+        public static string StringWithUnicode => AsciiCodes + SnowflakeUnicode + EmojiUnicode;
         
         public static bool NextBool()
         {

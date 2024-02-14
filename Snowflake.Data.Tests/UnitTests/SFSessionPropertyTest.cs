@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFSessionPropertyTest
     {
 
-        [Test, TestCaseSource("ConnectionStringTestCases")]
+        [Test, TestCaseSource(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // act
@@ -29,7 +29,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
-        public void TestThatItFailsForWrongFileTransferMaxBytesInMemoryParameter(string connectionString, string expectedErrorMessagePart)
+        [TestCase("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
+        [TestCase("ACCOUNT=complicated.long.testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value complicated.long.testaccount? for ACCOUNT")]
+        [TestCase("ACCOUNT=?testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value ?testaccount for ACCOUNT")]
+        public void TestThatItFailsForWrongConnectionParameter(string connectionString, string expectedErrorMessagePart)
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
@@ -40,6 +43,20 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
             Assert.IsTrue(exception.Message.Contains(expectedErrorMessagePart));
         }
+
+        [Test]
+        [TestCase("ACCOUNT=;USER=testuser;PASSWORD=testpassword")]
+        [TestCase("USER=testuser;PASSWORD=testpassword")]
+        public void TestThatItFailsIfNoAccountSpecified(string connectionString)
+        {
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(
+                () => SFSessionProperties.parseConnectionString(connectionString, null)
+            );
+            
+            // assert
+            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+        }
         
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
@@ -48,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string defHost = "testaccount.snowflakecomputing.com";
             string defAuthenticator = "snowflake";
             string defScheme = "https";
-            string defConnectionTimeout = "120";
+            string defConnectionTimeout = "300";
             string defBrowserResponseTime = "120";
             string defPassword = "123";
             string defPort = "443";
@@ -57,8 +74,12 @@ namespace Snowflake.Data.Tests.UnitTests
             string defProxyPort = "1234";
             string defNonProxyHosts = "localhost";
 
+            string defRetryTimeout = "300";
             string defMaxHttpRetries = "7";
             string defIncludeRetryReason = "true";
+            string defDisableQueryContextCache = "false";
+            string defDisableConsoleLogin = "true";
+            string defAllowUnderscoresInHost = "false";
 
             var simpleTestCase = new TestCase()
             {
@@ -81,8 +102,12 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason }
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithBrowserResponseTimeout = new TestCase()
@@ -105,10 +130,14 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "180" },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason }
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
-            };   
+            };
             var testCaseWithProxySettings = new TestCase()
             {
                 ExpectedProperties = new SFSessionProperties()
@@ -132,8 +161,12 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason }
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -161,8 +194,12 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PROXYPORT, defProxyPort },
                     { SFSessionProperty.NONPROXYHOSTS, defNonProxyHosts },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason }
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -188,9 +225,13 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
                     { SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, "25" },
-                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason }
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithIncludeRetryReason = new TestCase()
@@ -214,8 +255,160 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
                     { SFSessionProperty.FORCEPARSEERROR, "false" },
                     { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
                     { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
-                    { SFSessionProperty.INCLUDERETRYREASON, "false" }
+                    { SFSessionProperty.INCLUDERETRYREASON, "false" },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+            var testCaseWithDisableQueryContextCache = new TestCase()
+            {
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                },
+                ConnectionString =
+                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
+            };
+            var testCaseWithDisableConsoleLogin = new TestCase()
+            {
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, "false" },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                },
+                ConnectionString =
+                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
+            };
+            var complicatedAccount = $"{defAccount}.region-name.host-name";
+            var testCaseComplicatedAccountName = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={complicatedAccount};USER={defUser};PASSWORD={defPassword};",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"{complicatedAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+            var testCaseUnderscoredAccountName = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT=prefix_{defAccount};USER={defUser};PASSWORD={defPassword};",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"prefix_{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"prefix-{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+            var testCaseUnderscoredAccountNameWithEnabledAllowUnderscores = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT=prefix_{defAccount};USER={defUser};PASSWORD={defPassword};allowUnderscoresInHost=true;",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"prefix_{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"prefix_{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
             return new TestCase[]
@@ -224,7 +417,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithBrowserResponseTimeout,
                 testCaseWithProxySettings,
                 testCaseThatDefaultForUseProxyIsFalse,
-                testCaseWithFileTransferMaxBytesInMemory
+                testCaseWithFileTransferMaxBytesInMemory,
+                testCaseWithIncludeRetryReason,
+                testCaseWithDisableQueryContextCache,
+                testCaseWithDisableConsoleLogin,
+                testCaseComplicatedAccountName,
+                testCaseUnderscoredAccountName,
+                testCaseUnderscoredAccountNameWithEnabledAllowUnderscores
             };
         }
         

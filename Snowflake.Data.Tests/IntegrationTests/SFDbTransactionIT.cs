@@ -16,10 +16,39 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]
-        [Ignore("DbTransactionIT")]
-        public void DbTransactionITDone()
+        public void TestTransactionDbConnection()
         {
-            // Do nothing;
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Act
+                using (IDbTransaction t1 = conn.BeginTransaction())
+                {
+                    // Assert
+                    Assert.AreEqual(conn, t1.Connection);
+                }
+            }
+        }
+
+        [Test]
+        public void TestTransactionIsolationLevel()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                // Act
+                using (IDbTransaction t1 = conn.BeginTransaction())
+                {
+                    // Assert
+                    Assert.AreEqual(IsolationLevel.ReadCommitted, t1.IsolationLevel);
+                }
+            }
         }
 
         [Test]

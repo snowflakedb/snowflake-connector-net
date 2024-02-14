@@ -32,13 +32,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("SecretDetectorTest")]
-        public void SecretDetectorTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestNullString()
         {
             BasicMasking(null);

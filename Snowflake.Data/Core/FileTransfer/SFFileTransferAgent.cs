@@ -275,7 +275,7 @@ namespace Snowflake.Data.Core
         /// Generate the result set based on the file metadata.
         /// </summary>
         /// <returns>The result set containing file status and info</returns>
-        public SFBaseResultSet result()
+        public SFResultSet result()
         {
             // Set the row count using the number of metadata in the result metas
             TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
@@ -595,7 +595,11 @@ namespace Snowflake.Data.Core
                     };
 
                     /// The storage client used to upload data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    /// This is only needed for remote storage types
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                    {
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    }
 
                     if (!fileMetadata.requireCompress)
                     {
@@ -656,13 +660,18 @@ namespace Snowflake.Data.Core
                     };
 
                     /// The storage client used to download data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
-                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
-
-                    if (fileHeader != null)
+                    /// This is only needed for remote storage types
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
-                        fileMetadata.srcFileSize = fileHeader.contentLength;
-                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+
+                        FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                        if (fileHeader != null)
+                        {
+                            fileMetadata.srcFileSize = fileHeader.contentLength;
+                            fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        }
                     }
 
                     FilesMetas.Add(fileMetadata);
@@ -781,10 +790,18 @@ namespace Snowflake.Data.Core
             var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
             var resolvedPaths = new List<string>();
 
+            bool firstPass = true;
+
             foreach (var part in pathParts)
             {
                 if (ContainsWildcard(part))
                 {
+                    // Directory containing the wildcard is the first one in the path
+                    if (firstPass)
+                    {
+                        resolvedPaths.Add(Directory.GetCurrentDirectory());
+                    }
+
                     var tempPaths = new List<string>();
                     foreach (var location in resolvedPaths)
                     {
@@ -815,6 +832,8 @@ namespace Snowflake.Data.Core
                         resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
                     }
                 }
+
+                firstPass = false;
             }
 
             return resolvedPaths;

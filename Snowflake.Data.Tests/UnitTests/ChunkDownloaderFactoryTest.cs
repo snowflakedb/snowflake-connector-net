@@ -36,7 +36,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 rowSet = new string[,] { { } },
                 rowType = new List<ExecResponseRowType>(),
                 parameters = new List<NameValueParameter>(),
-                chunks = new List<ExecResponseChunk>()
+                chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
+                {
+                    url = "fake",
+                    uncompressedSize = 100,
+                    rowCount = 1
+                }}
             };
         }
 
@@ -53,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestGetDownloader([Values(1, 2, 3, 4)] int chunkDownloaderVersion)
         {
             // Set configuration settings

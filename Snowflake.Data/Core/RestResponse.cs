@@ -229,6 +229,48 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "rowsetBase64", NullValueHandling = NullValueHandling.Ignore)]
         internal string rowsetBase64 { get; set; }
+
+        // query context
+        [JsonProperty(PropertyName = "queryContext", NullValueHandling = NullValueHandling.Ignore)]
+        internal ResponseQueryContext QueryContext { get; set; }
+    }
+
+    // The query context in query response
+    internal class ResponseQueryContext
+    {
+        [JsonProperty(PropertyName = "entries")]
+        internal List<ResponseQueryContextElement> Entries { get; set; }
+    }
+
+    // The query context in query response
+    internal class ResponseQueryContextElement
+    {
+        // database id as key. (bigint)
+        [JsonProperty(PropertyName = "id")]
+        public long Id { get; set; }
+
+        // When the query context read (bigint). Compare for same id.
+        [JsonProperty(PropertyName = "timestamp")]
+        public long ReadTimestamp { get; set; }
+
+        // Priority of the query context (bigint). Compare for different ids.
+        [JsonProperty(PropertyName = "priority")]
+        public long Priority { get; set; }
+
+        // Opaque information (object with a value of base64 encoded string).
+        [JsonProperty(PropertyName = "context", NullValueHandling = NullValueHandling.Ignore)]
+        public string Context { get; set; }
+
+        // default constructor for JSON converter
+        public ResponseQueryContextElement() { }
+
+        public ResponseQueryContextElement(QueryContextElement elem)
+        {
+            Id = elem.Id;
+            Priority = elem.Priority;
+            ReadTimestamp = elem.ReadTimestamp;
+            Context = elem.Context;
+        }
     }
 
     internal class ExecResponseRowType
@@ -265,6 +307,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "uncompressedSize")]
         internal int uncompressedSize { get; set; }
+
+        [JsonProperty(PropertyName = "compressedSize")]
+        internal int compressedSize { get; set; }
     }
 
     internal class CloseResponse : BaseRestResponse

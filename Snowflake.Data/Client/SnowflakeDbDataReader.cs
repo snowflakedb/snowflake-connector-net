@@ -29,6 +29,8 @@ namespace Snowflake.Data.Client
 
         private int RecordsAffectedInternal;
 
+        internal ResultFormat ResultFormat => resultSet.ResultFormat;
+        
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
@@ -137,64 +139,53 @@ namespace Snowflake.Data.Client
 		
         public override bool GetBoolean(int ordinal)
         {
-            return resultSet.GetValue<bool>(ordinal);
+            return resultSet.GetBoolean(ordinal);
         }
 
         public override byte GetByte(int ordinal)
         {
-            byte[] bytes = resultSet.GetValue<byte[]>(ordinal);
-            return bytes[0];
+            return resultSet.GetByte(ordinal);
         }
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
-            return readSubset<byte>(ordinal, dataOffset, buffer, bufferOffset, length);
+            return resultSet.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
         }
 
         public override char GetChar(int ordinal)
         {
-            string val = resultSet.GetString(ordinal);
-            return val[0];
+            return resultSet.GetChar(ordinal);
         }
 
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
-            return readSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
+            return resultSet.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
         }
 
         public override string GetDataTypeName(int ordinal)
         {
-            return resultSet.sfResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
+            resultSet.ThrowIfOutOfBounds(ordinal);
+            return resultSet.sfResultSetMetaData.GetColumnTypeByIndex(ordinal).ToString();
         }
 
         public override DateTime GetDateTime(int ordinal)
         {
-            return resultSet.GetValue<DateTime>(ordinal);
+            return resultSet.GetDateTime(ordinal);
         }
 
-        /// <summary>
-        /// Retrieves the value of the specified column as a TimeSpan object.
-        /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <returns>The value of the specified column as a TimeSpan.</returns>
-        /// <exception cref="InvalidCastException">The specified cast is not valid.</exception>    
-        /// <remarks>
-        /// Call IsDBNull to check for null values before calling this method, because TimeSpan 
-        /// objects are not nullable.
-        /// </remarks>
         public TimeSpan GetTimeSpan(int ordinal)
         {
-            return resultSet.GetValue<TimeSpan>(ordinal);
+            return resultSet.GetTimeSpan(ordinal);
         }
 
         public override decimal GetDecimal(int ordinal)
         {
-            return resultSet.GetValue<decimal>(ordinal);
+            return resultSet.GetDecimal(ordinal);
         }
 
         public override double GetDouble(int ordinal)
         {
-            return resultSet.GetValue<double>(ordinal);
+            return resultSet.GetDouble(ordinal);
         }
 
         public override IEnumerator GetEnumerator()
@@ -204,42 +195,44 @@ namespace Snowflake.Data.Client
 
         public override Type GetFieldType(int ordinal)
         {
-            return resultSet.sfResultSetMetaData.getCSharpTypeByIndex(ordinal);
+            resultSet.ThrowIfOutOfBounds(ordinal);
+            return resultSet.sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
         }
 
         public override float GetFloat(int ordinal)
         {
-            return resultSet.GetValue<float>(ordinal);
+            return resultSet.GetFloat(ordinal);
         }
 
         public override Guid GetGuid(int ordinal)
         {
-            return resultSet.GetValue<Guid>(ordinal);
+            return resultSet.GetGuid(ordinal);
         }
 
         public override short GetInt16(int ordinal)
         {
-            return resultSet.GetValue<short>(ordinal);
+            return resultSet.GetInt16(ordinal);
         }
 
         public override int GetInt32(int ordinal)
         {
-            return resultSet.GetValue<int>(ordinal);
+            return resultSet.GetInt32(ordinal);
         }
 
         public override long GetInt64(int ordinal)
         {
-            return resultSet.GetValue<long>(ordinal);
+            return resultSet.GetInt64(ordinal);
         }
 
         public override string GetName(int ordinal)
         {
-            return resultSet.sfResultSetMetaData.getColumnNameByIndex(ordinal);
+            resultSet.ThrowIfOutOfBounds(ordinal);
+            return resultSet.sfResultSetMetaData.GetColumnNameByIndex(ordinal);
         }
 
         public override int GetOrdinal(string name)
         {
-            return resultSet.sfResultSetMetaData.getColumnIndexByName(name);
+            return resultSet.sfResultSetMetaData.GetColumnIndexByName(name);
         }
 
         public override string GetString(int ordinal)
@@ -308,73 +301,5 @@ namespace Snowflake.Data.Client
             isClosed = true;
         }
 
-        //
-        // Summary:
-        //     Reads a subset of data starting at location indicated by dataOffset into the buffer,
-        //     starting at the location indicated by bufferOffset.
-        //
-        // Parameters:
-        //   ordinal:
-        //     The zero-based column ordinal.
-        //
-        //   dataOffset:
-        //     The index within the data from which to begin the read operation.
-        //
-        //   buffer:
-        //     The buffer into which to copy the data.
-        //
-        //   bufferOffset:
-        //     The index with the buffer to which the data will be copied.
-        //
-        //   length:
-        //     The maximum number of elements to read.
-        //
-        // Returns:
-        //     The actual number of elements read.
-        private long readSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length)
-        {
-            if (dataOffset < 0)
-            {
-                throw new ArgumentOutOfRangeException("dataOffset", "Non negative number is required.");
-            }
-
-            if (bufferOffset < 0)
-            {
-                throw new ArgumentOutOfRangeException("bufferOffset", "Non negative number is required.");
-            }
-
-            if ((null != buffer) && (bufferOffset > buffer.Length))
-            {
-                throw new System.ArgumentException("Destination buffer is not long enough. " +
-                    "Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
-            }
-
-            T[] data = resultSet.GetValue<T[]>(ordinal);
-
-            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
-            // If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
-            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getchars?view=net-5.0#remarks
-            // If you pass a buffer that is null, GetChars returns the length of the field in characters.
-            if (null == buffer)
-            {
-                return data.Length;
-            }
-
-            if (dataOffset > data.Length)
-            {
-                throw new System.ArgumentException("Source data is not long enough. " +
-                    "Check the data offset, length, and the data's lower bounds." ,"dataOffset");
-            }
-            else
-            {
-                // How much data is available after the offset
-                long dataLength = data.Length - dataOffset;
-                // How much data to read
-                long elementsRead = Math.Min(length, dataLength);
-                Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
-
-                return elementsRead;
-            }
-        }
     }
 }

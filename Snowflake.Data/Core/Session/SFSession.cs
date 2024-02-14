@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Web;
@@ -14,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Core
 {
@@ -28,6 +30,8 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_BASIC = "Basic";
 
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
+
+        private const int _defaultQueryContextCacheSize = 5;
 
         internal string sessionId;
 
@@ -62,8 +66,22 @@ namespace Snowflake.Data.Core
         internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
             new SFSessionHttpClientProxyProperties.Extractor());
 
+        private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
+
         private long _startTime = 0;
         internal string connStr = null;
+
+        private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
+
+        private int _queryContextCacheSize = _defaultQueryContextCacheSize;
+
+        private bool _disableQueryContextCache = false;
+
+        internal bool _disableConsoleLogin;
+
+        internal int _maxRetryCount;
+
+        internal int _maxRetryTimeout;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -77,6 +95,10 @@ namespace Snowflake.Data.Core
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+                if (_disableQueryContextCache)
+                {
+                    logger.Debug("Query context cache disabled.");
+                }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             }
@@ -117,10 +139,22 @@ namespace Snowflake.Data.Core
         ///     Constructor 
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(String connectionString, SecureString password)
+        internal SFSession(
+            String connectionString,
+            SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
         {
+        }
+
+        internal SFSession(
+            String connectionString,
+            SecureString password,
+            EasyLoggingStarter easyLoggingStarter)
+        {
+            _easyLoggingStarter = easyLoggingStarter;
             connStr = connectionString;
             properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
+            _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             ValidateApplicationName(properties);
             try
             {
@@ -130,8 +164,12 @@ namespace Snowflake.Data.Core
                 InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
-                extractedProperties.WarnOnTimeout();
+                extractedProperties.CheckPropertiesAreValid();
                 connectionTimeout = extractedProperties.TimeoutDuration();
+                properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
+                _easyLoggingStarter.Init(easyLoggingConfigFile);
+                _maxRetryCount = extractedProperties.maxHttpRetries;
+                _maxRetryTimeout = extractedProperties.retryTimeout;
             }
             catch (Exception e)
             {
@@ -142,7 +180,7 @@ namespace Snowflake.Data.Core
                             "Unable to connect");
             }
         }
-
+        
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern
@@ -200,7 +238,7 @@ namespace Snowflake.Data.Core
 
         internal async Task OpenAsync(CancellationToken cancellationToken)
         {
-            logger.Debug("Open Session");
+            logger.Debug("Open Session Async");
 
             if (authenticator == null)
             {
@@ -213,7 +251,7 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -245,7 +283,7 @@ namespace Snowflake.Data.Core
         internal async Task CloseAsync(CancellationToken cancellationToken)
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -273,6 +311,8 @@ namespace Snowflake.Data.Core
             // Just in case the session won't be closed twice
             sessionToken = null;
         }
+
+        internal bool IsEstablished() => sessionToken != null;
 
         internal void renewSession()
         {
@@ -333,7 +373,8 @@ namespace Snowflake.Data.Core
                 jsonBody = postBody,
                 Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                RestTimeout = Timeout.InfiniteTimeSpan
+                RestTimeout = Timeout.InfiniteTimeSpan,
+                _isLogin = true
             };
         }
 
@@ -345,12 +386,20 @@ namespace Snowflake.Data.Core
                 Url = uri,
                 authorizationToken = SF_AUTHORIZATION_BASIC,
                 RestTimeout = connectionTimeout,
+                _isLogin = true
             };
         }
 
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
+            // with HTAP parameter removal parameters might not returned
+            // query response
+            if (parameterList is null)
+            {
+                return;
+            }
+
             foreach (NameValueParameter parameter in parameterList)
             {
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
@@ -375,12 +424,44 @@ namespace Snowflake.Data.Core
                     stopHeartBeatForThisSession();
                 }
             }
+            if ((!_disableQueryContextCache) &&
+                (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
+            {
+                string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
+                _queryContextCacheSize = Int32.Parse(val);
+                _queryContextCache.SetCapacity(_queryContextCacheSize);
+            }
+        }
+
+        internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
+        {
+            if (!_disableQueryContextCache)
+            {
+                _queryContextCache.Update(queryContext);
+            }
+        }
+
+        internal RequestQueryContext GetQueryContextRequest()
+        {
+            if (_disableQueryContextCache)
+            {
+                return null;
+            }
+            return _queryContextCache.GetQueryContextRequest();
         }
 
         internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
         {
-            this.database = databaseName;
-            this.schema = schemaName;
+            // with HTAP session metadata removal database/schema
+            // might be not returened in query result
+            if (!String.IsNullOrEmpty(databaseName))
+            {
+                this.database = databaseName;
+            }
+            if (!String.IsNullOrEmpty(schemaName))
+            {
+                this.schema = schemaName;
+            }
         }
         
         internal void startHeartBeatForThisSession()
@@ -434,7 +515,7 @@ namespace Snowflake.Data.Core
             logger.Debug("heartbeat");
 
             bool retry = false;
-            if (sessionToken != null)
+            if (IsEstablished())
             {
                 do
                 {

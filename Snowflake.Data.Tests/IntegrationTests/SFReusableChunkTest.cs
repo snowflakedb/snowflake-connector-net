@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -9,24 +10,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Client;
     using System.Threading.Tasks;
     
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
         [Test]
-        [Ignore("ReusableChunkTest")]
-        public void ReusableChunkTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
-        public void testDelCharPr431()
+        public void TestDelCharPr431()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
+                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -57,13 +52,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 Assert.AreEqual(largeTableRowCount, rowCount);
 
+                SessionParameterAlterer.RestoreResultFormat(conn);
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
         }
 
         [Test]
-        public void testParseJson()
+        public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(1);
@@ -73,6 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
+                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -116,6 +113,7 @@ select parse_json('{{
                 }
                 Assert.AreEqual(500, rowCount);
 
+                SessionParameterAlterer.RestoreResultFormat(conn);
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
@@ -123,7 +121,7 @@ select parse_json('{{
         }
 
         [Test]
-        public void testChunkRetry()
+        public void TestChunkRetry()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
@@ -133,6 +131,7 @@ select parse_json('{{
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 
+                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -163,6 +162,7 @@ select parse_json('{{
                 }
                 Assert.AreEqual(largeTableRowCount, rowCount);
 
+                SessionParameterAlterer.RestoreResultFormat(conn);
                 // Reader's RecordsAffected should be available even if the connection is closed
                 conn.Close();
             }
@@ -171,7 +171,7 @@ select parse_json('{{
         }
 
         [Test]
-        public void testExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {            
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
@@ -230,7 +230,7 @@ select parse_json('{{
                 _exceptionsThrown = 0;
             }
             
-            public IChunkParser GetParser(Stream stream)
+            public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
                 if (++_exceptionsThrown <= _expectedExceptionsNumber)
                     return new ThrowingReusableChunkParser();

@@ -2,41 +2,37 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Configuration;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using log4net.Repository.Hierarchy;
-    using log4net;
     using NUnit.Framework;
     using Snowflake.Data.Log;
-    using log4net.Core;
-    using System;
-
-    [TestFixture]
+    
+    [TestFixture, NonParallelizable]
     class SFLoggerTest
     {
         SFLogger _logger;
 
         [OneTimeSetUp]
-        public void BeforeTest()
+        public static void BeforeTest()
         {
             // Log level defaults to Warn on net6.0 builds in github actions
             // Set the root level to Debug
-            ((Hierarchy)LogManager.GetRepository()).Root.Level = Level.Debug;
-            ((Hierarchy)LogManager.GetRepository()).RaiseConfigurationChanged(EventArgs.Empty);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
         }
 
+        [OneTimeTearDown]
+        public static void AfterAll()
+        {
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
+        }
+        
         [TearDown] public void AfterTest()
         {
             // Return to default setting
             SFLoggerFactory.useDefaultLogger();
             SFLoggerFactory.enableLogger();
-        }
-
-        [Test]
-        [Ignore("SFLoggerTest")]
-        public void SFLoggerTestDone()
-        {
-            // Do nothing;
         }
 
         [Test]

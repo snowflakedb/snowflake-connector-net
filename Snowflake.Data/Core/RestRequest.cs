@@ -108,6 +108,9 @@ namespace Snowflake.Data.Core
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
 
+        private const string ClientAppId = "CLIENT_APP_ID";
+        private const string ClientAppVersion = "CLIENT_APP_VERSION";
+
         internal SFRestRequest() : base()
         {
             RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
@@ -123,6 +126,8 @@ namespace Snowflake.Data.Core
         internal String serviceName { get; set; }
 
         internal bool isPutGet { get; set; }
+
+        internal bool _isLogin { get; set; }
 
         public override string ToString()
         {
@@ -156,6 +161,12 @@ namespace Snowflake.Data.Core
             else
             {
                 message.Headers.Accept.Add(applicationSnowflake);
+            }
+
+            if (_isLogin)
+            {
+                message.Headers.Add(ClientAppId, SFEnvironment.DriverName);
+                message.Headers.Add(ClientAppVersion, SFEnvironment.DriverVersion);
             }
 
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
@@ -198,7 +209,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("AuthenticatorRequestData {{ACCOUNT_NANM: {0} }}",
+            return String.Format("AuthenticatorRequestData {{ACCOUNT_NAME: {0} }}",
                 AccountName.ToString());
         }
     }
@@ -299,6 +310,78 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "parameters")]
         internal Dictionary<string, string> parameters { get; set; }
+
+        [JsonProperty(PropertyName = "queryContextDTO", NullValueHandling = NullValueHandling.Ignore)]
+        internal RequestQueryContext QueryContextDTO { get; set; }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContext
+    {
+        [JsonProperty(PropertyName = "entries")]
+        internal List<RequestQueryContextElement> Entries { get; set; }
+    }
+
+    // The empty query context value in request
+    internal class QueryContextValueEmpty
+    {
+        // empty object with no filed
+    }
+
+    // The non-empty query context value in request
+    internal class QueryContextValue
+    {
+        // base64 encoded string of Opaque information
+        [JsonProperty(PropertyName = "base64Data")]
+        public string Base64Data { get; set; }
+
+        public QueryContextValue(string context)
+        {
+            Base64Data = context;
+        }
+    }
+
+    // The query context in query response
+    internal class RequestQueryContextElement
+    {
+        // database id as key. (bigint)
+        [JsonProperty(PropertyName = "id")]
+        public long Id { get; set; }
+
+        // When the query context read (bigint). Compare for same id.
+        [JsonProperty(PropertyName = "timestamp")]
+        public long ReadTimestamp { get; set; }
+
+        // Priority of the query context (bigint). Compare for different ids.
+        [JsonProperty(PropertyName = "priority")]
+        public long Priority { get; set; }
+
+        // Opaque information (object with a value of base64 encoded string).
+        [JsonProperty(PropertyName = "context")]
+        public object Context{ get; set; }
+
+        public void SetContext(string context)
+        {
+            if (context != null)
+            {
+                Context = new QueryContextValue(context);
+            }
+            else
+            {
+                Context = new QueryContextValueEmpty();
+            }
+        }
+
+        // default constructor for JSON converter
+        public RequestQueryContextElement() { }
+
+        public RequestQueryContextElement(QueryContextElement elem)
+        {
+            Id = elem.Id;
+            Priority = elem.Priority;
+            ReadTimestamp = elem.ReadTimestamp;
+            SetContext(elem.Context);
+        }
     }
 
     class QueryCancelRequest

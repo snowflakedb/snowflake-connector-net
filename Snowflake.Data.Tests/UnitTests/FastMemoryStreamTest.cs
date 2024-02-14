@@ -20,13 +20,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("FastMemoryStreamTest")]
-        public void FastMemoryStreamTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestDefaultValues()
         {
             // FastMemoryStream defaults to size of 0 and buffer of size 256

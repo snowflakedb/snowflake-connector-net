@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Apache.Arrow.Ipc;
@@ -14,52 +15,65 @@ namespace Snowflake.Data.Core
 {
     class ArrowResultSet : SFBaseResultSet
     {
+        internal override ResultFormat ResultFormat => ResultFormat.ARROW;
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
         
-        private int _currentChunkRowIdx = -1;
-        private int _currentChunkRowCount;
         private readonly int _totalChunkCount;
-        private IResultChunk _currentChunk;
+        private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
 
-        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
         {
             columnCount = responseData.rowType.Count;
             try
             {
-                using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
-                {
-                    using (var reader = new ArrowStreamReader(stream))
-                    {
-                        var recordBatch = reader.ReadNextRecordBatch();
-                        _currentChunkRowCount = recordBatch.Length;
-                        _currentChunk = new ArrowResultChunk(recordBatch);
-                    }
-                }
-
                 this.sfStatement = sfStatement;
                 UpdateSessionStatus(responseData);
 
                 if (responseData.chunks != null)
                 {
                     _totalChunkCount = responseData.chunks.Count;
-                    
-                    // TODO in SNOW-893835 - support for multiple chunks
-                    throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                    _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
                 }
 
                 responseData.rowSet = null;
 
-                sfResultSetMetaData = new SFResultSetMetaData(responseData);
+                sfResultSetMetaData = new SFResultSetMetaData(responseData, this.sfStatement.SfSession);
 
                 isClosed = false;
 
                 queryId = responseData.queryId;
+                
+                ReadChunk(responseData);
             }
-            catch(System.Exception ex)
+            catch(Exception ex)
             {
                 s_logger.Error("Result set error queryId="+responseData.queryId, ex);
                 throw;
+            }
+        }
+
+        private void ReadChunk(QueryExecResponseData responseData)
+        {
+            if (responseData.rowsetBase64.Length > 0)
+            {
+                using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
+                {
+                    using (var reader = new ArrowStreamReader(stream))
+                    {
+                        var recordBatch = reader.ReadNextRecordBatch();
+                        _currentChunk = new ArrowResultChunk(recordBatch);
+                        while ((recordBatch = reader.ReadNextRecordBatch()) != null)
+                        {
+                            ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _currentChunk = new ArrowResultChunk(columnCount);
             }
         }
 
@@ -67,35 +81,36 @@ namespace Snowflake.Data.Core
         {
             ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
 
             if (_totalChunkCount > 0)
             {
-                // TODO in SNOW-893835 - support for multiple chunks
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
+                _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+                return _currentChunk?.Next() ?? false;
             }
 
             return false;
         }
-
+        
         internal override bool Next()
         {
             ThrowIfClosed();
 
-            _currentChunkRowIdx++;
-            if (_currentChunkRowIdx < _currentChunkRowCount)
-            {
+            if (_currentChunk.Next())
                 return true;
-            }
-
+            
             if (_totalChunkCount > 0)
             {
-                // TODO in SNOW-893835 - support for multiple chunks
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
+                               $" size uncompressed: {_currentChunk.UncompressedSize}");
+                _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+                
+                return _currentChunk?.Next() ?? false;
             }
 
             return false;
@@ -118,7 +133,7 @@ namespace Snowflake.Data.Core
                 return false;
             }
 
-            return _currentChunkRowCount > 0 || _totalChunkCount > 0;
+            return _currentChunk.RowCount > 0 || _totalChunkCount > 0;
         }
 
         /// <summary>
@@ -129,41 +144,316 @@ namespace Snowflake.Data.Core
         {
             ThrowIfClosed();
 
-            if (_currentChunkRowIdx >= 0)
-            {
-                // TODO in SNOW-893835 - rewind
-                _currentChunkRowIdx--; 
+            if (_currentChunk.Rewind())
                 return true;
+
+            if (_currentChunk.ChunkIndex > 0)
+            {
+                s_logger.Warn("Unable to rewind to the previous chunk");
             }
 
             return false;
         }
-
-        internal override UTF8Buffer getObjectInternal(int columnIndex)
+        
+        private object GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
+            ThrowIfOutOfBounds(ordinal);
+            
+            var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
+            var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
+            
+            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
 
-            if (columnIndex < 0 || columnIndex >= columnCount)
+            return value ?? DBNull.Value;
+   
+        }
+        
+        internal override object GetValue(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            if (value == DBNull.Value)
             {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
+                return value;
+            }
+            
+            object obj;
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: obj =  ret;
+                        break;
+                    case long ret: obj =  ret;
+                        break;
+                    case int ret: obj =  (long)ret;
+                        break;
+                    case short ret: obj =  (long)ret;
+                        break;
+                    case sbyte ret: obj =  (long)ret;
+                        break;
+                    case string ret: obj =  ret;
+                        break;
+                    case bool ret: obj = ret;
+                        break;
+                    default:
+                    {
+                        var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                        obj = Convert.ChangeType(value, dstType);
+                        break;
+                    }
+                }
             }
 
-            return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
+            return obj;
         }
 
+        internal override bool IsDBNull(int ordinal)
+        {
+            return GetObjectInternal(ordinal) == DBNull.Value;
+        }
+
+        internal override bool GetBoolean(int ordinal)
+        {
+            return (bool)GetObjectInternal(ordinal);
+        }
+        
+        internal override byte GetByte(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: return (byte)ret;
+                    case long ret: return (byte)ret;
+                    case int ret: return (byte)ret;
+                    case short ret: return (byte)ret;
+                    case sbyte ret: return (byte)ret;
+                    default: return (byte)value;
+                }
+            }
+        }
+
+        internal override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
+        {
+            return ReadSubset<byte>(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override char GetChar(int ordinal)
+        {
+            return ((string)GetObjectInternal(ordinal))[0];
+        }
+        
+        internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
+        {
+            return ReadSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override DateTime GetDateTime(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            if (value == DBNull.Value)
+                return (DateTime)value;
+
+            switch (value)
+            {
+                case DateTime ret:
+                    return ret;
+                case DateTimeOffset ret:
+                    return ret.DateTime;
+            }
+            return (DateTime)Convert.ChangeType(value, typeof(DateTime));
+        }
+
+        internal override TimeSpan GetTimeSpan(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            if (value == DBNull.Value)
+                return (TimeSpan)value;
+            var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
+            if (type == SFDataType.TIME && value is DateTime ret)
+                return TimeSpan.FromTicks(ret.Ticks - SFDataConverter.UnixEpoch.Ticks);
+            throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, value, type, typeof(TimeSpan));
+        }
+
+        internal override decimal GetDecimal(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            switch (value)
+            {
+                case double ret: return (decimal)ret;
+                case float  ret: return (decimal)ret;
+                case long   ret: return ret;
+                case int    ret: return ret;
+                case short  ret: return ret;
+                case sbyte  ret: return ret;
+                default: return (decimal)value;
+            }
+        }
+
+        internal override double GetDouble(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            switch (value)
+            {
+                case float   ret: return ret;
+                case decimal ret: return (double)ret;
+                case long    ret: return ret;
+                case int     ret: return ret;
+                case short   ret: return ret;
+                case sbyte   ret: return ret;
+                default: return (double)value; 
+            }
+        }
+
+        internal override float GetFloat(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            switch (value)
+            {
+                case double ret: return (float)ret;
+                case decimal ret: return (float)ret;
+                case long ret: return ret;
+                case int ret: return ret;
+                case short ret: return ret;
+                case sbyte ret: return ret;
+                default: return (float)value;
+            }
+        }
+
+        internal override Guid GetGuid(int ordinal)
+        {
+            return new Guid(GetString(ordinal));
+        }
+
+        internal override short GetInt16(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: return (short)ret;
+                    case long  ret: return (short)ret;
+                    case int   ret: return (short)ret;
+                    case sbyte ret: return ret;
+                    default: return (short)value;
+                }
+            }
+        }
+
+        internal override int GetInt32(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: return (int)ret;
+                    case long ret: return (int)ret;
+                    case short ret: return ret;
+                    case sbyte ret: return ret;
+                    default: return (int)value;
+                }
+            }
+        }
+
+        internal override long GetInt64(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            checked
+            {
+                switch (value)
+                {
+                    case decimal ret: return (long)ret;
+                    case int ret: return ret;
+                    case short ret: return ret;
+                    case sbyte ret: return ret;
+                    default: return (long)value;
+                }
+            }
+        }
+        
+        internal override string GetString(int ordinal)
+        {
+            var value = GetObjectInternal(ordinal);
+            if (value == DBNull.Value)
+                return (string)value;
+
+            var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
+            switch (value)
+            {
+                case string ret:
+                    return ret;
+                case DateTime ret:
+                    if (type == SFDataType.DATE)
+                        return SFDataConverter.toDateString(ret, sfResultSetMetaData.dateOutputFormat);
+                    break;
+            }
+
+            return Convert.ToString(value);
+        }
+        
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
             session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
-
-        private void ThrowIfClosed()
+        
+        private long ReadSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length) where T : struct
         {
-            if (isClosed)
+            if (dataOffset < 0)
             {
-                throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
+                throw new ArgumentOutOfRangeException(nameof(dataOffset), "Non negative number is required.");
             }
+
+            if (bufferOffset < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bufferOffset), "Non negative number is required.");
+            }
+
+            if (buffer != null && bufferOffset > buffer.Length)
+            {
+                throw new System.ArgumentException(
+                    "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.", 
+                    nameof(buffer));
+            }
+
+            var value = GetObjectInternal(ordinal);
+            var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
+            Array data;
+            if (type == SFDataType.BINARY)
+                data = (byte[])value;
+            else if (typeof(T) == typeof(byte))
+                data = Encoding.ASCII.GetBytes(value.ToString());
+            else
+                data = value.ToString().ToCharArray();
+
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getchars?view=net-5.0#remarks
+            // If you pass a buffer that is null, GetChars returns the length of the field in characters.
+            if (buffer == null)
+            {
+                return data.Length;
+            }
+
+            if (dataOffset > data.Length)
+            {
+                throw new System.ArgumentException(
+                    "Source data is not long enough. Check the data offset, length, and the data's lower bounds.",
+                    nameof(dataOffset));
+            }
+            
+            long dataLength = data.Length - dataOffset;
+            long elementsRead = Math.Min(length, dataLength);
+            Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
+
+            return elementsRead;
+            
         }
+        
     }
 }

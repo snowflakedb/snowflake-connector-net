@@ -2,74 +2,66 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Text;
 
 namespace Snowflake.Data.Core
 {
-    internal class SFResultChunk : IResultChunk
+    internal class SFResultChunk : BaseResultChunk
     {
-        public string[,] rowSet { get; set; }
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
-        public int rowCount { get; set; }
-
-        public int colCount { get; set; }
-
-        public string url { get; set; }
-
-        public DownloadState downloadState { get; set; }
-        public int ChunkIndex { get;  }
-
-        public readonly object syncPrimitive; 
+        private int _currentRowIndex = -1;
 
         public SFResultChunk(string[,] rowSet)
         {
-            this.rowSet = rowSet;
-            this.rowCount = rowSet.GetLength(0);
-            this.colCount = rowSet.GetLength(1);
-            this.downloadState = DownloadState.NOT_STARTED;
+            RowSet = rowSet;
+            RowCount = rowSet.GetLength(0);
+            ColumnCount = rowSet.GetLength(1);
+            ChunkIndex = -1;
         }
 
-        public SFResultChunk(string url, int rowCount, int colCount, int index)
+        public SFResultChunk(string url, int rowCount, int columnCount, int index)
         {
-            this.rowCount = rowCount;
-            this.colCount = colCount;
-            this.url = url;
+            RowCount = rowCount;
+            ColumnCount = columnCount;
+            Url = url;
             ChunkIndex = index;
-            syncPrimitive = new object();
-            this.downloadState = DownloadState.NOT_STARTED;
         }
 
-        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        {
+            _currentRowIndex = rowIndex;
+            return ExtractCell(columnIndex);
+        }
+
+        public override UTF8Buffer ExtractCell(int columnIndex)
         {
             // Convert string to UTF8Buffer. This makes this method a little slower, but this class is not used for large result sets
-            string s = rowSet[rowIndex, columnIndex];
+            string s = RowSet[_currentRowIndex, columnIndex];
             if (s == null)
                 return null;
             byte[] b = Encoding.UTF8.GetBytes(s);
             return new UTF8Buffer(b);
         }
 
-        public void addValue(string val, int rowCount, int colCount)
+        internal override bool Next()
         {
-            rowSet[rowCount, colCount] = val;
+            _currentRowIndex += 1;
+            return _currentRowIndex < RowCount;
         }
 
-        public int GetRowCount()
+        internal override bool Rewind()
         {
-            return rowCount;
+            _currentRowIndex -= 1;
+            return _currentRowIndex >= 0;
         }
 
-        public int GetChunkIndex()
+        internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
-            return ChunkIndex;
+            base.Reset(chunkInfo, chunkIndex);
+            _currentRowIndex = -1;
         }
-    }
-
-    public enum DownloadState
-    {
-        NOT_STARTED,
-        IN_PROGRESS,
-        SUCCESS,
-        FAILURE
     }
 }

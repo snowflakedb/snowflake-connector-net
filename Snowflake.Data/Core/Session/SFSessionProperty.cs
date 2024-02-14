@@ -11,6 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Data.Common;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
 {
@@ -36,7 +37,7 @@ namespace Snowflake.Data.Core
         USER,
         [SFSessionPropertyAttr(required = false)]
         WAREHOUSE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "120")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "300")]
         CONNECTION_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "snowflake")]
         AUTHENTICATOR,
@@ -78,12 +79,22 @@ namespace Snowflake.Data.Core
         FORCEPARSEERROR,
         [SFSessionPropertyAttr(required = false, defaultValue = "120")]
         BROWSER_RESPONSE_TIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "300")]
+        RETRY_TIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "7")]
         MAXHTTPRETRIES,
         [SFSessionPropertyAttr(required = false)]
         FILE_TRANSFER_MEMORY_THRESHOLD,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         INCLUDERETRYREASON,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        DISABLEQUERYCONTEXTCACHE,
+        [SFSessionPropertyAttr(required = false)]
+        CLIENT_CONFIG_FILE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        DISABLE_CONSOLE_LOGIN,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOWUNDERSCORESINHOST
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -95,10 +106,10 @@ namespace Snowflake.Data.Core
 
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
         // Connection string properties to obfuscate in the log
-        static private List<SFSessionProperty> secretProps =
+        private static List<SFSessionProperty> secretProps =
             new List<SFSessionProperty>{
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
@@ -106,6 +117,8 @@ namespace Snowflake.Data.Core
                 SFSessionProperty.PRIVATE_KEY_PWD,
                 SFSessionProperty.PROXYPASSWORD,
             };
+        
+        private const string AccountRegexString = "^\\w[\\w.-]+\\w$";
 
         public override bool Equals(object obj)
         {
@@ -245,12 +258,21 @@ namespace Snowflake.Data.Core
 
             checkSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
+            ValidateAccountDomain(properties);
 
+            var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
+            
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
             {
-                string hostName = String.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+                var compliantAccountName = properties[SFSessionProperty.ACCOUNT];
+                if (!allowUnderscoresInHost && compliantAccountName.Contains('_'))
+                {
+                    compliantAccountName = compliantAccountName.Replace('_', '-');
+                    logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
+                }
+                var hostName = $"{compliantAccountName}.snowflakecomputing.com";
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
@@ -262,8 +284,23 @@ namespace Snowflake.Data.Core
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
-
             return properties;
+        }
+
+        private static void ValidateAccountDomain(SFSessionProperties properties)
+        {
+            var account = properties[SFSessionProperty.ACCOUNT];
+            if (string.IsNullOrEmpty(account))
+                return;
+            var match = Regex.Match(account, AccountRegexString, RegexOptions.IgnoreCase);
+            if (match.Success)
+                return;
+            logger.Error($"Invalid account {account}");
+            throw new SnowflakeDbException(
+                new Exception("Invalid account"),
+                SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                account,
+                SFSessionProperty.ACCOUNT);
         }
 
         private static void checkSessionProperties(SFSessionProperties properties)
@@ -352,6 +389,23 @@ namespace Snowflake.Data.Core
             {
                 return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
             }
+        }
+
+        private static bool ParseAllowUnderscoresInHost(SFSessionProperties properties)
+        {
+            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            if (!properties.TryGetValue(SFSessionProperty.ALLOWUNDERSCORESINHOST, out var property))
+                return allowUnderscoresInHost;
+            try
+            {
+                allowUnderscoresInHost = bool.Parse(property);
+            }
+            catch (Exception e)
+            {
+                logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
+            }
+
+            return allowUnderscoresInHost;
         }
     }
 

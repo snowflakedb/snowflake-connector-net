@@ -41,13 +41,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("DbFactoryIT")]
-        public void DbFactoryITDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestSimpleDbFactory()
         {
             // set commnad's connection object

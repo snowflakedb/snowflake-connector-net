@@ -12,6 +12,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text;
 using System.Web;
+using System.Linq;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -21,6 +22,9 @@ namespace Snowflake.Data.Core.Authenticator
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
+
+        internal const string RetryCountHeader = "RetryCount";
+        internal const string TimeoutElapsedHeader = "TimeoutElapsed";
 
         /// <summary>
         /// url of the okta idp
@@ -59,23 +63,54 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("Checking token url");
             VerifyUrls(tokenUrl, oktaUrl);
 
-            logger.Debug("step 3: get idp onetime token");
-            IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-            var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
-            string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
+            int retryCount = 0;
+            int timeoutElapsed = 0;
+            Exception lastRetryException = null;
+            HttpResponseMessage samlRawResponse = null;
 
-            logger.Debug("step 4: get SAML reponse from sso");
-            var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-            using (var samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
-            { 
-                samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            // If VerifyPostbackUrl() fails, retry with new onetimetoken
+            while (RetryLimitIsNotReached(retryCount, timeoutElapsed))
+            {
+                try
+                {
+                    logger.Debug("step 3: get idp onetime token");
+                    IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
+                    var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
+                    string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
+
+                    logger.Debug("step 4: get SAML reponse from sso");
+                    var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
+                    samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
+                    samlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    logger.Debug("step 5: verify postback url in SAML reponse");
+                    VerifyPostbackUrl();
+
+                    logger.Debug("step 6: send SAML reponse to snowflake to login");
+                    await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    lastRetryException = ex;
+                    if (IsPostbackUrlNotFound(lastRetryException))
+                    {
+                        logger.Debug("Refreshing token for Okta re-authentication and starting from step 3 again");
+
+                        // Get the current retry count and timeout elapsed from the response headers
+                        retryCount += int.Parse(samlRawResponse.Content.Headers.GetValues(RetryCountHeader).First());
+                        timeoutElapsed += int.Parse(samlRawResponse.Content.Headers.GetValues(TimeoutElapsedHeader).First());
+                    }
+                    else
+                    {
+                        logger.Error("Failed to get the correct SAML response from Okta", ex);
+                        throw;
+                    }
+                }
             }
 
-            logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl();
-
-            logger.Debug("step 6: send SAML reponse to snowflake to login");
-            await base.LoginAsync(cancellationToken).ConfigureAwait(false);  
+            // Throw exception if max retry count or max timeout has been reached
+            ThrowRetryLimitException(retryCount, timeoutElapsed, lastRetryException);
         }
 
         void IAuthenticator.Authenticate()
@@ -95,23 +130,54 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Debug("Checking token url");
             VerifyUrls(tokenUrl, oktaUrl);
 
-            logger.Debug("step 3: get idp onetime token");
-            IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-            var idpResponse =  session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
-            string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
+            int retryCount = 0;
+            int timeoutElapsed = 0;
+            Exception lastRetryException = null;
+            HttpResponseMessage samlRawResponse = null;
 
-            logger.Debug("step 4: get SAML reponse from sso");
-            var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-            using (var samlRawResponse = session.restRequester.Get(samlRestRequest))
+            // If VerifyPostbackUrl() fails, retry with new onetimetoken
+            while (RetryLimitIsNotReached(retryCount, timeoutElapsed))
             {
-                samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
+                try
+                {
+                    logger.Debug("step 3: get idp onetime token");
+                    IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
+                    var idpResponse =  session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+                    string onetimeToken = idpResponse.SessionToken != null ? idpResponse.SessionToken : idpResponse.CookieToken;
+
+                    logger.Debug("step 4: get SAML reponse from sso");
+                    var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
+                    samlRawResponse = session.restRequester.Get(samlRestRequest);
+                    samlRawHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
+
+                    logger.Debug("step 5: verify postback url in SAML reponse");
+                    VerifyPostbackUrl();
+
+                    logger.Debug("step 6: send SAML reponse to snowflake to login");
+                    base.Login();
+                    return;
+                }
+                catch(Exception ex)
+                {
+                    lastRetryException = ex;
+                    if (IsPostbackUrlNotFound(lastRetryException))
+                    {
+                        logger.Debug("Refreshing token for Okta re-authentication and starting from step 3 again");
+
+                        // Get the current retry count and timeout elapsed from the response headers
+                        retryCount += int.Parse(samlRawResponse.Content.Headers.GetValues(RetryCountHeader).First());
+                        timeoutElapsed += int.Parse(samlRawResponse.Content.Headers.GetValues(TimeoutElapsedHeader).First());
+                    }
+                    else
+                    {
+                        logger.Error("Failed to get the correct SAML response from Okta", ex);
+                        throw;
+                    }
+                }
             }
 
-            logger.Debug("step 5: verify postback url in SAML reponse");
-            VerifyPostbackUrl();
-
-            logger.Debug("step 6: send SAML reponse to snowflake to login");
-            base.Login();
+            // Throw exception if max retry count or max timeout has been reached
+            ThrowRetryLimitException(retryCount, timeoutElapsed, lastRetryException);
         }
 
         private SFRestRequest BuildAuthenticatorRestRequest()
@@ -214,6 +280,41 @@ namespace Snowflake.Data.Core.Authenticator
                 logger.Error("Authentication failed", e);
                 throw e;
             }
+        }
+
+        private bool RetryLimitIsNotReached(int retryCount, int timeoutElapsed)
+        {
+            return retryCount < session._maxRetryCount && timeoutElapsed < session._maxRetryTimeout;
+        }
+
+        private bool IsPostbackUrlNotFound(Exception ex)
+        {
+            if (ex is SnowflakeDbException)
+            {
+                SnowflakeDbException error = ex as SnowflakeDbException;
+                return error.ErrorCode == SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode;
+            }
+
+            return false;
+        }
+
+        private void ThrowRetryLimitException(int retryCount, int timeoutElapsed, Exception lastRetryException)
+        {
+            string errorMessage = "";
+            if (retryCount >= session._maxRetryCount)
+            {
+                errorMessage = $"The retry count has reached its limit of {session._maxRetryCount}";
+            }
+            if (timeoutElapsed >= session._maxRetryTimeout)
+            {
+                errorMessage += string.IsNullOrEmpty(errorMessage) ? "The" : " and the";
+                errorMessage += $" timeout elapsed has reached its limit of {session._maxRetryTimeout}";
+
+            }
+            errorMessage += " while trying to authenticate through Okta";
+
+            logger.Error(errorMessage);
+            throw new SnowflakeDbException(lastRetryException, SFError.INTERNAL_ERROR, errorMessage);
         }
     }
 

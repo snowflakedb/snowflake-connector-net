@@ -12,13 +12,6 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFUriUpdaterTest
     {
         [Test]
-        [Ignore("UriUpdaterTest")]
-        public void UriUpdaterTestDone()
-        {
-            // Do nothing;
-        }
-
-        [Test]
         public void TestRetryCount()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);

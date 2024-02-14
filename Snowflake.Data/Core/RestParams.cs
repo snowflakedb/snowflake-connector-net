@@ -40,6 +40,14 @@ namespace Snowflake.Data.Core
         internal const string SF_QUERY_PATH = "/queries/v1/query-request";
 
         internal const string SF_SESSION_HEARTBEAT_PATH = SF_SESSION_PATH + "/heartbeat";
+
+        internal const string SF_CONSOLE_LOGIN = "/console/login";
+    }
+
+    internal static class OktaUrl
+    {
+        internal const string DOMAIN = "okta.com";
+        internal const string SSO_SAML_PATH = "/sso/saml";
     }
 
     internal class SFEnvironment

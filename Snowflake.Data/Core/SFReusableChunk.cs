@@ -8,51 +8,42 @@ using System.Text;
 
 namespace Snowflake.Data.Core
 {
-    class SFReusableChunk : IResultChunk
+    class SFReusableChunk : BaseResultChunk
     {
-       
-        public int RowCount { get; set; }
-
-        public int ColCount { get; set; }
-
-        public string Url { get; set; }
-
-        public int chunkIndexToDownload { get; set; }
-
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
+        
         private readonly BlockResultData data;
 
-        internal SFReusableChunk(int colCount)
+        private int _currentRowIndex = -1;
+
+        internal SFReusableChunk(int columnCount)
         {
-            ColCount = colCount;
+            ColumnCount = columnCount;
             data = new BlockResultData();
         }
 
-        internal void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
+        internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
-            this.RowCount = chunkInfo.rowCount;
-            this.Url = chunkInfo.url;
-            this.chunkIndexToDownload = chunkIndex;
-            data.Reset(this.RowCount, this.ColCount, chunkInfo.uncompressedSize);
+            base.Reset(chunkInfo, chunkIndex);
+            _currentRowIndex = -1;
+            data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
-        internal void ResetForRetry()
+        internal override void ResetForRetry()
         {
             data.ResetForRetry();
         }
         
-        public int GetRowCount()
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
-            return RowCount;
+            _currentRowIndex = rowIndex;
+            return ExtractCell(columnIndex);
         }
 
-        public int GetChunkIndex()
+        public override UTF8Buffer ExtractCell(int columnIndex)
         {
-            return chunkIndexToDownload;
-        }
-
-        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
-        {
-            return data.get(rowIndex * ColCount + columnIndex);
+            return data.get(_currentRowIndex * ColumnCount + columnIndex);
         }
 
         public void AddCell(string val)
@@ -64,6 +55,18 @@ namespace Snowflake.Data.Core
         public void AddCell(byte[] bytes, int length)
         {
             data.add(bytes, length);
+        }
+
+        internal override bool Next()
+        {
+            _currentRowIndex += 1;
+            return _currentRowIndex < RowCount;
+        }
+        
+        internal override bool Rewind()
+        {
+            _currentRowIndex -= 1;
+            return _currentRowIndex >= 0;
         }
 
         private class BlockResultData
