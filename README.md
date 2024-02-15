@@ -672,6 +672,21 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Writing to `VARIANT` column with bind variable
+----------------------------------------------
+You can use bind variables together with `VARIANT` datatype column. For example, to insert data:
+```cs
+cmd.CommandText = "insert into table (id, data) select :id, parse_json(:data)"
+```
+then reference the `SFDataType` for the named parameter, `p2` in this example:
+```cs
+p2.SFDataType = SFDataType.TEXT
+```
+As an alternative, you can use an approach like:
+```cs
+var p2 = new SnowflakeDbParameter("data", SFDataType.TEXT) { Value = jsonStr };
+```
+
 Close the Connection
 --------------------
 
