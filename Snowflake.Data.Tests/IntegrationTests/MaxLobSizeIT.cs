@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int LargeSize = (MaxLobSize / 2);
         private const int MediumSize = (LargeSize / 2);
         private const int OriginSize = (MediumSize / 2);
-        private const int SmallSize = 64;
+        private const int SmallSize = 16;
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
         private static string s_outputDirectory;
