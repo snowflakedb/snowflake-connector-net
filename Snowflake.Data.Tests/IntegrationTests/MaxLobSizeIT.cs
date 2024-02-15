@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
-    [Parallelizable(ParallelScope.Children)]
+    [Parallelizable(ParallelScope.None)]
     class MaxLobSizeIT : SFBaseTest
     {
         private readonly ResultFormat _resultFormat;
