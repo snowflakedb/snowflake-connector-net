@@ -6,4 +6,5 @@ export SOURCE_ROOT=${SOURCE_ROOT:-/mnt/host}
 export WORKSPACE=${WORKSPACE:-/mnt/workspace}
 
 cd $SOURCE_ROOT
-dotnet test -f net6.0 -l "console;verbosity=normal" --logger:"junit;LogFilePath=$WORKSPACE/junit-dotnet.xml"
+# todo unignore MaxLobSizeIT after SNOW-1058345 is fixed
+dotnet test -f net6.0 -l "console;verbosity=normal" --logger:"junit;LogFilePath=$WORKSPACE/junit-dotnet.xml" --filter "FullyQualifiedName!=Snowflake.Data.Tests.IntegrationTests.MaxLobSizeIT" 
