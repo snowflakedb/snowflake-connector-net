@@ -49,7 +49,8 @@ namespace Snowflake.Data.Core
             }
 
             // Use the shorter timeout between CONNECTION_TIMEOUT and RETRY_TIMEOUT
-            if (retryTimeout < timeoutInSec)
+            // but only if retry timeout is not set to infinite
+            if (retryTimeout < timeoutInSec && retryTimeout > 0)
             {
                 timeoutInSec = retryTimeout;
             }
