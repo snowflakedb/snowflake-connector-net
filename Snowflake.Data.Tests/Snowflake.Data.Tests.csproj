@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0, netcoreapp3.1, net5.0, net6.0, net7.0, net461, net471, net472, net481</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1, net5.0, net6.0, net7.0, net461, net471, net472, net481</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
     <RuntimeFrameworkVersion>6.0.0</RuntimeFrameworkVersion>
     <Title>Snowflake.Data.Tests</Title>
