@@ -185,5 +185,8 @@
   </data>
   <data name="IO_ERROR_ON_GETPUT_COMMAND" xml:space="preserve">
     <value>IO operation failed. Error: {0}</value>
+  </data>  
+  <data name="EXECUTE_COMMAND_ON_CLOSED_CONNECTION" xml:space="preserve">
+    <value>Executing command on a non-opened connection.</value>
   </data>
 </root>

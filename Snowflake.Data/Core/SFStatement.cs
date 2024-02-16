@@ -409,14 +409,16 @@ namespace Snowflake.Data.Core
                     return BuildResultSet(response, CancellationToken.None);
                 }
             }
+            catch (SnowflakeDbException ex)
+            {
+                logger.Error($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
+                _lastQueryId = ex.QueryId ?? _lastQueryId;
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
-                if (ex is SnowflakeDbException snowflakeDbException)
-                {
-                    this._lastQueryId = snowflakeDbException.QueryId;
-                }
-                throw;
+                throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
             finally
             {

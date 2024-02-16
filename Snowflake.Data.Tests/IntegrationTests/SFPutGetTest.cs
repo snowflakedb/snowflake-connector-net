@@ -209,7 +209,61 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
-                
+
+        [Test]
+        public void TestPutGetOnClosedConnectionThrowsWithoutQueryId([Values("GET", "PUT")] string command)
+        {
+            t_inputFilePath = "unexisting_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                // conn.Open(); // intentionally closed
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => ProcessFile(command, conn));
+                Assert.NotNull(snowflakeDbException);
+                Assert.IsNull(snowflakeDbException.QueryId);
+                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
+            }
+        }
+        
+        [Test]
+        public void TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
+        {
+            t_inputFilePath = "non_existent_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open(); 
+                var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
+                using (var command = conn.CreateCommand())
+                {
+                    command.CommandText = sql;
+                    var reader = command.ExecuteReader();
+                    Assert.AreEqual(false, reader.Read());
+                }
+            }
+        }
+        
+        [Test]
+        public void TestPutNonExistentFileThrowsWithQueryId()
+        {
+            t_inputFilePath = "non_existent_file.csv";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            // Act
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open(); 
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
+                Assert.IsNotNull(snowflakeDbException);
+                Assert.IsNotNull(snowflakeDbException.QueryId);
+                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
+            }
+        }
+        
         [Test]
         public void TestPutFileProvidesQueryIdOnFailure()
         {
@@ -643,6 +697,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.AreEqual(s_colData[i], values[i]);
                     }
                 }
+            }
+        }
+
+        private void ProcessFile(String command, SnowflakeDbConnection connection)
+        {
+            switch (command)
+            {
+                case "GET": 
+                    GetFile(connection);
+                    break;
+                case "PUT":
+                    PutFile(connection);
+                    break;
             }
         }
 

@@ -691,7 +691,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 	
 	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.read()); // on success
+	    Assert.IsTrue(reader.read());
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)
@@ -699,12 +699,8 @@ using (IDbConnection conn = new SnowflakeDbConnection())
         Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
         Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
     }
-    catch (Exception e)
-    {
-        // for instance on a query execution if a connection was not opened
-    }
 ```
-In case of a failure an exception will be thrown. 
+In case of a failure a SnowflakeDbException exception will be thrown with affected QueryId if possible. 
 If it was after the query got executed this exception will be a SnowflakeDbException containing affected QueryId.
 In case of the initial phase of execution QueryId might not be provided.
 Inner exception (if applicable) will provide some details on the failure cause and
@@ -726,22 +722,17 @@ To use the command in a driver similar code can be executed in a client app:
 	
 	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.read()); // if succeeded
+	    Assert.IsTrue(reader.read()); // True on success, False if failure
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)
     {
         Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // on failure
     }
-    catch (Exception e)
-    {
-        // some other failure has occurred before query got started
-    }
 ```
-In case of a failure a SnowflakeDbException will be thrown or DBDataReader will return a False response.
-In any case QueryId should be available from the exception or command property.
-Similarly to PUT command in some rare cases QueryID might not be possible to provide and a generic Exception
-can be thrown.
+In case of a failure a SnowflakeDbException will be thrown with affected QueryId if possible.
+When no technical or syntax errors occurred but the DBDataReader has no data to process it returns False 
+without throwing an exception.
 
 Close the Connection
 --------------------
