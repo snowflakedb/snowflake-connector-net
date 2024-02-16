@@ -92,7 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0', 'net471', 'net472', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
@@ -149,7 +149,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0', 'net471', 'net472', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
