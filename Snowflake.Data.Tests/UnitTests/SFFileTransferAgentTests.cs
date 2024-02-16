@@ -2,7 +2,6 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
-using Amazon.S3.Transfer;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 

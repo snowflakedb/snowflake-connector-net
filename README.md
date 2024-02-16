@@ -685,11 +685,11 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 {
     try
     {
-	    conn.ConnectionString = "<connecting parameter>";
+	    conn.ConnectionString = "<connection parameters>";
 	    conn.Open();
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
 	
-	    cmd.CommandText = $"PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
+	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
 	    Assert.IsTrue(reader.read()); // on success
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
@@ -698,10 +698,15 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     {
         Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
         Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
-
+    }
+    catch (Exception e)
+    {
+        // for instance on a query execution if a connection was not opened
     }
 ```
-In case of a failure a SnowflakeDbException will be thrown with the affected QueryId.
+In case of a failure an exception will be thrown. 
+If it was after the query got executed this exception will be a SnowflakeDbException containing affected QueryId.
+In case of the initial phase of execution QueryId might not be provided.
 Inner exception (if applicable) will provide some details on the failure cause and
 it will be for example: FileNotFoundException, DirectoryNotFoundException.
 
@@ -715,11 +720,11 @@ To use the command in a driver similar code can be executed in a client app:
 ```cs
     try
     {
-	    conn.ConnectionString = "<connecting parameter>";
+	    conn.ConnectionString = "<connection parameters>";
 	    conn.Open();
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
 	
-	    cmd.CommandText = $"GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
+	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
 	    Assert.IsTrue(reader.read()); // if succeeded
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
@@ -728,9 +733,15 @@ To use the command in a driver similar code can be executed in a client app:
     {
         Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // on failure
     }
+    catch (Exception e)
+    {
+        // some other failure has occurred before query got started
+    }
 ```
 In case of a failure a SnowflakeDbException will be thrown or DBDataReader will return a False response.
 In any case QueryId should be available from the exception or command property.
+Similarly to PUT command in some rare cases QueryID might not be possible to provide and a generic Exception
+can be thrown.
 
 Close the Connection
 --------------------

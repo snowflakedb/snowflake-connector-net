@@ -7,7 +7,6 @@ using System.Data;
 using System.Data.Common;
 using System.IO.Compression;
 using System.Text;
-using Castle.Components.DictionaryAdapter;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -533,7 +532,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             String additionalAttribute = "", 
             ResultStatus expectedStatus = ResultStatus.UPLOADED)
         {
-            String queryId;
+            string queryId;
             using (var command = conn.CreateCommand())
             {
                 // Prepare PUT query
