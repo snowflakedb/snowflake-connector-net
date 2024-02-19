@@ -359,7 +359,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
             try
             {
@@ -398,7 +398,7 @@ namespace Snowflake.Data.Core
             }
         }
         
-        internal SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
             try
             {

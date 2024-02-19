@@ -1,8 +1,9 @@
 ﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Data.Common;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -1841,7 +1842,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
-                int timeoutSec = 5;
+                int timeoutSec = 15;
                 string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
                 conn.ConnectionString = loginTimeOut5sec;
@@ -1966,8 +1967,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode((SnowflakeDbException)e.InnerException, SFError.INTERNAL_ERROR);
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
