@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core.Tools
         public virtual string GetExecutionDirectory()
         {
             var executablePath = Environment.GetCommandLineArgs()[0];
-            return Path.GetDirectoryName(executablePath);
+            return string.IsNullOrEmpty(executablePath) ? null : Path.GetDirectoryName(executablePath);
         }
     }
 }
