@@ -343,71 +343,47 @@ namespace Snowflake.Data.Core
         {
             // Trim the sql query and check if this is a PUT/GET command
             string trimmedSql = TrimSql(sql);
-
             try
             {
                 if (IsPutOrGetCommand(trimmedSql))
                 {
-                    isPutGetQuery = true;
-                    PutGetExecResponse response =
-                        ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                             timeout,
-                             sql,
-                             bindings,
-                             describeOnly);
-
-                    logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
-
-                    SFFileTransferAgent fileTransferAgent =
-                        new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
-
-                    // Start the file transfer
-                    fileTransferAgent.execute();
-
-                    if (response.data != null)
-                        _lastQueryId = response.data.queryId;
-
-                    // Get the results of the upload/download
-                    return fileTransferAgent.result();
+                    return ExecuteSqlWithPutGet(timeout, trimmedSql, bindings, describeOnly);
                 }
-                else
-                {
-                    int arrayBindingThreshold = 0;
-                    if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
-                    {
-                        String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
-                        arrayBindingThreshold = Int32.Parse(val);
-                    }
 
-                    int numBinding = GetBindingCount(bindings);
+                return ExecuteSqlOtherThanPutGet(timeout, trimmedSql, bindings, describeOnly);
+            }
+            finally
+            {
+                CleanUpCancellationTokenSources();
+                ClearQueryRequestId();
+            }
+        }
 
-                    if (0 < arrayBindingThreshold
-                        && arrayBindingThreshold <= numBinding
-                        && !describeOnly)
-                    {
-                        try
-                        {
-                            AssignQueryRequestId();
-                            SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
-                            uploader.Upload(bindings);
-                            _bindStage = uploader.getStagePath();
-                            ClearQueryRequestId();
-                        }
-                        catch (Exception e)
-                        {
-                            logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
-                        }
-                    }
+        internal SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        {
+            try
+            {
+                isPutGetQuery = true;
+                PutGetExecResponse response =
+                    ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                        timeout,
+                        sql,
+                        bindings,
+                        describeOnly);
 
-                    QueryExecResponse response =
-                        ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
-                             timeout,
-                             sql,
-                             bindings,
-                             describeOnly);
+                logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
 
-                    return BuildResultSet(response, CancellationToken.None);
-                }
+                SFFileTransferAgent fileTransferAgent =
+                    new SFFileTransferAgent(sql, SfSession, response.data, CancellationToken.None);
+
+                // Start the file transfer
+                fileTransferAgent.execute();
+
+                if (response.data != null)
+                    _lastQueryId = response.data.queryId;
+
+                // Get the results of the upload/download
+                return fileTransferAgent.result();
             }
             catch (SnowflakeDbException ex)
             {
@@ -420,13 +396,62 @@ namespace Snowflake.Data.Core
                 logger.Error("Query execution failed.", ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
-            finally
+        }
+        
+        internal SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        {
+            try
             {
-                CleanUpCancellationTokenSources();
-                ClearQueryRequestId();
+                int arrayBindingThreshold = 0;
+                if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+                {
+                    String val =
+                        (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
+                    arrayBindingThreshold = Int32.Parse(val);
+                }
+
+                int numBinding = GetBindingCount(bindings);
+
+                if (0 < arrayBindingThreshold
+                    && arrayBindingThreshold <= numBinding
+                    && !describeOnly)
+                {
+                    try
+                    {
+                        AssignQueryRequestId();
+                        SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                        uploader.Upload(bindings);
+                        _bindStage = uploader.getStagePath();
+                        ClearQueryRequestId();
+                    }
+                    catch (Exception e)
+                    {
+                        logger.Warn(
+                            "Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}",
+                            e);
+                    }
+                }
+
+                QueryExecResponse response =
+                    ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                        timeout,
+                        sql,
+                        bindings,
+                        describeOnly);
+
+                return BuildResultSet(response, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
+                if (ex is SnowflakeDbException snowflakeDbException)
+                {
+                    _lastQueryId = snowflakeDbException.QueryId ?? _lastQueryId;
+                }
+                throw;
             }
         }
-
+        
         internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
         {
             var req = BuildResultRequestWithId(resultId);
