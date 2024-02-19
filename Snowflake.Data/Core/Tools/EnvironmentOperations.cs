@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.IO;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -18,6 +19,12 @@ namespace Snowflake.Data.Core.Tools
         public virtual string GetFolderPath(Environment.SpecialFolder folder)
         {
             return Environment.GetFolderPath(folder);
+        }
+
+        public virtual string GetExecutionDirectory()
+        {
+            var executablePath = Environment.GetCommandLineArgs()[0];
+            return Path.GetDirectoryName(executablePath);
         }
     }
 }
