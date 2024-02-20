@@ -141,8 +141,13 @@ namespace Snowflake.Data.Core
                     {
                         Directory.CreateDirectory(logPathOrDefault);
                     }
-                    _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
+                    var createDirResult = _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
                         FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    if (createDirResult != 0)
+                    {
+                        s_logger.Error($"Failed to create logs directory: {pathWithDotnetSubdirectory}");
+                        throw new Exception("Failed to create logs directory");
+                    }
                 }
             }
             CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);

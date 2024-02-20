@@ -11,9 +11,9 @@ namespace Snowflake.Data.Core.Tools
     {
         public static readonly UnixOperations Instance = new UnixOperations();
 
-        public virtual void CreateDirectoryWithPermissions(string path, FilePermissions permissions)
+        public virtual int CreateDirectoryWithPermissions(string path, FilePermissions permissions)
         {
-            Syscall.mkdir(path, permissions);
+            return Syscall.mkdir(path, permissions);
         }
 
         public virtual FileAccessPermissions GetDirPermissions(string path)
