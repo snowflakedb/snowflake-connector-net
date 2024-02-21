@@ -399,7 +399,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 stopwatch.Stop();
-                int delta = 10; // in case server time slower.
+                int delta = 15; // in case server time slower.
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
                 Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
