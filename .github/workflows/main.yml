@@ -25,7 +25,7 @@ env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
   # uncomment to run the tests sequentially
-  SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
+  # SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
 
 jobs:
   test-windows:
@@ -92,7 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0', 'net471', 'net472', 'net481']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
@@ -149,7 +149,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0', 'net471', 'net472', 'net481']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
