@@ -339,12 +339,17 @@ namespace Snowflake.Data.Client
 
         private void SetStatement() 
         {
+            if (connection == null)
+            {
+                throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
+            }
+            
             var session = (connection as SnowflakeDbConnection).SfSession;
 
             // SetStatement is called when executing a command. If SfSession is null
             // the connection has never been opened. Exception might be a bit vague.
             if (session == null)
-                throw new Exception("Can't execute command when connection has never been opened");
+                throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
 
             this.sfStatement = new SFStatement(session);
         }
