@@ -25,7 +25,7 @@ env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
   # uncomment to run the tests sequentially
-  #SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
+  SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
 
 jobs:
   test-windows:
