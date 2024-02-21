@@ -70,7 +70,6 @@ namespace Snowflake.Data.Tests.Util
             {
                 case AggregateException aggregate:
                     var inner = aggregate.Flatten().InnerExceptions;
-                    // collected.AddRange(inner.OfType<SnowflakeDbException>());
                     collected.AddRange(inner);
                     collected.AddRange(inner
                         .Where(e => e.InnerException != null)

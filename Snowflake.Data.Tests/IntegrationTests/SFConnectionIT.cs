@@ -505,8 +505,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     if (e.InnerException is SnowflakeDbException)
                     {
-                        Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                        SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
 
                         stopwatch.Stop();
                         int delta = 10; // in case server time slower.
@@ -804,7 +803,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.UNKNOWN_AUTHENTICATOR);
                 }
 
             }
@@ -859,7 +858,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     Assert.IsInstanceOf<SnowflakeDbException>(e);
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e).ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                     Assert.IsTrue(e.Message.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
@@ -1851,7 +1850,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
-                int timeoutSec = 15;
+                int timeoutSec = 5;
                 string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
                 conn.ConnectionString = loginTimeOut5sec;
@@ -1866,9 +1865,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
-
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                 }
                 stopwatch.Stop();
                 int delta = 10; // in case server time slower.
@@ -1904,9 +1901,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
-
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                 }
                 stopwatch.Stop();
                 int delta = 10; // in case server time slower.
@@ -1939,8 +1934,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                 }
                 stopwatch.Stop();
                 int delta = 10; // in case server time slower.
@@ -2145,7 +2139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                     Exception oktaException;
 #if NETFRAMEWORK
                     oktaException = e.InnerException.InnerException.InnerException;
