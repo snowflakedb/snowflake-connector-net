@@ -505,7 +505,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     if (e.InnerException is SnowflakeDbException)
                     {
-                        SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                        SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.REQUEST_TIMEOUT);
 
                         stopwatch.Stop();
                         int delta = 10; // in case server time slower.
@@ -803,7 +803,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.UNKNOWN_AUTHENTICATOR);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.UNKNOWN_AUTHENTICATOR);
                 }
 
             }
@@ -858,7 +858,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     Assert.IsInstanceOf<SnowflakeDbException>(e);
-                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
                     Assert.IsTrue(e.Message.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
