@@ -3,6 +3,7 @@
  */
 
 using System.Data.Common;
+using System.Net;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -520,12 +521,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestConnectionFailFast()
+        public void TestConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=learn.microsoft.com;"
+                string invalidConnectionString = "host=google.com/404;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
@@ -538,8 +539,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        e.ErrorCode);
+                    SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
+                    SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, "404 (Not Found)");
+                }
+                catch (Exception unexpected)
+                {
+                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -547,11 +552,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestEnableRetry()
+        public void TestEnableLoginRetryOn404()
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                string invalidConnectionString = "host=learn.microsoft.com;"
+                string invalidConnectionString = "host=google.com/404;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
                 conn.ConnectionString = invalidConnectionString;
 
@@ -563,8 +568,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-                        e.ErrorCode);
+                    SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
+                    SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
+                }
+                catch (Exception unexpected)
+                {
+                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -1947,12 +1956,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestAsyncConnectionFailFast()
+        public void TestAsyncConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Just a way to get a 404 on the login request and make sure there are no retry
-                string invalidConnectionString = "host=learn.microsoft.com;"
+                string invalidConnectionString = "host=google.com/404;"
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
 
                 conn.ConnectionString = invalidConnectionString;
@@ -1967,7 +1976,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    SnowflakeDbExceptionAssert.HasErrorCode((SnowflakeDbException)e.InnerException, SFError.INTERNAL_ERROR);
+                    SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
+                    SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, "404 (Not Found)");
+                }
+                catch (Exception unexpected)
+                {
+                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
