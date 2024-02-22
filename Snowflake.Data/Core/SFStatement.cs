@@ -361,6 +361,7 @@ namespace Snowflake.Data.Core
 
         private SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
+            logger.Info("Executing ExecuteSqlWithPutGet");
             try
             {
                 isPutGetQuery = true;
