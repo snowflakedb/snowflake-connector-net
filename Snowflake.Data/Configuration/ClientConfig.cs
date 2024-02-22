@@ -12,3 +12,4 @@ namespace Snowflake.Data.Configuration
         public ClientConfigCommonProps CommonProps { get; set; }
     }
 }
+
