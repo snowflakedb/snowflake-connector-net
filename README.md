@@ -793,13 +793,14 @@ The feature is activated by a config file which can be:
 2. provided as environmental variable called `SF_CLIENT_CONFIG_FILE` (eg. `SET SF_CLIENT_CONFIG_FILE=C:\some-path\client_config.json`)
 3. found in the driver location by searching for `sf_client_config.json` file
 4. found in the home location by searching for `sf_client_config.json` file
-5. found in temp directory location by searching for `sf_client_config.json` file
 
 The search for a config file is executed in the order listed above.
 
 To minimize the number of searches for a configuration file it is executed only:
 - for the first connection
 - for the first connection with `CLIENT_CONFIG_FILE` parameter.
+
+On Unix-style systems, client configuration file permissions are expected to have a limitation that only the file owner can modify the files (e.g. 600, 644).
 
 The example of the configuration file is:
 ```json
