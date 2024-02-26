@@ -800,7 +800,7 @@ To minimize the number of searches for a configuration file it is executed only:
 - for the first connection
 - for the first connection with `CLIENT_CONFIG_FILE` parameter.
 
-On Unix-style systems client configuration file permissions are expected to have limitation that only the file owner can modify the files (e.g. 600, 644).
+On Unix-style systems, client configuration file permissions are expected to have a limitation that only the file owner can modify the files (e.g. 600, 644).
 
 The example of the configuration file is:
 ```json
