@@ -295,7 +295,6 @@ __pycache__/
 *.xsd.cs
 
 # Unencrypted file
-Snowflake.Data.Tests/parameters.json
 *.xml
 
 # WhiteSource
