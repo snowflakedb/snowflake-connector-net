@@ -15,7 +15,8 @@ namespace Snowflake.Data.Core.Session
     {
         public static List<string> StringValues()
         {
-            return Enum.GetValues<ChangedSessionBehavior>()
+            return Enum.GetValues(typeof(ChangedSessionBehavior))
+                .Cast<ChangedSessionBehavior>()
                 .Where(e => e == ChangedSessionBehavior.OriginalPool) // currently we support only OriginalPool case
                 .Select(b => b.ToString())
                 .ToList();
