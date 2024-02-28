@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5"; // Will be set to the minimum allowed value of 7
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
@@ -169,10 +169,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                // retry 7 times with backoff 1, 2, 4, 8, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                Assert.Less(stopwatch.ElapsedMilliseconds, 83 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 54 * 1000);
             }
         }
     }
@@ -639,7 +639,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5"; // Will be set to the minimum allowed value of 7
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
@@ -660,10 +660,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                // retry 7 times with backoff 1, 2, 4, 8, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                Assert.Less(stopwatch.ElapsedMilliseconds, 83 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 54 * 1000);
             }
         }
 
