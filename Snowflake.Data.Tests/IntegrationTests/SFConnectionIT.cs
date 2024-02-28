@@ -435,11 +435,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with starting backoff of 1 second
+                // retry 7 times with starting backoff of 1 second
                 // but should not delay more than the max possible seconds after 7 retries
                 // and should not take less time than the minimum possible seconds after 7 retries
                 Assert.Less(stopwatch.ElapsedMilliseconds, 164 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1.9 * 1000);
             }
         }
 

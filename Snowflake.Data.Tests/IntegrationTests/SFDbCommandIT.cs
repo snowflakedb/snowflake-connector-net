@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // retry 7 times with backoff 1, 2, 4, 8, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
                 Assert.Less(stopwatch.ElapsedMilliseconds, 83 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 54 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 62 * 1000);
             }
         }
     }
@@ -663,7 +663,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // retry 7 times with backoff 1, 2, 4, 8, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
                 Assert.Less(stopwatch.ElapsedMilliseconds, 83 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 54 * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 62 * 1000);
             }
         }
 
