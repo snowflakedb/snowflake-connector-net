@@ -17,7 +17,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Collections.Generic;
     using System.Globalization;
     using Snowflake.Data.Tests.Mock;
-    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
@@ -93,7 +92,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Temporary ignored. It will be enabled when we get to know whether allowing maxHttpRetries to be less than 7 should be allowed for http client")]
         public void TestExecuteAsyncWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
@@ -103,7 +101,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8";
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
@@ -125,10 +123,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
+                // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                Assert.Less(stopwatch.ElapsedMilliseconds, (totalDelaySeconds + 20) * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000);
             }
         }
     }
@@ -586,7 +585,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Temporary ignored. It will be enabled when we get to know whether allowing maxHttpRetries to be less than 7 should be allowed for http client")]
         public void TestExecuteWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
@@ -596,7 +594,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8";
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
@@ -617,10 +615,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with backoff 1, 2, 4, 8, 16 seconds
+                var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
+                // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
-                Assert.Less(stopwatch.ElapsedMilliseconds, 51 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
+                Assert.Less(stopwatch.ElapsedMilliseconds, (totalDelaySeconds + 20) * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000);
             }
         }
 
