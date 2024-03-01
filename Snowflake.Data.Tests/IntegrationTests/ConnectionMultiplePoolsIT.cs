@@ -324,6 +324,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
 
+        [Test]
+        public void TestMinPoolSize()
+        {
+            // arrange
+            var connection = new SnowflakeDbConnection();
+            connection.ConnectionString = ConnectionString + "application=TestMinPoolSize;minPoolSize=3";
+            
+            // act
+            connection.Open();
+            Thread.Sleep(3000);
+            
+            // assert
+            var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            
+            // cleanup
+            connection.Close();
+        }
+
         private SnowflakeDbConnection OpenedConnection(string connectionString)
         {
             var connection = new SnowflakeDbConnection();

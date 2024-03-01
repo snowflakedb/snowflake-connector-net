@@ -115,12 +115,15 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::GetSession");
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password);
-            var sessionOrCreateToken = GetIdleSession(connStr);
-            if (sessionOrCreateToken.Session != null)
+            var sessionOrCreateTokens = GetIdleSession(connStr);
+            if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.SessionCreationToken);
+            sessionOrCreateTokens.BackgroundSessionCreationTokens().ForEach(token =>
+                ScheduleNewIdleSession(connStr, password, token)
+            );
+            return sessionOrCreateTokens.Session ?? NewSession(connStr, password, sessionOrCreateTokens.SessionCreationToken());
         }
         
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
@@ -128,12 +131,24 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::GetSessionAsync");
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, cancellationToken).ConfigureAwait(false);
-            var sessionOrCreateToken = GetIdleSession(connStr);
-            if (sessionOrCreateToken.Session != null)
+            var sessionOrCreateTokens = GetIdleSession(connStr);
+            if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.SessionCreationToken, cancellationToken).ConfigureAwait(false);
+            sessionOrCreateTokens.BackgroundSessionCreationTokens().ForEach(token =>
+                ScheduleNewIdleSession(connStr, password, token)
+            );
+            return sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
+        }
+
+        internal void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
+        {
+            Task.Run(() =>
+            {
+                var session = NewSession(connStr, password, token);
+                AddSession(session);
+            });
         }
 
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
@@ -146,7 +161,7 @@ namespace Snowflake.Data.Core.Session
             _sessionPoolEventHandler = sessionPoolEventHandler;
         }
         
-        private SessionOrCreationToken GetIdleSession(string connStr)
+        private SessionOrCreationTokens GetIdleSession(string connStr)
         {
             s_logger.Debug("SessionPool::GetIdleSession");
             lock (_sessionPoolLock)
@@ -161,34 +176,41 @@ namespace Snowflake.Data.Core.Session
                     if (session != null)
                     {
                         s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, an idle session was retrieved from the pool");
-                        return new SessionOrCreationToken(session);
+                        return new SessionOrCreationTokens(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool");
-                    if (IsAllowedToCreateNewSession())
+                    var sessionsCount = AllowedNumberOfNewSessionCreations();
+                    if (sessionsCount > 0)
                     {
-                        // there is no need to wait for a session since we can create a new one
-                        return new SessionOrCreationToken(_sessionCreationTokenCounter.NewToken());
+                        // there is no need to wait for a session since we can create new ones
+                        var sessionCreationTokens = Enumerable.Range(1, sessionsCount)
+                            .Select(_ => _sessionCreationTokenCounter.NewToken())
+                            .ToList();
+                        return new SessionOrCreationTokens(sessionCreationTokens);
                     }
                 }
             }
-            return new SessionOrCreationToken(WaitForSession(connStr));
+            return new SessionOrCreationTokens(WaitForSession(connStr));
         }
 
-        private bool IsAllowedToCreateNewSession()
+        private int AllowedNumberOfNewSessionCreations()
         {
             if (!_waitingForIdleSessionQueue.IsWaitingEnabled())
             {
                 s_logger.Debug($"SessionPool - creating of new sessions is not limited");
-                return true;
+                return 1; // waiting disabled means we are in .... TODO
             }
             var currentSize = GetCurrentPoolSize();
             if (currentSize < _poolConfig.MaxPoolSize)
             {
-                s_logger.Debug($"SessionPool - allowed to create a session, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}");
-                return true;
+                var maxSessionsToCreate = _poolConfig.MaxPoolSize - currentSize;
+                var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, 1);
+                var sessionsToCreate = Math.Min(sessionsNeeded, maxSessionsToCreate);
+                s_logger.Debug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}");
+                return sessionsToCreate;
             }
             s_logger.Debug($"SessionPool - not allowed to create a session, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}");
-            return false;
+            return 0;
         }
         
         private SFSession WaitForSession(string connStr)
