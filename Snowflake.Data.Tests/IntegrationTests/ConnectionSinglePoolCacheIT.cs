@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -269,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             conn1.Open();
             conn1.Close();
-            SnowflakeDbConnectionPool.SetTimeout(1);
+            SnowflakeDbConnectionPool.SetTimeout(0);
 
             var conn2 = new SnowflakeDbConnection();
             conn2.ConnectionString = ConnectionString;
@@ -279,7 +278,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var conn3 = new SnowflakeDbConnection();
             conn3.ConnectionString = ConnectionString;
             conn3.Open();
-            Thread.Sleep(1010);
             conn3.Close();
 
             // The pooling timeout should apply to all connections being pooled,
