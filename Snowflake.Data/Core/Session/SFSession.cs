@@ -577,6 +577,54 @@ namespace Snowflake.Data.Core
         {
             return _startTime + timeoutInSeconds <= utcTimeInSeconds;
         }
+
+        /// <summary>
+        /// Contains the ID and status of queries executed in async mode
+        /// </summary>
+        internal Dictionary<string, QueryStatus> AsyncQueries = new Dictionary<string, QueryStatus>();
+
+        /// <summary>
+        /// Checks if the session contains async queries that are still executing
+        /// </summary>
+        /// <returns>True if session can be closed, false otherwise</returns>
+        internal bool StillRunningAsyncQueries()
+        {
+            foreach (var query in AsyncQueries.ToList())
+            {
+                var sfStatement = new SFStatement(this);
+                var status = sfStatement.GetQueryStatus(query.Key);
+                if (QueryStatuses.IsStillRunning(status))
+                {
+                    return true;
+                }
+
+                AsyncQueries.Remove(query.Key);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the session contains async queries that are still executing
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>True if session can be closed, false otherwise</returns>
+        internal async Task<bool> StillRunningAsyncQueriesAsync(CancellationToken cancellationToken)
+        {
+            foreach (var query in AsyncQueries.ToList())
+            {
+                var sfStatement = new SFStatement(this);
+                var status = await sfStatement.GetQueryStatusAsync(query.Key, cancellationToken).ConfigureAwait(false);
+                if (QueryStatuses.IsStillRunning(status))
+                {
+                    return true;
+                }
+
+                AsyncQueries.Remove(query.Key);
+            }
+
+            return false;
+        }
     }
 }
 

@@ -11,19 +11,26 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Client
 {
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbCommand : DbCommand
     {
-        private DbConnection connection;
+        private SnowflakeDbConnection connection;
 
         private SFStatement sfStatement;
 
         private SnowflakeDbParameterCollection parameterCollection;
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
+
+        // Async max retry and retry pattern
+        private const int AsyncNoDataMaxRetry = 24;
+        private readonly int[] _asyncRetryPattern = { 1, 1, 2, 3, 4, 8, 10 };
+
+        private static readonly Regex UuidRegex = new Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 
         public SnowflakeDbCommand()
         {
@@ -274,6 +281,179 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Execute a query in async mode.
+        /// </summary>
+        /// <returns>The query id.</returns>
+        public string ExecuteInAsyncMode()
+        {
+            logger.Debug($"ExecuteInAsyncMode");
+            SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
+            return resultSet.queryId;
+        }
+
+        /// <summary>
+        /// Executes an asynchronous query in async mode.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query id.</returns>
+        public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
+        {
+            logger.Debug($"ExecuteAsyncInAsyncMode");
+            var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+            return resultSet.queryId;
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query status.</returns>
+        public QueryStatus GetQueryStatus(string queryId)
+        {
+            logger.Debug($"GetQueryStatus");
+
+            if (UuidRegex.IsMatch(queryId))
+            {
+                var sfStatement = new SFStatement(connection.SfSession);
+                return sfStatement.GetQueryStatus(queryId);
+            }
+            else
+            {
+                var errorMessage = $"The given query id {queryId} is not valid uuid";
+                logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
+
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query status.</returns>
+        public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
+        {
+            logger.Debug($"GetQueryStatusAsync");
+
+            // Check if queryId is valid uuid
+            if (UuidRegex.IsMatch(queryId))
+            {
+                var sfStatement = new SFStatement(connection.SfSession);
+                return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var errorMessage = $"The given query id {queryId} is not valid uuid";
+                logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
+        }
+
+        /// <summary>
+        /// Gets the query results based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query results.</returns>
+        public DbDataReader GetResultsFromQueryId(string queryId)
+        {
+            logger.Debug($"GetResultsFromQueryId");
+
+            int retryPatternPos = 0;
+            int noDataCounter = 0;
+
+            QueryStatus status;
+            while (true)
+            {
+                status = GetQueryStatus(queryId);
+
+                if (!QueryStatuses.IsStillRunning(status))
+                {
+                    break;
+                }
+
+                // Timeout based on query status retry rules
+                Thread.Sleep(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]));
+
+                // If no data, increment the no data counter
+                if (status == QueryStatus.NO_DATA)
+                {
+                    noDataCounter++;
+
+                    // Check if retry for no data is exceeded
+                    if (noDataCounter > AsyncNoDataMaxRetry)
+                    {
+                        var errorMessage = "Max retry for no data is reached";
+                        logger.Error(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+                }
+
+                if (retryPatternPos < _asyncRetryPattern.Length - 1)
+                {
+                    retryPatternPos++;
+                }
+            }
+
+            connection.SfSession.AsyncQueries.Remove(queryId);
+            SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
+
+            return new SnowflakeDbDataReader(this, resultSet);
+        }
+
+        /// <summary>
+        /// Gets the query results based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query results.</returns>
+        public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
+        {
+            logger.Debug($"GetResultsFromQueryIdAsync");
+
+            int retryPatternPos = 0;
+            int noDataCounter = 0;
+
+            QueryStatus status;
+            while (true)
+            {
+                status = GetQueryStatus(queryId);
+
+                if (!QueryStatuses.IsStillRunning(status))
+                {
+                    break;
+                }
+
+                // Timeout based on query status retry rules
+                await Task.Delay(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
+
+                // If no data, increment the no data counter
+                if (status == QueryStatus.NO_DATA)
+                {
+                    noDataCounter++;
+
+                    // Check if retry for no data is exceeded
+                    if (noDataCounter > AsyncNoDataMaxRetry)
+                    {
+                        var errorMessage = "Max retry for no data is reached";
+                        logger.Error(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+                }
+
+                if (retryPatternPos < _asyncRetryPattern.Length - 1)
+                {
+                    retryPatternPos++;
+                }
+            }
+
+            connection.SfSession.AsyncQueries.Remove(queryId);
+            SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
+
+            return new SnowflakeDbDataReader(this, resultSet);
+        }
+
         private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
         {
             if (parameters == null || parameters.Count == 0)
@@ -354,18 +534,18 @@ namespace Snowflake.Data.Client
             this.sfStatement = new SFStatement(session);
         }
 
-        private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
+        private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
         {
             CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec);
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false, bool asyncExec = false)
         {
             CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
         }
 
         private void CheckIfCommandTextIsSet()

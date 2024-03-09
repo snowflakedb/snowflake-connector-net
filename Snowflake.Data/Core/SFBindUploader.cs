@@ -290,7 +290,7 @@ namespace Snowflake.Data.Core
                     try
                     {
                         SFStatement statement = new SFStatement(session);
-                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false);
+                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false, false);
                         session.SetArrayBindStage(STAGE_NAME);
                     }
                     catch (Exception e)
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Core
                 try
                 {
                     SFStatement statement = new SFStatement(session);
-                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, cancellationToken).ConfigureAwait(false);
+                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, false, cancellationToken).ConfigureAwait(false);
                     session.SetArrayBindStage(STAGE_NAME);
                 }
                 catch (Exception e)

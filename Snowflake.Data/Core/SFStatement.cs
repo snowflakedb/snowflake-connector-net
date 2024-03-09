@@ -17,6 +17,61 @@ using System.Text;
 
 namespace Snowflake.Data.Core
 {
+    /// <summary>
+    /// The status types of the query.
+    /// </summary>
+    public enum QueryStatus
+    {
+        RUNNING,
+        ABORTING,
+        SUCCESS,
+        FAILED_WITH_ERROR,
+        ABORTED,
+        QUEUED,
+        FAILED_WITH_INCIDENT,
+        DISCONNECTED,
+        RESUMING_WAREHOUSE,
+        // purposeful typo.Is present in QueryDTO.java
+        QUEUED_REPARING_WAREHOUSE,
+        RESTARTED,
+        BLOCKED,
+        NO_DATA,
+    }
+
+    internal static class QueryStatuses
+    {
+        internal static bool IsStillRunning(QueryStatus status)
+        {
+            switch (status)
+            {
+                case QueryStatus.RUNNING:
+                case QueryStatus.RESUMING_WAREHOUSE:
+                case QueryStatus.QUEUED:
+                case QueryStatus.QUEUED_REPARING_WAREHOUSE:
+                case QueryStatus.NO_DATA:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        internal static bool IsAnError(QueryStatus status)
+        {
+            switch (status)
+            {
+                case QueryStatus.ABORTING:
+                case QueryStatus.FAILED_WITH_ERROR:
+                case QueryStatus.ABORTED:
+                case QueryStatus.FAILED_WITH_INCIDENT:
+                case QueryStatus.DISCONNECTED:
+                case QueryStatus.BLOCKED:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
     class SFStatement
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFStatement>();
@@ -90,7 +145,7 @@ namespace Snowflake.Data.Core
                 _requestId = null;
         }
 
-        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             AssignQueryRequestId();
 
@@ -120,8 +175,9 @@ namespace Snowflake.Data.Core
             QueryRequest postBody = new QueryRequest();
             postBody.sqlText = sql;
             postBody.describeOnly = describeOnly;
-			postBody.parameters = bodyParameters;
+            postBody.parameters = bodyParameters;
             postBody.QueryContextDTO = SfSession.GetQueryContextRequest();
+            postBody.asyncExec = asyncExec;
             if (_bindStage == null)
             {
                 postBody.parameterBindings = bindings;
@@ -249,13 +305,14 @@ namespace Snowflake.Data.Core
 
         private bool SessionExpired(BaseRestResponse r) => r.code == SFSession.SF_SESSION_EXPIRED_CODE;
 
-        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly,
+        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec,
                                                           CancellationToken cancellationToken)
         {
             // Trim the sql query and check if this is a PUT/GET command
             string trimmedSql = TrimSql(sql);
 
-            if (IsPutOrGetCommand(trimmedSql)) {
+            if (IsPutOrGetCommand(trimmedSql))
+            {
                 throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
             }
 
@@ -287,8 +344,8 @@ namespace Snowflake.Data.Core
                     logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
                 }
             }
-            
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 QueryExecResponse response = null;
@@ -309,19 +366,26 @@ namespace Snowflake.Data.Core
 
                 var lastResultUrl = response.data?.getResultUrl;
 
-                while (RequestInProgress(response) || SessionExpired(response))
+                if (asyncExec)
                 {
-                    var req = BuildResultRequest(lastResultUrl);
-                    response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+                    SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                }
+                else
+                {
+                    while (RequestInProgress(response) || SessionExpired(response))
+                    {
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
 
-                    if (SessionExpired(response))
-                    {
-                        logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        lastResultUrl = response.data?.getResultUrl;
+                        if (SessionExpired(response))
+                        {
+                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            lastResultUrl = response.data?.getResultUrl;
+                        }
                     }
                 }
 
@@ -338,8 +402,8 @@ namespace Snowflake.Data.Core
                 ClearQueryRequestId();
             }
         }
-        
-        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+
+        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             // Trim the sql query and check if this is a PUT/GET command
             string trimmedSql = TrimSql(sql);
@@ -350,7 +414,7 @@ namespace Snowflake.Data.Core
                     return ExecuteSqlWithPutGet(timeout, trimmedSql, bindings, describeOnly);
                 }
 
-                return ExecuteSqlOtherThanPutGet(timeout, trimmedSql, bindings, describeOnly);
+                return ExecuteSqlOtherThanPutGet(timeout, trimmedSql, bindings, describeOnly, asyncExec);
             }
             finally
             {
@@ -398,7 +462,7 @@ namespace Snowflake.Data.Core
             }
         }
         
-        private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             try
             {
@@ -432,12 +496,13 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                QueryExecResponse response =
-                    ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
-                        timeout,
-                        sql,
-                        bindings,
-                        describeOnly);
+                    QueryExecResponse response =
+                        ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                             timeout,
+                             sql,
+                             bindings,
+                             describeOnly,
+                             asyncExec);
 
                 return BuildResultSet(response, CancellationToken.None);
             }
@@ -531,12 +596,13 @@ namespace Snowflake.Data.Core
             int timeout,
             string sql,
             Dictionary<string, BindingDTO> bindings,
-            bool describeOnly)
+            bool describeOnly,
+            bool asyncExec = false)
             where T : BaseQueryExecResponse<U>
             where U : IQueryExecResponseData
         {
             registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 T response = null;
@@ -558,20 +624,28 @@ namespace Snowflake.Data.Core
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    var lastResultUrl = queryResponse.data?.getResultUrl;
-                    while (RequestInProgress(response) || SessionExpired(response))
+                    if (asyncExec)
                     {
-                        var req = BuildResultRequest(lastResultUrl);
-                        response = _restRequester.Get<T>(req);
+                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                    }
+                    else
+                    {
+                        var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        if (SessionExpired(response))
+                        while (RequestInProgress(response) || SessionExpired(response))
                         {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            SfSession.renewSession();
-                        }
-                        else
-                        {
-                            lastResultUrl = queryResponse.data?.getResultUrl;
+                            var req = BuildResultRequest(lastResultUrl);
+                            response = _restRequester.Get<T>(req);
+
+                            if (SessionExpired(response))
+                            {
+                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                                SfSession.renewSession();
+                            }
+                            else
+                            {
+                                lastResultUrl = queryResponse.data?.getResultUrl;
+                            }
                         }
                     }
                 }
@@ -612,13 +686,14 @@ namespace Snowflake.Data.Core
             string sql,
             Dictionary<string, BindingDTO> bindings,
             bool describeOnly,
-            CancellationToken cancellationToken
+            CancellationToken cancellationToken,
+            bool asyncExec = false
             )
             where T : BaseQueryExecResponse<U>
             where U : IQueryExecResponseData
         {
             registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 T response = null;
@@ -640,20 +715,28 @@ namespace Snowflake.Data.Core
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    var lastResultUrl = queryResponse.data?.getResultUrl;
-                    while (RequestInProgress(response) || SessionExpired(response))
+                    if (asyncExec)
                     {
-                        var req = BuildResultRequest(lastResultUrl);
-                        response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
+                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                    }
+                    else
+                    {
+                        var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        if (SessionExpired(response))
+                        while (RequestInProgress(response) || SessionExpired(response))
                         {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            lastResultUrl = queryResponse.data?.getResultUrl;
+                            var req = BuildResultRequest(lastResultUrl);
+                            response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
+
+                            if (SessionExpired(response))
+                            {
+                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                lastResultUrl = queryResponse.data?.getResultUrl;
+                            }
                         }
                     }
                 }
@@ -672,6 +755,138 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+
+        /// <summary>
+        /// Creates a request to get the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The request to get the query status.</returns>
+        private SFRestRequest BuildQueryStatusRequest(string queryId)
+        {
+            var queryUri = SfSession.BuildUri(RestPath.SF_MONITOR_QUERY_PATH + queryId);
+
+            return new SFRestRequest
+            {
+                Url = queryUri,
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
+                                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan,
+                sid = SfSession.sessionId,
+                _isStatusRequest = true
+            };
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query status.</returns>
+        internal QueryStatus GetQueryStatus(string queryId)
+        {
+            var queryRequest = BuildQueryStatusRequest(queryId);
+
+            try
+            {
+                QueryStatusResponse response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    response = _restRequester.Get<QueryStatusResponse>(queryRequest);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                if (!response.success)
+                {
+                    throw new SnowflakeDbException(
+                        response.data.queries[0].state,
+                        response.code,
+                        response.message,
+                        queryId);
+                }
+
+                var status = response.data.queries.Count != 0 ? response.data.queries[0].status : QueryStatus.NO_DATA.ToString();
+
+                QueryStatus queryStatus;
+                Enum.TryParse(status, out queryStatus);
+
+                SfSession.AsyncQueries[queryId] = queryStatus;
+                return queryStatus;
+            }
+            catch
+            {
+                logger.Error("Query execution failed.");
+                throw;
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query status.</returns>
+        internal async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
+        {
+            var queryRequest = BuildQueryStatusRequest(queryId);
+
+            try
+            {
+                QueryStatusResponse response = null;
+                bool receivedFirstQueryResponse = false;
+                while (!receivedFirstQueryResponse)
+                {
+                    response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
+                    if (SessionExpired(response))
+                    {
+                        SfSession.renewSession();
+                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    }
+                    else
+                    {
+                        receivedFirstQueryResponse = true;
+                    }
+                }
+
+                if (!response.success)
+                {
+                    throw new SnowflakeDbException(
+                        response.data.queries[0].state,
+                        response.code,
+                        response.message,
+                        queryId);
+                }
+
+                var status = response.data.queries.Count != 0 ? response.data.queries[0].status : QueryStatus.NO_DATA.ToString();
+
+                QueryStatus queryStatus;
+                Enum.TryParse(status, out queryStatus);
+
+                SfSession.AsyncQueries[queryId] = queryStatus;
+                return queryStatus;
+            }
+            catch
+            {
+                logger.Error("Query execution failed.");
                 throw;
             }
             finally
