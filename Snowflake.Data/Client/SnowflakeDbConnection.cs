@@ -153,8 +153,8 @@ namespace Snowflake.Data.Client
             {
                 var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
-                if (CanReuseSession(transactionRollbackStatus) &&
-                    SfSession.StillRunningAsyncQueries() &&
+                if ((CanReuseSession(transactionRollbackStatus) ||
+                    SfSession.StillRunningAsyncQueries()) &&
                     SnowflakeDbConnectionPool.AddSession(SfSession)
                     )
                 {
@@ -194,8 +194,8 @@ namespace Snowflake.Data.Client
                 {
                     var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
-                    if (CanReuseSession(transactionRollbackStatus) &&
-                        await SfSession.StillRunningAsyncQueriesAsync(cancellationToken).ConfigureAwait(false) &&
+                    if ((CanReuseSession(transactionRollbackStatus) ||
+                        await SfSession.StillRunningAsyncQueriesAsync(cancellationToken).ConfigureAwait(false)) &&
                         SnowflakeDbConnectionPool.AddSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
