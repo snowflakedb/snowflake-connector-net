@@ -516,7 +516,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestGetResultsOfUnknownQueryIdAsync()
         {
             string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
@@ -1669,7 +1669,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestGetResultsOfUnknownQueryId()
         {
             string unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
