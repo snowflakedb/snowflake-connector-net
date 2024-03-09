@@ -537,7 +537,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
 
                     // Assert
+#if NETFRAMEWORK
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+#else
                     Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+#endif
                 }
 
                 task = conn.CloseAsync(CancellationToken.None);
