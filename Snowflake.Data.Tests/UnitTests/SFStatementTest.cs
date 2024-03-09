@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
             for (int i = 0; i < 5; i++)
             {
                 SFStatement statement = new SFStatement(sfSession);
-                SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false);
+                SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false, false);
                 expectServiceName += "a";
                 Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -118,9 +118,47 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        [Test]
+        [TestCase(QueryStatus.RUNNING, true)]
+        [TestCase(QueryStatus.RESUMING_WAREHOUSE, true)]
+        [TestCase(QueryStatus.QUEUED, true)]
+        [TestCase(QueryStatus.QUEUED_REPARING_WAREHOUSE, true)]
+        [TestCase(QueryStatus.NO_DATA, true)]
+        [TestCase(QueryStatus.ABORTING, false)]
+        [TestCase(QueryStatus.SUCCESS, false)]
+        [TestCase(QueryStatus.FAILED_WITH_ERROR, false)]
+        [TestCase(QueryStatus.ABORTED, false)]
+        [TestCase(QueryStatus.FAILED_WITH_INCIDENT, false)]
+        [TestCase(QueryStatus.DISCONNECTED, false)]
+        [TestCase(QueryStatus.RESTARTED, false)]
+        [TestCase(QueryStatus.BLOCKED, false)]
+        public void TestIsStillRunning(QueryStatus status, bool expectedResult)
+        {
+            Assert.AreEqual(expectedResult, QueryStatuses.IsStillRunning(status));
+        }
+
+        [Test]
+        [TestCase(QueryStatus.ABORTING, true)]
+        [TestCase(QueryStatus.FAILED_WITH_ERROR, true)]
+        [TestCase(QueryStatus.ABORTED, true)]
+        [TestCase(QueryStatus.FAILED_WITH_INCIDENT, true)]
+        [TestCase(QueryStatus.DISCONNECTED, true)]
+        [TestCase(QueryStatus.BLOCKED, true)]
+        [TestCase(QueryStatus.RUNNING, false)]
+        [TestCase(QueryStatus.RESUMING_WAREHOUSE, false)]
+        [TestCase(QueryStatus.QUEUED, false)]
+        [TestCase(QueryStatus.QUEUED_REPARING_WAREHOUSE, false)]
+        [TestCase(QueryStatus.NO_DATA, false)]
+        [TestCase(QueryStatus.SUCCESS, false)]
+        [TestCase(QueryStatus.RESTARTED, false)]
+        public void TestIsAnError(QueryStatus status, bool expectedResult)
+        {
+            Assert.AreEqual(expectedResult, QueryStatuses.IsAnError(status));
         }
     }
 }
