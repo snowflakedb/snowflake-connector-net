@@ -804,7 +804,7 @@ where:
 
 The driver looks for the location of the configuration file in the following order:
 
-- `CLIENT_CONFIG_FILE` connection parameter, containing the full path to the configuration file (e.g. eg. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
+- `CLIENT_CONFIG_FILE` connection parameter, containing the full path to the configuration file (e.g. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
 - `SF_CLIENT_CONFIG_FILE` environment variable, containing the full path to the configuration file.
 - .NET driver/application directory, where the file must be named `sf_client_config.json`.
 - User’s home directory, where the file must be named `sf_client_config.json`.
@@ -812,10 +812,10 @@ The driver looks for the location of the configuration file in the following ord
 **Note**
 To enhance security, the driver no longer searches a temporary directory for easy logging configurations. Additionally, the driver now requires the logging configuration file on Unix-style systems to limit file permissions to allow only the file owner to modify the files (such as `chmod 0600` or `chmod 0644`).
 
-To minimize the number of searches for a configuration file it is executed only:
+To minimize the number of searches for a configuration file, the driver reads the file only for:
 
-- for the first connection
-- for the first connection with `CLIENT_CONFIG_FILE` parameter.
+- The first connection.
+- The first connection with `CLIENT_CONFIG_FILE` parameter.
 
 The extra logs are stored in a `dotnet` subfolder of the specified directory, such as `C:\some-path\some-directory\dotnet`.
 
