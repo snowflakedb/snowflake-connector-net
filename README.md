@@ -806,7 +806,7 @@ The driver looks for the location of the configuration file in the following ord
 
 - `CLIENT_CONFIG_FILE` connection parameter, containing the full path to the configuration file (e.g. eg. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
 - `SF_CLIENT_CONFIG_FILE` environment variable, containing the full path to the configuration file.
-- .NET driver installation directory, where the file must be named `sf_client_config.json`.
+- .NET driver/application directory, where the file must be named `sf_client_config.json`.
 - User’s home directory, where the file must be named `sf_client_config.json`.
 
 **Note**
