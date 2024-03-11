@@ -772,18 +772,19 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
 
 ## Easy logging
 
-The Easy Logging feature lets you easily specify the log level and the directory in which to save log files in the `sf_client_config.json` configuration file.
-This feature makes tracing of driver's logs easier.
+The Easy Logging feature lets you change the log level for all driver classes and add an extra file appender for logs from the driver's classes at runtime. You can specify the log levels and the directory in which to save log files in a configuration file (default: `sf_client_config.json`).
+
+You typically change log levels only when debugging your application.
 
 **Note**
 This logging configuration file features supports only the following log levels:
 
-- DEBUG
-- ERROR
-- INFO
 - OFF
-- TRACE
+- ERROR
 - WARNING
+- INFO
+- DEBUG
+- TRACE
 
 This configuration file uses JSON to define the `log_level` and `log_path` logging parameters, as follows:
 
