@@ -777,7 +777,7 @@ The Easy Logging feature lets you change the log level for all driver classes an
 You typically change log levels only when debugging your application.
 
 **Note**
-This logging configuration file features supports only the following log levels:
+This logging configuration file features support only the following log levels:
 
 - OFF
 - ERROR
@@ -796,6 +796,11 @@ This configuration file uses JSON to define the `log_level` and `log_path` loggi
   }
 }
 ```
+
+where:
+
+- `log_level` is the desired logging level.
+- `log_path` is the location to store the log files. The driver automatically creates a `dotnet` subdirectory in the specified `log_path`. For example, if you set log_path to `c:\logs`, the drivers creates the `c:\logs\dotnet` directory and stores the logs there.
 
 The driver looks for the location of the configuration file in the following order:
 
