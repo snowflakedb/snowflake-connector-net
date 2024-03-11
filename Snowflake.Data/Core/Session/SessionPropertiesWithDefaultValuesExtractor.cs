@@ -54,7 +54,66 @@ namespace Snowflake.Data.Core.Session
                 ValidateTimeoutFormat,
                 t => true
             );
+
+        public T ExtractPropertyWithDefaultValue<T>(
+            SFSessionProperty property,
+            Func<string, T> extractor,
+            Func<string, bool> preExtractValidation,
+            Func<T, bool> postExtractValidation) 
+        {
+            var propertyAttribute = property.GetAttribute<SFSessionPropertyAttr>();
+            var defaultValueString = propertyAttribute.defaultValue;
+            var defaultValue = extractor(defaultValueString);
+            if (!postExtractValidation(defaultValue))
+            {
+                throw new Exception($"Invalid default value of {property}");
+            }
+            var valueString = _propertiesDictionary[property];
+            if (string.IsNullOrEmpty(valueString))
+            {
+                s_logger.Warn($"Parameter {property} not defined. Using a default value: {defaultValue}");
+                return defaultValue;
+            }
+            if (!preExtractValidation(valueString))
+            {
+                return handleFailedValidation(defaultValue, valueString, property);
+            }
+            T value;
+            try
+            {
+                value = extractor(valueString);
+            }
+            catch (Exception e)
+            {
+                if (_failOnWrongValue)
+                {
+                    s_logger.Error($"Invalid value of parameter {property}. Error: {e}");
+                    throw new Exception($"Invalid value of parameter {property}", e);
+                }
+                s_logger.Warn($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
+                return defaultValue;
+            }
+            if (!postExtractValidation(value))
+            {
+                return handleFailedValidation(defaultValue, value, property);
+            }
+            return value;
+        }
         
+        private TResult handleFailedValidation<TResult, TValue>(
+            TResult defaultValue,
+            TValue value,
+            SFSessionProperty property)
+        {
+            if (_failOnWrongValue)
+            {
+                s_logger.Error($"Invalid value of parameter {property}: {value}");
+                throw new Exception($"Invalid value of parameter {property}");
+            }
+            s_logger.Warn($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
+            return defaultValue;            
+        }
+
         private static bool ValidateTimeoutFormat(string value) =>
             !string.IsNullOrEmpty(value) && s_timeoutFormatRegex.IsMatch(value);
         
@@ -80,64 +139,5 @@ namespace Snowflake.Data.Core.Session
         }
 
         private static bool IsNumberOrMinus(char value) => char.IsNumber(value) || value.Equals('-');
-
-        public T ExtractPropertyWithDefaultValue<T>(
-            SFSessionProperty property,
-            Func<string, T> extractor,
-            Func<string, bool> preExtractValidation,
-            Func<T, bool> postExtractValidation) 
-        {
-            var propertyAttribute = property.GetAttribute<SFSessionPropertyAttr>();
-            var defaultValueString = propertyAttribute.defaultValue;
-            var defaultValue = extractor(defaultValueString);
-            if (!postExtractValidation(defaultValue))
-            {
-                throw new Exception($"Invalid default value of {property}");
-            }
-            var valueString = _propertiesDictionary[property];
-            if (string.IsNullOrEmpty(valueString))
-            {
-                s_logger.Warn($"Parameter {property} not defined. Will be used a default value: {defaultValue}");
-                return defaultValue;
-            }
-            if (!preExtractValidation(valueString))
-            {
-                return handleFailedValidation(defaultValue, valueString, property);
-            }
-            T value;
-            try
-            {
-                value = extractor(valueString);
-            }
-            catch (Exception e)
-            {
-                if (_failOnWrongValue)
-                {
-                    s_logger.Error($"Invalid value of parameter {property}. Error: {e}");
-                    throw new Exception($"Invalid value of parameter {property}", e);
-                }
-                s_logger.Warn($"Invalid value of parameter {property}. Will be used a default value: {defaultValue}");
-                return defaultValue;
-            }
-            if (!postExtractValidation(value))
-            {
-                return handleFailedValidation(defaultValue, value, property);
-            }
-            return value;
-        }
-
-        private TResult handleFailedValidation<TResult, TValue>(
-            TResult defaultValue,
-            TValue value,
-            SFSessionProperty property)
-        {
-            if (_failOnWrongValue)
-            {
-                s_logger.Error($"Invalid value of parameter {property}: {value}");
-                throw new Exception($"Invalid value of parameter {property}");
-            }
-            s_logger.Warn($"Invalid value of parameter {property}. Will be used a default value: {defaultValue}");
-            return defaultValue;            
-        }
     }
 }

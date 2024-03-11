@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(SFSessionHttpClientProperties.DefaultMinPoolSize, result.MinPoolSize, "min pool size");
             Assert.AreEqual(SFSessionHttpClientProperties.DefaultChangedSession, result.ChangedSession, "changed session");
             Assert.AreEqual(SFSessionHttpClientProperties.DefaultExpirationTimeout, result.ExpirationTimeout, "expiration timeout");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForSessionIdleTimeout, "waiting for idle session timeout");
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForIdleSessionTimeout, "waiting for idle session timeout");
             Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionTimeout, result.ConnectionTimeout, "connection timeout");
             Assert.AreEqual(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled, "pooling enabled");
         }
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedTimeout, result.WaitingForSessionIdleTimeout);
+            Assert.AreEqual(testCase.ExpectedTimeout, result.WaitingForIdleSessionTimeout);
         }
         
         [Test]
@@ -286,8 +286,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         private static IEnumerable<TimeoutTestCase> ZeroAsInfiniteTimeouts()
         {
-            yield return new TimeoutTestCase("0", Timeout.InfiniteTimeSpan);
-            yield return new TimeoutTestCase("0ms", Timeout.InfiniteTimeSpan);
+            yield return new TimeoutTestCase("0", TimeoutHelper.Infinity());
+            yield return new TimeoutTestCase("0ms", TimeoutHelper.Infinity());
         }
 
         private static IEnumerable<TimeoutTestCase> ZeroUnchangedTimeouts()

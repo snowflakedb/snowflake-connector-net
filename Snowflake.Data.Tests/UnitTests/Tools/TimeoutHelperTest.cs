@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
     public class TimeoutHelperTest
     {
         [Test]
-        [TestCaseSource(nameof(InfinityTimeouts))]
+        [TestCaseSource(nameof(InfiniteTimeouts))]
         public void TestInfinity(TimeSpan infiniteTimeout)
         {
             // act
@@ -20,8 +20,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [TestCaseSource(nameof(NoInfinityTimeouts))]
-        public void TestNoInfinity(TimeSpan finiteTimeout)
+        [TestCaseSource(nameof(FiniteTimeouts))]
+        public void TestFiniteValue(TimeSpan finiteTimeout)
         {
             // act
             var isInfinite = TimeoutHelper.IsInfinite(finiteTimeout);
@@ -42,16 +42,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [TestCaseSource(nameof(NotZeroLengthTimeouts))]
-        public void TestNotZeroLength(TimeSpan notZeroTimeout)
+        [TestCaseSource(nameof(NonZeroLengthTimeouts))]
+        public void TestNonZeroLength(TimeSpan nonZeroTimeout)
         {
             // act
-            var isZeroLength = TimeoutHelper.IsZeroLength(notZeroTimeout);
+            var isZeroLength = TimeoutHelper.IsZeroLength(nonZeroTimeout);
             
             // assert
             Assert.IsFalse(isZeroLength);
         }
-
         
         [Test]
         [TestCase(1000, 1000)]
@@ -112,13 +111,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.AreEqual(expectedMillisLeft, millisLeft);
         } 
         
-        public static IEnumerable<TimeSpan> InfinityTimeouts()
+        public static IEnumerable<TimeSpan> InfiniteTimeouts()
         {
             yield return TimeoutHelper.Infinity();
             yield return TimeSpan.FromMilliseconds(-1);
         }
         
-        public static IEnumerable<TimeSpan> NoInfinityTimeouts()
+        public static IEnumerable<TimeSpan> FiniteTimeouts()
         {
             yield return TimeSpan.Zero;
             yield return TimeSpan.FromMilliseconds(1);
@@ -132,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return TimeSpan.FromSeconds(0);
         }
         
-        public static IEnumerable<TimeSpan> NotZeroLengthTimeouts()
+        public static IEnumerable<TimeSpan> NonZeroLengthTimeouts()
         {
             yield return TimeoutHelper.Infinity();
             yield return TimeSpan.FromMilliseconds(3);

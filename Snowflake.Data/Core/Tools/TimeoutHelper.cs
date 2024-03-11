@@ -30,7 +30,8 @@ namespace Snowflake.Data.Core.Tools
             {
                 throw new Exception("Infinite timeout cannot be used to determine milliseconds left");
             }
-            return Math.Max(startedAtMillis - nowMillis + (long) timeout.TotalMilliseconds, 0);
+            var passedMillis = nowMillis - startedAtMillis;
+            return Math.Max((long) timeout.TotalMilliseconds - passedMillis, 0);
         }
     }
 }

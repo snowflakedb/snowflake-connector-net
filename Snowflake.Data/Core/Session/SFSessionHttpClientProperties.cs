@@ -180,7 +180,7 @@ namespace Snowflake.Data.Core
                 MaxPoolSize = _maxPoolSize,
                 MinPoolSize = _minPoolSize,
                 ChangedSession = _changedSession,
-                WaitingForSessionIdleTimeout = _waitingForSessionIdleTimeout,
+                WaitingForIdleSessionTimeout = _waitingForSessionIdleTimeout,
                 ExpirationTimeout = _expirationTimeout,
                 PoolingEnabled = _poolingEnabled,
                 ConnectionTimeout = connectionTimeout

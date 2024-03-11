@@ -193,15 +193,15 @@ namespace Snowflake.Data.Core.Session
         
         private SFSession WaitForSession(string connStr)
         {
-            if (TimeoutHelper.IsInfinite(_poolConfig.WaitingForSessionIdleTimeout))
-                throw new Exception("WaitingForSessionIdleTimeout cannot be infinite");
-            s_logger.Info($"SessionPool::WaitForSession for {(long) _poolConfig.WaitingForSessionIdleTimeout.TotalMilliseconds} ms timeout");
+            if (TimeoutHelper.IsInfinite(_poolConfig.WaitingForIdleSessionTimeout))
+                throw new Exception("WaitingForIdleSessionTimeout cannot be infinite");
+            s_logger.Info($"SessionPool::WaitForSession for {(long) _poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout");
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTimeMillis = beforeWaitingTimeMillis;
-            while (!TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForSessionIdleTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
+            while (!TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
             {
-                var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForSessionIdleTimeout);
+                var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout);
                 _sessionPoolEventHandler.OnWaitingForSessionStarted(this, timeoutLeftMillis);
                 var successful = _waitingForIdleSessionQueue.Wait((int) timeoutLeftMillis, CancellationToken.None);
                 if (successful)
