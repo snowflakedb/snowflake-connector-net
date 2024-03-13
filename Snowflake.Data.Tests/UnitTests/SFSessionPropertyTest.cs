@@ -33,6 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("a-b", "a-b", "a-b.snowflakecomputing.com")]
         [TestCase("a_b", "a_b", "a-b.snowflakecomputing.com")]
         [TestCase("abc", "abc", "abc.snowflakecomputing.com")]
+        [TestCase("xy12345.us-east-2.aws", "xy12345", "xy12345.us-east-2.aws.snowflakecomputing.com")]
         public void TestValidateCorrectAccountNames(string accountName, string expectedAccountName, string expectedHost)
         {
             // arrange
