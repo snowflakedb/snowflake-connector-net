@@ -40,7 +40,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                if (_dbType != DbType.AnsiString || string.IsNullOrEmpty(Value.ToString()))
+                if (_dbType != DbType.AnsiString || Value == null || string.IsNullOrEmpty(Value.ToString()))
                 {
                     return _dbType;
                 }
