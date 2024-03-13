@@ -38,7 +38,23 @@ namespace Snowflake.Data.Client
 
         public override DbType DbType
         {
-            get => _dbType == DbType.AnsiString ? SFDataConverter.TypeToDbTypeMap[Value.GetType()] : _dbType;
+            get
+            {
+                if (_dbType != DbType.AnsiString || string.IsNullOrEmpty(Value.ToString()))
+                {
+                    return _dbType;
+                }
+
+                var type = Value.GetType();
+                if (type.IsArray)
+                {
+                    return SFDataConverter.TypeToDbTypeMap[type.GetElementType()];
+                }
+                else
+                {
+                    return SFDataConverter.TypeToDbTypeMap[type];
+                }
+            }
 
             set => _dbType = value;
         }
