@@ -15,6 +15,8 @@ namespace Snowflake.Data.Client
 
         private SFDataType OriginType;
 
+        private DbType _dbType;
+
         public SnowflakeDbParameter()
         {
             SFDataType = SFDataType.None;
@@ -34,7 +36,12 @@ namespace Snowflake.Data.Client
             this.SFDataType = SFDataType;
         }
 
-        public override DbType DbType { get; set; }
+        public override DbType DbType
+        {
+            get => _dbType == DbType.AnsiString ? SFDataConverter.TypeToDbTypeMap[Value.GetType()] : _dbType;
+
+            set => _dbType = value;
+        }
 
         public override ParameterDirection Direction
         {
