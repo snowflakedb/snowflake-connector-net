@@ -20,7 +20,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetPooling(true);
         }
         
         [TearDown]
@@ -35,6 +34,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
+        [Test]
+        public void TestBasicConnectionPool()
+        {
+            var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=1";
+            var conn1 = new SnowflakeDbConnection(connectionString);
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            // assert
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(connectionString).GetCurrentPoolSize());
+        }
+        
         [Test]
         public void TestReuseSessionInConnectionPool() // old name: TestConnectionPool
         {
@@ -230,7 +243,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Enable when disabling pooling in connection string enabled - SNOW-902632")]
         public void TestConnectionPoolNotPossibleToDisableForAllPools()
         {
             // act
@@ -267,19 +279,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestNewConnectionPoolClean()
         {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            var connectionString = ConnectionString + "maxPoolSize=2;";
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            conn1.ConnectionString = connectionString;
             conn1.Open();
             Assert.AreEqual(ConnectionState.Open, conn1.State);
 
             var conn2 = new SnowflakeDbConnection();
-            conn2.ConnectionString = ConnectionString + " retryCount=1";
+            conn2.ConnectionString = connectionString + "retryCount=1";
             conn2.Open();
             Assert.AreEqual(ConnectionState.Open, conn2.State);
 
             var conn3 = new SnowflakeDbConnection();
-            conn3.ConnectionString = ConnectionString + "  retryCount=2";
+            conn3.ConnectionString = connectionString + "retryCount=2";
             conn3.Open();
             Assert.AreEqual(ConnectionState.Open, conn3.State);
 
@@ -301,27 +313,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
+            var connectionString = ConnectionString + "expirationTimeout=0;maxPoolSize=2";
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
+            conn1.ConnectionString = connectionString;
             conn1.Open();
             conn1.Close();
-            SnowflakeDbConnectionPool.SetTimeout(0);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             
             var conn2 = new SnowflakeDbConnection();
-            conn2.ConnectionString = ConnectionString;
+            conn2.ConnectionString = connectionString;
             conn2.Open();
             conn2.Close();
 
             var conn3 = new SnowflakeDbConnection();
-            conn3.ConnectionString = ConnectionString;
+            conn3.ConnectionString = connectionString;
             conn3.Open();
             conn3.Close();
 
-            // The pooling timeout should apply to all connections being pooled,
-            // not just the connections created after the new setting,
-            // so expected result should be 0
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+            // assert
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(connectionString).GetCurrentPoolSize());
         }
 
         private SnowflakeDbConnection OpenedConnection(string connectionString)

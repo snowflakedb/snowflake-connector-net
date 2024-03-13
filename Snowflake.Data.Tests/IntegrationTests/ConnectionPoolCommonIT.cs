@@ -33,7 +33,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             SnowflakeDbConnectionPool.SetConnectionPoolVersion(_connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetPooling(true);
+            if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
+            {
+                SnowflakeDbConnectionPool.SetPooling(true);
+            }
             s_logger.Debug($"---------------- BeforeTest ---------------------");
             s_logger.Debug($"Testing Pool Type: {SnowflakeDbConnectionPool.GetConnectionPoolVersion()}");
         }
@@ -48,20 +51,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void AfterAllTests()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-        }
-        
-        [Test]
-        public void TestBasicConnectionPool()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-
-            var conn1 = new SnowflakeDbConnection(ConnectionString);
-            conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            conn1.Close();
-
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
 
         [Test]
@@ -100,16 +89,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             conn1.Close();
-            SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetMaxPoolSize(0);
-            SnowflakeDbConnectionPool.SetPooling(true);
+            // SnowflakeDbConnectionPool.ClearAllPools();
+            // SnowflakeDbConnectionPool.SetMaxPoolSize(0);
+            // SnowflakeDbConnectionPool.SetPooling(true);
         }
         
         [Test]
         public void TestConnectionPoolWithDispose()
         {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-            
+            if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
+            {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            }
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = "bad connection string";
             Assert.Throws<SnowflakeDbException>(() => conn1.Open());

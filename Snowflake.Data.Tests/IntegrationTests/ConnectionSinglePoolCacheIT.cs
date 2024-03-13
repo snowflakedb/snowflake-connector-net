@@ -36,6 +36,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }        
         
         [Test]
+        public void TestBasicConnectionPool()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+        }
+
+        [Test]
         public void TestConcurrentConnectionPooling()
         {
             // add test case name in connection string to make in unique for each test case
