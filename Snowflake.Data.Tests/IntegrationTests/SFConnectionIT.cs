@@ -2153,6 +2153,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+        
+        [Test]
+        [Ignore("This test requires established dev Okta SSO and credentials matching Snowflake user")]
+        public void TestNativeOktaSuccess()
+        {
+            var oktaUrl = "https://***.okta.com/";
+            var oktaUser = "***";
+            var oktaPassword = "***";
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionStringWithoutAuth + 
+                                        $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
     }
 }
 

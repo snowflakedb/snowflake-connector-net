@@ -1,6 +1,4 @@
-
-Snowflake Connector for .NET
-============================
+# Snowflake Connector for .NET
 
 [![codecov](https://codecov.io/github/snowflakedb/snowflake-connector-net/coverage.svg?branch=master)](https://codecov.io/github/snowflakedb/snowflake-connector-net?branch=master)
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
@@ -14,33 +12,31 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
-Coding conventions for the project
-==================================
+# Coding conventions for the project
 
 If you would like to contribute to this project, please get to know coding conventions we would like to follow:
 [Coding conventions](CodingConventions.md).
 
-Building the Package
-====================
+# Building the Package
 
 You can build Snowflake .NET connector applications for Window, Macintosh, and Linux operating systems. For information about supported operating system versions, refer to the [Client Versions and Support Policy](https://docs.snowflake.com/release-notes/requirements).
 
-Prerequisites
--------------
+## Prerequisites
 
 This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
 
-Steps
------
+## Steps
 
 Prerequisites: Install dotnet, git, nuget, and mono (Only on Mac)
 
 1. Check out the source code from GitHub:
+
 ```{r, engine='bash', code_block_name}
 git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
 ```
 
 2. Pull down the dependency:
+
 ```{r, engine='bash', code_block_name}
 cd snowflake-connector-net
 nuget restore
@@ -58,24 +54,24 @@ Add a parameters.json file to Snowflake.Data.Tests
 dotnet build
 ```
 
-Installing the Package
-======================
+# Installing the Package
 
-Package ID for Snowflake Connector for .Net is Snowflake.Data. 
+Package ID for Snowflake Connector for .Net is Snowflake.Data.
 
-Packages can be directly downloaded from [nuget.org](https://www.nuget.org/). 
+Packages can be directly downloaded from [nuget.org](https://www.nuget.org/).
 
 It can also be downloaded using Visual Studio UI (Tools > NuGet Package Manager > Manage NuGet Packages for Solution and search for "Snowflake.Data")
 
 Alternatively, packages can also be downloaded using Package Manager Console:
+
 ```{r, engine='bash', code_block_name}
 PM> Install-Package Snowflake.Data
 ```
 
-Testing the Connector
-=====================
+# Testing the Connector
 
 Before running tests, create a parameters.json file under Snowflake.Data.Tests\ directory. In this file, specify username, password and account info that tests will run against. Here is a sample parameters.json file
+
 ```
 {
   "testconnection": {
@@ -91,15 +87,14 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
 }
 ```
 
-Command Prompt
---------------
-The build solution file builds the connector and tests binaries. Issue the following command from the command line to run the tests. The test binary is located in the Debug directory if you built the solution file in Debug mode. 
+## Command Prompt
+
+The build solution file builds the connector and tests binaries. Issue the following command from the command line to run the tests. The test binary is located in the Debug directory if you built the solution file in Debug mode.
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
 dotnet test -f net6.0 -l "console;verbosity=normal"
 ```
-
 
 Tests can also be run under code coverage:
 
@@ -123,18 +118,15 @@ cd Snowflake.Data.Tests
 dotnet test -l "console;verbosity=normal" --filter FullyQualifiedName~IntegrationTests
 ```
 
-Visual Studio 2017
-------------------
+## Visual Studio 2017
+
 Tests can also be run under Visual Studio 2017. Open the solution file in Visual Studio 2017 and run tests using Test Explorer.
 
+# Usage
 
-Usage
-=====
+## Create a Connection
 
-Create a Connection
--------------------
-
-To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons, 
+To connect to Snowflake, specify a valid connection string composed of key-value pairs separated by semicolons,
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
 **Note**: If the keyword or value contains an equal sign (=), you must precede the equal sign with another equal sign. For example, if the keyword is "key" and the value is "value_part1=value_part2", use "key=value_part1==value_part2".
@@ -143,9 +135,9 @@ The following table lists all valid connection properties:
 <br />
 
 | Connection Property            | Required | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-|--------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ACCOUNT                        | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| APPLICATION                    | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern:  ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ACCOUNT                        | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| APPLICATION                    | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern: ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | DB                             | No       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | HOST                           | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | PASSWORD                       | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -157,22 +149,23 @@ The following table lists all valid connection properties:
 | RETRY_TIMEOUT                  | No       | Total timeout in seconds for supported endpoints of retry policy. The default is 300 seconds. The value can only be increased from the default value or set to 0 for infinite timeout                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | MAXHTTPRETRIES                 | No       | Maximum number of times to retry failed HTTP requests (default: 7). You can set `MAXHTTPRETRIES=0` to remove the retry limit, but doing so runs the risk of the .NET driver infinitely retrying failed HTTP calls.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | CLIENT_SESSION_KEEP_ALIVE      | No       | Whether to keep the current session active after a period of inactivity, or to force the user to login again. If the value is `true`, Snowflake keeps the session active indefinitely, even if there is no activity from the user. If the value is `false`, the user must log in again after four hours of inactivity. The default is `false`. Setting this value overrides the server session property for the current session.                                                                                                                                                                                                                                                                                          |
+| BROWSER_RESPONSE_TIMEOUT       | No       | Number to seconds to wait for authentication in an external browser (default: 120).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | DISABLERETRY                   | No       | Set this property to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. The default value is `false`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| AUTHENTICATOR                  | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN. | BROWSER_RESPONSE_TIMEOUT   | No       | Number to seconds to wait for authentication in an external browser (default: 120). |
+| AUTHENTICATOR                  | No       | The method of authentication. Currently supports the following values: <br /> - snowflake (default): You must also set USER and PASSWORD. <br /> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br /> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You must also set USER. <br /> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br /> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN. |
 | VALIDATE_DEFAULT_PARAMETERS    | No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default to be true.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | PRIVATE_KEY_FILE               | Depends  | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | PRIVATE_KEY_PWD                | No       | The passphrase to use for decrypting the private key, if the key is encrypted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | PRIVATE_KEY                    | Depends  | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | TOKEN                          | Depends  | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| INSECUREMODE                   | No   	   | Set to true to disable the certificate revocation list check. Default is false.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| INSECUREMODE                   | No       | Set to true to disable the certificate revocation list check. Default is false.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | USEPROXY                       | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | PROXYHOST                      | Depends  | The hostname of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | PROXYPORT                      | Depends  | The port number of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | PROXYUSER                      | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | PROXYPASSWORD                  | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | NONPROXYHOSTS                  | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| FILE_TRANSFER_MEMORY_THRESHOLD | No       | The maximum number of bytes to store in memory used in order to provide a file encryption. If encrypting/decrypting file size exeeds provided value a temporary file will be created and the work will be continued in the temporary file instead of memory. <br/> If no value provided 1MB will be used as a default value (that is 1048576 bytes). <br/> It is possible to configure any integer value bigger than zero representing maximal number of bytes to reside in memory.                                                                                                                                                                                                                                       |
-| CLIENT_CONFIG_FILE             | No       | The location of the client configuration json file. In this file you can configure easy logging feature.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 
+| FILE_TRANSFER_MEMORY_THRESHOLD | No       | The maximum number of bytes to store in memory used in order to provide a file encryption. If encrypting/decrypting file size exceeds provided value a temporary file will be created and the work will be continued in the temporary file instead of memory. <br/> If no value provided 1MB will be used as a default value (that is 1048576 bytes). <br/> It is possible to configure any integer value bigger than zero representing maximal number of bytes to reside in memory.                                                                                                                                                                                                                                      |
+| CLIENT_CONFIG_FILE             | No       | The location of the client configuration json file. In this file you can configure easy logging feature.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ALLOWUNDERSCORESINHOST         | No       | Specifies whether to allow underscores in account names. This impacts PrivateLink customers whose account names contain underscores. In this situation, you must override the default value by setting allowUnderscoresInHost to true.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 <br />
@@ -187,20 +180,20 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema";
 
     conn.Open();
-    
+
     conn.Close();
 }
 ```
 
 <a id="sample-connection-strings"></a>
 
-Beginning with version 2.0.18, the .NET connector uses Microsoft [DbConnectionStringBuilder](https://learn.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring?view=dotnet-plat-ext-6.0#remarks) to follow the .NET specification for escaping characters in connection strings. 
+Beginning with version 2.0.18, the .NET connector uses Microsoft [DbConnectionStringBuilder](https://learn.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring?view=dotnet-plat-ext-6.0#remarks) to follow the .NET specification for escaping characters in connection strings.
 
 The following examples show how you can include different types of special characters in a connection string:
 
 - To include a single quote (') character:
 
-  ``` cs
+  ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
     "user=testuser; " +
@@ -210,7 +203,7 @@ The following examples show how you can include different types of special chara
 
 - To include a double quote (") character:
 
-  ``` cs
+  ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
     "user=testuser; " +
@@ -220,7 +213,7 @@ The following examples show how you can include different types of special chara
 
 - To include a semicolon (;):
 
-  ``` cs
+  ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
     "user=testuser; " +
@@ -230,7 +223,7 @@ The following examples show how you can include different types of special chara
 
 - To include an equal sign (=):
 
-  ``` cs
+  ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
     "user=testuser; " +
@@ -240,16 +233,16 @@ The following examples show how you can include different types of special chara
 
   Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
 
-### Other Authentication Methods 
+### Other Authentication Methods
 
 If you are using a different method for authentication, see the examples below:
 
-* **Key-pair authentication**
+- **Key-pair authentication**
 
   After setting up [key-pair authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth.html), you can specify the
   private key for authentication in one of the following ways:
 
-  * Specify the file containing an unencrypted private key:
+  - Specify the file containing an unencrypted private key:
 
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
@@ -257,16 +250,16 @@ If you are using a different method for authentication, see the examples below:
         conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
 
         conn.Open();
-    
+
         conn.Close();
     }
     ```
 
     where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    - `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
 
-  * Specify the file containing an encrypted private key:
+  - Specify the file containing an encrypted private key:
 
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
@@ -274,17 +267,17 @@ If you are using a different method for authentication, see the examples below:
         conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
 
         conn.Open();
-    
+
         conn.Close();
     }
     ```
 
     where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
-    * `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
+    - `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    - `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
 
-  * Specify an unencrypted private key (read from a file):
+  - Specify an unencrypted private key (read from a file):
 
     ```cs
     using (IDbConnection conn = new SnowflakeDbConnection())
@@ -294,16 +287,16 @@ If you are using a different method for authentication, see the examples below:
         conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
         conn.Open();
-    
+
         conn.Close();
     }
     ```
 
     where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    - `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
 
-* **OAuth**
+- **OAuth**
 
   After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), set `AUTHENTICATOR=oauth` and `TOKEN` to the
   OAuth token in the connection string.
@@ -314,16 +307,16 @@ If you are using a different method for authentication, see the examples below:
       conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
 
       conn.Open();
-    
+
       conn.Close();
   }
   ```
 
   where:
 
-  * `{oauthTokenValue}` is the oauth token to use for authentication.
+  - `{oauthTokenValue}` is the oauth token to use for authentication.
 
-* **Browser-based SSO**
+- **Browser-based SSO**
 
   In the connection string, set `AUTHENTICATOR=externalbrowser`.
   Optionally, `USER` can be set. In that case only if user authenticated via external browser matches the one from configuration, authentication will complete.
@@ -341,14 +334,13 @@ If you are using a different method for authentication, see the examples below:
 
   where:
 
-  * `{login_name_for_IdP}` is your login name for your IdP.
+  - `{login_name_for_IdP}` is your login name for your IdP.
 
   You can override the default timeout after which external browser authentication is marked as failed.
   The timeout prevents the infinite hang when the user does not provide the login details, e.g. when closing the browser tab.
   To override, you can provide `BROWSER_RESPONSE_TIMEOUT` parameter (in seconds).
 
-
-* **Native SSO through Okta**
+- **Native SSO through Okta**
 
   In the connection string, set `AUTHENTICATOR` to the
   [URL of the endpoint for your Okta account](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#label-native-sso-okta),
@@ -367,8 +359,8 @@ If you are using a different method for authentication, see the examples below:
 
   where:
 
-  * `{okta_url_endpoint}` is the URL for the endpoint for your Okta account (e.g. `https://<okta_account_name>.okta.com`).
-  * `{login_name_for_IdP}` is your login name for your IdP.
+  - `{okta_url_endpoint}` is the URL for the endpoint for your Okta account (e.g. `https://<okta_account_name>.okta.com`).
+  - `{login_name_for_IdP}` is your login name for your IdP.
 
 In v2.0.4 and later releases, you can configure the driver to connect through a proxy server. The following example configures the
 driver to connect through the proxy server `myproxyserver` on port `8888`. The driver authenticates to the proxy server as the
@@ -380,25 +372,24 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema;useProxy=true;proxyHost=myproxyserver;proxyPort=8888;proxyUser=test;proxyPassword=test";
 
     conn.Open();
-    
+
     conn.Close();
 }
 ```
 
-Using Connection Pools
-----------------------
+## Using Connection Pools
 
 Instead of creating a connection each time your client application needs to access Snowflake, you can define a cache of Snowflake connections that can be reused as needed. Connection pooling usually reduces the lag time to make a connection. However, it can slow down client failover to an alternative DNS when a DNS problem occurs.
 
 The Snowflake .NET driver provides the following functions for managing connection pools.
 
-| Function | Description |
-|----------|--------------|
-| SnowflakeDbConnectionPool.ClearAllPools() | Removes all connections from the connection pool. |
-| SnowflakeDbConnection.SetMaxPoolSize(n) | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
-| SnowflakeDBConnection.SetTimeout(n) | Sets the number of seconds to keep an unresponsive connection in the connection pool.|
-| SnowflakeDbConnectionPool.GetCurrentPoolSize() | Returns the number of connections currently in the connection pool. |
-| SnowflakeDbConnectionPool.SetPooling() | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.|
+| Function                                       | Description                                                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| SnowflakeDbConnectionPool.ClearAllPools()      | Removes all connections from the connection pool.                                                       |
+| SnowflakeDbConnection.SetMaxPoolSize(n)        | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
+| SnowflakeDBConnection.SetTimeout(n)            | Sets the number of seconds to keep an unresponsive connection in the connection pool.                   |
+| SnowflakeDbConnectionPool.GetCurrentPoolSize() | Returns the number of connections currently in the connection pool.                                     |
+| SnowflakeDbConnectionPool.SetPooling()         | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.          |
 
 The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
 
@@ -442,26 +433,23 @@ public void TestConnectionPoolClean()
 }
 ```
 
-Mapping .NET and Snowflake Data Types
--------------------------------------
+## Mapping .NET and Snowflake Data Types
 
 The .NET driver supports the following mappings from .NET to Snowflake data types.
 
-
 | .NET Framekwork Data Type | Data Type in Snowflake |
-| ------------------------------ | ---------------------- |
-| `int`, `long`                 | `NUMBER(38, 0)`        |
-| `decimal`                       | `NUMBER(38, <scale>)`  |
-| `double` | `REAL` |
-| `string` | `TEXT` |
-| `bool` | `BOOLEAN` |
-| `byte` | `BINARY` |
-| `datetime` | `DATE` |
+| ------------------------- | ---------------------- |
+| `int`, `long`             | `NUMBER(38, 0)`        |
+| `decimal`                 | `NUMBER(38, <scale>)`  |
+| `double`                  | `REAL`                 |
+| `string`                  | `TEXT`                 |
+| `bool`                    | `BOOLEAN`              |
+| `byte`                    | `BINARY`               |
+| `datetime`                | `DATE`                 |
 
-Arrow data format
------------------
+## Arrow data format
 
-The .NET connector, starting with v2.1.3, supports the [Arrow data format](https://arrow.apache.org/) 
+The .NET connector, starting with v2.1.3, supports the [Arrow data format](https://arrow.apache.org/)
 as a [preview](https://docs.snowflake.com/en/release-notes/preview-features) feature for data transfers
 between Snowflake and a .NET client. The Arrow data format avoids extra
 conversions between binary and textual representations of the data. The Arrow
@@ -478,13 +466,13 @@ ALTER USER SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
 -- or at the account level
 ALTER ACCOUNT SET DOTNET_QUERY_RESULT_FORMAT = ARROW;
 ```
+
 The valid values for the parameter are:
 
 - ARROW
 - JSON (default)
 
-Run a Query and Read Data
--------------------------
+## Run a Query and Read Data
 
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
@@ -515,8 +503,7 @@ Note that because this method is not available in the generic `IDataReader` inte
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
 
-Executing a Batch of SQL Statements (Multi-Statement Support)
---------------------------------------------------------------
+## Executing a Batch of SQL Statements (Multi-Statement Support)
 
 With version 2.0.18 and later of the .NET connector, you can send
 a batch of SQL statements, separated by semicolons,
@@ -525,6 +512,7 @@ to be executed in a single request.
 **Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
 
 ---
+
 **Note**
 
 By default, Snowflake returns an error for queries issued with multiple statements to protect against SQL injection attacks. The multiple statements feature makes your system more vulnerable to SQL injections, and so it should be used carefully. You can reduce the risk by using the MULTI_STATEMENT_COUNT parameter to specify the number of statements to be executed, which makes it more difficult to inject a statement by appending to it.
@@ -541,13 +529,13 @@ ALTER SESSION SET MULTI_STATEMENT_COUNT = <0/1>;
 
 where:
 
-- **0**: Enables an unspecified number of SQL statements in a query. 
+- **0**: Enables an unspecified number of SQL statements in a query.
 
-    Using this value allows batch queries to contain any number of SQL statements without needing to specify the MULTI_STATEMENT_COUNT statement parameter. However, be aware that using this value reduces the protection against SQL injection attacks.
+  Using this value allows batch queries to contain any number of SQL statements without needing to specify the MULTI_STATEMENT_COUNT statement parameter. However, be aware that using this value reduces the protection against SQL injection attacks.
 
 - **1**: Allows one SQL statement or a specified number of statement in a query string (default).
 
-    You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included when the query string contains more than one statement. If the number of statements sent in the query string does not match the  MULTI_STATEMENT_COUNT value, the .NET driver rejects the request. You can, however, omit this parameter if you send a single statement.
+  You must include MULTI_STATEMENT_COUNT as a statement parameter to specify the number of statements included when the query string contains more than one statement. If the number of statements sent in the query string does not match the MULTI_STATEMENT_COUNT value, the .NET driver rejects the request. You can, however, omit this parameter if you send a single statement.
 
 The following example sets the MULTI_STATEMENT_COUNT session parameter to 1. Then for an individual command, it sets MULTI_STATEMENT_COUNT=3 to indicate that the query contains precisely three SQL commands. The query string, `cmd.CommandText` , then contains the three statements to execute.
 
@@ -586,10 +574,7 @@ using (DbCommand cmd = conn.CreateCommand())
 }
 ```
 
-
-
-Bind Parameter
---------------
+## Bind Parameter
 
 **Note**: Snowflake does not currently support variable binding in multi-statement SQL requests.
 
@@ -642,8 +627,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
-Bind Array Variables
---------------------
+## Bind Array Variables
 
 The sample code creates a table with a single integer column and then uses array binding to populate the table with values 0 to 70000.
 
@@ -681,14 +665,14 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
-PUT local files to stage
-------------------------
+## PUT local files to stage
 
 PUT command can be used to upload files of a local directory or a single local file to the Snowflake stages (named, internal table stage or internal user stage).
-Such staging files can be used to load data into a table. 
+Such staging files can be used to load data into a table.
 More on this topic: [File staging with PUT](https://docs.snowflake.com/en/sql-reference/sql/put).
 
 In the driver the command can be executed in a bellow way:
+
 ```cs
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
@@ -697,7 +681,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 	    conn.ConnectionString = "<connection parameters>";
 	    conn.Open();
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
-	
+
 	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
 	    Assert.IsTrue(reader.read());
@@ -709,26 +693,28 @@ using (IDbConnection conn = new SnowflakeDbConnection())
         Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
     }
 ```
-In case of a failure a SnowflakeDbException exception will be thrown with affected QueryId if possible. 
+
+In case of a failure a SnowflakeDbException exception will be thrown with affected QueryId if possible.
 If it was after the query got executed this exception will be a SnowflakeDbException containing affected QueryId.
 In case of the initial phase of execution QueryId might not be provided.
 Inner exception (if applicable) will provide some details on the failure cause and
 it will be for example: FileNotFoundException, DirectoryNotFoundException.
 
-GET stage files
----------------
+## GET stage files
+
 GET command allows to download stage directories or files to a local directory.
-It can be used in connection with named stage, table internal stage or user stage. 
+It can be used in connection with named stage, table internal stage or user stage.
 Detailed information on the command: [Downloading files with GET](https://docs.snowflake.com/en/sql-reference/sql/get).
 
 To use the command in a driver similar code can be executed in a client app:
+
 ```cs
     try
     {
 	    conn.ConnectionString = "<connection parameters>";
 	    conn.Open();
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
-	
+
 	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
 	    Assert.IsTrue(reader.read()); // True on success, False if failure
@@ -739,12 +725,12 @@ To use the command in a driver similar code can be executed in a client app:
         Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // on failure
     }
 ```
+
 In case of a failure a SnowflakeDbException will be thrown with affected QueryId if possible.
-When no technical or syntax errors occurred but the DBDataReader has no data to process it returns False 
+When no technical or syntax errors occurred but the DBDataReader has no data to process it returns False
 without throwing an exception.
 
-Close the Connection
---------------------
+## Close the Connection
 
 To close the connection, call the `Close` method of `SnowflakeDbConnection`.
 
@@ -760,8 +746,8 @@ CancellationTokenSource cancellationTokenSource  = new CancellationTokenSource()
 ((SnowflakeDbConnection)conn).CloseAsync(cancellationTokenSource.Token);
 ```
 
-Logging
--------
+## Logging
+
 The Snowflake Connector for .NET uses [log4net](http://logging.apache.org/log4net/) as the logging framework.
 
 Here is a sample app.config file that uses [log4net](http://logging.apache.org/log4net/)
@@ -792,26 +778,24 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
   </log4net>
 ```
 
-Easy logging
-------------
+## Easy logging
 
-The Easy logging feature allows you to change log level of all driver's classes and add extra file appender for logs from driver's classes in runtime.
-This feature was introduced to make tracing of driver's logs easier.
-The feature is activated by a config file which can be:
-1. provided in connection string as `CLIENT_CONFIG_FILE` parameter (eg. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
-2. provided as environmental variable called `SF_CLIENT_CONFIG_FILE` (eg. `SET SF_CLIENT_CONFIG_FILE=C:\some-path\client_config.json`)
-3. found in the driver location by searching for `sf_client_config.json` file
-4. found in the home location by searching for `sf_client_config.json` file
+The Easy Logging feature lets you change the log level for all driver classes and add an extra file appender for logs from the driver's classes at runtime. You can specify the log levels and the directory in which to save log files in a configuration file (default: `sf_client_config.json`).
 
-The search for a config file is executed in the order listed above.
+You typically change log levels only when debugging your application.
 
-To minimize the number of searches for a configuration file it is executed only:
-- for the first connection
-- for the first connection with `CLIENT_CONFIG_FILE` parameter.
+**Note**
+This logging configuration file features support only the following log levels:
 
-On Unix-style systems, client configuration file permissions are expected to have a limitation that only the file owner can modify the files (e.g. 600, 644).
+- OFF
+- ERROR
+- WARNING
+- INFO
+- DEBUG
+- TRACE
 
-The example of the configuration file is:
+This configuration file uses JSON to define the `log_level` and `log_path` logging parameters, as follows:
+
 ```json
 {
   "common": {
@@ -820,19 +804,37 @@ The example of the configuration file is:
   }
 }
 ```
-Available log levels are: `OFF`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`. The log levels are case insensitive.
 
-The extra logs land into `dotnet` subfolder of given directory `C:\some-path\some-directory` so in this example: `C:\some-path\some-directory\dotnet`.
+where:
 
-If the client uses log4net library for logging in their application enabling easy logging affect the log level in their logs as well.
+- `log_level` is the desired logging level.
+- `log_path` is the location to store the log files. The driver automatically creates a `dotnet` subdirectory in the specified `log_path`. For example, if you set log_path to `c:\logs`, the drivers creates the `c:\logs\dotnet` directory and stores the logs there.
 
+The driver looks for the location of the configuration file in the following order:
 
-Getting the code coverage
-----------------
+- `CLIENT_CONFIG_FILE` connection parameter, containing the full path to the configuration file (e.g. `"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_CONFIG_FILE=C:\\some-path\\client_config.json;"`)
+- `SF_CLIENT_CONFIG_FILE` environment variable, containing the full path to the configuration file.
+- .NET driver/application directory, where the file must be named `sf_client_config.json`.
+- User’s home directory, where the file must be named `sf_client_config.json`.
+
+**Note**
+To enhance security, the driver no longer searches a temporary directory for easy logging configurations. Additionally, the driver now requires the logging configuration file on Unix-style systems to limit file permissions to allow only the file owner to modify the files (such as `chmod 0600` or `chmod 0644`).
+
+To minimize the number of searches for a configuration file, the driver reads the file only for:
+
+- The first connection.
+- The first connection with `CLIENT_CONFIG_FILE` parameter.
+
+The extra logs are stored in a `dotnet` subfolder of the specified directory, such as `C:\some-path\some-directory\dotnet`.
+
+If a client uses the `log4net` library for application logging, enabling easy logging affects the log level in those logs as well.
+
+## Getting the code coverage
 
 1. Go to .NET project directory
 
 2. Clean the directory
+
 ```
 dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
 ```
@@ -840,21 +842,25 @@ dotnet clean snowflake-connector-net.sln && dotnet nuget locals all --clear
 3. Create parameters.json containing connection info for AWS, AZURE, or GCP account and place inside the Snowflake.Data.Tests folder
 
 4. Build the project for .NET6
+
 ```
 dotnet build snowflake-connector-net.sln /p:DebugType=Full
 ```
 
 5. Run dotnet-cover on the .NET6 build
+
 ```
 dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_AWS_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 6. Build the project for .NET Framework
+
 ```
 msbuild snowflake-connector-net.sln -p:Configuration=Release
 ```
 
 7. Run dotnet-cover on the .NET Framework build
+
 ```
 dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_AWS_coverage.xml --output-format cobertura --settings coverage.config
 ```
@@ -867,12 +873,14 @@ For Azure:<br />
 
 3. Create parameters.json containing connection info for AZURE account and place inside the Snowflake.Data.Tests folder
 
-5. Run dotnet-cover on the .NET6 build
+4. Run dotnet-cover on the .NET6 build
+
 ```
 dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_AZURE_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 7. Run dotnet-cover on the .NET Framework build
+
 ```
 dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_AZURE_coverage.xml --output-format cobertura --settings coverage.config
 ```
@@ -882,42 +890,45 @@ For GCP:<br />
 
 3. Create parameters.json containing connection info for GCP account and place inside the Snowflake.Data.Tests folder
 
-5. Run dotnet-cover on the .NET6 build
+4. Run dotnet-cover on the .NET6 build
+
 ```
 dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_GCP_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
 7. Run dotnet-cover on the .NET Framework build
+
 ```
 dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;verbosity=normal" --output net472_GCP_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
-Notice
-----------------
-1. CVE-2019-0820 -  
-This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used: 
+## Notice
 
-    * v1.0 branch: 1.0 - 1.0.16 (exclusive)
-    * v1.1 branch: 1.1 - 1.1.13 (exclusive)
-    * v2.1 branch: 2.1 - 2.1.11 (exclusive)
-    * v2.2 branch: 2.2 - 2.2.5  (exclusive)
+1.  CVE-2019-0820 -  
+    This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used:
 
-	In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability. 
+        * v1.0 branch: 1.0 - 1.0.16 (exclusive)
+        * v1.1 branch: 1.1 - 1.1.13 (exclusive)
+        * v2.1 branch: 2.1 - 2.1.11 (exclusive)
+        * v2.2 branch: 2.2 - 2.2.5  (exclusive)
 
-2. Logging -  
-	Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+        In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability.
 
-	Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
+2.  Logging -  
+    Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
 
-	If you are using the .NET driver please take the following action:
-    * Upgrade to the latest version(v1.1.0) as soon as possible.
-    * Remove all “Debugging” options for any existing .NET drivers in use.
-    * Delete any logs collected thus far and make sure that all copies are deleted. 
-    * If you cannot upgrade for any reason, please ensure all debugging is disabled
-    * If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens. 
+    Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
 
-3. Global HTTP connection settings -  
-	Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
-	Starting with v2.0.0, the driver will set these locally.  
-	
-  Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
+    If you are using the .NET driver please take the following action:
+
+    - Upgrade to the latest version(v1.1.0) as soon as possible.
+    - Remove all “Debugging” options for any existing .NET drivers in use.
+    - Delete any logs collected thus far and make sure that all copies are deleted.
+    - If you cannot upgrade for any reason, please ensure all debugging is disabled
+    - If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens.
+
+3.  Global HTTP connection settings -  
+    Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
+    Starting with v2.0.0, the driver will set these locally.
+
+Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
