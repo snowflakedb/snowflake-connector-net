@@ -117,8 +117,13 @@ namespace Snowflake.Data.Core
                 SFSessionProperty.PRIVATE_KEY_PWD,
                 SFSessionProperty.PROXYPASSWORD,
             };
-        
-        private const string AccountRegexString = "^\\w[\\w.-]+\\w$";
+
+        private static readonly List<string> s_accountRegexStrings = new List<string>
+        {
+            "^\\w",
+            "\\w$",
+            "^[\\w.-]+$"
+        };
 
         public override bool Equals(object obj)
         {
@@ -292,8 +297,7 @@ namespace Snowflake.Data.Core
             var account = properties[SFSessionProperty.ACCOUNT];
             if (string.IsNullOrEmpty(account))
                 return;
-            var match = Regex.Match(account, AccountRegexString, RegexOptions.IgnoreCase);
-            if (match.Success)
+            if (IsAccountRegexMatched(account))
                 return;
             logger.Error($"Invalid account {account}");
             throw new SnowflakeDbException(
@@ -302,6 +306,11 @@ namespace Snowflake.Data.Core
                 account,
                 SFSessionProperty.ACCOUNT);
         }
+
+        private static bool IsAccountRegexMatched(string account) =>
+            s_accountRegexStrings
+                .Select(regex => Regex.Match(account, regex, RegexOptions.IgnoreCase))
+                .All(match => match.Success);
 
         private static void checkSessionProperties(SFSessionProperties properties)
         {

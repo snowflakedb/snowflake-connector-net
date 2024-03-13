@@ -27,11 +27,35 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("a", "a", "a.snowflakecomputing.com")]
+        [TestCase("ab", "ab", "ab.snowflakecomputing.com")]
+        [TestCase("a.b", "a", "a.b.snowflakecomputing.com")]
+        [TestCase("a-b", "a-b", "a-b.snowflakecomputing.com")]
+        [TestCase("a_b", "a_b", "a-b.snowflakecomputing.com")]
+        [TestCase("abc", "abc", "abc.snowflakecomputing.com")]
+        [TestCase("xy12345.us-east-2.aws", "xy12345", "xy12345.us-east-2.aws.snowflakecomputing.com")]
+        public void TestValidateCorrectAccountNames(string accountName, string expectedAccountName, string expectedHost)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
+            
+            // act
+            var properties = SFSessionProperties.parseConnectionString(connectionString, null);
+            
+            // assert
+            Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
+            Assert.AreEqual(expectedHost, properties[SFSessionProperty.HOST]);
+        }
+        
+        [Test]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
         [TestCase("ACCOUNT=complicated.long.testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value complicated.long.testaccount? for ACCOUNT")]
         [TestCase("ACCOUNT=?testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value ?testaccount for ACCOUNT")]
+        [TestCase("ACCOUNT=.testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value .testaccount for ACCOUNT")]
+        [TestCase("ACCOUNT=testaccount.;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount. for ACCOUNT")]
+        [TestCase("ACCOUNT=test%account;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value test%account for ACCOUNT")]
         public void TestThatItFailsForWrongConnectionParameter(string connectionString, string expectedErrorMessagePart)
         {
             // act
