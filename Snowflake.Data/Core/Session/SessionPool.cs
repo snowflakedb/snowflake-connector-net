@@ -29,6 +29,7 @@ namespace Snowflake.Data.Core.Session
         private readonly ICounter _busySessionsCounter;
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
         private readonly ConnectionPoolConfig _poolConfig;
+        private bool _configOverriden = false;
         
         private SessionPool()
         {
@@ -120,6 +121,7 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
+            WarnAboutOverridenConfig();
             return sessionOrCreateToken.Session ?? NewSession(connStr, password, sessionOrCreateToken.SessionCreationToken);
         }
         
@@ -133,7 +135,16 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
+            WarnAboutOverridenConfig();
             return sessionOrCreateToken.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateToken.SessionCreationToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        private void WarnAboutOverridenConfig()
+        {
+            if (_configOverriden && GetPooling() && IsMultiplePoolsVersion())
+            {
+                s_logger.Warn("Providing a connection from a pool for which technical configuration has been overriden by the user");
+            }
         }
 
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
@@ -176,7 +187,7 @@ namespace Snowflake.Data.Core.Session
 
         private bool IsAllowedToCreateNewSession()
         {
-            if (!_waitingForIdleSessionQueue.IsWaitingEnabled())
+            if (!IsMultiplePoolsVersion())
             {
                 s_logger.Debug($"SessionPool - creating of new sessions is not limited");
                 return true;
@@ -190,6 +201,8 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug($"SessionPool - not allowed to create a session, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}");
             return false;
         }
+
+        private bool IsMultiplePoolsVersion() => _waitingForIdleSessionQueue.IsWaitingEnabled();
         
         private SFSession WaitForSession(string connStr)
         {
@@ -415,6 +428,7 @@ namespace Snowflake.Data.Core.Session
         public void SetMaxPoolSize(int size)
         {
             _poolConfig.MaxPoolSize = size;
+            _configOverriden = true;
         }
 
         public int GetMaxPoolSize()
@@ -426,6 +440,7 @@ namespace Snowflake.Data.Core.Session
         {
             var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
             _poolConfig.ExpirationTimeout = timeout;
+            _configOverriden = true;
         }
 
         public long GetTimeout()
@@ -448,6 +463,7 @@ namespace Snowflake.Data.Core.Session
             {
                 ClearSessions();
             }
+            _configOverriden = true;
             return true;
         }
 
