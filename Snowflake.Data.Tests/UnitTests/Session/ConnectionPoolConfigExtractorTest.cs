@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -240,7 +238,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString)
         {
             var properties = SFSessionProperties.parseConnectionString(connectionString, null);
-            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties, TestDataGenarator.NextBool());
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
             return extractedProperties.BuildConnectionPoolConfig();
         }
         

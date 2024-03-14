@@ -57,6 +57,7 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
         {
+            s_logger.Debug($"Creating a pool identified by connection string: {connectionString}");
             var poolConfig = ExtractConfig(connectionString, password);
             return new SessionPool(connectionString, password, poolConfig);
         }
@@ -101,7 +102,7 @@ namespace Snowflake.Data.Core.Session
             try
             {
                 var properties = SFSessionProperties.parseConnectionString(connectionString, password);
-                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties, false);
+                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return extractedProperties.BuildConnectionPoolConfig();
             }
             catch (SnowflakeDbException exception)
@@ -353,9 +354,16 @@ namespace Snowflake.Data.Core.Session
 
         internal bool AddSession(SFSession session)
         {
-            s_logger.Debug("SessionPool::AddSession");
             if (!GetPooling())
                 return false;
+            if (IsMultiplePoolsVersion())
+            {
+                s_logger.Debug($"SessionPool::AddSession - returning session to pool identified by connection string: {ConnectionString}");
+            }
+            else
+            {
+                s_logger.Debug("SessionPool::AddSession");
+            }
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
             {
@@ -389,7 +397,14 @@ namespace Snowflake.Data.Core.Session
 
         internal void ClearSessions()
         {
-            s_logger.Debug("SessionPool::ClearSessions");
+            if (IsMultiplePoolsVersion())
+            {
+                s_logger.Debug($"SessionPool::ClearSessions for connection string: {ConnectionString}");
+            }
+            else
+            {
+                s_logger.Debug("SessionPool::ClearSessions");       
+            }
             lock (_sessionPoolLock)
             {
                 _busySessionsCounter.Reset();

@@ -41,21 +41,21 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
 
-        public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties, bool printWarnings)
+        public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
             var extractedProperties = s_propertiesExtractor.ExtractProperties(properties);
-            extractedProperties.CheckPropertiesAreValid(printWarnings);
+            extractedProperties.CheckPropertiesAreValid();
             return extractedProperties;
         }
         
-        private void CheckPropertiesAreValid(bool printWarnings)
+        private void CheckPropertiesAreValid()
         {
             try
             {
-                ValidateConnectionTimeout(printWarnings);
-                ValidateRetryTimeout(printWarnings);
-                ShortenConnectionTimeoutByRetryTimeout(printWarnings);
-                ValidateHttpRetries(printWarnings);
+                ValidateConnectionTimeout();
+                ValidateRetryTimeout();
+                ShortenConnectionTimeoutByRetryTimeout();
+                ValidateHttpRetries();
                 ValidateMinMaxPoolSize();
                 ValidateWaitingForSessionIdleTimeout();
             }
@@ -69,71 +69,59 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private void ValidateConnectionTimeout(bool printWarnings)
+        private void ValidateConnectionTimeout()
         {
             if (TimeoutHelper.IsZeroLength(connectionTimeout))
             {
-                if (printWarnings)
-                    s_logger.Warn($"Connection timeout provided is 0. Timeout will be infinite");
+                s_logger.Warn("Connection timeout provided is 0. Timeout will be infinite");
                 connectionTimeout = TimeoutHelper.Infinity();
             }
-            else if (TimeoutHelper.IsInfinite(connectionTimeout) && printWarnings)
+            else if (TimeoutHelper.IsInfinite(connectionTimeout))
             {
-                s_logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
+                s_logger.Warn("Connection timeout provided is negative. Timeout will be infinite.");
             }
-            if (!TimeoutHelper.IsInfinite(connectionTimeout) && connectionTimeout < DefaultRetryTimeout && printWarnings)
+            if (!TimeoutHelper.IsInfinite(connectionTimeout) && connectionTimeout < DefaultRetryTimeout)
             {
-                s_logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
-                            $" {DefaultRetryTimeout}");
+                s_logger.Warn($"Connection timeout provided is less than recommended minimum value of {DefaultRetryTimeout}");
             }
         }
 
-        private void ValidateRetryTimeout(bool printWarnings)
+        private void ValidateRetryTimeout()
         {
             if (retryTimeout.TotalMilliseconds > 0 && retryTimeout < DefaultRetryTimeout)
             {
-                if (printWarnings)
-                    s_logger.Warn($"Max retry timeout provided is less than the allowed minimum value of" +
-                                $" {DefaultRetryTimeout}");
-
+                s_logger.Warn($"Max retry timeout provided is less than the allowed minimum value of {DefaultRetryTimeout}");
                 retryTimeout = DefaultRetryTimeout;
             }
             else if (TimeoutHelper.IsZeroLength(retryTimeout))
             {
-                if (printWarnings)
-                    s_logger.Warn($"Max retry timeout provided is 0. Timeout will be infinite");
+                s_logger.Warn($"Max retry timeout provided is 0. Timeout will be infinite");
                 retryTimeout = TimeoutHelper.Infinity();
             }
             else if (TimeoutHelper.IsInfinite(retryTimeout))
             {
-                if (printWarnings)
-                    s_logger.Warn($"Max retry timeout provided is negative. Timeout will be infinite");
+                s_logger.Warn($"Max retry timeout provided is negative. Timeout will be infinite");
             }
         }
 
-        private void ShortenConnectionTimeoutByRetryTimeout(bool printWarnings)
+        private void ShortenConnectionTimeoutByRetryTimeout()
         {
             if (!TimeoutHelper.IsInfinite(retryTimeout) && retryTimeout < connectionTimeout)
             {
-                if (printWarnings)
-                    s_logger.Warn($"Connection timeout greater than retry timeout. Setting connection time same as retry timeout");
+                s_logger.Warn($"Connection timeout greater than retry timeout. Setting connection time same as retry timeout");
                 connectionTimeout = retryTimeout;
             }
         }
 
-        private void ValidateHttpRetries(bool printWarnings)
+        private void ValidateHttpRetries()
         {
             if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
             {
-                if (printWarnings)
-                {
-                    s_logger.Warn($"Max retry count provided is less than the allowed minimum value of" +
-                                $" {DefaultMaxHttpRetries}");
-                }
+                    s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
                 maxHttpRetries = DefaultMaxHttpRetries;
             }
-            else if (maxHttpRetries == 0 && printWarnings)
+            else if (maxHttpRetries == 0)
             {
                 s_logger.Warn($"Max retry count provided is 0. Retry count will be infinite");
             }

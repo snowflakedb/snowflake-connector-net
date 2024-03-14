@@ -152,7 +152,7 @@ namespace Snowflake.Data.Core
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties, true); 
+                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties); 
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;

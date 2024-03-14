@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // when
-            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties, true);
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // then
             Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
