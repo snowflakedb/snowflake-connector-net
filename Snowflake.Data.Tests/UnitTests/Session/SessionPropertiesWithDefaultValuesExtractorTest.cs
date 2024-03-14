@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = SFSessionProperties.parseConnectionString($"account=test;user=test;password=test", null);
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
-            var defaultValue = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
             var value = extractor.ExtractPropertyWithDefaultValue(
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
-            var defaultValue = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
             var value = extractor.ExtractPropertyWithDefaultValue(
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
-            var defaultValue = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
             var value = extractor.ExtractPropertyWithDefaultValue(
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;connection_timeout=15X", null);
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
-            var defaultValue = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
             var value = extractor.ExtractPropertyWithDefaultValue(
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
-            var defaultValue = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
             var thrown = Assert.Throws<Exception>(() => 
@@ -169,5 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain("Invalid value of parameter CONNECTION_TIMEOUT"));
         }
 
+        private int GetDefaultIntSessionProperty(SFSessionProperty property) =>
+            int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
     }
 }
