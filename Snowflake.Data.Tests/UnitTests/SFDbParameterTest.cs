@@ -7,7 +7,9 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
+    using System;
     using System.Data;
+    using System.Text;
 
     [TestFixture]
     class SFDbParameterTest
@@ -124,6 +126,76 @@ namespace Snowflake.Data.Tests
 
             _parameter.ResetDbType();
             Assert.AreEqual(SFDataType.None, _parameter.SFDataType);
+        }
+
+        [Test]
+        public void TestDbParameterExplicitAssignment([Values] DbType expectedDbType)
+        {
+            _parameter = new SnowflakeDbParameter();
+
+            switch (expectedDbType)
+            {
+                case DbType.SByte:
+                    _parameter.Value = new sbyte();
+                    break;
+                case DbType.Byte:
+                    _parameter.Value = new byte();
+                    break;
+                case DbType.Int16:
+                    _parameter.Value = new short();
+                    break;
+                case DbType.Int32:
+                    _parameter.Value = new int();
+                    break;
+                case DbType.Int64:
+                    _parameter.Value = new long();
+                    break;
+                case DbType.UInt16:
+                    _parameter.Value = new ushort();
+                    break;
+                case DbType.UInt32:
+                    _parameter.Value = new uint();
+                    break;
+                case DbType.UInt64:
+                    _parameter.Value = new ulong();
+                    break;
+                case DbType.Decimal:
+                    _parameter.Value = new decimal();
+                    break;
+                case DbType.Boolean:
+                    _parameter.Value = true;
+                    break;
+                case DbType.Single:
+                    _parameter.Value = new float();
+                    break;
+                case DbType.Double:
+                    _parameter.Value = new double();
+                    break;
+                case DbType.Guid:
+                    _parameter.Value = new Guid();
+                    break;
+                case DbType.String:
+                    _parameter.Value = "thisIsAString";
+                    break;
+                case DbType.DateTime:
+                    _parameter.Value = DateTime.Now;
+                    break;
+                case DbType.DateTimeOffset:
+                    _parameter.Value = DateTimeOffset.Now;
+                    break;
+                case DbType.Binary:
+                    _parameter.Value = Encoding.UTF8.GetBytes("BinaryData");
+                    break;
+                case DbType.Object:
+                    _parameter.Value = new object();
+                    break;
+                default:
+                    // Not supported
+                    expectedDbType = DbType.AnsiString;
+                    break;
+            }
+
+            Assert.AreEqual(expectedDbType, _parameter.DbType);
         }
     }
 }

@@ -46,7 +46,7 @@ namespace Snowflake.Data.Client
                 }
 
                 var type = Value.GetType();
-                if (type.IsArray)
+                if (type.IsArray && type != typeof(byte[]))
                 {
                     return SFDataConverter.TypeToDbTypeMap[type.GetElementType()];
                 }
