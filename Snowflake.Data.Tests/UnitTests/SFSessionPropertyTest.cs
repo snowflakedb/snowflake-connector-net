@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // act
-            var properties = SFSessionProperties.parseConnectionString(
+            var properties = SFSessionProperties.ParseConnectionString(
                 testcase.ConnectionString,
                 testcase.SecurePassword);
 
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
             
             // act
-            var properties = SFSessionProperties.parseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
             
             // assert
             Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert
@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert
@@ -113,6 +113,40 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.ACCOUNT, defAccount },
                     { SFSessionProperty.USER, defUser },
                     { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+
+            var warehouseWithSpaces = "\"warehouse  test\"";
+            var dbWithQuotes = "\"testdb\"";
+            var testCaseWithWrappedValuesWithQuotesAndAllowSpaces = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};WAREHOUSE={warehouseWithSpaces};DB={dbWithQuotes}",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.WAREHOUSE, warehouseWithSpaces },
+                    { SFSessionProperty.DB, dbWithQuotes },
                     { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
                     { SFSessionProperty.SCHEME, defScheme },
                     { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
@@ -438,6 +472,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new TestCase[]
             {
                 simpleTestCase,
+                testCaseWithWrappedValuesWithQuotesAndAllowSpaces,
                 testCaseWithBrowserResponseTimeout,
                 testCaseWithProxySettings,
                 testCaseThatDefaultForUseProxyIsFalse,
