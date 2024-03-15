@@ -324,7 +324,6 @@ namespace Snowflake.Data.Client
                 logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
-
         }
 
         /// <summary>
