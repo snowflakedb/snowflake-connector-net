@@ -30,7 +30,7 @@ namespace Snowflake.Data.Client
         private const int AsyncNoDataMaxRetry = 24;
         private readonly int[] _asyncRetryPattern = { 1, 1, 2, 3, 4, 8, 10 };
 
-        private static readonly Regex UuidRegex = new Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
+        private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
         public SnowflakeDbCommand()
         {
