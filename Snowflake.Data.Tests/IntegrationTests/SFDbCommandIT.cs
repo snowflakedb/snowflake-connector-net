@@ -1605,6 +1605,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestAsyncExecQueryPutGetThrowsNotImplemented()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    cmd.CommandText = $"PUT file://non_existent_file.csv @~;";
+                    //cmd.CommandText = "GET @~ file://C:\\tmp\\;";
+
+                    // Act
+                    var thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
         public void TestGetStatusOfInvalidQueryId()
         {
             string fakeQueryId = "fakeQueryId";
