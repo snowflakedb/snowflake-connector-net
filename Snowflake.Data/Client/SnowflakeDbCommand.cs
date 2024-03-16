@@ -283,6 +283,7 @@ namespace Snowflake.Data.Client
 
         /// <summary>
         /// Execute a query in async mode.
+        /// Async mode means the server will respond immediately with the query ID and execute the query asynchronously
         /// </summary>
         /// <returns>The query id.</returns>
         public string ExecuteInAsyncMode()
@@ -294,6 +295,7 @@ namespace Snowflake.Data.Client
 
         /// <summary>
         /// Executes an asynchronous query in async mode.
+        /// Async mode means the server will respond immediately with the query ID and execute the query asynchronously
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns>The query id.</returns>
