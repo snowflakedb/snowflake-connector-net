@@ -168,9 +168,11 @@ namespace Snowflake.Data.Tests.UnitTests
             
             var warehouseWithSpaces = "\"warehouse  test\"";
             var dbWithQuotes = "\"testdb\"";
+            var schemaWithQuotes = "\"quotedSchema\"";
+            var roleWithQuotes = "\"userrole\"";
             var testCaseWithWrappedValuesWithQuotesAndAllowSpaces = new TestCase()
             {
-                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};WAREHOUSE={warehouseWithSpaces};DB={dbWithQuotes}",
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};WAREHOUSE={warehouseWithSpaces};DB={dbWithQuotes};SCHEMA={schemaWithQuotes};ROLE={roleWithQuotes}",
                 ExpectedProperties = new SFSessionProperties()
                 {
                     { SFSessionProperty.ACCOUNT, defAccount },
@@ -178,6 +180,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.HOST, defHost },
                     { SFSessionProperty.WAREHOUSE, warehouseWithSpaces },
                     { SFSessionProperty.DB, dbWithQuotes },
+                    { SFSessionProperty.SCHEMA, schemaWithQuotes },
+                    { SFSessionProperty.ROLE, roleWithQuotes },
                     { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
                     { SFSessionProperty.SCHEME, defScheme },
                     { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
