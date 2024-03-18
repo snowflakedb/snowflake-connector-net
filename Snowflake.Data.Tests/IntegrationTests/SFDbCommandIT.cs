@@ -1616,10 +1616,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Arrange
                     cmd.CommandText = $"PUT file://non_existent_file.csv @~;";
-                    //cmd.CommandText = "GET @~ file://C:\\tmp\\;";
 
                     // Act
                     var thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+
+                    // Arrange
+                    cmd.CommandText = "GET @~ file://C:\\tmp\\;";
+
+                    // Act
+                    thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
 
                     // Assert
                     Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
