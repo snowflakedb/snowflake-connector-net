@@ -425,7 +425,7 @@ namespace Snowflake.Data.Client
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                status = GetQueryStatus(queryId);
+                status = await GetQueryStatusAsync(queryId, cancellationToken);
 
                 if (!QueryStatuses.IsStillRunning(status))
                 {
