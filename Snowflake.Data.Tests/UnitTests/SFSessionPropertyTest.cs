@@ -11,7 +11,6 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using System;
 
     class SFSessionPropertyTest
     {
