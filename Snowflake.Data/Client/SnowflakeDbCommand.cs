@@ -353,29 +353,35 @@ namespace Snowflake.Data.Client
         }
 
         /// <summary>
-        /// Gets the query results based on query ID.
+        /// Checks query status until it is done executing.
         /// </summary>
         /// <param name="queryId"></param>
-        /// <returns>The query results.</returns>
-        public DbDataReader GetResultsFromQueryId(string queryId)
+        /// <param name="cancellationToken"></param>
+        /// <param name="isAsync"></param>
+        internal async Task RetryUntilQueryResultIsAvailable(string queryId, CancellationToken cancellationToken, bool isAsync)
         {
-            logger.Debug($"GetResultsFromQueryId");
-
             int retryPatternPos = 0;
             int noDataCounter = 0;
 
             QueryStatus status;
             while (true)
             {
-                status = GetQueryStatus(queryId);
+                status = isAsync ? await GetQueryStatusAsync(queryId, cancellationToken) : GetQueryStatus(queryId);
 
                 if (!QueryStatuses.IsStillRunning(status))
                 {
-                    break;
+                    return;
                 }
 
                 // Timeout based on query status retry rules
-                Thread.Sleep(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]));
+                if (isAsync)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]));
+                }
 
                 // If no data, increment the no data counter
                 if (status == QueryStatus.NO_DATA)
@@ -396,6 +402,19 @@ namespace Snowflake.Data.Client
                     retryPatternPos++;
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the query results based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query results.</returns>
+        public DbDataReader GetResultsFromQueryId(string queryId)
+        {
+            logger.Debug($"GetResultsFromQueryId");
+
+            Task task = RetryUntilQueryResultIsAvailable(queryId, CancellationToken.None, false);
+            task.Wait();
 
             connection.SfSession.AsyncQueries.Remove(queryId);
             SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
@@ -413,47 +432,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"GetResultsFromQueryIdAsync");
 
-            int retryPatternPos = 0;
-            int noDataCounter = 0;
-
-            QueryStatus status;
-            while (true)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    logger.Debug("Cancellation requested for getting results from query id");
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                status = await GetQueryStatusAsync(queryId, cancellationToken);
-
-                if (!QueryStatuses.IsStillRunning(status))
-                {
-                    break;
-                }
-
-                // Timeout based on query status retry rules
-                await Task.Delay(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
-
-                // If no data, increment the no data counter
-                if (status == QueryStatus.NO_DATA)
-                {
-                    noDataCounter++;
-
-                    // Check if retry for no data is exceeded
-                    if (noDataCounter > AsyncNoDataMaxRetry)
-                    {
-                        var errorMessage = "Max retry for no data is reached";
-                        logger.Error(errorMessage);
-                        throw new Exception(errorMessage);
-                    }
-                }
-
-                if (retryPatternPos < _asyncRetryPattern.Length - 1)
-                {
-                    retryPatternPos++;
-                }
-            }
+            await RetryUntilQueryResultIsAvailable(queryId, cancellationToken, true);
 
             connection.SfSession.AsyncQueries.Remove(queryId);
             SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);

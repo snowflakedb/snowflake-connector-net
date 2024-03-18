@@ -1717,10 +1717,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Act
-                    var thrown = Assert.Throws<Exception>(() => cmd.GetResultsFromQueryId(fakeQueryId));
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
                 conn.Close();
@@ -1763,10 +1763,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Act
-                    var thrown = Assert.Throws<Exception>(() => cmd.GetResultsFromQueryId(unknownQueryId));
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
                 }
 
                 conn.Close();
