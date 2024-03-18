@@ -313,6 +313,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestAsyncExecCancelWhileGettingResultsAsync()
+        {
+            string queryId;
+            Task task;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                task = conn.OpenAsync(CancellationToken.None);
+                task.Wait();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    CancellationTokenSource cancelToken = new CancellationTokenSource();
+                    cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
+
+                    // Act
+                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
+                    queryTask.Wait();
+                    queryId = queryTask.Result;
+
+                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
+                    statusTask.Wait();
+                    var queryStatus = statusTask.Result;
+
+                    // Assert
+                    Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
+
+                    // Act
+                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token);
+                    cancelToken.Cancel();
+                    var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
+
+                    // Assert
+                    Assert.IsTrue(thrown.InnerException.Message.Contains("A task was canceled"));
+                }
+
+                task = conn.CloseAsync(CancellationToken.None);
+                task.Wait();
+            }
+        }
+
+        [Test]
         public void TestStillRunningAsyncQueriesAsync()
         {
             string queryIdOne, queryIdTwo;
