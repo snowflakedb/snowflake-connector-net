@@ -283,9 +283,9 @@ namespace Snowflake.Data.Core
                         {
                             if (tokens.Length == 2)
                             {
-                                var p = (SFSessionProperty)Enum.Parse(
+                                var sessionProperty = (SFSessionProperty)Enum.Parse(
                                     typeof(SFSessionProperty), propertyName);
-                                properties[p]= tokens[1];
+                                properties[sessionProperty]= tokens[1];
                             }
                         
                             break;
@@ -293,14 +293,9 @@ namespace Snowflake.Data.Core
                         case "USER":
                         case "PASSWORD":
                         {
-                            
-                            var p = (SFSessionProperty)Enum.Parse(
+                            var sessionProperty = (SFSessionProperty)Enum.Parse(
                                 typeof(SFSessionProperty), propertyName);
-                            if (!properties.ContainsKey(p))
-                            {
-                                properties.Add(p, "");
-                            }
-
+                            properties.TryAdd(sessionProperty, string.Empty);
                             break;
                         }
                     }
