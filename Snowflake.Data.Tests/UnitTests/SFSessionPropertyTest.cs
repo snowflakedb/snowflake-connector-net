@@ -11,6 +11,8 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+    using System;
+
     class SFSessionPropertyTest
     {
 
@@ -135,6 +137,36 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
+            var testCaseWithEmptyUserAndPassword = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER=;PASSWORD=",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, string.Empty },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, string.Empty },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
+                }
+            };
+            
             var warehouseWithSpaces = "\"warehouse  test\"";
             var dbWithQuotes = "\"testdb\"";
             var testCaseWithWrappedValuesWithQuotesAndAllowSpaces = new TestCase()
@@ -472,6 +504,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new TestCase[]
             {
                 simpleTestCase,
+                testCaseWithEmptyUserAndPassword,
                 testCaseWithWrappedValuesWithQuotesAndAllowSpaces,
                 testCaseWithBrowserResponseTimeout,
                 testCaseWithProxySettings,

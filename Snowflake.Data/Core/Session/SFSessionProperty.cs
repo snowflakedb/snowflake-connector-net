@@ -293,9 +293,14 @@ namespace Snowflake.Data.Core
                         case "USER":
                         case "PASSWORD":
                         {
+                            
                             var sessionProperty = (SFSessionProperty)Enum.Parse(
                                 typeof(SFSessionProperty), propertyName);
-                            properties.TryAdd(sessionProperty, string.Empty);
+                            if (!properties.ContainsKey(sessionProperty))
+                            {
+                                properties.Add(sessionProperty, "");
+                            }
+
                             break;
                         }
                     }
