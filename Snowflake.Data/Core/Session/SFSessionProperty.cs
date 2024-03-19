@@ -196,9 +196,9 @@ namespace Snowflake.Data.Core
                 }
             }
             
-            ProcessPropertySpecialCases(connectionString, properties);
+            UpdatePropertiesForSpecialCases(properties, connectionString);
 
-            bool useProxy = false;
+            var useProxy = false;
             if (properties.ContainsKey(SFSessionProperty.USEPROXY))
             {
                 try
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Core
             return properties;
         }
 
-        private static void ProcessPropertySpecialCases(string connectionString, SFSessionProperties properties)
+        private static void UpdatePropertiesForSpecialCases(SFSessionProperties properties, string connectionString)
         {
             var propertyEntry = connectionString.Split(';');
             foreach(var keyVal in propertyEntry)
