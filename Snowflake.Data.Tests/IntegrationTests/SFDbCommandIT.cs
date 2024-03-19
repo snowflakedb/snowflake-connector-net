@@ -177,17 +177,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestAsyncExecQueryAsync()
+        public async Task TestAsyncExecQueryAsync()
         {
             string queryId;
             var expectedWaitTime = 5;
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
@@ -195,25 +193,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
 
                     // Act
-                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryId = queryTask.Result;
-
-                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    var queryStatus = statusTask.Result;
+                    queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
                     Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
 
                     // Act
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None);
-                    readerTask.Wait();
-                    DbDataReader reader = readerTask.Result;
-
-                    statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    queryStatus = statusTask.Result;
+                    DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                    queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
                     Assert.IsTrue(reader.Read());
@@ -221,8 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(QueryStatus.SUCCESS, queryStatus);
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
