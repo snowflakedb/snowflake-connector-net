@@ -328,59 +328,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestStillRunningAsyncQueriesAsync()
-        {
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({3}, \'SECONDS\');";
-
-                    // Act
-                    var queryIdOne = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
-
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({10}, \'SECONDS\');";
-
-                    // Act
-                    var queryIdTwo = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
-                    var stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
-                    var queryStatus = await cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
-
-                    // Assert
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
-                    Assert.IsTrue(stillRunning);
-
-                    // Act
-                    await cmd.GetResultsFromQueryIdAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
-                    queryStatus = await cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
-                    stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
-
-                    // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(queryStatus));
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdTwo)));
-                    Assert.IsTrue(stillRunning);
-
-                    // Act
-                    await cmd.GetResultsFromQueryIdAsync(queryIdTwo, CancellationToken.None).ConfigureAwait(false);
-                    queryStatus = await cmd.GetQueryStatusAsync(queryIdTwo, CancellationToken.None).ConfigureAwait(false);
-                    stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
-
-                    // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(queryStatus));
-                    Assert.IsFalse(stillRunning);
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-
-        [Test]
         public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1475,56 +1422,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
                     Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
-                }
-
-                conn.Close();
-            }
-        }
-
-
-        [Test]
-        public void TestStillRunningAsyncQueries()
-        {
-            string queryIdOne, queryIdTwo;
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({3}, \'SECONDS\');";
-
-                    // Act
-                    queryIdOne = cmd.ExecuteInAsyncMode();
-
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({10}, \'SECONDS\');";
-
-                    // Act
-                    queryIdTwo = cmd.ExecuteInAsyncMode();
-
-                    // Assert
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdOne)));
-                    Assert.IsTrue(conn.SfSession.StillRunningAsyncQueries());
-
-                    // Act
-                    cmd.GetResultsFromQueryId(queryIdOne);
-
-                    // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdOne)));
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdTwo)));
-                    Assert.IsTrue(conn.SfSession.StillRunningAsyncQueries());
-
-                    // Act
-                    cmd.GetResultsFromQueryId(queryIdTwo);
-
-                    // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdTwo)));
-                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryIdTwo));
-                    Assert.IsFalse(conn.SfSession.StillRunningAsyncQueries());
                 }
 
                 conn.Close();

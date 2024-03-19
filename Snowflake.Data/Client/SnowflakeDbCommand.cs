@@ -416,7 +416,6 @@ namespace Snowflake.Data.Client
             Task task = RetryUntilQueryResultIsAvailable(queryId, CancellationToken.None, false);
             task.Wait();
 
-            connection.SfSession.AsyncQueries.Remove(queryId);
             SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
 
             return new SnowflakeDbDataReader(this, resultSet);
@@ -434,7 +433,6 @@ namespace Snowflake.Data.Client
 
             await RetryUntilQueryResultIsAvailable(queryId, cancellationToken, true);
 
-            connection.SfSession.AsyncQueries.Remove(queryId);
             SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
             return new SnowflakeDbDataReader(this, resultSet);

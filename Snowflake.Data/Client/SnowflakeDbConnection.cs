@@ -153,10 +153,7 @@ namespace Snowflake.Data.Client
             {
                 var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
                 
-                if ((CanReuseSession(transactionRollbackStatus) ||
-                    SfSession.StillRunningAsyncQueries()) &&
-                    SnowflakeDbConnectionPool.AddSession(SfSession)
-                    )
+                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
                 {
                     logger.Debug($"Session pooled: {SfSession.sessionId}");
                 }
@@ -194,9 +191,7 @@ namespace Snowflake.Data.Client
                 {
                     var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
 
-                    if ((CanReuseSession(transactionRollbackStatus) ||
-                        await SfSession.StillRunningAsyncQueriesAsync(cancellationToken).ConfigureAwait(false)) &&
-                        SnowflakeDbConnectionPool.AddSession(SfSession))
+                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
                     {
                         logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;

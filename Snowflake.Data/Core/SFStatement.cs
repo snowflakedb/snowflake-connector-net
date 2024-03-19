@@ -366,11 +366,7 @@ namespace Snowflake.Data.Core
 
                 var lastResultUrl = response.data?.getResultUrl;
 
-                if (asyncExec)
-                {
-                    SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
-                }
-                else
+                if (!asyncExec)
                 {
                     while (RequestInProgress(response) || SessionExpired(response))
                     {
@@ -628,11 +624,7 @@ namespace Snowflake.Data.Core
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    if (asyncExec)
-                    {
-                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
-                    }
-                    else
+                    if (!asyncExec)
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
@@ -719,11 +711,7 @@ namespace Snowflake.Data.Core
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    if (asyncExec)
-                    {
-                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
-                    }
-                    else
+                    if (!asyncExec)
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
@@ -830,7 +818,6 @@ namespace Snowflake.Data.Core
                 QueryStatus queryStatus;
                 Enum.TryParse(status, true, out queryStatus);
 
-                SfSession.AsyncQueries[queryId] = queryStatus;
                 return queryStatus;
             }
             catch
@@ -885,7 +872,6 @@ namespace Snowflake.Data.Core
                 QueryStatus queryStatus;
                 Enum.TryParse(status, true, out queryStatus);
 
-                SfSession.AsyncQueries[queryId] = queryStatus;
                 return queryStatus;
             }
             catch
