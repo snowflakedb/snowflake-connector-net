@@ -22,20 +22,20 @@ namespace Snowflake.Data.Core
     /// </summary>
     public enum QueryStatus
     {
-        RUNNING,
-        ABORTING,
-        SUCCESS,
-        FAILED_WITH_ERROR,
-        ABORTED,
-        QUEUED,
-        FAILED_WITH_INCIDENT,
-        DISCONNECTED,
-        RESUMING_WAREHOUSE,
+        Running,
+        Aborting,
+        Success,
+        FailedWithError,
+        Aborted,
+        Queued,
+        FailedWithIncident,
+        Disconnected,
+        ResumingWarehouse,
         // purposeful typo.Is present in QueryDTO.java
-        QUEUED_REPARING_WAREHOUSE,
-        RESTARTED,
-        BLOCKED,
-        NO_DATA,
+        QueuedReparingWarehouse,
+        Restarted,
+        Blocked,
+        NoData,
     }
 
     internal static class QueryStatuses
@@ -44,11 +44,11 @@ namespace Snowflake.Data.Core
         {
             switch (status)
             {
-                case QueryStatus.RUNNING:
-                case QueryStatus.RESUMING_WAREHOUSE:
-                case QueryStatus.QUEUED:
-                case QueryStatus.QUEUED_REPARING_WAREHOUSE:
-                case QueryStatus.NO_DATA:
+                case QueryStatus.Running:
+                case QueryStatus.ResumingWarehouse:
+                case QueryStatus.Queued:
+                case QueryStatus.QueuedReparingWarehouse:
+                case QueryStatus.NoData:
                     return true;
                 default:
                     return false;
@@ -59,12 +59,12 @@ namespace Snowflake.Data.Core
         {
             switch (status)
             {
-                case QueryStatus.ABORTING:
-                case QueryStatus.FAILED_WITH_ERROR:
-                case QueryStatus.ABORTED:
-                case QueryStatus.FAILED_WITH_INCIDENT:
-                case QueryStatus.DISCONNECTED:
-                case QueryStatus.BLOCKED:
+                case QueryStatus.Aborting:
+                case QueryStatus.FailedWithError:
+                case QueryStatus.Aborted:
+                case QueryStatus.FailedWithIncident:
+                case QueryStatus.Disconnected:
+                case QueryStatus.Blocked:
                     return true;
                 default:
                     return false;
@@ -368,7 +368,7 @@ namespace Snowflake.Data.Core
 
                 if (asyncExec)
                 {
-                    SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                    SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
                 }
                 else
                 {
@@ -630,7 +630,7 @@ namespace Snowflake.Data.Core
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
                     if (asyncExec)
                     {
-                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
                     }
                     else
                     {
@@ -721,7 +721,7 @@ namespace Snowflake.Data.Core
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
                     if (asyncExec)
                     {
-                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.RUNNING);
+                        SfSession.AsyncQueries.Add(response.data.queryId, QueryStatus.Running);
                     }
                     else
                     {
@@ -825,10 +825,10 @@ namespace Snowflake.Data.Core
                         queryId);
                 }
 
-                var status = response.data.queries.Count != 0 ? response.data.queries[0].status : QueryStatus.NO_DATA.ToString();
+                var status = response.data.queries.Count != 0 ? response.data.queries[0].status.Replace("_", string.Empty) : QueryStatus.NoData.ToString();
 
                 QueryStatus queryStatus;
-                Enum.TryParse(status, out queryStatus);
+                Enum.TryParse(status, true, out queryStatus);
 
                 SfSession.AsyncQueries[queryId] = queryStatus;
                 return queryStatus;
@@ -880,10 +880,10 @@ namespace Snowflake.Data.Core
                         queryId);
                 }
 
-                var status = response.data.queries.Count != 0 ? response.data.queries[0].status : QueryStatus.NO_DATA.ToString();
+                var status = response.data.queries.Count != 0 ? response.data.queries[0].status.Replace("_", string.Empty) : QueryStatus.NoData.ToString();
 
                 QueryStatus queryStatus;
-                Enum.TryParse(status, out queryStatus);
+                Enum.TryParse(status, true, out queryStatus);
 
                 SfSession.AsyncQueries[queryId] = queryStatus;
                 return queryStatus;

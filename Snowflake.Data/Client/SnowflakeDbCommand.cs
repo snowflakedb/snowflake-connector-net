@@ -384,7 +384,7 @@ namespace Snowflake.Data.Client
                 }
 
                 // If no data, increment the no data counter
-                if (status == QueryStatus.NO_DATA)
+                if (status == QueryStatus.NoData)
                 {
                     noDataCounter++;
 

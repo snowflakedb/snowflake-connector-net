@@ -206,7 +206,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.SUCCESS, queryStatus);
+                    Assert.AreEqual(QueryStatus.Success, queryStatus);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -277,7 +277,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.SUCCESS, queryStatus);
+                    Assert.AreEqual(QueryStatus.Success, queryStatus);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -403,7 +403,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.FAILED_WITH_ERROR, queryStatus);
+                    Assert.AreEqual(QueryStatus.FailedWithError, queryStatus);
 
                     // Act
                     var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
@@ -481,7 +481,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.NO_DATA, queryStatus);
+                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1405,7 +1405,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.SUCCESS, cmd.GetQueryStatus(queryId));
+                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
                 }
 
                 conn.Close();
@@ -1474,7 +1474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Assert
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.SUCCESS, cmd.GetQueryStatus(queryId));
+                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
                 }
 
                 conn.Close();
@@ -1523,7 +1523,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Assert
                     Assert.IsFalse(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdTwo)));
-                    Assert.AreEqual(QueryStatus.SUCCESS, cmd.GetQueryStatus(queryIdTwo));
+                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryIdTwo));
                     Assert.IsFalse(conn.SfSession.StillRunningAsyncQueries());
                 }
 
@@ -1554,7 +1554,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.FAILED_WITH_ERROR, cmd.GetQueryStatus(queryId));
+                    Assert.AreEqual(QueryStatus.FailedWithError, cmd.GetQueryStatus(queryId));
 
                     // Act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.GetResultsFromQueryId(queryId));
@@ -1662,7 +1662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = cmd.GetQueryStatus(unknownQueryId);
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.NO_DATA, queryStatus);
+                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
                 }
 
                 conn.Close();
