@@ -214,18 +214,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestMixedSyncAndAsyncQueryAsync()
+        public async Task TestMixedSyncAndAsyncQueryAsync()
         {
             string queryId;
             var expectedWaitTime = 5;
-            Task task;
 
             // Start the async exec query
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
@@ -233,20 +231,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
 
                     // Act
-                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryId = queryTask.Result;
-
-                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    var queryStatus = statusTask.Result;
+                    queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
                     Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
 
             // Execute a normal query
@@ -274,19 +266,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Act
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None);
-                    readerTask.Wait();
-                    DbDataReader reader = readerTask.Result;
-
-                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    var queryStatus = statusTask.Result;
+                    var reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
                     Assert.IsTrue(reader.Read());
@@ -294,22 +280,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(QueryStatus.SUCCESS, queryStatus);
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestAsyncExecCancelWhileGettingResultsAsync()
+        public async Task TestAsyncExecCancelWhileGettingResultsAsync()
         {
-            string queryId;
-            Task task;
-
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
@@ -318,42 +299,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
 
                     // Act
-                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryId = queryTask.Result;
-
-                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    var queryStatus = statusTask.Result;
+                    var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
                     Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
 
                     // Act
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token);
                     cancelToken.Cancel();
-                    var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
+                    var thrown = Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
+
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains("A task was canceled"));
+                    Console.WriteLine(thrown.Message);
+                    Assert.IsTrue(thrown.Message.Contains("The operation was canceled"));
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestStillRunningAsyncQueriesAsync()
+        public async Task TestStillRunningAsyncQueriesAsync()
         {
-            string queryIdOne, queryIdTwo;
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
@@ -361,68 +335,51 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"CALL SYSTEM$WAIT({3}, \'SECONDS\');";
 
                     // Act
-                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryIdOne = queryTask.Result;
+                    var queryIdOne = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
 
                     // Arrange
                     cmd.CommandText = $"CALL SYSTEM$WAIT({10}, \'SECONDS\');";
 
                     // Act
-                    queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryIdTwo = queryTask.Result;
-                    var stillRunningTask = conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None);
-                    stillRunningTask.Wait();
-                    var statusTask = cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None);
-                    statusTask.Wait();
+                    var queryIdTwo = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(statusTask.Result));
-                    Assert.IsTrue(stillRunningTask.Result);
+                    Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
+                    Assert.IsTrue(stillRunning);
 
                     // Act
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryIdOne, CancellationToken.None);
-                    readerTask.Wait();
-                    statusTask = cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None);
-                    statusTask.Wait();
-                    stillRunningTask = conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None);
-                    stillRunningTask.Wait();
+                    await cmd.GetResultsFromQueryIdAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
+                    queryStatus = await cmd.GetQueryStatusAsync(queryIdOne, CancellationToken.None).ConfigureAwait(false);
+                    stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(statusTask.Result));
+                    Assert.IsFalse(QueryStatuses.IsStillRunning(queryStatus));
                     Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryIdTwo)));
-                    Assert.IsTrue(stillRunningTask.Result);
+                    Assert.IsTrue(stillRunning);
 
                     // Act
-                    readerTask = cmd.GetResultsFromQueryIdAsync(queryIdTwo, CancellationToken.None);
-                    readerTask.Wait();
-                    statusTask = cmd.GetQueryStatusAsync(queryIdTwo, CancellationToken.None);
-                    statusTask.Wait();
-                    stillRunningTask = conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None);
-                    stillRunningTask.Wait();
+                    await cmd.GetResultsFromQueryIdAsync(queryIdTwo, CancellationToken.None).ConfigureAwait(false);
+                    queryStatus = await cmd.GetQueryStatusAsync(queryIdTwo, CancellationToken.None).ConfigureAwait(false);
+                    stillRunning = await conn.SfSession.StillRunningAsyncQueriesAsync(CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsFalse(QueryStatuses.IsStillRunning(statusTask.Result));
-                    Assert.IsFalse(stillRunningTask.Result);
+                    Assert.IsFalse(QueryStatuses.IsStillRunning(queryStatus));
+                    Assert.IsFalse(stillRunning);
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestFailedAsyncExecQueryThrowsErrorAsync()
+        public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
         {
-            string queryId;
-            Task task;
-
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
@@ -430,153 +387,121 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT * FROM FAKE_TABLE;";
 
                     // Act
-                    var queryTask = cmd.ExecuteAsyncInAsyncMode(CancellationToken.None);
-                    queryTask.Wait();
-                    queryId = queryTask.Result;
-
-                    var statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                    statusTask.Wait();
-                    var queryStatus = statusTask.Result;
-
+                    var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     while (QueryStatuses.IsStillRunning(queryStatus))
                     {
                         Thread.Sleep(1000);
-                        statusTask = cmd.GetQueryStatusAsync(queryId, CancellationToken.None);
-                        statusTask.Wait();
-                        queryStatus = statusTask.Result;
+                        queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     }
 
                     // Assert
                     Assert.AreEqual(QueryStatus.FAILED_WITH_ERROR, queryStatus);
 
                     // Act
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None);
-                    var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
+                    var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains("'FAKE_TABLE' does not exist"));
+                    Assert.IsTrue(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestGetStatusOfInvalidQueryIdAsync()
+        public async Task TestGetStatusOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    // Arrange
-                    var statusTask = cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None);
-
                     // Act
-                    var thrown = Assert.Throws<AggregateException>(() => statusTask.Wait());
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestGetResultsOfInvalidQueryIdAsync()
+        public async Task TestGetResultsOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    // Arrange
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None);
-
                     // Act
-                    var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test, NonParallelizable]
-        public void TestGetStatusOfUnknownQueryIdAsync()
+        public async Task TestGetStatusOfUnknownQueryIdAsync()
         {
             string unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Act
-                    var statusTask = cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None);
-                    statusTask.Wait();
+                    var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.NO_DATA, statusTask.Result);
+                    Assert.AreEqual(QueryStatus.NO_DATA, queryStatus);
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestGetResultsOfUnknownQueryIdAsync()
+        public async Task TestGetResultsOfUnknownQueryIdAsync()
         {
             string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
-            Task task;
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    // Arrange
-                    var readerTask = cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None);
-
                     // Act
-                    var thrown = Assert.Throws<AggregateException>(() => readerTask.Wait());
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-#if NETFRAMEWORK
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
-#else
                     Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
-#endif
                 }
 
-                task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
