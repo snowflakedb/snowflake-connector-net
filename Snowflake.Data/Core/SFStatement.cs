@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core
         FailedWithIncident,
         Disconnected,
         ResumingWarehouse,
-        // purposeful typo.Is present in QueryDTO.java
+        // purposeful typo
         QueuedReparingWarehouse,
         Restarted,
         Blocked,

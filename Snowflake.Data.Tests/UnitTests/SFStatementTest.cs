@@ -8,7 +8,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using System;
 
-    public enum ServerQueryStatus
+    // Based on the values that the server sends back
+    public enum TestQueryStatus
     {
         RUNNING,
         ABORTING,
@@ -19,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
         FAILED_WITH_INCIDENT,
         DISCONNECTED,
         RESUMING_WAREHOUSE,
-        // purposeful typo.Is present in QueryDTO.java
+        // purposeful typo
         QUEUED_REPARING_WAREHOUSE,
         RESTARTED,
         BLOCKED,
@@ -143,19 +144,19 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase(ServerQueryStatus.RUNNING, true)]
-        [TestCase(ServerQueryStatus.RESUMING_WAREHOUSE, true)]
-        [TestCase(ServerQueryStatus.QUEUED, true)]
-        [TestCase(ServerQueryStatus.QUEUED_REPARING_WAREHOUSE, true)]
-        [TestCase(ServerQueryStatus.NO_DATA, true)]
-        [TestCase(ServerQueryStatus.ABORTING, false)]
-        [TestCase(ServerQueryStatus.SUCCESS, false)]
-        [TestCase(ServerQueryStatus.FAILED_WITH_ERROR, false)]
-        [TestCase(ServerQueryStatus.ABORTED, false)]
-        [TestCase(ServerQueryStatus.FAILED_WITH_INCIDENT, false)]
-        [TestCase(ServerQueryStatus.DISCONNECTED, false)]
-        [TestCase(ServerQueryStatus.RESTARTED, false)]
-        [TestCase(ServerQueryStatus.BLOCKED, false)]
+        [TestCase(TestQueryStatus.RUNNING, true)]
+        [TestCase(TestQueryStatus.RESUMING_WAREHOUSE, true)]
+        [TestCase(TestQueryStatus.QUEUED, true)]
+        [TestCase(TestQueryStatus.QUEUED_REPARING_WAREHOUSE, true)]
+        [TestCase(TestQueryStatus.NO_DATA, true)]
+        [TestCase(TestQueryStatus.ABORTING, false)]
+        [TestCase(TestQueryStatus.SUCCESS, false)]
+        [TestCase(TestQueryStatus.FAILED_WITH_ERROR, false)]
+        [TestCase(TestQueryStatus.ABORTED, false)]
+        [TestCase(TestQueryStatus.FAILED_WITH_INCIDENT, false)]
+        [TestCase(TestQueryStatus.DISCONNECTED, false)]
+        [TestCase(TestQueryStatus.RESTARTED, false)]
+        [TestCase(TestQueryStatus.BLOCKED, false)]
         public void TestIsStillRunning(QueryStatus status, bool expectedResult)
         {
             QueryStatus queryStatus;
@@ -164,19 +165,19 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase(ServerQueryStatus.ABORTING, true)]
-        [TestCase(ServerQueryStatus.FAILED_WITH_ERROR, true)]
-        [TestCase(ServerQueryStatus.ABORTED, true)]
-        [TestCase(ServerQueryStatus.FAILED_WITH_INCIDENT, true)]
-        [TestCase(ServerQueryStatus.DISCONNECTED, true)]
-        [TestCase(ServerQueryStatus.BLOCKED, true)]
-        [TestCase(ServerQueryStatus.RUNNING, false)]
-        [TestCase(ServerQueryStatus.RESUMING_WAREHOUSE, false)]
-        [TestCase(ServerQueryStatus.QUEUED, false)]
-        [TestCase(ServerQueryStatus.QUEUED_REPARING_WAREHOUSE, false)]
-        [TestCase(ServerQueryStatus.NO_DATA, false)]
-        [TestCase(ServerQueryStatus.SUCCESS, false)]
-        [TestCase(ServerQueryStatus.RESTARTED, false)]
+        [TestCase(TestQueryStatus.ABORTING, true)]
+        [TestCase(TestQueryStatus.FAILED_WITH_ERROR, true)]
+        [TestCase(TestQueryStatus.ABORTED, true)]
+        [TestCase(TestQueryStatus.FAILED_WITH_INCIDENT, true)]
+        [TestCase(TestQueryStatus.DISCONNECTED, true)]
+        [TestCase(TestQueryStatus.BLOCKED, true)]
+        [TestCase(TestQueryStatus.RUNNING, false)]
+        [TestCase(TestQueryStatus.RESUMING_WAREHOUSE, false)]
+        [TestCase(TestQueryStatus.QUEUED, false)]
+        [TestCase(TestQueryStatus.QUEUED_REPARING_WAREHOUSE, false)]
+        [TestCase(TestQueryStatus.NO_DATA, false)]
+        [TestCase(TestQueryStatus.SUCCESS, false)]
+        [TestCase(TestQueryStatus.RESTARTED, false)]
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
             QueryStatus queryStatus;
