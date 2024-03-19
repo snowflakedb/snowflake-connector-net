@@ -67,6 +67,44 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.AreEqual(defaultValue, value);
         }
+
+        [Test]
+        public void TestFailForPropertyWithInvalidDefaultValue()
+        {
+            // arrange
+            var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;", null);
+            var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
+            
+            // act
+            var thrown = Assert.Throws<Exception>(() => extractor.ExtractPropertyWithDefaultValue(
+                SFSessionProperty.CONNECTION_TIMEOUT,
+                s => s,
+                s => true,
+                s => false));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Invalid default value of CONNECTION_TIMEOUT"));
+        }
+
+        [Test]
+        public void TestReturnDefaultValueForNullProperty()
+        {
+            // arrange
+            var properties = SFSessionProperties.parseConnectionString("account=test;user=test;password=test;", null);
+            properties[SFSessionProperty.CONNECTION_TIMEOUT] = null;
+            var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
+            var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
+            
+            // act
+            var value = extractor.ExtractPropertyWithDefaultValue(
+                SFSessionProperty.CONNECTION_TIMEOUT,
+                int.Parse,
+                s => true,
+                i => true);
+            
+            // assert
+            Assert.AreEqual(defaultValue, value);
+        }
         
         [Test]
         public void TestReturnDefaultValueWhenPostValidationFails()

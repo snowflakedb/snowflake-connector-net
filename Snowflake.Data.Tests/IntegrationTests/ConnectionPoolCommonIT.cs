@@ -89,9 +89,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             conn1.Close();
-            // SnowflakeDbConnectionPool.ClearAllPools();
-            // SnowflakeDbConnectionPool.SetMaxPoolSize(0);
-            // SnowflakeDbConnectionPool.SetPooling(true);
         }
         
         [Test]

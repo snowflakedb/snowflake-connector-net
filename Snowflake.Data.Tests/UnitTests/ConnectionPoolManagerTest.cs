@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetMaxPoolSize(3));
 
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot not change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }
          
         [Test]
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetTimeout(3000));
             
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot not change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }         
         
         [Test]
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetPooling(false));
             
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot not change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }
 
         [Test]

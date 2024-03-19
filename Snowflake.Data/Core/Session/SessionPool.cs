@@ -142,12 +142,14 @@ namespace Snowflake.Data.Core.Session
 
         private void WarnAboutOverridenConfig()
         {
-            if (_configOverriden && GetPooling() && IsMultiplePoolsVersion())
+            if (IsConfigOverridden() && GetPooling() && IsMultiplePoolsVersion())
             {
                 s_logger.Warn("Providing a connection from a pool for which technical configuration has been overriden by the user");
             }
         }
 
+        internal bool IsConfigOverridden() => _configOverriden;
+        
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
 
         internal Task<SFSession> GetSessionAsync(CancellationToken cancellationToken) =>
