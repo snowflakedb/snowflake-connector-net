@@ -27,6 +27,8 @@ This project is developed under Visual Studio 2017. Earlier versions of Visual S
 
 ## Steps
 
+Prerequisites: Install dotnet, git, nuget, and mono (Only on Mac)
+
 1. Check out the source code from GitHub:
 
 ```{r, engine='bash', code_block_name}
@@ -41,9 +43,15 @@ nuget restore
 ```
 
 3. Build the solution file
-
+- To build the connector only:
 ```{r, engine='bash', code_block_name}
-msbuild snowflake-connector-net.sln /p:Configuration=Release
+cd Snowflake.Data
+dotnet build --configuration Release
+```
+- To build the connector and test project:
+```
+Add a parameters.json file to Snowflake.Data.Tests
+dotnet build
 ```
 
 # Installing the Package
