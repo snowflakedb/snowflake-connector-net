@@ -219,68 +219,56 @@ namespace Snowflake.Data.Tests.IntegrationTests
             string queryId;
             var expectedWaitTime = 5;
 
-            // Start the async exec query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
+            for (int i = 0; i < connections.Length; i++)
             {
-                conn.ConnectionString = ConnectionString;
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                await connections[i].OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            }
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+            // Start the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
 
-                    // Act
-                    queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
-                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                // Act
+                queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
-                    // Assert
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+                // Assert
+                Assert.IsTrue(QueryStatuses.IsStillRunning(queryStatus));
             }
 
             // Execute a normal query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                // Arrange
+                cmd.CommandText = $"select 1;";
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"select 1;";
+                // Act
+                var row = cmd.ExecuteScalar();
 
-                    // Act
-                    var row = cmd.ExecuteScalar();
-
-                    // Assert
-                    Assert.AreEqual(1, row);
-                }
-
-                conn.Close();
+                // Assert
+                Assert.AreEqual(1, row);
             }
 
             // Get results of the async exec query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
             {
-                conn.ConnectionString = ConnectionString;
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                // Act
+                var reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    var reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                // Assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.AreEqual(QueryStatus.Success, queryStatus);
+            }
 
-                    // Assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.Success, queryStatus);
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            for (int i = 0; i < connections.Length; i++)
+            {
+                await connections[i].CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
@@ -1367,66 +1355,54 @@ namespace Snowflake.Data.Tests.IntegrationTests
             string queryId;
             var expectedWaitTime = 5;
 
-            // Start the async exec query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
+            for (int i = 0; i < connections.Length; i++)
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                connections[i].Open();
+            }
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+            // Start the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
 
-                    // Act
-                    queryId = cmd.ExecuteInAsyncMode();
+                // Act
+                queryId = cmd.ExecuteInAsyncMode();
 
-                    // Assert
-                    Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryId)));
-                }
-
-                conn.Close();
+                // Assert
+                Assert.IsTrue(QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryId)));
             }
 
             // Execute a normal query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                // Arrange
+                cmd.CommandText = $"select 1;";
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    cmd.CommandText = $"select 1;";
+                // Act
+                var row = cmd.ExecuteScalar();
 
-                    // Act
-                    var row = cmd.ExecuteScalar();
-
-                    // Assert
-                    Assert.AreEqual(1, row);
-                }
-
-                conn.Close();
+                // Assert
+                Assert.AreEqual(1, row);
             }
 
             // Get results of the async exec query
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                // Act
+                DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
 
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+                // Assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
+            }
 
-                    // Assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
-                }
-
-                conn.Close();
+            for (int i = 0; i < connections.Length; i++)
+            {
+                connections[i].Close();
             }
         }
 
