@@ -338,15 +338,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Arrange
+                    var statusRetryCount = 0;
                     cmd.CommandText = $"SELECT * FROM FAKE_TABLE;";
 
                     // Act
                     var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                    while (QueryStatuses.IsStillRunning(queryStatus))
+                    while (statusRetryCount < 5 && QueryStatuses.IsStillRunning(queryStatus))
                     {
                         Thread.Sleep(1000);
                         queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                        statusRetryCount++;
                     }
 
                     // Assert
@@ -1441,13 +1443,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
                     // Arrange
+                    var statusRetryCount = 0;
                     cmd.CommandText = $"SELECT * FROM FAKE_TABLE;";
 
                     // Act
                     queryId = cmd.ExecuteInAsyncMode();
-                    while (QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryId)))
+                    while (statusRetryCount < 5 && QueryStatuses.IsStillRunning(cmd.GetQueryStatus(queryId)))
                     {
                         Thread.Sleep(1000);
+                        statusRetryCount++;
                     }
 
                     // Assert
