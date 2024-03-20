@@ -497,12 +497,12 @@ namespace Snowflake.Data.Core
                 }
 
                 QueryExecResponse response =
-                ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
-                    timeout,
-                    sql,
-                    bindings,
-                    describeOnly,
-                    asyncExec);
+                    ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
+                        timeout,
+                        sql,
+                        bindings,
+                        describeOnly,
+                        asyncExec);
 
                 return BuildResultSet(response, CancellationToken.None);
             }
