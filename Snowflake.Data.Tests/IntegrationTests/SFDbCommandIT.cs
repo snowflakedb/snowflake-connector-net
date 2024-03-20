@@ -214,7 +214,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestMixedSyncAndAsyncQueryAsync()
+        public async Task TestExecuteNormalQueryWhileAsyncExecQueryIsRunningAsync()
         {
             string queryId;
             var expectedWaitTime = 5;
@@ -1362,7 +1362,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestMixedSyncAndAsyncQuery()
+        public void TestExecuteNormalQueryWhileAsyncExecQueryIsRunning()
         {
             string queryId;
             var expectedWaitTime = 5;
