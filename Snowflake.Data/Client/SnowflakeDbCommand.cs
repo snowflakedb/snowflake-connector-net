@@ -241,7 +241,7 @@ namespace Snowflake.Data.Client
 
         public override void Prepare()
         {
-            throw new NotImplementedException();
+            // Currently handled as a Noop
         }
 
         public string GetQueryId()
