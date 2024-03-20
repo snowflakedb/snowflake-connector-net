@@ -1652,7 +1652,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
         public void TestEscapeChar()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1679,7 +1679,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::parseConnectionString() to verify")]
+        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
         public void TestEscapeChar1()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
