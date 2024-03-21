@@ -8,25 +8,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using System;
 
-    // Based on the values that the server sends back
-    public enum TestQueryStatus
-    {
-        RUNNING,
-        ABORTING,
-        SUCCESS,
-        FAILED_WITH_ERROR,
-        ABORTED,
-        QUEUED,
-        FAILED_WITH_INCIDENT,
-        DISCONNECTED,
-        RESUMING_WAREHOUSE,
-        // purposeful typo
-        QUEUED_REPARING_WAREHOUSE,
-        RESTARTED,
-        BLOCKED,
-        NO_DATA,
-    }
-
     /**
      * Mock rest request test
      */
@@ -144,45 +125,41 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase(TestQueryStatus.RUNNING, true)]
-        [TestCase(TestQueryStatus.RESUMING_WAREHOUSE, true)]
-        [TestCase(TestQueryStatus.QUEUED, true)]
-        [TestCase(TestQueryStatus.QUEUED_REPARING_WAREHOUSE, true)]
-        [TestCase(TestQueryStatus.NO_DATA, true)]
-        [TestCase(TestQueryStatus.ABORTING, false)]
-        [TestCase(TestQueryStatus.SUCCESS, false)]
-        [TestCase(TestQueryStatus.FAILED_WITH_ERROR, false)]
-        [TestCase(TestQueryStatus.ABORTED, false)]
-        [TestCase(TestQueryStatus.FAILED_WITH_INCIDENT, false)]
-        [TestCase(TestQueryStatus.DISCONNECTED, false)]
-        [TestCase(TestQueryStatus.RESTARTED, false)]
-        [TestCase(TestQueryStatus.BLOCKED, false)]
+        [TestCase(QueryStatus.Running, true)]
+        [TestCase(QueryStatus.ResumingWarehouse, true)]
+        [TestCase(QueryStatus.Queued, true)]
+        [TestCase(QueryStatus.QueuedReparingWarehouse, true)]
+        [TestCase(QueryStatus.NoData, true)]
+        [TestCase(QueryStatus.Aborting, false)]
+        [TestCase(QueryStatus.Success, false)]
+        [TestCase(QueryStatus.FailedWithError, false)]
+        [TestCase(QueryStatus.Aborted, false)]
+        [TestCase(QueryStatus.FailedWithIncident, false)]
+        [TestCase(QueryStatus.Disconnected, false)]
+        [TestCase(QueryStatus.Restarted, false)]
+        [TestCase(QueryStatus.Blocked, false)]
         public void TestIsStillRunning(QueryStatus status, bool expectedResult)
         {
-            QueryStatus queryStatus;
-            Enum.TryParse(status.ToString(), true, out queryStatus);
-            Assert.AreEqual(expectedResult, QueryStatuses.IsStillRunning(queryStatus));
+            Assert.AreEqual(expectedResult, QueryStatuses.IsStillRunning(status));
         }
 
         [Test]
-        [TestCase(TestQueryStatus.ABORTING, true)]
-        [TestCase(TestQueryStatus.FAILED_WITH_ERROR, true)]
-        [TestCase(TestQueryStatus.ABORTED, true)]
-        [TestCase(TestQueryStatus.FAILED_WITH_INCIDENT, true)]
-        [TestCase(TestQueryStatus.DISCONNECTED, true)]
-        [TestCase(TestQueryStatus.BLOCKED, true)]
-        [TestCase(TestQueryStatus.RUNNING, false)]
-        [TestCase(TestQueryStatus.RESUMING_WAREHOUSE, false)]
-        [TestCase(TestQueryStatus.QUEUED, false)]
-        [TestCase(TestQueryStatus.QUEUED_REPARING_WAREHOUSE, false)]
-        [TestCase(TestQueryStatus.NO_DATA, false)]
-        [TestCase(TestQueryStatus.SUCCESS, false)]
-        [TestCase(TestQueryStatus.RESTARTED, false)]
+        [TestCase(QueryStatus.Aborting, true)]
+        [TestCase(QueryStatus.FailedWithError, true)]
+        [TestCase(QueryStatus.Aborted, true)]
+        [TestCase(QueryStatus.FailedWithIncident, true)]
+        [TestCase(QueryStatus.Disconnected, true)]
+        [TestCase(QueryStatus.Blocked, true)]
+        [TestCase(QueryStatus.Running, false)]
+        [TestCase(QueryStatus.ResumingWarehouse, false)]
+        [TestCase(QueryStatus.Queued, false)]
+        [TestCase(QueryStatus.QueuedReparingWarehouse, false)]
+        [TestCase(QueryStatus.NoData, false)]
+        [TestCase(QueryStatus.Success, false)]
+        [TestCase(QueryStatus.Restarted, false)]
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
-            QueryStatus queryStatus;
-            Enum.TryParse(status.ToString(), true, out queryStatus);
-            Assert.AreEqual(expectedResult, QueryStatuses.IsAnError(queryStatus));
+            Assert.AreEqual(expectedResult, QueryStatuses.IsAnError(status));
         }
     }
 }

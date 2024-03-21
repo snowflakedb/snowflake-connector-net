@@ -14,6 +14,7 @@ using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using System.ComponentModel;
 
 namespace Snowflake.Data.Core
 {
@@ -22,24 +23,44 @@ namespace Snowflake.Data.Core
     /// </summary>
     public enum QueryStatus
     {
+        [Description("NO_DATA")]
+        NoData,
+        [Description("RUNNING")]
         Running,
+        [Description("ABORTING")]
         Aborting,
+        [Description("SUCCESS")]
         Success,
+        [Description("FAILED_WITH_ERROR")]
         FailedWithError,
+        [Description("ABORTED")]
         Aborted,
+        [Description("QUEUED")]
         Queued,
+        [Description("FAILED_WITH_INCIDENT")]
         FailedWithIncident,
+        [Description("DISCONNECTED")]
         Disconnected,
+        [Description("RESUMING_WAREHOUSE")]
         ResumingWarehouse,
         // purposeful typo
+        [Description("QUEUED_REPARING_WAREHOUSE")]
         QueuedReparingWarehouse,
+        [Description("RESTARTED")]
         Restarted,
+        [Description("BLOCKED")]
         Blocked,
-        NoData,
     }
 
     internal static class QueryStatuses
     {
+        internal static QueryStatus GetQueryStatusByDescription(string description)
+        {
+            return Enum.GetValues(typeof(QueryStatus))
+                .Cast<QueryStatus>()
+                .FirstOrDefault(v => v.GetAttribute<DescriptionAttribute>().Description == description);
+        }
+
         internal static bool IsStillRunning(QueryStatus status)
         {
             switch (status)
@@ -813,10 +834,11 @@ namespace Snowflake.Data.Core
                         queryId);
                 }
 
-                var status = response.data.queries.Count != 0 ? response.data.queries[0].status.Replace("_", string.Empty) : QueryStatus.NoData.ToString();
-
-                QueryStatus queryStatus;
-                Enum.TryParse(status, true, out queryStatus);
+                QueryStatus queryStatus = QueryStatus.NoData;
+                if (response.data.queries.Count != 0)
+                {
+                    queryStatus = QueryStatuses.GetQueryStatusByDescription(response.data.queries[0].status);
+                }
 
                 return queryStatus;
             }
@@ -867,10 +889,11 @@ namespace Snowflake.Data.Core
                         queryId);
                 }
 
-                var status = response.data.queries.Count != 0 ? response.data.queries[0].status.Replace("_", string.Empty) : QueryStatus.NoData.ToString();
-
-                QueryStatus queryStatus;
-                Enum.TryParse(status, true, out queryStatus);
+                QueryStatus queryStatus = QueryStatus.NoData;
+                if (response.data.queries.Count != 0)
+                {
+                    queryStatus = QueryStatuses.GetQueryStatusByDescription(response.data.queries[0].status);
+                }
 
                 return queryStatus;
             }
