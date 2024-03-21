@@ -295,20 +295,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Act
                     cancelToken.Cancel();
-#if NET471
                     var thrown = Assert.ThrowsAsync<OperationCanceledException>(async () =>
                         await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
-#else
-                    var thrown = Assert.ThrowsAsync<TaskCanceledException>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
-#endif
 
                     // Assert
-#if NET472
-                    Assert.IsTrue(thrown.Message.Contains("A task was canceled"));
-#else
                     Assert.IsTrue(thrown.Message.Contains("The operation was canceled"));
-#endif
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
