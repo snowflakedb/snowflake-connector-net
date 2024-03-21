@@ -213,7 +213,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public async Task TestExecuteNormalQueryWhileAsyncExecQueryIsRunningAsync()
         {
             string queryId;
@@ -1349,7 +1349,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestExecuteNormalQueryWhileAsyncExecQueryIsRunning()
         {
             string queryId;
