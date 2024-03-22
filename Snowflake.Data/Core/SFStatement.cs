@@ -55,7 +55,7 @@ namespace Snowflake.Data.Core
         {
             return Enum.GetValues(typeof(QueryStatus))
                 .Cast<QueryStatus>()
-                .FirstOrDefault(v => v.GetAttribute<DescriptionAttribute>().Description == description);
+                .FirstOrDefault(v => v.GetAttribute<DescriptionAttribute>().Description.Equals(description, StringComparison.OrdinalIgnoreCase));
         }
 
         internal static bool IsStillRunning(QueryStatus status)
