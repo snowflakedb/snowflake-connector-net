@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.Blocked, false)]
         public void TestIsStillRunning(QueryStatus status, bool expectedResult)
         {
-            Assert.AreEqual(expectedResult, QueryStatuses.IsStillRunning(status));
+            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsStillRunning(status));
         }
 
         [Test]
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.Restarted, false)]
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
-            Assert.AreEqual(expectedResult, QueryStatuses.IsAnError(status));
+            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsAnError(status));
         }
     }
 }

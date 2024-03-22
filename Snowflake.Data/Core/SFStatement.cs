@@ -49,9 +49,9 @@ namespace Snowflake.Data.Core
         Blocked,
     }
 
-    internal static class QueryStatuses
+    internal static class QueryStatusExtensions
     {
-        internal static QueryStatus GetQueryStatusByDescription(string description)
+        internal static QueryStatus GetQueryStatusByStringValue(string description)
         {
             return Enum.GetValues(typeof(QueryStatus))
                 .Cast<QueryStatus>()
@@ -834,7 +834,7 @@ namespace Snowflake.Data.Core
                 QueryStatus queryStatus = QueryStatus.NoData;
                 if (response.data.queries.Count != 0)
                 {
-                    queryStatus = QueryStatuses.GetQueryStatusByDescription(response.data.queries[0].status);
+                    queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
                 }
 
                 return queryStatus;
@@ -889,7 +889,7 @@ namespace Snowflake.Data.Core
                 QueryStatus queryStatus = QueryStatus.NoData;
                 if (response.data.queries.Count != 0)
                 {
-                    queryStatus = QueryStatuses.GetQueryStatusByDescription(response.data.queries[0].status);
+                    queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
                 }
 
                 return queryStatus;
