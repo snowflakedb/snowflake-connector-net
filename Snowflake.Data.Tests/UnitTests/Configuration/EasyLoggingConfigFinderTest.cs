@@ -43,6 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations = new Mock<EnvironmentOperations>();
             t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
             MockHomeDirectory();
+            MockExecutionDirectory();
         }
         
         [Test]
@@ -213,6 +214,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                 .Throws(() => new Exception("No home directory"));
         }
 
+        private static void MockExecutionDirectory()
+        {
+            t_environmentOperations
+                .Setup(e => e.GetExecutionDirectory())
+                .Returns(DriverDirectory);
+        }
+        
         private static void MockFileOnHomePathDoesNotExist()
         {
             t_fileOperations

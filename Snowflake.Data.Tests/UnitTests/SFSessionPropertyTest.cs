@@ -11,6 +11,7 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+
     class SFSessionPropertyTest
     {
 
@@ -18,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // act
-            var properties = SFSessionProperties.parseConnectionString(
+            var properties = SFSessionProperties.ParseConnectionString(
                 testcase.ConnectionString,
                 testcase.SecurePassword);
 
@@ -27,16 +28,40 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("a", "a", "a.snowflakecomputing.com")]
+        [TestCase("ab", "ab", "ab.snowflakecomputing.com")]
+        [TestCase("a.b", "a", "a.b.snowflakecomputing.com")]
+        [TestCase("a-b", "a-b", "a-b.snowflakecomputing.com")]
+        [TestCase("a_b", "a_b", "a-b.snowflakecomputing.com")]
+        [TestCase("abc", "abc", "abc.snowflakecomputing.com")]
+        [TestCase("xy12345.us-east-2.aws", "xy12345", "xy12345.us-east-2.aws.snowflakecomputing.com")]
+        public void TestValidateCorrectAccountNames(string accountName, string expectedAccountName, string expectedHost)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
+            
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            
+            // assert
+            Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
+            Assert.AreEqual(expectedHost, properties[SFSessionProperty.HOST]);
+        }
+        
+        [Test]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
         [TestCase("ACCOUNT=complicated.long.testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value complicated.long.testaccount? for ACCOUNT")]
         [TestCase("ACCOUNT=?testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value ?testaccount for ACCOUNT")]
+        [TestCase("ACCOUNT=.testaccount;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value .testaccount for ACCOUNT")]
+        [TestCase("ACCOUNT=testaccount.;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount. for ACCOUNT")]
+        [TestCase("ACCOUNT=test%account;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value test%account for ACCOUNT")]
         public void TestThatItFailsForWrongConnectionParameter(string connectionString, string expectedErrorMessagePart)
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert
@@ -51,11 +76,44 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.parseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
             
             // assert
             Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+        }
+        
+        
+
+        [Test]
+        [TestCase("DB", SFSessionProperty.DB, "\"testdb\"")]
+        [TestCase("SCHEMA", SFSessionProperty.SCHEMA, "\"quotedSchema\"")]
+        [TestCase("ROLE", SFSessionProperty.ROLE, "\"userrole\"")]
+        [TestCase("WAREHOUSE", SFSessionProperty.WAREHOUSE, "\"warehouse  test\"")]
+        public void TestValidateSupportEscapedQuotesValuesForObjectProperties(string propertyName, SFSessionProperty sessionProperty, string value)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
+            
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            
+            // assert
+            Assert.AreEqual(value, properties[sessionProperty]);
+        }
+        
+        [Test]
+        public void TestProcessEmptyUserAndPasswordInConnectionString()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=test;USER=;PASSWORD=;";
+            
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            
+            // assert
+            Assert.AreEqual(string.Empty, properties[SFSessionProperty.USER]);
+            Assert.AreEqual(string.Empty, properties[SFSessionProperty.PASSWORD]);
         }
         
         public static IEnumerable<TestCase> ConnectionStringTestCases()
@@ -110,6 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
+            
             var testCaseWithBrowserResponseTimeout = new TestCase()
             {
                 ConnectionString = $"ACCOUNT={defAccount};BROWSER_RESPONSE_TIMEOUT=180;authenticator=externalbrowser",

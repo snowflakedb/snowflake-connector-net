@@ -68,8 +68,8 @@ namespace Snowflake.Data.Configuration
 
         private string GetHomeDirectory() => HomeDirectoryProvider.HomeDirectory(_environmentOperations);
 
-        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => ".", "driver");
-
+        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => _environmentOperations.GetExecutionDirectory(), "driver");
+        
         private string SearchForConfigInDirectory(Func<string> directoryProvider, string directoryDescription)
         {
             try
