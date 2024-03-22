@@ -3,13 +3,10 @@
  */
 
 using System;
-using System.Web;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
