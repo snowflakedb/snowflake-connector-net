@@ -152,7 +152,7 @@ namespace Snowflake.Data.Core
         {
             _easyLoggingStarter = easyLoggingStarter;
             connStr = connectionString;
-            properties = SFSessionProperties.parseConnectionString(connectionString, password);
+            properties = SFSessionProperties.ParseConnectionString(connectionString, password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             ValidateApplicationName(properties);

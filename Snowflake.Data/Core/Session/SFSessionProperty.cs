@@ -117,8 +117,13 @@ namespace Snowflake.Data.Core
                 SFSessionProperty.PRIVATE_KEY_PWD,
                 SFSessionProperty.PROXYPASSWORD,
             };
-        
-        private const string AccountRegexString = "^\\w[\\w.-]+\\w$";
+
+        private static readonly List<string> s_accountRegexStrings = new List<string>
+        {
+            "^\\w",
+            "\\w$",
+            "^[\\w.-]+$"
+        };
 
         public override bool Equals(object obj)
         {
@@ -155,10 +160,10 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties parseConnectionString(String connectionString, SecureString password)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password)
         {
             logger.Info("Start parsing connection string.");
-            DbConnectionStringBuilder builder = new DbConnectionStringBuilder();
+            var builder = new DbConnectionStringBuilder();
             try
             { 
                 builder.ConnectionString = connectionString;
@@ -170,14 +175,14 @@ namespace Snowflake.Data.Core
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
             }
-            SFSessionProperties properties = new SFSessionProperties();
+            var properties = new SFSessionProperties();
 
-            string[] keys = new string[builder.Keys.Count];
-            string[] values = new string[builder.Values.Count];
+            var keys = new string[builder.Keys.Count];
+            var values = new string[builder.Values.Count];
             builder.Keys.CopyTo(keys, 0);
             builder.Values.CopyTo(values,0);
 
-            for(int i=0; i<keys.Length; i++)
+            for(var i=0; i<keys.Length; i++)
             {
                 try
                 {
@@ -190,37 +195,10 @@ namespace Snowflake.Data.Core
                     logger.Warn($"Property {keys[i]} not found ignored.", e);
                 }
             }
+            
+            UpdatePropertiesForSpecialCases(properties, connectionString);
 
-            //handle DbConnectionStringBuilder missing cases
-            string[] propertyEntry = connectionString.Split(';');
-            foreach(string keyVal in propertyEntry)
-            {
-                if(keyVal.Length > 0)
-                {
-                    string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    if(tokens[0].ToUpper() == "DB" || tokens[0].ToUpper() == "SCHEMA" ||
-                        tokens[0].ToLower() == "WAREHOUSE" || tokens[0].ToUpper() == "ROLE")
-                    {
-                        if (tokens.Length == 2)
-                        {
-                            SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), tokens[0].ToUpper());
-                            properties[p]= tokens[1];
-                        }
-                    }
-                    if(tokens[0].ToUpper() == "USER" || tokens[0].ToUpper() == "PASSWORD")
-                    {
-                        SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), tokens[0].ToUpper());
-                        if (!properties.ContainsKey(p))
-                        {
-                            properties.Add(p, "");
-                        }
-                    }
-                }
-            }
-
-            bool useProxy = false;
+            var useProxy = false;
             if (properties.ContainsKey(SFSessionProperty.USEPROXY))
             {
                 try
@@ -287,13 +265,55 @@ namespace Snowflake.Data.Core
             return properties;
         }
 
+        private static void UpdatePropertiesForSpecialCases(SFSessionProperties properties, string connectionString)
+        {
+            var propertyEntry = connectionString.Split(';');
+            foreach(var keyVal in propertyEntry)
+            {
+                if(keyVal.Length > 0)
+                {
+                    var tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
+                    var propertyName = tokens[0].ToUpper();
+                    switch (propertyName)
+                    {
+                        case "DB":
+                        case "SCHEMA":
+                        case "WAREHOUSE":
+                        case "ROLE":
+                        {
+                            if (tokens.Length == 2)
+                            {
+                                var sessionProperty = (SFSessionProperty)Enum.Parse(
+                                    typeof(SFSessionProperty), propertyName);
+                                properties[sessionProperty]= tokens[1];
+                            }
+                        
+                            break;
+                        }
+                        case "USER":
+                        case "PASSWORD":
+                        {
+                            
+                            var sessionProperty = (SFSessionProperty)Enum.Parse(
+                                typeof(SFSessionProperty), propertyName);
+                            if (!properties.ContainsKey(sessionProperty))
+                            {
+                                properties.Add(sessionProperty, "");
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         private static void ValidateAccountDomain(SFSessionProperties properties)
         {
             var account = properties[SFSessionProperty.ACCOUNT];
             if (string.IsNullOrEmpty(account))
                 return;
-            var match = Regex.Match(account, AccountRegexString, RegexOptions.IgnoreCase);
-            if (match.Success)
+            if (IsAccountRegexMatched(account))
                 return;
             logger.Error($"Invalid account {account}");
             throw new SnowflakeDbException(
@@ -302,6 +322,11 @@ namespace Snowflake.Data.Core
                 account,
                 SFSessionProperty.ACCOUNT);
         }
+
+        private static bool IsAccountRegexMatched(string account) =>
+            s_accountRegexStrings
+                .Select(regex => Regex.Match(account, regex, RegexOptions.IgnoreCase))
+                .All(match => match.Success);
 
         private static void checkSessionProperties(SFSessionProperties properties)
         {

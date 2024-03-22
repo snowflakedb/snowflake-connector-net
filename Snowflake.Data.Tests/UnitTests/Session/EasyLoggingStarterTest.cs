@@ -152,6 +152,29 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        public void TestFailIfDirectoryCreationFails()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+            
+            // arrange
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithErrorLevel);
+            t_unixOperations
+                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
+                .Returns((int)Errno.EPERM);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+            
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Failed to create logs directory"));
+        }
+
+        [Test]
         public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
         {
             // arrange
