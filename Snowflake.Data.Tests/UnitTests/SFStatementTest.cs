@@ -125,6 +125,50 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("UNKNOWN", QueryStatus.Unknown)]
+        [TestCase("RANDOM_STATUS", QueryStatus.Unknown)]
+        [TestCase("aBcZyX", QueryStatus.Unknown)]
+        [TestCase("running", QueryStatus.Running)]
+        [TestCase("RUNNING", QueryStatus.Running)]
+        [TestCase("resuming_warehouse", QueryStatus.ResumingWarehouse)]
+        [TestCase("RESUMING_WAREHOUSE", QueryStatus.ResumingWarehouse)]
+        [TestCase("queued", QueryStatus.Queued)]
+        [TestCase("QUEUED", QueryStatus.Queued)]
+        [TestCase("queued_reparing_warehouse", QueryStatus.QueuedReparingWarehouse)]
+        [TestCase("QUEUED_REPARING_WAREHOUSE", QueryStatus.QueuedReparingWarehouse)]
+        [TestCase("no_data", QueryStatus.NoData)]
+        [TestCase("NO_DATA", QueryStatus.NoData)]
+        [TestCase("aborting", QueryStatus.Aborting)]
+        [TestCase("ABORTING", QueryStatus.Aborting)]
+        [TestCase("success", QueryStatus.Success)]
+        [TestCase("SUCCESS", QueryStatus.Success)]
+        [TestCase("failed_with_error", QueryStatus.FailedWithError)]
+        [TestCase("FAILED_WITH_ERROR", QueryStatus.FailedWithError)]
+        [TestCase("aborted", QueryStatus.Aborted)]
+        [TestCase("ABORTED", QueryStatus.Aborted)]
+        [TestCase("failed_with_incident", QueryStatus.FailedWithIncident)]
+        [TestCase("FAILED_WITH_INCIDENT", QueryStatus.FailedWithIncident)]
+        [TestCase("disconnected", QueryStatus.Disconnected)]
+        [TestCase("DISCONNECTED", QueryStatus.Disconnected)]
+        [TestCase("restarted", QueryStatus.Restarted)]
+        [TestCase("RESTARTED", QueryStatus.Restarted)]
+        [TestCase("blocked", QueryStatus.Blocked)]
+        [TestCase("BLOCKED", QueryStatus.Blocked)]
+        public void TestGetQueryStatusByStringValue(string status, QueryStatus expectedStatus)
+        {
+            if (expectedStatus == QueryStatus.Unknown)
+            {
+                var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(status));
+                Assert.IsTrue(thrown.Message.Contains("The query status returned by the server is not recognized"));
+            }
+            else
+            {
+                var actualStatus = QueryStatusExtensions.GetQueryStatusByStringValue(status);
+                Assert.AreEqual(expectedStatus, actualStatus);
+            }
+        }
+
+        [Test]
         [TestCase(QueryStatus.Running, true)]
         [TestCase(QueryStatus.ResumingWarehouse, true)]
         [TestCase(QueryStatus.Queued, true)]
