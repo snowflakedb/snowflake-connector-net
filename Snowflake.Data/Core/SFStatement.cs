@@ -20,35 +20,40 @@ namespace Snowflake.Data.Core
     /// </summary>
     public enum QueryStatus
     {
-        [Description("UNKNOWN")]
+        [StringAttr(value = "UNKNOWN")]
         Unknown,
-        [Description("NO_DATA")]
+        [StringAttr(value = "NO_DATA")]
         NoData,
-        [Description("RUNNING")]
+        [StringAttr(value = "RUNNING")]
         Running,
-        [Description("ABORTING")]
+        [StringAttr(value = "ABORTING")]
         Aborting,
-        [Description("SUCCESS")]
+        [StringAttr(value = "SUCCESS")]
         Success,
-        [Description("FAILED_WITH_ERROR")]
+        [StringAttr(value = "FAILED_WITH_ERROR")]
         FailedWithError,
-        [Description("ABORTED")]
+        [StringAttr(value = "ABORTED")]
         Aborted,
-        [Description("QUEUED")]
+        [StringAttr(value = "QUEUED")]
         Queued,
-        [Description("FAILED_WITH_INCIDENT")]
+        [StringAttr(value = "FAILED_WITH_INCIDENT")]
         FailedWithIncident,
-        [Description("DISCONNECTED")]
+        [StringAttr(value = "DISCONNECTED")]
         Disconnected,
-        [Description("RESUMING_WAREHOUSE")]
+        [StringAttr(value = "RESUMING_WAREHOUSE")]
         ResumingWarehouse,
         // purposeful typo
-        [Description("QUEUED_REPARING_WAREHOUSE")]
+        [StringAttr(value = "QUEUED_REPARING_WAREHOUSE")]
         QueuedReparingWarehouse,
-        [Description("RESTARTED")]
+        [StringAttr(value = "RESTARTED")]
         Restarted,
-        [Description("BLOCKED")]
+        [StringAttr(value = "BLOCKED")]
         Blocked,
+    }
+
+    class StringAttr : Attribute
+    {
+        public string value { get; set; }
     }
 
     internal static class QueryStatusExtensions
@@ -57,7 +62,7 @@ namespace Snowflake.Data.Core
         {
             var status =  Enum.GetValues(typeof(QueryStatus))
                 .Cast<QueryStatus>()
-                .FirstOrDefault(v => v.GetAttribute<DescriptionAttribute>().Description.Equals(description, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(v => v.GetAttribute<StringAttr>().value.Equals(description, StringComparison.OrdinalIgnoreCase));
 
             if (status == QueryStatus.Unknown)
             {
