@@ -138,6 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.Disconnected, false)]
         [TestCase(QueryStatus.Restarted, false)]
         [TestCase(QueryStatus.Blocked, false)]
+        [TestCase(QueryStatus.Unknown, false)]
         public void TestIsStillRunning(QueryStatus status, bool expectedResult)
         {
             Assert.AreEqual(expectedResult, QueryStatusExtensions.IsStillRunning(status));
@@ -157,6 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.NoData, false)]
         [TestCase(QueryStatus.Success, false)]
         [TestCase(QueryStatus.Restarted, false)]
+        [TestCase(QueryStatus.Unknown, false)]
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
             Assert.AreEqual(expectedResult, QueryStatusExtensions.IsAnError(status));
