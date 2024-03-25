@@ -197,7 +197,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(QueryStatusExtensions.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsFalse(conn.IsAnError(queryStatus));
 
                     // Act
                     DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
@@ -237,7 +238,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(QueryStatusExtensions.IsStillRunning(queryStatus));
+                Assert.IsTrue(connections[0].IsStillRunning(queryStatus));
             }
 
             // Execute a normal query
@@ -291,7 +292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(QueryStatusExtensions.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
 
                     // Act
                     cancelToken.Cancel();
@@ -324,7 +325,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Act
                     var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                    while (statusRetryCount < statusMaxRetryCount && QueryStatusExtensions.IsStillRunning(queryStatus))
+                    while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(queryStatus))
                     {
                         Thread.Sleep(1000);
                         queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
@@ -1351,9 +1352,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Act
                     queryId = cmd.ExecuteInAsyncMode();
+                    var queryStatus = cmd.GetQueryStatus(queryId);
 
                     // Assert
-                    Assert.IsTrue(QueryStatusExtensions.IsStillRunning(cmd.GetQueryStatus(queryId)));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsFalse(conn.IsAnError(queryStatus));
 
                     // Act
                     DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
@@ -1391,7 +1394,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 queryId = cmd.ExecuteInAsyncMode();
 
                 // Assert
-                Assert.IsTrue(QueryStatusExtensions.IsStillRunning(cmd.GetQueryStatus(queryId)));
+                Assert.IsTrue(connections[0].IsStillRunning(cmd.GetQueryStatus(queryId)));
             }
 
             // Execute a normal query
@@ -1444,7 +1447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Act
                     queryId = cmd.ExecuteInAsyncMode();
-                    while (statusRetryCount < statusMaxRetryCount && QueryStatusExtensions.IsStillRunning(cmd.GetQueryStatus(queryId)))
+                    while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(cmd.GetQueryStatus(queryId)))
                     {
                         Thread.Sleep(1000);
                         statusRetryCount++;

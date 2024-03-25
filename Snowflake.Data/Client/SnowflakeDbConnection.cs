@@ -402,6 +402,16 @@ namespace Snowflake.Data.Client
             }
         }
 
+        public bool IsStillRunning(QueryStatus status)
+        {
+            return QueryStatusExtensions.IsStillRunning(status);
+        }
+
+        public bool IsAnError(QueryStatus status)
+        {
+            return QueryStatusExtensions.IsAnError(status);
+        }
+
         ~SnowflakeDbConnection()
         {
             Dispose(false);
