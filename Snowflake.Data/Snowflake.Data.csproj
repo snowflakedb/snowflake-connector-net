@@ -35,9 +35,9 @@
     <Reference Include="System.Net.Http" />
   </ItemGroup>-->
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <!--<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
     <InternalsVisibleTo Include="Snowflake.Data.Tests" />
