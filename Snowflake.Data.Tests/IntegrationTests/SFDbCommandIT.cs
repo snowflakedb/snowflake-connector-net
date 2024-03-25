@@ -457,6 +457,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
+                    // Arrange
                     QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
 
                     // Act
