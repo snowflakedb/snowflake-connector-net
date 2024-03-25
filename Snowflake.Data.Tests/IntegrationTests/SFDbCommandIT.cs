@@ -455,11 +455,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                using (SnowflakeDbCommand cmd = new SnowflakeDbCommand(conn, new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern)))
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
+                    QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+
                     // Act
                     var thrown = Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
+                        await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true).ConfigureAwait(false));
 
                     // Assert
                     Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
@@ -1604,11 +1606,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-
-                using (SnowflakeDbCommand cmd = new SnowflakeDbCommand(conn, new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern)))
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
+                    // Arrange
+                    QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+                    var task = queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, false);
+
                     // Act
-                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
+                    var thrown = Assert.Throws<AggregateException>(() => task.Wait());
 
                     // Assert
                     Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));

@@ -44,11 +44,6 @@ namespace Snowflake.Data.Client
             this.CommandText = cmdText;
         }
 
-        public SnowflakeDbCommand(SnowflakeDbConnection connection, QueryResultsRetryConfig queryResultsRetryConfig) : this(connection)
-        {
-            _queryResultsAwaiter = new QueryResultsAwaiter(queryResultsRetryConfig);
-        }
-
         public override string CommandText
         {
             get; set;
