@@ -125,9 +125,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("UNKNOWN", QueryStatus.Unknown)]
-        [TestCase("RANDOM_STATUS", QueryStatus.Unknown)]
-        [TestCase("aBcZyX", QueryStatus.Unknown)]
         [TestCase("running", QueryStatus.Running)]
         [TestCase("RUNNING", QueryStatus.Running)]
         [TestCase("resuming_warehouse", QueryStatus.ResumingWarehouse)]
@@ -154,18 +151,19 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("RESTARTED", QueryStatus.Restarted)]
         [TestCase("blocked", QueryStatus.Blocked)]
         [TestCase("BLOCKED", QueryStatus.Blocked)]
-        public void TestGetQueryStatusByStringValue(string status, QueryStatus expectedStatus)
+        public void TestGetQueryStatusByStringValue(string stringValue, QueryStatus expectedStatus)
         {
-            if (expectedStatus == QueryStatus.Unknown)
-            {
-                var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(status));
-                Assert.IsTrue(thrown.Message.Contains("The query status returned by the server is not recognized"));
-            }
-            else
-            {
-                var actualStatus = QueryStatusExtensions.GetQueryStatusByStringValue(status);
-                Assert.AreEqual(expectedStatus, actualStatus);
-            }
+            Assert.AreEqual(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
+        }
+
+        [Test]
+        [TestCase("UNKNOWN")]
+        [TestCase("RANDOM_STATUS")]
+        [TestCase("aBcZyX")]
+        public void TestGetQueryStatusByStringValueThrowsErrorForUnknownStatus(string stringValue)
+        {
+            var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
+            Assert.IsTrue(thrown.Message.Contains("The query status returned by the server is not recognized"));
         }
 
         [Test]
