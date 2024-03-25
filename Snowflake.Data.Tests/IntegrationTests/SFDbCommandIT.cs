@@ -418,7 +418,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestGetResultsOfUnknownQueryIdAsync()
+        [Ignore("The test takes too long to finish when using the default retry")]
+        public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
         {
             string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
 
@@ -428,6 +429,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
+        {
+            var queryResultsRetryCount = 3;
+            var queryResultsRetryPattern = new int[] { 1, 2 };
+            var unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = new SnowflakeDbCommand(conn, new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern)))
                 {
                     // Act
                     var thrown = Assert.ThrowsAsync<Exception>(async () =>
@@ -1540,7 +1567,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestGetResultsOfUnknownQueryId()
+        [Ignore("The test takes too long to finish when using the default retry")]
+        public void TestGetResultsOfUnknownQueryIdWithDefaultRetry()
         {
             string unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
 
@@ -1550,6 +1578,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
+
+                    // Assert
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestGetResultsOfUnknownQueryIdWithConfiguredRetry()
+        {
+            var queryResultsRetryCount = 3;
+            var queryResultsRetryPattern = new int[] { 1, 2 };
+            var unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = new SnowflakeDbCommand(conn, new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern)))
                 {
                     // Act
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));

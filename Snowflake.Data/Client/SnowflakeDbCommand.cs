@@ -9,9 +9,7 @@ using System.Data;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Snowflake.Data.Log;
-using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Client
 {
@@ -26,11 +24,7 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
-        // Async max retry and retry pattern
-        private const int AsyncNoDataMaxRetry = 24;
-        private readonly int[] _asyncRetryPattern = { 1, 1, 2, 3, 4, 8, 10 };
-
-        private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+        private QueryResultsAwaiter _queryResultsAwaiter = new QueryResultsAwaiter();
 
         public SnowflakeDbCommand()
         {
@@ -48,6 +42,11 @@ namespace Snowflake.Data.Client
         public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
         {
             this.CommandText = cmdText;
+        }
+
+        public SnowflakeDbCommand(SnowflakeDbConnection connection, QueryResultsRetryConfig queryResultsRetryConfig) : this(connection)
+        {
+            _queryResultsAwaiter = new QueryResultsAwaiter(queryResultsRetryConfig);
         }
 
         public override string CommandText
@@ -314,18 +313,7 @@ namespace Snowflake.Data.Client
         public QueryStatus GetQueryStatus(string queryId)
         {
             logger.Debug($"GetQueryStatus");
-
-            if (UuidRegex.IsMatch(queryId))
-            {
-                var sfStatement = new SFStatement(connection.SfSession);
-                return sfStatement.GetQueryStatus(queryId);
-            }
-            else
-            {
-                var errorMessage = $"The given query id {queryId} is not valid uuid";
-                logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
+            return _queryResultsAwaiter.GetQueryStatus(connection, queryId);
         }
 
         /// <summary>
@@ -337,77 +325,7 @@ namespace Snowflake.Data.Client
         public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
         {
             logger.Debug($"GetQueryStatusAsync");
-
-            // Check if queryId is valid uuid
-            if (UuidRegex.IsMatch(queryId))
-            {
-                var sfStatement = new SFStatement(connection.SfSession);
-                return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                var errorMessage = $"The given query id {queryId} is not valid uuid";
-                logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
-        }
-
-        /// <summary>
-        /// Checks query status until it is done executing.
-        /// </summary>
-        /// <param name="queryId"></param>
-        /// <param name="cancellationToken"></param>
-        /// <param name="isAsync"></param>
-        internal async Task RetryUntilQueryResultIsAvailable(string queryId, CancellationToken cancellationToken, bool isAsync)
-        {
-            int retryPatternPos = 0;
-            int noDataCounter = 0;
-
-            QueryStatus status;
-            while (true)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    logger.Debug("Cancellation requested for getting results from query id");
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                status = isAsync ? await GetQueryStatusAsync(queryId, cancellationToken) : GetQueryStatus(queryId);
-
-                if (!QueryStatusExtensions.IsStillRunning(status))
-                {
-                    return;
-                }
-
-                // Timeout based on query status retry rules
-                if (isAsync)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    Thread.Sleep(TimeSpan.FromSeconds(_asyncRetryPattern[retryPatternPos]));
-                }
-
-                // If no data, increment the no data counter
-                if (status == QueryStatus.NoData)
-                {
-                    noDataCounter++;
-
-                    // Check if retry for no data is exceeded
-                    if (noDataCounter > AsyncNoDataMaxRetry)
-                    {
-                        var errorMessage = "Max retry for no data is reached";
-                        logger.Error(errorMessage);
-                        throw new Exception(errorMessage);
-                    }
-                }
-
-                if (retryPatternPos < _asyncRetryPattern.Length - 1)
-                {
-                    retryPatternPos++;
-                }
-            }
+            return await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
         }
 
         /// <summary>
@@ -419,7 +337,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"GetResultsFromQueryId");
 
-            Task task = RetryUntilQueryResultIsAvailable(queryId, CancellationToken.None, false);
+            Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
             task.Wait();
 
             SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
@@ -437,7 +355,7 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"GetResultsFromQueryIdAsync");
 
-            await RetryUntilQueryResultIsAvailable(queryId, cancellationToken, true);
+            await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
 
             SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
