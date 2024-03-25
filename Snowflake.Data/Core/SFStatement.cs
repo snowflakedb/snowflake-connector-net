@@ -19,8 +19,6 @@ namespace Snowflake.Data.Core
     /// </summary>
     public enum QueryStatus
     {
-        [StringAttr(value = "UNKNOWN")]
-        Unknown,
         [StringAttr(value = "NO_DATA")]
         NoData,
         [StringAttr(value = "RUNNING")]
@@ -59,16 +57,10 @@ namespace Snowflake.Data.Core
     {
         internal static QueryStatus GetQueryStatusByStringValue(string stringValue)
         {
-            var status =  Enum.GetValues(typeof(QueryStatus))
+            var statuses = Enum.GetValues(typeof(QueryStatus))
                 .Cast<QueryStatus>()
-                .FirstOrDefault(v => v.GetAttribute<StringAttr>().value.Equals(stringValue, StringComparison.OrdinalIgnoreCase));
-
-            if (status == QueryStatus.Unknown)
-            {
-                throw new Exception("The query status returned by the server is not recognized");
-            }
-
-            return status;
+                .Where(v => v.GetAttribute<StringAttr>().value.Equals(stringValue, StringComparison.OrdinalIgnoreCase));
+            return statuses.Any() ? statuses.First() : throw new Exception("The query status returned by the server is not recognized");
         }
 
         internal static bool IsStillRunning(QueryStatus status)
