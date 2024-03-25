@@ -57,11 +57,11 @@ namespace Snowflake.Data.Core
 
     internal static class QueryStatusExtensions
     {
-        internal static QueryStatus GetQueryStatusByStringValue(string description)
+        internal static QueryStatus GetQueryStatusByStringValue(string stringValue)
         {
             var status =  Enum.GetValues(typeof(QueryStatus))
                 .Cast<QueryStatus>()
-                .FirstOrDefault(v => v.GetAttribute<StringAttr>().value.Equals(description, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(v => v.GetAttribute<StringAttr>().value.Equals(stringValue, StringComparison.OrdinalIgnoreCase));
 
             if (status == QueryStatus.Unknown)
             {
