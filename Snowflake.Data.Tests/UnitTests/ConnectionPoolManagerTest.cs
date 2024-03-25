@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,10 +33,16 @@ namespace Snowflake.Data.Tests.UnitTests
         }
         
         [OneTimeTearDown]
-        public void AfterAllTests()
+        public static void AfterAllTests()
         {
             s_poolConfig.Reset();
             SessionPool.SessionFactory = new SessionFactory();
+        }
+
+        [SetUp]
+        public void BeforeEach()
+        {
+            _connectionPoolManager.ClearAllPools();
         }
 
         [Test]
@@ -105,7 +110,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("Enable after completion of SNOW-937189")] // TODO: 
         public void TestCountingOfSessionProvidedByPool()
         {
             // Act
@@ -131,38 +135,33 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestSetMaxPoolSizeForAllPools()
+        public void TestSetMaxPoolSizeForAllPoolsDisabled()
         {
             // Arrange
-            var sessionPool1 = _connectionPoolManager.GetPool(ConnectionString1, _password);
-            var sessionPool2 = _connectionPoolManager.GetPool(ConnectionString2, _password);
+            _connectionPoolManager.GetPool(ConnectionString1, _password);
 
             // Act
-            _connectionPoolManager.SetMaxPoolSize(3);
+            var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetMaxPoolSize(3));
 
             // Assert
-            Assert.AreEqual(3, sessionPool1.GetMaxPoolSize());
-            Assert.AreEqual(3, sessionPool2.GetMaxPoolSize());
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }
          
         [Test]
-        public void TestSetTimeoutForAllPools()
+        public void TestSetTimeoutForAllPoolsDisabled()
         {
             // Arrange
-            var sessionPool1 = _connectionPoolManager.GetPool(ConnectionString1, _password);
-            var sessionPool2 = _connectionPoolManager.GetPool(ConnectionString2, _password);
-            
+            _connectionPoolManager.GetPool(ConnectionString1, _password);
+
             // Act
-            _connectionPoolManager.SetTimeout(3000);
+            var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetTimeout(3000));
             
             // Assert
-            Assert.AreEqual(3000, sessionPool1.GetTimeout());
-            Assert.AreEqual(3000, sessionPool2.GetTimeout());
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }         
         
         [Test]
-        [Ignore("Enable when disabling pooling in connection string enabled - SNOW-902632")]
-        public void TestSetPoolingDisabledForAllPoolsNotPossible()
+        public void TestSetPoolingForAllPoolsDisabled()
         {
             // Arrange
             _connectionPoolManager.GetPool(ConnectionString1, _password);
@@ -171,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetPooling(false));
             
             // Assert
-            Assert.IsNotNull(thrown);
+            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
         }
 
         [Test]
@@ -279,19 +278,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var sessionPool = _connectionPoolManager.GetPool(connectionString, _password);
             sessionPool.SetMaxPoolSize(requiredCurrentSize);
-            var busySessions = new List<SFSession>();
             for (var i = 0; i < requiredCurrentSize; i++)
             {
-                var sfSession = _connectionPoolManager.GetSession(connectionString, _password);
-                busySessions.Add(sfSession);
+                _connectionPoolManager.GetSession(connectionString, _password);
             }
-
-            foreach (var session in busySessions) // TODO: remove after SNOW-937189 since sessions will be already counted by GetCurrentPool size
-            {
-                session.close();
-                _connectionPoolManager.AddSession(session);
-            }
-            
             Assert.AreEqual(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
         }
     }
@@ -304,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockSfSession.Setup(x => x.Open()).Verifiable();
             mockSfSession.Setup(x => x.OpenAsync(default)).Returns(Task.FromResult(this));
             mockSfSession.Setup(x => x.IsNotOpen()).Returns(false);
-            mockSfSession.Setup(x => x.IsExpired(It.IsAny<long>(), It.IsAny<long>())).Returns(false);
+            mockSfSession.Setup(x => x.IsExpired(It.IsAny<TimeSpan>(), It.IsAny<long>())).Returns(false);
             return mockSfSession.Object;
         }
     }

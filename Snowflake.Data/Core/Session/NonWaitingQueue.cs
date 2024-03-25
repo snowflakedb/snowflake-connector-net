@@ -22,12 +22,5 @@ namespace Snowflake.Data.Core.Session
         {
             return false;
         }
-
-        public long GetWaitingTimeoutMillis() => 0;
-
-        public void SetWaitingTimeout(long timeoutMillis)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

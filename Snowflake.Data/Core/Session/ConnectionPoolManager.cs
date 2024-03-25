@@ -17,6 +17,7 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private static readonly Object s_poolsLock = new Object();
+        private static readonly Exception s_operationNotAvailable = new Exception("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool");
         private readonly Dictionary<string, SessionPool> _pools;
 
         internal ConnectionPoolManager()
@@ -50,18 +51,14 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");
             foreach (var sessionPool in _pools.Values)
             {
-                sessionPool.ClearIdleSessions();       
+                sessionPool.ClearSessions();       
             }
             _pools.Clear();
         }
         
         public void SetMaxPoolSize(int maxPoolSize)
         {
-            s_logger.Debug("ConnectionPoolManager::SetMaxPoolSize for all pools");
-            foreach (var pool in _pools.Values)
-            {
-                pool.SetMaxPoolSize(maxPoolSize);
-            }
+            throw s_operationNotAvailable;
         }
 
         public int GetMaxPoolSize()
@@ -75,11 +72,7 @@ namespace Snowflake.Data.Core.Session
 
         public void SetTimeout(long connectionTimeout)
         {
-            s_logger.Debug("ConnectionPoolManager::SetTimeout for all pools");
-            foreach (var pool in _pools.Values)
-            {
-                pool.SetTimeout(connectionTimeout);
-            }
+            throw s_operationNotAvailable;
         }
 
         public long GetTimeout()
@@ -102,13 +95,7 @@ namespace Snowflake.Data.Core.Session
 
         public bool SetPooling(bool poolingEnabled)
         {
-            // if (!poolingEnabled) // TODO: enable when disabling pooling in connection string completed SNOW-902632
-            //     throw new Exception(
-            //         "Could not disable pooling for all connections. You could disable pooling by given connection string instead.");
-            s_logger.Debug("ConnectionPoolManager::SetPooling for all pools");
-            return _pools.Values
-                .Select(pool => pool.SetPooling(poolingEnabled))
-                .All(setPoolingResult => setPoolingResult);
+            throw s_operationNotAvailable;
         }
 
         public bool GetPooling() 

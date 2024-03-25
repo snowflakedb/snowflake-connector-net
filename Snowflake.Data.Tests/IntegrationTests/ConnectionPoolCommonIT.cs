@@ -33,7 +33,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             SnowflakeDbConnectionPool.SetConnectionPoolVersion(_connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetPooling(true);
+            if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
+            {
+                SnowflakeDbConnectionPool.SetPooling(true);
+            }
             s_logger.Debug($"---------------- BeforeTest ---------------------");
             s_logger.Debug($"Testing Pool Type: {SnowflakeDbConnectionPool.GetConnectionPoolVersion()}");
         }
@@ -48,48 +51,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void AfterAllTests()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-        }
-        
-        [Test]
-        public void TestBasicConnectionPool()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-
-            var conn1 = new SnowflakeDbConnection(ConnectionString);
-            conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
-            conn1.Close();
-
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
-        }
-
-        [Test]
-        public void TestConnectionPoolExpirationWorks()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
-            SnowflakeDbConnectionPool.SetTimeout(10);
-
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString;
-
-            conn1.Open();
-            conn1.Close();
-            SnowflakeDbConnectionPool.SetTimeout(-1);
-
-            var conn2 = new SnowflakeDbConnection();
-            conn2.ConnectionString = ConnectionString;
-            conn2.Open();
-            conn2.Close();
-            var conn3 = new SnowflakeDbConnection();
-            conn3.ConnectionString = ConnectionString;
-            conn3.Open();
-            conn3.Close();
-
-            // The pooling timeout should apply to all connections being pooled,
-            // not just the connections created after the new setting,
-            // so expected result should be 0
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
 
         [Test]
@@ -128,16 +89,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             conn1.Close();
-            SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetMaxPoolSize(0);
-            SnowflakeDbConnectionPool.SetPooling(true);
         }
         
         [Test]
         public void TestConnectionPoolWithDispose()
         {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-            
+            if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
+            {
+                SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+            }
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = "bad connection string";
             Assert.Throws<SnowflakeDbException>(() => conn1.Open());

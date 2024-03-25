@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security;
 using System.Web;
@@ -15,6 +14,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -50,7 +51,9 @@ namespace Snowflake.Data.Core
 
         internal string serverVersion;
 
-        internal TimeSpan connectionTimeout;
+        private readonly ConnectionPoolConfig _poolConfig;
+
+        internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
         internal bool InsecureMode;
 
@@ -61,9 +64,6 @@ namespace Snowflake.Data.Core
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
         internal int masterValidityInSeconds = 0;
-        
-        internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
-            new SFSessionHttpClientProxyProperties.Extractor());
 
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Core
                     logger.Debug("Query context cache disabled.");
                 }
                 logger.Debug($"Session opened: {sessionId}");
-                _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
             else
             {
@@ -152,14 +152,13 @@ namespace Snowflake.Data.Core
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = propertiesExtractor.ExtractProperties(properties);
+                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties); 
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
-                extractedProperties.CheckPropertiesAreValid();
-                connectionTimeout = extractedProperties.TimeoutDuration();
+                _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
             }
@@ -563,10 +562,8 @@ namespace Snowflake.Data.Core
             return _startTime == 0;
         }
 
-        internal virtual bool IsExpired(long timeoutInSeconds, long utcTimeInSeconds)
-        {
-            return _startTime + timeoutInSeconds <= utcTimeInSeconds;
-        }
+        internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis) =>
+            TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
     }
 }
 

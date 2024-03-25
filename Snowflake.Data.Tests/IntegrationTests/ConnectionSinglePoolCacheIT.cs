@@ -36,6 +36,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }        
         
         [Test]
+        public void TestBasicConnectionPool()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
+            conn1.Open();
+            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+        }
+
+        [Test]
         public void TestConcurrentConnectionPooling()
         {
             // add test case name in connection string to make in unique for each test case
@@ -255,6 +269,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
             Assert.AreEqual(ConnectionState.Closed, conn3.State);
+        }
+        
+        [Test]
+        public void TestConnectionPoolExpirationWorks()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = ConnectionString;
+
+            conn1.Open();
+            conn1.Close();
+            SnowflakeDbConnectionPool.SetTimeout(0);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = ConnectionString;
+            conn2.Open();
+            conn2.Close();
+
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = ConnectionString;
+            conn3.Open();
+            conn3.Close();
+
+            // The pooling timeout should apply to all connections being pooled,
+            // not just the connections created after the new setting,
+            // so expected result should be 0
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
     }
 }

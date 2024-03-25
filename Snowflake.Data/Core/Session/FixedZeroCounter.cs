@@ -11,5 +11,9 @@ namespace Snowflake.Data.Core.Session
         public void Decrease()
         {
         }
+
+        public void Reset()
+        {
+        }
     }
 }

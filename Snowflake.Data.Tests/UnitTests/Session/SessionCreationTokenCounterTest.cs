@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using NUnit.Framework;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
@@ -7,14 +9,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class SessionCreationTokenCounterTest
     {
-        private const long LongTimeAsMillis = 30000;
-        private const long ShortTimeAsMillis = 50;
+        private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
         
         [Test]
         public void TestGrantSessionCreation()
         {
             // arrange
-            var tokens = new SessionCreationTokenCounter(LongTimeAsMillis);
+            var tokens = new SessionCreationTokenCounter(s_longTime);
             
             // act
             tokens.NewToken();
@@ -33,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteSessionCreation()
         {
             // arrange
-            var tokens = new SessionCreationTokenCounter(LongTimeAsMillis);
+            var tokens = new SessionCreationTokenCounter(s_longTime);
             var token1 = tokens.NewToken();
             var token2 = tokens.NewToken();
             
@@ -54,9 +56,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
-            var tokens = new SessionCreationTokenCounter(LongTimeAsMillis);
+            var tokens = new SessionCreationTokenCounter(s_longTime);
             tokens.NewToken();
-            var unknownToken = new SessionCreationToken(0);
+            var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
             
             // act
             tokens.RemoveToken(unknownToken);
@@ -69,11 +71,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestCompleteCleansExpiredTokens()
         {
             // arrange
-            var tokens = new SessionCreationTokenCounter(ShortTimeAsMillis);
+            var tokens = new SessionCreationTokenCounter(s_shortTime);
             var token = tokens.NewToken();
             tokens.NewToken(); // this token will be cleaned because of expiration
             Assert.AreEqual(2, tokens.Count());
-            Thread.Sleep((int) ShortTimeAsMillis + 5);
+            const int EpsilonMillis = 5;
+            Thread.Sleep((int) s_shortTime.TotalMilliseconds + EpsilonMillis);
 
             // act
             tokens.RemoveToken(token);

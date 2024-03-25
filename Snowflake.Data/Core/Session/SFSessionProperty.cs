@@ -89,7 +89,19 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLEQUERYCONTEXTCACHE,
         [SFSessionPropertyAttr(required = false)]
-        CLIENT_CONFIG_FILE
+        CLIENT_CONFIG_FILE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "10")]
+        MAXPOOLSIZE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "2")]
+        MINPOOLSIZE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "OriginalPool")]
+        CHANGEDSESSION,
+        [SFSessionPropertyAttr(required = false, defaultValue = "30s")]
+        WAITINGFORIDLESESSIONTIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "60m")]
+        EXPIRATIONTIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        POOLINGENABLED
     }
 
     class SFSessionPropertyAttr : Attribute

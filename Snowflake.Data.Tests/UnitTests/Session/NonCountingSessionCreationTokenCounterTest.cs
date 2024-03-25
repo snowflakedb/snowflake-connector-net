@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var tokens = new NonCountingSessionCreationTokenCounter();
             tokens.NewToken();
-            var unknownToken = new SessionCreationToken(0);
+            var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
             
             // act
             tokens.RemoveToken(unknownToken);

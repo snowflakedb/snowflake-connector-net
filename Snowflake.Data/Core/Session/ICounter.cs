@@ -7,5 +7,7 @@ namespace Snowflake.Data.Core.Session
         void Increase();
 
         void Decrease();
+
+        void Reset();
     }
 }
