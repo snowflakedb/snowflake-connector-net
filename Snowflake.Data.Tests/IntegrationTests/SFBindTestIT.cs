@@ -858,6 +858,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        /* Disabled until supported within automated tests environment available
         // HYBRID Tables
         [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
@@ -871,7 +872,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        /* Disabled until automated tests environment available
         // ICEBERG Tables; require env variables: ICEBERG_EXTERNAL_VOLUME, ICEBERG_CATALOG, ICEBERG_BASE_LOCATION. 
         [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
@@ -888,7 +888,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         */
         // Session TimeZone cases
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
         public void TestDateTimeBindingWithValue(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
@@ -896,8 +896,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var expected = ExpectedTimestamp.From(timestamp, columnType);
             var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
             var testInfo = $"TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
-            var bindingThreshold = 6; // parameters limit for binding without bindings file on stage when exceeded enforces bindings file to stage
-            var batchSize = 3; // 3 * 2 columns >= bindingThreshold
+            var bindingThreshold = 65280; // parameters limit for binding without bindings file on stage when exceeded enforces bindings file to stage
+            var batchSize = bindingThreshold/2; 
             s_logger.Info(testInfo);
             
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
@@ -905,7 +905,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
-                conn.ExecuteNonQuery($"alter session set CLIENT_STAGE_ARRAY_BINDING_THRESHOLD = {bindingThreshold}"); 
+                // conn.ExecuteNonQuery($"alter session set CLIENT_STAGE_ARRAY_BINDING_THRESHOLD = {bindingThreshold}"); 
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
                     conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
 
@@ -932,7 +932,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 
                 // insert 2 rows with array bindings (bindings count below CLIENT_STAGE_ARRAY_BINDING_THRESHOLD)
-                var batchSizeBelowThreshold = batchSize - 1;
+                var batchSizeBelowThreshold = 2;
                 startId += 1;
                 using (var insert = conn.CreateCommand(sqlInsert))
                 {
@@ -942,7 +942,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
                 }
                 
-                // insert 3 rows with bindings via stage file (above CLIENT_STAGE_ARRAY_BINDING_THRESHOLD)
+                // insert CLIENT_STAGE_ARRAY_BINDING_THRESHOLD/2 rows with bindings via stage file (above CLIENT_STAGE_ARRAY_BINDING_THRESHOLD)
                 startId += batchSizeBelowThreshold;
                 using (var insert = conn.CreateCommand(sqlInsert))
                 {
@@ -966,7 +966,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         expected.IsEqual(reader.GetValue(1), comparisonFormat, faultMessage);
                     }
                 }
-                Assert.AreEqual(batchSize*2, row);
+                Assert.AreEqual(batchSize+3, row);
             }
         }
         
