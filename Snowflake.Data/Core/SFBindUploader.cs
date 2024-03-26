@@ -224,13 +224,13 @@ namespace Snowflake.Data.Core
             statement.SetUploadStream(stream, destFileName, stagePath);
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
+        
         private string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
                 return sValue;
 
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
-            DateTimeOffset dateTimeOffset = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
             switch (sType)
             {
                 case "TEXT":
@@ -246,31 +246,35 @@ namespace Snowflake.Data.Core
                         return '"' + sValue.Replace("\"", "\"\"") + '"';
                     return sValue;
                 case "DATE":
+                    // SFDateConverter.csharpValToSfVal provides in [ms] from Epoch
                     long dateLong = long.Parse(sValue);
-                    DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
+                    DateTime date = epoch.AddMilliseconds(dateLong);
                     return date.ToShortDateString();
                 case "TIME":
+                    // SFDateConverter.csharpValToSfVal provides in [ns]
                     long timeLong = long.Parse(sValue);
-                    DateTime time = dateTime.AddMilliseconds(timeLong).ToUniversalTime();
-                    return time.ToLongTimeString();
+                    DateTime time = epoch.AddMilliseconds((double)timeLong/1_000_000);
+                    var s = time.ToString("HH:mm:ss.ffffff");
+                    return s;
                 case "TIMESTAMP_LTZ":
+                    // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
                     long ltzLong = long.Parse(sValue);
                     TimeSpan ltzts = new TimeSpan(ltzLong / 100);
-                    DateTime ltzdt = dateTime + ltzts;
-                    return ltzdt.ToString();
+                    DateTime ltzdt = epoch + ltzts;
+                    return ltzdt.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
                     long ntzLong = long.Parse(sValue);
                     TimeSpan ts = new TimeSpan(ntzLong/100);
-                    DateTime dt = dateTime + ts;
+                    DateTime dt = epoch + ts;
                     return dt.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
-                    long tzLong = long.Parse(tstzString[0]);
+                    long tzLong = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
                     int tzInt = (int.Parse(tstzString[1]) - 1440) / 60;
                     TimeSpan tzts = new TimeSpan(tzLong/100);
-                    DateTime tzdt = dateTime + tzts;
+                    DateTime tzdt = epoch + tzts;
                     TimeSpan tz = new TimeSpan(tzInt, 0, 0);
-                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt, tz);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt.AddHours(tzInt), tz);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
                     
             }

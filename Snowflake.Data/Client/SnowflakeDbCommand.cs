@@ -460,5 +460,7 @@ namespace Snowflake.Data.Client
                 throw new Exception(errorMessage);
             }
         }
+
+        internal string GetBindStage() => sfStatement?.GetBindStage();
     }
 }
