@@ -503,6 +503,65 @@ Note that because this method is not available in the generic `IDataReader` inte
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
 
+## Execute a query asynchronously on the server
+
+You can run the query asynchronously on the server. The server responds immediately with `queryId` and continues to execute the query asynchronously.
+Then you can use this `queryId` to check the query status or wait until the query is completed and get the results.
+It is fine to start the query in one session and continue to query for the results in another one based on the queryId.
+
+**Note**: There are 2 levels of asynchronous execution. One is asynchronous execution in terms of C# language (`async await`).
+Another is asynchronous execution of the query by the server (you can recognize it by `InAsyncMode` containing method names, e. g. `ExecuteInAsyncMode`, `ExecuteAsyncInAsyncMode`).
+
+Example of synchronous code starting a query to be executed asynchronously on the server:
+```cs
+using (SnowflakeDbConnection conn = new SnowflakeDbConnection("account=testaccount;username=testusername;password=testpassword"))
+{
+      conn.Open();
+      SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand();
+      cmd.CommandText = "SELECT ...";
+      var queryId = cmd.ExecuteInAsyncMode();
+      // ...
+}
+```
+
+Example of asynchronous code starting a query to be executed asynchronously on the server:
+```cs
+using (SnowflakeDbConnection conn = new SnowflakeDbConnection("account=testaccount;username=testusername;password=testpassword"))
+{
+      await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+      SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+      cmd.CommandText = "SELECT ...";
+      var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+      // ...
+}
+```
+
+You can check the status of a query executed asynchronously on the server either in synchronous code:
+```cs
+var queryStatus = cmd.GetQueryStatus(queryId);
+Assert.IsTrue(conn.IsStillRunning(queryStatus)); // assuming that the query is still running
+Assert.IsFalse(conn.IsAnError(queryStatus)); // assuming that the query has not finished with error
+```
+or the same in an asynchronous code:
+```cs
+var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+Assert.IsTrue(conn.IsStillRunning(queryStatus)); // assuming that the query is still running
+Assert.IsFalse(conn.IsAnError(queryStatus)); // assuming that the query has not finished with error
+```
+
+The following example shows how to get query results.
+The operation will repeatedly check the query status until the query is completed or timeout happened or reaching the maximum number of attempts.
+The synchronous code example:
+```cs
+DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+```
+and the asynchronous code example:
+```cs
+DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+```
+
+**Note**: GET/PUT operations are currently not enabled for asynchronous executions.
+
 ## Executing a Batch of SQL Statements (Multi-Statement Support)
 
 With version 2.0.18 and later of the .NET connector, you can send
