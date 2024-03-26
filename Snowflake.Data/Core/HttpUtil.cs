@@ -18,6 +18,8 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
+    using System.Text.RegularExpressions;
+
     public class HttpClientConfig
     {
         public HttpClientConfig(
@@ -187,6 +189,10 @@ namespace Snowflake.Data.Core
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
 
+                        if (!entry.StartsWith("^") || !entry.EndsWith("$"))
+                        {
+                            entry = $"^{entry}$";
+                        }
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
