@@ -333,7 +333,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             Thread.Sleep(5000);
             SFStatement statement = new SFStatement(conn1.SfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             SnowflakeDbConnectionPool.ClearAllPools();
