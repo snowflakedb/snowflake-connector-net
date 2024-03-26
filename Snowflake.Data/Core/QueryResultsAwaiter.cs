@@ -11,7 +11,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
-    public class QueryResultsRetryConfig
+    internal class QueryResultsRetryConfig
     {
         private const int DefaultAsyncNoDataMaxRetry = 24;
 
@@ -41,6 +41,8 @@ namespace Snowflake.Data.Core
         private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
         private QueryResultsRetryConfig _queryResultsRetryConfig;
+
+        internal static readonly QueryResultsAwaiter Instance = new QueryResultsAwaiter();
 
         internal QueryResultsAwaiter()
         {

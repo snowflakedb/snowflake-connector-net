@@ -24,7 +24,7 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
-        private QueryResultsAwaiter _queryResultsAwaiter = new QueryResultsAwaiter();
+        private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
 
         public SnowflakeDbCommand()
         {
