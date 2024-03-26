@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestDbParameterExplicitAssignment([Values] DbType expectedDbType)
+        public void TestDbTypeExplicitAssignment([Values] DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
 
