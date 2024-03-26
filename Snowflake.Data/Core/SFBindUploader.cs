@@ -225,7 +225,7 @@ namespace Snowflake.Data.Core
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
         
-        private string GetCSVData(string sType, string sValue)
+        internal string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
                 return sValue;
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Core
                 case "TIME":
                     // SFDateConverter.csharpValToSfVal provides in [ns]
                     long timeLong = long.Parse(sValue);
-                    DateTime time = epoch.AddMilliseconds((double)timeLong/1_000_000);
+                    DateTime time = epoch.AddTicks(timeLong/100);
                     var s = time.ToString("HH:mm:ss.ffffff");
                     return s;
                 case "TIMESTAMP_LTZ":
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Core
                     long ntzLong = long.Parse(sValue);
                     TimeSpan ts = new TimeSpan(ntzLong/100);
                     DateTime dt = epoch + ts;
-                    return dt.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
+                    return dt.ToString("yyyy-MM-dd HH:mm:ss.ffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
                     long tzLong = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
@@ -275,8 +275,7 @@ namespace Snowflake.Data.Core
                     DateTime tzdt = epoch + tzts;
                     TimeSpan tz = new TimeSpan(tzInt, 0, 0);
                     DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt.AddHours(tzInt), tz);
-                    return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
-                    
+                    return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.ffffff zzz");
             }
             return sValue;
         }
