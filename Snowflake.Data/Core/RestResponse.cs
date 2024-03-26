@@ -423,6 +423,37 @@ namespace Snowflake.Data.Core
         internal long smkId { get; set; }
     }
 
+    internal class QueryStatusResponse : BaseRestResponse
+    {
+
+        [JsonProperty(PropertyName = "data")]
+        internal QueryStatusData data { get; set; }
+    }
+
+    internal class QueryStatusData
+    {
+        [JsonProperty(PropertyName = "queries", NullValueHandling = NullValueHandling.Ignore)]
+        internal List<QueryStatusDataQueries> queries { get; set; }
+    }
+
+    internal class QueryStatusDataQueries
+    {
+        [JsonProperty(PropertyName = "id", NullValueHandling = NullValueHandling.Ignore)]
+        internal string id { get; set; }
+
+        [JsonProperty(PropertyName = "status", NullValueHandling = NullValueHandling.Ignore)]
+        internal string status { get; set; }
+
+        [JsonProperty(PropertyName = "state", NullValueHandling = NullValueHandling.Ignore)]
+        internal string state { get; set; }
+
+        [JsonProperty(PropertyName = "errorCode", NullValueHandling = NullValueHandling.Ignore)]
+        internal string errorCode { get; set; }
+
+        [JsonProperty(PropertyName = "errorMessage", NullValueHandling = NullValueHandling.Ignore)]
+        internal string errorMessage { get; set; }
+    }
+
     // Retrieved from: https://stackoverflow.com/a/18997172
     internal class SingleOrArrayConverter<T> : JsonConverter
     {

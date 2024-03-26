@@ -39,6 +39,8 @@ namespace Snowflake.Data.Core
 
         internal const string SF_QUERY_PATH = "/queries/v1/query-request";
 
+        internal const string SF_MONITOR_QUERY_PATH = "/monitoring/queries/";
+
         internal const string SF_SESSION_HEARTBEAT_PATH = SF_SESSION_PATH + "/heartbeat";
 
         internal const string SF_CONSOLE_LOGIN = "/console/login";
