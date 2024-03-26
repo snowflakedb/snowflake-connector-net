@@ -889,23 +889,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Session TimeZone cases
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
-        public void TestDateTimeBindingWithValue(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
+        public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
             var timestamp = "2023/03/15 13:17:29.207 +05:00"; // 08:17:29.207 UTC
             var expected = ExpectedTimestamp.From(timestamp, columnType);
             var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
-            var testInfo = $"TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
-            var bindingThreshold = 65280; // parameters limit for binding without bindings file on stage when exceeded enforces bindings file to stage
-            var batchSize = bindingThreshold/2; 
-            s_logger.Info(testInfo);
+            var testCase = $"TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
+            var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
+            var smallBatchRowCount = 2;
+            var bigBatchRowCount = bindingThreshold / 2;
+            s_logger.Info(testCase);
             
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
-                // conn.ExecuteNonQuery($"alter session set CLIENT_STAGE_ARRAY_BINDING_THRESHOLD = {bindingThreshold}"); 
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
                     conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
 
@@ -918,39 +918,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }, 
                     tableType.TableCreationFlags());
 
-                // Act
+                // Act+Assert
                 var sqlInsert = $"insert into {TableName} (id, ts) values (?, ?)";
-                
-                // insert 1 row with value binding
-                var startId = 1;
-                using (var insert = conn.CreateCommand(sqlInsert))
-                {
-                    insert.Add("1", DbType.Int32, startId); 
-                    insert.Add("2", bindingType, expected); 
-                    Assert.AreEqual(1, insert.ExecuteNonQuery());
-                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
-                }
-                
-                // insert 2 rows with array bindings (bindings count below CLIENT_STAGE_ARRAY_BINDING_THRESHOLD)
-                var batchSizeBelowThreshold = 2;
-                startId += 1;
-                using (var insert = conn.CreateCommand(sqlInsert))
-                {
-                    insert.Add("1", DbType.Int32, Enumerable.Range(startId, batchSizeBelowThreshold).ToArray()); 
-                    insert.Add("2", bindingType, expected, batchSizeBelowThreshold);
-                    Assert.AreEqual(batchSizeBelowThreshold, insert.ExecuteNonQuery());
-                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
-                }
-                
-                // insert CLIENT_STAGE_ARRAY_BINDING_THRESHOLD/2 rows with bindings via stage file (above CLIENT_STAGE_ARRAY_BINDING_THRESHOLD)
-                startId += batchSizeBelowThreshold;
-                using (var insert = conn.CreateCommand(sqlInsert))
-                {
-                    insert.Add("1", DbType.Int32, Enumerable.Range(startId, batchSize).ToArray());
-                    insert.Add("2", bindingType, expected, batchSize); 
-                    Assert.AreEqual(batchSize, insert.ExecuteNonQuery());
-                    Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
-                }
+                InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount+2, expected, bigBatchRowCount, true);
 
                 // read all rows
                 var row = 0;
@@ -961,16 +933,42 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         // Assert
                         ++row;
-                        string faultMessage = $"Mismatch for row: {row}, {testInfo}";
+                        string faultMessage = $"Mismatch for row: {row}, {testCase}";
                         Assert.AreEqual(row, reader.GetInt32(0));
                         expected.IsEqual(reader.GetValue(1), comparisonFormat, faultMessage);
                     }
                 }
-                Assert.AreEqual(batchSize+3, row);
+                Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
+            }
+            
+            void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestamp ts)
+            {
+                using (var insert = conn.CreateCommand(sqlInsert))
+                {
+                    insert.Add("1", DbType.Int32, identifier);
+                    insert.Add("2", binding, ts);
+                    Assert.AreEqual(1, insert.ExecuteNonQuery());
+                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                }
+            }
+
+            void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestamp ts, int rowsCount, bool shouldUseBinding)
+            {
+                using (var insert = conn.CreateCommand(sqlInsert))
+                {
+                    insert.Add("1", DbType.Int32, Enumerable.Range(initialIdentifier, rowsCount).ToArray());
+                    insert.Add("2", binding, ts, rowsCount);
+                    Assert.AreEqual(rowsCount, insert.ExecuteNonQuery());
+                    if (shouldUseBinding)
+                        Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
+                    else
+                        Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                }
             }
         }
-        
-        private static string ColumnTypeWithPrecision(SFDataType columnType, Int32? columnPrecision) => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
+
+        private static string ColumnTypeWithPrecision(SFDataType columnType, Int32? columnPrecision) 
+            => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
     }
     
     class ExpectedTimestamp
@@ -1051,10 +1049,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         internal static string TableCreationFlags(this SFTableType val)
         {
             if (val != SFTableType.Iceberg)
-            {
                 return "";
-            }
-
             var externalVolume = Environment.GetEnvironmentVariable("ICEBERG_EXTERNAL_VOLUME"); 
             var catalog = Environment.GetEnvironmentVariable("ICEBERG_CATALOG"); 
             var baseLocation = Environment.GetEnvironmentVariable("ICEBERG_BASE_LOCATION"); 
@@ -1068,7 +1063,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             if (value is ExpectedTimestamp expected)
                 return command.Add(name, dbType, expected);
-    
             var parameter = (SnowflakeDbParameter)command.CreateParameter();
             parameter.ParameterName = name;
             parameter.DbType = dbType;
