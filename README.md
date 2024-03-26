@@ -549,7 +549,9 @@ Assert.IsTrue(conn.IsStillRunning(queryStatus)); // assuming that the query is s
 Assert.IsFalse(conn.IsAnError(queryStatus)); // assuming that the query has not finished with error
 ```
 
-The following example shows how to get query results. The operation will repeatedly check the query status until the query is completed or timeout happened or reaching the maximal number of attempts. The synchronous code example:
+The following example shows how to get query results.
+The operation will repeatedly check the query status until the query is completed or timeout happened or reaching the maximum number of attempts.
+The synchronous code example:
 ```cs
 DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
 ```
