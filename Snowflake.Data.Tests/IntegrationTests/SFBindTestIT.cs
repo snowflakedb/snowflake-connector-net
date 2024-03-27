@@ -858,7 +858,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        /* Disabled until supported within automated tests environment available
+        /* TODO: Enable when features available on the automated tests environment
         // HYBRID Tables
         [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
@@ -893,7 +893,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // Arrange
             var timestamp = "2023/03/15 13:17:29.207 +05:00"; // 08:17:29.207 UTC
-            var expected = ExpectedTimestamp.From(timestamp, columnType);
+            var expected = ExpectedTimestampValueProvider.From(timestamp, columnType);
             var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
             var testCase = $"TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
             var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
@@ -924,14 +924,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount+2, expected, bigBatchRowCount, true);
 
-                // read all rows
+                // Assert
                 var row = 0;
                 using (var select = conn.CreateCommand($"select id, ts from {TableName} order by id"))
                 {
+                    s_logger.Debug(select.CommandText);
                     var reader = select.ExecuteReader();
                     while (reader.Read())
                     {
-                        // Assert
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
                         Assert.AreEqual(row, reader.GetInt32(0));
@@ -941,24 +941,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
             }
             
-            void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestamp ts)
+            void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestampValueProvider ts)
             {
                 using (var insert = conn.CreateCommand(sqlInsert))
                 {
+                    // Arrange
                     insert.Add("1", DbType.Int32, identifier);
                     insert.Add("2", binding, ts);
-                    Assert.AreEqual(1, insert.ExecuteNonQuery());
+                    
+                    // Act
+                    s_logger.Info(sqlInsert);
+                    var rowsAffected = insert.ExecuteNonQuery();
+                    
+                    // Assert
+                    Assert.AreEqual(1, rowsAffected);
                     Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
                 }
             }
 
-            void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestamp ts, int rowsCount, bool shouldUseBinding)
+            void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestampValueProvider ts, int rowsCount, bool shouldUseBinding)
             {
                 using (var insert = conn.CreateCommand(sqlInsert))
                 {
+                    // Arrange
                     insert.Add("1", DbType.Int32, Enumerable.Range(initialIdentifier, rowsCount).ToArray());
                     insert.Add("2", binding, ts, rowsCount);
-                    Assert.AreEqual(rowsCount, insert.ExecuteNonQuery());
+                    
+                    // Act
+                    s_logger.Debug(sqlInsert);
+                    var rowsAffected = insert.ExecuteNonQuery();
+                    
+                    // Assert
+                    Assert.AreEqual(rowsCount, rowsAffected);
                     if (shouldUseBinding)
                         Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
                     else
@@ -971,39 +985,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
             => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
     }
     
-    class ExpectedTimestamp
+    class ExpectedTimestampValueProvider
     {
         private readonly SFDataType _columnType;
         private readonly DateTime? _expectedDateTime;
         private readonly DateTimeOffset? _expectedDateTimeOffset;
 
-        internal static ExpectedTimestamp From(string timestampWithTimeZone, SFDataType columnType)
+        internal static ExpectedTimestampValueProvider From(string timestampWithTimeZone, SFDataType columnType)
         {
-            if (columnType == SFDataType.TIMESTAMP_TZ)
-                return new ExpectedTimestamp(DateTimeOffset.ParseExact(timestampWithTimeZone, 
-                        "yyyy/MM/dd HH:mm:ss.fff zzz", 
-                        CultureInfo.InvariantCulture), columnType);
-
             if (IsOffsetType(columnType))
-                return new ExpectedTimestamp(DateTimeOffset.ParseExact(timestampWithTimeZone, 
+                return new ExpectedTimestampValueProvider(DateTimeOffset.ParseExact(timestampWithTimeZone, 
                         "yyyy/MM/dd HH:mm:ss.fff zzz", 
-                        CultureInfo.InvariantCulture)
-                    .ToLocalTime(), columnType); 
+                        CultureInfo.InvariantCulture), columnType); 
                     
-            return new ExpectedTimestamp(DateTime.ParseExact(timestampWithTimeZone, 
+            return new ExpectedTimestampValueProvider(DateTime.ParseExact(timestampWithTimeZone, 
                     "yyyy/MM/dd HH:mm:ss.fff zzz", 
-                    CultureInfo.InvariantCulture)
-                .ToLocalTime(), columnType);
+                    CultureInfo.InvariantCulture), columnType);
         }
 
-        private ExpectedTimestamp(DateTime dateTime, SFDataType columnType)
+        private ExpectedTimestampValueProvider(DateTime dateTime, SFDataType columnType)
         {
             _expectedDateTime = dateTime;
             _expectedDateTimeOffset = null;
             _columnType = columnType;
         }
 
-        private ExpectedTimestamp(DateTimeOffset dateTimeOffset, SFDataType columnType)
+        private ExpectedTimestampValueProvider(DateTimeOffset dateTimeOffset, SFDataType columnType)
         {
             _expectedDateTimeOffset = dateTimeOffset;
             _expectedDateTime = null;
@@ -1011,20 +1018,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         internal SFDataType ExpectedColumnType() => _columnType;
-        
+
         internal void IsEqual(object actual, string comparisonFormat, string faultMessage)
         {
-            if (IsOffsetType(_columnType))
+            switch (_columnType)
             {
-                Assert.AreEqual(GetDateTimeOffset().ToString(comparisonFormat), 
-                    ((DateTimeOffset)actual).ToString(comparisonFormat), 
-                    faultMessage);
-            }
-            else
-            {
-                Assert.AreEqual(GetDateTime().ToString(comparisonFormat), 
-                    ((DateTime)actual).ToString(comparisonFormat), 
-                    faultMessage);
+                case SFDataType.TIMESTAMP_TZ:
+                    Assert.AreEqual(GetDateTimeOffset().ToString(comparisonFormat),
+                        ((DateTimeOffset)actual).ToString(comparisonFormat),
+                        faultMessage);
+                    break;
+                case SFDataType.TIMESTAMP_LTZ:
+                    Assert.AreEqual(GetDateTimeOffset().ToUniversalTime().ToString(comparisonFormat),
+                        ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat),
+                        faultMessage);
+                    break;
+                default:
+                    Assert.AreEqual(GetDateTime().ToString(comparisonFormat),
+                        ((DateTime)actual).ToString(comparisonFormat),
+                        faultMessage);
+                    break;
             }
         }
 
@@ -1053,15 +1066,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var externalVolume = Environment.GetEnvironmentVariable("ICEBERG_EXTERNAL_VOLUME"); 
             var catalog = Environment.GetEnvironmentVariable("ICEBERG_CATALOG"); 
             var baseLocation = Environment.GetEnvironmentVariable("ICEBERG_BASE_LOCATION"); 
-            Assert.IsNotNull(externalVolume);
-            Assert.IsNotNull(catalog);
-            Assert.IsNotNull(baseLocation);
+            Assert.IsNotNull(externalVolume, "env ICEBERG_EXTERNAL_VOLUME not set!");
+            Assert.IsNotNull(catalog, "env ICEBERG_CATALOG not set!");
+            Assert.IsNotNull(baseLocation, "env ICEBERG_BASE_LOCATION not set!");
             return $"EXTERNAL_VOLUME = '{externalVolume}' CATALOG = '{catalog}' BASE_LOCATION = '{baseLocation}'";
         }
 
         internal static SnowflakeDbParameter Add(this IDbCommand command, string name, DbType dbType, object value)
         {
-            if (value is ExpectedTimestamp expected)
+            if (value is ExpectedTimestampValueProvider expected)
                 return command.Add(name, dbType, expected);
             var parameter = (SnowflakeDbParameter)command.CreateParameter();
             parameter.ParameterName = name;
@@ -1071,7 +1084,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return parameter;
         }
     
-        internal static SnowflakeDbParameter Add(this IDbCommand command, string name, DbType dbType, ExpectedTimestamp value)
+        internal static SnowflakeDbParameter Add(this IDbCommand command, string name, DbType dbType, ExpectedTimestampValueProvider value)
         {
             if (dbType == DbType.DateTimeOffset)
             {
@@ -1083,7 +1096,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return command.Add(name, dbType, value.GetDateTime());
         }
     
-        internal static void Add(this IDbCommand command, string name, DbType dbType, ExpectedTimestamp value, int batchSize)
+        internal static void Add(this IDbCommand command, string name, DbType dbType, ExpectedTimestampValueProvider value, int batchSize)
         {
             if (dbType == DbType.DateTimeOffset)
             {
