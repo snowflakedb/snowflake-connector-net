@@ -20,7 +20,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
-    using System.Text.RegularExpressions;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
