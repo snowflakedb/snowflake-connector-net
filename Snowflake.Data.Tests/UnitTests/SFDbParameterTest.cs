@@ -199,11 +199,21 @@ namespace Snowflake.Data.Tests
         }
 
         [Test]
-        public void TestDbTypeExplicitAssignmentWithNullValue()
+        public void TestDbTypeExplicitAssignmentWithNullValueAndDefaultDbType()
         {
             _parameter = new SnowflakeDbParameter();
             _parameter.Value = null;
             Assert.AreEqual(default(DbType), _parameter.DbType);
+        }
+
+        [Test]
+        public void TestDbTypeExplicitAssignmentWithNullValueAndNonDefaultDbType()
+        {
+            var nonDefaultDbType = DbType.String;
+            _parameter = new SnowflakeDbParameter();
+            _parameter.Value = null;
+            _parameter.DbType = nonDefaultDbType;
+            Assert.AreEqual(nonDefaultDbType, _parameter.DbType);
         }
     }
 }
