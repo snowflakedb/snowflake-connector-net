@@ -175,6 +175,302 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 30 * 1000);
             }
         }
+
+        [Test]
+        public async Task TestAsyncExecQueryAsync()
+        {
+            string queryId;
+            var expectedWaitTime = 5;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+
+                    // Act
+                    queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+
+                    // Assert
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsFalse(conn.IsAnError(queryStatus));
+
+                    // Act
+                    DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                    queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                    Assert.AreEqual(QueryStatus.Success, queryStatus);
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test, NonParallelizable]
+        public async Task TestExecuteNormalQueryWhileAsyncExecQueryIsRunningAsync()
+        {
+            string queryId;
+            var expectedWaitTime = 5;
+
+            SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
+            for (int i = 0; i < connections.Length; i++)
+            {
+                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                await connections[i].OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+
+            // Start the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+
+                // Act
+                queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+
+                // Assert
+                Assert.IsTrue(connections[0].IsStillRunning(queryStatus));
+            }
+
+            // Execute a normal query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"select 1;";
+
+                // Act
+                var row = cmd.ExecuteScalar();
+
+                // Assert
+                Assert.AreEqual(1, row);
+            }
+
+            // Get results of the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
+            {
+                // Act
+                var reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+
+                // Assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.AreEqual(QueryStatus.Success, queryStatus);
+            }
+
+            for (int i = 0; i < connections.Length; i++)
+            {
+                await connections[i].CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestAsyncExecCancelWhileGettingResultsAsync()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    CancellationTokenSource cancelToken = new CancellationTokenSource();
+                    cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
+
+                    // Act
+                    var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+
+                    // Assert
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+
+                    // Act
+                    cancelToken.Cancel();
+                    var thrown = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("The operation was canceled"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    var statusMaxRetryCount = 5;
+                    var statusRetryCount = 0;
+                    cmd.CommandText = $"SELECT * FROM FAKE_TABLE;";
+
+                    // Act
+                    var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                    while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(queryStatus))
+                    {
+                        Thread.Sleep(1000);
+                        queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                        statusRetryCount++;
+                    }
+
+                    // Assert
+                    Assert.AreEqual(QueryStatus.FailedWithError, queryStatus);
+
+                    // Act
+                    var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestGetStatusOfInvalidQueryIdAsync()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestGetResultsOfInvalidQueryIdAsync()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test, NonParallelizable]
+        public async Task TestGetStatusOfUnknownQueryIdAsync()
+        {
+            string unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
+
+                    // Assert
+                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        [Ignore("The test takes too long to finish when using the default retry")]
+        public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
+        {
+            string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
+        public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
+        {
+            var queryResultsRetryCount = 3;
+            var queryResultsRetryPattern = new int[] { 1, 2 };
+            var unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+
+                    // Act
+                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
+                        await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true).ConfigureAwait(false));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
     }
 
     [TestFixture]
@@ -1036,6 +1332,294 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 queryId = command.GetQueryId();
                 Assert.IsNotEmpty(queryId);
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestAsyncExecQuery()
+        {
+            string queryId;
+            var expectedWaitTime = 5;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+
+                    // Act
+                    queryId = cmd.ExecuteInAsyncMode();
+                    var queryStatus = cmd.GetQueryStatus(queryId);
+
+                    // Assert
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsFalse(conn.IsAnError(queryStatus));
+
+                    // Act
+                    DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+
+                    // Assert
+                    Assert.IsTrue(reader.Read());
+                    Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test, NonParallelizable]
+        public void TestExecuteNormalQueryWhileAsyncExecQueryIsRunning()
+        {
+            string queryId;
+            var expectedWaitTime = 5;
+
+            SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
+            for (int i = 0; i < connections.Length; i++)
+            {
+                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                connections[i].Open();
+            }
+
+            // Start the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
+
+                // Act
+                queryId = cmd.ExecuteInAsyncMode();
+
+                // Assert
+                Assert.IsTrue(connections[0].IsStillRunning(cmd.GetQueryStatus(queryId)));
+            }
+
+            // Execute a normal query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
+            {
+                // Arrange
+                cmd.CommandText = $"select 1;";
+
+                // Act
+                var row = cmd.ExecuteScalar();
+
+                // Assert
+                Assert.AreEqual(1, row);
+            }
+
+            // Get results of the async exec query
+            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
+            {
+                // Act
+                DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+
+                // Assert
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
+            }
+
+            for (int i = 0; i < connections.Length; i++)
+            {
+                connections[i].Close();
+            }
+        }
+
+        [Test]
+        public void TestFailedAsyncExecQueryThrowsError()
+        {
+            string queryId;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    var statusMaxRetryCount = 5;
+                    var statusRetryCount = 0;
+                    cmd.CommandText = $"SELECT * FROM FAKE_TABLE;";
+
+                    // Act
+                    queryId = cmd.ExecuteInAsyncMode();
+                    while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(cmd.GetQueryStatus(queryId)))
+                    {
+                        Thread.Sleep(1000);
+                        statusRetryCount++;
+                    }
+
+                    // Assert
+                    Assert.AreEqual(QueryStatus.FailedWithError, cmd.GetQueryStatus(queryId));
+
+                    // Act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.GetResultsFromQueryId(queryId));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestAsyncExecQueryPutGetThrowsNotImplemented()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    cmd.CommandText = $"PUT file://non_existent_file.csv @~;";
+
+                    // Act
+                    var thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+
+                    // Arrange
+                    cmd.CommandText = "GET @~ file://C:\\tmp\\;";
+
+                    // Act
+                    thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestGetStatusOfInvalidQueryId()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<Exception>(() => cmd.GetQueryStatus(fakeQueryId));
+
+                    // Assert
+                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestGetResultsOfInvalidQueryId()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
+
+                    // Assert
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test, NonParallelizable]
+        public void TestGetStatusOfUnknownQueryId()
+        {
+            string unknownQueryId = "ab123cde-1cba-789a-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var queryStatus = cmd.GetQueryStatus(unknownQueryId);
+
+                    // Assert
+                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        [Ignore("The test takes too long to finish when using the default retry")]
+        public void TestGetResultsOfUnknownQueryIdWithDefaultRetry()
+        {
+            string unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
+
+                    // Assert
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestGetResultsOfUnknownQueryIdWithConfiguredRetry()
+        {
+            var queryResultsRetryCount = 3;
+            var queryResultsRetryPattern = new int[] { 1, 2 };
+            var unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+                    var task = queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, false);
+
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => task.Wait());
+
+                    // Assert
+                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                }
 
                 conn.Close();
             }
