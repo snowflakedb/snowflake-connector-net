@@ -1542,8 +1542,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [TestCase("*")]
-        [TestCase("*{0}")]
-        [TestCase("^*{0}$")]
+        [TestCase("*{0}*")]
+        [TestCase("^*{0}*$")]
         [TestCase("^nonmatch*{0}$|*")]
         [TestCase("*a*", "a")]
         [TestCase("*la*", "la")]
@@ -1612,7 +1612,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 = ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}");
+                    $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}*");
                 conn.Open();
                 // Because testConfig.host is in the bypass list, the proxy should not be used
             }
