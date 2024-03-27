@@ -147,6 +147,8 @@ namespace Snowflake.Data.Core
             _restRequester = session.restRequester;
         }
 
+        internal string GetBindStage() => _bindStage;
+
         private void AssignQueryRequestId()
         {
             lock (_requestIdLock)
