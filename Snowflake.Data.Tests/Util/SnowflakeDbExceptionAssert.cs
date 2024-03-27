@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.Util
                         case SnowflakeDbException se:
                             return se.ErrorCode == (int)expected;
                         case HttpRequestException he:
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETCOREAPP
                             return he.Message.Contains(((int)expected).ToString());
 #else
                             return he.StatusCode == expected;

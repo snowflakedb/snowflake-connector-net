@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net471;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net471;net472;net481</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
@@ -32,12 +31,8 @@
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472' Or '$(TargetFramework)' == 'net481'">
     <Reference Include="System.Net.Http" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
