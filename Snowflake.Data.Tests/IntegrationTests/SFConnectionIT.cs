@@ -1541,6 +1541,66 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TestCase("*")]
+        [TestCase("*{0}")]
+        [TestCase("^*{0}$")]
+        [TestCase("^nonmatch*{0}$|*")]
+        [TestCase("*a*", "a")]
+        [TestCase("*la*", "la")]
+        public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = null)
+        {
+            var host = string.Empty;
+            try
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    host = ResolveHostToUseFromTestConfig(ConnectionString);
+                    var nonProxyHosts = string.Format(regexHost, $"{host}");
+                    var proxyHostForConnection = proxyHost ?? "proxyserverhost";
+                    conn.ConnectionString =
+                        $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                }
+            }
+            catch (Exception e)
+            {
+                var wrapException = new Exception($"Issue trying to bypass with host {host}", e);
+                throw wrapException;
+            }
+        }
+
+        [Test]
+        [TestCase("invalid{0}")]
+        [TestCase("*invalid{0}*")]
+        [TestCase("^invalid{0}$")]
+        [TestCase("*a.b")]
+        [TestCase("a", "a")]
+        [TestCase("la", "la")]
+        public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = null)
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+                var proxyHostForConnection = proxyHost ?? "proxyserverhost";
+                conn.ConnectionString =
+                    $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                try
+                {
+                    conn.Open();
+                    //Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    // Expected
+                    s_logger.Debug("Failed opening connection ", e);
+                    Assert.AreEqual(270001, e.ErrorCode); //Internal error
+                    AssertIsConnectionFailure(e);
+                }
+            }
+        }
+
+        [Test]
         public void TestUseProxyFalseWithInvalidProxyConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1561,7 +1621,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 = ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    "*.foo.com %7C" + testConfig.account + ".snowflakecomputing.com|" + testConfig.host);
+                    $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}");
                 conn.Open();
                 // Because testConfig.host is in the bypass list, the proxy should not be used
             }
@@ -1789,6 +1849,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // fail the test case if any exception is thrown
                 Assert.Fail();
             }
+        }
+        
+        private string ResolveHostToUseFromTestConfig(string connectionString)
+        {
+            return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }
     }
 
@@ -2169,6 +2234,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
+        
     }
 }
 
