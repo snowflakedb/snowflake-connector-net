@@ -191,11 +191,19 @@ namespace Snowflake.Data.Tests
                     break;
                 default:
                     // Not supported
-                    expectedDbType = DbType.AnsiString;
+                    expectedDbType = default(DbType);
                     break;
             }
 
             Assert.AreEqual(expectedDbType, _parameter.DbType);
+        }
+
+        [Test]
+        public void TestDbTypeExplicitAssignmentWithNullValue()
+        {
+            _parameter = new SnowflakeDbParameter();
+            _parameter.Value = null;
+            Assert.AreEqual(default(DbType), _parameter.DbType);
         }
     }
 }
