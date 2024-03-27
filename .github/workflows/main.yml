@@ -25,7 +25,7 @@ env:
   DOTNET_VERSION: 6.0
   DOTNET_LEGACY_VERSION: 4.7.1
   # uncomment to run the tests sequentially
-  #SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
+  # SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
 
 jobs:
   test-windows:
@@ -34,14 +34,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net472', 'net471']
+        dotnet: ['netcoreapp3.1', 'net5.0', 'net6.0', 'net7.0', 'net8.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -92,14 +92,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -149,14 +149,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0']
+        dotnet: ['net5.0', 'net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4

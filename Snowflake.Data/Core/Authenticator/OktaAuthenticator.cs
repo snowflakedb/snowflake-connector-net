@@ -80,7 +80,7 @@ namespace Snowflake.Data.Core.Authenticator
                     s_logger.Debug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
                     samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
-#if NETFRAMEWORK                    
+#if NETFRAMEWORK || NETSTANDARD2_0
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 #else
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
