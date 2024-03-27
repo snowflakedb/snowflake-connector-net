@@ -1549,15 +1549,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("*la*", "la")]
         public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = null)
         {
-            using (var conn = new SnowflakeDbConnection())
+            var host = string.Empty;
+            try
             {
-                var host = ResolveHostToUseFromTestConfig(ConnectionString);
-                var nonProxyHosts = string.Format(regexHost, $"{host}");
-                var proxyHostForConnection = proxyHost ?? "proxyserverhost";
-                conn.ConnectionString =
-                    $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
-                conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    host = ResolveHostToUseFromTestConfig(ConnectionString);
+                    var nonProxyHosts = string.Format(regexHost, $"{host}");
+                    var proxyHostForConnection = proxyHost ?? "proxyserverhost";
+                    conn.ConnectionString =
+                        $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                }
+            }
+            catch (Exception e)
+            {
+                var wrapException = new Exception($"Issue trying to bypass with host {host}", e);
+                throw wrapException;
             }
         }
 
