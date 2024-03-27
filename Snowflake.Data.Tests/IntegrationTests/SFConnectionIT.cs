@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
+    using System.Text.RegularExpressions;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -1551,7 +1552,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+                var host = ResolveHostToUseFromTestConfig(ConnectionString);
+                var nonProxyHosts = string.Format(regexHost, $"{host}");
                 var proxyHostForConnection = proxyHost ?? "proxyserverhost";
                 conn.ConnectionString =
                     $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
@@ -1839,6 +1841,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // fail the test case if any exception is thrown
                 Assert.Fail();
             }
+        }
+        
+        private string ResolveHostToUseFromTestConfig(string connectionString)
+        {
+            return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }
     }
 
@@ -2219,6 +2226,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
+        
     }
 }
 
