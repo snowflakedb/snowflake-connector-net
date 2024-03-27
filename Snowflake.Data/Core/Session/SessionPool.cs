@@ -111,6 +111,14 @@ namespace Snowflake.Data.Core.Session
                 return new ConnectionPoolConfig();
             }
         }
+
+        internal List<string> GetIdleSessionIds()
+        {
+            lock (_sessionPoolLock)
+            {
+                return _idleSessions.Select(s => s.sessionId).ToList();
+            }
+        }
         
         internal SFSession GetSession(string connStr, SecureString password)
         {
@@ -122,9 +130,7 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            sessionOrCreateTokens.BackgroundSessionCreationTokens().ForEach(token =>
-                ScheduleNewIdleSession(connStr, password, token)
-            );
+            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
             return sessionOrCreateTokens.Session ?? NewSession(connStr, password, sessionOrCreateTokens.SessionCreationToken());
         }
@@ -139,14 +145,20 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            sessionOrCreateTokens.BackgroundSessionCreationTokens().ForEach(token =>
-                ScheduleNewIdleSession(connStr, password, token)
-            );
+            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
             return sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
         }
 
-        internal void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
+        private void ScheduleNewIdleSessions(string connStr, SecureString password, IList<SessionCreationToken> tokens)
+        {
+            foreach (var token in tokens)
+            {
+                ScheduleNewIdleSession(connStr, password, token);
+            }
+        }
+        
+        private void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
         {
             Task.Run(() =>
             {
@@ -193,32 +205,43 @@ namespace Snowflake.Data.Core.Session
                         return new SessionOrCreationTokens(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool");
-                    var sessionsCount = AllowedNumberOfNewSessionCreations();
+                    var sessionsCount = AllowedNumberOfNewSessionCreations(1);
                     if (sessionsCount > 0)
                     {
                         // there is no need to wait for a session since we can create new ones
-                        var sessionCreationTokens = Enumerable.Range(1, sessionsCount)
-                            .Select(_ => _sessionCreationTokenCounter.NewToken())
-                            .ToList();
-                        return new SessionOrCreationTokens(sessionCreationTokens);
+                        return new SessionOrCreationTokens(RegisterSessionCreations(sessionsCount));
                     }
                 }
             }
             return new SessionOrCreationTokens(WaitForSession(connStr));
         }
 
-        private int AllowedNumberOfNewSessionCreations()
+        private IList<SessionCreationToken> RegisterSessionCreationsWhenReturningSessionToPool()
         {
+            var count = AllowedNumberOfNewSessionCreations(0);
+            return RegisterSessionCreations(count);
+        }
+
+        private IList<SessionCreationToken> RegisterSessionCreations(int sessionsCount) =>
+            Enumerable.Range(1, sessionsCount)
+                .Select(_ => _sessionCreationTokenCounter.NewToken())
+                .ToList();
+        
+        private int AllowedNumberOfNewSessionCreations(int atLeastCount)
+        {
+            // we are expecting to create atLeast 1 session in case of opening a connection (atLeastCount = 1)
+            // but we have no expectations when closing a connection (atLeastCount = 0)
             if (!IsMultiplePoolsVersion())
             {
-                s_logger.Debug($"SessionPool - creating of new sessions is not limited");
-                return 1; // waiting disabled means we are either in old pool or there is no pooling
+                if (atLeastCount > 0)
+                    s_logger.Debug($"SessionPool - creating of new sessions is not limited");
+                return atLeastCount; // we are either in old pool or there is no pooling
             }
             var currentSize = GetCurrentPoolSize();
             if (currentSize < _poolConfig.MaxPoolSize)
             {
                 var maxSessionsToCreate = _poolConfig.MaxPoolSize - currentSize;
-                var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, 1);
+                var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, atLeastCount);
                 var sessionsToCreate = Math.Min(sessionsNeeded, maxSessionsToCreate);
                 s_logger.Debug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}");
                 return sessionsToCreate;
@@ -388,14 +411,24 @@ namespace Snowflake.Data.Core.Session
             {
                 s_logger.Debug("SessionPool::AddSession");
             }
+            var result = ReturnSessionToPool(session);
+            var wasSessionReturnedToPool = result.Item1;
+            var sessionCreationTokens = result.Item2;
+            ScheduleNewIdleSessions(ConnectionString, Password, sessionCreationTokens);
+            return wasSessionReturnedToPool;
+        }
+
+        private Tuple<bool, IList<SessionCreationToken>> ReturnSessionToPool(SFSession session)
+        {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
             {
                 lock (_sessionPoolLock)
                 {
                     _busySessionsCounter.Decrease();
+                    var numberOfSessionsToCreate = AllowedNumberOfNewSessionCreations(0);
+                    return Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool());
                 }
-                return false;
             }
 
             lock (_sessionPoolLock)
@@ -404,18 +437,17 @@ namespace Snowflake.Data.Core.Session
                 CleanExpiredSessions();
                 if (session.IsExpired(_poolConfig.ExpirationTimeout, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())) // checking again because we could have spent some time waiting for a lock
                 {
-                    return false;
+                    return Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool());
                 }
                 if (GetCurrentPoolSize() >= _poolConfig.MaxPoolSize)
                 {
                     s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId}");
-                    return false;
+                    return Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
                 }
-
                 s_logger.Debug($"pool connection with sid {session.sessionId}");
                 _idleSessions.Add(session);
                 _waitingForIdleSessionQueue.OnResourceIncrease();
-                return true;
+                return Tuple.Create(true, RegisterSessionCreationsWhenReturningSessionToPool());
             }
         }
 

@@ -315,24 +315,49 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
-            var connectionString = ConnectionString + "expirationTimeout=0;maxPoolSize=2;minPoolSize=1";
-            var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = connectionString;
-            conn1.Open();
-            conn1.Close();
+            // arrange
+            var connectionString = ConnectionString + "expirationTimeout=0;maxPoolSize=3;minPoolSize=2";
+            var conn1 = new SnowflakeDbConnection(connectionString);
+            var conn2 = new SnowflakeDbConnection(connectionString);
+            var conn3 = new SnowflakeDbConnection(connectionString);
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
             
-            var conn2 = new SnowflakeDbConnection();
-            conn2.ConnectionString = connectionString;
-            conn2.Open();
-            conn2.Close();
+            // act
+            conn1.Open();
+            
+            // assert
+            Assert.AreEqual(2, pool.GetCurrentPoolSize());
+            var conn1SessionId = conn1.SfSession.sessionId;
 
-            var conn3 = new SnowflakeDbConnection();
-            conn3.ConnectionString = connectionString;
+            // act
+            conn2.Open();
+            
+            // assert
+            Assert.AreEqual(2, pool.GetCurrentPoolSize());
+            var conn2SessionId = conn2.SfSession.sessionId;
+            
+            // act 
             conn3.Open();
+            
+            // assert
+            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            var conn3SessionId = conn2.SfSession.sessionId;
+            
+            // act
+            conn1.Close();
+            conn2.Close();
             conn3.Close();
+            Awaiter.WaitUntilConditionOrTimeout(
+                () => pool.GetIdleSessionIds().Count == 2,
+                TimeSpan.FromSeconds(30));
 
             // assert
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(connectionString).GetCurrentPoolSize());
+            Assert.AreEqual(2, pool.GetCurrentPoolSize());
+            var idleSessionIds = pool.GetIdleSessionIds();
+            CollectionAssert.DoesNotContain(idleSessionIds, conn1SessionId);
+            CollectionAssert.DoesNotContain(idleSessionIds, conn2SessionId);
+            CollectionAssert.DoesNotContain(idleSessionIds, conn3SessionId);
         }
 
         [Test]

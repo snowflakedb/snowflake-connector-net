@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace Snowflake.Data.Core.Session
 {
     internal class SessionOrCreationTokens
     {
-        private static readonly List<SessionCreationToken> s_emptySessionCreationTokenList = new List<SessionCreationToken>();
+        internal static readonly IList<SessionCreationToken> s_emptySessionCreationTokenList = ImmutableList<SessionCreationToken>.Empty; // used as a memory optimization not to create many short living empty list
         
         public SFSession Session { get; }
-        public List<SessionCreationToken> SessionCreationTokens { get; }
+        public IList<SessionCreationToken> SessionCreationTokens { get; }
 
         public SessionOrCreationTokens(SFSession session)
         {
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Core.Session
             SessionCreationTokens = s_emptySessionCreationTokenList;
         }
 
-        public SessionOrCreationTokens(List<SessionCreationToken> sessionCreationTokens)
+        public SessionOrCreationTokens(IList<SessionCreationToken> sessionCreationTokens)
         {
             Session = null;
             if (sessionCreationTokens == null || sessionCreationTokens.Count == 0)
@@ -27,7 +28,7 @@ namespace Snowflake.Data.Core.Session
             SessionCreationTokens = sessionCreationTokens;
         }
 
-        public List<SessionCreationToken> BackgroundSessionCreationTokens()
+        public IList<SessionCreationToken> BackgroundSessionCreationTokens()
         {
             if (Session == null)
             {
