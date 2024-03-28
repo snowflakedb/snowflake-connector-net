@@ -150,12 +150,9 @@ namespace Snowflake.Data.Core.Session
             return sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
         }
 
-        private void ScheduleNewIdleSessions(string connStr, SecureString password, IList<SessionCreationToken> tokens)
+        private void ScheduleNewIdleSessions(string connStr, SecureString password, List<SessionCreationToken> tokens)
         {
-            foreach (var token in tokens)
-            {
-                ScheduleNewIdleSession(connStr, password, token);
-            }
+            tokens.ForEach(token => ScheduleNewIdleSession(connStr, password, token));
         }
         
         private void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
@@ -216,13 +213,13 @@ namespace Snowflake.Data.Core.Session
             return new SessionOrCreationTokens(WaitForSession(connStr));
         }
 
-        private IList<SessionCreationToken> RegisterSessionCreationsWhenReturningSessionToPool()
+        private List<SessionCreationToken> RegisterSessionCreationsWhenReturningSessionToPool()
         {
             var count = AllowedNumberOfNewSessionCreations(0);
             return RegisterSessionCreations(count);
         }
 
-        private IList<SessionCreationToken> RegisterSessionCreations(int sessionsCount) =>
+        private List<SessionCreationToken> RegisterSessionCreations(int sessionsCount) =>
             Enumerable.Range(1, sessionsCount)
                 .Select(_ => _sessionCreationTokenCounter.NewToken())
                 .ToList();
@@ -418,7 +415,7 @@ namespace Snowflake.Data.Core.Session
             return wasSessionReturnedToPool;
         }
 
-        private Tuple<bool, IList<SessionCreationToken>> ReturnSessionToPool(SFSession session)
+        private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session)
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
