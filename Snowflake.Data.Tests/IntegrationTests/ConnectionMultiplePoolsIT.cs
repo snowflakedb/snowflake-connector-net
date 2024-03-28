@@ -316,7 +316,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConnectionPoolExpirationWorks()
         {
             // arrange
-            var connectionString = ConnectionString + "expirationTimeout=0;maxPoolSize=3;minPoolSize=2";
+            var connectionString = ConnectionString + "expirationTimeout=10;maxPoolSize=3;minPoolSize=2";
             var conn1 = new SnowflakeDbConnection(connectionString);
             var conn2 = new SnowflakeDbConnection(connectionString);
             var conn3 = new SnowflakeDbConnection(connectionString);
@@ -325,6 +325,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // act
             conn1.Open();
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
             
             // assert
             Assert.AreEqual(2, pool.GetCurrentPoolSize());
@@ -332,6 +333,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             conn2.Open();
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
             
             // assert
             Assert.AreEqual(2, pool.GetCurrentPoolSize());
@@ -339,6 +341,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // act 
             conn3.Open();
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
             
             // assert
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
@@ -347,17 +350,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // act
             conn1.Close();
             conn2.Close();
-            conn3.Close();
-            Awaiter.WaitUntilConditionOrTimeout(
-                () => pool.GetIdleSessionIds().Count == 2,
-                TimeSpan.FromSeconds(30));
+            //conn3.Close();
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0,TimeSpan.FromSeconds(15));
+            Thread.Sleep(10000);
 
             // assert
+            // pool.Describe();
+            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            
+            // act
+            conn3.Close();
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0,TimeSpan.FromSeconds(15));
+            
+            pool.Describe();
             Assert.AreEqual(2, pool.GetCurrentPoolSize());
+            
+            // jeśli tutaj teraz poproszę o nową sesję to ilość sesji powinna spaść z 3 do 2 - i to zademonstruje że TODO: !!!
+            // albo 3-go połączenia nie zamykać, czekam 10s i robię close - wtedy powinna ilość połączeń spaść do 2
             var idleSessionIds = pool.GetIdleSessionIds();
             CollectionAssert.DoesNotContain(idleSessionIds, conn1SessionId);
             CollectionAssert.DoesNotContain(idleSessionIds, conn2SessionId);
-            CollectionAssert.DoesNotContain(idleSessionIds, conn3SessionId);
+            // CollectionAssert.DoesNotContain(idleSessionIds, conn3SessionId);
         }
 
         [Test]

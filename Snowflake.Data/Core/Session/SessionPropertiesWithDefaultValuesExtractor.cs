@@ -45,6 +45,14 @@ namespace Snowflake.Data.Core.Session
                 s => true,
                 i => i >= 0
             );
+
+        public TimeSpan ExtractTimeoutWithMinimalValue(SFSessionProperty property, TimeSpan minimalValue) =>
+            ExtractPropertyWithDefaultValue(
+                property,
+                ExtractTimeout,
+                ValidateTimeoutFormat,
+                t => HasTimeoutMinimalValue(t, minimalValue)
+            );
         
         public TimeSpan ExtractTimeout(
             SFSessionProperty property) =>
@@ -99,6 +107,9 @@ namespace Snowflake.Data.Core.Session
             }
             return value;
         }
+
+        internal static bool HasTimeoutMinimalValue(TimeSpan timeout, TimeSpan minimalValue) =>
+            TimeoutHelper.IsInfinite(timeout) || timeout.TotalMilliseconds >= minimalValue.TotalMilliseconds;
         
         private TResult handleFailedValidation<TResult, TValue>(
             TResult defaultValue,

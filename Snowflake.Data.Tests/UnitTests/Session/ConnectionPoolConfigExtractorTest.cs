@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [TestCaseSource(nameof(CorrectTimeoutsWithZeroUnchanged))]
+        [TestCaseSource(nameof(AtLeast10SecTimeouts))]
         public void TestExtractExpirationTimeout(TimeoutTestCase testCase)
         {
             // arrange
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
         
         [Test]
-        [TestCaseSource(nameof(IncorrectTimeouts))]
+        [TestCaseSource(nameof(LessThan10SecOrIncorrectTimeouts))]
         public void TestExtractExpirationTimeoutFailsWhenWrongValue(string propertyValue)
         {
             // arrange
@@ -207,7 +207,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("TRUE", true)]
         [TestCase("false", false)]
         [TestCase("FALSE", false)]
-        // [TestCase("0", false)]
         public void TestExtractPoolingEnabled(string propertyValue, bool poolingEnabled)
         {
             // arrange
@@ -254,14 +253,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
         }
         
-        public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroUnchanged() =>
-            CorrectTimeoutsWithoutZero().Concat(ZeroUnchangedTimeouts());
-        
         public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroAsInfinite() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroAsInfiniteTimeouts());
 
         public static IEnumerable<TimeoutTestCase> PositiveTimeoutsAndZeroUnchanged() =>
             PositiveTimeouts().Concat(ZeroUnchangedTimeouts());
+        
+        public static IEnumerable<string> LessThan10SecOrIncorrectTimeouts() =>
+            LessThan10SecTimeouts().Concat(IncorrectTimeouts());
 
         private static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithoutZero() =>
             NegativeAsInfinityTimeouts().Concat(PositiveTimeouts());
@@ -293,12 +292,25 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             yield return new TimeoutTestCase("0", TimeSpan.Zero);
             yield return new TimeoutTestCase("0ms", TimeSpan.Zero);
         }
-
+        
+        private static IEnumerable<string> LessThan10SecTimeouts()
+        {
+            yield return "0";
+            yield return "9999ms";
+        }
+        
         public static IEnumerable<string> IncorrectTimeouts()
         {
             yield return "wrong value";
             yield return "1h";
             yield return "1s1s";
+        }
+
+        public static IEnumerable<TimeoutTestCase> AtLeast10SecTimeouts()
+        {
+            yield return new TimeoutTestCase("10", TimeSpan.FromSeconds(10));
+            yield return new TimeoutTestCase("15s", TimeSpan.FromSeconds(15));
+            yield return new TimeoutTestCase("-1", TimeoutHelper.Infinity());
         }
     }
 }

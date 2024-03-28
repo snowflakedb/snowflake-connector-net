@@ -21,6 +21,7 @@ namespace Snowflake.Data.Core
         public const bool DefaultPoolingEnabled = true;
         public const int DefaultMaxHttpRetries = 7;
         public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
+        public static readonly TimeSpan MinimalExpirationTimeout = TimeSpan.FromSeconds(10);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
         private static readonly List<string> s_changedSessionValues = ChangedSessionBehaviorExtensions.StringValues();
         
@@ -215,7 +216,7 @@ namespace Snowflake.Data.Core
                     _minPoolSize = extractor.ExtractNonNegativeIntegerWithDefaultValue(SFSessionProperty.MINPOOLSIZE),
                     _changedSession = ExtractChangedSession(extractor, SFSessionProperty.CHANGEDSESSION),
                     _waitingForSessionIdleTimeout = extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
-                    _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
+                    _expirationTimeout = extractor.ExtractTimeoutWithMinimalValue(SFSessionProperty.EXPIRATIONTIMEOUT, MinimalExpirationTimeout),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED)
                 };
             }

@@ -507,6 +507,11 @@ namespace Snowflake.Data.Core.Session
         public void SetTimeout(long seconds)
         {
             var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
+            if (IsMultiplePoolsVersion()
+                && !SessionPropertiesWithDefaultValuesExtractor.HasTimeoutMinimalValue(timeout, SFSessionHttpClientProperties.MinimalExpirationTimeout))
+            {
+                throw new Exception("Wrong value of expiration timeout");
+            }
             _poolConfig.ExpirationTimeout = timeout;
             _configOverriden = true;
         }
@@ -536,5 +541,14 @@ namespace Snowflake.Data.Core.Session
         }
 
         public bool GetPooling() => _poolConfig.PoolingEnabled;
+
+        internal int OngoingSessionCreationsCount() => _sessionCreationTokenCounter.Count();
+
+        internal void Describe()
+        {
+            Console.WriteLine($"idle sessions: {_idleSessions.Count}");
+            Console.WriteLine($"busy sessions: {_busySessionsCounter.Count()}");
+            Console.WriteLine($"session creations : {_sessionCreationTokenCounter.Count()}");
+        }
     }
 }
