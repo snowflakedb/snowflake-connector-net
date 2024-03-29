@@ -935,7 +935,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
                         Assert.AreEqual(row, reader.GetInt32(0));
-                        expected.IsEqual(reader.GetValue(1), comparisonFormat, faultMessage);
+                        expected.AssertEqual(reader.GetValue(1), comparisonFormat, faultMessage);
                     }
                 }
                 Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
@@ -994,13 +994,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         internal static ExpectedTimestampValueProvider From(string timestampWithTimeZone, SFDataType columnType)
         {
             if (IsOffsetType(columnType))
-                return new ExpectedTimestampValueProvider(DateTimeOffset.ParseExact(timestampWithTimeZone, 
-                        "yyyy/MM/dd HH:mm:ss.fff zzz", 
-                        CultureInfo.InvariantCulture), columnType); 
-                    
-            return new ExpectedTimestampValueProvider(DateTime.ParseExact(timestampWithTimeZone, 
-                    "yyyy/MM/dd HH:mm:ss.fff zzz", 
-                    CultureInfo.InvariantCulture), columnType);
+            {
+                var dateTimeOffset = DateTimeOffset.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+                return new ExpectedTimestampValueProvider(dateTimeOffset, columnType);
+            }
+
+            var dateTime = DateTime.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+            return new ExpectedTimestampValueProvider(dateTime, columnType);
         }
 
         private ExpectedTimestampValueProvider(DateTime dateTime, SFDataType columnType)
@@ -1019,7 +1019,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         internal SFDataType ExpectedColumnType() => _columnType;
 
-        internal void IsEqual(object actual, string comparisonFormat, string faultMessage)
+        internal void AssertEqual(object actual, string comparisonFormat, string faultMessage)
         {
             switch (_columnType)
             {
