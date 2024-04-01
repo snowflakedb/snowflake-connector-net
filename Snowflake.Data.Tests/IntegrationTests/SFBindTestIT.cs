@@ -769,5 +769,69 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void testExplicitDbTypeAssignmentForSimpleValue()
+        {
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "cola INTEGER",
+                });
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    string insertCommand = $"insert into {TableName} values (?)";
+                    cmd.CommandText = insertCommand;
+
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.Value = 1;
+                    cmd.Parameters.Add(p1);
+
+                    var count = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(1, count);
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void testExplicitDbTypeAssignmentForArrayValue()
+        {
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "cola INTEGER",
+                });
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    string insertCommand = $"insert into {TableName} values (?)";
+                    cmd.CommandText = insertCommand;
+
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.Value = new int[] { 1, 2, 3 };
+                    cmd.Parameters.Add(p1);
+
+                    var count = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(3, count);
+                }
+
+                conn.Close();
+            }
+        }
     }
 }
