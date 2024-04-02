@@ -188,11 +188,11 @@ namespace Snowflake.Data.Core
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
-
-                        if (!entry.StartsWith("^") || !entry.EndsWith("$"))
-                        {
-                            entry = $"^{entry}$";
-                        }
+                        
+                        entry = entry.StartsWith("^") ? entry : $"^{entry}";
+                        
+                        entry = entry.EndsWith("$") ? entry : $"{entry}$";
+                        
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 

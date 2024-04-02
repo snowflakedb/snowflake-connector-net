@@ -1543,6 +1543,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [TestCase("*")]
         [TestCase("*{0}*")]
+        [TestCase("^*{0}*")]
+        [TestCase("*{0}*$")]
         [TestCase("^*{0}*$")]
         [TestCase("^nonmatch*{0}$|*")]
         [TestCase("*a*", "a")]
@@ -1576,18 +1578,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var proxyHostForConnection = proxyHost ?? "proxyserverhost";
                 conn.ConnectionString =
                     $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
-                try
-                {
-                    conn.Open();
-                    //Assert.Fail();
-                }
-                catch (SnowflakeDbException e)
-                {
-                    // Expected
-                    s_logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual(270001, e.ErrorCode); //Internal error
-                    AssertIsConnectionFailure(e);
-                }
+                var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                s_logger.Debug("Failed opening connection ", exception);
+                Assert.AreEqual(270001, exception.ErrorCode);
+                AssertIsConnectionFailure(exception);
             }
         }
 
