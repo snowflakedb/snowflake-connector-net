@@ -567,6 +567,8 @@ namespace Snowflake.Data.Core
             var hasEverBeenOpened = !IsNotOpen();
             return hasEverBeenOpened && TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
         }
+
+        internal long GetStartTime() => _startTime;
     }
 }
 

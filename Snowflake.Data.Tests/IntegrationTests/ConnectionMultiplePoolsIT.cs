@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestWaitInAQueueForAnIdleSession()
         {
             // arrange
-            var connectionString = ConnectionString + "application=TestWaitForMaxSize3;waitingForIdleSessionTimeout=3s;maxPoolSize=2";
+            var connectionString = ConnectionString + "application=TestWaitForMaxSize3;waitingForIdleSessionTimeout=3s;maxPoolSize=2;minPoolSize=0";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             const long ADelay = 0;
@@ -203,7 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var events = threads.Events().ToList();
-            Assert.AreEqual(6, events.Count);
+            Assert.AreEqual(6, events.Count); // A,B - connected; C,D - waiting, connected
             var waitingEvents = events.Where(e => e.IsWaitingEvent()).ToList();
             Assert.AreEqual(2, waitingEvents.Count);
             CollectionAssert.AreEquivalent(new[] { "C", "D" }, waitingEvents.Select(e => e.ThreadName)); // equivalent = in any order
@@ -316,61 +316,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConnectionPoolExpirationWorks()
         {
             // arrange
-            var connectionString = ConnectionString + "expirationTimeout=10;maxPoolSize=3;minPoolSize=2";
-            var conn1 = new SnowflakeDbConnection(connectionString);
-            var conn2 = new SnowflakeDbConnection(connectionString);
-            var conn3 = new SnowflakeDbConnection(connectionString);
+            const int ExpirationTimeoutInSeconds = 10;
+            var connectionString = ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
             
             // act
-            conn1.Open();
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
+            var conn1 = OpenedConnection(connectionString);
+            var conn2 = OpenedConnection(connectionString);
+            var conn3 = OpenedConnection(connectionString);
+            var conn4 = OpenedConnection(connectionString);
             
             // assert
-            Assert.AreEqual(2, pool.GetCurrentPoolSize());
-            var conn1SessionId = conn1.SfSession.sessionId;
-
-            // act
-            conn2.Open();
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
-            
-            // assert
-            Assert.AreEqual(2, pool.GetCurrentPoolSize());
-            var conn2SessionId = conn2.SfSession.sessionId;
-            
-            // act 
-            conn3.Open();
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, TimeSpan.FromSeconds(15));
-            
-            // assert
-            Assert.AreEqual(3, pool.GetCurrentPoolSize());
-            var conn3SessionId = conn2.SfSession.sessionId;
+            Assert.AreEqual(4, pool.GetCurrentPoolSize());
             
             // act
+            WaitUntilAllSessionsCreatedOrTimeout(pool);
+            var beforeSleepMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); 
+            Thread.Sleep(TimeSpan.FromSeconds(ExpirationTimeoutInSeconds));
             conn1.Close();
             conn2.Close();
-            //conn3.Close();
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0,TimeSpan.FromSeconds(15));
-            Thread.Sleep(10000);
-
+            conn3.Close();
+            conn4.Close();
+            
             // assert
-            // pool.Describe();
-            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            Assert.AreEqual(2, pool.GetCurrentPoolSize()); // 2 idle sessions, but expired because close doesn't remove expired sessions
             
             // act
-            conn3.Close();
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0,TimeSpan.FromSeconds(15));
+            WaitUntilAllSessionsCreatedOrTimeout(pool);
+            var conn5 = OpenedConnection(connectionString);
+            WaitUntilAllSessionsCreatedOrTimeout(pool);
             
-            pool.Describe();
-            Assert.AreEqual(2, pool.GetCurrentPoolSize());
-            
-            // jeśli tutaj teraz poproszę o nową sesję to ilość sesji powinna spaść z 3 do 2 - i to zademonstruje że TODO: !!!
-            // albo 3-go połączenia nie zamykać, czekam 10s i robię close - wtedy powinna ilość połączeń spaść do 2
-            var idleSessionIds = pool.GetIdleSessionIds();
-            CollectionAssert.DoesNotContain(idleSessionIds, conn1SessionId);
-            CollectionAssert.DoesNotContain(idleSessionIds, conn2SessionId);
-            // CollectionAssert.DoesNotContain(idleSessionIds, conn3SessionId);
+            // assert
+            Assert.AreEqual(2, pool.GetCurrentPoolSize()); // 1 idle session and 1 busy
+            var sessionStartTimes = pool.GetIdleSessionsStartTimes();
+            Assert.AreEqual(1, sessionStartTimes.Count);
+            Assert.That(sessionStartTimes.First(), Is.GreaterThan(beforeSleepMillis));
+            Assert.That(conn5.SfSession.GetStartTime(), Is.GreaterThan(beforeSleepMillis));
         }
 
         [Test]
@@ -390,6 +372,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // cleanup
             connection.Close();
+        }
+
+        private void WaitUntilAllSessionsCreatedOrTimeout(SessionPool pool)
+        {
+            var expectingToWaitAtMostForSessionCreations = TimeSpan.FromSeconds(15);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, expectingToWaitAtMostForSessionCreations);
         }
 
         private SnowflakeDbConnection OpenedConnection(string connectionString)

@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // would fail on pooling while some connections could success
             const int ThreadNum = 12;
             // set short pooling timeout to cover the case that connection expired
-            const int PoolTimeout = 10;
+            const int PoolTimeout = 3;
 
             // reset to default settings in case it changed by other test cases
             Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool

@@ -111,14 +111,6 @@ namespace Snowflake.Data.Core.Session
                 return new ConnectionPoolConfig();
             }
         }
-
-        internal List<string> GetIdleSessionIds()
-        {
-            lock (_sessionPoolLock)
-            {
-                return _idleSessions.Select(s => s.sessionId).ToList();
-            }
-        }
         
         internal SFSession GetSession(string connStr, SecureString password)
         {
@@ -160,7 +152,7 @@ namespace Snowflake.Data.Core.Session
             Task.Run(() =>
             {
                 var session = NewSession(connStr, password, token);
-                AddSession(session, false);
+                AddSession(session, false); // we don't want to ensure min pool size here because we could get into infinite recursion if expirationTimeout would be very low
             });
         }
 
@@ -512,11 +504,6 @@ namespace Snowflake.Data.Core.Session
         public void SetTimeout(long seconds)
         {
             var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
-            if (IsMultiplePoolsVersion()
-                && !SessionPropertiesWithDefaultValuesExtractor.HasTimeoutMinimalValue(timeout, SFSessionHttpClientProperties.MinimalExpirationTimeout))
-            {
-                throw new Exception("Wrong value of expiration timeout");
-            }
             _poolConfig.ExpirationTimeout = timeout;
             _configOverriden = true;
         }
@@ -547,8 +534,23 @@ namespace Snowflake.Data.Core.Session
 
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
-        internal int OngoingSessionCreationsCount() => _sessionCreationTokenCounter.Count();
+        internal int OngoingSessionCreationsCount()
+        {
+            lock (_sessionPoolLock)
+            {
+                return _sessionCreationTokenCounter.Count();
+            }
+        }
 
+        internal List<long> GetIdleSessionsStartTimes()
+        {
+            lock (_sessionPoolLock)
+            {
+                return _idleSessions.Select(s => s.GetStartTime()).ToList();
+            }
+        }
+            
+        
         internal void Describe()
         {
             Console.WriteLine($"idle sessions: {_idleSessions.Count}");
