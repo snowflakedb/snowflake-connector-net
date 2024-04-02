@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core.Session
         public SFSession GetSession(string connectionString, SecureString password) => _sessionPool.GetSession(connectionString, password);
         public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
             => _sessionPool.GetSessionAsync(connectionString, password, cancellationToken);
-        public bool AddSession(SFSession session) => _sessionPool.AddSession(session);
+        public bool AddSession(SFSession session) => _sessionPool.AddSession(session, false);
         public void ClearAllPools() => _sessionPool.ClearSessions();
         public void SetMaxPoolSize(int maxPoolSize) => _sessionPool.SetMaxPoolSize(maxPoolSize);
         public int GetMaxPoolSize() => _sessionPool.GetMaxPoolSize();

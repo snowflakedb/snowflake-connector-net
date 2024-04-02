@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core.Session
         public bool AddSession(SFSession session)
         {
             s_logger.Debug($"ConnectionPoolManager::AddSession for {session.ConnectionString}");
-            return GetPool(session.ConnectionString, session.Password).AddSession(session);
+            return GetPool(session.ConnectionString, session.Password).AddSession(session, true);
         }
 
         public void ClearAllPools()

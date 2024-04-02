@@ -160,7 +160,7 @@ namespace Snowflake.Data.Core.Session
             Task.Run(() =>
             {
                 var session = NewSession(connStr, password, token);
-                AddSession(session);
+                AddSession(session, false);
             });
         }
 
@@ -396,7 +396,7 @@ namespace Snowflake.Data.Core.Session
                 }, TaskContinuationOptions.NotOnCanceled); 
         }
 
-        internal bool AddSession(SFSession session)
+        internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
             if (!GetPooling())
                 return false;
@@ -408,14 +408,14 @@ namespace Snowflake.Data.Core.Session
             {
                 s_logger.Debug("SessionPool::AddSession");
             }
-            var result = ReturnSessionToPool(session);
+            var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
             ScheduleNewIdleSessions(ConnectionString, Password, sessionCreationTokens);
             return wasSessionReturnedToPool;
         }
 
-        private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session)
+        private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session, bool ensureMinPoolSize)
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
@@ -423,8 +423,9 @@ namespace Snowflake.Data.Core.Session
                 lock (_sessionPoolLock)
                 {
                     _busySessionsCounter.Decrease();
-                    var numberOfSessionsToCreate = AllowedNumberOfNewSessionCreations(0);
-                    return Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool());
+                    return ensureMinPoolSize
+                        ? Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool())
+                        : Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
                 }
             }
 
@@ -434,7 +435,9 @@ namespace Snowflake.Data.Core.Session
                 CleanExpiredSessions();
                 if (session.IsExpired(_poolConfig.ExpirationTimeout, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())) // checking again because we could have spent some time waiting for a lock
                 {
-                    return Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool());
+                    return ensureMinPoolSize
+                        ? Tuple.Create(false, RegisterSessionCreationsWhenReturningSessionToPool())
+                        : Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
                 }
                 if (GetCurrentPoolSize() >= _poolConfig.MaxPoolSize)
                 {
@@ -444,7 +447,9 @@ namespace Snowflake.Data.Core.Session
                 s_logger.Debug($"pool connection with sid {session.sessionId}");
                 _idleSessions.Add(session);
                 _waitingForIdleSessionQueue.OnResourceIncrease();
-                return Tuple.Create(true, RegisterSessionCreationsWhenReturningSessionToPool());
+                return ensureMinPoolSize
+                    ? Tuple.Create(true, RegisterSessionCreationsWhenReturningSessionToPool())
+                    : Tuple.Create(true, SessionOrCreationTokens.s_emptySessionCreationTokenList);
             }
         }
 
