@@ -896,7 +896,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var timestamp = "2023/03/15 13:17:29.207 +05:00"; // 08:17:29.207 UTC
             var expected = ExpectedTimestampWrapper.From(timestamp, columnType);
             var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
-            var testCase = $"TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
+            var testCase = $"ResultFormat={resultFormat}, TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
             var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
             var smallBatchRowCount = 2;
             var bigBatchRowCount = bindingThreshold / 2;

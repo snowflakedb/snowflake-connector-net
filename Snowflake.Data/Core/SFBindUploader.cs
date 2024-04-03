@@ -230,7 +230,7 @@ namespace Snowflake.Data.Core
             if (sValue == null)
                 return sValue;
 
-            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTime epoch = SFDataConverter.UnixEpoch;
             switch (sType)
             {
                 case "TEXT":
@@ -265,9 +265,9 @@ namespace Snowflake.Data.Core
                     string[] tstzString = sValue.Split(' ');
                     long nsFromEpochTz = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
                     int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m 
-                    DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100);
+                    DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
                     TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
-                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.AddMinutes(timeZoneOffset), offset);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second, timestamp.Millisecond, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
             }
             return sValue;

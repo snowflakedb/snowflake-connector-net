@@ -2,7 +2,7 @@ using System.Data;
 
 namespace Snowflake.Data.Tests.Util
 {
-    public static class DbCommandTestExtensions
+    public static class DbCommandExtensions
     {
         internal static IDbDataParameter Add(this IDbCommand command, string name, DbType dbType, object value)
         {

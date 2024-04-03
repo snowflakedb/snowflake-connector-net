@@ -2,7 +2,7 @@ using System.Data;
 
 namespace Snowflake.Data.Tests.Util
 {
-    public static class DbConnectionTestExtensions
+    public static class DbConnectionExtensions
     {
         internal static IDbCommand CreateCommand(this IDbConnection connection, string commandText)
         {

@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.Util
         Iceberg
     }
 
-    static class TableTypeTestExtensions
+    static class TableTypeExtensions
     {
         internal static string TableDDLCreationPrefix(this SFTableType val) => val == SFTableType.Standard ? "" : val.ToString().ToUpper();
         
