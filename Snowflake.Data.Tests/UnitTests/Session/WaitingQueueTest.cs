@@ -1,8 +1,10 @@
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -48,22 +50,28 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
-            var queue = new WaitingQueue();
-            var watch = new Stopwatch();
-            Task.Run(() =>
+            var tests = TestRepeater<Tuple<bool, long>>.Test(3, () =>
             {
-                Thread.Sleep(50);
-                queue.OnResourceIncrease();
+                var queue = new WaitingQueue();
+                var watch = new Stopwatch();
+                Task.Run(() =>
+                {
+                    Thread.Sleep(50);
+                    queue.OnResourceIncrease();
+                });
+
+                // act
+                watch.Start();
+                var result = queue.Wait(30000, CancellationToken.None);
+                watch.Stop();
+                return Tuple.Create(result, watch.ElapsedMilliseconds);
             });
-            
-            // act
-            watch.Start();
-            var result = queue.Wait(30000, CancellationToken.None);
-            watch.Stop();
 
             // assert
-            Assert.IsTrue(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1500));
+            tests.ForEach(t => Assert.IsTrue(t.Item1));
+            tests.ForEach(t => Assert.GreaterOrEqual(t.Item2, 50));
+            tests.SkipLargest(t => t.Item2) // some execution can be randomly delayed so we skip the largest value
+                .ForEach(t => Assert.That(t.Item2, Is.InRange(50, 1500)));
         }
 
         [Test]
