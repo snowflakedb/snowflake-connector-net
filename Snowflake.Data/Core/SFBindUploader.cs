@@ -267,7 +267,7 @@ namespace Snowflake.Data.Core
                     int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m 
                     DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
                     TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
-                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, timestamp.Minute, timestamp.Second, timestamp.Millisecond, offset);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
             }
             return sValue;
