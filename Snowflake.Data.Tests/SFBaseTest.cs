@@ -155,6 +155,11 @@ namespace Snowflake.Data.Tests
                                                  testConfig.password);
 
         protected TestConfig testConfig { get; }
+        
+        protected string ResolveHostToUseFromTestConfig()
+        {
+            return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
+        }
     }
     
     [SetUpFixture]

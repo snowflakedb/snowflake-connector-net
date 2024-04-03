@@ -12,14 +12,11 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using System.Runtime.InteropServices;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
-    using System.Text.RegularExpressions;
-
     public class HttpClientConfig
     {
         public HttpClientConfig(

@@ -1549,16 +1549,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("^nonmatch*{0}$|*")]
         [TestCase("*a*", "a")]
         [TestCase("*la*", "la")]
-        public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = null)
+        public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
             {
+                // Arrange
                 var host = ResolveHostToUseFromTestConfig(ConnectionString);
                 var nonProxyHosts = string.Format(regexHost, $"{host}");
-                var proxyHostForConnection = proxyHost ?? "proxyserverhost";
                 conn.ConnectionString =
-                    $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                
+                // Act
                 conn.Open();
+                
+                // Assert
+                // If the connection is open, it indicates that the server proxy was bypassed.
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
@@ -1570,15 +1575,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("*a.b")]
         [TestCase("a", "a")]
         [TestCase("la", "la")]
-        public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = null)
+        public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
             {
+                // Arrange
                 var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
-                var proxyHostForConnection = proxyHost ?? "proxyserverhost";
                 conn.ConnectionString =
-                    $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHostForConnection};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                
+                // Act/Assert
+                // If the nonproxyhosts property fails to bypass the server, the proxy will be use but it will return a exception
+                // because is not configure in the testing environment so the exception is used to verify that was not bypass.
                 var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                
+                // Assert
                 s_logger.Debug("Failed opening connection ", exception);
                 Assert.AreEqual(270001, exception.ErrorCode);
                 AssertIsConnectionFailure(exception);
@@ -1834,11 +1845,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // fail the test case if any exception is thrown
                 Assert.Fail();
             }
-        }
-        
-        private string ResolveHostToUseFromTestConfig(string connectionString)
-        {
-            return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }
     }
 

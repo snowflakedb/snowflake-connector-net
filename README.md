@@ -387,10 +387,10 @@ Examples:
 - `*.myserver.com | *testaccount*` (You can specify multiple regex for the property divided by `|`)
 
 
-> Note: If you only specify the hostname in the property if will not be bypass because should match the full url including the http or https section.
+> Note: The nonproxyhost value should match the full url including the http or https section. The '*' wilcard could be added to bypass the hostname successfully.
 
-- `myaccount.snowflakecomputing.com` (This will not be bypassed).
-
+- `myaccount.snowflakecomputing.com` (Not bypassed).
+- `*myaccount.snowflakecomputing.com` (Bypassed).
 
 
 ## Using Connection Pools
