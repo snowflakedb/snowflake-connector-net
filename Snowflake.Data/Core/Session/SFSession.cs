@@ -562,8 +562,13 @@ namespace Snowflake.Data.Core
             return _startTime == 0;
         }
 
-        internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis) =>
-            TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
+        internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
+        {
+            var hasEverBeenOpened = !IsNotOpen();
+            return hasEverBeenOpened && TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
+        }
+
+        internal long GetStartTime() => _startTime;
     }
 }
 

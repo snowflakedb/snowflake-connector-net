@@ -207,7 +207,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("TRUE", true)]
         [TestCase("false", false)]
         [TestCase("FALSE", false)]
-        // [TestCase("0", false)]
         public void TestExtractPoolingEnabled(string propertyValue, bool poolingEnabled)
         {
             // arrange
@@ -256,7 +255,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         
         public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroUnchanged() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroUnchangedTimeouts());
-        
+
         public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroAsInfinite() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroAsInfiniteTimeouts());
 

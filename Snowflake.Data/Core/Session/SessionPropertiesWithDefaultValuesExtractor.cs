@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core.Session
                 s => true,
                 i => i >= 0
             );
-        
+
         public TimeSpan ExtractTimeout(
             SFSessionProperty property) =>
             ExtractPropertyWithDefaultValue(
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core.Session
             }
             return value;
         }
-        
+
         private TResult handleFailedValidation<TResult, TValue>(
             TResult defaultValue,
             TValue value,
