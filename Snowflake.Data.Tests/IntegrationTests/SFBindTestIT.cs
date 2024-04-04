@@ -8,16 +8,16 @@ using System.Linq;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using System.Text;
+using System.Globalization;
+using System.Collections.Generic;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using System.Text;
-    using System.Globalization;
-    using System.Collections.Generic;
-    using Snowflake.Data.Tests.Util;
 
     [TestFixture]    
     class SFBindTestIT : SFBaseTest
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
         [Test]
-        public void testArrayBind()
+        public void TestArrayBind()
         {
             
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindNullValue()
+        public void TestBindNullValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindValue()
+        public void TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -319,7 +319,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
                                 param.Value = DBNull.Value;
                                 command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
+                                command.ExecuteNonQuery();
                             }
                             catch (SnowflakeDbException e)
                             {
@@ -353,7 +353,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindValueWithSFDataType()
+        public void TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -446,7 +446,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                     command.CommandText = $"insert into {TableName}(unsupportedType) values(:p0)";
                                     param.Value = DBNull.Value;
                                     command.Parameters.Add(param);
-                                    int rowsInserted = command.ExecuteNonQuery();
+                                    command.ExecuteNonQuery();
                                 }
                                 catch (SnowflakeDbException e)
                                 {
@@ -474,7 +474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testParameterCollection()
+        public void TestParameterCollection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -530,7 +530,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testPutArrayBind()
+        public void TestPutArrayBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -652,10 +652,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
-                    
-                    //cmd.CommandText = "drop table if exists testPutArrayBind";
-                    //cmd.ExecuteNonQuery();
-                    
                 }
 
                 conn.Close();
@@ -663,7 +659,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
-        public void testPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
+        public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
                 TypeNameHandling = TypeNameHandling.Auto
@@ -735,7 +731,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testPutArrayBind1()
+        public void TestPutArrayIntegerBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -777,7 +773,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testExplicitDbTypeAssignmentForSimpleValue()
+        public void TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -809,7 +805,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testExplicitDbTypeAssignmentForArrayValue()
+        public void TestExplicitDbTypeAssignmentForArrayValue()
         {
 
             using (IDbConnection conn = new SnowflakeDbConnection())
