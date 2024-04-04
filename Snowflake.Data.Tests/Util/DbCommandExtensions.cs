@@ -1,12 +1,13 @@
 using System.Data;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.Util
 {
     public static class DbCommandExtensions
     {
-        internal static IDbDataParameter Add(this IDbCommand command, string name, DbType dbType, object value)
+        internal static SnowflakeDbParameter Add(this IDbCommand command, string name, DbType dbType, object value)
         {
-            var parameter = command.CreateParameter();
+            var parameter = (SnowflakeDbParameter)command.CreateParameter();
             parameter.ParameterName = name;
             parameter.DbType = dbType;
             parameter.Value = value;
