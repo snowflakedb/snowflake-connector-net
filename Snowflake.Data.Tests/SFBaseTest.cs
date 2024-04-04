@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests
 
         protected TestConfig testConfig { get; }
         
-        protected string ResolveHostToUseFromTestConfig()
+        protected string ResolveHost()
         {
             return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }

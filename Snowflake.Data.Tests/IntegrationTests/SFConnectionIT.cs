@@ -1554,7 +1554,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                var host = ResolveHostToUseFromTestConfig(ConnectionString);
+                var host = this.ResolveHost();
                 var nonProxyHosts = string.Format(regexHost, $"{host}");
                 conn.ConnectionString =
                     $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
@@ -1563,7 +1563,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 
                 // Assert
-                // If the connection is open, it indicates that the server proxy was bypassed.
+                // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
@@ -1585,12 +1585,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
                 
                 // Act/Assert
-                // If the nonproxyhosts property fails to bypass the server, the proxy will be use but it will return a exception
-                // because is not configure in the testing environment so the exception is used to verify that was not bypass.
+                // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
                 var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
                 
                 // Assert
-                s_logger.Debug("Failed opening connection ", exception);
                 Assert.AreEqual(270001, exception.ErrorCode);
                 AssertIsConnectionFailure(exception);
             }
