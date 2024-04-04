@@ -1,12 +1,13 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+using Moq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -299,6 +300,46 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // not just the connections created after the new setting,
             // so expected result should be 0
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+        }
+        
+        [Test]
+        public void TestPreventConnectionFromReturningToPool()
+        {
+            // arrange
+            var connection = new SnowflakeDbConnection(ConnectionString);
+            connection.Open();
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            
+            // act
+            connection.PreventFromReturningToPool();
+            connection.Close();
+            
+            // assert
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+        }
+        
+        [Test]
+        public void TestReleaseConnectionWhenRollbackFails()
+        {
+            // arrange
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
+            var mockDbProviderFactory = new Mock<DbProviderFactory>();
+            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
+            connection.ConnectionString = ConnectionString;
+            connection.Open();
+            connection.BeginTransaction();
+            Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+            // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
+                
+            // act
+            connection.Close();
+            
+            // assert
+            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }
     }
 }

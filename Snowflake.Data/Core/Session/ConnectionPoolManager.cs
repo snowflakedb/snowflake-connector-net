@@ -46,6 +46,12 @@ namespace Snowflake.Data.Core.Session
             return GetPool(session.ConnectionString, session.Password).AddSession(session, true);
         }
 
+        public void ReleaseBusySession(SFSession session)
+        {
+            s_logger.Debug($"ConnectionPoolManager::ReleaseBusySession for {session.ConnectionString}");
+            GetPool(session.ConnectionString, session.Password).ReleaseBusySession(session);
+        }
+
         public void ClearAllPools()
         {
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");

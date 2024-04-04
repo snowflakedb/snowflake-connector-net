@@ -1,11 +1,14 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -374,12 +377,52 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Close();
         }
 
+        [Test]
+        public void TestPreventConnectionFromReturningToPool()
+        {
+            // arrange
+            var connectionString = ConnectionString + "minPoolSize=0";
+            var connection = OpenConnection(connectionString);
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            
+            // act
+            connection.PreventFromReturningToPool();
+            connection.Close();
+            
+            // assert
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+        }
+
+        [Test]
+        public void TestReleaseConnectionWhenRollbackFails()
+        {
+            // arrange
+            var connectionString = ConnectionString + "minPoolSize=0";
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
+            var mockDbProviderFactory = new Mock<DbProviderFactory>();
+            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
+            connection.ConnectionString = connectionString;
+            connection.Open();
+            connection.BeginTransaction();
+            Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+            
+            // act
+            connection.Close();
+            
+            // assert
+            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
+        }
+
         private void WaitUntilAllSessionsCreatedOrTimeout(SessionPool pool)
         {
             var expectingToWaitAtMostForSessionCreations = TimeSpan.FromSeconds(15);
             Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, expectingToWaitAtMostForSessionCreations);
         }
-
+        
         private SnowflakeDbConnection OpenConnection(string connectionString)
         {
             var connection = new SnowflakeDbConnection();

@@ -54,6 +54,12 @@ namespace Snowflake.Data.Client
             return ConnectionManager.AddSession(session);
         }
 
+        internal static void ReleaseBusySession(SFSession session)
+        {
+            s_logger.Debug("SnowflakeDbConnectionPool::ReleaseBusySession");
+            ConnectionManager.ReleaseBusySession(session);
+        }
+
         public static void ClearAllPools()
         {
             s_logger.Debug("SnowflakeDbConnectionPool::ClearAllPools");

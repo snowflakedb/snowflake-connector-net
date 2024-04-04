@@ -77,6 +77,13 @@ namespace Snowflake.Data.Core
 
         private bool _disableQueryContextCache = false;
 
+        public bool GetPooling() => _poolConfig.PoolingEnabled;
+
+        public void SetPooling(bool isEnabled)
+        {
+            _poolConfig.PoolingEnabled = isEnabled;
+        }
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)

@@ -105,8 +105,35 @@ namespace Snowflake.Data.Client
 
         public override ConnectionState State => _connectionState;
         internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
+
+        public void PreventFromReturningToPool()
+        {
+            if (SfSession == null)
+            {
+                throw new Exception("Connection is not ready to prevent its session from returning to the pool");
+            }
+            SfSession.SetPooling(false);
+        }
         
         internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
+
+        private bool ReleaseOrReturnSessionToPool()
+        {
+            var pooling = SnowflakeDbConnectionPool.GetPooling() && SfSession.GetPooling();
+            var transactionRollbackStatus = pooling ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+            var canReuseSession = CanReuseSession(transactionRollbackStatus);
+            if (!canReuseSession)
+            {
+                SnowflakeDbConnectionPool.ReleaseBusySession(SfSession);
+                return false;
+            }
+            var sessionReturnedToPool = SnowflakeDbConnectionPool.AddSession(SfSession);
+            if (sessionReturnedToPool)
+            {
+                logger.Debug($"Session pooled: {SfSession.sessionId}");
+            }
+            return sessionReturnedToPool;
+        }
 
         private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
@@ -125,7 +152,7 @@ namespace Snowflake.Data.Client
                     return TransactionRollbackStatus.Success; 
                 }
             }
-            catch (SnowflakeDbException exception)
+            catch (Exception exception)
             {
                 // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool 
                 logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
@@ -151,22 +178,16 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
-                
-                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
-                {
-                    logger.Debug($"Session pooled: {SfSession.sessionId}");
-                }
-                else
+                var returnedToPool = ReleaseOrReturnSessionToPool();
+                if (!returnedToPool)
                 {
                     SfSession.close();
                 }
                 SfSession = null;
             }
-
             _connectionState = ConnectionState.Closed;
         }
-
+        
 #if NETCOREAPP3_0_OR_GREATER
         // CloseAsync was added to IDbConnection as part of .NET Standard 2.1, first supported by .NET Core 3.0.
         // Adding an override for CloseAsync will prevent the need for casting to SnowflakeDbConnection to call CloseAsync(CancellationToken).
@@ -189,11 +210,9 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
-
-                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
+                    var returnedToPool = ReleaseOrReturnSessionToPool();
+                    if (returnedToPool)
                     {
-                        logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
                         taskCompletionSource.SetResult(null);
                     }

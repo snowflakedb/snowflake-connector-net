@@ -9,10 +9,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
-using Moq;
 using NUnit.Framework;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -231,30 +228,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestFailureOfTransactionRollbackOnConnectionClosePreventsAddingToPool()
-        {
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            var commandThrowingExceptionOnlyForRollback = new Mock<SnowflakeDbCommand>();
-            commandThrowingExceptionOnlyForRollback.CallBase = true;
-            commandThrowingExceptionOnlyForRollback.SetupSet(it => it.CommandText = "ROLLBACK")
-                .Throws(new SnowflakeDbException(SFError.INTERNAL_ERROR, "Unexpected failure on transaction rollback when connection is returned to the pool with pending transaction"));
-            var mockDbProviderFactory = new Mock<DbProviderFactory>();
-            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
-
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            using (var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object))
-            {
-                connection.ConnectionString = ConnectionString;
-                connection.Open();
-                connection.BeginTransaction();
-                Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
-                // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
-            }
-            
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
-        }
-
-        [Test]
         // test connection pooling with concurrent connection and using async calls no close
         // call for connection. Connection is closed when Dispose() is called
         // by framework.
@@ -345,16 +318,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // roughly at the same speed as connections for query tasks
                 await Task.Delay(100);
             }
-        }
-        
-        private class TestSnowflakeDbConnection : SnowflakeDbConnection
-        {
-            public TestSnowflakeDbConnection(DbProviderFactory dbProviderFactory)
-            {
-                DbProviderFactory = dbProviderFactory;
-            }
-
-            protected override DbProviderFactory DbProviderFactory { get; }
         }
     }
 }
