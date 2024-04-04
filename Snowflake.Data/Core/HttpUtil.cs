@@ -12,7 +12,6 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using System.Runtime.InteropServices;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
 
@@ -186,7 +185,11 @@ namespace Snowflake.Data.Core
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
-
+                        
+                        entry = entry.StartsWith("^") ? entry : $"^{entry}";
+                        
+                        entry = entry.EndsWith("$") ? entry : $"{entry}$";
+                        
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
