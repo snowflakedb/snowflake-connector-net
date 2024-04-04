@@ -1554,7 +1554,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                var host = this.ResolveHost();
+                var host = ResolveHost();
                 var nonProxyHosts = string.Format(regexHost, $"{host}");
                 conn.ConnectionString =
                     $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
