@@ -316,10 +316,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 if(start > -1 && end > -1 && end > start)
                 {
                     endpoint = endpoint.Substring(start + 1, end - start - 1);
-                    if(!endpoint.Contains("https"))
-                    {
-                        endpoint = "https://" + endpoint;
-                    }
+                }
+                if (!endpoint.Contains("https"))
+                {
+                    endpoint = "https://" + endpoint;
                 }
                 clientConfig.ServiceURL = endpoint;
             }
