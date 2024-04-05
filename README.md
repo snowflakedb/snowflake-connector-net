@@ -274,7 +274,7 @@ If you are using a different method for authentication, see the examples below:
 
     where:
 
-    - `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    - `{pathToThePrivateKeyFile}` is the path to the file containing the encrypted private key.
     - `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
 
   - Specify an unencrypted private key (read from a file):
