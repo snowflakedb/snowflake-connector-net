@@ -231,7 +231,7 @@ The following examples show how you can include different types of special chara
   );
   ```
 
-  Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
+  Note that previously you needed to use a double equals sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equals sign.
 
 ### Other Authentication Methods
 
