@@ -667,6 +667,12 @@ CancellationTokenSource cancellationTokenSource  = new CancellationTokenSource()
 ((SnowflakeDbConnection)conn).CloseAsync(cancellationTokenSource.Token);
 ```
 
+Evict the Connection
+--------------------
+
+For the open connection, call the `PreventFromReturningToPool()` to make the connection not return to the pool.
+The busy sessions counter will be decreased when the connection is closed.
+
 Logging
 -------
 The Snowflake Connector for .NET uses [log4net](http://logging.apache.org/log4net/) as the logging framework.
