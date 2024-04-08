@@ -657,14 +657,14 @@ using Newtonsoft.Json;
                     {
 
                         int[] vals = new int[] { 1, 2, 3 };
-                        string array = JsonConvert.SerializeObject(vals); 
+                        string array = JsonConvert.SerializeObject(vals); // alternatively you can do `vals.ToArray()` when passing it to `p1.Value`
                         string sql = "CALL test_db.public.test(parse_json(?))"; // test SP, returns a single value
                         // execute this sql with bind variable 'array'
                         cmd.CommandText = sql;
 
                         var p1 = cmd.CreateParameter();
                         p1.ParameterName = "1";
-                        p1.Value = array; // passing the array in the bind variable
+                        p1.Value = array; // passing the array in the bind variable. 
                         p1.DbType = DbType.String;
                         cmd.Parameters.Add(p1);
 
