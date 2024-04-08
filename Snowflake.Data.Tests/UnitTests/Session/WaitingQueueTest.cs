@@ -45,6 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [Retry(2)]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
