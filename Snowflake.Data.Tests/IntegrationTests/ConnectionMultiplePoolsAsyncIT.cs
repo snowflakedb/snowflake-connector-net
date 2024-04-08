@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             
             // act
             connection.PreventFromReturningToPool();
-            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
@@ -80,11 +80,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
             await connection.OpenAsync().ConfigureAwait(false);
-            await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted).ConfigureAwait(false);
+            connection.BeginTransaction(); // not using async version because it is not available on .net framework
             Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
             
             // act
-            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
