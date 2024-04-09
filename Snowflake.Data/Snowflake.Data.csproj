@@ -2,8 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;net471;net472</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
-    <Title>Snowflake.Data</Title>
-    <PackageId>Snowflake.Data</PackageId>
+    <ExcludeProviderDependencies Condition="'$(ExcludeProviderDependencies)'==''">false</ExcludeProviderDependencies>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -17,13 +16,50 @@
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="Apache.Arrow" Version="14.0.2" />
+
+  <PropertyGroup Condition="'$(ExcludeProviderDependencies)'=='false'">
+    <Title>Snowflake.Data</Title>
+    <PackageId>Snowflake.Data</PackageId>
+    <Description>Snowflake Connector for .NET</Description>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ExcludeProviderDependencies)'=='true'">
+    <Title>Snowflake.Data.Core</Title>
+    <PackageId>Snowflake.Data.Core</PackageId>
+    <Description>Snowflake Connector for .NET</Description>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ExcludeProviderDependencies)'=='true'">
+
+    <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0">
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Storage.Common" Version="12.12.0" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(ExcludeProviderDependencies)'=='false'">
+
     <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
+
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Apache.Arrow" Version="14.0.2" />
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="log4net" Version="2.0.12" />
