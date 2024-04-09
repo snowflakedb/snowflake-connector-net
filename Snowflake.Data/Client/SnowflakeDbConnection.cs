@@ -106,11 +106,11 @@ namespace Snowflake.Data.Client
         public override ConnectionState State => _connectionState;
         internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
 
-        public void PreventFromReturningToPool()
+        public void PreventPooling()
         {
             if (SfSession == null)
             {
-                throw new Exception("Connection is not ready to prevent its session from returning to the pool");
+                throw new Exception("Session not yet created for this connection. Unable to prevent the session from pooling");
             }
             SfSession.SetPooling(false);
         }
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Client
             }
             _connectionState = ConnectionState.Closed;
         }
-        
+
 #if NETCOREAPP3_0_OR_GREATER
         // CloseAsync was added to IDbConnection as part of .NET Standard 2.1, first supported by .NET Core 3.0.
         // Adding an override for CloseAsync will prevent the need for casting to SnowflakeDbConnection to call CloseAsync(CancellationToken).

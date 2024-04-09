@@ -387,7 +387,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, pool.GetCurrentPoolSize());
             
             // act
-            connection.PreventFromReturningToPool();
+            connection.PreventPooling();
             connection.Close();
             
             // assert

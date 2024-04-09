@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, pool.GetCurrentPoolSize());
             
             // act
-            connection.PreventFromReturningToPool();
+            connection.PreventPooling();
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             
             // assert

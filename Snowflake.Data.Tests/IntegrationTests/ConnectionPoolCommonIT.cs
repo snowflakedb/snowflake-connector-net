@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection(ConnectionString);
             
             // act
-            var thrown = Assert.Throws<Exception>(() => connection.PreventFromReturningToPool());
+            var thrown = Assert.Throws<Exception>(() => connection.PreventPooling());
             
             // assert
             Assert.That(thrown.Message, Does.Contain("Connection is not ready to prevent its session from returning to the pool"));
