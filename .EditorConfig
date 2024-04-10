@@ -1,0 +1,61 @@
+root = true
+# All files
+[*.*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+max_line_length=150
+
+# Interfaces should start with I and PascalCase
+dotnet_naming_rule.interfaces_begin_with_I.severity = warning
+dotnet_naming_rule.interfaces_begin_with_I.symbols = interfaces
+dotnet_naming_rule.interfaces_begin_with_I.style = prefix_and_pascal_case
+dotnet_naming_rule.interfaces_begin_with_I.required_prefix = I
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_diagnostic.interfaces_begin_with_I.severity = warning
+dotnet_diagnostic.interfaces_begin_with_I.enabled = true
+
+# Static fields should start with _s
+dotnet_naming_rule.static_fields_begin_with_s.severity = warning
+dotnet_naming_rule.static_fields_begin_with_s.symbols = static_fields
+dotnet_naming_rule.static_fields_begin_with_s.style = custom
+dotnet_naming_rule.static_fields_begin_with_s.custom_recommended_prefix = _r
+dotnet_naming_rule.static_fields_begin_with_s.required_prefix = _r
+dotnet_naming_rule.static_fields_begin_with_s.capitalization = camel_case
+dotnet_naming_symbols.static_fields.applicable_kinds = field
+dotnet_naming_symbols.static_fields.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.static_fields.required_modifiers = static
+dotnet_diagnostic.static_fields_begin_with_s.severity = warning
+dotnet_diagnostic.static_fields_begin_with_s.enabled = true
+
+# Enforce use of Pascal case in enums, classes, const and methods
+dotnet_naming_rule.enforce_pascal_case.severity = suggestion
+dotnet_naming_rule.enforce_pascal_case.symbols = methods, enums, consts, public_methods, public_classes
+dotnet_naming_rule.enforce_pascal_case.style = pascal_case
+dotnet_naming_symbols.methods.applicable_kinds = method
+dotnet_naming_symbols.enums.applicable_kinds = enum
+dotnet_naming_symbols.consts.applicable_kinds = field
+dotnet_naming_symbols.consts.applicable_modifiers = const
+dotnet_naming_symbols.public_methods.applicable_kinds = method
+dotnet_naming_symbols.public_methods.applicable_accessibilities = public
+dotnet_naming_symbols.public_classes.applicable_kinds = class
+dotnet_naming_symbols.public_classes.applicable_accessibilities = public
+dotnet_diagnostic.enforce_pascal_case.severity = suggestion
+dotnet_diagnostic.enforce_pascal_case.enabled = true
+
+# private and internal members should start with underscore
+dotnet_naming_rule.private_and_internal_members_start_with_underscore.severity = warning
+dotnet_naming_rule.private_and_internal_members_start_with_underscore.symbols = private_fields, internal_fields, private_properties, internal_properties, private_methods, internal_methods
+dotnet_naming_rule.private_and_internal_members_start_with_underscore.style = underscore_prefix
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.internal_fields.applicable_kinds = field
+dotnet_naming_symbols.private_properties.applicable_kinds = property
+dotnet_naming_symbols.internal_properties.applicable_kinds = property
+dotnet_naming_symbols.private_methods.applicable_kinds = method
+dotnet_naming_symbols.internal_methods.applicable_kinds = method
+dotnet_naming_symbols.private_methods.applicable_accessibilities = private
+dotnet_naming_symbols.internal_methods.applicable_accessibilities = internal
+dotnet_diagnostic.private_and_internal_members_start_with_underscore.severity = warning
+dotnet_diagnostic.private_and_internal_members_start_with_underscore.enabled = true
