@@ -670,7 +670,7 @@ CancellationTokenSource cancellationTokenSource  = new CancellationTokenSource()
 Evict the Connection
 --------------------
 
-For the open connection, call the `PreventPooling()` to make the connection not return to the pool.
+For the open connection, call the `PreventPooling()` to mark the connection to be removed on close instead being still pooled.
 The busy sessions counter will be decreased when the connection is closed.
 
 Logging

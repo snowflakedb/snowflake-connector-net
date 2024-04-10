@@ -391,10 +391,17 @@ namespace Snowflake.Data.Core.Session
         internal void ReleaseBusySession(SFSession session)
         {
             s_logger.Debug("SessionPool::ReleaseBusySession");
+            int currentPoolSize;
             lock (_sessionPoolLock)
             {
                 _busySessionsCounter.Decrease();
+                currentPoolSize = GetCurrentPoolSize();
             }
+            var currentSizeMessageOldPool = $"After releasing a busy session from the pool, the pool size is: {currentPoolSize}";
+            var poolSizeMessage = IsMultiplePoolsVersion()
+                ? $"{currentSizeMessageOldPool} - pool identified by: {ConnectionString}"
+                : currentSizeMessageOldPool;
+            s_logger.Debug(poolSizeMessage);
         }
         
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)

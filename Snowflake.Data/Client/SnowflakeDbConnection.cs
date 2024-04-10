@@ -113,11 +113,12 @@ namespace Snowflake.Data.Client
                 throw new Exception("Session not yet created for this connection. Unable to prevent the session from pooling");
             }
             SfSession.SetPooling(false);
+            logger.Debug($"Session {SfSession.sessionId} marked not to be pooled any more");
         }
         
         internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
 
-        private bool ReleaseOrReturnSessionToPool()
+        private bool TryToReturnSessionToPool()
         {
             var pooling = SnowflakeDbConnectionPool.GetPooling() && SfSession.GetPooling();
             var transactionRollbackStatus = pooling ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
@@ -178,7 +179,7 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var returnedToPool = ReleaseOrReturnSessionToPool();
+                var returnedToPool = TryToReturnSessionToPool();
                 if (!returnedToPool)
                 {
                     SfSession.close();
@@ -210,7 +211,7 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var returnedToPool = ReleaseOrReturnSessionToPool();
+                    var returnedToPool = TryToReturnSessionToPool();
                     if (returnedToPool)
                     {
                         _connectionState = ConnectionState.Closed;
