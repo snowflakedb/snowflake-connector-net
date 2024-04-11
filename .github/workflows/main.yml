@@ -36,6 +36,7 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net472', 'net471']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        pkg_version: ['current', 'latest']
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -57,9 +58,17 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: Build Driver
+      - name: Build Driver Current
+        if: ${{ matrix.pkg_version == 'current' }}
         run: |
           cd Snowflake.Data.Tests
+          dotnet restore
+          dotnet build -f ${{ matrix.dotnet }}
+      - name: Build Driver Latest
+        if: ${{ matrix.pkg_version == 'latest' }}
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package AWSSDK.S3
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }}
       - name: Run Tests
