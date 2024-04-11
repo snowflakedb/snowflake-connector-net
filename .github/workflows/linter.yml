@@ -39,5 +39,4 @@ jobs:
         with:
           dotnet_format: true
           continue_on_error: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           check_name: ${linter} run
