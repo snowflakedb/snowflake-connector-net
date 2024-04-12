@@ -7,8 +7,8 @@ using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+using static Snowflake.Data.Tests.Util.TestData;
 
 namespace Snowflake.Data.Tests.IcebergTests
 {
@@ -17,7 +17,6 @@ namespace Snowflake.Data.Tests.IcebergTests
     [NonParallelizable]
     public class TestIcebergTable : SFBaseTest
     {
-        private readonly SFLogger _logger = SFLoggerFactory.GetLogger<TestIcebergTable>();
         private const string TableNameIceberg = "DOTNET_TEST_DATA_IB";
         private const string TableNameHybrid = "DOTNET_TEST_DATA_HY";
         private const string SqlCreateIcebergTableColumns = @"nu1 number(10,0),
@@ -90,22 +89,17 @@ namespace Snowflake.Data.Tests.IcebergTests
                                                             '{_tm.ToString(FormatHms)}', 
                                                             '{_ntz.ToString(FormatYmdHms)}', 
                                                             '{_ltz.ToString(FormatYmdHmsfZ)}', 
-                                                            '{ByteArrayToString(_bi)}')");
+                                                            '{ByteArrayToHexString(_bi)}')");
                 
                 // Assert
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
+                int rowsRead = 0;
                 while (reader.Read())
                 {
+                    rowsRead++;
                     AssertRowValuesEqual(reader, SqlCreateIcebergTableColumns.Split('\n'), I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 }
-            }
-
-            string ByteArrayToString(byte[] ba)
-            {
-                StringBuilder hex = new StringBuilder(ba.Length * 2);
-                foreach (byte b in ba)
-                    hex.AppendFormat("{0:x2}", b);
-                return hex.ToString();
+                Assert.AreEqual(1, rowsRead);
             }
         }
         
@@ -125,10 +119,13 @@ namespace Snowflake.Data.Tests.IcebergTests
 
                 // Assert
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
+                int rowsRead = 0;
                 while (reader.Read())
                 {
+                    rowsRead++;
                     AssertRowValuesEqual(reader, SqlCreateIcebergTableColumns.Split('\n'), I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 }
+                Assert.AreEqual(1, rowsRead);
             }
         }
         
@@ -180,10 +177,13 @@ namespace Snowflake.Data.Tests.IcebergTests
                 
                 // Assert
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
+                int rowsRead = 0;
                 while (reader.Read())
                 {
+                    rowsRead++;
                     AssertRowValuesEqual(reader, SqlCreateIcebergTableColumns.Split('\n'), i32, i64, dec, dbl, flt, txt, b1, b0, dt, tm, ntz, ltz, bi);
                 }
+                Assert.AreEqual(1, rowsRead);
             }
         }
         
@@ -296,13 +296,13 @@ namespace Snowflake.Data.Tests.IcebergTests
                 var reader = cmd.ExecuteReader();
                 
                 // Assert
-                int rowCnt = 0;
+                int rowsRead = 0;
                 while (reader.Read())
                 {
-                    rowCnt++;
+                    rowsRead++;
                     AssertRowValuesEqual((DbDataReader)reader, SqlCreateIcebergTableColumns.Split('\n'), I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 }
-                Assert.AreEqual(1, rowCnt);
+                Assert.AreEqual(1, rowsRead);
             }
         }
         
@@ -322,25 +322,16 @@ namespace Snowflake.Data.Tests.IcebergTests
                 
                 // Assert
                 var resultSetColumns = SqlCreateIcebergTableColumns.Split('\n');
-                var expected = new Object[] {I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi};
-                var index = -1;
+                var expected = new object[] {I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi};
+                var rowsRead = 0;
                 while (reader.Read())
                 {
-                    ++index;
-                    expected[0] = index+1;
-                    AssertRowValuesEqual(reader, resultSetColumns, NullifyWithinRow(expected, index));
+                    ++rowsRead;
+                    expected[0] = rowsRead;
+                    var expectedRow = NullEachNthValueBesidesFirst(expected, rowsRead-1);
+                    AssertRowValuesEqual(reader, resultSetColumns, expectedRow);
                 }
-            }
-            
-            object[] NullifyWithinRow(object[] expected, int index)
-            {
-                var ret = new object[expected.Length];
-                foreach (var column in Enumerable.Range(1, expected.Length-1))
-                {
-                    ret[column] = index % (column + 1) == 0 ? null : expected[column];
-                }
-                ret[0] = expected[0];
-                return ret;
+                Assert.AreEqual(20_000, rowsRead);
             }
         }
 
@@ -361,12 +352,15 @@ namespace Snowflake.Data.Tests.IcebergTests
                 conn.ExecuteNonQuery(sql);
 
                 var dbDataReader = conn.ExecuteReader($"select {SqlColumnsStructureTypes} from {TableNameIceberg}");
+                int rowsRead = 0;
                 while (dbDataReader.Read())
                 {
-                    Assert.AreEqual("[1,2,3]", Inline(dbDataReader.GetString(0)));
-                    Assert.AreEqual("{\"a\":1,\"b\":\"two\"}", Inline(dbDataReader.GetString(1)));
-                    Assert.AreEqual("{\"4\":\"one\",\"5\":\"two\",\"6\":\"three\"}", Inline(dbDataReader.GetString(2)));
+                    rowsRead++;
+                    Assert.AreEqual("[1,2,3]", RemoveBlanks(dbDataReader.GetString(0)));
+                    Assert.AreEqual("{\"a\":1,\"b\":\"two\"}", RemoveBlanks(dbDataReader.GetString(1)));
+                    Assert.AreEqual("{\"4\":\"one\",\"5\":\"two\",\"6\":\"three\"}", RemoveBlanks(dbDataReader.GetString(2)));
                 }
+                Assert.AreEqual(1, rowsRead);
             }
         }
 
@@ -442,41 +436,41 @@ namespace Snowflake.Data.Tests.IcebergTests
                 cmd.Add("1", DbType.Int32, Enumerable.Range((int)bindings[0], times).ToArray());
                 
                 var longArray = Enumerable.Repeat((long?)bindings[1], times).ToArray();
-                cmd.Add("2", DbType.Int64, NullifyWithinColumn(ref longArray, 2));
+                cmd.Add("2", DbType.Int64, NullEachNthValue(longArray, 2));
                 
                 var decArray = Enumerable.Repeat((decimal?)bindings[2], times).ToArray();
-                cmd.Add("3", DbType.Decimal, NullifyWithinColumn(ref decArray, 3));
+                cmd.Add("3", DbType.Decimal, NullEachNthValue(decArray, 3));
                 
                 var dblArray = Enumerable.Repeat((double?)bindings[3], times).ToArray();
-                cmd.Add("4", DbType.Double, NullifyWithinColumn(ref dblArray, 4));
+                cmd.Add("4", DbType.Double, NullEachNthValue(dblArray, 4));
 
                 var fltArray = Enumerable.Repeat((float?)bindings[4], times).ToArray();
-                cmd.Add("5", DbType.Double, NullifyWithinColumn(ref fltArray, 5));
+                cmd.Add("5", DbType.Double, NullEachNthValue(fltArray, 5));
                 
                 var strArray = Enumerable.Repeat((string)bindings[5], times).ToArray();
-                cmd.Add("6", DbType.String, NullifyWithinColumn(ref strArray, 6));
+                cmd.Add("6", DbType.String, NullEachNthValue(strArray, 6));
  
                 var bltArray = Enumerable.Repeat((bool?)bindings[6], times).ToArray();
-                cmd.Add("7", DbType.Boolean, NullifyWithinColumn(ref bltArray, 7));
+                cmd.Add("7", DbType.Boolean, NullEachNthValue(bltArray, 7));
                 
                 var blfArray = Enumerable.Repeat((bool?)bindings[7], times).ToArray();
-                cmd.Add("8", DbType.Boolean, NullifyWithinColumn(ref blfArray, 8));
+                cmd.Add("8", DbType.Boolean, NullEachNthValue(blfArray, 8));
                 
                 var dtArray = Enumerable.Repeat((DateTime?)bindings[8], times).ToArray();
-                cmd.Add("9", DbType.Date, NullifyWithinColumn(ref dtArray, 9));
+                cmd.Add("9", DbType.Date, NullEachNthValue(dtArray, 9));
                 
                 var tmArray = Enumerable.Repeat((DateTime?)bindings[9], times).ToArray();
-                cmd.Add("10", DbType.Time, NullifyWithinColumn(ref tmArray, 10));
+                cmd.Add("10", DbType.Time, NullEachNthValue(tmArray, 10));
                 
                 var ntzArray = Enumerable.Repeat((DateTime?)bindings[10], times).ToArray();
-                cmd.Add("11", DbType.DateTime, NullifyWithinColumn(ref ntzArray, 11));
+                cmd.Add("11", DbType.DateTime, NullEachNthValue(ntzArray, 11));
                 
                 var ltzArray = Enumerable.Repeat((DateTimeOffset?)bindings[11], times).ToArray();
-                cmd.Add("12", DbType.DateTimeOffset, NullifyWithinColumn(ref ltzArray, 12))
+                cmd.Add("12", DbType.DateTimeOffset, NullEachNthValue(ltzArray, 12))
                     .SFDataType = SFDataType.TIMESTAMP_LTZ;
                 
                 var binArray = Enumerable.Repeat((byte[])bindings[12], times).ToArray();
-                cmd.Add("13", DbType.Binary, NullifyWithinColumn(ref binArray, 13));
+                cmd.Add("13", DbType.Binary, NullEachNthValue(binArray, 13));
                 
                 Assert.AreEqual(times, cmd.ExecuteNonQuery());
             }
@@ -531,7 +525,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                         Assert.AreEqual(dt.ToString(frmt), actualRow.GetDateTime(idx).ToString(frmt), mismatch);
                         break;
                     case DateTimeOffset dto:    
-                        Assert.AreEqual(dto.ToUniversalTime().ToString(FormatYmdHmsfZ), actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ), mismatch);
+                        Assert.AreEqual(dto.ToUniversalTime().ToString(FormatYmdHmsfZ), 
+                                        actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ), 
+                                        mismatch);
                         break;
                     case byte[] bt:
                         Assert.AreEqual(bt, actualRow.GetFieldValue<byte[]>(idx), mismatch);
@@ -539,24 +535,5 @@ namespace Snowflake.Data.Tests.IcebergTests
                 }
             }
         }
-        
-        private T?[] NullifyWithinColumn<T>(ref T?[] array, int nullEachNth) where T : class
-        {
-            var ret = new T?[array.Length]; 
-            foreach (var index in Enumerable.Range(0, array.Length))
-                ret[index] = index % nullEachNth == 0 ? null : array[index];
-            return ret;
-        }
-        
-        private T?[] NullifyWithinColumn<T>(ref T?[] array, int nullEachNth) where T : struct
-        {
-            var ret = new T?[array.Length]; 
-            foreach (var index in Enumerable.Range(0, array.Length))
-                ret[index] = index % nullEachNth == 0 ? null : array[index];
-            return ret;
-        }
-        
-        private string Inline(String text) 
-            => text.Replace("\n", "").Replace(" ", "");
     }
 }

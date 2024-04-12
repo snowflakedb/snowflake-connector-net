@@ -327,7 +327,7 @@ namespace Snowflake.Data.Core
         {
             string destVal = null;
 
-            if (srcVal != DBNull.Value)
+            if (srcVal != DBNull.Value && srcVal != null)
             {
                 switch (sfDataType)
                 {
