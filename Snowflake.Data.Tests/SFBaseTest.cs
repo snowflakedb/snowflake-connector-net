@@ -246,7 +246,7 @@ namespace Snowflake.Data.Tests
             
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            var pkgVersion = Environment.GetEnvironmentVariable("pgk_version");
+            var pkgVersion = Environment.GetEnvironmentVariable("pkg_version");
 
             var separator = Path.DirectorySeparatorChar;
             
