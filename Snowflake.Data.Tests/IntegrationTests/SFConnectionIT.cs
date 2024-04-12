@@ -2224,6 +2224,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         
+        [Test]
+        public void TestConnectStringWithQueryTag()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string expectedQueryTag = "Test QUERY_TAG 12345";
+                conn.ConnectionString = ConnectionString + $";query_tag={expectedQueryTag}";
+                
+                conn.Open();
+                var command = conn.CreateCommand();
+                // This query itself will be part of the history and will have the query tag
+                command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
+                var queryTag = command.ExecuteScalar();
+                
+                Assert.AreEqual(expectedQueryTag, queryTag);
+            }
+        }
+        
     }
 }
 
