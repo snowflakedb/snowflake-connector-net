@@ -388,18 +388,36 @@ namespace Snowflake.Data.Core.Session
                 }, TaskContinuationOptions.NotOnCanceled); 
         }
 
+        internal void ReleaseBusySession(SFSession session)
+        {
+            s_logger.Debug("SessionPool::ReleaseBusySession");
+            int currentPoolSize;
+            lock (_sessionPoolLock)
+            {
+                _busySessionsCounter.Decrease();
+                currentPoolSize = GetCurrentPoolSize();
+            }
+            var currentSizeMessageOldPool = $"After releasing a busy session from the pool, the pool size is: {currentPoolSize}";
+            var poolSizeMessage = IsMultiplePoolsVersion()
+                ? $"{currentSizeMessageOldPool} - pool identified by: {ConnectionString}"
+                : currentSizeMessageOldPool;
+            s_logger.Debug(poolSizeMessage);
+        }
+        
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
             if (!GetPooling())
                 return false;
-            if (IsMultiplePoolsVersion())
+            if (!session.GetPooling())
             {
-                s_logger.Debug($"SessionPool::AddSession - returning session to pool identified by connection string: {ConnectionString}");
+                ReleaseBusySession(session);
+                return false;
             }
-            else
-            {
-                s_logger.Debug("SessionPool::AddSession");
-            }
+            const string AddSessionMessage = "SessionPool::AddSession";
+            var addSessionMessage = IsMultiplePoolsVersion()
+                ? $"{AddSessionMessage} - returning session to pool identified by connection string: {ConnectionString}"
+                : AddSessionMessage;
+            s_logger.Debug(addSessionMessage);
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
@@ -548,14 +566,6 @@ namespace Snowflake.Data.Core.Session
             {
                 return _idleSessions.Select(s => s.GetStartTime()).ToList();
             }
-        }
-            
-        
-        internal void Describe()
-        {
-            Console.WriteLine($"idle sessions: {_idleSessions.Count}");
-            Console.WriteLine($"busy sessions: {_busySessionsCounter.Count()}");
-            Console.WriteLine($"session creations : {_sessionCreationTokenCounter.Count()}");
         }
     }
 }

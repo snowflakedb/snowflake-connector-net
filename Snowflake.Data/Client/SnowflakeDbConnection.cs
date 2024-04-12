@@ -105,8 +105,36 @@ namespace Snowflake.Data.Client
 
         public override ConnectionState State => _connectionState;
         internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
+
+        public void PreventPooling()
+        {
+            if (SfSession == null)
+            {
+                throw new Exception("Session not yet created for this connection. Unable to prevent the session from pooling");
+            }
+            SfSession.SetPooling(false);
+            logger.Debug($"Session {SfSession.sessionId} marked not to be pooled any more");
+        }
         
         internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
+
+        private bool TryToReturnSessionToPool()
+        {
+            var pooling = SnowflakeDbConnectionPool.GetPooling() && SfSession.GetPooling();
+            var transactionRollbackStatus = pooling ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
+            var canReuseSession = CanReuseSession(transactionRollbackStatus);
+            if (!canReuseSession)
+            {
+                SnowflakeDbConnectionPool.ReleaseBusySession(SfSession);
+                return false;
+            }
+            var sessionReturnedToPool = SnowflakeDbConnectionPool.AddSession(SfSession);
+            if (sessionReturnedToPool)
+            {
+                logger.Debug($"Session pooled: {SfSession.sessionId}");
+            }
+            return sessionReturnedToPool;
+        }
 
         private TransactionRollbackStatus TerminateTransactionForDirtyConnectionReturningToPool()
         {
@@ -125,7 +153,7 @@ namespace Snowflake.Data.Client
                     return TransactionRollbackStatus.Success; 
                 }
             }
-            catch (SnowflakeDbException exception)
+            catch (Exception exception)
             {
                 // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool 
                 logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
@@ -151,19 +179,13 @@ namespace Snowflake.Data.Client
             logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
-                var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
-                
-                if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
-                {
-                    logger.Debug($"Session pooled: {SfSession.sessionId}");
-                }
-                else
+                var returnedToPool = TryToReturnSessionToPool();
+                if (!returnedToPool)
                 {
                     SfSession.close();
                 }
                 SfSession = null;
             }
-
             _connectionState = ConnectionState.Closed;
         }
 
@@ -189,11 +211,9 @@ namespace Snowflake.Data.Client
             {
                 if (IsNonClosedWithSession())
                 {
-                    var transactionRollbackStatus = SnowflakeDbConnectionPool.GetPooling() ? TerminateTransactionForDirtyConnectionReturningToPool() : TransactionRollbackStatus.Undefined;
-
-                    if (CanReuseSession(transactionRollbackStatus) && SnowflakeDbConnectionPool.AddSession(SfSession))
+                    var returnedToPool = TryToReturnSessionToPool();
+                    if (returnedToPool)
                     {
-                        logger.Debug($"Session pooled: {SfSession.sessionId}");
                         _connectionState = ConnectionState.Closed;
                         taskCompletionSource.SetResult(null);
                     }

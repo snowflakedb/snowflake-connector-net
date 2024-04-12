@@ -13,6 +13,7 @@ namespace Snowflake.Data.Core.Session
         SFSession GetSession(string connectionString, SecureString password);
         Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken);
         bool AddSession(SFSession session);
+        void ReleaseBusySession(SFSession session);
         void ClearAllPools();
         void SetMaxPoolSize(int maxPoolSize);
         int GetMaxPoolSize();
