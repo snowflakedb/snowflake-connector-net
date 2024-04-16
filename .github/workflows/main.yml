@@ -69,6 +69,8 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package AWSSDK.S3
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Google.Cloud.Storage.V1
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Azure.Storage.Blobs
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }}
       - name: Run Tests
@@ -105,7 +107,7 @@ jobs:
       matrix:
         dotnet: ['net6.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
-        pkg_version: ['current']
+        pkg_version: ['current', 'latest']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
@@ -126,10 +128,21 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: Build Driver
+      - name: Build Driver Current
+        if: ${{ matrix.pkg_version == 'current' }}
         run: |
+          cd Snowflake.Data.Tests
           dotnet restore
-          dotnet build
+          dotnet build -f ${{ matrix.dotnet }}
+      - name: Build Driver Latest
+        if: ${{ matrix.pkg_version == 'latest' }}
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package AWSSDK.S3
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Google.Cloud.Storage.V1
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Azure.Storage.Blobs
+          dotnet restore
+          dotnet build -f ${{ matrix.dotnet }}
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
@@ -164,7 +177,7 @@ jobs:
       matrix:
         dotnet: ['net6.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
-        pkg_version: ['current']
+        pkg_version: ['current', 'latest']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
@@ -185,10 +198,21 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
-      - name: Build Driver
+      - name: Build Driver Current
+        if: ${{ matrix.pkg_version == 'current' }}
         run: |
+          cd Snowflake.Data.Tests
           dotnet restore
-          dotnet build
+          dotnet build -f ${{ matrix.dotnet }}
+      - name: Build Driver Latest
+        if: ${{ matrix.pkg_version == 'latest' }}
+        run: |
+          cd Snowflake.Data.Tests
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package AWSSDK.S3
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Google.Cloud.Storage.V1
+          dotnet add ./../Snowflake.Data/Snowflake.Data.csproj package Azure.Storage.Blobs
+          dotnet restore
+          dotnet build -f ${{ matrix.dotnet }}
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
