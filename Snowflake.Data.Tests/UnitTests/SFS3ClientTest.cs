@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void SetCommonClientConfig_AppendHttpsToURL()
+        public void TestSetCommonClientConfigAppendHttpsToURL()
         {
             // Arrange
             var amazonS3Client = new AmazonS3Config();
@@ -236,7 +236,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void SetCommonClientConfig_AppendHttpsToURLWithBrackets()
+        public void TestSetCommonClientConfigAppendHttpsToURLWithBrackets()
         {
             // Arrange
             var amazonS3Client = new AmazonS3Config();

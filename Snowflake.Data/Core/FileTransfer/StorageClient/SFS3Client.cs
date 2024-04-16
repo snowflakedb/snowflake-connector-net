@@ -318,7 +318,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     endpoint = endpoint.Substring(start + 1, end - start - 1);
                 }
 
-                if (!endpoint.Contains("https://"))
+                if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
                     endpoint = "https://" + endpoint;
                 }
