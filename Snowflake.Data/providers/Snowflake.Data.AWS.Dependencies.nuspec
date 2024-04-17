@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
-    <id>Snowflake.Data.AWS</id>
+    <id>Snowflake.Data.AWS.Dependencies</id>
     <version>3.1.0</version>
-    <title>Snowflake.Data.AWS</title>
-    <authors>howryu, tchen</authors>
+    <title>Snowflake.Data.AWS.Dependencies</title>
+    <authors>Snowflake</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <licenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/snowflakedb/snowflake-connector-net</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</iconUrl>
-    <description>Snowflake Connector for .NET</description>
+    <description>Snowflake Connector AWS dependencies for .NET</description>
     <copyright>Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.</copyright>
     <dependencies>
-      <group targetFramework="net6.0">
+      <group targetFramework="netstandard2.0">
         <dependency id="AWSSDK.S3" version="3.7.0.4" exclude="Build,Analyzers" />
       </group>
     </dependencies>
