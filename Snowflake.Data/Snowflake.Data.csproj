@@ -2,7 +2,9 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;net471;net472</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
-    <ExcludeProviderDependencies Condition="'$(ExcludeProviderDependencies)'==''">false</ExcludeProviderDependencies>
+    <Title>Snowflake.Data</Title>
+    <PackageId>Snowflake.Data</PackageId>
+    <Description>Snowflake Connector for .NET</Description>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -16,19 +18,8 @@
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(ExcludeProviderDependencies)'=='false'">
-    <Title>Snowflake.Data</Title>
-    <PackageId>Snowflake.Data</PackageId>
-    <Description>Snowflake Connector for .NET</Description>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(ExcludeProviderDependencies)'=='true'">
-    <Title>Snowflake.Data.Core</Title>
-    <PackageId>Snowflake.Data.Core</PackageId>
-    <Description>Snowflake Connector for .NET</Description>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(ExcludeProviderDependencies)'=='true'">
+  
+  <ItemGroup>
 
     <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" >
       <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
@@ -46,19 +37,6 @@
       <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
       <IncludeAssets>compile</IncludeAssets>
     </PackageReference>
-
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(ExcludeProviderDependencies)'=='false'">
-
-    <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
-    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
-    <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
-
-  </ItemGroup>
-  
-  <ItemGroup>
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
