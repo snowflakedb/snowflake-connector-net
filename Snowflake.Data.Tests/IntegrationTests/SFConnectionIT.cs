@@ -1022,6 +1022,66 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCaching()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.user,
+                    "",
+                    "externalbrowser",
+                    true);
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+
+                // Authenticate using the token
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithInvalidCachedToken()
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.user,
+                    "",
+                    "externalbrowser",
+                    true);
+
+                var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken.ToString());
+                var credentialManager = new SnowflakeCredentialManagerInMemoryImpl();
+                credentialManager.SaveCredentials(key, "wrongToken");
+
+                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithWrongUser()
         {
             try
@@ -2166,6 +2226,39 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionStringWithoutAuth + 
                                         $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
                 conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCachingAsync()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
+                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
+                    testConfig.protocol,
+                    testConfig.host,
+                    testConfig.port,
+                    testConfig.account,
+                    testConfig.user,
+                    "",
+                    "externalbrowser",
+                    true);
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                connectTask = conn.CloseAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+
+                // Authenticate using the token
+                connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
