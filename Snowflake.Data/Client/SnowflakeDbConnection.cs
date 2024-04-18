@@ -198,7 +198,7 @@ namespace Snowflake.Data.Client
         }
 #endif
 
-        public virtual Task CloseAsync(CancellationToken cancellationToken)
+        public virtual async Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
             TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Client
                     }
                     else
                     {
-                        SfSession.CloseAsync(cancellationToken).ContinueWith(
+                        await SfSession.CloseAsync(cancellationToken).ContinueWith(
                             previousTask =>
                             {
                                 if (previousTask.IsFaulted)
@@ -240,7 +240,7 @@ namespace Snowflake.Data.Client
                                     _connectionState = ConnectionState.Closed;
                                     taskCompletionSource.SetResult(null);
                                 }
-                            }, cancellationToken);
+                            }, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Client
                     taskCompletionSource.SetResult(null);
                 }
             }
-            return taskCompletionSource.Task;
+            await taskCompletionSource.Task;
         }
 
         protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
@@ -420,6 +420,16 @@ namespace Snowflake.Data.Client
             {
                 externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
             }
+        }
+
+        public bool IsStillRunning(QueryStatus status)
+        {
+            return QueryStatusExtensions.IsStillRunning(status);
+        }
+
+        public bool IsAnError(QueryStatus status)
+        {
+            return QueryStatusExtensions.IsAnError(status);
         }
 
         ~SnowflakeDbConnection()

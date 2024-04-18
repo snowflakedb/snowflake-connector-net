@@ -12,12 +12,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public const string EmptyCommonConfig = @"{
             ""common"": {}
         }";
-        
-        public static readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
-        
-        public static string CreateConfigTempFile(string fileContent)
+
+        public static string CreateConfigTempFile(string workingDirectory, string fileContent)
         {
-            var filePath = NewConfigFilePath();
+            var filePath = NewConfigFilePath(workingDirectory);
             using (var writer = File.CreateText(filePath))
             {
                 writer.Write(fileContent);
@@ -26,9 +24,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             return filePath;
         }
 
-        private static string NewConfigFilePath()
+        private static string NewConfigFilePath(string workingDirectory)
         {
-            return Path.Combine(WorkingDirectory, Path.GetRandomFileName());
+            return Path.Combine(workingDirectory, Path.GetRandomFileName());
         }
         
         public static string Config(string logLevel, string logPath)
@@ -40,7 +38,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                 }
             }"
                 .Replace("{logLevel}", SerializeParameter(logLevel))
-                .Replace("{logPath}", SerializeParameter(logPath));
+                .Replace("{logPath}", SerializeParameter(logPath))
+                .Replace("\\", "\\\\");
         }
 
         private static string SerializeParameter(string parameter)

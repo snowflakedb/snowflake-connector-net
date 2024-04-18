@@ -2,7 +2,11 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using Mono.Unix;
+using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -17,23 +21,31 @@ namespace Snowflake.Data.Core
 
         private readonly EasyLoggerManager _easyLoggerManager;
 
+        private readonly UnixOperations _unixOperations;
+
         private readonly DirectoryOperations _directoryOperations;
+
+        private readonly EnvironmentOperations _environmentOperations;
 
         private readonly object _lockForExclusiveInit = new object();
         
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
-            EasyLoggerManager.Instance, DirectoryOperations.Instance);
+            EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
         
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
-            DirectoryOperations directoryOperations)
+            UnixOperations unixOperations,
+            DirectoryOperations directoryOperations,
+            EnvironmentOperations environmentOperations)
         {
             _easyLoggingConfigProvider = easyLoggingConfigProvider;
             _easyLoggerManager = easyLoggerManager;
+            _unixOperations = unixOperations;
             _directoryOperations = directoryOperations;
+            _environmentOperations = environmentOperations;
         }
 
         internal EasyLoggingStarter()
@@ -48,6 +60,14 @@ namespace Snowflake.Data.Core
                 {
                     return;
                 }
+                if (string.IsNullOrEmpty(configFilePathFromConnectionString))
+                {
+                    s_logger.Info($"Attempting to enable easy logging without a config file specified from connection string");
+                }
+                else
+                {
+                    s_logger.Info($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
+                }
                 var config = _easyLoggingConfigProvider.ProvideConfig(configFilePathFromConnectionString);
                 if (config == null)
                 {
@@ -56,11 +76,22 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
+                s_logger.Info($"LogLevel set to {logLevel}");
+                s_logger.Info($"LogPath set to {logPath}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
         }
 
+        internal void Reset(EasyLoggingLogLevel logLevel)
+        {
+            lock (_lockForExclusiveInit)
+            {
+                _initTrialParameters = null;
+                _easyLoggerManager.ResetEasyLogging(logLevel);
+            }
+        }
+        
         private bool AllowedToInitialize(string configFilePathFromConnectionString)
         {
             var everTriedToInitialize = _initTrialParameters != null;
@@ -90,16 +121,52 @@ namespace Snowflake.Data.Core
             var logPathOrDefault = logPath;
             if (string.IsNullOrEmpty(logPath))
             {
-                s_logger.Warn("LogPath in client config not found. Using temporary directory as a default value");
-                logPathOrDefault = Path.GetTempPath();
+                s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
+                logPathOrDefault = HomeDirectoryProvider.HomeDirectory(_environmentOperations);
+                if (string.IsNullOrEmpty(logPathOrDefault))
+                {
+                    throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
+                }
             }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
             {
-                _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    _directoryOperations.CreateDirectory(pathWithDotnetSubdirectory);
+                }
+                else
+                {
+                    if (!Directory.Exists(logPathOrDefault))
+                    {
+                        Directory.CreateDirectory(logPathOrDefault);
+                    }
+                    var createDirResult = _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
+                        FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    if (createDirResult != 0)
+                    {
+                        s_logger.Error($"Failed to create logs directory: {pathWithDotnetSubdirectory}");
+                        throw new Exception("Failed to create logs directory");
+                    }
+                }
             }
+            CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
 
             return pathWithDotnetSubdirectory;
+        }
+
+        private void CheckDirPermissionsOnlyAllowUser(string dirPath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
+
+            var dirPermissions = _unixOperations.GetDirPermissions(dirPath);
+            if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
+            {
+                s_logger.Warn($"Access permission for the logs directory is currently " +
+                    $"{UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(dirPermissions)} " +
+                    $"and is potentially accessible to users other than the owner of the logs directory");
+            }
         }
     }
 

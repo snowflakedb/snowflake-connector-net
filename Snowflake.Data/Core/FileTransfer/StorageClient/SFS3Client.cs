@@ -116,7 +116,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 stageInfo.endPoint,
                 maxRetry,
                 parallel);
-            
+
             // Get the AWS token value and create the S3 client
             if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out string awsSessionToken))
             {
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
-                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1, 
+                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
                     stageLocation.Length - stageLocation.IndexOf('/') - 1);
                 if (s3path != null && !s3path.EndsWith("/"))
                 {
@@ -287,13 +287,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         }
 
         /// <summary>
-        /// Set the client configuration common to both client with and without client-side 
+        /// Set the client configuration common to both client with and without client-side
         /// encryption.
         /// </summary>
         /// <param name="clientConfig">The client config to update.</param>
         /// <param name="region">The region if any.</param>
         /// <param name="endpoint">The endpoint if any.</param>
-        private static void SetCommonClientConfig(
+        internal static void SetCommonClientConfig(
             AmazonS3Config clientConfig,
             string region,
             string endpoint,
@@ -309,23 +309,25 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             // If a specific endpoint is specified use this
-            if ((null != endpoint) && (0 != endpoint.Length))
+            if (!string.IsNullOrEmpty(endpoint))
             {
                 var start = endpoint.IndexOf('[');
                 var end = endpoint.IndexOf(']');
-                if(start > -1 && end > -1 && end > start)
+                if (start > -1 && end > -1 && end > start)
                 {
                     endpoint = endpoint.Substring(start + 1, end - start - 1);
-                    if(!endpoint.Contains("https"))
-                    {
-                        endpoint = "https://" + endpoint;
-                    }
                 }
+
+                if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    endpoint = "https://" + endpoint;
+                }
+
                 clientConfig.ServiceURL = endpoint;
             }
 
             // The region information used to determine the endpoint for the service.
-            // RegionEndpoint and ServiceURL are mutually exclusive properties. 
+            // RegionEndpoint and ServiceURL are mutually exclusive properties.
             // If both stageInfo.endPoint and stageInfo.region have a value, stageInfo.region takes
             // precedence and ServiceUrl will be reset to null.
             if ((null != region) && (0 != region.Length))
@@ -337,7 +339,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Unavailable for .net framework 4.6
             //clientConfig.MaxConnectionsPerServer = parallel;
             clientConfig.MaxErrorRetry = maxRetry;
-
         }
 
         /// <summary>
@@ -410,7 +411,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
-            
+
             // Create S3 PUT request
             fileBytesStream.Position = 0;
             PutObjectRequest putObjectRequest = new PutObjectRequest

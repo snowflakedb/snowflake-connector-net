@@ -77,6 +77,12 @@ namespace Snowflake.Data.Core
 
         private bool _disableQueryContextCache = false;
 
+        internal bool _disableConsoleLogin;
+
+        internal int _maxRetryCount;
+
+        internal int _maxRetryTimeout;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -137,7 +143,7 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        ///     Constructor 
+        ///     Constructor
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
@@ -154,12 +160,13 @@ namespace Snowflake.Data.Core
             _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
             Password = password;
-            properties = SFSessionProperties.parseConnectionString(ConnectionString, Password);
+            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
+            _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties); 
+                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;
@@ -168,6 +175,8 @@ namespace Snowflake.Data.Core
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
+                _maxRetryCount = extractedProperties.maxHttpRetries;
+                _maxRetryTimeout = extractedProperties.retryTimeout;
             }
             catch (Exception e)
             {
@@ -178,7 +187,7 @@ namespace Snowflake.Data.Core
                             "Unable to connect");
             }
         }
-        
+
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern
@@ -249,7 +258,7 @@ namespace Snowflake.Data.Core
         internal void close()
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -281,7 +290,7 @@ namespace Snowflake.Data.Core
         internal async Task CloseAsync(CancellationToken cancellationToken)
         {
             // Nothing to do if the session is not open
-            if (null == sessionToken) return;
+            if (!IsEstablished()) return;
 
             stopHeartBeatForThisSession();
 
@@ -309,6 +318,8 @@ namespace Snowflake.Data.Core
             // Just in case the session won't be closed twice
             sessionToken = null;
         }
+
+        internal bool IsEstablished() => sessionToken != null;
 
         internal void renewSession()
         {
@@ -459,7 +470,7 @@ namespace Snowflake.Data.Core
                 this.schema = schemaName;
             }
         }
-        
+
         internal void startHeartBeatForThisSession()
         {
             if (!this.isHeartBeatEnabled)
@@ -511,7 +522,7 @@ namespace Snowflake.Data.Core
             logger.Debug("heartbeat");
 
             bool retry = false;
-            if (sessionToken != null)
+            if (IsEstablished())
             {
                 do
                 {

@@ -14,21 +14,12 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class ChunkDownloaderFactoryTest
     {
-        bool _useV2ChunkDownloaderDefault;
-        int _chunkDownloaderVersionDefault;
-
-        [SetUp]
-        public void BeforeTest()
-        {
-            _useV2ChunkDownloaderDefault = SFConfiguration.Instance().UseV2ChunkDownloader;
-            _chunkDownloaderVersionDefault = SFConfiguration.Instance().ChunkDownloaderVersion;
-        }
+        int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
 
         [TearDown]
         public void AfterTest()
         {
-            SFConfiguration.Instance().UseV2ChunkDownloader = _useV2ChunkDownloaderDefault; // Return to default version
-            SFConfiguration.Instance().ChunkDownloaderVersion = _chunkDownloaderVersionDefault; // Return to default version
+            SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
         }
 
         private QueryExecResponseData mockQueryRequestData()
@@ -61,15 +52,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test, NonParallelizable]
-        public void TestGetDownloader([Values(false, true)] bool useV2ChunkDownloader, [Values(1, 2, 3, 4)] int chunkDownloaderVersion)
+        public void TestGetDownloader([Values(1, 2, 3, 4)] int chunkDownloaderVersion)
         {
             // Set configuration settings
-            SFConfiguration.Instance().UseV2ChunkDownloader = useV2ChunkDownloader;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
 
             CancellationToken token = new CancellationToken();
 
-            if (chunkDownloaderVersion == 4 && !useV2ChunkDownloader)
+            if (chunkDownloaderVersion == 4)
             {
                 Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
                 Assert.AreEqual("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
@@ -81,26 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
 
-                // GetDownloader() returns SFChunkDownloaderV2 when UseV2ChunkDownloader is true
-                if (SFConfiguration.Instance().UseV2ChunkDownloader)
-                {
-                    Assert.IsTrue(downloader is SFChunkDownloaderV2);
-                }
-                else
-                {
-                    if (SFConfiguration.Instance().GetChunkDownloaderVersion() == 1)
-                    {
-                        Assert.IsTrue(downloader is SFBlockingChunkDownloader);
-                    }
-                    else if (SFConfiguration.Instance().GetChunkDownloaderVersion() == 2)
-                    {
-                        Assert.IsTrue(downloader is SFChunkDownloaderV2);
-                    }
-                    else if (SFConfiguration.Instance().GetChunkDownloaderVersion() == 3)
-                    {
-                        Assert.IsTrue(downloader is SFBlockingChunkDownloaderV3);
-                    }
-                }
+                Assert.IsTrue(downloader is SFBlockingChunkDownloaderV3);
             }
         }
     }

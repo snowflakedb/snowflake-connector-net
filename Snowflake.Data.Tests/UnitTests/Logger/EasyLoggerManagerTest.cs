@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -21,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private const string WarnMessage = "Easy logging Warn message";
         private const string ErrorMessage = "Easy logging Error message";
         private const string FatalMessage = "Easy logging Fatal message";
-        private static readonly string s_logsDirectory = Path.GetTempPath();
+        private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         [ThreadStatic]
         private static string t_directoryLogPath;
@@ -92,6 +93,38 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
         }
         
+        [Test]
+        public void TestThatOnlyUnknownFieldsAreLogged()
+        {
+            // arrange
+            string expectedFakeLogField = "fake_log_field";
+            string ConfigWithUnknownFields = $@"{{
+                    ""common"": {{
+                        ""LOG_LEVEL"": ""warn"",
+                        ""lOg_PaTh"": ""path"",
+                        ""{expectedFakeLogField}_1"": ""abc"",
+                        ""{expectedFakeLogField}_2"": ""123""
+                    }}
+                }}";
+            var configFilePath = Guid.NewGuid().ToString() + ".json";
+            using (var writer = File.CreateText(configFilePath))
+            {
+                writer.Write(ConfigWithUnknownFields);
+            }
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            var parser = new EasyLoggingConfigParser();
+
+            // act
+            parser.Parse(configFilePath);
+
+            // assert
+            var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
+
+            // cleanup
+            File.Delete(configFilePath);
+        }
+
         private static string RandomLogsDirectoryPath()
         {
             var randomName = Path.GetRandomFileName();

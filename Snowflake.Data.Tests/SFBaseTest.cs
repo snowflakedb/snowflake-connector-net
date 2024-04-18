@@ -12,6 +12,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
 [assembly:LevelOfParallelism(10)]
@@ -56,6 +57,8 @@ namespace Snowflake.Data.Tests
     #endif
     public class SFBaseTestAsync
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
+
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
@@ -107,9 +110,15 @@ namespace Snowflake.Data.Tests
 
         protected void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
+            CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
+        }
+
+        protected void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns, string additionalQueryStr = null)
+        {
             var columnsStr = string.Join(", ", columns);
             var cmd = conn.CreateCommand();
-            cmd.CommandText = $"CREATE OR REPLACE TABLE {tableName}({columnsStr}) {additionalQueryStr}";
+            cmd.CommandText = $"CREATE OR REPLACE {tableType} TABLE {tableName}({columnsStr}) {additionalQueryStr}";
+            s_logger.Debug(cmd.CommandText);
             cmd.ExecuteNonQuery();
 
             _tablesToRemove.Add(tableName);
@@ -146,6 +155,11 @@ namespace Snowflake.Data.Tests
                                                  testConfig.password);
 
         protected TestConfig testConfig { get; }
+        
+        protected string ResolveHost()
+        {
+            return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
+        }
     }
     
     [SetUpFixture]

@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core.Session
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
         private readonly ConnectionPoolConfig _poolConfig;
         private bool _configOverriden = false;
-        
+
         private SessionPool()
         {
             // acquiring a lock not needed because one is already acquired in SnowflakeDbConnectionPool
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core.Session
 
         private SessionPool(string connectionString, SecureString password, ConnectionPoolConfig poolConfig)
         {
-            // acquiring a lock not needed because one is already acquired in ConnectionPoolManager 
+            // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
@@ -90,8 +90,8 @@ namespace Snowflake.Data.Core.Session
                 {
                     if (item.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
+                        Task.Run(() => item.close());
                         _idleSessions.Remove(item);
-                        item.close();
                     }
                 }
             }
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core.Session
         {
             try
             {
-                var properties = SFSessionProperties.parseConnectionString(connectionString, password);
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return extractedProperties.BuildConnectionPoolConfig();
             }
@@ -111,7 +111,7 @@ namespace Snowflake.Data.Core.Session
                 return new ConnectionPoolConfig();
             }
         }
-        
+
         internal SFSession GetSession(string connStr, SecureString password)
         {
             s_logger.Debug("SessionPool::GetSession");
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Core.Session
             WarnAboutOverridenConfig();
             return sessionOrCreateTokens.Session ?? NewSession(connStr, password, sessionOrCreateTokens.SessionCreationToken());
         }
-        
+
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync");
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Core.Session
         {
             tokens.ForEach(token => ScheduleNewIdleSession(connStr, password, token));
         }
-        
+
         private void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
         {
             Task.Run(() =>
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Core.Session
         }
 
         internal bool IsConfigOverridden() => _configOverriden;
-        
+
         internal SFSession GetSession() => GetSession(ConnectionString, Password);
 
         internal Task<SFSession> GetSessionAsync(CancellationToken cancellationToken) =>
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Core.Session
         {
             _sessionPoolEventHandler = sessionPoolEventHandler;
         }
-        
+
         private SessionOrCreationTokens GetIdleSession(string connStr)
         {
             s_logger.Debug("SessionPool::GetIdleSession");
@@ -215,7 +215,7 @@ namespace Snowflake.Data.Core.Session
             Enumerable.Range(1, sessionsCount)
                 .Select(_ => _sessionCreationTokenCounter.NewToken())
                 .ToList();
-        
+
         private int AllowedNumberOfNewSessionCreations(int atLeastCount)
         {
             // we are expecting to create atLeast 1 session in case of opening a connection (atLeastCount = 1)
@@ -240,7 +240,7 @@ namespace Snowflake.Data.Core.Session
         }
 
         private bool IsMultiplePoolsVersion() => _waitingForIdleSessionQueue.IsWaitingEnabled();
-        
+
         private SFSession WaitForSession(string connStr)
         {
             if (TimeoutHelper.IsInfinite(_poolConfig.WaitingForIdleSessionTimeout))
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Core.Session
                         }
                     }
                 }
-                else 
+                else
                 {
                     s_logger.Debug($"SessionPool::WaitForSession - woken without a session granted");
                 }
@@ -291,7 +291,7 @@ namespace Snowflake.Data.Core.Session
                     var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     if (session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
-                        session.close(); // TODO: cherry-pick SNOW-984600
+                        Task.Run(() => session.close()); // TODO: cherry-pick SNOW-984600
                         i--;
                     }
                     else
@@ -347,7 +347,7 @@ namespace Snowflake.Data.Core.Session
             SecureString password,
             CancellationToken cancellationToken) =>
             NewSessionAsync(connectionString, password, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
-        
+
         private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync");
@@ -385,7 +385,7 @@ namespace Snowflake.Data.Core.Session
                         _sessionPoolEventHandler.OnSessionProvided(this);
                     }
                     return session;
-                }, TaskContinuationOptions.NotOnCanceled); 
+                }, TaskContinuationOptions.NotOnCanceled);
         }
 
         internal void ReleaseBusySession(SFSession session)
@@ -403,7 +403,7 @@ namespace Snowflake.Data.Core.Session
                 : currentSizeMessageOldPool;
             s_logger.Debug(poolSizeMessage);
         }
-        
+
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
             if (!GetPooling())
@@ -471,7 +471,7 @@ namespace Snowflake.Data.Core.Session
             }
             else
             {
-                s_logger.Debug("SessionPool::ClearSessions");       
+                s_logger.Debug("SessionPool::ClearSessions");
             }
             lock (_sessionPoolLock)
             {
@@ -479,7 +479,7 @@ namespace Snowflake.Data.Core.Session
                 ClearIdleSessions();
             }
         }
-        
+
         internal void ClearIdleSessions()
         {
             s_logger.Debug("SessionPool::ClearIdleSessions");
@@ -487,7 +487,7 @@ namespace Snowflake.Data.Core.Session
             {
                 foreach (SFSession session in _idleSessions)
                 {
-                    session.close();
+                    session.close(); // it is left synchronously here because too much async tasks slows down testing
                 }
                 _idleSessions.Clear();
             }

@@ -3,6 +3,7 @@
  */
 
 using System;
+using Amazon.S3.Encryption;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -217,6 +218,36 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             AssertForUploadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        public void TestAppendHttpsToEndpoint()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var endpoint = "endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com";
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
+        }
+
+        [Test]
+        public void TestAppendHttpsToEndpointWithBrackets()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var endpoint = "[endpointWithNoHttps.com]";
+            var expectedEndpoint = "https://endpointWithNoHttps.com";
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
         }
 
         [Test]

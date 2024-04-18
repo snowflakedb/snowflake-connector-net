@@ -58,6 +58,24 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedIsLoginEndpoint, isLoginEndpoint);
         }
 
+        // Parameters: request url, expected value
+        [TestCase("https://dev.okta.com/sso/saml", true)]
+        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", false)]
+        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", false)]
+        [TestCase("https://test.snowflakecomputing.com/session/token-request", false)]
+        [Test]
+        public void TestIsOktaSSORequest(string requestUrl, bool expectedIsOktaSSORequest)
+        {
+            // given
+            var uri = new Uri(requestUrl);
+
+            // when
+            bool isOktaSSORequest = HttpUtil.IsOktaSSORequest(uri.Host, uri.AbsolutePath);
+
+            // then
+            Assert.AreEqual(expectedIsOktaSSORequest, isOktaSSORequest);
+        }
+
         // Parameters: time in seconds
         [TestCase(4)]
         [TestCase(8)]

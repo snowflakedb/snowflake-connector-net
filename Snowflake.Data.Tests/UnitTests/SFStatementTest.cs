@@ -6,6 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using Snowflake.Data.Core;
     using NUnit.Framework;
+    using System;
 
     /**
      * Mock rest request test
@@ -21,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
@@ -37,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             for (int i = 0; i < 5; i++)
             {
                 SFStatement statement = new SFStatement(sfSession);
-                SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false);
+                SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false, false);
                 expectServiceName += "a";
                 Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
@@ -73,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -88,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -103,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -118,9 +119,89 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
+        }
+
+        [Test]
+        [TestCase("running", QueryStatus.Running)]
+        [TestCase("RUNNING", QueryStatus.Running)]
+        [TestCase("resuming_warehouse", QueryStatus.ResumingWarehouse)]
+        [TestCase("RESUMING_WAREHOUSE", QueryStatus.ResumingWarehouse)]
+        [TestCase("queued", QueryStatus.Queued)]
+        [TestCase("QUEUED", QueryStatus.Queued)]
+        [TestCase("queued_reparing_warehouse", QueryStatus.QueuedReparingWarehouse)]
+        [TestCase("QUEUED_REPARING_WAREHOUSE", QueryStatus.QueuedReparingWarehouse)]
+        [TestCase("no_data", QueryStatus.NoData)]
+        [TestCase("NO_DATA", QueryStatus.NoData)]
+        [TestCase("aborting", QueryStatus.Aborting)]
+        [TestCase("ABORTING", QueryStatus.Aborting)]
+        [TestCase("success", QueryStatus.Success)]
+        [TestCase("SUCCESS", QueryStatus.Success)]
+        [TestCase("failed_with_error", QueryStatus.FailedWithError)]
+        [TestCase("FAILED_WITH_ERROR", QueryStatus.FailedWithError)]
+        [TestCase("aborted", QueryStatus.Aborted)]
+        [TestCase("ABORTED", QueryStatus.Aborted)]
+        [TestCase("failed_with_incident", QueryStatus.FailedWithIncident)]
+        [TestCase("FAILED_WITH_INCIDENT", QueryStatus.FailedWithIncident)]
+        [TestCase("disconnected", QueryStatus.Disconnected)]
+        [TestCase("DISCONNECTED", QueryStatus.Disconnected)]
+        [TestCase("restarted", QueryStatus.Restarted)]
+        [TestCase("RESTARTED", QueryStatus.Restarted)]
+        [TestCase("blocked", QueryStatus.Blocked)]
+        [TestCase("BLOCKED", QueryStatus.Blocked)]
+        public void TestGetQueryStatusByStringValue(string stringValue, QueryStatus expectedStatus)
+        {
+            Assert.AreEqual(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
+        }
+
+        [Test]
+        [TestCase("UNKNOWN")]
+        [TestCase("RANDOM_STATUS")]
+        [TestCase("aBcZyX")]
+        public void TestGetQueryStatusByStringValueThrowsErrorForUnknownStatus(string stringValue)
+        {
+            var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
+            Assert.IsTrue(thrown.Message.Contains("The query status returned by the server is not recognized"));
+        }
+
+        [Test]
+        [TestCase(QueryStatus.Running, true)]
+        [TestCase(QueryStatus.ResumingWarehouse, true)]
+        [TestCase(QueryStatus.Queued, true)]
+        [TestCase(QueryStatus.QueuedReparingWarehouse, true)]
+        [TestCase(QueryStatus.NoData, true)]
+        [TestCase(QueryStatus.Aborting, false)]
+        [TestCase(QueryStatus.Success, false)]
+        [TestCase(QueryStatus.FailedWithError, false)]
+        [TestCase(QueryStatus.Aborted, false)]
+        [TestCase(QueryStatus.FailedWithIncident, false)]
+        [TestCase(QueryStatus.Disconnected, false)]
+        [TestCase(QueryStatus.Restarted, false)]
+        [TestCase(QueryStatus.Blocked, false)]
+        public void TestIsStillRunning(QueryStatus status, bool expectedResult)
+        {
+            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsStillRunning(status));
+        }
+
+        [Test]
+        [TestCase(QueryStatus.Aborting, true)]
+        [TestCase(QueryStatus.FailedWithError, true)]
+        [TestCase(QueryStatus.Aborted, true)]
+        [TestCase(QueryStatus.FailedWithIncident, true)]
+        [TestCase(QueryStatus.Disconnected, true)]
+        [TestCase(QueryStatus.Blocked, true)]
+        [TestCase(QueryStatus.Running, false)]
+        [TestCase(QueryStatus.ResumingWarehouse, false)]
+        [TestCase(QueryStatus.Queued, false)]
+        [TestCase(QueryStatus.QueuedReparingWarehouse, false)]
+        [TestCase(QueryStatus.NoData, false)]
+        [TestCase(QueryStatus.Success, false)]
+        [TestCase(QueryStatus.Restarted, false)]
+        public void TestIsAnError(QueryStatus status, bool expectedResult)
+        {
+            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsAnError(status));
         }
     }
 }
