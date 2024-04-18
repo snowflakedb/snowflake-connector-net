@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -1026,16 +1026,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
-                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.user,
-                    "",
-                    "externalbrowser",
-                    true);
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 conn.Open();
@@ -1056,19 +1049,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
-                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.user,
-                    "",
-                    "externalbrowser",
-                    true);
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
                 var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken.ToString());
-                var credentialManager = new SnowflakeCredentialManagerInMemoryImpl();
+                var credentialManager = SnowflakeCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "wrongToken");
 
                 SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -2290,16 +2276,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
-                "account={3};user={4};password={5};authenticator={6};allow_sso_token_caching={7}",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.user,
-                    "",
-                    "externalbrowser",
-                    true);
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);

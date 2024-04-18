@@ -45,6 +45,39 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }
 
+        private void TestCredentialManagerImplementation()
+        {
+            var key = SnowflakeCredentialManagerFactory.BuildCredentialKey("host", "user", "tokentype");
+            var expectedToken = "token";
+
+            // act
+            var actualToken = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+
+            // act
+            _credentialManager.SaveCredentials(key, expectedToken);
+            actualToken = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.AreEqual(expectedToken, actualToken);
+
+            // act
+            _credentialManager.RemoveCredentials(key);
+            actualToken = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+
+            // act
+            _credentialManager.RemoveCredentials(key);
+            actualToken = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+        }
+
         [Test]
         public void TestUsingDefaultCredentialManager()
         {
@@ -79,63 +112,35 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestDefaultCredentialManager()
+        public void TestAdysTechCredentialManager()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on non-Windows");
+            }
+
+            // arrange
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerAdysTechImpl.Instance);
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+            TestCredentialManagerImplementation();
+        }
+
+        [Test]
+        public void TestInMemoryCredentialManager()
         {
             // arrange
-            var key = SnowflakeCredentialManagerFactory.BuildCredentialKey("host", "user", "tokentype");
-            var expectedToken = "token";
-
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerInMemoryImpl.Instance);
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-
-            // act
-            var actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
-
-            // act
-            _credentialManager.SaveCredentials(key, expectedToken);
-            actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.AreEqual(expectedToken, actualToken);
-
-            // act
-            _credentialManager.RemoveCredentials(key);
-            actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+            TestCredentialManagerImplementation();
         }
 
         [Test]
         public void TestJsonCredentialManager()
         {
             // arrange
-            var key = SnowflakeCredentialManagerFactory.BuildCredentialKey("host", "user", "tokentype");
-            var expectedToken = "token";
             SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerIFileImpl.Instance);
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-
-            // act
-            var actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
-
-            // act
-            _credentialManager.SaveCredentials(key, expectedToken);
-            actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.AreEqual(expectedToken, actualToken);
-
-            // act
-            _credentialManager.RemoveCredentials(key);
-            actualToken = _credentialManager.GetCredentials(key);
-
-            // assert
-            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+            TestCredentialManagerImplementation();
         }
 
         [Test]
