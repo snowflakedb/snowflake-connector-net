@@ -22,6 +22,7 @@ namespace Snowflake.Data.Core
         internal int maxHttpRetries;
         internal bool includeRetryReason;
         internal SFSessionHttpClientProxyProperties proxyProperties;
+        internal bool allowSSOTokenCaching;
 
         internal void CheckPropertiesAreValid()
         {
@@ -92,6 +93,7 @@ namespace Snowflake.Data.Core
             var parameterMap = new Dictionary<SFSessionParameter, object>();
             parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = validateDefaultParameters;
             parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = clientSessionKeepAlive;
+            parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = allowSSOTokenCaching;
             return parameterMap;
         }
 
@@ -122,7 +124,8 @@ namespace Snowflake.Data.Core
                     retryTimeout = int.Parse(propertiesDictionary[SFSessionProperty.RETRY_TIMEOUT]),
                     maxHttpRetries = int.Parse(propertiesDictionary[SFSessionProperty.MAXHTTPRETRIES]),
                     includeRetryReason = Boolean.Parse(propertiesDictionary[SFSessionProperty.INCLUDERETRYREASON]),
-                    proxyProperties = proxyPropertiesExtractor.ExtractProperties(propertiesDictionary)
+                    proxyProperties = proxyPropertiesExtractor.ExtractProperties(propertiesDictionary),
+                    allowSSOTokenCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOW_SSO_TOKEN_CACHING])
                 };
             }
         }

@@ -83,7 +83,10 @@ namespace Snowflake.Data.Core
         IO_ERROR_ON_GETPUT_COMMAND,
         
         [SFErrorAttr(errorCode = 270059)]
-        EXECUTE_COMMAND_ON_CLOSED_CONNECTION
+        EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
+
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID
     }
 
     class SFErrorAttr : Attribute

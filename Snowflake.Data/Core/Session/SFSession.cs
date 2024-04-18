@@ -83,6 +83,12 @@ namespace Snowflake.Data.Core
 
         internal int _maxRetryTimeout;
 
+        private readonly ISnowflakeCredentialManager _credManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+
+        internal bool _allowSSOTokenCaching;
+
+        internal string _idToken;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -99,6 +105,12 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
+                if (_allowSSOTokenCaching && authenticator is ExternalBrowserAuthenticator && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                {
+                    _idToken = authnResponse.data.idToken;
+                    var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken.ToString());
+                    _credManager.SaveCredentials(key, _idToken);
+                }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             }
@@ -111,7 +123,17 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
-                throw e;
+
+                if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+                {
+                    logger.Error("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
+                    _idToken = null;
+                    authenticator.Authenticate();
+                }
+                else
+                {
+                    throw e;
+                }
             }
         }
 
@@ -170,6 +192,13 @@ namespace Snowflake.Data.Core
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
+                _allowSSOTokenCaching = extractedProperties.allowSSOTokenCaching;
+
+                if (_allowSSOTokenCaching)
+                {
+                    var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken.ToString());
+                    _idToken = _credManager.GetCredentials(key);
+                }
             }
             catch (Exception e)
             {
