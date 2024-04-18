@@ -4,8 +4,6 @@
 
 using Mono.Unix;
 using Mono.Unix.Native;
-using System;
-using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core.Tools
 {
