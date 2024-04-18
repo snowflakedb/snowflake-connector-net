@@ -309,3 +309,6 @@ whitesource/
 Snowflake.Data.Tests/macos_*_performance.csv
 Snowflake.Data.Tests/windows_*_performance.csv
 Snowflake.Data.Tests/unix_*_performance.csv
+
+# Ignore Mac files
+**/.DS_Store

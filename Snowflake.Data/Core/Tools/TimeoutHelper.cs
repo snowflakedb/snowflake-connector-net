@@ -13,6 +13,13 @@ namespace Snowflake.Data.Core.Tools
             return startedAtMillis + timeoutInMillis <= nowMillis;
         }
 
+        public static bool IsExpired(long elapsedMillis, TimeSpan timeout)
+        {
+            if (IsInfinite(timeout))
+                return false;
+            return elapsedMillis >= timeout.TotalMilliseconds;
+        }
+
         public static bool IsInfinite(TimeSpan timeout) => timeout == Timeout.InfiniteTimeSpan;
 
         public static bool IsZeroLength(TimeSpan timeout)

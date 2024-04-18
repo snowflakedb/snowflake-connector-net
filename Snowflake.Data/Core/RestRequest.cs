@@ -129,6 +129,8 @@ namespace Snowflake.Data.Core
 
         internal bool _isLogin { get; set; }
 
+        internal bool _isStatusRequest { get; set; }
+
         public override string ToString()
         {
             return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(), 
@@ -154,7 +156,7 @@ namespace Snowflake.Data.Core
             // add quote otherwise it would be reported as error format
             string osInfo = "(" + SFEnvironment.ClientEnv.osVersion + ")";
 
-            if (isPutGet)
+            if (isPutGet || _isStatusRequest)
             {
                 message.Headers.Accept.Add(applicationJson);
             }
@@ -313,6 +315,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "queryContextDTO", NullValueHandling = NullValueHandling.Ignore)]
         internal RequestQueryContext QueryContextDTO { get; set; }
+
+        [JsonProperty(PropertyName = "asyncExec")]
+        internal bool asyncExec { get; set; }
     }
 
     // The query context in query response

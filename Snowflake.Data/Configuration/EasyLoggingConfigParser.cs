@@ -3,8 +3,12 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Configuration
@@ -44,6 +48,7 @@ namespace Snowflake.Data.Configuration
             try {
                 var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
                 Validate(config);
+                CheckForUnknownFields(fileContent);
                 return config;
             }
             catch (Exception e)
@@ -60,6 +65,20 @@ namespace Snowflake.Data.Configuration
             {
                 EasyLoggingLogLevelExtensions.From(config.CommonProps.LogLevel);
             }
+        }
+
+        private void CheckForUnknownFields(string fileContent)
+        {
+            // Parse the specified config file and get the key-value pairs from the "common" section
+            List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
+                .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
+                .ToList();
+
+            JObject.Parse(fileContent).GetValue("common", StringComparison.OrdinalIgnoreCase)?
+                .Cast<JProperty>()
+                .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                .ToList()
+                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
         }
     }
 }

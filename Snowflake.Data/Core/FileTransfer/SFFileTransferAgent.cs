@@ -185,45 +185,61 @@ namespace Snowflake.Data.Core
         /// </summary>
         public void execute()
         {
-            // Initialize the encryption metadata
-            initEncryptionMaterial();
-
-            if (CommandTypes.UPLOAD == CommandType)
+            try
             {
-                initFileMetadataForUpload();
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                initFileMetadata(TransferMetadata.src_locations);
+                // Initialize the encryption metadata
+                initEncryptionMaterial();
 
-                Directory.CreateDirectory(TransferMetadata.localLocation);
-            }
-
-            // Update the file metadata with GCS presigned URL
-            updatePresignedUrl();
-
-            foreach (SFFileMetadata fileMetadata in FilesMetas)
-            {
-                // If the file is larger than the threshold, add it to the large files list
-                // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                if (CommandTypes.UPLOAD == CommandType)
                 {
-                    LargeFilesMetas.Add(fileMetadata);
+                    initFileMetadataForUpload();
                 }
-                else
+                else if (CommandTypes.DOWNLOAD == CommandType)
                 {
-                    SmallFilesMetas.Add(fileMetadata);
+                    initFileMetadata(TransferMetadata.src_locations);
+
+                    Directory.CreateDirectory(TransferMetadata.localLocation);
+                }
+
+                // Update the file metadata with GCS presigned URL
+                updatePresignedUrl();
+
+                foreach (SFFileMetadata fileMetadata in FilesMetas)
+                {
+                    // If the file is larger than the threshold, add it to the large files list
+                    // Otherwise add it to the small files list
+                    if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                    {
+                        LargeFilesMetas.Add(fileMetadata);
+                    }
+                    else
+                    {
+                        SmallFilesMetas.Add(fileMetadata);
+                    }
+                }
+
+                // Check command type
+                if (CommandTypes.UPLOAD == CommandType)
+                {
+                    upload();
+                }
+                else if (CommandTypes.DOWNLOAD == CommandType)
+                {
+                    download();
                 }
             }
-
-            // Check command type
-            if (CommandTypes.UPLOAD == CommandType)
+            catch (Exception e)
             {
-                upload();
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                download();
+                Logger.Error("Error while transferring file(s): " + e.Message);
+                if (e is SnowflakeDbException snowflakeException)
+                {
+                    if (snowflakeException.QueryId == null)
+                    {
+                        snowflakeException.QueryId = TransferMetadata.queryId;
+                    }
+                    throw snowflakeException;
+                }
+                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
         }
 
@@ -693,8 +709,9 @@ namespace Snowflake.Data.Core
             {
                 return int.Parse(maxBytesInMemoryString);
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
                 return FileTransferConfiguration.DefaultMaxBytesInMemory;
             }
         }
@@ -1262,7 +1279,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1299,7 +1317,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1336,7 +1355,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {

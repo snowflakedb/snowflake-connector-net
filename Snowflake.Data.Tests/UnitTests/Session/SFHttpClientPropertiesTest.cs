@@ -15,11 +15,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     public class SFHttpClientPropertiesTest
     {
         [Test]
-        public void ShouldConvertToMapOnly2Properties(
+        public void TestConvertToMapOnly2Properties(
             [Values(true, false)] bool validateDefaultParameters,
             [Values(true, false)] bool clientSessionKeepAlive)
         {
-            // given
+            // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
             {
                 proxyHost = "localhost",
@@ -40,20 +40,53 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 maxHttpRetries = 7,
                 proxyProperties = proxyProperties
             };
-            
-            // when
+
+            // act
             var parameterMap = properties.ToParameterMap();
-            
-            // then
+
+            // assert
             Assert.AreEqual(2, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
         }
 
         [Test]
-        public void ShouldBuildHttpClientConfig()
+        public void TestBuildHttpClientConfig()
         {
-            // given
+            // arrange
+            var properties = RandomSFSessionHttpClientProperties();
+
+            // act
+            var config = properties.BuildHttpClientConfig();
+
+            // assert
+            Assert.AreEqual(!properties.insecureMode, config.CrlCheckEnabled);
+            Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
+            Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
+            Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
+            Assert.AreEqual(properties.proxyProperties.proxyPassword, config.ProxyPassword);
+            Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
+            Assert.AreEqual(properties.disableRetry, config.DisableRetry);
+            Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
+            Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
+        }
+
+        [Test]
+        public void TestCrlCheckEnabledToBeOppositeInsecureMode([Values] bool insecureMode)
+        {
+            // arrange
+            var properties = RandomSFSessionHttpClientProperties();
+            properties.insecureMode = insecureMode;
+
+            // act
+            var config = properties.BuildHttpClientConfig();
+
+            // assert
+            Assert.AreEqual(!insecureMode, config.CrlCheckEnabled);
+        }
+
+        private SFSessionHttpClientProperties RandomSFSessionHttpClientProperties()
+        {
             var proxyProperties = new SFSessionHttpClientProxyProperties()
             {
                 proxyHost = TestDataGenarator.NextAlphaNumeric(),
@@ -62,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 proxyPassword = TestDataGenarator.NextAlphaNumeric(),
                 proxyUser = TestDataGenarator.NextAlphaNumeric()
             };
-            var properties = new SFSessionHttpClientProperties()
+            return new SFSessionHttpClientProperties()
             {
                 validateDefaultParameters = TestDataGenarator.NextBool(),
                 clientSessionKeepAlive = TestDataGenarator.NextBool(),
@@ -74,33 +107,19 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 maxHttpRetries = TestDataGenarator.NextInt(0, 15),
                 proxyProperties = proxyProperties
             };
-            
-            // when
-            var config = properties.BuildHttpClientConfig();
-
-            // then
-            Assert.AreEqual(properties.insecureMode, config.CrlCheckEnabled);
-            Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
-            Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
-            Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
-            Assert.AreEqual(properties.proxyProperties.proxyPassword, config.ProxyPassword);
-            Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
-            Assert.AreEqual(properties.disableRetry, config.DisableRetry);
-            Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
-            Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
         [Test, TestCaseSource(nameof(PropertiesProvider))]
-        public void ShouldExtractProperties(PropertiesTestCase testCase)
+        public void TestExtractProperties(PropertiesTestCase testCase)
         {
-            // given
-            var properties = SFSessionProperties.parseConnectionString(testCase.conectionString, null);
+            // arrange
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
-            // when
+            // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
-            // then
+            // assert
             Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
             Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
             Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
@@ -111,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
             Assert.NotNull(proxyProperties);
         }
-    
+
         public static IEnumerable<PropertiesTestCase> PropertiesProvider()
         {
             var defaultProperties = new PropertiesTestCase()

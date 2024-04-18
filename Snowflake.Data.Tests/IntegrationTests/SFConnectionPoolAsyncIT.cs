@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             s_previousPoolConfigRestorer.Reset();
         }
-        
+
         [OneTimeTearDown]
         public static void AfterAllTests()
         {
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 connectionWithSessionReused.ConnectionString = ConnectionString;
                 connectionWithSessionReused.Open();
-                
+
                 Assert.AreEqual(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
                 Assert.AreEqual(false, connectionWithSessionReused.HasActiveExplicitTransaction());
                 using (var cmd = connectionWithSessionReused.CreateCommand())
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DBNull.Value, cmd.ExecuteScalar());
                 }
             }
-            
+
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be reused and any pending transaction rolled back before it gets back to the pool");
         }
 
@@ -181,9 +181,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well 
+                    command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well
                     command.ExecuteNonQuery();
-                    Assert.AreEqual(false, connection.HasActiveExplicitTransaction()); 
+                    Assert.AreEqual(false, connection.HasActiveExplicitTransaction());
                 }
             }
         }

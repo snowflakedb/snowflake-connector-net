@@ -224,13 +224,13 @@ namespace Snowflake.Data.Core
             statement.SetUploadStream(stream, destFileName, stagePath);
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
-        private string GetCSVData(string sType, string sValue)
+        
+        internal string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
                 return sValue;
 
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
-            DateTimeOffset dateTimeOffset = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTime epoch = SFDataConverter.UnixEpoch;
             switch (sType)
             {
                 case "TEXT":
@@ -246,33 +246,29 @@ namespace Snowflake.Data.Core
                         return '"' + sValue.Replace("\"", "\"\"") + '"';
                     return sValue;
                 case "DATE":
-                    long dateLong = long.Parse(sValue);
-                    DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
+                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ms] from Epoch
+                    DateTime date = epoch.AddMilliseconds(msFromEpoch);
                     return date.ToShortDateString();
                 case "TIME":
-                    long timeLong = long.Parse(sValue);
-                    DateTime time = dateTime.AddMilliseconds(timeLong).ToUniversalTime();
-                    return time.ToLongTimeString();
+                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Midnight
+                    DateTime time = epoch.AddTicks(nsSinceMidnight/100);
+                    return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
-                    long ltzLong = long.Parse(sValue);
-                    TimeSpan ltzts = new TimeSpan(ltzLong / 100);
-                    DateTime ltzdt = dateTime + ltzts;
-                    return ltzdt.ToString();
+                    long nsFromEpochLtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
+                    DateTime ltz = epoch.AddTicks(nsFromEpochLtz/100);
+                    return ltz.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
-                    long ntzLong = long.Parse(sValue);
-                    TimeSpan ts = new TimeSpan(ntzLong/100);
-                    DateTime dt = dateTime + ts;
-                    return dt.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
+                    long nsFromEpochNtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
+                    DateTime ntz = epoch.AddTicks(nsFromEpochNtz/100);
+                    return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
-                    long tzLong = long.Parse(tstzString[0]);
-                    int tzInt = (int.Parse(tstzString[1]) - 1440) / 60;
-                    TimeSpan tzts = new TimeSpan(tzLong/100);
-                    DateTime tzdt = dateTime + tzts;
-                    TimeSpan tz = new TimeSpan(tzInt, 0, 0);
-                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt, tz);
+                    long nsFromEpochTz = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
+                    int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m 
+                    DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
+                    TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
-                    
             }
             return sValue;
         }
@@ -290,14 +286,14 @@ namespace Snowflake.Data.Core
                     try
                     {
                         SFStatement statement = new SFStatement(session);
-                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false);
+                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false, false);
                         session.SetArrayBindStage(STAGE_NAME);
                     }
                     catch (Exception e)
                     {
                         session.SetArrayBindStageThreshold(0);
                         logger.Error("Failed to create temporary stage for array binds.", e);
-                        throw e;
+                        throw;
                     }
                 }
             }
@@ -314,14 +310,14 @@ namespace Snowflake.Data.Core
                 try
                 {
                     SFStatement statement = new SFStatement(session);
-                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, cancellationToken).ConfigureAwait(false);
+                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, false, cancellationToken).ConfigureAwait(false);
                     session.SetArrayBindStage(STAGE_NAME);
                 }
                 catch (Exception e)
                 {
                     session.SetArrayBindStageThreshold(0);
                     logger.Error("Failed to create temporary stage for array binds.", e);
-                    throw e;
+                    throw;
                 }
             }
         }

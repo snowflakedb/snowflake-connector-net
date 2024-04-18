@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -24,19 +25,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(true);
         }
-        
+
         [TearDown]
         public new void AfterTest()
         {
             _previousPoolConfig.Reset();
         }
-        
+
         [OneTimeTearDown]
         public static void AfterAllTests()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-        }        
-        
+        }
+
         [Test]
         public void TestBasicConnectionPool()
         {
@@ -93,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Task.WaitAll(threads);
         }
-        
+
         // thead to execute query with new connection in a loop
         static void QueryExecutionThread(string connectionString, bool closeConnection)
         {
@@ -153,7 +154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
         }
-        
+
         [Test]
         public void TestPoolContainsAtMostMaxPoolSizeConnections() // old name: TestConnectionPoolFull
         {
@@ -201,14 +202,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetPooling(false);
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
-            
+
             // act
             conn1.Open();
-            
+
             // assert
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            
+
             // act
             conn1.Close();
 
@@ -216,7 +217,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
-        
+
         [Test]
         public void TestConnectionPoolDisable()
         {
@@ -225,14 +226,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             pool.SetPooling(false);
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
-            
+
             // act
             conn1.Open();
-            
+
             // assert
             Assert.AreEqual(ConnectionState.Open, conn1.State);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
-            
+
             // act
             conn1.Close();
 
@@ -272,7 +273,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(ConnectionState.Closed, conn2.State);
             Assert.AreEqual(ConnectionState.Closed, conn3.State);
         }
-        
+
         [Test]
         public void TestConnectionPoolExpirationWorks()
         {
@@ -301,7 +302,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // so expected result should be 0
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
-        
+
         [Test]
         public void TestPreventConnectionFromReturningToPool()
         {
@@ -310,15 +311,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Open();
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
-            
+
             // act
             connection.PreventPooling();
             connection.Close();
-            
+
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
         }
-        
+
         [Test]
         public void TestReleaseConnectionWhenRollbackFails()
         {
@@ -334,12 +335,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.BeginTransaction();
             Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
             // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
-                
+
             // act
             connection.Close();
-            
+
             // assert
             Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Should not return connection to the pool");
+        }
+
+        [Test]
+        public void TestCloseSessionAfterTimeout()
+        {
+            // arrange
+            const int SessionTimeoutSeconds = 2;
+            const int TimeForBackgroundSessionCloseMillis = 2000;
+            SnowflakeDbConnectionPool.SetTimeout(SessionTimeoutSeconds);
+            var conn1 = new SnowflakeDbConnection(ConnectionString);
+            conn1.Open();
+            var session = conn1.SfSession;
+            conn1.Close();
+            Assert.IsTrue(session.IsEstablished());
+            Thread.Sleep(SessionTimeoutSeconds * 1000); // wait until the session is expired
+            var conn2 = new SnowflakeDbConnection(ConnectionString);
+
+            // act
+            conn2.Open(); // it gets a session from the caching pool firstly closing session of conn1 in background
+            Thread.Sleep(TimeForBackgroundSessionCloseMillis); // wait for closing expired session
+
+            // assert
+            Assert.IsFalse(session.IsEstablished());
+
+            // cleanup
+            conn2.Close();
         }
     }
 }

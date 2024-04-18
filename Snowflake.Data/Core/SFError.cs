@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270003)]
         INVALID_DATA_CONVERSION,
-        
+
         [SFErrorAttr(errorCode = 270004)]
         STATEMENT_ALREADY_RUNNING_QUERY,
 
@@ -78,16 +78,22 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270057)]
         BROWSER_RESPONSE_TIMEOUT,
-        
+
         [SFErrorAttr(errorCode = 270058)]
-        INCONSISTENT_RESULT_ERROR,
+        IO_ERROR_ON_GETPUT_COMMAND,
+
+        [SFErrorAttr(errorCode = 270059)]
+        EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
+
+        [SFErrorAttr(errorCode = 270060)]
+        INCONSISTENT_RESULT_ERROR
     }
 
     class SFErrorAttr : Attribute
     {
         public int errorCode { get; set; }
     }
-    
+
     public class SqlState
     {
         public const string WARNING = "01000";

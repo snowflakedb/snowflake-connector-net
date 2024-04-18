@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var maxPoolSize = 15;
             var connectionString = $"account=test;user=test;password=test;maxPoolSize={maxPoolSize}";
-            
+
             // act
             var result = ExtractConnectionPoolConfig(connectionString);
 
@@ -53,14 +53,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;maxPoolSize={maxPoolSize}";
-            
+
             // act
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}"));
         }
-        
+
         [Test]
         [TestCase("0", 0)]
         [TestCase("7", 7)]
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;minPoolSize={propertyValue}";
-            
+
             // act
             var result = ExtractConnectionPoolConfig(connectionString);
 
@@ -84,20 +84,20 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;minPoolSize={minPoolSize}";
-            
+
             // act
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MINPOOLSIZE.ToString()}"));
         }
-        
+
         [Test]
         public void TestExtractFailsWhenMinPoolSizeGreaterThanMaxPoolSize()
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;minPoolSize=10;maxPoolSize=9";
-            
+
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.AreEqual(testCase.ExpectedTimeout, result.ExpirationTimeout);
         }
-        
+
         [Test]
         [TestCaseSource(nameof(IncorrectTimeouts))]
         public void TestExtractExpirationTimeoutFailsWhenWrongValue(string propertyValue)
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.AreEqual(testCase.ExpectedTimeout, result.WaitingForIdleSessionTimeout);
         }
-        
+
         [Test]
         public void TestExtractWaitingForIdleSessionTimeoutFailsForInfiniteTimeout()
         {
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.That(thrown.Message, Does.Contain("Waiting for idle session timeout cannot be infinite"));
         }
-        
+
         [Test]
         [TestCaseSource(nameof(IncorrectTimeouts))]
         public void TestExtractWaitingForIdleSessionTimeoutFailsWhenWrongValue(string propertyValue)
@@ -180,21 +180,21 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;CONNECTION_TIMEOUT={testCase.PropertyValue};RETRY_TIMEOUT=60m";
-        
+
             // act
             var result = ExtractConnectionPoolConfig(connectionString);
-        
+
             // assert
             Assert.AreEqual(testCase.ExpectedTimeout, result.ConnectionTimeout);
         }
-        
+
         [Test]
         [TestCaseSource(nameof(IncorrectTimeouts))]
         public void TestExtractConnectionTimeoutFailsForWrongValue(string propertyValue)
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;CONNECTION_TIMEOUT={propertyValue}";
-        
+
             // act
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
@@ -211,10 +211,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = $"account=test;user=test;password=test;poolingEnabled={propertyValue}";
-            
+
             // act
             var result = ExtractConnectionPoolConfig(connectionString);
-            
+
             // assert
             Assert.AreEqual(poolingEnabled, result.PoolingEnabled);
         }
@@ -233,14 +233,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}"));
         }
-        
+
         private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString)
         {
-            var properties = SFSessionProperties.parseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
             return extractedProperties.BuildConnectionPoolConfig();
         }
-        
+
         public class TimeoutTestCase
         {
             public string PropertyValue { get; }
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 ExpectedTimeout = expectedTimeout;
             }
         }
-        
+
         public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroUnchanged() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroUnchangedTimeouts());
 

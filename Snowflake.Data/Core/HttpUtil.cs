@@ -12,8 +12,8 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using System.Runtime.InteropServices;
 using System.Linq;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
@@ -185,7 +185,11 @@ namespace Snowflake.Data.Core
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
-
+                        
+                        entry = entry.StartsWith("^") ? entry : $"^{entry}";
+                        
+                        entry = entry.EndsWith("$") ? entry : $"{entry}$";
+                        
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
@@ -342,7 +346,9 @@ namespace Snowflake.Data.Core
                 CancellationToken cancellationToken)
             {
                 HttpResponseMessage response = null;
-                bool isLoginRequest = IsLoginEndpoint(requestMessage.RequestUri.AbsolutePath);
+                string absolutePath = requestMessage.RequestUri.AbsolutePath;
+                bool isLoginRequest = IsLoginEndpoint(absolutePath);
+                bool isOktaSSORequest = IsOktaSSORequest(requestMessage.RequestUri.Host, absolutePath);
                 int backOffInSec = s_baseBackOffTime;
                 int totalRetryTime = 0;
 
@@ -411,6 +417,12 @@ namespace Snowflake.Data.Core
 
                     if (response != null)
                     {
+                        if (isOktaSSORequest)
+                        {
+                            response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, retryCount.ToString());
+                            response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, totalRetryTime.ToString());
+                        }
+
                         if (response.IsSuccessStatusCode)
                         {
                             logger.Debug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
@@ -533,6 +545,17 @@ namespace Snowflake.Data.Core
         static internal bool IsLoginEndpoint(string endpoint)
         {
             return null != s_supportedEndpointsForRetryPolicy.FirstOrDefault(ep => endpoint.Equals(ep));
+        }
+
+        /// <summary>
+        /// Checks if request is for Okta and an SSO SAML endpoint.
+        /// </summary>
+        /// <param name="host">The host url to check.</param>
+        /// <param name="endpoint">The endpoint to check.</param>
+        /// <returns>True if the endpoint is an okta sso saml request, false otherwise.</returns>
+        static internal bool IsOktaSSORequest(string host, string endpoint)
+        {
+            return host.Contains(OktaUrl.DOMAIN) && endpoint.Contains(OktaUrl.SSO_SAML_PATH);
         }
     }
 }

@@ -86,12 +86,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             Thread.Sleep(5000);
             SFStatement statement = new SFStatement(conn1.SfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             conn1.Close();
         }
-        
+
         [Test]
         public void TestConnectionPoolWithDispose()
         {
@@ -114,10 +114,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var connection = new SnowflakeDbConnection(ConnectionString);
-            
+
             // act
             var thrown = Assert.Throws<Exception>(() => connection.PreventPooling());
-            
+
             // assert
             Assert.That(thrown.Message, Does.Contain("Session not yet created for this connection. Unable to prevent the session from pooling"));
         }

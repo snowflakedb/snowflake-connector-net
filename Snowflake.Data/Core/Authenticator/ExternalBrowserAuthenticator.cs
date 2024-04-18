@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -54,19 +55,28 @@ namespace Snowflake.Data.Core.Authenticator
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
-                var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse =
-                    await session.restRequester.PostAsync<AuthenticatorResponse>(
-                        authenticatorRestRequest,
-                        cancellationToken
-                    ).ConfigureAwait(false);
-                authenticatorRestResponse.FilterFailedResponse();
+                string loginUrl;
+                if (session._disableConsoleLogin)
+                {
+                    var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
+                    var authenticatorRestResponse =
+                        await session.restRequester.PostAsync<AuthenticatorResponse>(
+                            authenticatorRestRequest,
+                            cancellationToken
+                        ).ConfigureAwait(false);
+                    authenticatorRestResponse.FilterFailedResponse();
 
-                var idpUrl = authenticatorRestResponse.data.ssoUrl;
-                _proofKey = authenticatorRestResponse.data.proofKey;
+                    loginUrl = authenticatorRestResponse.data.ssoUrl;
+                    _proofKey = authenticatorRestResponse.data.proofKey;
+                }
+                else
+                {
+                    _proofKey = GenerateProofKey();
+                    loginUrl = GetLoginUrl(_proofKey, localPort);
+                }
 
                 logger.Debug("Open browser");
-                StartBrowser(idpUrl);
+                StartBrowser(loginUrl);
 
                 logger.Debug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
@@ -96,15 +106,24 @@ namespace Snowflake.Data.Core.Authenticator
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
-                var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
-                authenticatorRestResponse.FilterFailedResponse();
+                string loginUrl;
+                if (session._disableConsoleLogin)
+                {
+                    var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
+                    var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+                    authenticatorRestResponse.FilterFailedResponse();
 
-                var idpUrl = authenticatorRestResponse.data.ssoUrl;
-                _proofKey = authenticatorRestResponse.data.proofKey;
+                    loginUrl = authenticatorRestResponse.data.ssoUrl;
+                    _proofKey = authenticatorRestResponse.data.proofKey;
+                }
+                else
+                {
+                    _proofKey = GenerateProofKey();
+                    loginUrl = GetLoginUrl(_proofKey, localPort);
+                }
 
                 logger.Debug("Open browser");
-                StartBrowser(idpUrl);
+                StartBrowser(loginUrl);
 
                 logger.Debug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
@@ -187,7 +206,7 @@ namespace Snowflake.Data.Core.Authenticator
             // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
 #if NETFRAMEWORK
             // .net standard would pass here
-            Process.Start(url);
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 #else
             // hack because of this: https://github.com/dotnet/corefx/issues/10361
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -246,6 +265,26 @@ namespace Snowflake.Data.Core.Authenticator
             // Add the token and proof key to the Data
             data.Token = _samlResponseToken;
             data.ProofKey = _proofKey;
+        }
+
+        private string GetLoginUrl(string proofKey, int localPort)
+        {
+            Dictionary<string, string> parameters = new Dictionary<string, string>()
+            {
+                { "login_name", session.properties[SFSessionProperty.USER]},
+                { "proof_key", proofKey },
+                { "browser_mode_redirect_port", localPort.ToString() }
+            };
+            Uri loginUrl = session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
+            return loginUrl.ToString();
+        }
+
+        private string GenerateProofKey()
+        {
+            Random rnd = new Random();
+            Byte[] randomness = new Byte[32];
+            rnd.NextBytes(randomness);
+            return Convert.ToBase64String(randomness);
         }
     }
 }

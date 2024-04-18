@@ -1,4 +1,3 @@
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,30 +15,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        
+
         [SetUp]
         public new void BeforeTest()
         {
             SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
-        
+
         [TearDown]
         public new void AfterTest()
         {
             _previousPoolConfig.Reset();
         }
-        
+
         [Test]
         public async Task TestMinPoolSizeAsync()
         {
             // arrange
             var connection = new SnowflakeDbConnection();
             connection.ConnectionString = ConnectionString + "application=TestMinPoolSizeAsync;minPoolSize=3";
-            
+
             // act
             await connection.OpenAsync().ConfigureAwait(false);
-            Thread.Sleep(3000);            
+            Thread.Sleep(3000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
@@ -48,7 +47,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // cleanup
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
-        
+
         [Test]
         public async Task TestPreventConnectionFromReturningToPool()
         {
@@ -58,15 +57,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.OpenAsync().ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.AreEqual(1, pool.GetCurrentPoolSize());
-            
+
             // act
             connection.PreventPooling();
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            
+
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
         }
-        
+
         [Test]
         public async Task TestReleaseConnectionWhenRollbackFailsAsync()
         {
@@ -82,10 +81,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.OpenAsync().ConfigureAwait(false);
             connection.BeginTransaction(); // not using async version because it is not available on .net framework
             Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
-            
+
             // act
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            
+
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }

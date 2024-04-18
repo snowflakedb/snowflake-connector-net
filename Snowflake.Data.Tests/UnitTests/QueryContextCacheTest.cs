@@ -134,6 +134,25 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestChangingCapacity()
+        {
+            InitCacheWithData();
+
+            // Add one more element at the end
+            int i = MaxCapacity;
+            _qcc.SetCapacity(MaxCapacity + 1);
+            _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
+            _qcc.SyncPriorityMap();
+            _qcc.CheckCacheCapacity();
+            Assert.IsTrue(_qcc.GetSize() == MaxCapacity + 1);
+
+            // reduce the capacity back
+            _qcc.SetCapacity(MaxCapacity);
+            // Compare elements
+            AssertCacheData();
+        }
+
+        [Test]
         public void TestUpdateTimestamp()
         {
             InitCacheWithData();
