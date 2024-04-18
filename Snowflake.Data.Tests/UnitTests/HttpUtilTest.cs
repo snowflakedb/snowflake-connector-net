@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -102,27 +102,53 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithProxy()
+        public void ShouldCreateHttpClientHandlerWithExplicitProxy()
         {
             // given
             var config = new HttpClientConfig(
+                true,
                 true,
                 "snowflake.com",
                 "123",
                 "testUser",
                 "proxyPassword",
-                "localhost", 
+                "localhost",
                 false,
                 false,
                 7
             );
-            
+
             // when
             var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+
             // then
             Assert.IsTrue(handler.UseProxy);
             Assert.IsNotNull(handler.Proxy);
+        }
+
+        [Test]
+        public void ShouldCreateHttpClientHandlerWithImplicitProxy()
+        {
+            // given
+            var config = new HttpClientConfig(
+                true,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                7
+            );
+
+            // when
+            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // then
+            Assert.IsTrue(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
         }
 
         [Test]
@@ -130,20 +156,21 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // given
             var config = new HttpClientConfig(
-                true,
+                false,
+                false,
                 null,
                 null,
                 null,
                 null,
-                null, 
+                null,
                 false,
                 false,
                 0
             );
-            
+
             // when
             var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+
             // then
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);
