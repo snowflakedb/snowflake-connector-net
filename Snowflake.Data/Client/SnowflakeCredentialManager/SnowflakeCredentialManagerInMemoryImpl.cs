@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -64,6 +64,8 @@ namespace Snowflake.Data.Client
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerInMemoryImpl>();
 
         private static readonly Dictionary<string, EncryptedToken> s_credentials = new Dictionary<string, EncryptedToken>();
+
+        public static readonly SnowflakeCredentialManagerInMemoryImpl Instance = new SnowflakeCredentialManagerInMemoryImpl();
 
         public string GetCredentials(string key)
         {

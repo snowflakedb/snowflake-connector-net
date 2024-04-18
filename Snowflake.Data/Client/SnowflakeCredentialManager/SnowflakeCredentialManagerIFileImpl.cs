@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -32,17 +32,16 @@ namespace Snowflake.Data.Client
 
         private readonly FileOperations _fileOperations;
 
+        private readonly DirectoryOperations _directoryOperations;
+
         private readonly UnixOperations _unixOperations;
 
-        public SnowflakeCredentialManagerIFileImpl()
-        {
-            _fileOperations = FileOperations.Instance;
-            _unixOperations = UnixOperations.Instance;
-        }
+        public static readonly SnowflakeCredentialManagerIFileImpl Instance = new SnowflakeCredentialManagerIFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance);
 
-        internal SnowflakeCredentialManagerIFileImpl(FileOperations fileOperations, UnixOperations unixOperations)
+        internal SnowflakeCredentialManagerIFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations)
         {
             _fileOperations = fileOperations;
+            _directoryOperations = directoryOperations;
             _unixOperations = unixOperations;
         }
 
@@ -62,9 +61,9 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if (!Directory.Exists(JsonCacheDirectory))
+                if (!_directoryOperations.Exists(JsonCacheDirectory))
                 {
-                    Directory.CreateDirectory(JsonCacheDirectory);
+                    _directoryOperations.CreateDirectory(JsonCacheDirectory);
                 }
                 var createFileResult = _unixOperations.CreateFileWithPermissions(s_jsonPath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);

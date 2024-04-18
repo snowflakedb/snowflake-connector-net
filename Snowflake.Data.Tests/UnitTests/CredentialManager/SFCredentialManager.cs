@@ -23,15 +23,21 @@ namespace Snowflake.Data.Tests.UnitTests
         private static Mock<FileOperations> t_fileOperations;
 
         [ThreadStatic]
+        private static Mock<DirectoryOperations> t_directoryOperations;
+
+        [ThreadStatic]
         private static Mock<UnixOperations> t_unixOperations;
 
-        private static readonly string s_expectedJsonPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "temporary_credential.json");
+        private static readonly string s_expectedJsonDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        private static readonly string s_expectedJsonPath = Path.Combine(s_expectedJsonDir, "temporary_credential.json");
 
         [SetUp] public void SetUp()
         {
             t_fileOperations = new Mock<FileOperations>();
+            t_directoryOperations = new Mock<DirectoryOperations>();
             t_unixOperations = new Mock<UnixOperations>();
-            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerInMemoryImpl());
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerInMemoryImpl.Instance);
         }
 
         [TearDown] public void TearDown()
@@ -63,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSettingCustomCredentialManager()
         {
             // arrange
-            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl());
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerIFileImpl.Instance);
 
             // act
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
@@ -108,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var key = SnowflakeCredentialManagerFactory.BuildCredentialKey("host", "user", "tokentype");
             var expectedToken = "token";
-            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl());
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerIFileImpl.Instance);
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act
@@ -144,12 +150,16 @@ namespace Snowflake.Data.Tests.UnitTests
             var key = SnowflakeCredentialManagerFactory.BuildCredentialKey("host", "user", "tokentype");
             var token = "token";
 
+            t_directoryOperations
+                .Setup(d => d.Exists(s_expectedJsonDir))
+                .Returns(false);
+
             t_unixOperations
-                .Setup(e => e.CreateFileWithPermissions(s_expectedJsonPath,
+                .Setup(u => u.CreateFileWithPermissions(s_expectedJsonPath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
                 .Returns(-1);
 
-            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl(t_fileOperations.Object, t_unixOperations.Object));
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object));
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act
@@ -172,14 +182,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var token = "token";
 
             t_unixOperations
-                .Setup(e => e.CreateFileWithPermissions(s_expectedJsonPath,
+                .Setup(u => u.CreateFileWithPermissions(s_expectedJsonPath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
                 .Returns(0);
             t_unixOperations
-                .Setup(e => e.GetFilePermissions(s_expectedJsonPath))
+                .Setup(u => u.GetFilePermissions(s_expectedJsonPath))
                 .Returns(FileAccessPermissions.AllPermissions);
 
-            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl(t_fileOperations.Object, t_unixOperations.Object));
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerIFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object));
             _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act

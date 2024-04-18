@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -12,6 +12,8 @@ namespace Snowflake.Data.Client
     public class SnowflakeCredentialManagerAdysTechImpl : ISnowflakeCredentialManager
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerAdysTechImpl>();
+
+        public static readonly SnowflakeCredentialManagerAdysTechImpl Instance = new SnowflakeCredentialManagerAdysTechImpl();
 
         public string GetCredentials(string key)
         {

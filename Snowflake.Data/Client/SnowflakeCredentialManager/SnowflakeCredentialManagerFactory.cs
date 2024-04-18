@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Client
             {
                 s_logger.Info("Using the default credential manager");
                 return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISnowflakeCredentialManager)
-                    new SnowflakeCredentialManagerAdysTechImpl() : new SnowflakeCredentialManagerInMemoryImpl();
+                    SnowflakeCredentialManagerAdysTechImpl.Instance : SnowflakeCredentialManagerInMemoryImpl.Instance;
             }
             else
             {
