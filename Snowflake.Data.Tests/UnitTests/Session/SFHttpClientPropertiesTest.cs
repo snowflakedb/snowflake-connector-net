@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var parameterMap = properties.ToParameterMap();
             
             // assert
-            Assert.AreEqual(2, parameterMap.Count);
+            Assert.AreEqual(3, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
         }
