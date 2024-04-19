@@ -122,8 +122,8 @@ namespace Snowflake.Data.Core
         private readonly IRestRequester _restRequester;
 
         private CancellationTokenSource _timeoutTokenSource;
-        
-        // Merged cancellation token source for all cancellation signal. 
+
+        // Merged cancellation token source for all cancellation signal.
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSource;
 
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Core
         {
             lock (_requestIdLock)
             {
-                
+
                 if (_requestId != null)
                 {
                     logger.Info("Another query is running.");
@@ -296,7 +296,7 @@ namespace Snowflake.Data.Core
             this._timeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) :
                                                      new CancellationTokenSource(Timeout.InfiniteTimeSpan);
         }
-        
+
         /// <summary>
         ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
         ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
@@ -342,7 +342,7 @@ namespace Snowflake.Data.Core
             }
 
             registerQueryCancellationCallback(timeout, cancellationToken);
-            
+
             int arrayBindingThreshold = 0;
             if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
             {
@@ -486,7 +486,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
         }
-        
+
         private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             try
@@ -541,7 +541,7 @@ namespace Snowflake.Data.Core
                 throw;
             }
         }
-        
+
         internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
         {
             var req = BuildResultRequestWithId(resultId);
@@ -660,7 +660,7 @@ namespace Snowflake.Data.Core
 
                             if (SessionExpired(response))
                             {
-                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
+                                logger.Warn("Ping pong request failed with session expired, trying to renew the session. !!!"); // it was info previously
                                 SfSession.renewSession();
                             }
                             else
@@ -1033,7 +1033,7 @@ namespace Snowflake.Data.Core
                      false);
 
             PutGetStageInfo stageInfo = new PutGetStageInfo();
-            
+
             SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
 
