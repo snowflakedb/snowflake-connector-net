@@ -20,6 +20,8 @@ namespace Snowflake.Data.Client
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 
+        internal const string CredentialCacheFileName = "temporary_credential.json";
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerIFileImpl>();
 
         private readonly string _jsonCacheDirectory;
@@ -49,7 +51,7 @@ namespace Snowflake.Data.Client
         {
             var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
             _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile) : customDirectory;
-            _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, "temporary_credential.json");
+            _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
         }
 
         internal void WriteToJsonFile(string content)
