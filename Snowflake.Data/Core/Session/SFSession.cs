@@ -107,7 +107,7 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(_idToken))
+                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     _idToken = authnResponse.data.idToken;
                     var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken.ToString());
