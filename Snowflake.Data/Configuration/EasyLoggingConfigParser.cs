@@ -7,8 +7,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using Microsoft.IdentityModel.Tokens;
+using Mono.Unix;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Configuration
@@ -17,23 +21,36 @@ namespace Snowflake.Data.Configuration
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
 
+        private readonly UnixOperations _unixOperations = UnixOperations.Instance;
+
         public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser();
 
         public virtual ClientConfig Parse(string filePath)
         {
             var configFile = TryToReadFile(filePath);
-            return configFile == null ? null : TryToParseFile(configFile);
+            return configFile.IsNullOrEmpty() ? null : TryToParseFile(configFile);
         }
 
         private string TryToReadFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
             {
-                return null;
+                return String.Empty;
             }
+
             try
             {
-                return File.ReadAllText(filePath);
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    using (StreamReader reader = new StreamReader(fileStream))
+                    {
+                        CheckIfValidPermissions(filePath);
+                        
+                        string fileContent = reader.ReadToEnd();
+
+                        return fileContent;
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -45,7 +62,8 @@ namespace Snowflake.Data.Configuration
 
         private ClientConfig TryToParseFile(string fileContent)
         {
-            try {
+            try
+            {
                 var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
                 Validate(config);
                 CheckForUnknownFields(fileContent);
@@ -79,6 +97,20 @@ namespace Snowflake.Data.Configuration
                 .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
                 .ToList()
                 .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
+        }
+
+        private void CheckIfValidPermissions(string filePath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
+
+            // Check if others have permissions to modify the file and fail if so
+            if (_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
+            {
+                var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
         }
     }
 }
