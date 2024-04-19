@@ -95,6 +95,8 @@ namespace Snowflake.Data.Core
         DISABLE_CONSOLE_LOGIN,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOWUNDERSCORESINHOST,
+        [SFSessionPropertyAttr(required = false)]
+        QUERY_TAG,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOW_SSO_TOKEN_CACHING
     }

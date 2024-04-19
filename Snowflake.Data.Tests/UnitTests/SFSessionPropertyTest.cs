@@ -138,7 +138,6 @@ namespace Snowflake.Data.Tests.UnitTests
             string defDisableQueryContextCache = "false";
             string defDisableConsoleLogin = "true";
             string defAllowUnderscoresInHost = "false";
-            string defAllowSSOTokenCaching = "false";
 
             var simpleTestCase = new TestCase()
             {
@@ -166,8 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             
@@ -196,8 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -228,8 +225,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -262,8 +258,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -295,8 +290,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithIncludeRetryReason = new TestCase()
@@ -325,8 +319,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, "false" },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseWithDisableQueryContextCache = new TestCase()
@@ -354,8 +347,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, "true" },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
@@ -385,8 +377,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, "false" },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
@@ -418,8 +409,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseUnderscoredAccountName = new TestCase()
@@ -448,8 +438,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost }
                 }
             };
             var testCaseUnderscoredAccountNameWithEnabledAllowUnderscores = new TestCase()
@@ -478,13 +467,44 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
                     { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
-                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" },
-                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, defAllowSSOTokenCaching }
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
 
+            var testQueryTag = "Test QUERY_TAG 12345";
+            var testCaseQueryTag = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};QUERY_TAG={testQueryTag}",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "false" },
+                    { SFSessionProperty.QUERY_TAG, testQueryTag }
+                }
+            };
             var testCaseWithAllowSSOTokenCaching = new TestCase()
             {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};ALLOW_SSO_TOKEN_CACHING=true",
                 ExpectedProperties = new SFSessionProperties()
                 {
                     { SFSessionProperty.ACCOUNT, defAccount },
@@ -510,10 +530,9 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
                     { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, "true" }
-                },
-                ConnectionString =
-                    $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};ALLOW_SSO_TOKEN_CACHING=true"
+                }
             };
+
             return new TestCase[]
             {
                 simpleTestCase,
@@ -527,6 +546,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseComplicatedAccountName,
                 testCaseUnderscoredAccountName,
                 testCaseUnderscoredAccountNameWithEnabledAllowUnderscores,
+                testCaseQueryTag,
                 testCaseWithAllowSSOTokenCaching
             };
         }

@@ -83,6 +83,8 @@ namespace Snowflake.Data.Core
 
         internal int _maxRetryTimeout;
 
+        internal String _queryTag;
+
         private readonly ISnowflakeCredentialManager _credManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
         internal bool _allowSSOTokenCaching;
@@ -190,6 +192,7 @@ namespace Snowflake.Data.Core
                 connectionTimeout = extractedProperties.TimeoutDuration();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
+                properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _allowSSOTokenCaching = extractedProperties.allowSSOTokenCaching;
