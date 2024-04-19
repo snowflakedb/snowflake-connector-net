@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var expectedIdToken = "mockIdToken";
-            var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;allow_sso_token_caching=true";
+            var connectionString = $"account=account;user=user;password=test;allow_sso_token_caching=true";
             var session = new SFSession(connectionString, null);
             LoginResponse authnResponse = new LoginResponse
             {
