@@ -621,6 +621,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
+            var connectionString = ConnectionString + "application=v1resultParser";
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
             int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
             SFConfiguration.Instance().ChunkParserVersion = 1;
@@ -628,7 +629,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = connectionString;
 
                 conn.Open();
 
@@ -650,6 +651,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestUseV2ChunkDownloader()
         {
+            var connectionString = ConnectionString + "application=v2chunkDownloader";
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
             int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
             SFConfiguration.Instance().ChunkParserVersion = 2;
@@ -657,7 +659,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = connectionString;
 
                 conn.Open();
 
