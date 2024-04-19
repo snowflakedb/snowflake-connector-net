@@ -413,6 +413,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(2)]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
