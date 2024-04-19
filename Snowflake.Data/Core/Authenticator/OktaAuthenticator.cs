@@ -298,7 +298,7 @@ namespace Snowflake.Data.Core.Authenticator
             if (TimeoutHelper.IsExpired(timeoutElapsed * 1000, session._maxRetryTimeout))
             {
                 errorMessage += string.IsNullOrEmpty(errorMessage) ? "The" : " and the";
-                errorMessage += $" timeout elapsed has reached its limit of {session._maxRetryTimeout}";
+                errorMessage += $" timeout elapsed has reached its limit of {session._maxRetryTimeout.TotalSeconds}";
 
             }
             errorMessage += " while trying to authenticate through Okta";
