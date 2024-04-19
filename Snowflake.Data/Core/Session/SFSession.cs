@@ -102,14 +102,14 @@ namespace Snowflake.Data.Core
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
-                _idToken = authnResponse.data.idToken;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
                 if (_disableQueryContextCache)
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_allowSSOTokenCaching && authenticator is ExternalBrowserAuthenticator && !string.IsNullOrEmpty(_idToken))
+                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(_idToken))
                 {
+                    _idToken = authnResponse.data.idToken;
                     var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken.ToString());
                     _credManager.SaveCredentials(key, _idToken);
                 }
