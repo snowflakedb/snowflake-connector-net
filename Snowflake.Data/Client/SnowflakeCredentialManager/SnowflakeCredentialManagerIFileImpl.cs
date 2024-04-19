@@ -18,17 +18,13 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeCredentialManagerIFileImpl : ISnowflakeCredentialManager
     {
-        private const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
-
-        private static readonly string CustomCredentialCacheDirectory = Environment.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
-
-        private static readonly string DefaultCredentialCacheDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        private static readonly string JsonCacheDirectory = string.IsNullOrEmpty(CustomCredentialCacheDirectory) ? DefaultCredentialCacheDirectory : CustomCredentialCacheDirectory;
+        internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerIFileImpl>();
 
-        private static readonly string s_jsonPath = Path.Combine(JsonCacheDirectory, "temporary_credential.json");
+        private readonly string _jsonCacheDirectory;
+
+        private readonly string _jsonCacheFilePath;
 
         private readonly FileOperations _fileOperations;
 
@@ -36,21 +32,32 @@ namespace Snowflake.Data.Client
 
         private readonly UnixOperations _unixOperations;
 
-        public static readonly SnowflakeCredentialManagerIFileImpl Instance = new SnowflakeCredentialManagerIFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance);
+        private readonly EnvironmentOperations _environmentOperations;
 
-        internal SnowflakeCredentialManagerIFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations)
+        public static readonly SnowflakeCredentialManagerIFileImpl Instance = new SnowflakeCredentialManagerIFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
+
+        internal SnowflakeCredentialManagerIFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
             _directoryOperations = directoryOperations;
             _unixOperations = unixOperations;
+            _environmentOperations = environmentOperations;
+            SetCredentialCachePath(ref _jsonCacheDirectory, ref _jsonCacheFilePath);
+        }
+
+        private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath)
+        {
+            var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
+            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile) : customDirectory;
+            _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, "temporary_credential.json");
         }
 
         internal void WriteToJsonFile(string content)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _fileOperations.Write(s_jsonPath, content);
-                FileInfo info = new FileInfo(s_jsonPath);
+                _fileOperations.Write(_jsonCacheFilePath, content);
+                FileInfo info = new FileInfo(_jsonCacheFilePath);
                 FileSecurity security = info.GetAccessControl();
                 FileSystemAccessRule rule = new FileSystemAccessRule(
                     new SecurityIdentifier(WellKnownSidType.CreatorOwnerSid, null),
@@ -61,11 +68,11 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                if (!_directoryOperations.Exists(JsonCacheDirectory))
+                if (!_directoryOperations.Exists(_jsonCacheDirectory))
                 {
-                    _directoryOperations.CreateDirectory(JsonCacheDirectory);
+                    _directoryOperations.CreateDirectory(_jsonCacheDirectory);
                 }
-                var createFileResult = _unixOperations.CreateFileWithPermissions(s_jsonPath,
+                var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
                 if (createFileResult == -1)
                 {
@@ -75,10 +82,10 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    _fileOperations.Write(s_jsonPath, content);
+                    _fileOperations.Write(_jsonCacheFilePath, content);
                 }
 
-                var jsonPermissions = _unixOperations.GetFilePermissions(s_jsonPath);
+                var jsonPermissions = _unixOperations.GetFilePermissions(_jsonCacheFilePath);
                 if (jsonPermissions != FileAccessPermissions.UserReadWriteExecute)
                 {
                     var errorMessage = "Permission for the JSON token cache file should contain only the owner access";
@@ -90,12 +97,12 @@ namespace Snowflake.Data.Client
 
         internal KeyToken ReadJsonFile()
         {
-            return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(s_jsonPath));
+            return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(_jsonCacheFilePath));
         }
 
         public string GetCredentials(string key)
         {
-            if (_fileOperations.Exists(s_jsonPath))
+            if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
 
@@ -111,7 +118,7 @@ namespace Snowflake.Data.Client
 
         public void RemoveCredentials(string key)
         {
-            if (_fileOperations.Exists(s_jsonPath))
+            if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
                 keyTokenPairs.Remove(key);
@@ -121,7 +128,7 @@ namespace Snowflake.Data.Client
 
         public void SaveCredentials(string key, string token)
         {
-            KeyToken keyTokenPairs = _fileOperations.Exists(s_jsonPath) ? ReadJsonFile() : new KeyToken();
+            KeyToken keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyToken();
             keyTokenPairs[key] = token;
 
             string jsonString = JsonConvert.SerializeObject(keyTokenPairs);

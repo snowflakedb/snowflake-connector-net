@@ -9,6 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using Snowflake.Data.Core;
     using NUnit.Framework;
+    using System;
 
     [TestFixture]
     class SFSessionTest
@@ -60,6 +61,23 @@ namespace Snowflake.Data.Tests.UnitTests
             
             // assert
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
+        }
+
+        [Test]
+        public void TestThatRetriesAuthenticationForInvalidIdToken()
+        {
+            // arrange
+            var connectionString = "account=test;user=test;password=test;allow_sso_token_caching=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                code = SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode,
+                message = "",
+                success = false
+            };
+
+            // assert
+            Assert.Throws<NullReferenceException>(() => session.ProcessLoginResponse(authnResponse));
         }
     }
 }
