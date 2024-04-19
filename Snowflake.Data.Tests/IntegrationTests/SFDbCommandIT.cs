@@ -7,6 +7,7 @@ using System.Data.Common;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -128,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch
                 {
-                    // assert that cancel is not triggered by timeout, but external cancellation 
+                    // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
                 Thread.Sleep(2000);
@@ -503,7 +504,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                 using (IDbCommand command = conn.CreateCommand())
@@ -608,7 +609,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
@@ -1022,13 +1023,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void ArrayBindTest(string connstr, string tableName, int size)
         {
-        
+
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, tableName, new []
                 {
                     "cola INTEGER",
@@ -1198,7 +1199,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
 
                 using (DbCommand cmd = conn.CreateCommand())
