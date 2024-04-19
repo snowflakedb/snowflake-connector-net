@@ -64,6 +64,30 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
+        {
+            // arrange
+            var expectedIdToken = "mockIdToken";
+            var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;allow_sso_token_caching=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = expectedIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, session._idToken);
+        }
+
+        [Test]
         public void TestThatRetriesAuthenticationForInvalidIdToken()
         {
             // arrange
