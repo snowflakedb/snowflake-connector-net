@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     conn.Open();
                     Assert.Fail();
-                
+
                 }
                 catch (SnowflakeDbException e)
                 {
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"insert into {TableName} Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
-           
+
             using (var conn1 = new SnowflakeDbConnection())
             {
                 conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
@@ -297,9 +297,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 conn1.Close();
 
-                Assert.AreEqual(ConnectionState.Closed, conn1.State); 
+                Assert.AreEqual(ConnectionState.Closed, conn1.State);
             }
-            
+
             using (IDbCommand cmd = conn.CreateCommand())
             {
                 //cmd.CommandText = "drop database \"dlTest\"";
@@ -497,8 +497,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
-                {                    
-                    conn.Open();                    
+                {
+                    conn.Open();
                     Assert.Fail();
                 }
                 catch (AggregateException e)
@@ -771,7 +771,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                // Previous connection would be disposed and 
+                // Previous connection would be disposed and
                 // uncommitted txn would rollback at this point
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
@@ -825,7 +825,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
-        }
+        } 
 
         [Test]
         public void TestOktaConnectionUntilMaxTimeout()
@@ -943,7 +943,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        
+
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUserAndDisableConsoleLogin()
@@ -992,7 +992,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionTimeoutAfter10s()
         {
-            // Do not log in by external browser - timeout after 10s should happen 
+            // Do not log in by external browser - timeout after 10s should happen
             int waitSeconds = 10;
             Stopwatch stopwatch = Stopwatch.StartNew();
             Assert.Throws<SnowflakeDbException>(() =>
@@ -1016,7 +1016,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // timeout after specified number of seconds
             Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, waitSeconds * 1000);
-            // and not later than 5s after expected time 
+            // and not later than 5s after expected time
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
         }
 
@@ -1148,7 +1148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             catch (SnowflakeDbException e)
             {
-                // Missing PRIVATE_KEY_FILE connection setting required for 
+                // Missing PRIVATE_KEY_FILE connection setting required for
                 // authenticator =snowflake_jwt
                 Assert.AreEqual(270008, e.ErrorCode);
             }
@@ -1474,7 +1474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn8.Open();
             }
 
-            // Another authenticated proxy with bypasslist, but this will create a new httpclient because 
+            // Another authenticated proxy with bypasslist, but this will create a new httpclient because
             // InsecureMode=true
             using (var conn9 = new SnowflakeDbConnection())
             {
@@ -1558,10 +1558,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var nonProxyHosts = string.Format(regexHost, $"{host}");
                 conn.ConnectionString =
                     $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
-                
+
                 // Act
                 conn.Open();
-                
+
                 // Assert
                 // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -1583,11 +1583,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
                 conn.ConnectionString =
                     $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
-                
+
                 // Act/Assert
                 // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
                 var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
-                
+
                 // Assert
                 Assert.AreEqual(270001, exception.ErrorCode);
                 AssertIsConnectionFailure(exception);
@@ -1758,7 +1758,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
-        
+
         [Test]
         [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
@@ -1794,7 +1794,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Close();
 
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-            
+
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
             conn1.Open();
@@ -1865,7 +1865,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = infiniteLoginTimeOut;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                // At this point the connection string has not been parsed, it will return the 
+                // At this point the connection string has not been parsed, it will return the
                 // default value
                 //Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
@@ -1877,7 +1877,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
-                // Cancel the connection because it will never succeed since there is no 
+                // Cancel the connection because it will never succeed since there is no
                 // connection_timeout defined
                 logger.Debug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
@@ -1891,7 +1891,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(
                         "System.Threading.Tasks.TaskCanceledException",
                         e.InnerException.GetType().ToString());
-                    
+
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -2042,7 +2042,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
-            // An application can call Close or CloseAsync more than one time. 
+            // An application can call Close or CloseAsync more than one time.
             // No exception is generated.
             using (var conn = new SnowflakeDbConnection())
             {
@@ -2078,7 +2078,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 		{
 			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
 			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
-			// An application can call Close or CloseAsync more than one time. 
+			// An application can call Close or CloseAsync more than one time.
 			// No exception is generated.
 			using (var conn = new SnowflakeDbConnection())
 			{
@@ -2154,7 +2154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.BeginTransaction().Rollback();
                 Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
-                
+
                 conn.BeginTransaction().Commit();
                 Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
             }
@@ -2207,7 +2207,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        
+
         [Test]
         [Ignore("This test requires established dev Okta SSO and credentials matching Snowflake user")]
         public void TestNativeOktaSuccess()
@@ -2217,13 +2217,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var oktaPassword = "***";
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionStringWithoutAuth + 
+                conn.ConnectionString = ConnectionStringWithoutAuth +
                                         $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
-        
+
     }
 }
 
