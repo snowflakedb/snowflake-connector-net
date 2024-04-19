@@ -81,7 +81,7 @@ namespace Snowflake.Data.Core
 
         internal int _maxRetryCount;
 
-        internal int _maxRetryTimeout;
+        internal TimeSpan _maxRetryTimeout;
 
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
