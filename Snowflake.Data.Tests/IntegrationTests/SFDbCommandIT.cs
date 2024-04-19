@@ -610,6 +610,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void DummyTest()
+        {
+            var conn = new SnowflakeDbConnection(ConnectionString);
+            conn.Close();
+            conn.Close();
+        }
+
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
@@ -634,7 +642,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
-                conn.Close();
             }
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
@@ -664,7 +671,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
-                conn.Close();
             }
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
