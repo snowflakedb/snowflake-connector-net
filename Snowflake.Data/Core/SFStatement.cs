@@ -827,7 +827,7 @@ namespace Snowflake.Data.Core
                     {
                         logger.Warn("No queries in data in executed query status response !!!");
                     }
-                    logger.Warn($"Executed query to get status !!! code: {response.code} message: {response.message} data: {response.data}, queriesCount: {response.data.queries?.Count}");
+                    logger.Warn($"Executed query to get status !!! success: {response.success} code: {response.code} message: {response.message} data: {response.data}, queriesCount: {response.data.queries?.Count}");
                     if (SessionExpired(response))
                     {
                         SfSession.renewSession();
