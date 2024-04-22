@@ -815,19 +815,21 @@ namespace Snowflake.Data.Core
             {
                 QueryStatusResponse response = null;
                 bool receivedFirstQueryResponse = false;
+                int counter = 0;
                 while (!receivedFirstQueryResponse)
                 {
-                    logger.Warn("Executing query to get status !!!");
+                    counter++;
+                    logger.Warn($"Executing query to get status {counter} !!!");
                     response = _restRequester.Get<QueryStatusResponse>(queryRequest);
                     if (response.data == null)
                     {
-                        logger.Warn("No data in executed query status response !!!");
+                        logger.Warn($"No data in executed query status response {counter} !!!");
                     }
                     if (response.data.queries == null)
                     {
-                        logger.Warn("No queries in data in executed query status response !!!");
+                        logger.Warn($"No queries in data in executed query status response {counter} !!!");
                     }
-                    logger.Warn($"Executed query to get status !!! success: {response.success} code: {response.code} message: {response.message} data: {response.data}, queriesCount: {response.data.queries?.Count}");
+                    logger.Warn($"Executed query to get status {counter} !!! success: {response.success} code: {response.code} message: {response.message} data: {response.data}, queriesCount: {response.data.queries?.Count}");
                     if (SessionExpired(response))
                     {
                         SfSession.renewSession();
@@ -856,9 +858,9 @@ namespace Snowflake.Data.Core
 
                 return queryStatus;
             }
-            catch
+            catch(Exception e)
             {
-                logger.Error("Query execution failed.");
+                logger.Error("Query execution failed.", e);
                 throw;
             }
             finally
