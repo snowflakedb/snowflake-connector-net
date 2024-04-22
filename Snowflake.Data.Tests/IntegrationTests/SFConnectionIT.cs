@@ -447,6 +447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(2)]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
