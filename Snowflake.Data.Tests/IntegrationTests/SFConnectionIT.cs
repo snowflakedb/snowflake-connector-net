@@ -413,12 +413,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=5";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=7";
 
                 conn.ConnectionString = maxRetryConnStr;
 
@@ -438,10 +437,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 stopwatch.Stop();
 
-                // retry 5 times with starting backoff of 1 second
-                // but should not delay more than the max possible seconds after 5 retries
-                // and should not take less time than the minimum possible seconds after 5 retries
-                Assert.Less(stopwatch.ElapsedMilliseconds, 79 * 1000);
+                // retry 7 times with starting backoff of 1 second
+                // backoff is chosen randomly it can drop to 0. So the minimal backoff time could be 1 + 0 + 0 + 0 + 0 + 0 + 0 = 1
+                // The maximal backoff time could be 1 + 2 + 5 + 10 + 21 + 42 + 85 = 166
+                Assert.Less(stopwatch.ElapsedMilliseconds, 166 * 1000);
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
             }
         }
