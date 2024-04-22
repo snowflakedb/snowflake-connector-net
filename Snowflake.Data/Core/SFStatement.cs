@@ -817,7 +817,9 @@ namespace Snowflake.Data.Core
                 bool receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
                 {
+                    logger.Warn("Executing query to get status !!!");
                     response = _restRequester.Get<QueryStatusResponse>(queryRequest);
+                    logger.Warn($"Executed query to get status !!! code: {response.code} message: {response.message} data: {response.data}, queriesCount: {response.data.queries.Count}");
                     if (SessionExpired(response))
                     {
                         SfSession.renewSession();
