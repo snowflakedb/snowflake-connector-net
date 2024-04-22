@@ -234,6 +234,25 @@ The following examples show how you can include different types of special chara
 
   Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
 
+
+Snowflake supports using [double quote identifiers](https://docs.snowflake.com/en/sql-reference/identifiers-syntax#double-quoted-identifiers) for object property values (WAREHOUSE, DATABASE, SCHEMA AND ROLES). The value should be delimited with `\"` in the connection string. The value is case-sensitive and allow to use special characters as part of the value.
+
+  ```cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "database=\"testDB\";"
+  );
+  ```
+  - To include a `"` character as part of the value should be escaped using `\"\"`.
+
+  ```cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "database=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
+  );
+  ```
+
+
 ### Other Authentication Methods
 
 If you are using a different method for authentication, see the examples below:
