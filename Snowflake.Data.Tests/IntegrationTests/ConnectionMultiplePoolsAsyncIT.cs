@@ -1,4 +1,3 @@
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    [Ignore("debugging")] // !!!
     public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();

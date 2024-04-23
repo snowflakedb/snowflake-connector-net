@@ -21,7 +21,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]
-    [Ignore("debugging")] // !!!
     class SFPutGetTest : SFBaseTest
     {
         private const int NumberOfRows = 4;

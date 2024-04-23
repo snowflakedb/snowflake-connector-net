@@ -17,7 +17,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture(ConnectionPoolType.SingleConnectionCache)]
     [TestFixture(ConnectionPoolType.MultipleConnectionPool)]
     [NonParallelizable]
-    [Ignore("debugging")] // !!!
     class ConnectionPoolCommonIT : SFBaseTest
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;

@@ -15,7 +15,6 @@ using NUnit.Framework;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture, NonParallelizable]
-    [Ignore("debugging")] // !!!
     class SFConnectionPoolITAsync : SFBaseTestAsync
     {
         private static PoolConfig s_previousPoolConfigRestorer;
