@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
 
     [TestFixture]
-    [Ignore("debugging")] // !!!
+    // [Ignore("debugging")] // !!!
     class SFDbCommandITAsync : SFBaseTestAsync
     {
         [Test]
