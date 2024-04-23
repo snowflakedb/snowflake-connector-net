@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <Title>Snowflake.Data.AWS.Dependencies</Title>
-        <PackageId>Snowflake.Data.AWS.Dependencies</PackageId>
-        <Description>Snowflake Connector AWS dependencies for .NET</Description>
+        <Title>Snowflake.Data.GCP.Dependencies</Title>
+        <PackageId>Snowflake.Data.GCP.Dependencies</PackageId>
+        <Description>Snowflake Connector GCP dependencies for .NET</Description>
         <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
+      <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
     </ItemGroup>
 
 </Project>
