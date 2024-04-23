@@ -110,7 +110,9 @@ namespace Snowflake.Data.Core
         private const string SF_QUERY_RESULT_PATH = "/queries/{0}/result";
 
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
-
+        
+        private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
+        
         private const int SF_QUERY_IN_PROGRESS = 333333;
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
@@ -141,10 +143,13 @@ namespace Snowflake.Data.Core
         // the query id of the last query
         string _lastQueryId = null;
 
+        private string _queryTag = null;
+
         internal SFStatement(SFSession session)
         {
             SfSession = session;
             _restRequester = session.restRequester;
+            _queryTag = session._queryTag;
         }
 
         internal string GetBindStage() => _bindStage;
@@ -195,7 +200,16 @@ namespace Snowflake.Data.Core
                 // remove it from parameter bindings so it won't break
                 // parameter binding feature
                 bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
-            }
+            } 
+            
+            if (_queryTag != null)
+            {
+                if (bodyParameters == null)
+                {
+                    bodyParameters = new Dictionary<string, string>();
+                }
+                bodyParameters[SF_PARAM_QUERY_TAG] = _queryTag;
+            } 
 
             QueryRequest postBody = new QueryRequest();
             postBody.sqlText = sql;

@@ -90,6 +90,8 @@ namespace Snowflake.Data.Core
             _poolConfig.PoolingEnabled = isEnabled;
         }
 
+        internal String _queryTag;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -175,6 +177,7 @@ namespace Snowflake.Data.Core
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
+                properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
             }
