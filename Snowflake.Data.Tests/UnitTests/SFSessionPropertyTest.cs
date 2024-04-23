@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
  */
 
