@@ -42,10 +42,10 @@ namespace Snowflake.Data.Configuration
             {
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
+                    CheckIfValidPermissions(fileStream, filePath);
+
                     using (StreamReader reader = new StreamReader(fileStream))
                     {
-                        CheckIfValidPermissions(filePath);
-                        
                         string fileContent = reader.ReadToEnd();
 
                         return fileContent;
@@ -99,18 +99,28 @@ namespace Snowflake.Data.Configuration
                 .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
         }
 
-        private void CheckIfValidPermissions(string filePath)
+        private void CheckIfValidPermissions(FileStream fileStream, string filePath)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return;
-
-            // Check if others have permissions to modify the file and fail if so
-            if (_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
             {
-                var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
-                s_logger.Error(errorMessage);
-                throw new Exception(errorMessage);
+                return;
             }
+
+#if NET8_0_OR_GREATER
+            var unixFileMode = File.GetUnixFileMode(fileStream.SafeFileHandle);
+            var hasPermissions = ((UnixFileMode.OtherRead | UnixFileMode.GroupWrite) & unixFileMode) == 0;
+#else
+            var entitlements = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
+            var hasPermissions = _unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
+#endif
+            if (hasPermissions)
+            {
+                return;
+            }
+
+            var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
+            s_logger.Error(errorMessage);
+            throw new Exception(errorMessage);
         }
     }
 }
