@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
@@ -945,7 +945,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8";
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
                 conn.ConnectionString = maxRetryConnStr;
                 conn.Open();
