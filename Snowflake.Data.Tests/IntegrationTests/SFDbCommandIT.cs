@@ -25,10 +25,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecAsyncAPI()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
@@ -63,10 +62,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecAsyncAPIParallel()
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
@@ -112,8 +110,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.ClearAllPools();
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
 
                 conn.Open();
 
@@ -185,7 +182,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -224,7 +221,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
             for (int i = 0; i < connections.Length; i++)
             {
-                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                connections[i] = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false");
                 await connections[i].OpenAsync(CancellationToken.None).ConfigureAwait(false);
             }
 
@@ -279,7 +276,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -313,7 +310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -355,7 +352,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -379,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -403,7 +400,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -427,7 +424,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -453,7 +450,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -482,7 +479,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -501,7 +498,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test case takes too much time so run it manually")]
         public void TestRowsAffectedOverflowInt()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 
@@ -527,7 +524,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
                 IDbCommand cmd = conn.CreateCommand();
@@ -590,7 +587,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -610,18 +607,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void DummyTest()
-        {
-            var conn = new SnowflakeDbConnection(ConnectionString);
-            conn.Close();
-            conn.Close();
-        }
-
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
-            var connectionString = ConnectionString + "application=v1resultParser";
+            var connectionString = ConnectionString + "poolingEnabled=false";
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
             int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
             SFConfiguration.Instance().ChunkParserVersion = 1;
@@ -651,7 +640,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, NonParallelizable]
         public void TestUseV2ChunkDownloader()
         {
-            var connectionString = ConnectionString + "application=v2chunkDownloader";
+            var connectionString = ConnectionString + "poolingEnabled=false";
             var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
             int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
             SFConfiguration.Instance().ChunkParserVersion = 2;
@@ -682,7 +671,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Parallelizable(ParallelScope.Children)]
         public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
         {
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 
@@ -710,7 +699,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -736,7 +725,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -791,7 +780,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -828,7 +817,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -897,7 +886,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -920,7 +909,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (IDbCommand command = conn.CreateCommand())
@@ -994,7 +983,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (IDbCommand command = conn.CreateCommand())
@@ -1026,7 +1015,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString, TableName, 15000);
+            ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 15000);
         }
 
         private void ArrayBindTest(string connstr, string tableName, int size)
@@ -1166,8 +1155,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var t1TableName = TableName + 1;
             var t2TableName = TableName + 2;
 
-            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString, t1TableName));
-            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString, t2TableName));
+            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString + "poolingEnabled=false", t1TableName));
+            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString + "poolingEnabled=false", t2TableName));
             //Thread t3 = new Thread(() => ThreadProcess3(ConnectionString));
             //Thread t4 = new Thread(() => ThreadProcess4(ConnectionString));
 
@@ -1205,7 +1194,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             CancellationTokenSource externalCancel = new CancellationTokenSource();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
@@ -1245,9 +1234,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString
-                    + String.Format(
-                    ";GCS_USE_DOWNSCOPED_CREDENTIAL=true");
+                conn.ConnectionString = ConnectionString + "GCS_USE_DOWNSCOPED_CREDENTIAL=true;poolingEnabled=false";
                 conn.Open();
 
                 int rowCount = 100000;
@@ -1266,7 +1253,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 // query id is null when no query executed
@@ -1355,7 +1342,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1393,7 +1380,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
             for (int i = 0; i < connections.Length; i++)
             {
-                connections[i] = new SnowflakeDbConnection(ConnectionString);
+                connections[i] = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false");
                 connections[i].Open();
             }
 
@@ -1448,7 +1435,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1485,7 +1472,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1520,7 +1507,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1543,7 +1530,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1566,7 +1553,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1590,7 +1577,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -1615,7 +1602,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
