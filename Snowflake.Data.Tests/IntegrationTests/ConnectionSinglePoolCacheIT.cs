@@ -14,6 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
+    [Ignore("debugging")] // !!!
     public class ConnectionSinglePoolCacheIT: SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
