@@ -660,7 +660,7 @@ namespace Snowflake.Data.Core
 
                             if (SessionExpired(response))
                             {
-                                logger.Warn("Ping pong request failed with session expired, trying to renew the session. !!!"); // it was info previously
+                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
                                 SfSession.renewSession();
                             }
                             else

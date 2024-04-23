@@ -174,8 +174,6 @@ namespace Snowflake.Data.Core.Authenticator
 
                 // Get the current retry count and timeout elapsed from the response headers
                 retryCount += int.Parse(samlRawResponse.Content.Headers.GetValues(RetryCountHeader).First());
-                var timeoutElapsedHeader = int.Parse(samlRawResponse.Content.Headers.GetValues(TimeoutElapsedHeader).First());
-                s_logger.Warn($"HandleAuthenticatorException - timeoutElapsedHeader = {timeoutElapsedHeader} !!!");
                 timeoutElapsed += int.Parse(samlRawResponse.Content.Headers.GetValues(TimeoutElapsedHeader).First());
             }
             else
@@ -277,13 +275,7 @@ namespace Snowflake.Data.Core.Authenticator
         private bool RetryLimitIsNotReached(int retryCount, int timeoutElapsed)
         {
             var elapsedMillis = timeoutElapsed * 1000;
-            var result = retryCount < session._maxRetryCount && !TimeoutHelper.IsExpired(elapsedMillis, session._maxRetryTimeout);
-            if (!result)
-            {
-                s_logger.Warn($"Reached retry timeout: {timeoutElapsed} - !!!");
-            }
-
-            return result;
+            return retryCount < session._maxRetryCount && !TimeoutHelper.IsExpired(elapsedMillis, session._maxRetryTimeout);
         }
 
         private bool IsPostbackUrlNotFound(Exception ex)
