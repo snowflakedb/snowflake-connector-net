@@ -1566,7 +1566,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.ConnectionString = ConnectionString; // + "poolingEnabled=false"; !!!
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
