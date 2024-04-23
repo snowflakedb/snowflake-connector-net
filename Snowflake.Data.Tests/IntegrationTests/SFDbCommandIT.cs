@@ -1393,7 +1393,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
             for (int i = 0; i < connections.Length; i++)
             {
-                connections[i] = new SnowflakeDbConnection(ConnectionString + "application=ExecNormalAndAsyncQueries");
+                connections[i] = new SnowflakeDbConnection(ConnectionString);
                 connections[i].Open();
             }
 
@@ -1566,7 +1566,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString; // + "poolingEnabled=false"; !!!
+                conn.ConnectionString = ConnectionString;
                 conn.Open();
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
