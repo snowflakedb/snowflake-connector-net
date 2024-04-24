@@ -4,6 +4,7 @@
 
 using System.Data.Common;
 using System.Net;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -165,7 +166,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
         {
-            SnowflakeDbConnectionPool.SetPooling(true);
             for (int i = 0; i < 2; ++i)
             {
                 s_logger.Debug($"Running try #{i}");
@@ -1713,8 +1713,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
-                conn.ConnectionString = ConnectionString + "key1=test\'password;key2=test\"password;key3=test==password";
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
@@ -1740,8 +1739,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SnowflakeDbConnectionPool.SetPooling(false);
-                conn.ConnectionString = ConnectionString + "key==word=value; key1=\"test;password\"; key2=\"test=password\"";
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
@@ -1765,9 +1763,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
         {
-            SnowflakeDbConnectionPool.SetPooling(false);
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.ConnectionString = ConnectionString + "poolingEnabled=false;CLIENT_SESSION_KEEP_ALIVE=true";
             conn.Open();
 
             Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
@@ -1786,12 +1783,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestHeartBeatWithConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
-            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
-            SnowflakeDbConnectionPool.SetTimeout(14800);
-            SnowflakeDbConnectionPool.SetPooling(true);
 
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.ConnectionString = ConnectionString + "maxPoolSize=2;minPoolSize=0;expirationTimeout=14800;CLIENT_SESSION_KEEP_ALIVE=true";
             conn.Open();
             conn.Close();
 
@@ -1818,10 +1812,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // create 100 connections, one per second
             var connCount = 100;
-            // pooled connectin expire in 5 seconds so after 5 seconds,
+            // pooled connection expires in 5 seconds so after 5 seconds,
             // one connection per second will be closed
-            SnowflakeDbConnectionPool.SetTimeout(5);
-            SnowflakeDbConnectionPool.SetMaxPoolSize(20);
+            var connectionString = ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
             // heart beat interval is validity/4 so send out per 5 seconds
             HeartBeatBackground.setValidity(20);
             try
@@ -1830,7 +1823,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     using (var conn = new SnowflakeDbConnection())
                     {
-                        conn.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+                        conn.ConnectionString = connectionString;
                         conn.Open();
                     }
                     Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -2225,7 +2218,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
-[Test]
+
+        [Test]
         public void TestConnectStringWithQueryTag()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -2243,6 +2237,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestUseMultiplePoolsConnectionPoolByDefault()
+        {
+            // act
+            var poolVersion = SnowflakeDbConnectionPool.GetConnectionPoolVersion();
+
+            // assert
+            Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        }
     }
 }
 

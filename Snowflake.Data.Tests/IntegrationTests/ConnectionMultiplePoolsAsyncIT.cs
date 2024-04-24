@@ -1,9 +1,11 @@
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
@@ -27,6 +29,93 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public new void AfterTest()
         {
             _previousPoolConfig.Reset();
+        }
+
+        [Test]
+        public async Task TestAddToPoolOnOpenAsync()
+        {
+            // arrange
+            var connection = new SnowflakeDbConnection(ConnectionString + "minPoolSize=1");
+
+            // act
+            await connection.OpenAsync().ConfigureAwait(false);
+
+            // assert
+            var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+
+            // cleanup
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TestDoNotAddToPoolInvalidConnectionAsync()
+        {
+            // arrange
+            var invalidConnectionString = ";connection_timeout=123";
+            var connection = new SnowflakeDbConnection(invalidConnectionString);
+
+            // act
+            try
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+                Assert.Fail("OpenAsync should fail for invalid connection string");
+            }
+            catch {}
+
+            // assert
+            var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Assert.Less(pool.GetCurrentPoolSize(), SFSessionHttpClientProperties.DefaultMinPoolSize); // for invalid connection string it is used default min pool size
+
+            // cleanup
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        [Test]
+        public void TestConnectionPoolWithInvalidOpenAsync()
+        {
+            // make the connection string unique so it won't pick up connection
+            // pooled by other test cases.
+            string connStr = ConnectionString + "minPoolSize=0;maxPoolSize=10;application=conn_pool_test_invalid_openasync2";
+            using (var connection = new SnowflakeDbConnection())
+            {
+                connection.ConnectionString = connStr;
+                // call openAsync but do not wait and destroy it direct
+                // so the session is initialized with empty token
+                connection.OpenAsync();
+            }
+
+            // use the same connection string to make a new connection
+            // to ensure the invalid connection made previously is not pooled
+            using (var connection1 = new SnowflakeDbConnection())
+            {
+                connection1.ConnectionString = connStr;
+                // this will not open a new session but get the invalid connection from pool
+                connection1.Open();
+                // Now run query with connection1
+                var command = connection1.CreateCommand();
+                command.CommandText = "select 1, 2, 3";
+
+                try
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                // Process each column as appropriate
+                                reader.GetFieldValue<object>(i);
+                            }
+                        }
+                    }
+                }
+                catch (SnowflakeDbException)
+                {
+                    // fail the test case if anything wrong.
+                    Assert.Fail();
+                }
+            }
         }
 
         [Test]
@@ -87,6 +176,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
+        }
+
+        [Test(Description = "test connection pooling with concurrent connection using async calls")]
+        public void TestConcurrentConnectionPoolingAsync()
+        {
+            // add test case name in connection string to make in unique for each test case
+            // set short expiration timeout to cover the case that connection expired
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3";
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 7, 100, 2);
+        }
+
+        [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
+        public void TestConcurrentConnectionPoolingDisposeAsync()
+        {
+            // add test case name in connection string to make in unique for each test case
+            // set short expiration timeout to cover the case that connection expired
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3";
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 7, 100, 2);
         }
     }
 }
