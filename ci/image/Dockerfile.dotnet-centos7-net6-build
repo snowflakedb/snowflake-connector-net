@@ -34,7 +34,7 @@ SHELL [ "/usr/bin/scl", "enable", "devtoolset-8"]
 
 # dotnet-sdk-6.0
 RUN rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-RUN yum -y install --exclude 1:openssl-libs-1.0.2k-26.el7_9.x86_64 dotnet-sdk-6.0
+RUN yum -y install --exclude 1:openssl-libs-1.0.2k-26.el7_9.x86_64 dotnet-sdk-8.0
 
 # workspace
 RUN mkdir -p /home/user && \
