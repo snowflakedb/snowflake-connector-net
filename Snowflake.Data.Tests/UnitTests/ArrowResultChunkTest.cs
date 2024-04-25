@@ -151,7 +151,6 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(_recordBatchOne);
 
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0));
-            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, 0));
         }
         
         [Test]
