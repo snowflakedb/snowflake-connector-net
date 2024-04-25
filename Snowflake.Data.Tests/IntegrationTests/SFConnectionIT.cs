@@ -1541,6 +1541,60 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TestCase("*")]
+        [TestCase("*{0}*")]
+        [TestCase("^*{0}*")]
+        [TestCase("*{0}*$")]
+        [TestCase("^*{0}*$")]
+        [TestCase("^nonmatch*{0}$|*")]
+        [TestCase("*a*", "a")]
+        [TestCase("*la*", "la")]
+        public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                var host = ResolveHost();
+                var nonProxyHosts = string.Format(regexHost, $"{host}");
+                conn.ConnectionString =
+                    $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                
+                // Act
+                conn.Open();
+                
+                // Assert
+                // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [TestCase("invalid{0}")]
+        [TestCase("*invalid{0}*")]
+        [TestCase("^invalid{0}$")]
+        [TestCase("*a.b")]
+        [TestCase("a", "a")]
+        [TestCase("la", "la")]
+        public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                // Arrange
+                var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+                conn.ConnectionString =
+                    $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                
+                // Act/Assert
+                // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
+                var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                
+                // Assert
+                Assert.AreEqual(270001, exception.ErrorCode);
+                AssertIsConnectionFailure(exception);
+            }
+        }
+
+        [Test]
         public void TestUseProxyFalseWithInvalidProxyConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1561,7 +1615,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 = ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    "*.foo.com %7C" + testConfig.account + ".snowflakecomputing.com|" + testConfig.host);
+                    $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}*");
                 conn.Open();
                 // Because testConfig.host is in the bypass list, the proxy should not be used
             }
@@ -2169,6 +2223,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Open, conn.State);
             }
         }
+        
+        [Test]
+        public void TestConnectStringWithQueryTag()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                string expectedQueryTag = "Test QUERY_TAG 12345";
+                conn.ConnectionString = ConnectionString + $";query_tag={expectedQueryTag}";
+                
+                conn.Open();
+                var command = conn.CreateCommand();
+                // This query itself will be part of the history and will have the query tag
+                command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
+                var queryTag = command.ExecuteScalar();
+                
+                Assert.AreEqual(expectedQueryTag, queryTag);
+            }
+        }
+        
     }
 }
 

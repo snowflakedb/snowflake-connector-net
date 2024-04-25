@@ -135,7 +135,7 @@ The following table lists all valid connection properties:
 <br />
 
 | Connection Property            | Required | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------------------| -------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ACCOUNT                        | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | APPLICATION                    | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern: ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | DB                             | No       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -163,10 +163,11 @@ The following table lists all valid connection properties:
 | PROXYPORT                      | Depends  | The port number of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | PROXYUSER                      | No       | The username for authenticating to the proxy server. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | PROXYPASSWORD                  | Depends  | The password for authenticating to the proxy server. <br/> <br/> If USEPROXY is `true` and PROXYUSER is set, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| NONPROXYHOSTS                  | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| NONPROXYHOSTS                  | No       | The list of hosts that the driver should connect to directly, bypassing the proxy server. Separate the hostnames with a pipe symbol (\|). You can also use an asterisk (`*`) as a wildcard. <br/> The host target value should fully match with any item from the proxy host list to bypass the proxy server. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                        |
 | FILE_TRANSFER_MEMORY_THRESHOLD | No       | The maximum number of bytes to store in memory used in order to provide a file encryption. If encrypting/decrypting file size exceeds provided value a temporary file will be created and the work will be continued in the temporary file instead of memory. <br/> If no value provided 1MB will be used as a default value (that is 1048576 bytes). <br/> It is possible to configure any integer value bigger than zero representing maximal number of bytes to reside in memory.                                                                                                                                                                                                                                      |
 | CLIENT_CONFIG_FILE             | No       | The location of the client configuration json file. In this file you can configure easy logging feature.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ALLOWUNDERSCORESINHOST         | No       | Specifies whether to allow underscores in account names. This impacts PrivateLink customers whose account names contain underscores. In this situation, you must override the default value by setting allowUnderscoresInHost to true.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| QUERY_TAG                      | No       | Optional string that can be used to tag queries and other SQL statements executed within a connection. The tags are displayed in the output of the QUERY_HISTORY , QUERY_HISTORY_BY_* functions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 <br />
 
@@ -377,6 +378,22 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+The NONPROXYHOSTS property could be set to specify if the server proxy should be bypassed by an specified host. This should be defined using the full host url or including the url + `*` wilcard symbol.
+
+Examples:
+
+- `*` (Bypassed all hosts from the proxy server)
+- `*.snowflakecomputing.com` ('Bypass all host that ends with `snowflakecomputing.com`')
+- `https:\\testaccount.snowflakecomputing.com` (Bypass proxy server using full host url).
+- `*.myserver.com | *testaccount*` (You can specify multiple regex for the property divided by `|`)
+
+
+> Note: The nonproxyhost value should match the full url including the http or https section. The '*' wilcard could be added to bypass the hostname successfully.
+
+- `myaccount.snowflakecomputing.com` (Not bypassed).
+- `*myaccount.snowflakecomputing.com` (Bypassed).
+
+
 ## Using Connection Pools
 
 Instead of creating a connection each time your client application needs to access Snowflake, you can define a cache of Snowflake connections that can be reused as needed. Connection pooling usually reduces the lag time to make a connection. However, it can slow down client failover to an alternative DNS when a DNS problem occurs.
@@ -502,6 +519,65 @@ Note that because this method is not available in the generic `IDataReader` inte
 ```cs
 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 ```
+
+## Execute a query asynchronously on the server
+
+You can run the query asynchronously on the server. The server responds immediately with `queryId` and continues to execute the query asynchronously.
+Then you can use this `queryId` to check the query status or wait until the query is completed and get the results.
+It is fine to start the query in one session and continue to query for the results in another one based on the queryId.
+
+**Note**: There are 2 levels of asynchronous execution. One is asynchronous execution in terms of C# language (`async await`).
+Another is asynchronous execution of the query by the server (you can recognize it by `InAsyncMode` containing method names, e. g. `ExecuteInAsyncMode`, `ExecuteAsyncInAsyncMode`).
+
+Example of synchronous code starting a query to be executed asynchronously on the server:
+```cs
+using (SnowflakeDbConnection conn = new SnowflakeDbConnection("account=testaccount;username=testusername;password=testpassword"))
+{
+      conn.Open();
+      SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand();
+      cmd.CommandText = "SELECT ...";
+      var queryId = cmd.ExecuteInAsyncMode();
+      // ...
+}
+```
+
+Example of asynchronous code starting a query to be executed asynchronously on the server:
+```cs
+using (SnowflakeDbConnection conn = new SnowflakeDbConnection("account=testaccount;username=testusername;password=testpassword"))
+{
+      await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+      SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+      cmd.CommandText = "SELECT ...";
+      var queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+      // ...
+}
+```
+
+You can check the status of a query executed asynchronously on the server either in synchronous code:
+```cs
+var queryStatus = cmd.GetQueryStatus(queryId);
+Assert.IsTrue(conn.IsStillRunning(queryStatus)); // assuming that the query is still running
+Assert.IsFalse(conn.IsAnError(queryStatus)); // assuming that the query has not finished with error
+```
+or the same in an asynchronous code:
+```cs
+var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+Assert.IsTrue(conn.IsStillRunning(queryStatus)); // assuming that the query is still running
+Assert.IsFalse(conn.IsAnError(queryStatus)); // assuming that the query has not finished with error
+```
+
+The following example shows how to get query results.
+The operation will repeatedly check the query status until the query is completed or timeout happened or reaching the maximum number of attempts.
+The synchronous code example:
+```cs
+DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+```
+and the asynchronous code example:
+```cs
+DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+```
+
+**Note**: GET/PUT operations are currently not enabled for asynchronous executions.
 
 ## Executing a Batch of SQL Statements (Multi-Statement Support)
 

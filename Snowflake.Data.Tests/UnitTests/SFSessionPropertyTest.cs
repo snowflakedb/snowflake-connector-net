@@ -470,6 +470,38 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.ALLOWUNDERSCORESINHOST, "true" }
                 }
             };
+            var testQueryTag = "Test QUERY_TAG 12345";
+            var testCaseQueryTag = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};QUERY_TAG={testQueryTag}",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, $"{defAccount}" },
+                    { SFSessionProperty.USER, defUser },
+                    { SFSessionProperty.HOST, $"{defAccount}.snowflakecomputing.com" },
+                    { SFSessionProperty.AUTHENTICATOR, defAuthenticator },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PASSWORD, defPassword },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, defBrowserResponseTime },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, "false" },
+                    { SFSessionProperty.QUERY_TAG, testQueryTag }
+                }
+            };
+            
             return new TestCase[]
             {
                 simpleTestCase,
@@ -482,7 +514,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseWithDisableConsoleLogin,
                 testCaseComplicatedAccountName,
                 testCaseUnderscoredAccountName,
-                testCaseUnderscoredAccountNameWithEnabledAllowUnderscores
+                testCaseUnderscoredAccountNameWithEnabledAllowUnderscores,
+                testCaseQueryTag
             };
         }
         

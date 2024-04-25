@@ -1,25 +1,31 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
 using System.Data;
+using System.Linq;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Snowflake.Data.Log;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using System.Text;
+using System.Globalization;
+using System.Collections.Generic;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using System.Text;
-    using System.Globalization;
-    using System.Collections.Generic;
 
     [TestFixture]    
     class SFBindTestIT : SFBaseTest
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
+
         [Test]
-        public void testArrayBind()
+        public void TestArrayBind()
         {
             
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -59,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindNullValue()
+        public void TestBindNullValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -196,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindValue()
+        public void TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -313,7 +319,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
                                 param.Value = DBNull.Value;
                                 command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
+                                command.ExecuteNonQuery();
                             }
                             catch (SnowflakeDbException e)
                             {
@@ -347,7 +353,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testBindValueWithSFDataType()
+        public void TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -440,7 +446,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                     command.CommandText = $"insert into {TableName}(unsupportedType) values(:p0)";
                                     param.Value = DBNull.Value;
                                     command.Parameters.Add(param);
-                                    int rowsInserted = command.ExecuteNonQuery();
+                                    command.ExecuteNonQuery();
                                 }
                                 catch (SnowflakeDbException e)
                                 {
@@ -468,7 +474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testParameterCollection()
+        public void TestParameterCollection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -524,7 +530,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testPutArrayBind()
+        public void TestPutArrayBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -646,10 +652,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
-                    
-                    //cmd.CommandText = "drop table if exists testPutArrayBind";
-                    //cmd.ExecuteNonQuery();
-                    
                 }
 
                 conn.Close();
@@ -657,7 +659,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
-        public void testPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
+        public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
                 TypeNameHandling = TypeNameHandling.Auto
@@ -729,7 +731,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testPutArrayBind1()
+        public void TestPutArrayIntegerBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -769,5 +771,287 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
+
+        [Test]
+        public void TestExplicitDbTypeAssignmentForSimpleValue()
+        {
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "cola INTEGER",
+                });
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    string insertCommand = $"insert into {TableName} values (?)";
+                    cmd.CommandText = insertCommand;
+
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.Value = 1;
+                    cmd.Parameters.Add(p1);
+
+                    var count = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(1, count);
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestExplicitDbTypeAssignmentForArrayValue()
+        {
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                CreateOrReplaceTable(conn, TableName, new[]
+                {
+                    "cola INTEGER",
+                });
+
+                using (IDbCommand cmd = conn.CreateCommand())
+                {
+                    string insertCommand = $"insert into {TableName} values (?)";
+                    cmd.CommandText = insertCommand;
+
+                    var p1 = cmd.CreateParameter();
+                    p1.ParameterName = "1";
+                    p1.Value = new int[] { 1, 2, 3 };
+                    cmd.Parameters.Add(p1);
+
+                    var count = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(3, count);
+                }
+
+                conn.Close();
+            }
+        }
+        
+        private const string FormatYmd = "yyyy/MM/dd";
+        private const string FormatHms = "HH\\:mm\\:ss";
+        private const string FormatHmsf = "HH\\:mm\\:ss\\.fff";
+        private const string FormatYmdHms = "yyyy/MM/dd HH\\:mm\\:ss";
+        private const string FormatYmdHmsZ = "yyyy/MM/dd HH\\:mm\\:ss zzz";
+
+        // STANDARD Tables
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        /* TODO: Enable when features available on the automated tests environment
+        // HYBRID Tables
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        // ICEBERG Tables; require env variables: ICEBERG_EXTERNAL_VOLUME, ICEBERG_CATALOG, ICEBERG_BASE_LOCATION. 
+        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTime, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        */
+        // Session TimeZone cases
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
+        {
+            // Arrange
+            var timestamp = "2023/03/15 13:17:29.207 +05:00"; // 08:17:29.207 UTC
+            var expected = ExpectedTimestampWrapper.From(timestamp, columnType);
+            var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
+            var testCase = $"ResultFormat={resultFormat}, TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
+            var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
+            var smallBatchRowCount = 2;
+            var bigBatchRowCount = bindingThreshold / 2;
+            s_logger.Info(testCase);
+            
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+
+                conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
+                if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
+                    conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
+
+                CreateOrReplaceTable(conn, 
+                    TableName, 
+                    tableType.TableDDLCreationPrefix(), 
+                    new[] {
+                        "id number(10,0) not null primary key", // necessary only for HYBRID tables
+                        $"ts {columnWithPrecision}" 
+                    }, 
+                    tableType.TableDDLCreationFlags());
+
+                // Act+Assert
+                var sqlInsert = $"insert into {TableName} (id, ts) values (?, ?)";
+                InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount+2, expected, bigBatchRowCount, true);
+
+                // Assert
+                var row = 0;
+                using (var select = conn.CreateCommand($"select id, ts from {TableName} order by id"))
+                {
+                    s_logger.Debug(select.CommandText);
+                    var reader = select.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        ++row;
+                        string faultMessage = $"Mismatch for row: {row}, {testCase}";
+                        Assert.AreEqual(row, reader.GetInt32(0));
+                        expected.AssertEqual(reader.GetValue(1), comparisonFormat, faultMessage);
+                    }
+                }
+                Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
+            }
+        }
+        
+        private void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestampWrapper ts)
+        {
+            using (var insert = conn.CreateCommand(sqlInsert))
+            {
+                // Arrange
+                insert.Add("1", DbType.Int32, identifier);
+                if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
+                {
+                    var parameter = (SnowflakeDbParameter)insert.Add("2", binding, ts.GetDateTimeOffset());
+                    parameter.SFDataType = ts.ExpectedColumnType();
+                }
+                else
+                {
+                    insert.Add("2", binding, ts.GetDateTime());
+                }
+
+                // Act
+                s_logger.Info(sqlInsert);
+                var rowsAffected = insert.ExecuteNonQuery();
+                    
+                // Assert
+                Assert.AreEqual(1, rowsAffected);
+                Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+            }
+        }
+
+        private void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestampWrapper ts, int rowsCount, bool shouldUseBinding)
+        {
+            using (var insert = conn.CreateCommand(sqlInsert))
+            {
+                // Arrange
+                insert.Add("1", DbType.Int32, Enumerable.Range(initialIdentifier, rowsCount).ToArray());
+                if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
+                {
+                    var parameter = (SnowflakeDbParameter)insert.Add("2", binding, Enumerable.Repeat(ts.GetDateTimeOffset(), rowsCount).ToArray());
+                    parameter.SFDataType = ts.ExpectedColumnType();
+                }
+                else
+                {
+                    insert.Add("2", binding, Enumerable.Repeat(ts.GetDateTime(), rowsCount).ToArray());
+                }
+                
+                // Act
+                s_logger.Debug(sqlInsert);
+                var rowsAffected = insert.ExecuteNonQuery();
+                    
+                // Assert
+                Assert.AreEqual(rowsCount, rowsAffected);
+                if (shouldUseBinding)
+                    Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
+                else
+                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+            }
+        }
+        
+        private static string ColumnTypeWithPrecision(SFDataType columnType, Int32? columnPrecision) 
+            => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
+    }
+    
+    class ExpectedTimestampWrapper
+    {
+        private readonly SFDataType _columnType;
+        private readonly DateTime? _expectedDateTime;
+        private readonly DateTimeOffset? _expectedDateTimeOffset;
+
+        internal static ExpectedTimestampWrapper From(string timestampWithTimeZone, SFDataType columnType)
+        {
+            if (IsOffsetType(columnType))
+            {
+                var dateTimeOffset = DateTimeOffset.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+                return new ExpectedTimestampWrapper(dateTimeOffset, columnType);
+            }
+
+            var dateTime = DateTime.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
+            return new ExpectedTimestampWrapper(dateTime, columnType);
+        }
+
+        private ExpectedTimestampWrapper(DateTime dateTime, SFDataType columnType)
+        {
+            _expectedDateTime = dateTime;
+            _expectedDateTimeOffset = null;
+            _columnType = columnType;
+        }
+
+        private ExpectedTimestampWrapper(DateTimeOffset dateTimeOffset, SFDataType columnType)
+        {
+            _expectedDateTimeOffset = dateTimeOffset;
+            _expectedDateTime = null;
+            _columnType = columnType;
+        }
+
+        internal SFDataType ExpectedColumnType() => _columnType;
+
+        internal void AssertEqual(object actual, string comparisonFormat, string faultMessage)
+        {
+            switch (_columnType)
+            {
+                case SFDataType.TIMESTAMP_TZ:
+                    Assert.AreEqual(GetDateTimeOffset().ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
+                    break;
+                case SFDataType.TIMESTAMP_LTZ:
+                    Assert.AreEqual(GetDateTimeOffset().ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
+                    break;
+                default:
+                    Assert.AreEqual(GetDateTime().ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
+                    break;
+            }
+        }
+
+        internal DateTime GetDateTime() => _expectedDateTime ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
+
+        internal DateTimeOffset GetDateTimeOffset() => _expectedDateTimeOffset ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
+        
+        internal static bool IsOffsetType(SFDataType type) => type == SFDataType.TIMESTAMP_LTZ || type == SFDataType.TIMESTAMP_TZ;
     }
 }

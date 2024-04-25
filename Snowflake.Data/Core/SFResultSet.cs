@@ -28,7 +28,7 @@ namespace Snowflake.Data.Core
         {
             try
             {
-                columnCount = responseData.rowType.Count;
+                columnCount = responseData.rowType?.Count ?? 0;
 
                 this.sfStatement = sfStatement;
                 UpdateSessionStatus(responseData);
@@ -40,10 +40,10 @@ namespace Snowflake.Data.Core
                     _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
                 }
 
-                _currentChunk = new SFResultChunk(responseData.rowSet);
+                _currentChunk = responseData.rowSet != null ? new SFResultChunk(responseData.rowSet) : null;
                 responseData.rowSet = null;
 
-                sfResultSetMetaData = new SFResultSetMetaData(responseData, this.sfStatement.SfSession);
+                sfResultSetMetaData = responseData.rowType != null ? new SFResultSetMetaData(responseData, this.sfStatement.SfSession) : null;
 
                 isClosed = false;
 
