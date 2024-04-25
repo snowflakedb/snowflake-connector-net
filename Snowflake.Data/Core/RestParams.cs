@@ -60,13 +60,8 @@ namespace Snowflake.Data.Core
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
-#if NETFRAMEWORK
-                netRuntime = "NETFramework",
-                netVersion = "4.7.1",
-#else
                 netRuntime = "NETCore",
                 netVersion ="2.0",
-#endif
             };
 
             DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
