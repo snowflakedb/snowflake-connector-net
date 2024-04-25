@@ -288,7 +288,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .ToArray();
 #endif
 
-PrepareTestCase(SFDataType.TEXT, 0, testValues);
+            PrepareTestCase(SFDataType.TEXT, 0, testValues);
             
             foreach (var testValue in testValues)
             {
