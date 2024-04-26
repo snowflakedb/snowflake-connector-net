@@ -17,7 +17,7 @@ namespace Snowflake.Data.Client
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
         private static readonly Object s_connectionManagerInstanceLock = new Object();
         private static IConnectionManager s_connectionManager;
-        private const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.SingleConnectionCache; // TODO: set to MultipleConnectionPool once development of entire ConnectionPoolManager epic is complete
+        internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
 
         private static IConnectionManager ConnectionManager
         {
@@ -29,13 +29,13 @@ namespace Snowflake.Data.Client
                 return s_connectionManager;
             }
         }
-        
+
         internal static SFSession GetSession(string connectionString, SecureString password)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSession");
             return ConnectionManager.GetSession(connectionString, password);
         }
-        
+
         internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Client
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
             return ConnectionManager.GetPool(connectionString);
         }
-        
+
         internal static bool AddSession(SFSession session)
         {
             s_logger.Debug("SnowflakeDbConnectionPool::AddSession");
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Client
             s_logger.Debug("SnowflakeDbConnectionPool::SetTimeout");
             ConnectionManager.SetTimeout(connectionTimeout);
         }
-        
+
         public static long GetTimeout()
         {
             s_logger.Debug("SnowflakeDbConnectionPool::GetTimeout");
@@ -108,9 +108,9 @@ namespace Snowflake.Data.Client
             return ConnectionManager.GetPooling();
         }
 
-        internal static void SetOldConnectionPoolVersion() // TODO: set to public once development of entire ConnectionPoolManager epic is complete
+        public static void SetOldConnectionPoolVersion()
         {
-            SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);   
+            SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
         }
 
         internal static void SetConnectionPoolVersion(ConnectionPoolType requestedPoolType)
