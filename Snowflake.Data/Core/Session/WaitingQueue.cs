@@ -8,7 +8,7 @@ namespace Snowflake.Data.Core.Session
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly List<SemaphoreSlim> _queue = new List<SemaphoreSlim>();
-        
+
         public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken)
         {
             var semaphore = new SemaphoreSlim(0, 1);
@@ -67,11 +67,14 @@ namespace Snowflake.Data.Core.Session
             semaphore?.Release();
         }
 
-        public bool IsAnyoneWaiting() {
+        public bool IsAnyoneWaiting() => WaitingCount() > 0;
+
+        public int WaitingCount()
+        {
             _lock.EnterReadLock();
             try
             {
-                return _queue.Count > 0;
+                return _queue.Count;
             }
             finally
             {
