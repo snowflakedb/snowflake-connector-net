@@ -112,7 +112,7 @@ namespace Snowflake.Data.Core
         private void updateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
-            session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
+            session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
             session.UpdateQueryContextCache(responseData.QueryContext);
         }

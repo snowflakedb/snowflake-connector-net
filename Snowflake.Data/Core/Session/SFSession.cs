@@ -46,8 +46,10 @@ namespace Snowflake.Data.Core
         internal SFSessionProperties properties;
 
         internal string database;
-
         internal string schema;
+        internal string role;
+        internal string warehouse;
+        internal bool sessionPropertiesChanged = false;
 
         internal string serverVersion;
 
@@ -101,6 +103,8 @@ namespace Snowflake.Data.Core
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
+                role = authnResponse.data.authResponseSessionInfo.roleName;
+                warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
@@ -460,19 +464,29 @@ namespace Snowflake.Data.Core
             return _queryContextCache.GetQueryContextRequest();
         }
 
-        internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
+        internal void UpdateSessionProperties(QueryExecResponseData responseData)
         {
-            // with HTAP session metadata removal database/schema
-            // might be not returened in query result
-            if (!String.IsNullOrEmpty(databaseName))
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            UpdateSessionProperty(ref database, responseData.finalDatabaseName);
+            UpdateSessionProperty(ref schema, responseData.finalSchemaName);
+            UpdateSessionProperty(ref role, responseData.finalRoleName);
+            UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
+        }
+
+        private void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
+        {
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            if (!String.IsNullOrEmpty(finalSessionValue))
             {
-                this.database = databaseName;
-            }
-            if (!String.IsNullOrEmpty(schemaName))
-            {
-                this.schema = schemaName;
+                if (!String.IsNullOrEmpty(initialSessionValue) && initialSessionValue != finalSessionValue)
+                {
+                    sessionPropertiesChanged = true;
+                }
+                initialSessionValue = finalSessionValue;
             }
         }
+
+        internal bool SessionPropertiesChanged => sessionPropertiesChanged;
 
         internal void startHeartBeatForThisSession()
         {
@@ -592,4 +606,3 @@ namespace Snowflake.Data.Core
         internal long GetStartTime() => _startTime;
     }
 }
-

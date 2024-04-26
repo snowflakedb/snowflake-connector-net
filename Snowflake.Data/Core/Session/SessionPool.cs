@@ -413,6 +413,16 @@ namespace Snowflake.Data.Core.Session
                 ReleaseBusySession(session);
                 return false;
             }
+
+            if (session.SessionPropertiesChanged && _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
+            {
+                session.SetPooling(false);
+                Task.Run(() => session.CloseAsync(CancellationToken.None)).ConfigureAwait(false);
+                ReleaseBusySession(session);
+                ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsWhenReturningSessionToPool());
+                return false;
+            }
+
             const string AddSessionMessage = "SessionPool::AddSession";
             var addSessionMessage = IsMultiplePoolsVersion()
                 ? $"{AddSessionMessage} - returning session to pool identified by connection string: {ConnectionString}"

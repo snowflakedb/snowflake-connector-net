@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core.Session
         {
             return Enum.GetValues(typeof(ChangedSessionBehavior))
                 .Cast<ChangedSessionBehavior>()
-                .Where(e => e == ChangedSessionBehavior.OriginalPool) // currently we support only OriginalPool case; TODO: SNOW-937188
+                .Where(e => e != ChangedSessionBehavior.ChangePool) // no support yet for ChangedSessionBehavior.ChangePool case
                 .Select(b => b.ToString())
                 .ToList();
         }
