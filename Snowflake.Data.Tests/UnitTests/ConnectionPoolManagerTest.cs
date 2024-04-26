@@ -19,8 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
     class ConnectionPoolManagerTest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
-        private const string ConnectionString1 = "database=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
-        private const string ConnectionString2 = "database=D2;warehouse=W2;account=A2;user=U2;password=P2;role=R2;minPoolSize=1;";
+        private const string ConnectionString1 = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
+        private const string ConnectionString2 = "db=D2;warehouse=W2;account=A2;user=U2;password=P2;role=R2;minPoolSize=1;";
         private readonly SecureString _password = new SecureString();
         private static PoolConfig s_poolConfig;
 
@@ -187,6 +187,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.IsTrue(pooling);
+            Assert.IsTrue(sessionPool1.GetPooling());
+            Assert.IsFalse(sessionPool2.GetPooling());
         }
 
         [Test]
