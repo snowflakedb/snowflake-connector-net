@@ -18,12 +18,12 @@ namespace Snowflake.Data.Client
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
-        internal SFSession SfSession { get; set; } 
+        internal SFSession SfSession { get; set; }
 
         internal ConnectionState _connectionState;
 
         protected override DbProviderFactory DbProviderFactory => new SnowflakeDbFactory();
-        
+
         internal int _connectionTimeout;
 
         private bool _disposed = false;
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Client
         public SnowflakeDbConnection()
         {
             _connectionState = ConnectionState.Closed;
-            _connectionTimeout = 
+            _connectionTimeout =
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
             _isArrayBindStageCreated = false;
@@ -84,12 +84,12 @@ namespace Snowflake.Data.Client
         public override int ConnectionTimeout => this._connectionTimeout;
 
         /// <summary>
-        ///     If the connection to the database is closed, the DataSource returns whatever is contained 
-        ///     in the ConnectionString for the DataSource keyword. If the connection is open and the 
-        ///     ConnectionString data source keyword's value starts with "|datadirectory|", the property 
-        ///     returns whatever is contained in the ConnectionString for the DataSource keyword only. If 
-        ///     the connection to the database is open, the property returns what the native provider 
-        ///     returns for the DBPROP_INIT_DATASOURCE, and if that is empty, the native provider's 
+        ///     If the connection to the database is closed, the DataSource returns whatever is contained
+        ///     in the ConnectionString for the DataSource keyword. If the connection is open and the
+        ///     ConnectionString data source keyword's value starts with "|datadirectory|", the property
+        ///     returns whatever is contained in the ConnectionString for the DataSource keyword only. If
+        ///     the connection to the database is open, the property returns what the native provider
+        ///     returns for the DBPROP_INIT_DATASOURCE, and if that is empty, the native provider's
         ///     DBPROP_DATASOURCENAME is returned.
         ///     Note: not yet implemented
         /// </summary>
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Client
             SfSession.SetPooling(false);
             logger.Debug($"Session {SfSession.sessionId} marked not to be pooled any more");
         }
-        
+
         internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
 
         private bool TryToReturnSessionToPool()
@@ -150,12 +150,12 @@ namespace Snowflake.Data.Client
                     // error to indicate a problem within application code that a connection was closed while still having a pending transaction
                     logger.Error("Closing dirty connection: rollback transaction in session " + SfSession.sessionId + " succeeded.");
                     ExplicitTransaction = null;
-                    return TransactionRollbackStatus.Success; 
+                    return TransactionRollbackStatus.Success;
                 }
             }
             catch (Exception exception)
             {
-                // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool 
+                // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool
                 logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
                 return TransactionRollbackStatus.Failure; // connection won't be pooled
             }
@@ -254,10 +254,10 @@ namespace Snowflake.Data.Client
 
         protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
-            return SnowflakeDbConnectionPool.GetPooling() && 
+            return SnowflakeDbConnectionPool.GetPooling() &&
                    transactionRollbackStatus == TransactionRollbackStatus.Success;
         }
-        
+
         public override void Open()
         {
             logger.Debug("Open Connection.");
@@ -401,7 +401,7 @@ namespace Snowflake.Data.Client
                     SfSession = null;
                     _connectionState = ConnectionState.Closed;
                 }
-                
+
                 _disposed = true;
             }
 

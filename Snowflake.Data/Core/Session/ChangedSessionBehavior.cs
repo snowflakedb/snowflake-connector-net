@@ -5,9 +5,9 @@ using System.Linq;
 namespace Snowflake.Data.Core.Session
 {
     /**
-     * It describes what should happen to a session with a changed state (e. g. schema/role/etc.) when it is being returned to the pool. 
+     * ChangedSessionBehavior describes what should happen to a session with a changed state (schema/role/database/warehouse) when it is being returned to the pool.
      */
-    internal enum ChangedSessionBehavior
+    public enum ChangedSessionBehavior
     {
         OriginalPool,
         ChangePool,
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core.Session
                 .Select(b => b.ToString())
                 .ToList();
         }
-        
+
         public static ChangedSessionBehavior From(string changedSession)
         {
             return (ChangedSessionBehavior) Enum.Parse(typeof(ChangedSessionBehavior), changedSession, true);

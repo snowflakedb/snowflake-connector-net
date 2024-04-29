@@ -140,7 +140,9 @@ namespace Snowflake.Data.Core.Session
         public SessionPool GetPool(string connectionString)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
-            if (!connectionString.ToLower().Contains("password="))
+            // unless it is an external browser then those two must be passed along
+            var connStr = $";{connectionString.ToLower()};";
+            if (!connStr.Contains(";password=") && connStr.Contains(";user="))
             {
                 s_logger.Error($"To obtain a pool a password must to be given with a connection string or SecureString parameter");
                 throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, "Could not provide the pool without the password");
@@ -148,7 +150,6 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, null);
         }
 
-        // TODO: SNOW-937188
         private string GetPoolKey(string connectionString)
         {
             return connectionString;

@@ -521,15 +521,58 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        public void SetMaxPoolSize(int size)
+        public void SetMaxPoolSize(int newMaxPoolSize)
         {
-            _poolConfig.MaxPoolSize = size;
+            s_logger.Info($"SessionPool::SetMaxPoolSize({newMaxPoolSize})");
+            _poolConfig.MaxPoolSize = newMaxPoolSize;
             _configOverriden = true;
         }
 
-        public int GetMaxPoolSize()
+        public int GetMaxPoolSize() => _poolConfig.MaxPoolSize;
+
+        public void SetMinPoolSize(int newMinPoolSize)
         {
-            return _poolConfig.MaxPoolSize;
+            s_logger.Info($"SessionPool::SetMinPoolSize({newMinPoolSize})");
+            _poolConfig.MinPoolSize = newMinPoolSize;
+            _configOverriden = true;
+        }
+
+        public int GetMinPoolSize() => _poolConfig.MinPoolSize;
+
+        public ChangedSessionBehavior GetChangedSession() => _poolConfig.ChangedSession;
+
+        public void SetChangedSession(ChangedSessionBehavior newChangedSession)
+        {
+            if (IsMultiplePoolsVersion())
+            {
+                s_logger.Info($"SessionPool::SetChangedSession({newChangedSession})");
+                _poolConfig.ChangedSession = newChangedSession;
+                _configOverriden = true;
+            }
+        }
+
+        public double GetWaitForIdleSessionTimeout() => _poolConfig.WaitingForIdleSessionTimeout.TotalSeconds;
+
+        public void SetWaitForIdleSessionTimeout(double waitForIdleSession)
+        {
+            if (IsMultiplePoolsVersion())
+            {
+                s_logger.Info($"SessionPool::SetWaitForIdleSessionTimeout({waitForIdleSession})");
+                _poolConfig.WaitingForIdleSessionTimeout = TimeSpan.FromSeconds(waitForIdleSession);
+                _configOverriden = true;
+            }
+        }
+
+        public void SetConnectionTimeout(long seconds)
+        {
+            var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
+            _poolConfig.ConnectionTimeout = timeout;
+            _configOverriden = true;
+        }
+
+        public long GetConnectionTimeout()
+        {
+            return TimeoutHelper.IsInfinite(_poolConfig.ConnectionTimeout) ? -1 : (long)_poolConfig.ConnectionTimeout.TotalSeconds;
         }
 
         public void SetTimeout(long seconds)

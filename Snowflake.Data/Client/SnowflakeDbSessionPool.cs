@@ -6,6 +6,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Client
 {
+
     public class SnowflakeDbSessionPool : IDisposable
     {
         private SessionPool _sessionPool;
@@ -17,12 +18,24 @@ namespace Snowflake.Data.Client
         public void SetMaxPoolSize(int size) => _sessionPool.SetMaxPoolSize(size);
         public int GetMaxPoolSize() => _sessionPool.GetMaxPoolSize();
 
-        public void SetTimeout(long seconds) => _sessionPool.SetTimeout(seconds);
-        public long GetTimeout() => _sessionPool.GetTimeout();
+        public void SetMinPoolSize(int size) => _sessionPool.SetMinPoolSize(size);
+        public int GetMinPoolSize() => _sessionPool.GetMinPoolSize();
+
+        public void SetExpirationTimeout(long seconds) => _sessionPool.SetTimeout(seconds);
+        public long GetExpirationTimeout() => _sessionPool.GetTimeout();
+
+        public void SetConnectionTimeout(long seconds) => _sessionPool.SetTimeout(seconds);
+        public long GetConnectionTimeout() => _sessionPool.GetTimeout();
 
         public int GetCurrentPoolSize() => _sessionPool.GetCurrentPoolSize();
 
         public bool SetPooling(bool isEnable) => _sessionPool.SetPooling(isEnable);
         public bool GetPooling() => _sessionPool.GetPooling();
+
+        public void SetChangedSession(ChangedSessionBehavior newChangedSession) => _sessionPool.SetChangedSession(newChangedSession);
+        public ChangedSessionBehavior GetChangedSession() => _sessionPool.GetChangedSession();
+
+        public void SetWaitForIdleSessionTimeout(double seconds) => _sessionPool.SetWaitForIdleSessionTimeout(seconds);
+        public double GetWaitForIdleSessionTimeout() => _sessionPool.GetWaitForIdleSessionTimeout();
     }
 }
