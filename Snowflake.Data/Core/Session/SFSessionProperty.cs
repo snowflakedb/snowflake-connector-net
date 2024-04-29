@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Core
             logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
             try
-            { 
+            {
                 builder.ConnectionString = connectionString;
             }
             catch (ArgumentException e)
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Core
                     logger.Warn($"Property {keys[i]} not found ignored.", e);
                 }
             }
-            
+
             UpdatePropertiesForSpecialCases(properties, connectionString);
 
             var useProxy = false;
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Core
             ValidateAccountDomain(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
-            
+
             // compose host value if not specified
             if (!properties.ContainsKey(SFSessionProperty.HOST) ||
                 (0 == properties[SFSessionProperty.HOST].Length))
@@ -262,7 +262,7 @@ namespace Snowflake.Data.Core
             }
 
             // Trim the account name to remove the region and cloud platform if any were provided
-            // because the login request data does not expect region and cloud information to be 
+            // because the login request data does not expect region and cloud information to be
             // passed on for account_name
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
@@ -289,15 +289,15 @@ namespace Snowflake.Data.Core
                             {
                                 var sessionProperty = (SFSessionProperty)Enum.Parse(
                                     typeof(SFSessionProperty), propertyName);
-                                properties[sessionProperty]= tokens[1];
+                                properties[sessionProperty]= ProcessObjectEscapedCharacters(tokens[1]);
                             }
-                        
+
                             break;
                         }
                         case "USER":
                         case "PASSWORD":
                         {
-                            
+
                             var sessionProperty = (SFSessionProperty)Enum.Parse(
                                 typeof(SFSessionProperty), propertyName);
                             if (!properties.ContainsKey(sessionProperty))
@@ -310,6 +310,18 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        private static string ProcessObjectEscapedCharacters(string objectValue)
+        {
+            var match = Regex.Match(objectValue, "^\"(.*)\"$");
+            if(match.Success)
+            {
+                var replaceEscapedQuotes = match.Groups[1].Value.Replace("\"\"", "\"");
+                return $"\"{replaceEscapedQuotes}\"";
+            }
+
+            return objectValue;
         }
 
         private static void ValidateAccountDomain(SFSessionProperties properties)
@@ -374,7 +386,7 @@ namespace Snowflake.Data.Core
                 logger.Error($"Value for parameter {propertyName} could not be parsed");
                 throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
             }
-            
+
             if (maxBytesInMemory <= 0)
             {
                 logger.Error($"Value for parameter {propertyName} should be greater than 0");
@@ -383,7 +395,7 @@ namespace Snowflake.Data.Core
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
             }
         }
-        
+
         private static bool IsRequired(SFSessionProperty sessionProperty, SFSessionProperties properties)
         {
             if (sessionProperty.Equals(SFSessionProperty.PASSWORD))

@@ -167,7 +167,7 @@ The following table lists all valid connection properties:
 | FILE_TRANSFER_MEMORY_THRESHOLD | No       | The maximum number of bytes to store in memory used in order to provide a file encryption. If encrypting/decrypting file size exceeds provided value a temporary file will be created and the work will be continued in the temporary file instead of memory. <br/> If no value provided 1MB will be used as a default value (that is 1048576 bytes). <br/> It is possible to configure any integer value bigger than zero representing maximal number of bytes to reside in memory.                                                                                                                                                                                                                                      |
 | CLIENT_CONFIG_FILE             | No       | The location of the client configuration json file. In this file you can configure easy logging feature.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ALLOWUNDERSCORESINHOST         | No       | Specifies whether to allow underscores in account names. This impacts PrivateLink customers whose account names contain underscores. In this situation, you must override the default value by setting allowUnderscoresInHost to true.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| QUERY_TAG                      | No       | Optional string that can be used to tag queries and other SQL statements executed within a connection. The tags are displayed in the output of the QUERY_HISTORY , QUERY_HISTORY_BY_* functions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| QUERY_TAG                      | No       | Optional string that can be used to tag queries and other SQL statements executed within a connection. The tags are displayed in the output of the QUERY_HISTORY , QUERY_HISTORY_BY_* functions.<br/> To set QUERY_TAG on the statement level you can use SnowflakeDbCommand.QueryTag.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ALLOW_SSO_TOKEN_CACHING        | No       | Specifies whether to cache tokens and use them for SSO authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 <br />
@@ -234,6 +234,25 @@ The following examples show how you can include different types of special chara
   ```
 
   Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
+
+
+Snowflake supports using [double quote identifiers](https://docs.snowflake.com/en/sql-reference/identifiers-syntax#double-quoted-identifiers) for object property values (WAREHOUSE, DATABASE, SCHEMA AND ROLES). The value should be delimited with `\"` in the connection string. The value is case-sensitive and allow to use special characters as part of the value.
+
+  ```cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "database=\"testDB\";"
+  );
+  ```
+  - To include a `"` character as part of the value should be escaped using `\"\"`.
+
+  ```cs
+  string connectionString = String.Format(
+    "account=testaccount; " +
+    "database=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
+  );
+  ```
+
 
 ### Other Authentication Methods
 
