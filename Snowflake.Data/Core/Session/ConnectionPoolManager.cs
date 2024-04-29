@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core.Session
                 _pools = new Dictionary<string, SessionPool>();
             }
         }
-        
+
         public SFSession GetSession(string connectionString, SecureString password)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSession");
@@ -57,11 +57,11 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");
             foreach (var sessionPool in _pools.Values)
             {
-                sessionPool.ClearSessions();       
+                sessionPool.ClearSessions();
             }
             _pools.Clear();
         }
-        
+
         public void SetMaxPoolSize(int maxPoolSize)
         {
             throw s_operationNotAvailable;
@@ -71,9 +71,15 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("ConnectionPoolManager::GetMaxPoolSize");
             var values = _pools.Values.Select(it => it.GetMaxPoolSize()).Distinct().ToList();
-            return values.Count == 1
-                ? values.First()
-                : throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Max Pool Size values");
+            switch (values.Count)
+            {
+                case 0:
+                    return SFSessionHttpClientProperties.DefaultMaxPoolSize;
+                case 1:
+                    return values.First();
+                default:
+                    throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Max Pool Size values");
+            }
         }
 
         public void SetTimeout(long connectionTimeout)
@@ -85,18 +91,21 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("ConnectionPoolManager::GetTimeout");
             var values = _pools.Values.Select(it => it.GetTimeout()).Distinct().ToList();
-            return values.Count == 1
-                ? values.First()
-                : throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Timeout values");
+            switch (values.Count)
+            {
+                case 0:
+                    return (long) SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
+                case 1:
+                    return values.First();
+                default:
+                    throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Timeout values");
+            }
         }
 
         public int GetCurrentPoolSize()
         {
             s_logger.Debug("ConnectionPoolManager::GetCurrentPoolSize");
-            var values = _pools.Values.Select(it => it.GetCurrentPoolSize()).Distinct().ToList();
-            return values.Count == 1
-                ? values.First()
-                : throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Current Pool Size values");
+            return _pools.Values.Select(it => it.GetCurrentPoolSize()).Sum();
         }
 
         public bool SetPooling(bool poolingEnabled)
@@ -104,20 +113,17 @@ namespace Snowflake.Data.Core.Session
             throw s_operationNotAvailable;
         }
 
-        public bool GetPooling() 
+        public bool GetPooling()
         {
             s_logger.Debug("ConnectionPoolManager::GetPooling");
-            var values = _pools.Values.Select(it => it.GetPooling()).Distinct().ToList();
-            return values.Count == 1
-                ? values.First()
-                : throw new SnowflakeDbException(SFError.INCONSISTENT_RESULT_ERROR, "Multiple pools have different Pooling values");
+            return true; // in new pool pooling is always enabled by default, disabling only by connection string parameter
         }
 
-        internal SessionPool GetPool(string connectionString, SecureString password)
+        public SessionPool GetPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
             var poolKey = GetPoolKey(connectionString);
-            
+
             if (_pools.TryGetValue(poolKey, out var item))
                 return item;
             lock (s_poolsLock)
@@ -134,6 +140,11 @@ namespace Snowflake.Data.Core.Session
         public SessionPool GetPool(string connectionString)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
+            if (!connectionString.ToLower().Contains("password="))
+            {
+                s_logger.Error($"To obtain a pool a password must to be given with a connection string or SecureString parameter");
+                throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, "Could not provide the pool without the password");
+            }
             return GetPool(connectionString, null);
         }
 
