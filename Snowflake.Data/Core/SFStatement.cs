@@ -151,7 +151,14 @@ namespace Snowflake.Data.Core
             _restRequester = session.restRequester;
             _queryTag = session._queryTag;
         }
-
+        
+        internal SFStatement(SFSession session, string queryTag) 
+        {
+            SfSession = session;
+            _restRequester = session.restRequester;
+            _queryTag = queryTag ?? session._queryTag; 
+        }
+        
         internal string GetBindStage() => _bindStage;
 
         private void AssignQueryRequestId()
