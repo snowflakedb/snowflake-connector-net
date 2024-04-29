@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -40,6 +40,12 @@ namespace Snowflake.Data.Client
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
             return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
+        }
+
+        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)
+        {
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
+            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, password));
         }
 
         internal static SessionPool GetPool(string connectionString)

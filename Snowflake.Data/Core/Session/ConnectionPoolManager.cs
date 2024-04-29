@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Core.Session
             return true; // in new pool pooling is always enabled by default, disabling only by connection string parameter
         }
 
-        internal SessionPool GetPool(string connectionString, SecureString password)
+        public SessionPool GetPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
             var poolKey = GetPoolKey(connectionString);
@@ -140,6 +140,11 @@ namespace Snowflake.Data.Core.Session
         public SessionPool GetPool(string connectionString)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
+            if (!connectionString.ToLower().Contains("password="))
+            {
+                s_logger.Error($"To obtain a pool a password must to be given with a connection string or SecureString parameter");
+                throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, "Could not provide the pool without the password");
+            }
             return GetPool(connectionString, null);
         }
 
