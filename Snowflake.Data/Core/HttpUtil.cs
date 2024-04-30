@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -21,6 +21,7 @@ namespace Snowflake.Data.Core
     {
         public HttpClientConfig(
             bool crlCheckEnabled,
+            bool useProxy,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -32,6 +33,7 @@ namespace Snowflake.Data.Core
             bool includeRetryReason = true)
         {
             CrlCheckEnabled = crlCheckEnabled;
+            UseProxy = useProxy;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
             ProxyUser = proxyUser;
@@ -45,6 +47,7 @@ namespace Snowflake.Data.Core
             ConfKey = string.Join(";",
                 new string[] {
                     crlCheckEnabled.ToString(),
+                    useProxy.ToString(),
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -57,6 +60,7 @@ namespace Snowflake.Data.Core
         }
 
         public readonly bool CrlCheckEnabled;
+        public readonly bool UseProxy;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
         public readonly string ProxyUser;
@@ -87,7 +91,7 @@ namespace Snowflake.Data.Core
 
         private HttpUtil()
         {
-            // This value is used by AWS SDK and can cause deadlock, 
+            // This value is used by AWS SDK and can cause deadlock,
             // so we need to increase the default value of 2
             // See: https://github.com/aws/aws-sdk-net/issues/152
             ServicePointManager.DefaultConnectionLimit = 50;
@@ -130,7 +134,7 @@ namespace Snowflake.Data.Core
 
         internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config)
         {
-            HttpMessageHandler httpHandler;
+            HttpClientHandler httpHandler;
             try
             {
                 httpHandler = new HttpClientHandler()
@@ -140,8 +144,7 @@ namespace Snowflake.Data.Core
                     // Enforce tls v1.2
                     SslProtocols = SslProtocols.Tls12,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
+                    UseCookies = false // Disable cookies
                 };
             }
             // special logic for .NET framework 4.7.1 that
@@ -151,56 +154,62 @@ namespace Snowflake.Data.Core
                 httpHandler = new HttpClientHandler()
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
+                    UseCookies = false // Disable cookies
                 };
             }
 
             // Add a proxy if necessary
-            if (null != config.ProxyHost)
+            if (!config.UseProxy)
+            {
+                httpHandler.UseProxy = false;
+            }
+            else
             {
                 // Proxy needed
-                WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
+                httpHandler.UseProxy = true;
 
-                // Add credential if provided
-                if (!String.IsNullOrEmpty(config.ProxyUser))
+                if (!String.IsNullOrEmpty(config.ProxyHost))
                 {
-                    ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
-                    proxy.Credentials = credentials;
-                }
+                    // Host explicitly specified, do not use default proxy
+                    WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
 
-                // Add bypasslist if provided
-                if (!String.IsNullOrEmpty(config.NoProxyList))
-                {
-                    string[] bypassList = config.NoProxyList.Split(
-                        new char[] { '|' },
-                        StringSplitOptions.RemoveEmptyEntries);
-                    // Convert simplified syntax to standard regular expression syntax
-                    string entry = null;
-                    for (int i = 0; i < bypassList.Length; i++)
+                    // Add credential if provided
+                    if (!String.IsNullOrEmpty(config.ProxyUser))
                     {
-                        // Get the original entry
-                        entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char 
-                        entry = entry.Replace(".", "[.]");
-                        // * -> .*  because * is a quantifier and need a char or group to apply to
-                        entry = entry.Replace("*", ".*");
-                        
-                        entry = entry.StartsWith("^") ? entry : $"^{entry}";
-                        
-                        entry = entry.EndsWith("$") ? entry : $"{entry}$";
-                        
-                        // Replace with the valid entry syntax
-                        bypassList[i] = entry;
-
+                        ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
+                        proxy.Credentials = credentials;
                     }
-                    proxy.BypassList = bypassList;
-                }
 
-                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                httpHandlerWithProxy.UseProxy = true;
-                httpHandlerWithProxy.Proxy = proxy;
-                return httpHandlerWithProxy;
+                    // Add bypasslist if provided
+                    if (!String.IsNullOrEmpty(config.NoProxyList))
+                    {
+                        string[] bypassList = config.NoProxyList.Split(
+                            new char[] { '|' },
+                            StringSplitOptions.RemoveEmptyEntries);
+                        // Convert simplified syntax to standard regular expression syntax
+                        string entry = null;
+                        for (int i = 0; i < bypassList.Length; i++)
+                        {
+                            // Get the original entry
+                            entry = bypassList[i].Trim();
+                            // . -> [.] because . means any char
+                            entry = entry.Replace(".", "[.]");
+                            // * -> .*  because * is a quantifier and need a char or group to apply to
+                            entry = entry.Replace("*", ".*");
+
+                            entry = entry.StartsWith("^") ? entry : $"^{entry}";
+
+                            entry = entry.EndsWith("$") ? entry : $"{entry}$";
+
+                            // Replace with the valid entry syntax
+                            bypassList[i] = entry;
+
+                        }
+                        proxy.BypassList = bypassList;
+                    }
+
+                    httpHandler.Proxy = proxy;
+                }
             }
             return httpHandler;
         }
@@ -384,7 +393,7 @@ namespace Snowflake.Data.Core
                             if (httpTimeout.Ticks == 0)
                                 childCts.Cancel();
                             else
-                                childCts.CancelAfter(httpTimeout);                        
+                                childCts.CancelAfter(httpTimeout);
                         }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
