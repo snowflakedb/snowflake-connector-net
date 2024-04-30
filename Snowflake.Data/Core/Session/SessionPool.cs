@@ -162,7 +162,7 @@ namespace Snowflake.Data.Core.Session
         {
             if (IsConfigOverridden() && GetPooling() && IsMultiplePoolsVersion())
             {
-                s_logger.Warn("Providing a connection from a pool for which technical configuration has been overriden by the user"); // TODO: + PoolIdentification());
+                s_logger.Warn("Providing a connection from a pool for which technical configuration has been overriden by the user");
             }
         }
 
@@ -472,7 +472,7 @@ namespace Snowflake.Data.Core.Session
                 var poolStateBeforeReturningToPool = GetCurrentState();
                 if (poolStateBeforeReturningToPool.Count() >= _poolConfig.MaxPoolSize)
                 {
-                    s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId} {poolStateBeforeReturningToPool}");// TODO: + PoolIdentification());
+                    s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId} {poolStateBeforeReturningToPool}");
                     return Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
                 }
                 _idleSessions.Add(session);
