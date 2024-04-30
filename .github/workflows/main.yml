@@ -146,7 +146,7 @@ jobs:
 
   test-mac:
     name: Tests on MAC
-    runs-on: macos-latest
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
