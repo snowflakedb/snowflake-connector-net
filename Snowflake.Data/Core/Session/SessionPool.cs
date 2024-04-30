@@ -26,6 +26,7 @@ namespace Snowflake.Data.Core.Session
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
+        private readonly string _connectionStringWithoutSecrets;
         private readonly ICounter _busySessionsCounter;
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
         private readonly ConnectionPoolConfig _poolConfig;
@@ -41,13 +42,14 @@ namespace Snowflake.Data.Core.Session
             _poolConfig = new ConnectionPoolConfig();
         }
 
-        private SessionPool(string connectionString, SecureString password, ConnectionPoolConfig poolConfig)
+        private SessionPool(string connectionString, SecureString password, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
             Password = password;
+            _connectionStringWithoutSecrets = connectionStringWithoutSecrets;
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
             _sessionCreationTokenCounter = new SessionCreationTokenCounter(_poolConfig.ConnectionTimeout);
@@ -58,8 +60,8 @@ namespace Snowflake.Data.Core.Session
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"Creating a pool identified by connection string: {connectionString}");
-            var poolConfig = ExtractConfig(connectionString, password);
-            return new SessionPool(connectionString, password, poolConfig);
+            var extracted = ExtractConfig(connectionString, password);
+            return new SessionPool(connectionString, password, extracted.Item1, extracted.Item2);
         }
 
         ~SessionPool()
@@ -97,18 +99,18 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private static ConnectionPoolConfig ExtractConfig(string connectionString, SecureString password)
+        private static Tuple<ConnectionPoolConfig, string> ExtractConfig(string connectionString, SecureString password)
         {
             try
             {
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-                return extractedProperties.BuildConnectionPoolConfig();
+                return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
             catch (SnowflakeDbException exception)
             {
                 s_logger.Error("Could not extract pool configuration, using default one", exception);
-                return new ConnectionPoolConfig();
+                return Tuple.Create(new ConnectionPoolConfig(), "could not parse connection string");
             }
         }
 
@@ -593,9 +595,9 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private String PoolIdentification() =>
+        internal String PoolIdentification() =>
             IsMultiplePoolsVersion()
-                ? " [pool identified by " + ConnectionString + "]"
+                ? " [pool: " + _connectionStringWithoutSecrets + "]"
                 : "";
     }
 }

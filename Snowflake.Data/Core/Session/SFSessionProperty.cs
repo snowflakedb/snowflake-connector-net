@@ -11,6 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Data.Common;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Core
@@ -122,15 +123,18 @@ namespace Snowflake.Data.Core
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
+        internal string ConnectionStringWithoutSecrets { get; set; }
+
         // Connection string properties to obfuscate in the log
-        private static List<SFSessionProperty> secretProps =
-            new List<SFSessionProperty>{
+        private static readonly List<string> s_secretProps =
+            new List<SFSessionProperty>
+            {
                 SFSessionProperty.PASSWORD,
                 SFSessionProperty.PRIVATE_KEY,
                 SFSessionProperty.TOKEN,
                 SFSessionProperty.PRIVATE_KEY_PWD,
-                SFSessionProperty.PROXYPASSWORD,
-            };
+                SFSessionProperty.PROXYPASSWORD
+            }.Select(p => p.ToString()).ToList();
 
         private static readonly List<string> s_accountRegexStrings = new List<string>
         {
@@ -195,6 +199,8 @@ namespace Snowflake.Data.Core
             var values = new string[builder.Values.Count];
             builder.Keys.CopyTo(keys, 0);
             builder.Values.CopyTo(values,0);
+
+            properties.ConnectionStringWithoutSecrets = BuildConnectionStringWithoutSecrets(ref keys, ref values);
 
             for(var i=0; i<keys.Length; i++)
             {
@@ -277,6 +283,28 @@ namespace Snowflake.Data.Core
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
             return properties;
+        }
+
+        private static string BuildConnectionStringWithoutSecrets(ref string[] keys, ref string[] values)
+        {
+            var count = keys.Length;
+            var result = new StringBuilder();
+            for (var i = 0; i < count; i++ )
+            {
+                if (!IsSecretProperty(keys[i]))
+                {
+                    result.Append(keys[i]);
+                    result.Append("=");
+                    result.Append(values[i]);
+                    result.Append(";");
+                }
+            }
+            return result.ToString();
+        }
+
+        private static bool IsSecretProperty(string propertyName)
+        {
+            return s_secretProps.Contains(propertyName, StringComparer.OrdinalIgnoreCase);
         }
 
         private static void UpdatePropertiesForSpecialCases(SFSessionProperties properties, string connectionString)
