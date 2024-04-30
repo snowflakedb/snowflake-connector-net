@@ -406,31 +406,32 @@ namespace Snowflake.Data.Core.Session
 
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
-            if (!GetPooling())
-                return false;
-            if (!session.GetPooling())
-            {
-                ReleaseBusySession(session);
-                return false;
-            }
-
-            if (IsMultiplePoolsVersion() &&
-                session.SessionPropertiesChanged &&
-                _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy
-                )
-            {
-                session.SetPooling(false);
-                // Task.Run(() => session.CloseAsync(CancellationToken.None)).ConfigureAwait(false);
-                ReleaseBusySession(session);
-                ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsWhenReturningSessionToPool());
-                return false;
-            }
-
             const string AddSessionMessage = "SessionPool::AddSession";
             var addSessionMessage = IsMultiplePoolsVersion()
                 ? $"{AddSessionMessage} - returning session to pool identified by connection string: {ConnectionString}"
                 : AddSessionMessage;
             s_logger.Debug(addSessionMessage);
+
+            if (!GetPooling())
+                return false;
+
+            if (IsMultiplePoolsVersion() &&
+                session.SessionPropertiesChanged &&
+                _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
+            {
+                session.SetPooling(false);
+            }
+
+            if (!session.GetPooling())
+            {
+                ReleaseBusySession(session);
+                if (ensureMinPoolSize)
+                {
+                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsWhenReturningSessionToPool());
+                }
+                return false;
+            }
+
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
@@ -530,45 +531,12 @@ namespace Snowflake.Data.Core.Session
 
         public int GetMaxPoolSize() => _poolConfig.MaxPoolSize;
 
-        public void SetMinPoolSize(int newMinPoolSize)
-        {
-            s_logger.Info($"SessionPool::SetMinPoolSize({newMinPoolSize})");
-            _poolConfig.MinPoolSize = newMinPoolSize;
-            _configOverriden = true;
-        }
-
         public int GetMinPoolSize() => _poolConfig.MinPoolSize;
 
         public ChangedSessionBehavior GetChangedSession() => _poolConfig.ChangedSession;
 
-        public void SetChangedSession(ChangedSessionBehavior newChangedSession)
-        {
-            if (IsMultiplePoolsVersion())
-            {
-                s_logger.Info($"SessionPool::SetChangedSession({newChangedSession})");
-                _poolConfig.ChangedSession = newChangedSession;
-                _configOverriden = true;
-            }
-        }
 
-        public double GetWaitForIdleSessionTimeout() => _poolConfig.WaitingForIdleSessionTimeout.TotalSeconds;
-
-        public void SetWaitForIdleSessionTimeout(double waitForIdleSession)
-        {
-            if (IsMultiplePoolsVersion())
-            {
-                s_logger.Info($"SessionPool::SetWaitForIdleSessionTimeout({waitForIdleSession})");
-                _poolConfig.WaitingForIdleSessionTimeout = TimeSpan.FromSeconds(waitForIdleSession);
-                _configOverriden = true;
-            }
-        }
-
-        public void SetConnectionTimeout(long seconds)
-        {
-            var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
-            _poolConfig.ConnectionTimeout = timeout;
-            _configOverriden = true;
-        }
+        public long GetWaitForIdleSessionTimeout() => (long)_poolConfig.WaitingForIdleSessionTimeout.TotalSeconds;
 
         public long GetConnectionTimeout()
         {

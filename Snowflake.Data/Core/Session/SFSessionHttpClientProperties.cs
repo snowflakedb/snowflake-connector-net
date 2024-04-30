@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
@@ -14,7 +13,7 @@ namespace Snowflake.Data.Core
         private static readonly Extractor s_propertiesExtractor = new Extractor(new SFSessionHttpClientProxyProperties.Extractor());
         public const int DefaultMaxPoolSize = 10;
         public const int DefaultMinPoolSize = 2;
-        public const ChangedSessionBehavior DefaultChangedSession = ChangedSessionBehavior.OriginalPool;
+        public const ChangedSessionBehavior DefaultChangedSession = ChangedSessionBehavior.Destroy;
         public static readonly TimeSpan DefaultWaitingForIdleSessionTimeout = TimeSpan.FromSeconds(30);
         public static readonly TimeSpan DefaultConnectionTimeout = TimeSpan.FromMinutes(5);
         public static readonly TimeSpan DefaultExpirationTimeout = TimeSpan.FromHours(1);
@@ -22,8 +21,7 @@ namespace Snowflake.Data.Core
         public const int DefaultMaxHttpRetries = 7;
         public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
-        private static readonly List<string> s_changedSessionValues = ChangedSessionBehaviorExtensions.StringValues();
-        
+
         internal bool validateDefaultParameters;
         internal bool clientSessionKeepAlive;
         internal TimeSpan connectionTimeout;
@@ -47,7 +45,7 @@ namespace Snowflake.Data.Core
             extractedProperties.CheckPropertiesAreValid();
             return extractedProperties;
         }
-        
+
         private void CheckPropertiesAreValid()
         {
             try
@@ -126,7 +124,7 @@ namespace Snowflake.Data.Core
                 s_logger.Warn($"Max retry count provided is 0. Retry count will be infinite");
             }
         }
-        
+
         private void ValidateMinMaxPoolSize()
         {
             if (_minPoolSize > _maxPoolSize)
@@ -143,7 +141,7 @@ namespace Snowflake.Data.Core
             }
             if (TimeoutHelper.IsZeroLength(_waitingForSessionIdleTimeout))
             {
-                s_logger.Warn("Waiting for idle session timeout is 0. There will be no waiting for idle session");   
+                s_logger.Warn("Waiting for idle session timeout is 0. There will be no waiting for idle session");
             }
         }
 
@@ -219,14 +217,14 @@ namespace Snowflake.Data.Core
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED)
                 };
             }
-            
+
             private ChangedSessionBehavior ExtractChangedSession(
                 SessionPropertiesWithDefaultValuesExtractor extractor,
                 SFSessionProperty property) =>
                 extractor.ExtractPropertyWithDefaultValue(
                     property,
-                    ChangedSessionBehaviorExtensions.From,
-                    s => !string.IsNullOrEmpty(s) && s_changedSessionValues.Contains(s, StringComparer.OrdinalIgnoreCase),
+                    Enum.Parse<ChangedSessionBehavior>,
+                    s => !string.IsNullOrEmpty(s) && Enum.IsDefined(typeof(ChangedSessionBehavior), s),
                     b => true
                 );
         }

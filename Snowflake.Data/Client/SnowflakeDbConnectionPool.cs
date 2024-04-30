@@ -48,9 +48,15 @@ namespace Snowflake.Data.Client
             return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, password));
         }
 
-        internal static SessionPool GetPool(string connectionString)
+        public static SnowflakeDbSessionPool GetPool(string connectionString)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
+            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString));
+        }
+
+        internal static SessionPool GetPoolInternal(string connectionString)
+        {
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPoolInternal");
             return ConnectionManager.GetPool(connectionString);
         }
 

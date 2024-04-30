@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core
         MAXPOOLSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "2")]
         MINPOOLSIZE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "OriginalPool")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "Destroy")]
         CHANGEDSESSION,
         [SFSessionPropertyAttr(required = false, defaultValue = "30s")]
         WAITINGFORIDLESESSIONTIMEOUT,
