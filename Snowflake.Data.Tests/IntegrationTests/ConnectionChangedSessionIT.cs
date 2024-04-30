@@ -129,11 +129,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var sessionId = connection.SfSession.sessionId;
             connection.Close();
 
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.AreEqual(0, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
 

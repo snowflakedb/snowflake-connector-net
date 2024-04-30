@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var connectionString = ConnectionString + "application=TestWaitForMaxSize3;waitingForIdleSessionTimeout=3s;maxPoolSize=2;minPoolSize=0";
-            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             const long ADelay = 0;
             const long BDelay = 400;
@@ -262,8 +262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConnectionPoolDisable()
         {
             // arrange
-            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
-            pool.SetPooling(false);
+            var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString + ";poolingEnabled=false");
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
 
@@ -322,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             const int ExpirationTimeoutInSeconds = 10;
             var connectionString = ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2";
-            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
 
             // act

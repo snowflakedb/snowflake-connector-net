@@ -223,7 +223,7 @@ namespace Snowflake.Data.Core
                 SFSessionProperty property) =>
                 extractor.ExtractPropertyWithDefaultValue(
                     property,
-                    Enum.Parse<ChangedSessionBehavior>,
+                    i => (ChangedSessionBehavior)Enum.Parse(typeof(ChangedSessionBehavior), i),
                     s => !string.IsNullOrEmpty(s) && Enum.IsDefined(typeof(ChangedSessionBehavior), s),
                     b => true
                 );
