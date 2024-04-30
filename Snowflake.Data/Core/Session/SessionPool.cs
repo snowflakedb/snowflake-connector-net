@@ -419,6 +419,7 @@ namespace Snowflake.Data.Core.Session
                 session.SessionPropertiesChanged &&
                 _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
             {
+                s_logger.Debug("Session returning to pool was changed. Destroying the session.");
                 session.SetPooling(false);
             }
 

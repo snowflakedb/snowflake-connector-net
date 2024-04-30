@@ -478,12 +478,42 @@ namespace Snowflake.Data.Core
             // with HTAP session metadata removal database/schema might be not returned in query result
             if (!String.IsNullOrEmpty(finalSessionValue))
             {
-                if (!String.IsNullOrEmpty(initialSessionValue) && initialSessionValue != finalSessionValue)
+                if (!String.IsNullOrEmpty(initialSessionValue) && !IsEqualSkippingQuotes(initialSessionValue, finalSessionValue))
                 {
                     sessionPropertiesChanged = true;
                 }
                 initialSessionValue = finalSessionValue;
             }
+        }
+
+        private static bool IsEqualSkippingQuotes(string value1, string value2)
+        {
+            bool wasUnquoted1 = false, wasUnquoted2 = false;
+            var unquotedValue1  = Unquote(value1, ref wasUnquoted1);
+            var unquotedValue2  = Unquote(value2, ref wasUnquoted2);
+            return string.Equals(unquotedValue1,
+                unquotedValue2,
+                wasUnquoted1 || wasUnquoted2 ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        private static string Unquote(string value, ref bool unquoted)
+        {
+            if (value is null)
+                return value;
+            var valueLength = value.Length;
+            var unquotedJson = valueLength >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+            var unquotedStr = valueLength >= 2 && value[0] == '"' && value[valueLength-1] == '"';
+
+            var ret =  value;
+            if (unquotedJson)
+            {
+                ret = value.Substring(2, valueLength - 4);
+            } else if (unquotedStr)
+            {
+                ret = value.Substring(1, valueLength - 2);
+            }
+            unquoted = unquotedJson || unquotedStr;
+            return ret;
         }
 
         internal bool SessionPropertiesChanged => sessionPropertiesChanged;

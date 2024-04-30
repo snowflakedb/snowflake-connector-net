@@ -156,5 +156,61 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
+
+        [Test]
+        public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
+        {
+            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+
+            var responseData = new QueryExecResponseData()
+            {
+                finalDatabaseName = TestEnvironment.TestConfig.database.ToLower(),
+                finalSchemaName = TestEnvironment.TestConfig.schema.ToUpper(),
+                finalRoleName = $"{char.ToUpper(TestEnvironment.TestConfig.role[0])}{TestEnvironment.TestConfig.role.Substring(1).ToLower()}",
+                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+            };
+
+            var connection = new SnowflakeDbConnection(connectionString);
+            connection.Open();
+            var sessionId = connection.SfSession.sessionId;
+            connection.SfSession.UpdateSessionProperties(responseData);
+            connection.Close();
+
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+
+            var connection2 = new SnowflakeDbConnection(connectionString);
+            connection2.Open();
+            Assert.AreEqual(sessionId, connection2.SfSession.sessionId);
+            connection2.Close();
+        }
+
+        [Test]
+        public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
+        {
+            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+
+            var responseData = new QueryExecResponseData()
+            {
+                finalDatabaseName = TestEnvironment.TestConfig.database,
+                finalSchemaName = TestEnvironment.TestConfig.schema,
+                finalRoleName = $"\\\"SomeQuotedValue\\\"",
+                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+            };
+
+            var connection = new SnowflakeDbConnection(connectionString);
+            connection.Open();
+            var sessionId = connection.SfSession.sessionId;
+            connection.SfSession.UpdateSessionProperties(responseData);
+            connection.Close();
+
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+
+            var connection2 = new SnowflakeDbConnection(connectionString);
+            connection2.Open();
+            Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
+            connection2.Close();
+        }
     }
 }
