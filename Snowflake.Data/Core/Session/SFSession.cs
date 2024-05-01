@@ -128,7 +128,7 @@ namespace Snowflake.Data.Core
 
                 if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
                 {
-                    logger.Error("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
+                    logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
                     _idToken = null;
                     authenticator.Authenticate();
                 }
