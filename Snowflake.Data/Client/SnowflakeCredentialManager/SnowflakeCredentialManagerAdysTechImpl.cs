@@ -19,12 +19,13 @@ namespace Snowflake.Data.Client
         {
             try
             {
+                s_logger.Debug($"Getting the credentials for key: {key}");
                 var networkCredentials = CredentialManager.GetCredentials(key);
                 return networkCredentials.Password;
             }
             catch (NullReferenceException)
             {
-                s_logger.Info("Unable to get credentials for the specified key");
+                s_logger.Info($"Unable to get credentials for key: {key}");
                 return "";
             }
         }
@@ -37,12 +38,13 @@ namespace Snowflake.Data.Client
             }
             catch (CredentialAPIException)
             {
-                s_logger.Info("Unable to remove credentials because the specified key did not exist in the credential manager");
+                s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
             }
         }
 
         public void SaveCredentials(string key, string token)
         {
+            s_logger.Debug($"Saving the credentials for key: {key}");
             var networkCredentials = new NetworkCredential(key, token);
             CredentialManager.SaveCredentials(key, networkCredentials);
         }

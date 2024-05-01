@@ -21,11 +21,13 @@ namespace Snowflake.Data.Client
 
         public static void UseDefaultCredentialManager()
         {
+            s_logger.Info("Clearing the custom credential manager");
             s_customCredentialManager = null;
         }
 
         public static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager)
         {
+            s_logger.Info("Setting the custom credential manager");
             s_customCredentialManager = customCredentialManager;
         }
 

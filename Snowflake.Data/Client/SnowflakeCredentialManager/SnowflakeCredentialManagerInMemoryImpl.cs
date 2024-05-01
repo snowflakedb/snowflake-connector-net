@@ -72,6 +72,7 @@ namespace Snowflake.Data.Client
             EncryptedToken token;
             s_credentials.TryGetValue(key, out token);
 
+            s_logger.Debug($"Getting credentials from memory for key: {key}");
             if (token.Bytes == null)
             {
                 s_logger.Info("Unable to get credentials for the specified key");
@@ -85,11 +86,13 @@ namespace Snowflake.Data.Client
 
         public void RemoveCredentials(string key)
         {
+            s_logger.Debug($"Removing credentials from memory for key: {key}");
             s_credentials.Remove(key);
         }
 
         public void SaveCredentials(string key, string token)
         {
+            s_logger.Debug($"Saving credentials into memory for key: {key}");
             s_credentials[key] = SnowflakeCredentialEncryption.EncryptToken(token);
         }
     }
