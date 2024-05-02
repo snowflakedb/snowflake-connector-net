@@ -49,15 +49,15 @@ namespace Snowflake.Data.Client
 
         private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath)
         {
-            s_logger.Info("Setting the json credential cache path");
             var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
             _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile) : customDirectory;
             _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
+            s_logger.Info($"Setting the json credential cache path to {_jsonCacheFilePath}");
         }
 
         internal void WriteToJsonFile(string content)
         {
-            s_logger.Debug("Writing credentials to json file");
+            s_logger.Debug($"Writing credentials to json file in {_jsonCacheFilePath}");
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 _fileOperations.Write(_jsonCacheFilePath, content);
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Client
                 {
                     _directoryOperations.CreateDirectory(_jsonCacheDirectory);
                 }
-                s_logger.Info("Creating the json file for credential cache");
+                s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
                 var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
                 if (createFileResult == -1)
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Client
 
         public string GetCredentials(string key)
         {
-            s_logger.Debug($"Getting credentials from json file for key: {key}");
+            s_logger.Debug($"Getting credentials from json file in {_jsonCacheFilePath} for key: {key}");
             if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Client
 
         public void RemoveCredentials(string key)
         {
-            s_logger.Debug($"Removing credentials from json file for key: {key}");
+            s_logger.Debug($"Removing credentials from json file in {_jsonCacheFilePath} for key: {key}");
             if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Client
 
         public void SaveCredentials(string key, string token)
         {
-            s_logger.Debug($"Saving credentials to json file for key: {key}");
+            s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
             KeyToken keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyToken();
             keyTokenPairs[key] = token;
 
