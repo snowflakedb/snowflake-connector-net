@@ -20,6 +20,7 @@ namespace Snowflake.Data.Core.Session
         private readonly object _sessionPoolLock = new object();
         private static ISessionFactory s_sessionFactory = new SessionFactory();
 
+        private readonly Guid _id = Guid.NewGuid();
         private readonly List<SFSession> _idleSessions;
         private readonly IWaitingQueue _waitingForIdleSessionQueue;
         private readonly ISessionCreationTokenCounter _sessionCreationTokenCounter;
@@ -59,8 +60,9 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
         {
-            s_logger.Debug($"Creating a pool identified by connection string: {connectionString}");
+            s_logger.Debug("Creating a connection pool");
             var extracted = ExtractConfig(connectionString, password);
+            s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
             return new SessionPool(connectionString, password, extracted.Item1, extracted.Item2);
         }
 
@@ -595,9 +597,17 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal String PoolIdentification() =>
-            IsMultiplePoolsVersion()
-                ? " [pool: " + _connectionStringWithoutSecrets + "]"
-                : "";
+        internal String PoolIdentification()
+        {
+            if (!IsMultiplePoolsVersion())
+                return "";
+            var identification =
+#if SF_PUBLIC_ENVIRONMENT
+            _id.ToString();
+#else
+            _connectionStringWithoutSecrets;
+#endif
+            return " [pool: " + identification + "]";
+        }
     }
 }

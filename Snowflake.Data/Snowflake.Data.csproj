@@ -17,7 +17,7 @@
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
@@ -31,7 +31,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472'">
     <Reference Include="System.Net.Http" />
   </ItemGroup>
@@ -45,7 +45,7 @@
     <!--needed by Moq to be able to mock internal interfaces-->
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
@@ -55,13 +55,17 @@
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AssemblyVersion>$(Version)</AssemblyVersion>
   </PropertyGroup>
-  
+
+  <PropertyGroup>
+    <DefineConstants Condition="'$(DefineAdditionalConstants)' != ''">$(DefineConstants);$(DefineAdditionalConstants)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
