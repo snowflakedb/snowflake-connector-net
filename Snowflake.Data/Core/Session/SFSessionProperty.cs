@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
         DB,
         [SFSessionPropertyAttr(required = false)]
         HOST,
-        [SFSessionPropertyAttr(required = true)]
+        [SFSessionPropertyAttr(required = true, IsSecret = true)]
         PASSWORD,
         [SFSessionPropertyAttr(required = false, defaultValue = "443")]
         PORT,
@@ -46,11 +46,11 @@ namespace Snowflake.Data.Core
         VALIDATE_DEFAULT_PARAMETERS,
         [SFSessionPropertyAttr(required = false)]
         PRIVATE_KEY_FILE,
-        [SFSessionPropertyAttr(required = false)]
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PRIVATE_KEY_PWD,
-        [SFSessionPropertyAttr(required = false)]
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PRIVATE_KEY,
-        [SFSessionPropertyAttr(required = false)]
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
         TOKEN,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         INSECUREMODE,
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
         PROXYPORT,
         [SFSessionPropertyAttr(required = false)]
         PROXYUSER,
-        [SFSessionPropertyAttr(required = false)]
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PROXYPASSWORD,
         [SFSessionPropertyAttr(required = false)]
         NONPROXYHOSTS,
@@ -117,6 +117,8 @@ namespace Snowflake.Data.Core
         public bool required { get; set; }
 
         public string defaultValue { get; set; }
+
+        public bool IsSecret { get; set; } = false;
     }
 
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
@@ -126,15 +128,11 @@ namespace Snowflake.Data.Core
         internal string ConnectionStringWithoutSecrets { get; set; }
 
         // Connection string properties to obfuscate in the log
-        private static readonly List<string> s_secretProps =
-            new List<SFSessionProperty>
-            {
-                SFSessionProperty.PASSWORD,
-                SFSessionProperty.PRIVATE_KEY,
-                SFSessionProperty.TOKEN,
-                SFSessionProperty.PRIVATE_KEY_PWD,
-                SFSessionProperty.PROXYPASSWORD
-            }.Select(p => p.ToString()).ToList();
+        private static readonly List<string> s_secretProps = Enum.GetValues(typeof(SFSessionProperty))
+            .Cast<SFSessionProperty>()
+            .Where(p => p.GetAttribute<SFSessionPropertyAttr>().IsSecret)
+            .Select(p => p.ToString())
+            .ToList();
 
         private static readonly List<string> s_accountRegexStrings = new List<string>
         {

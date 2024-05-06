@@ -326,8 +326,7 @@ namespace Snowflake.Data.Core.Session
                     {
                         _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                         _busySessionsCounter.Increase();
-                        var poolState = GetCurrentState();
-                        s_logger.Debug($"Pool state after creating a session {poolState}" + PoolIdentification());
+                        s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                     }
                 }
                 _sessionPoolEventHandler.OnNewSessionCreated(this);
@@ -342,8 +341,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     lock (_sessionPoolLock)
                     {
-                        var poolState = GetCurrentState();
-                        s_logger.Debug($"Failed to create a new session {poolState}" + PoolIdentification());
+                        s_logger.Debug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
                     }
                 }
                 if (e is SnowflakeDbException)
@@ -377,8 +375,7 @@ namespace Snowflake.Data.Core.Session
                         {
                             lock (_sessionPoolLock)
                             {
-                                var poolState = GetCurrentState();
-                                s_logger.Debug($"Failed to create a new session {poolState}" + PoolIdentification());
+                                s_logger.Debug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
                             }
                         }
                     }
@@ -400,8 +397,7 @@ namespace Snowflake.Data.Core.Session
                             {
                                 _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                                 _busySessionsCounter.Increase();
-                                var poolState = GetCurrentState();
-                                s_logger.Debug($"Pool state after creating a session {poolState}" + PoolIdentification());
+                                s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                             }
                         }
 

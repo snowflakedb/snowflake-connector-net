@@ -1,5 +1,4 @@
 using System.Net;
-using System.Security;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
 
@@ -90,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestPoolIdentificationForInvalidConnectionString()
         {
             // arrange
-            var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443";
+            var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443"; // invalid because password is not provided
             var pool = SessionPool.CreateSessionPool(invalidConnectionString, null);
 
             // act
