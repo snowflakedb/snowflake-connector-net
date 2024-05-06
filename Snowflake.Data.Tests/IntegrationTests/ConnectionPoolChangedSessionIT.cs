@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionChangedSessionIT : SFBaseTest
+    public class ConnectionPoolChangedSessionIT : SFBaseTest
     {
         private readonly QueryExecResponseData _queryExecResponseChangedRole = new()
         {

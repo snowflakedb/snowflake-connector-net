@@ -532,7 +532,12 @@ namespace Snowflake.Data.Core.Session
 
         public int GetMaxPoolSize() => _poolConfig.MaxPoolSize;
 
-        public int GetMinPoolSize() => _poolConfig.MinPoolSize;
+        public int GetMinPoolSize()
+        {
+            return IsMultiplePoolsVersion()
+                ? _poolConfig.MinPoolSize
+                : throw new InvalidOperationException("Feature not supported in a Connection Cache");
+        }
 
         public ChangedSessionBehavior GetChangedSession() => _poolConfig.ChangedSession;
 

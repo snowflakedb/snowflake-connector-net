@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -476,9 +476,9 @@ namespace Snowflake.Data.Core
         private void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
         {
             // with HTAP session metadata removal database/schema might be not returned in query result
-            if (!String.IsNullOrEmpty(finalSessionValue))
+            if (!string.IsNullOrEmpty(finalSessionValue))
             {
-                if (!String.IsNullOrEmpty(initialSessionValue) && !IsEqualSkippingQuotes(initialSessionValue, finalSessionValue))
+                if (!string.IsNullOrEmpty(initialSessionValue) && !IsEqualSkippingQuotes(initialSessionValue, finalSessionValue))
                 {
                     sessionPropertiesChanged = true;
                 }
