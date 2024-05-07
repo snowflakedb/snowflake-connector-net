@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch {}
 
             // assert
-            var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            var pool = SnowflakeDbConnectionPool.GetPoolInternal(connection.ConnectionString);
             var poolState = pool.GetCurrentState();
             logger.Warn($"Pool state: {poolState}");
             Assert.Less(pool.GetCurrentPoolSize(), SFSessionHttpClientProperties.DefaultMinPoolSize); // for invalid connection string it is used default min pool size

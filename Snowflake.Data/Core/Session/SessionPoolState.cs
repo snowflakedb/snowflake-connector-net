@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Core.Session
 {
-    public class SessionPoolState
+    internal class SessionPoolState
     {
         private readonly int _idleSessionsCount;
         private readonly int _busySessionsCount;
