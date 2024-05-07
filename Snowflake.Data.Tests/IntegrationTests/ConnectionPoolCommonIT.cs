@@ -103,10 +103,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn1.ConnectionString = "bad connection string";
             Assert.Throws<SnowflakeDbException>(() => conn1.Open());
             conn1.Close();
-            Thread.Sleep(3000); // minPoolSize = 2 causes that another thread has been started. We sleep to make that thread finish.
 
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(conn1.ConnectionString).GetCurrentPoolSize());
+            if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
+            {
+                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetPool(conn1.ConnectionString).GetCurrentPoolSize());
+            }
+            else
+            {
+                var thrown = Assert.Throws<SnowflakeDbException>(() => SnowflakeDbConnectionPool.GetPool(conn1.ConnectionString));
+                Assert.That(thrown.Message, Does.Contain("Connection string is invalid"));
+            }
         }
 
         [Test]

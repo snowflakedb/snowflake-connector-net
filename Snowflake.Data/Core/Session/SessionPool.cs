@@ -111,10 +111,10 @@ namespace Snowflake.Data.Core.Session
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
-            catch (SnowflakeDbException exception)
+            catch (Exception exception)
             {
-                s_logger.Error("Could not extract pool configuration, using default one", exception);
-                return Tuple.Create(new ConnectionPoolConfig(), "could not parse connection string");
+                s_logger.Error("Failed to extract pool configuration", exception);
+                throw;
             }
         }
 
