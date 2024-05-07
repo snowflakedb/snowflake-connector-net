@@ -483,7 +483,7 @@ namespace Snowflake.Data.Core
                 if (!string.IsNullOrEmpty(initialSessionValue))
                 {
                     quoted |= initialSessionValue.StartsWith("\"");
-                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.InvariantCultureIgnoreCase))
+                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                     {
                         sessionPropertiesChanged = true;
                         initialSessionValue = unquotedFinalValue;
@@ -500,7 +500,7 @@ namespace Snowflake.Data.Core
         {
             if (value is null)
                 return value;
-            unquoted = value.Length >= 2 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+            unquoted = value.Length >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
             return unquoted ? value.Replace("\\\"", "\"") : value;
         }
 
