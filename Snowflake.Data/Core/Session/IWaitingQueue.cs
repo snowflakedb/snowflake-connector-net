@@ -10,6 +10,8 @@ namespace Snowflake.Data.Core.Session
 
         bool IsAnyoneWaiting();
 
+        int WaitingCount();
+
         bool IsWaitingEnabled();
     }
 }

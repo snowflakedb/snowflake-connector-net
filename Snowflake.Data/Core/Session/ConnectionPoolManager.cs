@@ -42,13 +42,13 @@ namespace Snowflake.Data.Core.Session
 
         public bool AddSession(SFSession session)
         {
-            s_logger.Debug($"ConnectionPoolManager::AddSession for {session.ConnectionString}");
+            s_logger.Debug("ConnectionPoolManager::AddSession");
             return GetPool(session.ConnectionString, session.Password).AddSession(session, true);
         }
 
         public void ReleaseBusySession(SFSession session)
         {
-            s_logger.Debug($"ConnectionPoolManager::ReleaseBusySession for {session.ConnectionString}");
+            s_logger.Debug("ConnectionPoolManager::ReleaseBusySession");
             GetPool(session.ConnectionString, session.Password).ReleaseBusySession(session);
         }
 

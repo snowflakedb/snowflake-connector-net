@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
 
@@ -17,32 +19,32 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.IsFalse(pool.IsConfigOverridden());
         }
-        
+
         [Test]
         public void TestOverrideMaxPoolSize()
         {
             // arrange
             var pool = SessionPool.CreateSessionPool(ConnectionString, null);
             var newMaxPoolSize = 15;
-            
+
             // act
             pool.SetMaxPoolSize(newMaxPoolSize);
-            
+
             // assert
             Assert.AreEqual(newMaxPoolSize, pool.GetMaxPoolSize());
             Assert.IsTrue(pool.IsConfigOverridden());
         }
-        
+
         [Test]
         public void TestOverrideExpirationTimeout()
         {
             // arrange
             var pool = SessionPool.CreateSessionPool(ConnectionString, null);
             var newExpirationTimeoutSeconds = 15;
-            
+
             // act
             pool.SetTimeout(newExpirationTimeoutSeconds);
-            
+
             // assert
             Assert.AreEqual(newExpirationTimeoutSeconds, pool.GetTimeout());
             Assert.IsTrue(pool.IsConfigOverridden());
@@ -56,10 +58,74 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             pool.SetPooling(false);
-            
+
             // assert
             Assert.IsFalse(pool.GetPooling());
             Assert.IsTrue(pool.IsConfigOverridden());
+        }
+
+        [Test]
+        [TestCase("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;private_key=SomePrivateKey;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;token=someToken;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;USER=SomeUser;PORT=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";USER=\"SomeUser\";PORT=\"443\"", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string expectedPoolIdentification)
+        {
+            // arrange
+            var securePassword = password == null ? null : new NetworkCredential("", password).SecurePassword;
+            var pool = SessionPool.CreateSessionPool(connectionString, securePassword);
+
+            // act
+            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
+
+            // assert
+            Assert.AreEqual(expectedPoolIdentification, poolIdentification);
+        }
+
+        [Test]
+        public void TestPoolIdentificationForInvalidConnectionString()
+        {
+            // arrange
+            var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443"; // invalid because password is not provided
+            var pool = SessionPool.CreateSessionPool(invalidConnectionString, null);
+
+            // act
+            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
+
+            // assert
+            Assert.AreEqual(" [pool: could not parse connection string]", poolIdentification);
+        }
+
+        [Test]
+        public void TestPoolIdentificationBasedOnInternalId()
+        {
+            // arrange
+            var connectionString = "account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;port=443";
+            var pool = SessionPool.CreateSessionPool(connectionString, null);
+            var poolIdRegex = new Regex(@"^ \[pool: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]$");
+
+            // act
+            var poolIdentification = pool.PoolIdentificationBasedOnInternalId;
+
+            // assert
+            Assert.IsTrue(poolIdRegex.IsMatch(poolIdentification));
+        }
+
+        [Test]
+        public void TestPoolIdentificationForOldPool()
+        {
+            // arrange
+            var pool = SessionPool.CreateSessionCache();
+
+            // act
+            var poolIdentification = pool.PoolIdentification();
+
+            // assert
+            Assert.AreEqual("", poolIdentification);
         }
     }
 }

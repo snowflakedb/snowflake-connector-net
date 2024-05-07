@@ -61,7 +61,7 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           dotnet restore
-          dotnet build -f ${{ matrix.dotnet }}
+          dotnet build -f ${{ matrix.dotnet }} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
@@ -118,7 +118,7 @@ jobs:
       - name: Build Driver
         run: |
           dotnet restore
-          dotnet build
+          dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
@@ -175,7 +175,7 @@ jobs:
       - name: Build Driver
         run: |
           dotnet restore
-          dotnet build
+          dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
