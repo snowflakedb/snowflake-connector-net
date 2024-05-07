@@ -482,7 +482,7 @@ namespace Snowflake.Data.Core
                 string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
                 if (!string.IsNullOrEmpty(initialSessionValue))
                 {
-                    quoted |= initialSessionValue.StartsWith('\"');
+                    quoted |= initialSessionValue.StartsWith("\"");
                     if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.InvariantCultureIgnoreCase))
                     {
                         sessionPropertiesChanged = true;
