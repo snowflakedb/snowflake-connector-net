@@ -18,6 +18,11 @@ namespace Snowflake.Data.Core.Session
             return false;
         }
 
+        public int WaitingCount()
+        {
+            return 0;
+        }
+
         public bool IsWaitingEnabled()
         {
             return false;

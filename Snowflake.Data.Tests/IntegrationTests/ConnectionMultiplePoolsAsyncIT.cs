@@ -1,4 +1,3 @@
-using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +6,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
+        private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [SetUp]
         public new void BeforeTest()
@@ -65,6 +66,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            var poolState = pool.GetCurrentState();
+            logger.Warn($"Pool state: {poolState}");
             Assert.Less(pool.GetCurrentPoolSize(), SFSessionHttpClientProperties.DefaultMinPoolSize); // for invalid connection string it is used default min pool size
 
             // cleanup
