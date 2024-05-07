@@ -234,6 +234,24 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}"));
         }
 
+        [Test]
+        [TestCase("OriginalPool", ChangedSessionBehavior.OriginalPool)]
+        [TestCase("originalpool", ChangedSessionBehavior.OriginalPool)]
+        [TestCase("ORIGINALPOOL", ChangedSessionBehavior.OriginalPool)]
+        [TestCase("Destroy", ChangedSessionBehavior.Destroy)]
+        [TestCase("DESTROY", ChangedSessionBehavior.Destroy)]
+        public void TestExtractChangedSessionBehaviour(string propertyValue, ChangedSessionBehavior expectedChangedSession)
+        {
+            // arrange
+            var connectionString = $"account=test;user=test;password=test;changedSession={propertyValue}";
+
+            // act
+            var result = ExtractConnectionPoolConfig(connectionString);
+
+            // assert
+            Assert.AreEqual(expectedChangedSession, result.ChangedSession);
+        }
+
         private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString)
         {
             var properties = SFSessionProperties.ParseConnectionString(connectionString, null);

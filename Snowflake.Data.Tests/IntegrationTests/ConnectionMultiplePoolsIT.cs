@@ -50,6 +50,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(connectionString).GetCurrentPoolSize());
+            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(connectionString, null).GetCurrentPoolSize());
         }
 
         [Test]

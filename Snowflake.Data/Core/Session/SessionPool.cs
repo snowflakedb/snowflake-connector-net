@@ -33,6 +33,8 @@ namespace Snowflake.Data.Core.Session
         private readonly ConnectionPoolConfig _poolConfig;
         private bool _configOverriden = false;
 
+        private static readonly InvalidOperationException s_notSupportedInCachePoolException = new InvalidOperationException("Feature not supported in a Connection Cache");
+
         private SessionPool()
         {
             // acquiring a lock not needed because one is already acquired in SnowflakeDbConnectionPool
@@ -550,13 +552,18 @@ namespace Snowflake.Data.Core.Session
         {
             return IsMultiplePoolsVersion()
                 ? _poolConfig.MinPoolSize
-                : throw new InvalidOperationException("Feature not supported in a Connection Cache");
+                : throw s_notSupportedInCachePoolException;
         }
 
-        public ChangedSessionBehavior GetChangedSession() => _poolConfig.ChangedSession;
+        public ChangedSessionBehavior GetChangedSession() =>
+            IsMultiplePoolsVersion()
+                ? _poolConfig.ChangedSession
+                : throw s_notSupportedInCachePoolException;
 
-
-        public long GetWaitForIdleSessionTimeout() => (long)_poolConfig.WaitingForIdleSessionTimeout.TotalSeconds;
+        public long GetWaitForIdleSessionTimeout() =>
+            IsMultiplePoolsVersion()
+                ? (long)_poolConfig.WaitingForIdleSessionTimeout.TotalSeconds
+                : throw s_notSupportedInCachePoolException;
 
         public long GetConnectionTimeout()
         {
