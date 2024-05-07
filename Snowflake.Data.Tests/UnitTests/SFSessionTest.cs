@@ -93,5 +93,35 @@ namespace Snowflake.Data.Tests.UnitTests
             // assert
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
+
+        [TestCase(null, "accountDefault", "accountDefault", false)]
+        [TestCase("initial", "initial", "initial", false)]
+        [TestCase("initial", null, "initial", false)]
+        [TestCase("initial", "IniTiaL", "initial", false)]
+        [TestCase("initial", "final", "final", true)]
+        [TestCase("initial", "\\\"final\\\"", "\"final\"", true)]
+        [TestCase("initial", "\\\"Final\\\"", "\"Final\"", true)]
+        [TestCase("\"Ini\\t\"ial\"", "\\\"Ini\\t\"ial\\\"", "\"Ini\\t\"ial\"", false)]
+        [TestCase("\"initial\"", "initial", "initial", true)]
+        [TestCase("\"initial\"", "\\\"initial\\\"", "\"initial\"", false)]
+        [TestCase("init\"ial", "init\"ial", "init\"ial", false)]
+        [TestCase("\"init\"ial\"", "\\\"init\"ial\\\"", "\"init\"ial\"", false)]
+        [TestCase("\"init\"ial\"", "\\\"Init\"ial\\\"", "\"Init\"ial\"", true)]
+        public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
+        {
+            // Arrange
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            var changedSessionValue = sessionInitialValue;
+
+            // Act
+            sfSession.UpdateSessionProperty(ref changedSessionValue, serverResponseFinalSessionValue);
+
+            // Assert
+            Assert.AreEqual(sfSession.SessionPropertiesChanged, wasChanged);
+            if (wasChanged || sessionInitialValue is null)
+                Assert.AreEqual(unquotedExpectedFinalValue, changedSessionValue);
+            else
+                Assert.AreEqual(sessionInitialValue, changedSessionValue);
+        }
     }
 }

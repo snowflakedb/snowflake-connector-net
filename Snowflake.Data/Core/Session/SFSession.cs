@@ -473,47 +473,35 @@ namespace Snowflake.Data.Core
             UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
         }
 
-        private void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
+        internal void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
         {
             // with HTAP session metadata removal database/schema might be not returned in query result
             if (!string.IsNullOrEmpty(finalSessionValue))
             {
-                if (!string.IsNullOrEmpty(initialSessionValue) && !IsEqualSkippingQuotes(initialSessionValue, finalSessionValue))
+                bool quoted = false;
+                string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
+                if (!string.IsNullOrEmpty(initialSessionValue))
                 {
-                    sessionPropertiesChanged = true;
+                    quoted |= initialSessionValue.StartsWith('\"');
+                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        sessionPropertiesChanged = true;
+                        initialSessionValue = unquotedFinalValue;
+                    }
                 }
-                initialSessionValue = finalSessionValue;
+                else // null session value gets populated and is not treated as a session property change
+                {
+                    initialSessionValue = unquotedFinalValue;
+                }
             }
         }
 
-        private static bool IsEqualSkippingQuotes(string value1, string value2)
-        {
-            bool wasUnquoted1 = false, wasUnquoted2 = false;
-            var unquotedValue1  = Unquote(value1, ref wasUnquoted1);
-            var unquotedValue2  = Unquote(value2, ref wasUnquoted2);
-            return string.Equals(unquotedValue1,
-                unquotedValue2,
-                wasUnquoted1 || wasUnquoted2 ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        private static string Unquote(string value, ref bool unquoted)
+        private static string UnquoteJson(string value, ref bool unquoted)
         {
             if (value is null)
                 return value;
-            var valueLength = value.Length;
-            var unquotedJson = valueLength >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
-            var unquotedStr = valueLength >= 2 && value[0] == '"' && value[valueLength-1] == '"';
-
-            var ret =  value;
-            if (unquotedJson)
-            {
-                ret = value.Substring(2, valueLength - 4);
-            } else if (unquotedStr)
-            {
-                ret = value.Substring(1, valueLength - 2);
-            }
-            unquoted = unquotedJson || unquotedStr;
-            return ret;
+            unquoted = value.Length >= 2 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+            return unquoted ? value.Replace("\\\"", "\"") : value;
         }
 
         internal bool SessionPropertiesChanged => sessionPropertiesChanged;
