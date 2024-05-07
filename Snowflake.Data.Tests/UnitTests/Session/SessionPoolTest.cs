@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
 
@@ -72,14 +73,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;USER=SomeUser;PORT=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";USER=\"SomeUser\";PORT=\"443\"", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        public void TestPoolIdentification(string connectionString, string password, string expectedPoolIdentification)
+        public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string expectedPoolIdentification)
         {
             // arrange
             var securePassword = password == null ? null : new NetworkCredential("", password).SecurePassword;
             var pool = SessionPool.CreateSessionPool(connectionString, securePassword);
 
             // act
-            var poolIdentification = pool.PoolIdentification();
+            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
 
             // assert
             Assert.AreEqual(expectedPoolIdentification, poolIdentification);
@@ -93,10 +94,25 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(invalidConnectionString, null);
 
             // act
-            var poolIdentification = pool.PoolIdentification();
+            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
 
             // assert
             Assert.AreEqual(" [pool: could not parse connection string]", poolIdentification);
+        }
+
+        [Test]
+        public void TestPoolIdentificationBasedOnInternalId()
+        {
+            // arrange
+            var connectionString = "account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;port=443";
+            var pool = SessionPool.CreateSessionPool(connectionString, null);
+            var poolIdRegex = new Regex(@"^ \[pool: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]$");
+
+            // act
+            var poolIdentification = pool.PoolIdentificationBasedOnInternalId;
+
+            // assert
+            Assert.IsTrue(poolIdRegex.IsMatch(poolIdentification));
         }
 
         [Test]

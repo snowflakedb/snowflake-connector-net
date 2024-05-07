@@ -524,6 +524,7 @@ namespace Snowflake.Data.Core.Session
 
         public void SetMaxPoolSize(int size)
         {
+            s_logger.Debug($"SessionPool::SetMaxPoolSize({size})" + PoolIdentification());
             _poolConfig.MaxPoolSize = size;
             _configOverriden = true;
         }
@@ -535,6 +536,7 @@ namespace Snowflake.Data.Core.Session
 
         public void SetTimeout(long seconds)
         {
+            s_logger.Debug($"SessionPool::SetTimeout({seconds})" + PoolIdentification());
             var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
             _poolConfig.ExpirationTimeout = timeout;
             _configOverriden = true;
@@ -593,17 +595,20 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal String PoolIdentification()
+        internal string PoolIdentification()
         {
             if (!IsMultiplePoolsVersion())
                 return "";
-            var identification =
+            return
 #if SF_PUBLIC_ENVIRONMENT
-            _id.ToString();
+                PoolIdentificationBasedOnInternalId;
 #else
-            _connectionStringWithoutSecrets;
+                PoolIdentificationBasedOnConnectionString;
 #endif
-            return " [pool: " + identification + "]";
         }
+
+        internal string PoolIdentificationBasedOnConnectionString => " [pool: " + _connectionStringWithoutSecrets + "]";
+
+        internal string PoolIdentificationBasedOnInternalId => " [pool: " + _id + "]";
     }
 }
