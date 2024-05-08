@@ -109,12 +109,23 @@ namespace Snowflake.Data.Core.Session
             {
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+                ValidatePasswordProvided(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
             catch (Exception exception)
             {
                 s_logger.Error("Failed to extract pool configuration", exception);
                 throw;
+            }
+        }
+
+        private static void ValidatePasswordProvided(SFSessionProperties properties)
+        {
+            var isPasswordGiven = !string.IsNullOrEmpty(properties[SFSessionProperty.PASSWORD]);
+            if (!isPasswordGiven)
+            {
+                s_logger.Error($"To obtain a pool a password must to be given with a connection string or SecureString parameter");
+                throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, "Could not provide the pool without the password");
             }
         }
 
