@@ -247,7 +247,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (password != null)
+            if (password != null && password.Length > 0)
             {
                 properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
             }
