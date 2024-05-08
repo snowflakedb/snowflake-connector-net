@@ -27,17 +27,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // act
             _credentialManager.SaveCredentials(key, expectedToken);
-            var actualToken = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.AreEqual(expectedToken, actualToken);
+            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
-            actualToken = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(actualToken));
+            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
         [Test]
@@ -61,6 +59,12 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
                 // assert
                 Assert.AreEqual(secondExpectedToken, _credentialManager.GetCredentials(key));
+
+                // act
+                _credentialManager.RemoveCredentials(key);
+
+                // assert
+                Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
             }
             catch (Exception ex)
             {
@@ -99,6 +103,17 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         public void SetUp()
         {
             _credentialManager = SnowflakeCredentialManagerAdysTechImpl.Instance;
+        }
+    }
+
+    [TestFixture]
+    [Platform("Win")]
+    public class SFMeziantouCredentialManagerTest : SFBaseCredentialManagerTest
+    {
+        [SetUp]
+        public void SetUp()
+        {
+            _credentialManager = SnowflakeCredentialManagerMeziantouImpl.Instance;
         }
     }
 
