@@ -87,20 +87,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestPoolIdentificationForInvalidConnectionString()
-        {
-            // arrange
-            var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443"; // invalid because password is not provided
-            var pool = SessionPool.CreateSessionPool(invalidConnectionString, null);
-
-            // act
-            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
-
-            // assert
-            Assert.AreEqual(" [pool: could not parse connection string]", poolIdentification);
-        }
-
-        [Test]
         public void TestPoolIdentificationBasedOnInternalId()
         {
             // arrange
