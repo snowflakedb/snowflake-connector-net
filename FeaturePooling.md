@@ -4,22 +4,24 @@
 
 v4.0.0 version of Snowflake .NET Driver provides multiple pools with couple of additional features according to the previous implementation.
 
-| Connection Pool Feature    | Connection String Parameter  | Default      | Method               | Description |
-|----------------------------|------------------------------|--------------|----------------------|-------------|
-| Multiple pools             |                              |              |                      | TODO        |
-| Minimum pool size          | MinPoolSize                  | 2            |                      |             |
-| Maximum pool size          | MaxPoolSize                  | 10           |                      |             |
-| Changed Session Behavior   | ChangedSession               | OriginalPool |                      |             |
-| Pool Size Exceeded Timeout | WaitingForIdleSessionTimeout | 30s          |                      |             |
-| Expiration Timeout         | ExpirationTimeout            | 60m          |                      |             |
-| Pooling Enabled            | PoolingEnabled               | true         |                      |             |
-| Connection Timeout         |                              | 300s         |                      |             |
-| Current Pool Size          |                              |              | GetCurrentPoolSize() |             |
-| Clear Pool                 |                              |              | ClearPool()          |             |
+| Connection Pool Feature    | Connection String Parameter  | Default      | Method                         |
+|----------------------------|------------------------------|--------------|--------------------------------|
+| Multiple pools             |                              |              |                                |
+| Minimum pool size          | MinPoolSize                  | 2            |                                |
+| Maximum pool size          | MaxPoolSize                  | 10           |                                |
+| Changed Session Behavior   | ChangedSession               | OriginalPool |                                |
+| Pool Size Exceeded Timeout | WaitingForIdleSessionTimeout | 30s          |                                |
+| Expiration Timeout         | ExpirationTimeout            | 60m          |                                |
+| Pooling Enabled            | PoolingEnabled               | true         |                                |
+| Connection Timeout         |                              | 300s         |                                |
+| Current Pool Size          |                              |              | GetCurrentPoolSize()           |
+| Clear Pool                 |                              |              | ClearPool() or ClearAllPools() |
 
 #### Multiple pools
 
-When a connection is first opened, a connection pool is created based on an exact matching algorithm that associates the pool with the connection string in the connection. Each connection pool is associated with a distinct connection string. When a new connection is opened, if the connection string is not an exact match to an existing pool, a new pool is created.
+When a first connection is opened, a connection pool is created based on an exact matching algorithm that associates the pool with the connection string of the connection. Each connection pool is associated with a distinct connection string. When a new connection is opened, if the connection string is not an exact match to an existing pool, a new pool is created.
+
+Different pools can have separate settings from the above settings for instance: minimal pool size or changed session behavior.
 
 ```cs
 using (var connection = new SnowflakeDbConnection(ConnectionString + ";application=App1"))
@@ -59,6 +61,7 @@ What counts for that are:
 - idle connections
 - busy connections (provided by the pool to the application)
 - connections during opening phase
+
 When a maximum pool size is reached any request to provide (open) another connection is waiting for any idle session to be returned to the pool.
 When an Idle Session Timeout is reached and an idle session is not returned an exception will get thrown.
 
@@ -107,9 +110,14 @@ Assert.AreEqual(2, poolSize);
 
 #### Changed Session Behavior
 
-When a connection gets changed...
+When an application does a change to the connection using one of SQL commands: `use schema`, `use database`, `use warehouse`, `use role` then such
+an affected connection is marked internally as no longer matching with the pool it originated from.
+When parameter ChangedSession is set to `OriginalPool` it allows the connection to be pooled.
+Parameter ChangedSession set to `Destroy` (default) ensures that the connection is not pooled and after Close is called the connection will be removed.
+The pool will recreate necessary connections according to the minimal pool size.
 
 ```cs
+
 ```
 
 #### Pool Size Exceeded Timeout
@@ -212,7 +220,7 @@ using (var connection = new SnowflakeDbConnection(connectionString))
 
 #### Pooling Enabled
 
-Enables or disables connection pooling for the given connection string.
+Enables or disables connection pooling for the pool identified by a given connection string.
 
 ```cs
 var connectionString = ConnectionString + ";PoolingEnabled=false";
@@ -228,6 +236,8 @@ Assert.AreEqual(0, poolSize);
 
 #### Current Pool Size
 
+Allows to check size of the given pool programatically. It is total number of all the connections: idle, busy and during initialization.
+
 ```cs
 var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 var poolSize = pool.GetCurrentPoolSize();
@@ -235,9 +245,28 @@ var poolSize = pool.GetCurrentPoolSize();
 Assert.AreEqual(2, poolSize);
 ```
 
-#### Clear Pool
+At the SnowflakeDbConnectionPool there is also a way to get sum of connections from all the pools.
 
 ```cs
+var pool1 = SnowflakeDbConnectionPool.GetPool(connectionString + ";MinPoolSize=2");
+var pool2 = SnowflakeDbConnectionPool.GetPool(connectionString + ";MinPoolSize=3");
+var poolsSize = SnowflakeDbConnectionPool.GetCurrentPoolSize();
+Assert.AreEqual(5, poolSize);
+```
+
+#### Clear Pool
+
+Interface allows to clear a particular pool or all the pools initiated by an application.
+Please keep in mind that a default of min pool size will be maintained.
+
+```cs
+var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+```
+
+There is also a way to clear all the pools initiated by an application.
+
+```cs
+SnowflakeDbConnectionPool.ClearAllPools();
 ```
 
 ### Single Connection Pool
@@ -249,13 +278,13 @@ Connection pooling usually reduces the lag time to make a connection. However, i
 
 The Snowflake .NET driver provides the following functions for managing connection pools.
 
-| Function                                        | Description                                                                                              |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| SnowflakeDbConnectionPool.ClearAllPools()       | Removes all connections from the connection pool.                                                        |
-| SnowflakeDbConnection.SetMaxPoolSize(n)         | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections.  |
-| SnowflakeDBConnection.SetTimeout(n)             | Sets the number of seconds to keep an unresponsive connection in the connection pool.                    |
-| SnowflakeDbConnectionPool.GetCurrentPoolSize()  | Returns the number of connections currently in the connection pool.                                      |
-| SnowflakeDbConnectionPool.SetPooling()          | Determines whether to enable (`true`) or disable (`false`) connecing pooling. Default: `true`.           |
+| Function                                        | Description                                                                                             |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| SnowflakeDbConnectionPool.ClearAllPools()       | Removes all connections from the connection pool.                                                       |
+| SnowflakeDbConnection.SetMaxPoolSize(n)         | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
+| SnowflakeDBConnection.SetTimeout(n)             | Sets the number of seconds to keep an unresponsive connection in the connection pool.                   |
+| SnowflakeDbConnectionPool.GetCurrentPoolSize()  | Returns the number of connections currently in the connection pool.                                     |
+| SnowflakeDbConnectionPool.SetPooling()          | Determines whether to enable (`true`) or disable (`false`) connection pooling. Default: `true`.         |
 
 The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
 
