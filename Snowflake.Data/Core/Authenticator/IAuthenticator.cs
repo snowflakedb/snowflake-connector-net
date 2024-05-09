@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Authenticator
     internal interface IAuthenticator
     {
         /// <summary>
-        /// Process the authentication asynchronouly
+        /// Process the authentication asynchronously
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -49,19 +49,19 @@ namespace Snowflake.Data.Core.Authenticator
             SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
-        protected string authName;
+        private string authName;
 
         // The session which created this authenticator.
         protected SFSession session;
 
         // The client environment properties
-        protected LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
 
         /// <summary>
         /// The abstract base for all authenticators.
         /// </summary>
         /// <param name="session">The session which created the authenticator.</param>
-        public BaseAuthenticator(SFSession session, string authName)
+        protected BaseAuthenticator(SFSession session, string authName)
         {
             this.session = session;
             this.authName = authName;
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <summary>
         /// Builds a simple login request. Each authenticator will fill the Data part with their
         /// specialized information. The common Data attributes are already filled (clientAppId,
-        /// ClienAppVersion...).
+        /// ClientAppVersion...).
         /// </summary>
         /// <returns>A login request to send to the server.</returns>
         private SFRestRequest BuildLoginRequest()
@@ -129,10 +129,10 @@ namespace Snowflake.Data.Core.Authenticator
         }
     }
 
-        /// <summary>
-        /// Authenticator Factory to build authenticators
-        /// </summary>
-        internal class AuthenticatorFactory
+    /// <summary>
+    /// Authenticator Factory to build authenticators
+    /// </summary>
+    internal class AuthenticatorFactory
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
@@ -192,12 +192,8 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new OktaAuthenticator(session, type);
             }
-
-            var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
-
-            logger.Error("Unknown authenticator", e);
-
-            throw e;
+            logger.Error($"Unknown authenticator {type}");
+            throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
         }
     }
 }

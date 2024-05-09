@@ -22,6 +22,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
+        public const string AUTH_NAME = "okta";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
 
         internal const string RetryCountHeader = "RetryCount";

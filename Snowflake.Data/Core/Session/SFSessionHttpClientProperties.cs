@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -42,6 +43,7 @@ namespace Snowflake.Data.Core
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
             var extractedProperties = s_propertiesExtractor.ExtractProperties(properties);
+            AuthenticationPropertiesValidator.Validate(properties);
             extractedProperties.CheckPropertiesAreValid();
             return extractedProperties;
         }
