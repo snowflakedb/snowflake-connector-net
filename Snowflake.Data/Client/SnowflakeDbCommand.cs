@@ -54,6 +54,11 @@ namespace Snowflake.Data.Client
             get; set;
         }
 
+        public string QueryTag
+        {
+            get; set;
+        }
+
         public override CommandType CommandType
         {
             get
@@ -132,7 +137,7 @@ namespace Snowflake.Data.Client
                 connection = sfc;
                 if (sfc.SfSession != null)
                 {
-                    sfStatement = new SFStatement(sfc.SfSession);
+                    sfStatement = new SFStatement(sfc.SfSession, QueryTag);
                 }
             }
         }
@@ -143,7 +148,7 @@ namespace Snowflake.Data.Client
             {
                 return this.parameterCollection;
             }
-        } 
+        }
 
         protected override DbTransaction DbTransaction
         {
@@ -373,15 +378,15 @@ namespace Snowflake.Data.Client
 
                     if (parameter.Value.GetType().IsArray &&
                         // byte array and char array will not be treated as array binding
-                        parameter.Value.GetType().GetElementType() != typeof(char) && 
+                        parameter.Value.GetType().GetElementType() != typeof(char) &&
                         parameter.Value.GetType().GetElementType() != typeof(byte))
                     {
                         List<object> vals = new List<object>();
                         foreach(object val in (Array)parameter.Value)
                         {
-                            // if the user is using interface, SFDataType will be None and there will 
+                            // if the user is using interface, SFDataType will be None and there will
                             // a conversion from DbType to SFDataType
-                            // if the user is using concrete class, they should specify SFDataType. 
+                            // if the user is using concrete class, they should specify SFDataType.
                             if (parameter.SFDataType == SFDataType.None)
                             {
                                 Tuple<string, string> typeAndVal = SFDataConverter
@@ -392,7 +397,7 @@ namespace Snowflake.Data.Client
                             }
                             else
                             {
-                                bindingType = parameter.SFDataType.ToString(); 
+                                bindingType = parameter.SFDataType.ToString();
                                 vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
                             }
                         }
@@ -420,13 +425,13 @@ namespace Snowflake.Data.Client
             }
         }
 
-        private void SetStatement() 
+        private void SetStatement()
         {
             if (connection == null)
             {
                 throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
             }
-            
+
             var session = (connection as SnowflakeDbConnection).SfSession;
 
             // SetStatement is called when executing a command. If SfSession is null
@@ -434,7 +439,7 @@ namespace Snowflake.Data.Client
             if (session == null)
                 throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
 
-            this.sfStatement = new SFStatement(session);
+            this.sfStatement = new SFStatement(session, QueryTag);
         }
 
         private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
