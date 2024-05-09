@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
@@ -122,14 +123,21 @@ namespace Snowflake.Data.Core.Session
         public SessionPool GetPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
-            var poolKey = GetPoolKey(connectionString);
+            var poolKey = GetPoolKey(connectionString, password);
 
             if (_pools.TryGetValue(poolKey, out var item))
+            {
+                item.ValidateSecurePassword(password);
                 return item;
+            }
+
             lock (s_poolsLock)
             {
                 if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock))
+                {
+                    poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
                     return poolCreatedWhileWaitingOnLock;
+                }
                 s_logger.Info($"Creating new pool");
                 var pool = SessionPool.CreateSessionPool(connectionString, password);
                 _pools.Add(poolKey, pool);
@@ -143,9 +151,9 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, null);
         }
 
-        private string GetPoolKey(string connectionString)
-        {
-            return connectionString;
-        }
+        private string GetPoolKey(string connectionString, SecureString password) =>
+            password != null && password.Length > 0
+                ? connectionString + ";password=" + SecureStringHelper.Decode(password) + ";"
+                : connectionString + ";password=;";
     }
 }

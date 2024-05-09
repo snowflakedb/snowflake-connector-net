@@ -9,7 +9,6 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -118,6 +117,17 @@ namespace Snowflake.Data.Core.Session
                 throw;
             }
         }
+
+        internal void ValidateSecurePassword(SecureString password)
+        {
+            if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
+            {
+                throw new Exception("Could not get a pool because of password mismatch");
+            }
+        }
+
+        private string ExtractPassword(SecureString password) =>
+            password == null ? string.Empty : SecureStringHelper.Decode(password);
 
         internal SFSession GetSession(string connStr, SecureString password)
         {

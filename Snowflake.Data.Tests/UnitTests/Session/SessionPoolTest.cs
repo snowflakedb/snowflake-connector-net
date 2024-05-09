@@ -1,9 +1,11 @@
+using System;
 using System.Net;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
@@ -129,6 +131,40 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.AreEqual("", poolIdentification);
+        }
+
+        [Test]
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("anyPassword")]
+        public void TestValidateValidSecurePassword(string password)
+        {
+            // arrange
+            var securePassword = password == null ? null : SecureStringHelper.Encode(password);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, securePassword);
+
+            // act
+            Assert.DoesNotThrow(() => pool.ValidateSecurePassword(securePassword));
+        }
+
+        [Test]
+        [TestCase("somePassword", null)]
+        [TestCase("somePassword", "")]
+        [TestCase("somePassword", "anotherPassword")]
+        [TestCase("", "anotherPassword")]
+        [TestCase(null, "anotherPassword")]
+        public void TestFailToValidateNotMatchingSecurePassword(string poolPassword, string notMatchingPassword)
+        {
+            // arrange
+            var poolSecurePassword = poolPassword == null ? null : SecureStringHelper.Encode(poolPassword);
+            var notMatchingSecurePassword = notMatchingPassword == null ? null : SecureStringHelper.Encode(notMatchingPassword);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, poolSecurePassword);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => pool.ValidateSecurePassword(notMatchingSecurePassword));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
         }
     }
 }

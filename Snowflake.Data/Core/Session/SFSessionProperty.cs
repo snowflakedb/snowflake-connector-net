@@ -13,6 +13,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -249,7 +250,7 @@ namespace Snowflake.Data.Core
 
             if (password != null && password.Length > 0)
             {
-                properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
+                properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(password);
             }
 
             ValidateAuthenticator(properties);
