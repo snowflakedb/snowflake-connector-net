@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -108,6 +109,7 @@ namespace Snowflake.Data.Core.Session
             try
             {
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
+                AuthenticationPropertiesValidator.Validate(properties);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }

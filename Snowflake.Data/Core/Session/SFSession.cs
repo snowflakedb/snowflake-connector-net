@@ -185,13 +185,18 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
             }
+            catch (SnowflakeDbException e)
+            {
+                logger.Error("Unable to initialize session ", e);
+                throw;
+            }
             catch (Exception e)
             {
-                logger.Error("Unable to connect", e);
+                logger.Error("Unable to initialize session ", e);
                 throw new SnowflakeDbException(e,
                             SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
-                            "Unable to connect");
+                            "Unable to initialize session ");
             }
         }
 

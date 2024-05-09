@@ -43,7 +43,6 @@ namespace Snowflake.Data.Core
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
             var extractedProperties = s_propertiesExtractor.ExtractProperties(properties);
-            AuthenticationPropertiesValidator.Validate(properties);
             extractedProperties.CheckPropertiesAreValid();
             return extractedProperties;
         }
