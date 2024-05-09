@@ -109,7 +109,6 @@ namespace Snowflake.Data.Core.Session
             try
             {
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
-                AuthenticationPropertiesValidator.Validate(properties);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
