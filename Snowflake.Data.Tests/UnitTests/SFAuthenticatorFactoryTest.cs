@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOAuthWithMissingToken()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator(OAuthAuthenticator.AUTH_NAME));
-            Assert.AreEqual(SFError.INVALID_CONNECTION_STRING.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
 
         [Test]
