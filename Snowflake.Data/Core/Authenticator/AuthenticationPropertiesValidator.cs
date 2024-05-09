@@ -29,10 +29,12 @@ namespace Snowflake.Data.Core.Authenticator
                     valid = true;
                     break;
                 case KeyPairAuthenticator.AUTH_NAME:
-                    valid = !string.IsNullOrEmpty(properties[SFSessionProperty.PRIVATE_KEY]) ||
-                            !string.IsNullOrEmpty(properties[SFSessionProperty.PRIVATE_KEY]);
+                    valid = (properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var privateKey)
+                             && !string.IsNullOrEmpty(privateKey)) ||
+                            (properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var privateKeyFile) &&
+                             !string.IsNullOrEmpty(privateKeyFile));
                     if (!valid)
-                        error = $"PRIVATE_KEY or PRIVATE_KEY should be provided for Authenticator={authenticator}";
+                        error = $"PRIVATE_KEY or PRIVATE_KEY_FILE should be provided for Authenticator={authenticator}";
                     break;
                 case OAuthAuthenticator.AUTH_NAME:
                     valid = !string.IsNullOrEmpty(properties[SFSessionProperty.TOKEN]);
