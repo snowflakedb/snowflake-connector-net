@@ -252,7 +252,7 @@ namespace Snowflake.Data.Core
                 properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
             }
 
-            ValidateAuthenticator(properties);
+            ValidateAuthenticatorAndUpdateDependentProperties(properties);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -284,7 +284,7 @@ namespace Snowflake.Data.Core
             return properties;
         }
 
-        private static void ValidateAuthenticator(SFSessionProperties properties)
+        private static void ValidateAuthenticatorAndUpdateDependentProperties(SFSessionProperties properties)
         {
             var knownAuthenticators = new[] { BasicAuthenticator.AUTH_NAME, OktaAuthenticator.AUTH_NAME, OAuthAuthenticator.AUTH_NAME, KeyPairAuthenticator.AUTH_NAME, ExternalBrowserAuthenticator.AUTH_NAME };
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -295,6 +295,19 @@ namespace Snowflake.Data.Core
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
+                }
+
+                if (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME))
+                {
+                    if (!properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr))
+                    {
+                        properties.Add(SFSessionProperty.POOLINGENABLED, "false");
+                        logger.Info("Connection pooling is disabled for external browser authentication");
+                    }
+                    else if (Boolean.TryParse(poolingEnabledStr, out var poolingEnabled) && poolingEnabled)
+                    {
+                        logger.Warn("Connection pooling is enabled for external browser authentication");
+                    }
                 }
             }
         }

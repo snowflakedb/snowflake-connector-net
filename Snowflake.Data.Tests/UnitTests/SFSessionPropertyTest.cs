@@ -161,9 +161,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
-            var testCaseWithBrowserResponseTimeout = new TestCase()
+            var testCaseWithExternalBrowserAndBrowserResponseTimeout = new TestCase()
             {
-                ConnectionString = $"ACCOUNT={defAccount};BROWSER_RESPONSE_TIMEOUT=180;authenticator=externalbrowser",
+                ConnectionString = $"ACCOUNT={defAccount};authenticator=externalbrowser;BROWSER_RESPONSE_TIMEOUT=180;",
                 ExpectedProperties = new SFSessionProperties()
                 {
                     { SFSessionProperty.ACCOUNT, defAccount },
@@ -192,7 +192,41 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CHANGEDSESSION, DefaultValue(SFSessionProperty.CHANGEDSESSION) },
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
-                    { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) }
+                    { SFSessionProperty.POOLINGENABLED, "false" } // by default pooling is disabled for externalbrowser authentication
+                }
+            };
+            var testCaseWithExternalBrowserAndPoolingEnabled = new TestCase()
+            {
+                ConnectionString = $"ACCOUNT={defAccount};authenticator=externalbrowser;POOLINGENABLED=true;",
+                ExpectedProperties = new SFSessionProperties()
+                {
+                    { SFSessionProperty.ACCOUNT, defAccount },
+                    { SFSessionProperty.USER, "" },
+                    { SFSessionProperty.HOST, defHost },
+                    { SFSessionProperty.AUTHENTICATOR, ExternalBrowserAuthenticator.AUTH_NAME },
+                    { SFSessionProperty.SCHEME, defScheme },
+                    { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
+                    { SFSessionProperty.PORT, defPort },
+                    { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
+                    { SFSessionProperty.USEPROXY, "false" },
+                    { SFSessionProperty.INSECUREMODE, "false" },
+                    { SFSessionProperty.DISABLERETRY, "false" },
+                    { SFSessionProperty.FORCERETRYON404, "false" },
+                    { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
+                    { SFSessionProperty.FORCEPARSEERROR, "false" },
+                    { SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, DefaultValue(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT) },
+                    { SFSessionProperty.RETRY_TIMEOUT, defRetryTimeout },
+                    { SFSessionProperty.MAXHTTPRETRIES, defMaxHttpRetries },
+                    { SFSessionProperty.INCLUDERETRYREASON, defIncludeRetryReason },
+                    { SFSessionProperty.DISABLEQUERYCONTEXTCACHE, defDisableQueryContextCache },
+                    { SFSessionProperty.DISABLE_CONSOLE_LOGIN, defDisableConsoleLogin },
+                    { SFSessionProperty.ALLOWUNDERSCORESINHOST, defAllowUnderscoresInHost },
+                    { SFSessionProperty.MAXPOOLSIZE, DefaultValue(SFSessionProperty.MAXPOOLSIZE) },
+                    { SFSessionProperty.MINPOOLSIZE, DefaultValue(SFSessionProperty.MINPOOLSIZE) },
+                    { SFSessionProperty.CHANGEDSESSION, DefaultValue(SFSessionProperty.CHANGEDSESSION) },
+                    { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
+                    { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
+                    { SFSessionProperty.POOLINGENABLED, "true" }
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -563,7 +597,8 @@ namespace Snowflake.Data.Tests.UnitTests
             return new TestCase[]
             {
                 simpleTestCase,
-                testCaseWithBrowserResponseTimeout,
+                testCaseWithExternalBrowserAndBrowserResponseTimeout,
+                testCaseWithExternalBrowserAndPoolingEnabled,
                 testCaseWithProxySettings,
                 testCaseThatDefaultForUseProxyIsFalse,
                 testCaseWithFileTransferMaxBytesInMemory,
