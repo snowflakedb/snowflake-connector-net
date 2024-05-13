@@ -122,7 +122,9 @@ namespace Snowflake.Data.Core.Session
         {
             if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
             {
-                throw new Exception("Could not get a pool because of password mismatch");
+                var errorMessage = "Could not get a pool because of password mismatch";
+                s_logger.Error(errorMessage + PoolIdentification());
+                throw new Exception(errorMessage);
             }
         }
 
