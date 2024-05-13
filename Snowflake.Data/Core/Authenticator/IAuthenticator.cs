@@ -156,7 +156,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 // Get private key path or private key from connection settings
                 if ((!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) || string.IsNullOrEmpty(pkPath)) &&
-                    !session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
+                    (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent) || string.IsNullOrEmpty(pkContent)))
                 {
                     // There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
                     string invalidStringDetail =
