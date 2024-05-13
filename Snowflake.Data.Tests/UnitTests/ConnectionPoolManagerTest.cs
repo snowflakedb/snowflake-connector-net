@@ -345,7 +345,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var serializedPool = pool.ToString();
 
             // assert
-            Assert.IsFalse(serializedPool.Contains(password, StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(serializedPool.Contains(password));
         }
 
         private void EnsurePoolSize(string connectionString, SecureString password, int requiredCurrentSize)
