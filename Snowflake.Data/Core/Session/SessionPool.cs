@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -32,6 +33,8 @@ namespace Snowflake.Data.Core.Session
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
         private readonly ConnectionPoolConfig _poolConfig;
         private bool _configOverriden = false;
+
+        private static readonly InvalidOperationException s_notSupportedInCachePoolException = new InvalidOperationException("Feature not supported in a Connection Cache");
 
         private SessionPool()
         {
@@ -109,10 +112,10 @@ namespace Snowflake.Data.Core.Session
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
-            catch (SnowflakeDbException exception)
+            catch (Exception exception)
             {
-                s_logger.Error("Could not extract pool configuration, using default one", exception);
-                return Tuple.Create(new ConnectionPoolConfig(), "could not parse connection string");
+                s_logger.Error("Failed to extract pool configuration", exception);
+                throw;
             }
         }
 
@@ -422,14 +425,29 @@ namespace Snowflake.Data.Core.Session
 
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
+            s_logger.Debug("SessionPool::AddSession" + PoolIdentification());
+
             if (!GetPooling())
                 return false;
+
+            if (IsMultiplePoolsVersion() &&
+                session.SessionPropertiesChanged &&
+                _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
+            {
+                s_logger.Debug($"Session returning to pool was changed. Destroying the session: {session.sessionId}.");
+                session.SetPooling(false);
+            }
+
             if (!session.GetPooling())
             {
                 ReleaseBusySession(session);
+                if (ensureMinPoolSize)
+                {
+                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsWhenReturningSessionToPool());
+                }
                 return false;
             }
-            s_logger.Debug("SessionPool::AddSession" + PoolIdentification());
+
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
@@ -529,9 +547,28 @@ namespace Snowflake.Data.Core.Session
             _configOverriden = true;
         }
 
-        public int GetMaxPoolSize()
+        public int GetMaxPoolSize() => _poolConfig.MaxPoolSize;
+
+        public int GetMinPoolSize()
         {
-            return _poolConfig.MaxPoolSize;
+            return IsMultiplePoolsVersion()
+                ? _poolConfig.MinPoolSize
+                : throw s_notSupportedInCachePoolException;
+        }
+
+        public ChangedSessionBehavior GetChangedSession() =>
+            IsMultiplePoolsVersion()
+                ? _poolConfig.ChangedSession
+                : throw s_notSupportedInCachePoolException;
+
+        public long GetWaitForIdleSessionTimeout() =>
+            IsMultiplePoolsVersion()
+                ? (long)_poolConfig.WaitingForIdleSessionTimeout.TotalSeconds
+                : throw s_notSupportedInCachePoolException;
+
+        public long GetConnectionTimeout()
+        {
+            return TimeoutHelper.IsInfinite(_poolConfig.ConnectionTimeout) ? -1 : (long)_poolConfig.ConnectionTimeout.TotalSeconds;
         }
 
         public void SetTimeout(long seconds)

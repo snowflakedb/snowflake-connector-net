@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -87,17 +90,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestPoolIdentificationForInvalidConnectionString()
+        public void TestRetrievePoolFailureForInvalidConnectionString()
         {
             // arrange
             var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443"; // invalid because password is not provided
-            var pool = SessionPool.CreateSessionPool(invalidConnectionString, null);
 
             // act
-            var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
+            var exception = Assert.Throws<SnowflakeDbException>(() => SessionPool.CreateSessionPool(invalidConnectionString, null));
 
             // assert
-            Assert.AreEqual(" [pool: could not parse connection string]", poolIdentification);
+            SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
+            Assert.IsTrue(exception.Message.Contains("Required property PASSWORD is not provided"));
         }
 
         [Test]

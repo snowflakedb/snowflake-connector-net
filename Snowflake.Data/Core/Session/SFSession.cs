@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -46,8 +46,10 @@ namespace Snowflake.Data.Core
         internal SFSessionProperties properties;
 
         internal string database;
-
         internal string schema;
+        internal string role;
+        internal string warehouse;
+        internal bool sessionPropertiesChanged = false;
 
         internal string serverVersion;
 
@@ -101,6 +103,8 @@ namespace Snowflake.Data.Core
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
+                role = authnResponse.data.authResponseSessionInfo.roleName;
+                warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
@@ -181,13 +185,18 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
             }
+            catch (SnowflakeDbException e)
+            {
+                logger.Error("Unable to initialize session ", e);
+                throw;
+            }
             catch (Exception e)
             {
-                logger.Error("Unable to connect", e);
+                logger.Error("Unable to initialize session ", e);
                 throw new SnowflakeDbException(e,
                             SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
-                            "Unable to connect");
+                            "Unable to initialize session ");
             }
         }
 
@@ -460,19 +469,47 @@ namespace Snowflake.Data.Core
             return _queryContextCache.GetQueryContextRequest();
         }
 
-        internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
+        internal void UpdateSessionProperties(QueryExecResponseData responseData)
         {
-            // with HTAP session metadata removal database/schema
-            // might be not returened in query result
-            if (!String.IsNullOrEmpty(databaseName))
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            UpdateSessionProperty(ref database, responseData.finalDatabaseName);
+            UpdateSessionProperty(ref schema, responseData.finalSchemaName);
+            UpdateSessionProperty(ref role, responseData.finalRoleName);
+            UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
+        }
+
+        internal void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
+        {
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            if (!string.IsNullOrEmpty(finalSessionValue))
             {
-                this.database = databaseName;
-            }
-            if (!String.IsNullOrEmpty(schemaName))
-            {
-                this.schema = schemaName;
+                bool quoted = false;
+                string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
+                if (!string.IsNullOrEmpty(initialSessionValue))
+                {
+                    quoted |= initialSessionValue.StartsWith("\"");
+                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+                    {
+                        sessionPropertiesChanged = true;
+                        initialSessionValue = unquotedFinalValue;
+                    }
+                }
+                else // null session value gets populated and is not treated as a session property change
+                {
+                    initialSessionValue = unquotedFinalValue;
+                }
             }
         }
+
+        private static string UnquoteJson(string value, ref bool unquoted)
+        {
+            if (value is null)
+                return value;
+            unquoted = value.Length >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+            return unquoted ? value.Replace("\\\"", "\"") : value;
+        }
+
+        internal bool SessionPropertiesChanged => sessionPropertiesChanged;
 
         internal void startHeartBeatForThisSession()
         {
@@ -592,4 +629,3 @@ namespace Snowflake.Data.Core
         internal long GetStartTime() => _startTime;
     }
 }
-

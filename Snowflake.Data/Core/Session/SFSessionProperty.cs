@@ -102,7 +102,7 @@ namespace Snowflake.Data.Core
         MAXPOOLSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "2")]
         MINPOOLSIZE,
-        [SFSessionPropertyAttr(required = false, defaultValue = "OriginalPool")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "Destroy")]
         CHANGEDSESSION,
         [SFSessionPropertyAttr(required = false, defaultValue = "30s")]
         WAITINGFORIDLESESSIONTIMEOUT,
@@ -247,12 +247,13 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (password != null)
+            if (password != null && password.Length > 0)
             {
                 properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
             }
 
-            checkSessionProperties(properties);
+            ValidateAuthenticator(properties);
+            CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
 
@@ -281,6 +282,21 @@ namespace Snowflake.Data.Core
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
             return properties;
+        }
+
+        private static void ValidateAuthenticator(SFSessionProperties properties)
+        {
+            var knownAuthenticators = new[] { BasicAuthenticator.AUTH_NAME, OktaAuthenticator.AUTH_NAME, OAuthAuthenticator.AUTH_NAME, KeyPairAuthenticator.AUTH_NAME, ExternalBrowserAuthenticator.AUTH_NAME };
+            if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
+            {
+                authenticator = authenticator.ToLower();
+                if (!knownAuthenticators.Contains(authenticator) && !(authenticator.Contains(OktaAuthenticator.AUTH_NAME) && authenticator.StartsWith("https://")))
+                {
+                    var error = $"Unknown authenticator: {authenticator}";
+                    logger.Error(error);
+                    throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
+                }
+            }
         }
 
         private static string BuildConnectionStringWithoutSecrets(ref string[] keys, ref string[] values)
@@ -368,7 +384,7 @@ namespace Snowflake.Data.Core
                 .Select(regex => Regex.Match(account, regex, RegexOptions.IgnoreCase))
                 .All(match => match.Success);
 
-        private static void checkSessionProperties(SFSessionProperties properties)
+        private static void CheckSessionProperties(SFSessionProperties properties)
         {
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
@@ -376,9 +392,15 @@ namespace Snowflake.Data.Core
                 if (IsRequired(sessionProperty, properties) &&
                     !properties.ContainsKey(sessionProperty))
                 {
-                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY,
-                        sessionProperty);
+                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
                     logger.Error("Missing connection property", e);
+                    throw e;
+                }
+
+                if (IsRequired(sessionProperty, properties) && string.IsNullOrEmpty(properties[sessionProperty]))
+                {
+                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+                    logger.Error("Empty connection property", e);
                     throw e;
                 }
 
@@ -386,7 +408,7 @@ namespace Snowflake.Data.Core
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
-                    logger.Debug($"Sesssion property {sessionProperty} set to default value: {defaultVal}");
+                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
             }
@@ -449,6 +471,12 @@ namespace Snowflake.Data.Core
                 };
                 return !authenticatorDefined || !authenticatorsWithoutUsername
                     .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
+            }
+            else if (sessionProperty.Equals(SFSessionProperty.TOKEN))
+            {
+                var authenticatorDefined = properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
+
+                return !authenticatorDefined || authenticator.Equals(OAuthAuthenticator.AUTH_NAME);
             }
             else
             {

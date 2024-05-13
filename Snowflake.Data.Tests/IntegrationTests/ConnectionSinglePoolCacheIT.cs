@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var pool = SnowflakeDbConnectionPool.GetPool(ConnectionString);
-            pool.SetPooling(false);
+            SnowflakeDbConnectionPool.SetPooling(false);
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString;
 

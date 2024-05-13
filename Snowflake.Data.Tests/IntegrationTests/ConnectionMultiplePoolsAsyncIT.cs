@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestDoNotAddToPoolInvalidConnectionAsync()
+        public async Task TestFailForInvalidConnectionAsync()
         {
             // arrange
             var invalidConnectionString = ";connection_timeout=123";
@@ -63,15 +63,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.Fail("OpenAsync should fail for invalid connection string");
             }
             catch {}
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SnowflakeDbConnectionPool.GetPool(connection.ConnectionString));
 
             // assert
-            var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
-            var poolState = pool.GetCurrentState();
-            logger.Warn($"Pool state: {poolState}");
-            Assert.Less(pool.GetCurrentPoolSize(), SFSessionHttpClientProperties.DefaultMinPoolSize); // for invalid connection string it is used default min pool size
-
-            // cleanup
-            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.That(thrown.Message, Does.Contain("Required property ACCOUNT is not provided"));
         }
 
         [Test]

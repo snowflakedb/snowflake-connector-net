@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Core.Session
             return true; // in new pool pooling is always enabled by default, disabling only by connection string parameter
         }
 
-        internal SessionPool GetPool(string connectionString, SecureString password)
+        public SessionPool GetPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"ConnectionPoolManager::GetPool");
             var poolKey = GetPoolKey(connectionString);
@@ -143,7 +143,6 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, null);
         }
 
-        // TODO: SNOW-937188
         private string GetPoolKey(string connectionString)
         {
             return connectionString;

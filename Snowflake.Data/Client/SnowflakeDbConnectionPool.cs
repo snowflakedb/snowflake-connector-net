@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -42,9 +42,21 @@ namespace Snowflake.Data.Client
             return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
         }
 
-        internal static SessionPool GetPool(string connectionString)
+        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
+            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, password));
+        }
+
+        public static SnowflakeDbSessionPool GetPool(string connectionString)
+        {
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
+            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString));
+        }
+
+        internal static SessionPool GetPoolInternal(string connectionString)
+        {
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPoolInternal");
             return ConnectionManager.GetPool(connectionString);
         }
 

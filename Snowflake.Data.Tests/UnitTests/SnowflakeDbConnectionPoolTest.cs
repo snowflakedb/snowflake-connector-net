@@ -14,10 +14,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             SnowflakeDbConnectionPool.SetOldConnectionPoolVersion();
-            
+
             // assert
-            var sessionPool1 = SnowflakeDbConnectionPool.GetPool(_connectionString1);
-            var sessionPool2 = SnowflakeDbConnectionPool.GetPool(_connectionString2);
+            var sessionPool1 = SnowflakeDbConnectionPool.GetPoolInternal(_connectionString1);
+            var sessionPool2 = SnowflakeDbConnectionPool.GetPoolInternal(_connectionString2);
             Assert.AreEqual(ConnectionPoolType.SingleConnectionCache, SnowflakeDbConnectionPool.GetConnectionPoolVersion());
             Assert.AreEqual(sessionPool1, sessionPool2);
         }

@@ -102,20 +102,6 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(value, properties[sessionProperty]);
         }
 
-        [Test]
-        public void TestProcessEmptyUserAndPasswordInConnectionString()
-        {
-            // arrange
-            var connectionString = $"ACCOUNT=test;USER=;PASSWORD=;";
-
-            // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-
-            // assert
-            Assert.AreEqual(string.Empty, properties[SFSessionProperty.USER]);
-            Assert.AreEqual(string.Empty, properties[SFSessionProperty.PASSWORD]);
-        }
-
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";

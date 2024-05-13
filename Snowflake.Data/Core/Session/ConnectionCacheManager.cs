@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Security;
@@ -24,6 +24,7 @@ namespace Snowflake.Data.Core.Session
         public int GetCurrentPoolSize() => _sessionPool.GetCurrentPoolSize();
         public bool SetPooling(bool poolingEnabled) => _sessionPool.SetPooling(poolingEnabled);
         public bool GetPooling() => _sessionPool.GetPooling();
-        public SessionPool GetPool(string _) => _sessionPool;
+        public SessionPool GetPool(string connectionString) => _sessionPool;
+        public SessionPool GetPool(string connectionString, SecureString password) => _sessionPool;
     }
 }
