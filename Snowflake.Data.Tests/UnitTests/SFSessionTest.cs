@@ -2,8 +2,10 @@
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using Newtonsoft.Json;
 using Snowflake.Data.Core;
 using NUnit.Framework;
+using Snowflake.Data.Tests.Mock;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -122,6 +124,29 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.AreEqual(unquotedExpectedFinalValue, changedSessionValue);
             else
                 Assert.AreEqual(sessionInitialValue, changedSessionValue);
+        }
+
+        [Test]
+        public void TestHandlePasswordWithQuotations()
+        {
+            // arrange
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.AreEqual("test\"with'quotations{}", loginRequest.data.password);
+
+            // act
+            var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
+            var deserializedLoginRequest = (LoginRequest) JsonConvert.DeserializeObject(json, typeof(LoginRequest));
+
+            // assert
+            Assert.AreEqual(loginRequest.data.password, deserializedLoginRequest.data.password);
         }
     }
 }
