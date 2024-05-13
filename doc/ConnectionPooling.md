@@ -110,14 +110,57 @@ Assert.AreEqual(2, poolSize);
 
 #### Changed Session Behavior
 
-When an application does a change to the connection using one of SQL commands: `use schema`, `use database`, `use warehouse`, `use role` then such
-an affected connection is marked internally as no longer matching with the pool it originated from.
+When an application does a change to the connection using one of SQL commands:
+* `use schema`, `create schema`
+* `use database`, `create database`
+* `use warehouse`, `create warehouse`
+* `use role`, `create role`
+
+then such an affected connection is marked internally as no longer matching with the pool it originated from.
 When parameter ChangedSession is set to `OriginalPool` it allows the connection to be pooled.
 Parameter ChangedSession set to `Destroy` (default) ensures that the connection is not pooled and after Close is called the connection will be removed.
 The pool will recreate necessary connections according to the minimal pool size.
 
-```cs
+1) ChangedSession = Destroy
 
+In this mode application may safely alter session properties: schema, database, warehouse, role. Connection not matching
+with the connection string will not get pooled.
+
+```cs
+var connectionString = ConnectionString + ";ChangedSession=Destroy";
+var connection = new SnowflakeDbConnection(connectionString);
+
+connection.Open();
+var randomSchemaName = Guid.NewGuid();
+connection.CreateCommand($"create schema \"{randomSchemaName}\").ExecuteNonQuery(); // schema gets changed
+// application is running commands on a schema with random name
+connection.Close(); // connection does not return to the original pool and gets destroyed; pool will reconstruct the pool
+                    // with new connections accordingly to the MinPoolSize
+
+var connection2 = new SnowflakeDbConnection(connectionString);
+connection2.Open();
+// operations here will be performed against schema indicated in the ConnectionString
+```
+
+2) ChangedSession = OriginalPool
+
+When application reuses connections affected by the above commands it might get to a point when using a connection
+it gets errors since tables, procedures, stages do not exists cause the operations are executed using wrong
+database, schema, user or role. This mode is purely for backward compatibility but is not recommended to be used.
+
+```cs
+var connectionString = ConnectionString + ";ChangedSession=OriginalPool;MinPoolSize=1;MaxPoolSize=1";
+var connection = new SnowflakeDbConnection(connectionString);
+
+connection.Open();
+var randomSchemaName = Guid.NewGuid();
+connection.CreateCommand($"create schema \"{randomSchemaName}\").ExecuteNonQuery(); // schema gets changed
+// application is running commands on a schema with random name
+connection.Close(); // connection returns to the original pool but it's schema will no longer match with initial value
+
+var connection2 = new SnowflakeDbConnection(connectionString);
+connection2.Open();
+// operations here will be performed against schema: randomSchemaName
 ```
 
 #### Pool Size Exceeded Timeout
@@ -267,63 +310,4 @@ There is also a way to clear all the pools initiated by an application.
 
 ```cs
 SnowflakeDbConnectionPool.ClearAllPools();
-```
-
-### Single Connection Pool
-
-DEPRECATED VERSION
-
-Instead of creating a connection each time your client application needs to access Snowflake, you can define a cache of Snowflake connections that can be reused as needed.
-Connection pooling usually reduces the lag time to make a connection. However, it can slow down client failover to an alternative DNS when a DNS problem occurs.
-
-The Snowflake .NET driver provides the following functions for managing connection pools.
-
-| Function                                        | Description                                                                                             |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| SnowflakeDbConnectionPool.ClearAllPools()       | Removes all connections from the connection pool.                                                       |
-| SnowflakeDbConnection.SetMaxPoolSize(n)         | Sets the maximum number of connections for the connection pool, where _n_ is the number of connections. |
-| SnowflakeDBConnection.SetTimeout(n)             | Sets the number of seconds to keep an unresponsive connection in the connection pool.                   |
-| SnowflakeDbConnectionPool.GetCurrentPoolSize()  | Returns the number of connections currently in the connection pool.                                     |
-| SnowflakeDbConnectionPool.SetPooling()          | Determines whether to enable (`true`) or disable (`false`) connection pooling. Default: `true`.         |
-
-The following sample demonstrates how to monitor the size of a connection pool as connections are added and dropped from the pool.
-
-```cs
-public void TestConnectionPoolClean()
-{
-  SnowflakeDbConnectionPool.ClearAllPools();
-  SnowflakeDbConnectionPool.SetMaxPoolSize(2);
-  var conn1 = new SnowflakeDbConnection();
-  conn1.ConnectionString = ConnectionString;
-  conn1.Open();
-  Assert.AreEqual(ConnectionState.Open, conn1.State);
-
-  var conn2 = new SnowflakeDbConnection();
-  conn2.ConnectionString = ConnectionString + " retryCount=1";
-  conn2.Open();
-  Assert.AreEqual(ConnectionState.Open, conn2.State);
-  Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-  conn1.Close();
-  conn2.Close();
-  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-  var conn3 = new SnowflakeDbConnection();
-  conn3.ConnectionString = ConnectionString + "  retryCount=2";
-  conn3.Open();
-  Assert.AreEqual(ConnectionState.Open, conn3.State);
-
-  var conn4 = new SnowflakeDbConnection();
-  conn4.ConnectionString = ConnectionString + "  retryCount=3";
-  conn4.Open();
-  Assert.AreEqual(ConnectionState.Open, conn4.State);
-
-  conn3.Close();
-  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-  conn4.Close();
-  Assert.AreEqual(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
-
-  Assert.AreEqual(ConnectionState.Closed, conn1.State);
-  Assert.AreEqual(ConnectionState.Closed, conn2.State);
-  Assert.AreEqual(ConnectionState.Closed, conn3.State);
-  Assert.AreEqual(ConnectionState.Closed, conn4.State);
-}
 ```
