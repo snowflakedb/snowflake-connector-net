@@ -80,30 +80,32 @@ PM> Install-Package Snowflake.Data
 
 ## Create a Connection
 
-To create a connection
-[Connecting and Authentication Methods](doc/Connecting.md)
+To create a connection get familiar with: [Connecting and Authentication Methods](doc/Connecting.md)
 
 ## Using Connection Pools
 
-[Multiple Connection Pools](doc/ConnectionPooling.md)
+Connection pooling description: [Multiple Connection Pools](doc/ConnectionPooling.md).
 
-[Single Connection Pool](doc/ConnectionPoolingDeprecated.md) - `deprecated`
+Backward compatible pooling prior to v4.0.0 is described: [Single Connection Pool](doc/ConnectionPoolingDeprecated.md) - `deprecated`
 
 ## Data Types and Formats
 
-[Data Types and Data Formats](doc/DataTypes.md)
+Snowflake data types and their .NET types is covered in: [Data Types and Data Formats](doc/DataTypes.md)
 
 ## Querying Data
 
+How execute a query, use query bindings, run queries synchronously and asynchronously:
 [Running Queries and Reading Results](doc/QueryingData.md)
 
 ## Stage Files
 
+Using stage files within PUT/GET commands:
 [PUT and GET Files to/from Stage](doc/StageFiles.md)
 
 ## Logging
 
-[Logging and Easy Logging Configuration](doc/Logging.md)
+Logging description and configuration:
+[Logging and Easy Logging](doc/Logging.md)
 
 ---------------
 
