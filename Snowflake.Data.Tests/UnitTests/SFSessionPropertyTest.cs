@@ -139,6 +139,40 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
         }
 
+        [Test]
+        [TestCase("", "false")]
+        [TestCase("poolingEnabled=true", "true")]
+        [TestCase("poolingEnabled=false", "false")]
+        public void TestPoolingEnabledForExternalBrowserAuthenticator(string connectionParam, string expectedPoolingEnabled)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=test;AUTHENTICATOR=externalbrowser;{connectionParam}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedPoolingEnabled, properties[SFSessionProperty.POOLINGENABLED]);
+        }
+
+        [Test]
+        [TestCase(BasicAuthenticator.AUTH_NAME, "true")]
+        [TestCase(KeyPairAuthenticator.AUTH_NAME, "true")]
+        [TestCase(OAuthAuthenticator.AUTH_NAME, "true")]
+        [TestCase(OktaAuthenticator.AUTH_NAME, "true")]
+        [TestCase(ExternalBrowserAuthenticator.AUTH_NAME, "false")]
+        public void TestDefaultPoolingEnabledForAuthenticator(string authenticator, string expectedPoolingEnabled)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;TOKEN=test;AUTHENTICATOR={authenticator}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedPoolingEnabled, properties[SFSessionProperty.POOLINGENABLED]);
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
@@ -616,6 +650,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private static string DefaultValue(SFSessionProperty property) =>
             property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+
         internal class TestCase
         {
             public string ConnectionString { get; set; }

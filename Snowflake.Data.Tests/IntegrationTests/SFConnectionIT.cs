@@ -914,6 +914,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                // connection pooling is disabled for external browser by default
+                Assert.AreEqual(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+                using (IDbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT CURRENT_USER()";
+                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithPoolingEnabled()
+        {
+            // Use external browser to log in using proper password for qa@snowflakecomputing.com
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";

@@ -254,6 +254,7 @@ namespace Snowflake.Data.Core
             }
 
             ValidateAuthenticator(properties);
+            DisableConnectionPoolingForExternalBrowser(properties);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -287,7 +288,14 @@ namespace Snowflake.Data.Core
 
         private static void ValidateAuthenticator(SFSessionProperties properties)
         {
-            var knownAuthenticators = new[] { BasicAuthenticator.AUTH_NAME, OktaAuthenticator.AUTH_NAME, OAuthAuthenticator.AUTH_NAME, KeyPairAuthenticator.AUTH_NAME, ExternalBrowserAuthenticator.AUTH_NAME };
+            var knownAuthenticators = new[] {
+                BasicAuthenticator.AUTH_NAME,
+                OktaAuthenticator.AUTH_NAME,
+                OAuthAuthenticator.AUTH_NAME,
+                KeyPairAuthenticator.AUTH_NAME,
+                ExternalBrowserAuthenticator.AUTH_NAME
+            };
+
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
             {
                 authenticator = authenticator.ToLower();
@@ -296,6 +304,26 @@ namespace Snowflake.Data.Core
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
+                }
+            }
+        }
+
+        private static void DisableConnectionPoolingForExternalBrowser(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
+            {
+                authenticator = authenticator.ToLower();
+                if (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME))
+                {
+                    if (!properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr))
+                    {
+                        properties.Add(SFSessionProperty.POOLINGENABLED, "false");
+                        logger.Info("Connection pooling is disabled for external browser authentication");
+                    }
+                    else if (Boolean.TryParse(poolingEnabledStr, out var poolingEnabled) && poolingEnabled)
+                    {
+                        logger.Warn("Connection pooling is enabled for external browser authentication");
+                    }
                 }
             }
         }
