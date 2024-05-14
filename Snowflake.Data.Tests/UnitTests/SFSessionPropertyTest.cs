@@ -121,6 +121,24 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(value, properties[sessionProperty]);
         }
 
+        [Test]
+        [TestCase("DB", SFSessionProperty.DB, "testdb", "testdb")]
+        [TestCase("DB", SFSessionProperty.DB, "\"testdb\"", "\"testdb\"")]
+        [TestCase("DB", SFSessionProperty.DB, "\"\"\"testDB\"\"\"", "\"\"testDB\"\"")]
+        [TestCase("DB", SFSessionProperty.DB, "\"\"\"test\"\"DB\"\"\"", "\"\"test\"DB\"\"")]
+        [TestCase("SCHEMA", SFSessionProperty.SCHEMA, "\"quoted\"\"Schema\"", "\"quoted\"Schema\"")]
+        public void TestValidateSupportEscapedQuotesInsideValuesForObjectProperties(string propertyName, SFSessionProperty sessionProperty, string value, string expectedValue)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedValue, properties[sessionProperty]);
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
@@ -598,7 +616,6 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private static string DefaultValue(SFSessionProperty property) =>
             property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
-
         internal class TestCase
         {
             public string ConnectionString { get; set; }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -342,7 +342,7 @@ namespace Snowflake.Data.Core
                             {
                                 var sessionProperty = (SFSessionProperty)Enum.Parse(
                                     typeof(SFSessionProperty), propertyName);
-                                properties[sessionProperty]= tokens[1];
+                                properties[sessionProperty]= ProcessObjectEscapedCharacters(tokens[1]);
                             }
 
                             break;
@@ -363,6 +363,18 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        private static string ProcessObjectEscapedCharacters(string objectValue)
+        {
+            var match = Regex.Match(objectValue, "^\"(.*)\"$");
+            if(match.Success)
+            {
+                var replaceEscapedQuotes = match.Groups[1].Value.Replace("\"\"", "\"");
+                return $"\"{replaceEscapedQuotes}\"";
+            }
+
+            return objectValue;
         }
 
         private static void ValidateAccountDomain(SFSessionProperties properties)
