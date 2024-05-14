@@ -254,7 +254,7 @@ namespace Snowflake.Data.Core
             }
 
             ValidateAuthenticator(properties);
-            DisableConnectionPoolingForExternalBrowser(properties);
+            DisableConnectionPoolingWhenSecretsPassedExternally(properties);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -308,23 +308,34 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void DisableConnectionPoolingForExternalBrowser(SFSessionProperties properties)
+        private static void DisableConnectionPoolingWhenSecretsPassedExternally(SFSessionProperties properties)
         {
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
             {
                 authenticator = authenticator.ToLower();
-                if (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME))
+                if (ExternalBrowserAuthenticator.AUTH_NAME.Equals(authenticator))
                 {
-                    if (!properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr))
-                    {
-                        properties.Add(SFSessionProperty.POOLINGENABLED, "false");
-                        logger.Info("Connection pooling is disabled for external browser authentication");
-                    }
-                    else if (Boolean.TryParse(poolingEnabledStr, out var poolingEnabled) && poolingEnabled)
-                    {
-                        logger.Warn("Connection pooling is enabled for external browser authentication");
-                    }
+                    DisableConnectionPooling(properties, "external browser");
                 }
+                else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator)
+                         && properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var privateKeyFile)
+                         && !string.IsNullOrEmpty(privateKeyFile))
+                {
+                    DisableConnectionPooling(properties, "jwt token with private key in a file");
+                }
+            }
+        }
+
+        private static void DisableConnectionPooling(SFSessionProperties properties, string authenticationDescription)
+        {
+            if (!properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr))
+            {
+                properties.Add(SFSessionProperty.POOLINGENABLED, "false");
+                logger.Info($"Connection pooling is disabled for {authenticationDescription} authentication");
+            }
+            else if (Boolean.TryParse(poolingEnabledStr, out var poolingEnabled) && poolingEnabled)
+            {
+                logger.Warn($"Connection pooling is enabled for {authenticationDescription} authentication");
             }
         }
 
