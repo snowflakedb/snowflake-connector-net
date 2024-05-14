@@ -1,0 +1,47 @@
+FROM centos:7
+
+USER root
+WORKDIR /
+
+# update OS and install basic tools
+RUN yum -y update && \
+    yum -y install epel-release && \
+    yum -y install centos-release-scl && \
+    yum -y install git && \
+    yum -y install which && \
+    yum -y install zstd && \
+    yum -y install jq \
+
+# python
+RUN yum -y install python36
+RUN python3 -V
+RUN pip3 install -U pip
+RUN pip3 install -U snowflake-connector-python
+
+# aws
+RUN pip3 install -U awscli
+RUN aws --version
+
+# gosu
+RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.11/gosu-amd64"
+RUN chmod +x /usr/local/bin/gosu
+
+# Install build tools
+RUN yum -y groupinstall 'Development Tools'
+RUN yum -y install centos-release-scl
+RUN yum -y install devtoolset-8-gcc*
+SHELL [ "/usr/bin/scl", "enable", "devtoolset-8"]
+
+# dotnet-sdk-6.0
+RUN rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+RUN yum -y install --exclude 1:openssl-libs-1.0.2k-26.el7_9.x86_64 dotnet-sdk-6.0
+
+# workspace
+RUN mkdir -p /home/user && \
+    chmod 777 /home/user
+WORKDIR /home/user
+
+# entry point
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
