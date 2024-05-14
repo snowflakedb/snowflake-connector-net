@@ -2,26 +2,87 @@
 
 ### Multiple Connection Pools
 
-v4.0.0 version of Snowflake .NET Driver provides multiple pools with couple of additional features according to the previous implementation.
+Snowflake .NET Driver v4.0.0 provides multiple pools with couple of additional features in comparison to the previous implementation.
+Each pool is identified by the entire <b>connection string</b>. Order of connection string parameters is significant and the same connection parameters
+ordered differently lead to two different pools being used.
 
-| Connection Pool Feature    | Connection String Parameter  | Default      | Method                         |
-|----------------------------|------------------------------|--------------|--------------------------------|
-| Multiple pools             |                              |              |                                |
-| Minimum pool size          | MinPoolSize                  | 2            |                                |
-| Maximum pool size          | MaxPoolSize                  | 10           |                                |
-| Changed Session Behavior   | ChangedSession               | OriginalPool |                                |
-| Pool Size Exceeded Timeout | WaitingForIdleSessionTimeout | 30s          |                                |
-| Expiration Timeout         | ExpirationTimeout            | 60m          |                                |
-| Pooling Enabled            | PoolingEnabled               | true         |                                |
-| Connection Timeout         |                              | 300s         |                                |
-| Current Pool Size          |                              |              | GetCurrentPoolSize()           |
-| Clear Pool                 |                              |              | ClearPool() or ClearAllPools() |
+All the pool parameters can be controlled from the connection string.
+
+Pool interface is also maintained by the [SnowflakeDbConnectionPool.cs](https://github.com/snowflakedb/snowflake-connector-net/blob/master/Snowflake.Data/Client/SnowflakeDbConnectionPool.cs).
+However, some operations (eg. setting pool parameters from this SnowflakeDbConnectionPool class) are not possible having in mind multiple pools and possibly their different setup.
+For that a [SnowflakeDbSessionPool.cs](/Snowflake.Data/Client/SnowflakeDbSessionPool.cs) is provided by
+- [SnowflakeDbSessionPool.GetPool(connectionString)](https://github.com/snowflakedb/snowflake-connector-net/blob/master/Snowflake.Data/Client/SnowflakeDbConnectionPool.cs#L45)
+- [SnowflakeDbSessionPool.GetPool(connectionString, securePassword)](https://github.com/snowflakedb/snowflake-connector-net/blob/master/Snowflake.Data/Client/SnowflakeDbConnectionPool.cs#L51).
+to control pool settings from the code. Changed pool settings are not reflected by their connection string therefore recommended way is to control the pool from the connection string.
+
+### Pool Lifecycle
+
+Single pool is instantiated each time an application creates and opens a connection for the first time using particular connection string.
+From that moment the pool tracks and maintains connections matching exactly this connection string.
+Pool is responsible for destroying and recreating connections which are old enough (see [Expiration Timeout](#expiration-timeout)).
+Number of connections is maintained within [Minimum pool size](#minimum-pool-size) and [Maximum pool size](#maximum-pool-size).
+Connections in all their statuses are tracked:
+- opening phase
+- busy phase
+- closed and returned to the pool (idle)
+User can clean up the pool using methods: [Clear Pool](#clear-pool).
+
+### Connection Lifecycle
+
+#### Opening
+
+Before connection is opened it is `scheduled` to be opened in the pool on a waiting queue. Connections scheduled to open are counted to the pool size.
+After connection is successfully opened it is counted as a `busy` in a separate list. Pool can provide already opened `idle` connection or if there are none it will schedule new one to open.
+When [Maximum pool size](#maximum-pool-size) is reached connection is waiting to be opened within period of time controlled with [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout).
+When the timeout is exceeded then an exception will get thrown.
+
+#### Busy
+
+`Busy` connection is provided by the pool but it is counted to the pool size. It is returned to be reused during Close operation.
+When application does not Close connection it may hit the limit of [Maximum pool size](#maximum-pool-size).
+
+#### Closing
+
+When application closes the connection couple of things happen:
+- Pending transactions will be rolled back (if any)
+- Connection can be pooled when its properties are not changed
+- Connection with changed: database, schema, warehouse or role can be:
+  - pooled when OriginalPool mode enabled, see more: [Changed Session Behavior](#changed-session-behavior)
+  - destroyed when Destroy mode is set
+
+#### Evicting Connection
+
+Application may mark the connection to evict without turning off the pool. When connection Close methods gets executed it will not be pooled and if necessary
+a new connection will be created to maintain Minimum Pool Size.
+
+```cs
+using (var connection = new SnowflakeDbConnection(ConnectionString))
+{
+    connection.Open();
+    connection.PreventPooling();
+}
+```
+
+### Pool Interfaces
+
+| Connection Pool Feature                                   | Connection String Parameter  | Default | Method                          | Info                                               |
+|-----------------------------------------------------------|------------------------------|---------|---------------------------------|----------------------------------------------------|
+| [Multiple pools](#multiple-pools)                         |                              |         |                                 |                                                    |
+| [Minimum pool size](#minimum-pool-size)                   | MinPoolSize                  | 2       |                                 |                                                    |
+| [Maximum pool size](#maximum-pool-size)                   | MaxPoolSize                  | 10      |                                 |                                                    |
+| [Changed Session Behavior](#changed-session-behavior)     | ChangedSession               | Destroy |                                 | Destroy or OriginalPool                            |
+| [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout) | WaitingForIdleSessionTimeout | 30s     |                                 | Values can be provided with postfix [ms], [s], [m] |
+| [Expiration Timeout](#expiration-timeout)                 | ExpirationTimeout            | 60m     |                                 |                                                    |
+| [Pooling Enabled](#connection-timeout)                    | PoolingEnabled               | true    |                                 |                                                    |
+| [Connection Timeout](#pooling-enabled)                    |                              | 300s    |                                 |                                                    |
+| [Current Pool Size](#current-pool-size)                   |                              |         | GetCurrentPoolSize()            |                                                    |
+| [Clear Pool](#clear-pool)                                 |                              |         | ClearPool() or ClearAllPools()  |                                                    |
 
 #### Multiple pools
 
 When a first connection is opened, a connection pool is created based on an exact matching algorithm that associates the pool with the connection string of the connection. Each connection pool is associated with a distinct connection string. When a new connection is opened, if the connection string is not an exact match to an existing pool, a new pool is created.
 
-Different pools can have separate settings from the above settings for instance: minimal pool size or changed session behavior.
+Different pools can have separate settings from the above settings for instance: minimum pool size or changed session behavior.
 
 ```cs
 using (var connection = new SnowflakeDbConnection(ConnectionString + ";application=App1"))
@@ -39,9 +100,9 @@ using (var connection = new SnowflakeDbConnection(ConnectionString + ";applicati
 
 #### Minimum pool size
 
-Ensures minimal specified size of the connections in a pool. Additional connections are created in the background during connection opening request.
+Ensures minimum specified size of the connections in a pool. Additional connections are created in the background during connection opening request.
 When connections are being closed Connection Timeout is analysed for all the connections in a pool and the expired ones are being closed.
-After that some connections will get recreated to ensure minimal size of the pool.
+After that some connections will get recreated to ensure minimum size of the pool.
 
 ```cs
 var connectionString = ConnectionString + ";MinPoolSize=10";
@@ -63,7 +124,7 @@ What counts for that are:
 - connections during opening phase
 
 When a maximum pool size is reached any request to provide (open) another connection is waiting for any idle session to be returned to the pool.
-When an Idle Session Timeout is reached and an idle session is not returned an exception will get thrown.
+When an Idle Session Timeout is reached and an idle session is not returned within that period an exception will get thrown.
 
 ```cs
 var connectionString = ConnectionString + ";MaxPoolSize=2";
@@ -110,21 +171,28 @@ Assert.AreEqual(2, poolSize);
 
 #### Changed Session Behavior
 
-When an application does a change to the connection using one of SQL commands:
+When an application does a change to the connection using one of SQL commands, for instance:
 * `use schema`, `create schema`
 * `use database`, `create database`
 * `use warehouse`, `create warehouse`
 * `use role`, `create role`
+* `drop`
+then such an affected connection is marked internally as no longer matching with the pool it originated from (it becomes a "dirty" connection).
+Keep in mind that create commands automatically set active the created object within current connection
+(eg. [create database](https://docs.snowflake.com/en/sql-reference/sql/create-database#general-usage-notes)).
 
-then such an affected connection is marked internally as no longer matching with the pool it originated from.
-When parameter ChangedSession is set to `OriginalPool` it allows the connection to be pooled.
-Parameter ChangedSession set to `Destroy` (default) ensures that the connection is not pooled and after Close is called the connection will be removed.
-The pool will recreate necessary connections according to the minimal pool size.
+Pool has two different approaches to connections altered with above way:
+* Destroy connection
+* Pool it back to the Original Pool
 
-1) ChangedSession = Destroy
+1) Destroy Connection Mode
 
-In this mode application may safely alter session properties: schema, database, warehouse, role. Connection not matching
-with the connection string will not get pooled.
+To enable this pool mode parameter ChangedSession should be set to `Destroy` or entirely skipped (Destroy is the default pool behavior).
+In this mode application may safely alter connection properties: schema, database, warehouse or role. Such a dirty connection no longer matching
+with the connection string will not get pooled any more. The pool marks it internally as `dirty` and ensures it gets removed
+when no longer used (closed) by the application.
+
+Since such connections do not return to the pool, it will recreate necessary number of connections to satisfy the Minimum Pool Size requirement.
 
 ```cs
 var connectionString = ConnectionString + ";ChangedSession=Destroy";
@@ -142,11 +210,17 @@ connection2.Open();
 // operations here will be performed against schema indicated in the ConnectionString
 ```
 
-2) ChangedSession = OriginalPool
+2) Pooling Changed Session to the Original Pool
 
-When application reuses connections affected by the above commands it might get to a point when using a connection
-it gets errors since tables, procedures, stages do not exists cause the operations are executed using wrong
-database, schema, user or role. This mode is purely for backward compatibility but is not recommended to be used.
+When parameter ChangedSession is set to `OriginalPool` it allows the connection to be pooled back to the original pool from which it came from.
+
+<u>Disclaimer for OriginalPool Mode</u>
+
+When application reuses connections affected by the above commands (use/create) it might get to a point when using a connection
+provided by the pool it gets SQL syntax errors since tables, procedures, stages and other database objects do not exists because the operations
+are executed using changed database, schema, user or role no longer matching connection string.
+Reusing connection from a pool requires attention from the code perspective and ensuring that each retrieved connection uses appropriate database, schema, warehouse or role.
+This mode is purely for backward compatibility but is not recommended to be used. It is also not a default.
 
 ```cs
 var connectionString = ConnectionString + ";ChangedSession=OriginalPool;MinPoolSize=1;MaxPoolSize=1";

@@ -141,6 +141,7 @@ Logging description and configuration:
 4.  Certificate Revocation List not performed where insecureMode was disabled -
     Snowflake has identified vulnerability where the checks against the Certificate Revocation List (CRL)
     were not performed where the insecureMode flag was set to false, which is the default setting.
+    From version v2.1.5 CRL is working back as intended.
 
 Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 
