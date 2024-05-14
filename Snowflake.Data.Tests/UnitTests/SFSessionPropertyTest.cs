@@ -263,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CHANGEDSESSION, DefaultValue(SFSessionProperty.CHANGEDSESSION) },
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
-                    { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) }
+                    { SFSessionProperty.POOLINGENABLED, "false" } // connection pooling is disabled for external browser authentication
                 }
             };
             var testCaseWithProxySettings = new TestCase()
