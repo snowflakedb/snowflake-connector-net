@@ -73,13 +73,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Platform(Exclude="Win", Reason="skip test on Windows")]
         public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
@@ -91,19 +87,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
+                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
                 Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
         [Test]
+        [Platform(Exclude="Win", Reason="skip test on Windows")]
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", "/"));
             using (IDbConnection conn = new SnowflakeDbConnection())

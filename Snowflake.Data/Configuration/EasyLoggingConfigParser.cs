@@ -111,7 +111,7 @@ namespace Snowflake.Data.Configuration
             var hasPermissions = ((UnixFileMode.OtherRead | UnixFileMode.GroupWrite) & unixFileMode) == 0;
 #else
             var entitlements = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
-            var hasPermissions = _unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
+            var hasPermissions = !_unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
 #endif
             if (hasPermissions)
             {
