@@ -65,18 +65,18 @@ using (var connection = new SnowflakeDbConnection(ConnectionString))
 
 ### Pool Interfaces
 
-| Connection Pool Feature                                   | Connection String Parameter  | Default | Method                          | Info                                               |
-|-----------------------------------------------------------|------------------------------|---------|---------------------------------|----------------------------------------------------|
-| [Multiple pools](#multiple-pools)                         |                              |         |                                 |                                                    |
-| [Minimum pool size](#minimum-pool-size)                   | MinPoolSize                  | 2       |                                 |                                                    |
-| [Maximum pool size](#maximum-pool-size)                   | MaxPoolSize                  | 10      |                                 |                                                    |
-| [Changed Session Behavior](#changed-session-behavior)     | ChangedSession               | Destroy |                                 | Destroy or OriginalPool                            |
-| [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout) | WaitingForIdleSessionTimeout | 30s     |                                 | Values can be provided with postfix [ms], [s], [m] |
-| [Expiration Timeout](#expiration-timeout)                 | ExpirationTimeout            | 60m     |                                 |                                                    |
-| [Pooling Enabled](#connection-timeout)                    | PoolingEnabled               | true    |                                 |                                                    |
-| [Connection Timeout](#pooling-enabled)                    |                              | 300s    |                                 |                                                    |
-| [Current Pool Size](#current-pool-size)                   |                              |         | GetCurrentPoolSize()            |                                                    |
-| [Clear Pool](#clear-pool)                                 |                              |         | ClearPool() or ClearAllPools()  |                                                    |
+| Connection Pool Feature                                   | Connection String Parameter  | Default | Method                          | Info                                                                                                      |
+|-----------------------------------------------------------|------------------------------|---------|---------------------------------|-----------------------------------------------------------------------------------------------------------|
+| [Multiple pools](#multiple-pools)                         |                              |         |                                 |                                                                                                           |
+| [Minimum pool size](#minimum-pool-size)                   | MinPoolSize                  | 2       |                                 |                                                                                                           |
+| [Maximum pool size](#maximum-pool-size)                   | MaxPoolSize                  | 10      |                                 |                                                                                                           |
+| [Changed Session Behavior](#changed-session-behavior)     | ChangedSession               | Destroy |                                 | Destroy or OriginalPool                                                                                   |
+| [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout) | WaitingForIdleSessionTimeout | 30s     |                                 | Values can be provided with postfix [ms], [s], [m]                                                        |
+| [Expiration Timeout](#expiration-timeout)                 | ExpirationTimeout            | 60m     |                                 |                                                                                                           |
+| [Pooling Enabled](#connection-timeout)                    | PoolingEnabled               | true    |                                 | Pooling connections authenticated with External Browser or Key-Pair Authentication is disabled by default |
+| [Connection Timeout](#pooling-enabled)                    |                              | 300s    |                                 |                                                                                                           |
+| [Current Pool Size](#current-pool-size)                   |                              |         | GetCurrentPoolSize()            |                                                                                                           |
+| [Clear Pool](#clear-pool)                                 |                              |         | ClearPool() or ClearAllPools()  |                                                                                                           |
 
 #### Multiple pools
 
@@ -338,6 +338,14 @@ using (var connection = new SnowflakeDbConnection(connectionString))
 #### Pooling Enabled
 
 Enables or disables connection pooling for the pool identified by a given connection string.
+
+<u>For security reasons pooling is disabled by default for External Browser or Key-Pair Authentication.</u>
+
+It can be enabled with a connection string parameter if needed.
+However, be warned that using:
+- token key file accessible by others and used to authorize connection
+- shared environment with an external browser authenticated connections
+leads to vulnerabilities and is not recommended.
 
 ```cs
 var connectionString = ConnectionString + ";PoolingEnabled=false";
