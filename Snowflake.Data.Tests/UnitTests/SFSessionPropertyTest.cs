@@ -8,6 +8,7 @@ using System.Security;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -83,7 +84,25 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
 
+        [Test]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
+        [TestCase("ACCOUNT=testaccount;USER=testuser;", "")]
+        [TestCase("authenticator=okta;ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
+        [TestCase("authenticator=okta;ACCOUNT=testaccount;USER=testuser;", "")]
+        public void TestFailWhenNoPasswordProvided(string connectionString, string password)
+        {
+            // arrange
+            var securePassword = password == null ? null : SecureStringHelper.Encode(password);
 
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(
+                () => SFSessionProperties.ParseConnectionString(connectionString, securePassword)
+            );
+
+            // assert
+            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.That(exception.Message, Does.Contain("Required property PASSWORD is not provided"));
+        }
 
         [Test]
         [TestCase("DB", SFSessionProperty.DB, "\"testdb\"")]
