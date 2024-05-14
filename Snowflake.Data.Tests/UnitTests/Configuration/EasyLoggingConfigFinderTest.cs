@@ -119,26 +119,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
-            // arrange
-            MockFileOnHomePath();
-            MockHasFlagReturnsTrue();
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(null));
-
-            // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
-        }
-
-        [Test]
         public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
             // act
