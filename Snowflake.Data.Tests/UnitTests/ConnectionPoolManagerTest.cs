@@ -212,6 +212,18 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("authenticator=externalbrowser;account=test;user=test;")]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key")]
+        public void TestDisabledPoolingWhenSecretesProvidedExternally(string connectionString)
+        {
+            // act
+            var pool = _connectionPoolManager.GetPool(connectionString, null);
+
+            // assert
+            Assert.IsFalse(pool.GetPooling());
+        }
+
+        [Test]
         public void TestGetTimeoutOnManagerLevelWhenNotAllPoolsEqual()
         {
             // Arrange

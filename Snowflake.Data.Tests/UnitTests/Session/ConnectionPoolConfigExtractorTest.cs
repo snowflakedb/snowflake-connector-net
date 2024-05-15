@@ -220,6 +220,28 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [TestCase("account=test;user=test;password=test;", true)]
+        [TestCase("authenticator=externalbrowser;account=test;user=test;", false)]
+        [TestCase("authenticator=externalbrowser;account=test;user=test;poolingEnabled=true;", true)]
+        [TestCase("authenticator=externalbrowser;account=test;user=test;poolingEnabled=false;", false)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key", false)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=true;", true)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=false;", false)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey", true)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=true;", true)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=false;", false)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=secretPwd", true)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=", false)]
+        public void TestDisablePoolingDefaultWhenSecretsProvidedExternally(string connectionString, bool poolingEnabled)
+        {
+            // act
+            var result = ExtractConnectionPoolConfig(connectionString);
+
+            // assert
+            Assert.AreEqual(poolingEnabled, result.PoolingEnabled);
+        }
+
+        [Test]
         [TestCase("wrong_value")]
         [TestCase("15")]
         public void TestExtractFailsForWrongValueOfPoolingEnabled(string propertyValue)
@@ -252,12 +274,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(expectedChangedSession, result.ChangedSession);
         }
 
-        private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString)
-        {
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-            return extractedProperties.BuildConnectionPoolConfig();
-        }
+        private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString) =>
+            SessionPool.ExtractConfig(connectionString, null).Item1;
 
         public class TimeoutTestCase
         {

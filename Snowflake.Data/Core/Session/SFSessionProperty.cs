@@ -128,6 +128,8 @@ namespace Snowflake.Data.Core
 
         internal string ConnectionStringWithoutSecrets { get; set; }
 
+        internal bool IsPoolingEnabledValueProvided { get; set; }
+
         // Connection string properties to obfuscate in the log
         private static readonly List<string> s_secretProps = Enum.GetValues(typeof(SFSessionProperty))
             .Cast<SFSessionProperty>()
@@ -254,7 +256,7 @@ namespace Snowflake.Data.Core
             }
 
             ValidateAuthenticator(properties);
-            DisableConnectionPoolingForExternalBrowser(properties);
+            properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -308,25 +310,8 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void DisableConnectionPoolingForExternalBrowser(SFSessionProperties properties)
-        {
-            if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
-            {
-                authenticator = authenticator.ToLower();
-                if (authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME))
-                {
-                    if (!properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr))
-                    {
-                        properties.Add(SFSessionProperty.POOLINGENABLED, "false");
-                        logger.Info("Connection pooling is disabled for external browser authentication");
-                    }
-                    else if (Boolean.TryParse(poolingEnabledStr, out var poolingEnabled) && poolingEnabled)
-                    {
-                        logger.Warn("Connection pooling is enabled for external browser authentication");
-                    }
-                }
-            }
-        }
+        internal bool IsNonEmptyValueProvided(SFSessionProperty property) =>
+            TryGetValue(property, out var propertyValueStr) && !string.IsNullOrEmpty(propertyValueStr);
 
         private static string BuildConnectionStringWithoutSecrets(ref string[] keys, ref string[] values)
         {
