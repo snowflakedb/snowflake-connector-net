@@ -86,7 +86,7 @@ To create a connection get familiar with: [Connecting and Authentication Methods
 
 Connection pooling description: [Multiple Connection Pools](doc/ConnectionPooling.md).
 
-Backward compatible pooling prior to v4.0.0 is described: [Single Connection Pool](doc/ConnectionPoolingDeprecated.md) - `deprecated`
+Pooling prior to v4.0.0 is described: [Single Connection Pool](doc/ConnectionPoolingDeprecated.md) - `deprecated`
 
 ## Data Types and Formats
 
