@@ -21,9 +21,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  DOTNET_VERSION: 6.0
-  DOTNET_LEGACY_VERSION: 4.7.1
   # uncomment to run the tests sequentially
   # SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
 
@@ -40,9 +37,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            6.0.x
+            8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -98,9 +97,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            6.0.x
+            8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -153,11 +154,13 @@ jobs:
         dotnet: ['net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Dotnet
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            6.0.x
+            8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v4
