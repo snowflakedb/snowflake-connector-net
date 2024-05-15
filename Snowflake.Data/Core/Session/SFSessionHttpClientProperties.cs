@@ -54,7 +54,7 @@ namespace Snowflake.Data.Core
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
 
-            } else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator) && !string.IsNullOrEmpty(properties.GetValueOrDefault(SFSessionProperty.PRIVATE_KEY_FILE)))
+            } else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator) && !string.IsNullOrEmpty(properties.GetValueOrDefault(SFSessionProperty.PRIVATE_KEY_FILE, null)))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "jwt token with private key in a file");
             }
