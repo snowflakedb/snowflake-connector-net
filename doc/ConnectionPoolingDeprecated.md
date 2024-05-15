@@ -58,3 +58,13 @@ public void TestConnectionPoolClean()
   Assert.AreEqual(ConnectionState.Closed, conn4.State);
 }
 ```
+
+<u>Note</u>
+Some of the features and configurations available for [Multiple Connection Pools](ConnectionPooling.md) are not available for the old pool.
+Following configurations/settings have no effect on [Single Connection Pool](ConnectionPoolingDeprecated.md):
+- `poolingEnabled` setting, feature not configurable by connection string, instead you could use `SnowflakeDbConnectionPool.SetPooling(false)`
+- `changedSession` setting, only `OriginalPool` behavior available
+- `maxPoolSize` setting, feature not configurable by connection string, instead you could use `SnowflakeDbConnectionPool.SetMaxPoolSize()`
+- `minPoolSize` setting, feature not available
+- `waitingForIdleSessionTimeout` setting, feature not available
+- `expirationTimeout` setting, feature not configurable by connection string, instead you could use `SnowflakeDbConnectionPool.SetTimeout()`.
