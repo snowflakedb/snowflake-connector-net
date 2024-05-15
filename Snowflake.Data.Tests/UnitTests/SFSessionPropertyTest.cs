@@ -139,62 +139,6 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
         }
 
-        [Test]
-        [TestCase("", "false")]
-        [TestCase("poolingEnabled=true", "true")]
-        [TestCase("poolingEnabled=false", "false")]
-        public void TestPoolingEnabledForExternalBrowserAuthenticator(string connectionParam, string expectedPoolingEnabled)
-        {
-            // arrange
-            var connectionString = $"ACCOUNT=test;AUTHENTICATOR=externalbrowser;{connectionParam}";
-
-            // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-
-            // assert
-            Assert.AreEqual(expectedPoolingEnabled, properties[SFSessionProperty.POOLINGENABLED]);
-        }
-
-        [Test]
-        [TestCase(BasicAuthenticator.AUTH_NAME, "", "true")]
-        [TestCase(KeyPairAuthenticator.AUTH_NAME, "", "true")]
-        [TestCase(KeyPairAuthenticator.AUTH_NAME, ";PRIVATE_KEY_FILE=/some/file.txt", "false")]
-        [TestCase(OAuthAuthenticator.AUTH_NAME, "", "true")]
-        [TestCase(OktaAuthenticator.AUTH_NAME, "", "true")]
-        [TestCase(ExternalBrowserAuthenticator.AUTH_NAME, "", "false")]
-        public void TestDefaultPoolingEnabledForAuthenticator(string authenticator, string additionalConnectionStringPart, string expectedPoolingEnabled)
-        {
-            // arrange
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;TOKEN=test;AUTHENTICATOR={authenticator}{additionalConnectionStringPart}";
-
-            // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-
-            // assert
-            Assert.AreEqual(expectedPoolingEnabled, properties[SFSessionProperty.POOLINGENABLED]);
-        }
-
-        [Test]
-        [TestCase("PRIVATE_KEY_FILE=/some/file.txt", "false")]
-        [TestCase("PRIVATE_KEY=topSecret", "true")]
-        [TestCase("PRIVATE_KEY_FILE=/some/file.txt;PRIVATE_KEY=topSecret", "false")]
-        [TestCase("PRIVATE_KEY_FILE=;PRIVATE_KEY=topSecret", "true")]
-        [TestCase("PRIVATE_KEY_FILE=/some/file.txt;poolingEnabled=true", "true")]
-        [TestCase("PRIVATE_KEY_FILE=/some/file.txt;poolingEnabled=false", "false")]
-        [TestCase("PRIVATE_KEY=topSecret;poolingEnabled=true", "true")]
-        [TestCase("PRIVATE_KEY=topSecret;poolingEnabled=false", "false")]
-        public void TestPoolingEnabledForJwtTokenAuthenticator(string connectionParam, string expectedPoolingEnabled)
-        {
-            // arrange
-            var connectionString = $"ACCOUNT=test;USER=testuser;AUTHENTICATOR=snowflake_jwt;{connectionParam}";
-
-            // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-
-            // assert
-            Assert.AreEqual(expectedPoolingEnabled, properties[SFSessionProperty.POOLINGENABLED]);
-        }
-
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
@@ -285,7 +229,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.CHANGEDSESSION, DefaultValue(SFSessionProperty.CHANGEDSESSION) },
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
-                    { SFSessionProperty.POOLINGENABLED, "false" } // connection pooling is disabled for external browser authentication
+                    { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) }
                 }
             };
             var testCaseWithProxySettings = new TestCase()

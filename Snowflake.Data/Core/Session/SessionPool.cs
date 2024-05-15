@@ -103,12 +103,13 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private static Tuple<ConnectionPoolConfig, string> ExtractConfig(string connectionString, SecureString password)
+        internal static Tuple<ConnectionPoolConfig, string> ExtractConfig(string connectionString, SecureString password)
         {
             try
             {
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+                extractedProperties.DisablePoolingDefaultIfSecretsProvidedExternally(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
             }
             catch (Exception exception)

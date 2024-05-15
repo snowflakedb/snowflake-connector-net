@@ -47,6 +47,32 @@ namespace Snowflake.Data.Core
             return extractedProperties;
         }
 
+        public void DisablePoolingDefaultIfSecretsProvidedExternally(SFSessionProperties properties)
+        {
+            var authenticator = properties[SFSessionProperty.AUTHENTICATOR].ToLower();
+            if (ExternalBrowserAuthenticator.AUTH_NAME.Equals(authenticator))
+            {
+                DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
+
+            } else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator) && !string.IsNullOrEmpty(properties.GetValueOrDefault(SFSessionProperty.PRIVATE_KEY_FILE)))
+            {
+                DisablePoolingIfNotExplicitlyEnabled(properties, "jwt token with private key in a file");
+            }
+        }
+
+        private void DisablePoolingIfNotExplicitlyEnabled(SFSessionProperties properties, string authenticationDescription)
+        {
+            if (!properties.IsPoolingEnabledValueProvided && _poolingEnabled)
+            {
+                _poolingEnabled = false;
+                s_logger.Info($"Disabling connection pooling for {authenticationDescription} authentication");
+            }
+            else if (properties.IsPoolingEnabledValueProvided && _poolingEnabled)
+            {
+                s_logger.Warn($"Connection pooling is enabled for {authenticationDescription} authentication which is not recommended");
+            }
+        }
+
         private void CheckPropertiesAreValid()
         {
             try
