@@ -3,6 +3,7 @@
 ### Multiple Connection Pools
 
 Snowflake .NET Driver v4.0.0 provides multiple pools with couple of additional features in comparison to the previous implementation.
+
 Each pool is identified by the entire <b>connection string</b>. Order of connection string parameters is significant and the same connection parameters
 ordered differently lead to two different pools being used.
 
@@ -18,6 +19,8 @@ to control pool settings from the code. Changed pool settings are not reflected 
 ### Pool Lifecycle
 
 Single pool is instantiated each time an application creates and opens a connection for the first time using particular connection string.
+Pool can be also initialized when accessing for the first time from <b>SnowflakeDbConnectionPool.GetPool</b>.
+
 From that moment the pool tracks and maintains connections matching exactly this connection string.
 Pool is responsible for destroying and recreating connections which are old enough (see [Expiration Timeout](#expiration-timeout)).
 Number of connections is maintained within [Minimum pool size](#minimum-pool-size) and [Maximum pool size](#maximum-pool-size).
@@ -31,15 +34,20 @@ User can clean up the pool using methods: [Clear Pool](#clear-pool).
 
 #### Opening
 
-Before connection is opened it is `scheduled` to be opened in the pool on a waiting queue. Connections scheduled to open are counted to the pool size.
-After connection is successfully opened it is counted as a `busy` in a separate list. Pool can provide already opened `idle` connection or if there are none it will schedule new one to open.
-When [Maximum pool size](#maximum-pool-size) is reached connection is waiting to be opened within period of time controlled with [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout).
-When the timeout is exceeded then an exception will get thrown.
+When an application request to open a connection from the pool there are couple of possibilities:
+
+1) Pool has idle connections already opened and they are provided immediately to the application
+2) Pool has no idle connections but [Maximum pool size](#maximum-pool-size) is not reached in which case pool will open connection.
+The slot for the new connection is reserved in the pool from the very beginning.
+Even though opening a connection may take a while other threads are not blocked from accessing the pool.
+3) When [Maximum pool size](#maximum-pool-size) is reached connection is waiting to be opened within period of
+time controlled with [Pool Size Exceeded Timeout](#pool-size-exceeded-timeout).
+When the timeout is exceeded then an exception will be thrown.
 
 #### Busy
 
-`Busy` connection is provided by the pool but it is counted to the pool size. It is returned to be reused during Close operation.
-When application does not Close connection it may hit the limit of [Maximum pool size](#maximum-pool-size).
+`Busy` connection is provided by the pool and it is counted to the pool size. It is returned to be reused during Close operation.
+When application does not close connections it may hit the limit of [Maximum pool size](#maximum-pool-size).
 
 #### Closing
 
@@ -52,8 +60,10 @@ When application closes the connection couple of things happen:
 
 #### Evicting Connection
 
-Application may mark the connection to evict without turning off the pool. When connection Close methods gets executed it will not be pooled and if necessary
-a new connection will be created to maintain Minimum Pool Size.
+In order to prevent connection pooling the easiest way is to disable pooling. More on this here: [Pooling Enabled](#pooling-enabled).
+
+However, in special cases an application may need to mark a single, opened connection to evict without turning off the pool.
+When such a connection is closed it will not be pooled. Pool will create a new connection to maintain [Minimum pool size](#minimum-pool-size) if needed.
 
 ```cs
 using (var connection = new SnowflakeDbConnection(ConnectionString))
