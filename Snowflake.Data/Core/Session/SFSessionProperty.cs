@@ -256,7 +256,7 @@ namespace Snowflake.Data.Core
             }
 
             ValidateAuthenticator(properties);
-            properties.IsPoolingEnabledValueProvided = CheckPoolingEnabledValueProvided(properties);
+            properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -310,8 +310,8 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static bool CheckPoolingEnabledValueProvided(SFSessionProperties properties) =>
-            properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledStr) && !string.IsNullOrEmpty(poolingEnabledStr);
+        internal bool IsNonEmptyValueProvided(SFSessionProperty property) =>
+            TryGetValue(property, out var propertyValueStr) && !string.IsNullOrEmpty(propertyValueStr);
 
         private static string BuildConnectionStringWithoutSecrets(ref string[] keys, ref string[] values)
         {

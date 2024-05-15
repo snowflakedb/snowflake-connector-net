@@ -230,6 +230,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey", true)]
         [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=true;", true)]
         [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=false;", false)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=secretPwd", true)]
+        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=", false)]
         public void TestDisablePoolingDefaultWhenSecretsProvidedExternally(string connectionString, bool poolingEnabled)
         {
             // act
