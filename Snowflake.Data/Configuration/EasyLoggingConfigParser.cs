@@ -108,19 +108,17 @@ namespace Snowflake.Data.Configuration
 
 #if NET8_0_OR_GREATER
             var unixFileMode = File.GetUnixFileMode(fileStream.SafeFileHandle);
-            var hasPermissions = !(((UnixFileMode.GroupWrite | UnixFileMode.OtherWrite) & unixFileMode) != 0);
+            var hasGroupOrOtherWritePermissions = (((UnixFileMode.GroupWrite | UnixFileMode.OtherWrite) & unixFileMode) != 0);
 #else
             var entitlements = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
-            var hasPermissions = !_unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
+            var hasGroupOrOtherWritePermissions = _unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
 #endif
-            if (hasPermissions)
+            if (hasGroupOrOtherWritePermissions)
             {
-                return;
+                var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
             }
-
-            var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
-            s_logger.Error(errorMessage);
-            throw new Exception(errorMessage);
         }
     }
 }
