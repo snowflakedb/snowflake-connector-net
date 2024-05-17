@@ -97,7 +97,14 @@ namespace Snowflake.Data.Client
 
             protected override bool ReleaseHandle()
             {
-                throw new NotImplementedException();
+                if (IsInvalid)
+                {
+                    return false;
+                }
+
+                CredFree(handle);
+                SetHandleAsInvalid();
+                return true;
             }
         }
 
