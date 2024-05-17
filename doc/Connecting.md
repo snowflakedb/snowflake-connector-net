@@ -51,6 +51,8 @@ The following table lists all valid connection properties:
 
 <br />
 
+**Note**: Connections should not be shared across multiple threads.
+
 ### Password-based Authentication
 
 The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
