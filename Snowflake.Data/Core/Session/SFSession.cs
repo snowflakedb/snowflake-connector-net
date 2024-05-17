@@ -85,6 +85,8 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan _maxRetryTimeout;
 
+        private string _user;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -169,6 +171,7 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
             {
@@ -271,7 +274,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
@@ -303,7 +306,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection time in utc epoch millis: {_startTime}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
