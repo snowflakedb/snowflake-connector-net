@@ -34,6 +34,7 @@ namespace Snowflake.Data.Client
         {
             try
             {
+                s_logger.Debug($"Removing the credentials for key: {key}");
                 CredentialManager.DeleteCredential(key);
             }
             catch (Win32Exception)

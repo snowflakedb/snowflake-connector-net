@@ -97,6 +97,17 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
     [TestFixture]
     [Platform("Win")]
+    public class SFNativeCredentialManagerTest : SFBaseCredentialManagerTest
+    {
+        [SetUp]
+        public void SetUp()
+        {
+            _credentialManager = SnowflakeCredentialManagerNativeImpl.Instance;
+        }
+    }
+
+    [TestFixture]
+    [Platform("Win")]
     public class SFAdysTechCredentialManagerTest : SFBaseCredentialManagerTest
     {
         [SetUp]
