@@ -32,6 +32,7 @@ namespace Snowflake.Data.Core.Session
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
         private readonly ConnectionPoolConfig _poolConfig;
         private bool _configOverriden = false;
+        private bool _underDestruction = false;
 
         private static readonly InvalidOperationException s_notSupportedInCachePoolException = new InvalidOperationException("Feature not supported in a Connection Cache");
 
@@ -72,12 +73,12 @@ namespace Snowflake.Data.Core.Session
         {
             // Use async for the finalizer due to possible deadlock
             // when waiting for the CloseResponse task while closing the session
-            ClearAllPoolsAsync();
+            DestroyPoolAsync();
         }
 
         public void Dispose()
         {
-            ClearIdleSessions();
+            DestroyPool();
         }
 
         internal static ISessionFactory SessionFactory
@@ -269,7 +270,7 @@ namespace Snowflake.Data.Core.Session
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTimeMillis = beforeWaitingTimeMillis;
-            while (!TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
+            while (GetPooling() && !_underDestruction && !TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
             {
                 var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout);
                 _sessionPoolEventHandler.OnWaitingForSessionStarted(this, timeoutLeftMillis);
@@ -336,7 +337,7 @@ namespace Snowflake.Data.Core.Session
                 var session = s_sessionFactory.NewSession(connectionString, password);
                 session.Open();
                 s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
-                if (GetPooling())
+                if (GetPooling() && !_underDestruction)
                 {
                     lock (_sessionPoolLock)
                     {
@@ -407,7 +408,7 @@ namespace Snowflake.Data.Core.Session
 
                     if (!previousTask.IsCanceled)
                     {
-                        if (GetPooling())
+                        if (GetPooling() && !_underDestruction)
                         {
                             lock (_sessionPoolLock)
                             {
@@ -440,7 +441,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::AddSession" + PoolIdentification());
 
-            if (!GetPooling())
+            if (!GetPooling() || _underDestruction)
                 return false;
 
             if (IsMultiplePoolsVersion() &&
@@ -515,13 +516,40 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
+        internal void DestroyPool()
+        {
+            s_logger.Debug("SessionPool::DestroyPool" + PoolIdentification());
+            lock (_sessionPoolLock)
+            {
+                _underDestruction = true;
+                ClearIdleSessions();
+                _busySessionsCounter.Reset();
+                _waitingForIdleSessionQueue.Reset();
+                _sessionCreationTokenCounter.Reset();
+            }
+        }
+
+        internal void DestroyPoolAsync()
+        {
+            s_logger.Debug("SessionPool::DestroyPoolAsync" + PoolIdentification());
+            lock (_sessionPoolLock)
+            {
+                _underDestruction = true;
+                ClearAllPoolsAsync();
+                _busySessionsCounter.Reset();
+                _waitingForIdleSessionQueue.Reset();
+                _sessionCreationTokenCounter.Reset();
+            }
+        }
+
         internal void ClearSessions()
         {
-            s_logger.Debug("SessionPool::ClearSessions" + PoolIdentification());
+            s_logger.Debug($"SessionPool::ClearSessions" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 _busySessionsCounter.Reset();
                 ClearIdleSessions();
+                _waitingForIdleSessionQueue.Reset();
             }
         }
 

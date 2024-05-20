@@ -72,5 +72,20 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.AreEqual(0, counter.Count());
         }
+
+        [Test]
+        public void TestReset()
+        {
+            // arrange
+            var counter = new NonNegativeCounter();
+            counter.Increase();
+            counter.Increase();
+
+            // act
+            counter.Reset();
+
+            // assert
+            Assert.AreEqual(0, counter.Count());
+        }
     }
 }

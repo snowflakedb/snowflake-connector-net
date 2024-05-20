@@ -8,6 +8,7 @@ namespace Snowflake.Data.Core.Session
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly List<SemaphoreSlim> _queue = new List<SemaphoreSlim>();
+        private readonly HashSet<SemaphoreSlim> _notSuccessfulCollection = new HashSet<SemaphoreSlim>();
 
         public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken)
         {
@@ -23,7 +24,31 @@ namespace Snowflake.Data.Core.Session
             }
             try
             {
-                return semaphore.Wait(millisecondsTimeout, cancellationToken);
+                var waitingResult = semaphore.Wait(millisecondsTimeout, cancellationToken);
+                bool shouldFail;
+                _lock.EnterReadLock();
+                try
+                {
+                    shouldFail = _notSuccessfulCollection.Contains(semaphore);
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+                if (shouldFail)
+                {
+                    _lock.EnterWriteLock();
+                    try
+                    {
+                        _notSuccessfulCollection.Remove(semaphore);
+                    }
+                    finally
+                    {
+                        _lock.ExitWriteLock();
+                    }
+                    return false;
+                }
+                return waitingResult;
             }
             catch (OperationCanceledException)
             {
@@ -83,5 +108,24 @@ namespace Snowflake.Data.Core.Session
         }
 
         public bool IsWaitingEnabled() => true;
+
+        public void Reset()
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                while (_queue.Count > 0)
+                {
+                    var semaphore = _queue[0];
+                    _queue.RemoveAt(0);
+                    _notSuccessfulCollection.Add(semaphore);
+                    semaphore?.Release();
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
     }
 }

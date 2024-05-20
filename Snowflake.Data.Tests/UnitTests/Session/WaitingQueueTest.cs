@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var queue = new WaitingQueue();
             var watch = new Stopwatch();
-            
+
             // act
             watch.Start();
             var result = queue.Wait(50, CancellationToken.None);
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Start();
             var result = queue.Wait(30000, cancellationSource.Token);
             watch.Stop();
-            
+
             // assert
             Assert.IsFalse(result);
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1500)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 Thread.Sleep(50);
                 queue.OnResourceIncrease();
             });
-            
+
             // act
             watch.Start();
             var result = queue.Wait(30000, CancellationToken.None);
@@ -72,10 +72,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var queue = new WaitingQueue();
-            
+
             // act
             var isWaitingEnabled = queue.IsWaitingEnabled();
-            
+
             // assert
             Assert.IsTrue(isWaitingEnabled);
         }
@@ -85,10 +85,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var queue = new WaitingQueue();
-            
+
             // act
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
-            
+
             // assert
             Assert.IsFalse(isAnyoneWaiting);
         }
@@ -109,9 +109,32 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
-            
+
             // assert
             Assert.IsTrue(isAnyoneWaiting);
+        }
+
+        [Test]
+        [Retry(2)]
+        public void TestReturnUnsuccessfulOnResetWhileWaiting()
+        {
+            // arrange
+            var queue = new WaitingQueue();
+            var watch = new Stopwatch();
+            Task.Run(() =>
+            {
+                Thread.Sleep(50);
+                queue.Reset();
+            });
+
+            // act
+            watch.Start();
+            var result = queue.Wait(30000, CancellationToken.None);
+            watch.Stop();
+
+            // assert
+            Assert.IsFalse(result);
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1500));
         }
     }
 }

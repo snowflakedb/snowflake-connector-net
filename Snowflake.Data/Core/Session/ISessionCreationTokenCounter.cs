@@ -7,5 +7,7 @@ namespace Snowflake.Data.Core.Session
         void RemoveToken(SessionCreationToken creationToken);
 
         int Count();
+
+        void Reset();
     }
 }
