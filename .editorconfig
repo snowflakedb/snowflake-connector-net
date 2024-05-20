@@ -1,0 +1,73 @@
+root = true
+# yml files
+[*.yml]
+indent_style = space
+indent_size = 2
+
+# All files
+[*.*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+max_line_length = 150
+
+## Interfaces should start with I and PascalCase
+dotnet_naming_style.prefix_and_pascal_case.required_prefix = I
+dotnet_naming_style.prefix_and_pascal_case.capitalization = pascal_case
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_rule.interfaces_begin_with_I.severity = error
+dotnet_naming_rule.interfaces_begin_with_I.symbols = interfaces
+dotnet_naming_rule.interfaces_begin_with_I.style = prefix_and_pascal_case
+dotnet_diagnostic.interfaces_begin_with_I.enabled = true
+
+## Static fields should start with _s
+dotnet_naming_style.prefix_s.required_prefix = _s
+dotnet_naming_style.prefix_s.capitalization = camel_case
+dotnet_naming_rule.static_fields_begin_with_s.style = prefix_s
+dotnet_naming_symbols.static_fields.applicable_kinds = field
+dotnet_naming_symbols.static_fields.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.static_fields.required_modifiers = static
+dotnet_naming_rule.static_fields_begin_with_s.severity = error
+dotnet_naming_rule.static_fields_begin_with_s.symbols = static_fields
+dotnet_diagnostic.static_fields_begin_with_s.enabled = true
+
+## Internal or private member should prefixed with _
+dotnet_naming_style.internal_prefix_.required_prefix = _
+dotnet_naming_style.internal_prefix_.capitalization = camel_case
+dotnet_naming_rule.private_internal_prefix_.style = internal_prefix_
+dotnet_naming_symbols.private_internal_fields.applicable_kinds = field
+dotnet_naming_symbols.private_internal_fields.applicable_accessibilities = internal, private, protected_internal
+dotnet_naming_rule.private_internal_prefix_.severity = error
+dotnet_naming_rule.private_internal_prefix_.symbols = private_internal_fields
+dotnet_diagnostic.private_internal_prefix_.enabled = true
+
+# Enforce use of Pascal case in enums, classes, const and methods
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+dotnet_naming_rule.enforce_pascal_case.style = pascal_case_style
+dotnet_naming_symbols.methods.applicable_kinds = method
+dotnet_naming_symbols.enums.applicable_kinds = enum
+dotnet_naming_symbols.consts.applicable_kinds = field
+dotnet_naming_symbols.consts.applicable_modifiers = const
+dotnet_naming_symbols.public_methods.applicable_kinds = method
+dotnet_naming_symbols.public_methods.applicable_accessibilities = public
+dotnet_naming_symbols.public_classes.applicable_kinds = class
+dotnet_naming_symbols.public_classes.applicable_accessibilities = public
+dotnet_naming_symbols.enum_members.applicable_kinds = enum_member
+dotnet_naming_symbols.enum_members.applicable_accessibilities = *
+dotnet_naming_rule.enforce_pascal_case.severity = error
+dotnet_naming_rule.enforce_pascal_case.symbols = methods, enums, consts, public_methods, public_classes, enum_members
+dotnet_diagnostic.enforce_pascal_case.enabled = true
+
+
+# Naming styles for different symbol kinds
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+dotnet_naming_rule.method_parameters_should_be_camel_case.symbols = method_parameters
+dotnet_naming_rule.method_parameters_should_be_camel_case.style = camel_case_style
+dotnet_naming_symbols.method_parameters.applicable_kinds = parameter
+dotnet_naming_symbols.method_parameters.applicable_accessibilities = *
+dotnet_naming_symbols.method_parameters.required_modifiers = *
+dotnet_naming_rule.method_parameters_should_be_camel_case.severity = error
+dotnet_naming_rule.enforce_pascal_case.symbols = method_parameters
+dotnet_diagnostic.method_parameters_should_be_camel_case.enabled = true
