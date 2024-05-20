@@ -274,7 +274,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}");
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
@@ -306,7 +306,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection time in utc epoch millis: {_startTime}");
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user ?? string.Empty}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
