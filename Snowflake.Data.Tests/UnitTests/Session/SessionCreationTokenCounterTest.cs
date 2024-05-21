@@ -11,22 +11,22 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
-        
+
         [Test]
         public void TestGrantSessionCreation()
         {
             // arrange
             var tokens = new SessionCreationTokenCounter(s_longTime);
-            
+
             // act
             tokens.NewToken();
-            
+
             // assert
             Assert.AreEqual(1, tokens.Count());
-            
+
             // act
             tokens.NewToken();
-            
+
             // assert
             Assert.AreEqual(2, tokens.Count());
         }
@@ -38,16 +38,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var tokens = new SessionCreationTokenCounter(s_longTime);
             var token1 = tokens.NewToken();
             var token2 = tokens.NewToken();
-            
+
             // act
             tokens.RemoveToken(token1);
-            
+
             // assert
             Assert.AreEqual(1, tokens.Count());
-            
+
             // act
             tokens.RemoveToken(token2);
-            
+
             // assert
             Assert.AreEqual(0, tokens.Count());
         }
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var tokens = new SessionCreationTokenCounter(s_longTime);
             tokens.NewToken();
             var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
-            
+
             // act
             tokens.RemoveToken(unknownToken);
 
@@ -80,7 +80,22 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             tokens.RemoveToken(token);
-            
+
+            // assert
+            Assert.AreEqual(0, tokens.Count());
+        }
+
+        [Test]
+        public void TestResetTokens()
+        {
+            // arrange
+            var tokens = new SessionCreationTokenCounter(s_longTime);
+            tokens.NewToken();
+            tokens.NewToken();
+
+            // act
+            tokens.Reset();
+
             // assert
             Assert.AreEqual(0, tokens.Count());
         }

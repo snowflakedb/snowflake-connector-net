@@ -11,10 +11,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var counter = new FixedZeroCounter();
-            
+
             // act
             var count = counter.Count();
-            
+
             // assert
             Assert.AreEqual(0, count);
         }
@@ -24,22 +24,35 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var counter = new FixedZeroCounter();
-            
+
             // act
             counter.Increase();
 
             // assert
             Assert.AreEqual(0, counter.Count());
         }
-        
+
         [Test]
         public void TestZeroAfterDecrease()
         {
             // arrange
             var counter = new FixedZeroCounter();
-            
+
             // act
             counter.Decrease();
+
+            // assert
+            Assert.AreEqual(0, counter.Count());
+        }
+
+        [Test]
+        public void TestZeroAfterReset()
+        {
+            // arrange
+            var counter = new FixedZeroCounter();
+
+            // act
+            counter.Reset();
 
             // assert
             Assert.AreEqual(0, counter.Count());

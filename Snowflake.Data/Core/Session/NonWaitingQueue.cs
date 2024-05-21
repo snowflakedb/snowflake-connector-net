@@ -27,5 +27,9 @@ namespace Snowflake.Data.Core.Session
         {
             return false;
         }
+
+        public void Reset()
+        {
+        }
     }
 }

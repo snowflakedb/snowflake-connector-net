@@ -58,7 +58,7 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");
             foreach (var sessionPool in _pools.Values)
             {
-                sessionPool.ClearSessions();
+                sessionPool.DestroyPool();
             }
             _pools.Clear();
         }

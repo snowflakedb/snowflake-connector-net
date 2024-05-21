@@ -58,5 +58,18 @@ namespace Snowflake.Data.Core.Session
                 _tokenLock.ExitReadLock();
             }
         }
+
+        public void Reset()
+        {
+            _tokenLock.EnterWriteLock();
+            try
+            {
+                _tokens.Clear();
+            }
+            finally
+            {
+                _tokenLock.ExitWriteLock();
+            }
+        }
     }
 }

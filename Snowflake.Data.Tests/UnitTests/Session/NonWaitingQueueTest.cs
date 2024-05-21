@@ -14,12 +14,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var nonWaitingQueue = new NonWaitingQueue();
             var watch = new Stopwatch();
-            
+
             // act
             watch.Start();
             var result = nonWaitingQueue.Wait(10000, CancellationToken.None);
             watch.Stop();
-            
+
             // assert
             Assert.IsFalse(result);
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 50);
@@ -31,10 +31,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var nonWaitingQueue = new NonWaitingQueue();
             nonWaitingQueue.Wait(10000, CancellationToken.None);
-            
+
             // act
             var isAnyoneWaiting = nonWaitingQueue.IsAnyoneWaiting();
-            
+
             // assert
             Assert.IsFalse(isAnyoneWaiting);
         }
@@ -47,9 +47,19 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             var isWaitingEnabled = nonWaitingQueue.IsWaitingEnabled();
-            
+
             // assert
             Assert.IsFalse(isWaitingEnabled);
+        }
+
+        [Test]
+        public void TestReset()
+        {
+            // arrange
+            var nonWaitingQueue = new NonWaitingQueue();
+
+            // act/assert
+            Assert.DoesNotThrow(() => nonWaitingQueue.Reset());
         }
     }
 }

@@ -13,5 +13,7 @@ namespace Snowflake.Data.Core.Session
         int WaitingCount();
 
         bool IsWaitingEnabled();
+
+        void Reset();
     }
 }
