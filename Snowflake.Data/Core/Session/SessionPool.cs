@@ -535,7 +535,7 @@ namespace Snowflake.Data.Core.Session
             lock (_sessionPoolLock)
             {
                 _underDestruction = true;
-                ClearAllPoolsAsync();
+                ClearIdleSessionsAsync();
                 _busySessionsCounter.Reset();
                 _waitingForIdleSessionQueue.Reset();
                 _sessionCreationTokenCounter.Reset();
@@ -566,9 +566,9 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal async void ClearAllPoolsAsync()
+        internal async void ClearIdleSessionsAsync()
         {
-            s_logger.Debug("SessionPool::ClearAllPoolsAsync" + PoolIdentification());
+            s_logger.Debug("SessionPool::ClearIdleSessionsAsync" + PoolIdentification());
             IEnumerable<SFSession> idleSessionsCopy;
             lock (_sessionPoolLock)
             {
