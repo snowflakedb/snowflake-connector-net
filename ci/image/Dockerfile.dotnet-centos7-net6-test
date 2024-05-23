@@ -1,1 +1,0 @@
-FROM nexus.int.snowflakecomputing.com:8086/docker/client-dotnet-centos7-net6-build:1
