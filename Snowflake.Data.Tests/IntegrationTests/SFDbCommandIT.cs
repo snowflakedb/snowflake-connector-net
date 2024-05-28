@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch
                 {
-                    // assert that cancel is not triggered by timeout, but external cancellation 
+                    // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
                 Thread.Sleep(2000);
@@ -503,7 +503,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
 
                 using (IDbCommand command = conn.CreateCommand())
@@ -608,7 +608,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test, NonParallelizable]
         public void TestUseV1ResultParser()
         {
@@ -1021,13 +1021,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void ArrayBindTest(string connstr, string tableName, int size)
         {
-        
+
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, tableName, new []
                 {
                     "cola INTEGER",
@@ -1197,7 +1197,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -1624,7 +1624,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test]
         public void TestSetQueryTagOverridesConnectionString()
         {
@@ -1633,15 +1633,47 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string expectedQueryTag = "Test QUERY_TAG 12345";
                 string connectQueryTag = "Test 123";
                 conn.ConnectionString = ConnectionString + $";query_tag={connectQueryTag}";
-                
+
                 conn.Open();
                 var command = conn.CreateCommand();
                 ((SnowflakeDbCommand)command).QueryTag =  expectedQueryTag;
                 // This query itself will be part of the history and will have the query tag
                 command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
                 var queryTag = command.ExecuteScalar();
-                
+
                 Assert.AreEqual(expectedQueryTag, queryTag);
+            }
+        }
+
+        [Test]
+        public void TestCommandWithCommentEmbedded()
+        {
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var command = conn.CreateCommand();
+
+                command.CommandText = "\r\nselect '--'\r\n";
+                var reader = command.ExecuteReader();
+
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual("--", reader.GetString(0));
+            }
+        }
+
+        [Test]
+        public async Task TestCommandWithCommentEmbeddedAsync()
+        {
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                var command = conn.CreateCommand();
+
+                command.CommandText = "\r\nselect '--'\r\n";
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+
+                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.AreEqual("--", reader.GetString(0));
             }
         }
     }
