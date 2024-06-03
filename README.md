@@ -233,7 +233,7 @@ The following examples show how you can include different types of special chara
   );
   ```
 
-  Note that previously you needed to use a double equal sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equal size.
+  Note that previously you needed to use a double equals sign (==) to escape the character. However, beginning with version 2.0.18, you can use a single equals sign.
 
 
 Snowflake supports using [double quote identifiers](https://docs.snowflake.com/en/sql-reference/identifiers-syntax#double-quoted-identifiers) for object property values (WAREHOUSE, DATABASE, SCHEMA AND ROLES). The value should be delimited with `\"` in the connection string. The value is case-sensitive and allow to use special characters as part of the value.
@@ -295,7 +295,7 @@ If you are using a different method for authentication, see the examples below:
 
     where:
 
-    - `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+    - `{pathToThePrivateKeyFile}` is the path to the file containing the encrypted private key.
     - `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
 
   - Specify an unencrypted private key (read from a file):
