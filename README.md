@@ -9,6 +9,7 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 - .NET Framework 4.7.1
 - .NET Framework 4.7.2
 - .NET 6.0
+- .NET 8.0
 
 Please refer to the Notice section below for information about safe usage of the .NET Driver
 
@@ -1000,7 +1001,7 @@ dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;ve
 
 ## Notice
 
-1.  CVE-2019-0820 -  
+1.  CVE-2019-0820 -
     This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used:
 
         * v1.0 branch: 1.0 - 1.0.16 (exclusive)
@@ -1010,7 +1011,7 @@ dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;ve
 
         In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability.
 
-2.  Logging -  
+2.  Logging -
     Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
 
     Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
@@ -1023,8 +1024,8 @@ dotnet-coverage collect "dotnet test --framework net472 --no-build -l console;ve
     - If you cannot upgrade for any reason, please ensure all debugging is disabled
     - If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens.
 
-3.  Global HTTP connection settings -  
-    Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.  
+3.  Global HTTP connection settings -
+    Snowflake has identified an issue where the driver is globally enforcing TLS 1.2 and certificate revocation checks with the .NET Driver v1.2.1 and earlier versions.
     Starting with v2.0.0, the driver will set these locally.
 
 Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.

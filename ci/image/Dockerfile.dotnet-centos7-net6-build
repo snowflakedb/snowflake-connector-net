@@ -11,7 +11,7 @@ RUN yum -y update && \
     yum -y install which && \
     yum -y install zstd && \
     yum -y install jq \
-    
+
 # python
 RUN yum -y install python36
 RUN python3 -V

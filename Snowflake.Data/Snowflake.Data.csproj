@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net471;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net6.0;net471;net472</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net8.0</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
@@ -11,13 +11,15 @@
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
-    <Authors>howryu, tchen</Authors>
-    <Copyright>Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.</Copyright>
+    <Authors>Snowflake</Authors>
     <Version>3.1.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
+    <AssemblyOriginatorKeyFile>..\sign\publicKey.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="AdysTech.CredentialManager" Version="2.6.0" />
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
@@ -33,7 +35,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472'">
     <Reference Include="System.Net.Http" />
   </ItemGroup>
@@ -43,11 +45,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
-    <InternalsVisibleTo Include="Snowflake.Data.Tests" />
+    <InternalsVisibleTo Include="Snowflake.Data.Tests,PublicKey=0024000004800000940000000602000000240000525341310004000001000100c159643cbf31e9bbbe7920091c39ecbd988b3e102df664830b33f12c9d838b07463682948cb56bbc414311fa019d6bca1dc08bc9d54684667fdd94ddf140f499ccb66795322128ba1804d8342fec912cea2704fe09c82dbf03bf10817330537d57e8177d92c205e93278245d18a84f185c53d1c5d917171c9807ac769ae9dfcb" />
     <!--needed by Moq to be able to mock internal interfaces-->
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2,PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7" />
   </ItemGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
@@ -57,14 +59,20 @@
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AssemblyVersion>$(Version)</AssemblyVersion>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\sign\publicKey.snk">
+      <Link>publicKey.snk</Link>
+    </None>
   </ItemGroup>
 </Project>
