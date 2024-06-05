@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -9,9 +9,7 @@ namespace Snowflake.Data.Client
     internal enum TokenType
     {
         [StringAttr(value = "ID_TOKEN")]
-        IdToken,
-        [StringAttr(value = "MFATOKEN")]
-        MfaToken
+        IdToken
     }
 
     public interface ISnowflakeCredentialManager
