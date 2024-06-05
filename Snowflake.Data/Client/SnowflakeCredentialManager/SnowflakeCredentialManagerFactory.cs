@@ -27,7 +27,7 @@ namespace Snowflake.Data.Client
 
         public static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager)
         {
-            s_logger.Info("Setting the custom credential manager");
+            s_logger.Info($"Setting the custom credential manager: {customCredentialManager.GetType().Name}");
             s_customCredentialManager = customCredentialManager;
         }
 
