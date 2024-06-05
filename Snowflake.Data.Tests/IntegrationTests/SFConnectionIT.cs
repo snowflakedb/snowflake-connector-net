@@ -1053,7 +1053,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                         + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
-                var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken.ToString());
+                var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
                 var credentialManager = SnowflakeCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "wrongToken");
 

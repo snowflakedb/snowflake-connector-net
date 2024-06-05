@@ -14,9 +14,9 @@ namespace Snowflake.Data.Client
 
         private static ISnowflakeCredentialManager s_customCredentialManager = null;
 
-        internal static string BuildCredentialKey(string host, string user, string tokenType)
+        internal static string BuildCredentialKey(string host, string user, TokenType tokenType)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToUpper()}";
+            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}";
         }
 
         public static void UseDefaultCredentialManager()
