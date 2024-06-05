@@ -102,29 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SetUp]
         public void SetUp()
         {
-            _credentialManager = SnowflakeCredentialManagerNativeImpl.Instance;
-        }
-    }
-
-    [TestFixture]
-    [Platform("Win")]
-    public class SFAdysTechCredentialManagerTest : SFBaseCredentialManagerTest
-    {
-        [SetUp]
-        public void SetUp()
-        {
-            _credentialManager = SnowflakeCredentialManagerAdysTechImpl.Instance;
-        }
-    }
-
-    [TestFixture]
-    [Platform("Win")]
-    public class SFMeziantouCredentialManagerTest : SFBaseCredentialManagerTest
-    {
-        [SetUp]
-        public void SetUp()
-        {
-            _credentialManager = SnowflakeCredentialManagerMeziantouImpl.Instance;
+            _credentialManager = SnowflakeCredentialManagerWindowsNativeImpl.Instance;
         }
     }
 
@@ -199,7 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Assert.IsInstanceOf<SnowflakeCredentialManagerAdysTechImpl>(_credentialManager);
+                Assert.IsInstanceOf<SnowflakeCredentialManagerWindowsNativeImpl>(_credentialManager);
             }
             else
             {

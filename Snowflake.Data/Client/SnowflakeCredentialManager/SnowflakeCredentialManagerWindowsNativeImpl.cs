@@ -10,11 +10,11 @@ using System.Text;
 
 namespace Snowflake.Data.Client
 {
-    public class SnowflakeCredentialManagerNativeImpl : ISnowflakeCredentialManager
+    public class SnowflakeCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerNativeImpl>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerWindowsNativeImpl>();
 
-        public static readonly SnowflakeCredentialManagerNativeImpl Instance = new SnowflakeCredentialManagerNativeImpl();
+        public static readonly SnowflakeCredentialManagerWindowsNativeImpl Instance = new SnowflakeCredentialManagerWindowsNativeImpl();
 
         public string GetCredentials(string key)
         {

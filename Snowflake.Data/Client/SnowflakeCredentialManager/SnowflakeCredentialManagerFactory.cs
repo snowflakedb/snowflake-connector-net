@@ -36,7 +36,7 @@ namespace Snowflake.Data.Client
             if (s_customCredentialManager == null)
             {
                 var defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISnowflakeCredentialManager)
-                    SnowflakeCredentialManagerAdysTechImpl.Instance : SnowflakeCredentialManagerInMemoryImpl.Instance;
+                    SnowflakeCredentialManagerWindowsNativeImpl.Instance : SnowflakeCredentialManagerInMemoryImpl.Instance;
                 s_logger.Info($"Using the default credential manager: {defaultCredentialManager.GetType().Name}");
                 return defaultCredentialManager;
             }
