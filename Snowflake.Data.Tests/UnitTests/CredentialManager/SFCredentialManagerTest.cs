@@ -143,11 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
 
-        private static readonly string s_defaultJsonDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
         private const string CustomJsonDir = "testdirectory";
-
-        private static readonly string s_defaultJsonPath = Path.Combine(s_defaultJsonDir, SnowflakeCredentialManagerFileImpl.CredentialCacheFileName);
 
         private static readonly string s_customJsonPath = Path.Combine(CustomJsonDir, SnowflakeCredentialManagerFileImpl.CredentialCacheFileName);
 
@@ -208,7 +204,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // arrange
             t_directoryOperations
-                .Setup(d => d.Exists(s_defaultJsonDir))
+                .Setup(d => d.Exists(s_customJsonPath))
                 .Returns(false);
             t_unixOperations
                 .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
@@ -237,11 +233,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // arrange
             t_unixOperations
-                .Setup(u => u.CreateFileWithPermissions(s_defaultJsonPath,
+                .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
                 .Returns(0);
             t_unixOperations
-                .Setup(u => u.GetFilePermissions(s_defaultJsonPath))
+                .Setup(u => u.GetFilePermissions(s_customJsonPath))
                 .Returns(FileAccessPermissions.AllPermissions);
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(SnowflakeCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
@@ -254,6 +250,40 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // assert
             Assert.That(thrown.Message, Does.Contain("Permission for the JSON token cache file should contain only the owner access"));
+        }
+
+        [Test]
+        public void TestThatJsonFileIsCheckedIfAlreadyExists()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+
+            // arrange
+            t_unixOperations
+                .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
+                .Returns(0);
+            t_unixOperations
+                .Setup(u => u.GetFilePermissions(s_customJsonPath))
+                .Returns(FileAccessPermissions.UserReadWriteExecute);
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(SnowflakeCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Returns(CustomJsonDir);
+            t_fileOperations
+                .SetupSequence(f => f.Exists(s_customJsonPath))
+                .Returns(false)
+                .Returns(true);
+
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+
+            // act
+            _credentialManager.SaveCredentials("key", "token");
+
+            // assert
+            t_fileOperations.Verify(f => f.Exists(s_customJsonPath), Times.Exactly(2));
         }
     }
 }

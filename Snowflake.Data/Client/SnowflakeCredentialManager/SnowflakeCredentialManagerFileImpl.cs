@@ -77,6 +77,10 @@ namespace Snowflake.Data.Client
                     _directoryOperations.CreateDirectory(_jsonCacheDirectory);
                 }
                 s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
+                if (_fileOperations.Exists(_jsonCacheFilePath))
+                {
+                    s_logger.Info($"The existing json file for credential cache in {_jsonCacheFilePath} will be overwritten");
+                }
                 var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
                 if (createFileResult == -1)
