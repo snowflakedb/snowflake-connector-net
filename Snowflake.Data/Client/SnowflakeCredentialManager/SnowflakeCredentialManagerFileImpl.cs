@@ -50,7 +50,7 @@ namespace Snowflake.Data.Client
         private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath)
         {
             var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
-            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile) : customDirectory;
+            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? HomeDirectoryProvider.HomeDirectory(_environmentOperations) : customDirectory;
             _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
             s_logger.Info($"Setting the json credential cache path to {_jsonCacheFilePath}");
         }
