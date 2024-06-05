@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -151,6 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(_recordBatchOne);
 
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0));
+            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, 0));
         }
         
         [Test]
