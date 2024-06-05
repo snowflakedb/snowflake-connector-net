@@ -41,7 +41,7 @@ namespace Snowflake.Data.Client
             }
             else
             {
-                s_logger.Info("Using a custom credential manager");
+                s_logger.Info($"Using a custom credential manager: {s_customCredentialManager.GetType().Name}");
                 return s_customCredentialManager;
             }
         }
