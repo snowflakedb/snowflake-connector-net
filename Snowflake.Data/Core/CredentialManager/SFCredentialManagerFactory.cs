@@ -2,17 +2,16 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core;
 using Snowflake.Data.Log;
 using System.Runtime.InteropServices;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Core.CredentialManager
 {
-    internal class SnowflakeCredentialManagerFactory
+    internal class SFCredentialManagerFactory
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFactory>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFactory>();
 
-        private static ISnowflakeCredentialManager s_customCredentialManager = null;
+        private static ISFCredentialManager s_customCredentialManager = null;
 
         internal static string BuildCredentialKey(string host, string user, TokenType tokenType)
         {
@@ -25,18 +24,18 @@ namespace Snowflake.Data.Client
             s_customCredentialManager = null;
         }
 
-        public static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager)
+        public static void SetCredentialManager(ISFCredentialManager customCredentialManager)
         {
             s_logger.Info($"Setting the custom credential manager: {customCredentialManager.GetType().Name}");
             s_customCredentialManager = customCredentialManager;
         }
 
-        internal static ISnowflakeCredentialManager GetCredentialManager()
+        internal static ISFCredentialManager GetCredentialManager()
         {
             if (s_customCredentialManager == null)
             {
-                var defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISnowflakeCredentialManager)
-                    SnowflakeCredentialManagerWindowsNativeImpl.Instance : SnowflakeCredentialManagerInMemoryImpl.Instance;
+                var defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISFCredentialManager)
+                    SFCredentialManagerWindowsNativeImpl.Instance : SFCredentialManagerInMemoryImpl.Instance;
                 s_logger.Info($"Using the default credential manager: {defaultCredentialManager.GetType().Name}");
                 return defaultCredentialManager;
             }

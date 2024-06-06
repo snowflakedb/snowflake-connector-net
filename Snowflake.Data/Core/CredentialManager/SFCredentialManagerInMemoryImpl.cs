@@ -5,15 +5,15 @@
 using Snowflake.Data.Log;
 using System.Collections.Generic;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Core.CredentialManager
 {
-    public class SnowflakeCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
+    public class SFCredentialManagerInMemoryImpl : ISFCredentialManager
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerInMemoryImpl>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerInMemoryImpl>();
 
         private Dictionary<string, string> s_credentials = new Dictionary<string, string>();
 
-        public static readonly SnowflakeCredentialManagerInMemoryImpl Instance = new SnowflakeCredentialManagerInMemoryImpl();
+        public static readonly SFCredentialManagerInMemoryImpl Instance = new SFCredentialManagerInMemoryImpl();
 
         public string GetCredentials(string key)
         {

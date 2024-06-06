@@ -8,13 +8,13 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Core.CredentialManager
 {
-    public class SnowflakeCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
+    public class SFCredentialManagerWindowsNativeImpl : ISFCredentialManager
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerWindowsNativeImpl>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 
-        public static readonly SnowflakeCredentialManagerWindowsNativeImpl Instance = new SnowflakeCredentialManagerWindowsNativeImpl();
+        public static readonly SFCredentialManagerWindowsNativeImpl Instance = new SFCredentialManagerWindowsNativeImpl();
 
         public string GetCredentials(string key)
         {
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Client
             credential.Type = 1; // Generic
             credential.Persist = 2; // Local Machine
             credential.CredentialBlobSize = (uint)(byteArray == null ? 0 : byteArray.Length);
-            credential.TargetName =key;
+            credential.TargetName = key;
             credential.CredentialBlob = token;
             credential.UserName = Environment.UserName;
 
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Client
         static extern bool CredRead(string target, uint type, int reservedFlag, out IntPtr credentialPtr);
 
         [DllImport("Advapi32.dll", EntryPoint = "CredWriteW", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern bool CredWrite([In] ref Credential userCredential, [In] UInt32 flags);
+        static extern bool CredWrite([In] ref Credential userCredential, [In] uint flags);
 
         [DllImport("Advapi32.dll", EntryPoint = "CredFree", SetLastError = true)]
         static extern bool CredFree([In] IntPtr cred);

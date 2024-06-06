@@ -2,9 +2,7 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core;
-
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Core.CredentialManager
 {
     internal enum TokenType
     {
@@ -12,7 +10,7 @@ namespace Snowflake.Data.Client
         IdToken
     }
 
-    public interface ISnowflakeCredentialManager
+    public interface ISFCredentialManager
     {
         string GetCredentials(string key);
 

@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
+    using Snowflake.Data.Core.CredentialManager;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -1053,16 +1054,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                         + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
-                var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
-                var credentialManager = SnowflakeCredentialManagerInMemoryImpl.Instance;
+                var key = SFCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
+                var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "wrongToken");
 
-                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+                SFCredentialManagerFactory.SetCredentialManager(credentialManager);
 
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+                SFCredentialManagerFactory.UseDefaultCredentialManager();
             }
         }
 

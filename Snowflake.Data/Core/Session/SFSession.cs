@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.CredentialManager;
 
 namespace Snowflake.Data.Core
 {
@@ -85,7 +86,7 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
-        private readonly ISnowflakeCredentialManager _credManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+        private readonly ISFCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
 
         internal bool _allowSSOTokenCaching;
 
@@ -110,7 +111,7 @@ namespace Snowflake.Data.Core
                 if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     _idToken = authnResponse.data.idToken;
-                    var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _credManager.SaveCredentials(key, _idToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
@@ -199,7 +200,7 @@ namespace Snowflake.Data.Core
 
                 if (_allowSSOTokenCaching)
                 {
-                    var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _idToken = _credManager.GetCredentials(key);
                 }
             }
