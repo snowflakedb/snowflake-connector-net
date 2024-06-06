@@ -11,7 +11,7 @@ namespace Snowflake.Data.Client
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerInMemoryImpl>();
 
-        private static readonly Dictionary<string, string> s_credentials = new Dictionary<string, string>();
+        private Dictionary<string, string> s_credentials = new Dictionary<string, string>();
 
         public static readonly SnowflakeCredentialManagerInMemoryImpl Instance = new SnowflakeCredentialManagerInMemoryImpl();
 
