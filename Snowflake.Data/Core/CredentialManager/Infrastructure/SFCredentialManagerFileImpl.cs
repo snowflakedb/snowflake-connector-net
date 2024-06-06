@@ -14,7 +14,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using KeyToken = System.Collections.Generic.Dictionary<string, string>;
 
-namespace Snowflake.Data.Core.CredentialManager
+namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     public class SFCredentialManagerFileImpl : ISFCredentialManager
     {

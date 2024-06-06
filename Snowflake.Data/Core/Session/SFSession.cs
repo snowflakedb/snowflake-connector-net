@@ -17,6 +17,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Core
 {

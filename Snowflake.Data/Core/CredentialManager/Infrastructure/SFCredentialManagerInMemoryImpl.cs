@@ -5,7 +5,7 @@
 using Snowflake.Data.Log;
 using System.Collections.Generic;
 
-namespace Snowflake.Data.Core.CredentialManager
+namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     public class SFCredentialManagerInMemoryImpl : ISFCredentialManager
     {

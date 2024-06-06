@@ -8,7 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Snowflake.Data.Core.CredentialManager
+namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     public class SFCredentialManagerWindowsNativeImpl : ISFCredentialManager
     {

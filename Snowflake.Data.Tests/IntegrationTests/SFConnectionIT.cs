@@ -21,6 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Runtime.InteropServices;
     using System.Net.Http;
     using Snowflake.Data.Core.CredentialManager;
+    using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest

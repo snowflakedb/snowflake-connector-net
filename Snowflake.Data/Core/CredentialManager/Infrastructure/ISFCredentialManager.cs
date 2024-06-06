@@ -2,7 +2,7 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Core.CredentialManager
+namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     internal enum TokenType
     {
