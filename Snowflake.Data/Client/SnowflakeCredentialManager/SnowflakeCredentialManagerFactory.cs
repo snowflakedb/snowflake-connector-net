@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Client
 {
-    public class SnowflakeCredentialManagerFactory
+    internal class SnowflakeCredentialManagerFactory
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFactory>();
 
