@@ -223,10 +223,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "ALTER SESSION SET FEATURE_STRUCTURED_TYPES = enabled";
-                command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_FDN_TABLES = true";
-                command.ExecuteNonQuery();
+                // command.CommandText = "ALTER SESSION SET FEATURE_STRUCTURED_TYPES = enabled";
+                // command.ExecuteNonQuery();
+                // command.CommandText = "ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_FDN_TABLES = true";
+                // command.ExecuteNonQuery();
                 command.CommandText = "ALTER SESSION SET JDBC_QUERY_FORMAT=JSON";
                 command.ExecuteNonQuery();
 
