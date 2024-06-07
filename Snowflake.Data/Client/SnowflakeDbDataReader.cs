@@ -262,7 +262,8 @@ namespace Snowflake.Data.Client
             var fields = rowType.fields;
             if (fields == null || fields.Count == 0)
             {
-                return (T) GetValue(ordinal);
+                throw new Exception("Cannot return an object without metadata");
+                // return (T) GetValue(ordinal);
             }
             var json = JObject.Parse(GetString(ordinal));
             return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json, constructionMethod);
@@ -274,7 +275,8 @@ namespace Snowflake.Data.Client
             var fields = rowType.fields;
             if (fields == null || fields.Count == 0)
             {
-                return (T[]) GetValue(ordinal);
+                throw new Exception("Cannot return an object without metadata");
+                // return (T[]) GetValue(ordinal);
             }
             var json = JArray.Parse(GetString(ordinal));
             return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json, constructionMethod);
