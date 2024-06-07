@@ -25,9 +25,9 @@ namespace Snowflake.Data.Tests
     using Newtonsoft.Json.Serialization;
 
     /*
-     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that 
+     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
-     * 
+     *
      */
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests
 
     /*
      * This is the base class for all tests that call async methods in the library - it does not use a special SynchronizationContext
-     * 
+     *
      */
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
@@ -61,16 +61,17 @@ namespace Snowflake.Data.Tests
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
+                                                               // + ";useProxy=true;proxyHost=localhost;proxyPort=8080";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
         protected string TableName => TestNameWithWorker;
-        
+
 
         private Stopwatch _stopwatch;
 
         private List<string> _tablesToRemove;
-        
+
         [SetUp]
         public void BeforeTest()
         {
@@ -93,7 +94,7 @@ namespace Snowflake.Data.Tests
         {
             if (_tablesToRemove.Count == 0)
                 return;
-            
+
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
@@ -148,26 +149,26 @@ namespace Snowflake.Data.Tests
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
                                                  testConfig.user,
                                                  testConfig.password);
-        
+
         protected string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
                                                  "unknown",
                                                  testConfig.password);
 
         protected TestConfig testConfig { get; }
-        
+
         protected string ResolveHost()
         {
             return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }
     }
-    
+
     [SetUpFixture]
     public class TestEnvironment
     {
-        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" + 
+        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" +
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
-        
+
         public static TestConfig TestConfig { get; private set; }
 
         private static Dictionary<string, TimeSpan> s_testPerformance;
@@ -201,7 +202,7 @@ namespace Snowflake.Data.Tests
 
             var testConfigString = reader.ReadToEnd();
 
-            // Local JSON settings to avoid using system wide settings which could be different 
+            // Local JSON settings to avoid using system wide settings which could be different
             // than the default ones
             var jsonSettings = new JsonSerializerSettings
             {
@@ -221,16 +222,16 @@ namespace Snowflake.Data.Tests
             {
                 Assert.Fail("Failed to load test configuration");
             }
-            
+
             ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
-        
+
         [OneTimeTearDown]
         public void Cleanup()
         {
             ModifySchema(TestConfig.schema, SchemaAction.DROP);
         }
-        
+
         [OneTimeSetUp]
         public void SetupTestPerformance()
         {
@@ -243,12 +244,12 @@ namespace Snowflake.Data.Tests
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
                 s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
-            
+
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
 
             var separator = Path.DirectorySeparatorChar;
-            
+
             // We have to go up 3 times as the working directory path looks as follows:
             // Snowflake.Data.Tests/bin/debug/{.net_version}/
             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
