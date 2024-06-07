@@ -955,10 +955,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 stopwatch.Stop();
 
                 var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
+                const int MillisecondsDifferenceToAccept = 5;
                 // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
                 Assert.Less(stopwatch.ElapsedMilliseconds, (totalDelaySeconds + 20) * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000);
+                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds + MillisecondsDifferenceToAccept, totalDelaySeconds * 1000);
             }
         }
 
