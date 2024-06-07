@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 "unsupportedType VARCHAR"
                             };
                         }
-                        s_logger.Warn($"Trying to create a table: {TableName} with columns: {columns} !!!");
+                        s_logger.Warn($"Trying to create a table: {TableName} with columns: {string.Join(", ", columns)} !!!");
                         CreateOrReplaceTable(dbConnection, TableName, columns);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
