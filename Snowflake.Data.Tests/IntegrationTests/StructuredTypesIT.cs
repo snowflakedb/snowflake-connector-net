@@ -227,9 +227,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // command.ExecuteNonQuery();
                 // command.CommandText = "ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_FDN_TABLES = true";
                 // command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET JDBC_QUERY_FORMAT=JSON";
+                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT=JSON";
                 command.ExecuteNonQuery();
-
             }
         }
     }
