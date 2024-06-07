@@ -33,6 +33,21 @@ namespace Snowflake.Data.Core.Converter
             throw new Exception("Case not supported");
         }
 
+        public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(string sourceTypeName, List<FieldMetadata> fields, JObject value,
+            StructureTypeConstructionMethod constructionMethod)
+        {
+            var type = typeof(Dictionary<TKey, TValue>);
+            var keyType = typeof(TKey);
+            var valueType = typeof(TValue);
+            if (SFDataType.MAP.ToString().Equals(sourceTypeName, StringComparison.OrdinalIgnoreCase))
+            {
+                return (Dictionary<TKey, TValue>) ConvertToMap(type, keyType, valueType, fields, value, constructionMethod);
+            }
+
+            throw new Exception("Case not supported");
+        }
+
+
         private static object ConvertToObject(Type type, List<FieldMetadata> fields, JToken json, StructureTypeConstructionMethod constructionMethod)
         {
             if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
@@ -126,6 +141,61 @@ namespace Snowflake.Data.Core.Converter
                 return list;
             }
 
+            return result;
+        }
+
+        private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, JToken json,
+            StructureTypeConstructionMethod constructionMethod)
+        {
+            if (keyType != typeof(string))
+            {
+                throw new Exception("Usuported key type in dictionary");
+            }
+            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            {
+                return null;
+            }
+            if (json.Type != JTokenType.Object)
+            {
+                throw new Exception("Json is not an object");
+            }
+            if (fields == null || fields.Count != 2)
+            {
+                throw new Exception("Expecting map to have 2 metadata fields");
+            }
+            var keyMetadata = fields[0];
+            var fieldMetadata = fields[1];
+            var jsonObject = (JObject)json;
+            var result = (IDictionary) Activator.CreateInstance(type);
+            using (var jsonEnumerator = jsonObject.GetEnumerator())
+            {
+                while (jsonEnumerator.MoveNext())
+                {
+                    var jsonPropertyWithValue = jsonEnumerator.Current;
+                    var fieldValue = jsonPropertyWithValue.Value;
+                    var key = IsTextMetadata(keyMetadata) ? jsonPropertyWithValue.Key : throw new Exception("Unsupported type of map key");
+                    if (IsTextMetadata(fieldMetadata))
+                    {
+                        var stringValue = fieldValue.Value<string>();
+                        result.Add(key, stringValue);
+                    }
+                    else if (IsObjectMetadata(fieldMetadata))
+                    {
+                        var objectValue = ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
+                        result.Add(key, objectValue);
+                    }
+                    else if (IsArrayMetadata(fieldMetadata))
+                    {
+                        var nestedType = GetNestedType(valueType);
+                        var arrayValue = ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
+                        result.Add(key, arrayValue);
+                    }
+                    else
+                    {
+                        throw new Exception("Unsupported type of map value");
+                    }
+                }
+            }
             return result;
         }
 

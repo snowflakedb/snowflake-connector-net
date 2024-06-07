@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -33,6 +34,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             this.prefix = prefix;
             this.postfix = postfix;
+        }
+
+        protected bool Equals(Zip other)
+        {
+            return prefix == other.prefix && postfix == other.postfix;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Zip)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(prefix, postfix);
         }
     }
 

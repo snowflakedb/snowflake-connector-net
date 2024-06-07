@@ -5,12 +5,14 @@
 using System;
 using System.Data.Common;
 using System.Collections;
+using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Tls;
 using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Client
@@ -275,11 +277,26 @@ namespace Snowflake.Data.Client
             var fields = rowType.fields;
             if (fields == null || fields.Count == 0)
             {
-                throw new Exception("Cannot return an object without metadata");
+                throw new Exception("Cannot return an array without metadata");
                 // return (T[]) GetValue(ordinal);
             }
             var json = JArray.Parse(GetString(ordinal));
             return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json, constructionMethod);
+        }
+
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal,
+            StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        {
+            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var fields = rowType.fields;
+            if (fields == null || fields.Count == 0)
+            {
+                throw new Exception("Cannot return a map without metadata");
+                // return (T) GetValue(ordinal);
+            }
+
+            var json = JObject.Parse(GetString(ordinal));
+            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json, constructionMethod);
         }
 
         public override bool IsDBNull(int ordinal)

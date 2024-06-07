@@ -219,6 +219,116 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestSelectMap()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
+                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
+                    command.CommandText = $"SELECT {addressAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, string>(0);
+                    Assert.AreEqual(3, map.Count);
+                    Assert.AreEqual("San Mateo", map["city"]);
+                    Assert.AreEqual("CA", map["state"]);
+                    Assert.AreEqual("01-234", map["zip"]);
+                }
+            }
+        }
+
+
+        [Test]
+        public void TestSelectMapOfObjects()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var addressAsSFString = "OBJECT_CONSTRUCT('Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'), 'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567'))::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
+                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
+                    command.CommandText = $"SELECT {addressAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, Zip>(0);
+                    Assert.AreEqual(2, map.Count);
+                    Assert.AreEqual(new Zip("01", "234"), map["Warsaw"]);
+                    Assert.AreEqual(new Zip("02", "567"), map["San Mateo"]);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectMapOfArrays()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var addressAsSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
+                    command.CommandText = $"SELECT {addressAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, string[]>(0);
+                    Assert.AreEqual(1, map.Count);
+                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
+                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectMapOfLists()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var addressAsSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
+                    command.CommandText = $"SELECT {addressAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, List<string>>(0);
+                    Assert.AreEqual(1, map.Count);
+                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
+                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                }
+            }
+        }
+
         private void EnableStructuredTypes(SnowflakeDbConnection connection)
         {
             using (var command = connection.CreateCommand())

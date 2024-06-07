@@ -145,6 +145,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
                 case SFDataType.ARRAY:
+                case SFDataType.MAP:
                     return typeof(string);
                 case SFDataType.DATE:
                 case SFDataType.TIME:
