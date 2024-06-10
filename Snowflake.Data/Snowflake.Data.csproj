@@ -18,6 +18,7 @@
     <AssemblyOriginatorKeyFile>..\sign\publicKey.snk</AssemblyOriginatorKeyFile>
     <DelaySign>true</DelaySign>
     <SignAssembly>true</SignAssembly>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
