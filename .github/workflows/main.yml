@@ -60,7 +60,7 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           dotnet restore
-          dotnet build -f ${{ matrix.dotnet }}
+          dotnet build -f ${{ matrix.dotnet }} -- RunConfiguration.TargetPlatform=x64
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
