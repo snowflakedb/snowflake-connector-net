@@ -14,7 +14,7 @@
     <Authors>Snowflake</Authors>
     <Version>3.1.0</Version>
     <DebugType>Full</DebugType>
-    <LangVersion>8</LangVersion>
+    <LangVersion>9</LangVersion>
     <AssemblyOriginatorKeyFile>..\sign\publicKey.snk</AssemblyOriginatorKeyFile>
     <DelaySign>true</DelaySign>
     <SignAssembly>true</SignAssembly>
