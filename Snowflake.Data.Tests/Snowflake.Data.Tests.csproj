@@ -30,6 +30,9 @@
     <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
     <Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
   </Target>
+  <Target Name="Debug information" AfterTargets="AfterBuild">
+    <Message Importance="high" Text="os system:$(OS)!!!!!!"/>
+  </Target>
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
