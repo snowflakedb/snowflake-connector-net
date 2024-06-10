@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // s_logger.Warn($"OS: {osVariable}!!!");
             // // s_logger.Warn($"OS Description: {RuntimeInformation.OSDescription}!!!");
             // s_logger.Warn($"OS RuntimeIdentifier: {RuntimeInformation.RuntimeIdentifier}!!!");
-            // s_logger.Warn($"OS OSArchitecture: {RuntimeInformation.OSArchitecture}!!!");
+            s_logger.Warn($"OS OSArchitecture: {RuntimeInformation.OSArchitecture}!!!");
         }
     }
 }
