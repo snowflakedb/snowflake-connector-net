@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            6.0.x
+#            6.0.x
             8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
@@ -65,8 +65,7 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           echo "printing exiting dlls"
-          ls bin\Debug\net8.0\*
-          ls bin\Debug\net6.0\*
+          ls "${{ matrix.dotnet }}\*"
           dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
