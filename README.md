@@ -1,5 +1,5 @@
 # Snowflake Connector for .NET
- 
+
 [![codecov](https://codecov.io/github/snowflakedb/snowflake-connector-net/coverage.svg?branch=master)](https://codecov.io/github/snowflakedb/snowflake-connector-net?branch=master)
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
