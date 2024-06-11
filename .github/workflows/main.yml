@@ -3,9 +3,9 @@ name: DotNet Build and Test
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
-    branches: [ master, pool/SNOW-860872-connection-pool ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, pool/SNOW-860872-connection-pool ]
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       logLevel:

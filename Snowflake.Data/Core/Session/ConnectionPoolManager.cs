@@ -122,7 +122,7 @@ namespace Snowflake.Data.Core.Session
 
         public SessionPool GetPool(string connectionString, SecureString password)
         {
-            s_logger.Debug($"ConnectionPoolManager::GetPool");
+            s_logger.Debug("ConnectionPoolManager::GetPool with connection string and secure password");
             var poolKey = GetPoolKey(connectionString, password);
 
             if (_pools.TryGetValue(poolKey, out var item))
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Core.Session
 
         public SessionPool GetPool(string connectionString)
         {
-            s_logger.Debug($"ConnectionPoolManager::GetPool");
+            s_logger.Debug("ConnectionPoolManager::GetPool with connection string");
             return GetPool(connectionString, null);
         }
 
