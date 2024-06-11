@@ -7,6 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using Snowflake.Data.Core;
     using System.Linq;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class FastMemoryStreamTest

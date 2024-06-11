@@ -1,9 +1,10 @@
 using System;
 using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.Util
 {
-    public enum SFTableType 
+    public enum SFTableType
     {
         Standard,
         Hybrid,

@@ -10,10 +10,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Moq;
 using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

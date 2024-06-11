@@ -9,7 +9,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Core;
     using Client;
     using System.Threading.Tasks;
-    
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
+
     [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {

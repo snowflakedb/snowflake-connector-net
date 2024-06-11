@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

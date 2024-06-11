@@ -15,11 +15,12 @@ using System.Text;
 using System.Globalization;
 using System.Collections.Generic;
 using Snowflake.Data.Tests.Util;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
 
-    [TestFixture]    
+    [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();

@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
     using Azure;
     using Azure.Storage.Blobs.Models;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFAzureClientTest : SFBaseTest

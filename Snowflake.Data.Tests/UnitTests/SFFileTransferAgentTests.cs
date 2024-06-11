@@ -16,6 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFFileTransferAgentTest : SFBaseTest

@@ -9,6 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.IO;
     using System.Text;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class ConcatenatedStreamTest

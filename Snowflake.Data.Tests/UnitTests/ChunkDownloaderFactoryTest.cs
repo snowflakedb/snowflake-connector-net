@@ -10,6 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Collections.Generic;
     using System.Threading;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture, NonParallelizable]
     class ChunkDownloaderFactoryTest

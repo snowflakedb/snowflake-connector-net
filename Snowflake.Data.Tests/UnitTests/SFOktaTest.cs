@@ -4,6 +4,7 @@ using Snowflake.Data.Core;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -99,7 +100,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 sfSession.Open();
             } catch (SnowflakeDbException e)
             {
-                Assert.Fail("Should pass without exception", e);
+                Assert.Fail($"Should pass without exception {e}");
             }
         }
 
@@ -121,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 connectTask.Wait();
             } catch (SnowflakeDbException e)
             {
-                Assert.Fail("Should pass without exception", e);
+                Assert.Fail($"Should pass without exception {e}");
             }
         }
 
