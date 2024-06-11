@@ -474,7 +474,7 @@ public void TestConnectionPoolClean()
 
 The .NET driver supports the following mappings from .NET to Snowflake data types.
 
-| .NET Framekwork Data Type | Data Type in Snowflake |
+| .NET Framework Data Type | Data Type in Snowflake |
 | ------------------------- | ---------------------- |
 | `int`, `long`             | `NUMBER(38, 0)`        |
 | `decimal`                 | `NUMBER(38, <scale>)`  |
