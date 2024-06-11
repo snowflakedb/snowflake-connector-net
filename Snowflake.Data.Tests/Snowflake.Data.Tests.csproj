@@ -40,7 +40,7 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Net.Http.WebRequest" />
     <!--<FrameworkReference Include="Microsoft.AspNetCore.App" />-->
-    <!--<PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />-->
+    <!--<PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />--> 
   </ItemGroup>
 
   <ItemGroup>
