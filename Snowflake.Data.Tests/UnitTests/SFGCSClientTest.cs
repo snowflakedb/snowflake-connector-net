@@ -17,7 +17,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading;
     using Snowflake.Data.Tests.Mock;
     using Moq;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFGCSClientTest : SFBaseTest

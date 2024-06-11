@@ -10,7 +10,6 @@ namespace Snowflake.Data.Tests
     using System;
     using System.Data;
     using System.Text;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFDbParameterTest

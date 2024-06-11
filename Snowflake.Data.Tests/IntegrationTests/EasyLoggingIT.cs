@@ -7,7 +7,6 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Log;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.IntegrationTests

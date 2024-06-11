@@ -20,8 +20,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
-    using NUnit.Framework.Legacy;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -801,7 +799,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDbConnection conn = new SnowflakeDbConnection();
                     conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
                     conn.Open();
-                    Assert.Fail($"Authentication of {wrongAuthenticator} should fail");
+                    Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
                 }
                 catch (SnowflakeDbException e)
                 {

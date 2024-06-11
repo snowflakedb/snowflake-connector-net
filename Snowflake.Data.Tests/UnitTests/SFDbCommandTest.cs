@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFDbCommandTest

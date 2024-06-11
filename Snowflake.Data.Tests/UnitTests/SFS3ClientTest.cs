@@ -20,7 +20,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using Moq;
     using Amazon.S3.Model;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFS3ClientTest : SFBaseTest

@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System;
     using System.Text;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     [SetCulture("en-US")]

@@ -8,8 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Log;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
-
+    
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {

@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using Snowflake.Data.Core;
     using NUnit.Framework;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFSessionTest

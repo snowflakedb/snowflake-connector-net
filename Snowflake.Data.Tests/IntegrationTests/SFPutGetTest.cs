@@ -18,7 +18,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]

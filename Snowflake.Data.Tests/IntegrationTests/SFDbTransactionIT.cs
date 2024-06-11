@@ -11,7 +11,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFDbTransactionIT : SFBaseTest

@@ -18,7 +18,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Globalization;
     using Snowflake.Data.Tests.Mock;
     using Snowflake.Data.Core;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync

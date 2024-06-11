@@ -13,7 +13,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFReusableChunkTest
