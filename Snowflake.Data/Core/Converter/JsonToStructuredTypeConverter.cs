@@ -70,31 +70,38 @@ namespace Snowflake.Data.Core.Converter
                     var fieldMetadata = metadataIterator.Current;
                     var key = jsonPropertyWithValue.Key;
                     var fieldValue = jsonPropertyWithValue.Value;
-                    if (IsTextMetadata(fieldMetadata))
+                    var fieldType = objectBuilder.MoveNext(key);
+                    if (IsObjectMetadata(fieldMetadata))
                     {
-                        var stringValue = fieldValue.Value<string>();
-                        var fieldType = objectBuilder.MoveNext(key);
-                        objectBuilder.BuildPart(stringValue);
-                    } else if (IsObjectMetadata(fieldMetadata))
-                    {
-                        var fieldType = objectBuilder.MoveNext(key);
                         var objectValue = ConvertToObject(fieldType, fieldMetadata.fields, fieldValue, constructionMethod);
                         objectBuilder.BuildPart(objectValue);
                     }
                     else if (IsArrayMetadata(fieldMetadata))
                     {
-                        var fieldType = objectBuilder.MoveNext(key);
                         var nestedType = GetNestedType(fieldType);
                         var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
                         objectBuilder.BuildPart(arrayValue);
                     }
                     else
                     {
-                        throw new Exception("Case not implemented yet");
+                        var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldValue);
+                        objectBuilder.BuildPart(unstructuredValue);
                     }
                 }
             }
             return objectBuilder.Build();
+        }
+
+        private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, JToken json)
+        {
+            if (IsTextMetadata(fieldMetadata))
+            {
+                return json.Value<string>();
+            }
+            else
+            {
+                throw new Exception("Case not implemented yet");
+            }
         }
 
         private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, JToken json, StructureTypeConstructionMethod constructionMethod)
@@ -117,10 +124,6 @@ namespace Snowflake.Data.Core.Converter
                 {
                     result[i] = ConvertToObject(elementType, elementMetadata.fields, jsonArray[i], constructionMethod);
                 }
-                else if (IsTextMetadata(elementMetadata))
-                {
-                    result[i] = jsonArray[i].Value<string>();
-                }
                 else if (IsArrayMetadata(elementMetadata))
                 {
                     var nestedType = elementType.GetElementType();
@@ -128,7 +131,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 else
                 {
-                    throw new Exception("Case not implemented yet");
+                    result[i] = ConvertToUnstructuredType(elementMetadata, jsonArray[i]);
                 }
             }
             if (type != arrayType)
@@ -174,12 +177,7 @@ namespace Snowflake.Data.Core.Converter
                     var jsonPropertyWithValue = jsonEnumerator.Current;
                     var fieldValue = jsonPropertyWithValue.Value;
                     var key = IsTextMetadata(keyMetadata) ? jsonPropertyWithValue.Key : throw new Exception("Unsupported type of map key");
-                    if (IsTextMetadata(fieldMetadata))
-                    {
-                        var stringValue = fieldValue.Value<string>();
-                        result.Add(key, stringValue);
-                    }
-                    else if (IsObjectMetadata(fieldMetadata))
+                    if (IsObjectMetadata(fieldMetadata))
                     {
                         var objectValue = ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
                         result.Add(key, objectValue);
@@ -192,7 +190,8 @@ namespace Snowflake.Data.Core.Converter
                     }
                     else
                     {
-                        throw new Exception("Unsupported type of map value");
+                        var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldValue);
+                        result.Add(key, unstructuredValue);
                     }
                 }
             }
