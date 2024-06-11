@@ -6,7 +6,6 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Client;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFDbCommandBuilderTest

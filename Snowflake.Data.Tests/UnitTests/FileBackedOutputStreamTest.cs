@@ -6,7 +6,6 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Core.FileTransfer;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests
 {

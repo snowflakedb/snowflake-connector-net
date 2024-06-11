@@ -8,7 +8,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data;
     using Snowflake.Data.Client;
     using System.Data.Common;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFStatementTypeTest : SFBaseTest

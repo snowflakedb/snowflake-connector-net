@@ -23,12 +23,11 @@ namespace Snowflake.Data.Tests
     using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     /*
-     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
+     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that 
      * there are no async deadlocks in the library
-     *
+     * 
      */
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
@@ -434,7 +433,7 @@ namespace Snowflake.Data.Tests
             {
                 if (Environment.GetEnvironmentVariable(_key) == value)
                 {
-                    Assert.Ignore($"Test is ignored when environment variable {_key} is {value} ");
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", _key, value);
                 }
             }
         }

@@ -7,7 +7,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using NUnit.Framework;
     using System;
-    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     /**
      * Mock rest request test

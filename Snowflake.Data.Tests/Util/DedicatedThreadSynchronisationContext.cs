@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
+using NUnit.Framework;
 
 namespace Snowflake.Data.Tests.Util
 {
