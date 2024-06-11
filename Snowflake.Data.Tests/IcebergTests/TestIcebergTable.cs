@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 using static Snowflake.Data.Tests.Util.TestData;
 
 namespace Snowflake.Data.Tests.IcebergTests

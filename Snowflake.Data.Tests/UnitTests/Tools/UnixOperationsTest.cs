@@ -5,6 +5,7 @@ using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Core.Tools;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.Tools

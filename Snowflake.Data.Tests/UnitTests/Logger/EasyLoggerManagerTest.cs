@@ -10,13 +10,14 @@ using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Log;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     [TestFixture, NonParallelizable]
     public class EasyLoggerManagerTest
     {
-        
+
         private const string InfoMessage = "Easy logging Info message";
         private const string DebugMessage = "Easy logging Debug message";
         private const string WarnMessage = "Easy logging Warn message";

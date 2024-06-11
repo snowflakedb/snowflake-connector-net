@@ -16,6 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture, NonParallelizable]
     class ArrowChunkParserTest

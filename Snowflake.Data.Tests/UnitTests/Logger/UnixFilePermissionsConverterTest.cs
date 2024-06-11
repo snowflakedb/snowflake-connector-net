@@ -6,6 +6,7 @@ using Mono.Unix;
 using NUnit.Framework;
 using Snowflake.Data.Log;
 using System.Collections.Generic;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {

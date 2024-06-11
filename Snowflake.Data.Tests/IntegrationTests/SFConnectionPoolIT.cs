@@ -13,6 +13,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

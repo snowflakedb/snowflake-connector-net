@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Http;
 using Snowflake.Data.Core;
 using Snowflake.Data.Client;
-using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.Util
 {

@@ -5,6 +5,7 @@
 using System;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Snowflake.Data.Tests.UnitTests
 {

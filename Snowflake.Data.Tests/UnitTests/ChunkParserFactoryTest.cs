@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Security;
     using System.Text;
     using System.Threading;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture, NonParallelizable]
     class ChunkParserFactoryTest

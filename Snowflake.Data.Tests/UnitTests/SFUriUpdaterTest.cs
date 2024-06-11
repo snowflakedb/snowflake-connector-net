@@ -7,6 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using System;
     using Snowflake.Data.Core;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFUriUpdaterTest

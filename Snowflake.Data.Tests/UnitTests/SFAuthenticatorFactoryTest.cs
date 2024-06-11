@@ -8,6 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.Authenticator;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFAuthenticatorFactoryTest

@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
+    using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
     [TestFixture]
     class SFRemoteStorageClientTest : SFBaseTest
