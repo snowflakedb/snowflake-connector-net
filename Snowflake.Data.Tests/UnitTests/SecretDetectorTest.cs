@@ -1,16 +1,15 @@
 ﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Amazon.S3.Model.Internal.MarshallTransformations;
+using NUnit.Framework;
+using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Mock;
+using System;
+using System.Text;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Log;
-    using Snowflake.Data.Tests.Mock;
-    using System;
-    using System.Collections.Generic;
 
     [TestFixture]
     class SecretDetectorTest
@@ -95,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"""aws_key_id""='aaaaaaaa'", @"""aws_key_id""='****'");
 
             //aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:|=]\s*)'([^']+)'
-            // Delimiters before start of value to mask 
+            // Delimiters before start of value to mask
             BasicMasking(@"aws_key_id:'aaaaaaaa'", @"aws_key_id:'****'");
             BasicMasking(@"aws_key_id='aaaaaaaa'", @"aws_key_id='****'");
         }
@@ -144,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"sig=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"sig=****");
 
             // signature
-            BasicMasking(@"signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****"); 
+            BasicMasking(@"signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", @"signature=****");
 
             // AWSAccessKeyId
             BasicMasking(@"AWSAccessKeyId=ABCDEFGHIJKL01234", @"AWSAccessKeyId=****"); // pragma: allowlist secret
@@ -168,6 +167,32 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestPrivateKeyProperty()
+        {
+            BasicMasking(@"something=anything;private_key=aaaaaa", @"something=anything;private_key=****");
+            BasicMasking("something=anything;private_key \r\n  =aaaaaa", "something=anything;private_key \r\n  =****");
+            BasicMasking(@"something=anything;private_key=aaaaaaaaaaaaaaaaaa", @"something=anything;private_key=****");
+            BasicMasking(@"something=anything;private_key=a", @"something=anything;private_key=****");
+            BasicMasking(@"something=anything;private_key=""a"";someOtherProperty=someValue", @"something=anything;private_key=****");
+            BasicMasking(@"something=anything;private_key='a';someOtherProperty=someValue", @"something=anything;private_key=****");
+            BasicMasking($"something=anything;private_key ={GetStringWithManyWeirdCharacters()}\r\nxxxxxx\r\nyyyyyy;someOtherProperty=someValue", @"something=anything;private_key =****");
+        }
+
+        private string GetStringWithManyWeirdCharacters()
+        {
+            var bytes = new byte[256];
+            for (var i = 0; i < 256; i++)
+            {
+                if (i < 20)
+                {
+                    bytes[i] = 58;
+                }
+                bytes[i] = (byte) i;
+            }
+            return Encoding.Default.GetString(bytes);
+        }
+
+        [Test]
         public void TestPrivateKeyData()
         {
             BasicMasking(@"""privateKeyData"": ""aaaaaaaaaa""", @"""privateKeyData"": ""XXXX""");
@@ -185,12 +210,12 @@ namespace Snowflake.Data.Tests.UnitTests
             // assertion content
             BasicMasking(@"assertion content:aaaaaaaa", @"assertion content:****");
 
-            // Delimiters before start of value to mask 
+            // Delimiters before start of value to mask
             BasicMasking(@"token""aaaaaaaa", @"token""****"); // "
             BasicMasking(@"token'aaaaaaaa", @"token'****"); // '
             BasicMasking(@"token=aaaaaaaa", @"token=****"); // =
             BasicMasking(@"token aaaaaaaa", @"token ****"); // {space}
-            BasicMasking(@"token ="" 'aaaaaaaa", @"token ="" '****"); // Mix
+            BasicMasking(@"token ="" 'aaaaaaaa", @"token =****"); // Mix
 
             // Verify that all allowed characters are correctly supported
             BasicMasking(@"Token:a=b/c_d-e+F:025", @"Token:****");
@@ -211,15 +236,55 @@ namespace Snowflake.Data.Tests.UnitTests
             // passcode
             BasicMasking(@"passcode:aaaaaaaa", @"passcode:****");
 
-            // Delimiters before start of value to mask 
+            // Delimiters before start of value to mask
             BasicMasking(@"password""aaaaaaaa", @"password""****"); // "
             BasicMasking(@"password'aaaaaaaa", @"password'****"); // '
             BasicMasking(@"password=aaaaaaaa", @"password=****"); // =
             BasicMasking(@"password aaaaaaaa", @"password ****"); // {space}
-            BasicMasking(@"password ="" 'aaaaaaaa", @"password ="" '****"); // Mix
+            BasicMasking(@"password ="" 'aaaaaaaa", @"password =****"); // Mix
 
             // Verify that all allowed characters are correctly supported
             BasicMasking(@"password:a!b""c#d$e%f&g'h(i)k*k+l,m;n<o=p>q?r@s[t]u^v_w`x{y|z}Az0123", @"password:****");
+        }
+
+        [Test]
+        public void TestPasswordProperty()
+        {
+            BasicMasking(@"somethingBefore=cccc;password=aa", @"somethingBefore=cccc;password=****");
+            BasicMasking(@"somethingBefore=cccc;password=aa;somethingNext=bbbb", @"somethingBefore=cccc;password=****");
+            BasicMasking(@"somethingBefore=cccc;password=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;password=****");
+            BasicMasking(@"somethingBefore=cccc;password=;somethingNext=bbbb", @"somethingBefore=cccc;password=****");
+            BasicMasking(@"somethingBefore=cccc;password=", @"somethingBefore=cccc;password=****");
+            BasicMasking(@"somethingBefore=cccc;password     =aa;somethingNext=bbbb", @"somethingBefore=cccc;password     =****");
+            BasicMasking(@"somethingBefore=cccc;password="" 'aa", @"somethingBefore=cccc;password=****");
+
+            BasicMasking(@"somethingBefore=cccc;proxypassword=aa", @"somethingBefore=cccc;proxypassword=****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword=aa;somethingNext=bbbb", @"somethingBefore=cccc;proxypassword=****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;proxypassword=****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword=;somethingNext=bbbb", @"somethingBefore=cccc;proxypassword=****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword=", @"somethingBefore=cccc;proxypassword=****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword     =aa;somethingNext=bbbb", @"somethingBefore=cccc;proxypassword     =****");
+            BasicMasking(@"somethingBefore=cccc;proxypassword="" 'aa", @"somethingBefore=cccc;proxypassword=****");
+
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd=aa", @"somethingBefore=cccc;private_key_pwd=****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd=aa;somethingNext=bbbb", @"somethingBefore=cccc;private_key_pwd=****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;private_key_pwd=****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd=;somethingNext=bbbb", @"somethingBefore=cccc;private_key_pwd=****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd=", @"somethingBefore=cccc;private_key_pwd=****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd     =aa;somethingNext=bbbb", @"somethingBefore=cccc;private_key_pwd     =****");
+            BasicMasking(@"somethingBefore=cccc;private_key_pwd="" 'aa", @"somethingBefore=cccc;private_key_pwd=****");
+        }
+
+        [Test]
+        [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID password was not given")]
+        [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID proxyPassword was not given")]
+        [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID private_key_pwd was not given")]
+        public void TestPasswordFalsePositive(string falsePositiveMessage)
+        {
+            mask = SecretDetector.MaskSecrets(falsePositiveMessage);
+            Assert.IsFalse(mask.isMasked);
+            Assert.AreEqual(falsePositiveMessage, mask.maskedText);
+            Assert.IsNull(mask.errStr);
         }
 
         [Test]
@@ -268,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
             mask = SecretDetector.MaskSecrets(snowFlakeAuthToken);
             Assert.IsTrue(mask.isMasked);
-            Assert.AreEqual(@"Authorization: Snowflake Token=""****""", mask.maskedText);
+            Assert.AreEqual(@"Authorization: Snowflake Token=****", mask.maskedText);
             Assert.IsNull(mask.errStr);
         }
 
@@ -311,7 +376,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string randomPasswordEqualSign = "password = " + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPasswordEqualSign);
             Assert.IsTrue(mask.isMasked);
-            Assert.AreEqual(@"password = ****", mask.maskedText);
+            Assert.AreEqual(@"password =****", mask.maskedText);
             Assert.IsNull(mask.errStr);
 
             string randomPwdWithPrefix = "pwd:" + randomPassword;
@@ -350,9 +415,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(
-                "token=****" +
-                " random giberish " +
-                "password:****",
+                "token=****",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
 
@@ -378,11 +441,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(
-                "token=****" +
-                " random giberish " +
-                "password:****" +
-                " random giberish " +
-                "idToken:****",
+                "token=****",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
 
@@ -393,10 +452,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(
-                "password=****" +
-                " random giberish " +
-                "pwd:****",
-                mask.maskedText);
+                "password=****", mask.maskedText);
             Assert.IsNull(mask.errStr);
 
             // multiple passwords
@@ -408,13 +464,21 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(
-                "password=****" +
-                " random giberish " +
-                "password=****" +
-                " random giberish " +
                 "password=****",
                 mask.maskedText);
             Assert.IsNull(mask.errStr);
+        }
+
+        [Test]
+        public void TestTokenProperty()
+        {
+            BasicMasking(@"somethingBefore=cccc;token=aa", @"somethingBefore=cccc;token=****");
+            BasicMasking(@"somethingBefore=cccc;token=aa;somethingNext=bbbb", @"somethingBefore=cccc;token=****");
+            BasicMasking(@"somethingBefore=cccc;token=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;token=****");
+            BasicMasking(@"somethingBefore=cccc;token=;somethingNext=bbbb", @"somethingBefore=cccc;token=****");
+            BasicMasking(@"somethingBefore=cccc;token=", @"somethingBefore=cccc;token=****");
+            BasicMasking(@"somethingBefore=cccc;token     =aa;somethingNext=bbbb", @"somethingBefore=cccc;token     =****");
+            BasicMasking(@"somethingBefore=cccc;token="" 'aa", @"somethingBefore=cccc;token=****");
         }
 
         [Test]

@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "snowflake";
+        public const string AUTH_NAME = "snowflake";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
 
         internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)

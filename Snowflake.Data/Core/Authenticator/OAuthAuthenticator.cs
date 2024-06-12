@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core.Authenticator
     class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     {
         // The authenticator setting value to use to authenticate using key pair authentication.
-        public static readonly string AUTH_NAME = "oauth";
+        public const string AUTH_NAME = "oauth";
 
         // The logger.
         private static readonly SFLogger logger =

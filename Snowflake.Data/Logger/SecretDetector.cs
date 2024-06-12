@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -76,67 +76,105 @@ namespace Snowflake.Data.Log
         /*
          * https://docs.microsoft.com/en-us/dotnet/standard/base-types/character-escapes-in-regular-expressions
          * . $ ^ { [ ( | ) * + ? \
-         * The characters are special regular expression language elements. 
+         * The characters are special regular expression language elements.
          * To match them in a regular expression, they must be escaped or included in a positive character group.
          * [ ] \ - ^
          * The characters are special character group element.
          * To match them in a character group, they must be escaped.
          */
-        private static readonly string AWS_KEY_PATTERN = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'";
-        private static readonly string AWS_TOKEN_PATTERN = @"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""";
-        private static readonly string AWS_SERVER_SIDE_PATTERN = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+";
-        private static readonly string SAS_TOKEN_PATTERN = @"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})";
-        private static readonly string PRIVATE_KEY_PATTERN = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----";
-        private static readonly string PRIVATE_KEY_DATA_PATTERN = @"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""";
-        private static readonly string CONNECTION_TOKEN_PATTERN = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
-        private static readonly string PASSWORD_PATTERN = @"(password|passcode|pwd|proxypassword)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
+        private const string AwsKeyPattern = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'";
+        private const string AwsTokenPattern = @"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""";
+        private const string AwsServerSidePattern = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+";
+        private const string SasTokenPattern = @"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})";
+        private const string PrivateKeyPattern = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----"; // pragma: allowlist secret
+        private const string PrivateKeyDataPattern = @"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""";
+        private const string PrivateKeyPropertyPrefixPattern = @"(private_key\s*=)";
+        private const string ConnectionTokenPattern = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
+        private const string TokenPropertyPattern = @"(token)(\s*=)(.*)";
+        private const string PasswordPattern = @"(password|passcode|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
+        private const string PasswordPropertyPattern = @"(password|proxypassword|private_key_pwd)(\s*=)(.*)";
+
+        private static readonly Func<string, string>[] s_maskFunctions = {
+            MaskAWSServerSide,
+            MaskAWSKeys,
+            MaskSASTokens,
+            MaskAWSTokens,
+            MaskPrivateKey,
+            MaskPrivateKeyData,
+            MaskPrivateKeyProperty,
+            MaskPassword,
+            MaskPasswordProperty,
+            MaskConnectionTokens,
+            MaskTokenProperty
+        };
 
         private static string MaskAWSKeys(string text)
         {
-            return Regex.Replace(text, AWS_KEY_PATTERN, @"$1$2$3'****'",
+            return Regex.Replace(text, AwsKeyPattern, @"$1$2$3'****'",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskAWSTokens(string text)
         {
-            return Regex.Replace(text, AWS_TOKEN_PATTERN, @"$1"":""XXXX""",
+            return Regex.Replace(text, AwsTokenPattern, @"$1"":""XXXX""",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskAWSServerSide(string text)
         {
-            return Regex.Replace(text, AWS_SERVER_SIDE_PATTERN, @"$1:....",
+            return Regex.Replace(text, AwsServerSidePattern, @"$1:....",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskSASTokens(string text)
         {
-            return Regex.Replace(text, SAS_TOKEN_PATTERN, @"$1=****",
+            return Regex.Replace(text, SasTokenPattern, @"$1=****",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskPrivateKey(string text)
         {
-            return Regex.Replace(text, PRIVATE_KEY_PATTERN, "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----",
+            return Regex.Replace(text, PrivateKeyPattern, "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----", // pragma: allowlist secret
                                          RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        }
+
+        private static string MaskPrivateKeyProperty(string text)
+        {
+            var match = Regex.Match(text, PrivateKeyPropertyPrefixPattern, RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                int length = match.Index + match.Value.Length;
+                return text.Substring(0, length) + "****";
+            }
+            return text;
         }
 
         private static string MaskPrivateKeyData(string text)
         {
-            return Regex.Replace(text, PRIVATE_KEY_DATA_PATTERN, @"""privateKeyData"": ""XXXX""",
+            return Regex.Replace(text, PrivateKeyDataPattern, @"""privateKeyData"": ""XXXX""",
                                          RegexOptions.IgnoreCase | RegexOptions.Multiline);
         }
 
         private static string MaskConnectionTokens(string text)
         {
-            return Regex.Replace(text, CONNECTION_TOKEN_PATTERN, @"$1$2****",
+            return Regex.Replace(text, ConnectionTokenPattern, @"$1$2****",
                                          RegexOptions.IgnoreCase);
         }
 
         private static string MaskPassword(string text)
         {
-            return Regex.Replace(text, PASSWORD_PATTERN, @"$1$2****",
+            return Regex.Replace(text, PasswordPattern, @"$1$2****",
                                          RegexOptions.IgnoreCase);
+        }
+
+        private static string MaskPasswordProperty(string text)
+        {
+            return Regex.Replace(text, PasswordPropertyPattern, @"$1$2****", RegexOptions.IgnoreCase);
+        }
+
+        private static string MaskTokenProperty(string text)
+        {
+            return Regex.Replace(text, TokenPropertyPattern, @"$1$2****", RegexOptions.IgnoreCase);
         }
 
         public static Mask MaskSecrets(string text)
@@ -150,19 +188,7 @@ namespace Snowflake.Data.Log
 
             try
             {
-                result.maskedText =
-                    MaskConnectionTokens(
-                        MaskPassword(
-                            MaskPrivateKeyData(
-                                MaskPrivateKey(
-                                    MaskAWSTokens(
-                                        MaskSASTokens(
-                                            MaskAWSKeys(
-                                                MaskAWSServerSide(text))))))));
-                if (CUSTOM_PATTERNS_LENGTH > 0)
-                {
-                    result.maskedText = MaskCustomPatterns(result.maskedText);
-                }
+                result.maskedText = MaskAllPatterns(text);
                 if (result.maskedText != text)
                 {
                     result.isMasked = true;
@@ -176,6 +202,20 @@ namespace Snowflake.Data.Log
                 result.isMasked = true;
                 result.maskedText = ex.Message;
                 result.errStr = ex.Message;
+            }
+            return result;
+        }
+
+        private static string MaskAllPatterns(string text)
+        {
+            string result = text;
+            foreach (var maskFunction in s_maskFunctions)
+            {
+                result = maskFunction.Invoke(result);
+            }
+            if (CUSTOM_PATTERNS_LENGTH > 0)
+            {
+                result = MaskCustomPatterns(result);
             }
             return result;
         }

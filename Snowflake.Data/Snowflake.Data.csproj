@@ -67,6 +67,10 @@
     <AssemblyVersion>$(Version)</AssemblyVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants Condition="'$(DefineAdditionalConstants)' != ''">$(DefineConstants);$(DefineAdditionalConstants)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
