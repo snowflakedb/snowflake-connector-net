@@ -13,16 +13,16 @@ namespace Snowflake.Data.Tests.Util
     {
         public static void HasErrorCode(SnowflakeDbException exception, SFError sfError)
         {
-            Assert.AreEqual(exception.ErrorCode, sfError.GetAttribute<SFErrorAttr>().errorCode);
+            Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
-        
+
         public static void HasErrorCode(Exception exception, SFError sfError)
         {
             Assert.NotNull(exception);
             switch (exception)
             {
                 case SnowflakeDbException snowflakeDbException:
-                    Assert.AreEqual(snowflakeDbException.ErrorCode, sfError.GetAttribute<SFErrorAttr>().errorCode);
+                    Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, snowflakeDbException.ErrorCode);
                     break;
                 default:
                     Assert.Fail(exception.GetType() + " type is not " + typeof(SnowflakeDbException));
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.Util
                             return he.Message.Contains(((int)expected).ToString());
 #else
                             return he.StatusCode == expected;
-#endif 
+#endif
                         default:
                             return false;
                     }

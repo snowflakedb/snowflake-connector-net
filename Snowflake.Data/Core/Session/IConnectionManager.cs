@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Security;
@@ -13,6 +13,7 @@ namespace Snowflake.Data.Core.Session
         SFSession GetSession(string connectionString, SecureString password);
         Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken);
         bool AddSession(SFSession session);
+        void ReleaseBusySession(SFSession session);
         void ClearAllPools();
         void SetMaxPoolSize(int maxPoolSize);
         int GetMaxPoolSize();
@@ -21,5 +22,7 @@ namespace Snowflake.Data.Core.Session
         int GetCurrentPoolSize();
         bool SetPooling(bool poolingEnabled);
         bool GetPooling();
+        SessionPool GetPool(string connectionString);
+        SessionPool GetPool(string connectionString, SecureString password);
     }
 }

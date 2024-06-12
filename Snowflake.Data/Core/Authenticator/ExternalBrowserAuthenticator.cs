@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "externalbrowser";
+        public const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 HttpListenerContext context = httpListener.EndGetContext(result);
                 HttpListenerRequest request = context.Request;
-                
+
                 _samlResponseToken = ValidateAndExtractToken(request);
                 HttpListenerResponse response = context.Response;
                 try

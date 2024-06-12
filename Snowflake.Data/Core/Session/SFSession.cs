@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
+﻿/*
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security;
 using System.Web;
@@ -15,9 +14,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -48,12 +48,16 @@ namespace Snowflake.Data.Core
         internal SFSessionProperties properties;
 
         internal string database;
-
         internal string schema;
+        internal string role;
+        internal string warehouse;
+        internal bool sessionPropertiesChanged = false;
 
         internal string serverVersion;
 
-        internal TimeSpan connectionTimeout;
+        private readonly ConnectionPoolConfig _poolConfig;
+
+        internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
         internal bool InsecureMode;
 
@@ -64,14 +68,12 @@ namespace Snowflake.Data.Core
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
         internal int masterValidityInSeconds = 0;
-        
-        internal static readonly SFSessionHttpClientProperties.Extractor propertiesExtractor = new SFSessionHttpClientProperties.Extractor(
-            new SFSessionHttpClientProxyProperties.Extractor());
 
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
-        internal string connStr = null;
+        internal string ConnectionString { get; }
+        internal SecureString Password { get; }
 
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
@@ -83,7 +85,16 @@ namespace Snowflake.Data.Core
 
         internal int _maxRetryCount;
 
-        internal int _maxRetryTimeout;
+        internal TimeSpan _maxRetryTimeout;
+
+        private string _user;
+
+        public bool GetPooling() => _poolConfig.PoolingEnabled;
+
+        public void SetPooling(bool isEnabled)
+        {
+            _poolConfig.PoolingEnabled = isEnabled;
+        }
 
         internal String _queryTag;
 
@@ -102,6 +113,8 @@ namespace Snowflake.Data.Core
                 masterToken = authnResponse.data.masterToken;
                 database = authnResponse.data.authResponseSessionInfo.databaseName;
                 schema = authnResponse.data.authResponseSessionInfo.schemaName;
+                role = authnResponse.data.authResponseSessionInfo.roleName;
+                warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
                 serverVersion = authnResponse.data.serverVersion;
                 masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
                 UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
@@ -116,7 +129,7 @@ namespace Snowflake.Data.Core
                     _credManager.SaveCredentials(key, _idToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
-                _startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
             else
             {
@@ -162,7 +175,7 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        ///     Constructor 
+        ///     Constructor
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
@@ -177,21 +190,22 @@ namespace Snowflake.Data.Core
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
-            connStr = connectionString;
-            properties = SFSessionProperties.ParseConnectionString(connectionString, password);
+            ConnectionString = connectionString;
+            Password = password;
+            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = propertiesExtractor.ExtractProperties(properties);
+                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
-                extractedProperties.CheckPropertiesAreValid();
-                connectionTimeout = extractedProperties.TimeoutDuration();
+                _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
                 properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
@@ -205,16 +219,21 @@ namespace Snowflake.Data.Core
                     _idToken = _credManager.GetCredentials(key);
                 }
             }
+            catch (SnowflakeDbException e)
+            {
+                logger.Error("Unable to initialize session ", e);
+                throw;
+            }
             catch (Exception e)
             {
-                logger.Error("Unable to connect", e);
+                logger.Error("Unable to initialize session ", e);
                 throw new SnowflakeDbException(e,
                             SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                             SFError.INVALID_CONNECTION_STRING,
-                            "Unable to connect");
+                            "Unable to initialize session ");
             }
         }
-        
+
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern
@@ -258,7 +277,7 @@ namespace Snowflake.Data.Core
             return uriBuilder.Uri;
         }
 
-        internal void Open()
+        internal virtual void Open()
         {
             logger.Debug("Open Session");
 
@@ -270,7 +289,7 @@ namespace Snowflake.Data.Core
             authenticator.Authenticate();
         }
 
-        internal async Task OpenAsync(CancellationToken cancellationToken)
+        internal virtual async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session Async");
 
@@ -286,7 +305,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
@@ -318,7 +337,7 @@ namespace Snowflake.Data.Core
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
-
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
 
             // Send a close session request
@@ -484,20 +503,48 @@ namespace Snowflake.Data.Core
             return _queryContextCache.GetQueryContextRequest();
         }
 
-        internal void UpdateDatabaseAndSchema(string databaseName, string schemaName)
+        internal void UpdateSessionProperties(QueryExecResponseData responseData)
         {
-            // with HTAP session metadata removal database/schema
-            // might be not returened in query result
-            if (!String.IsNullOrEmpty(databaseName))
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            UpdateSessionProperty(ref database, responseData.finalDatabaseName);
+            UpdateSessionProperty(ref schema, responseData.finalSchemaName);
+            UpdateSessionProperty(ref role, responseData.finalRoleName);
+            UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
+        }
+
+        internal void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
+        {
+            // with HTAP session metadata removal database/schema might be not returned in query result
+            if (!string.IsNullOrEmpty(finalSessionValue))
             {
-                this.database = databaseName;
-            }
-            if (!String.IsNullOrEmpty(schemaName))
-            {
-                this.schema = schemaName;
+                bool quoted = false;
+                string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
+                if (!string.IsNullOrEmpty(initialSessionValue))
+                {
+                    quoted |= initialSessionValue.StartsWith("\"");
+                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+                    {
+                        sessionPropertiesChanged = true;
+                        initialSessionValue = unquotedFinalValue;
+                    }
+                }
+                else // null session value gets populated and is not treated as a session property change
+                {
+                    initialSessionValue = unquotedFinalValue;
+                }
             }
         }
-        
+
+        private static string UnquoteJson(string value, ref bool unquoted)
+        {
+            if (value is null)
+                return value;
+            unquoted = value.Length >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+            return unquoted ? value.Replace("\\\"", "\"") : value;
+        }
+
+        internal bool SessionPropertiesChanged => sessionPropertiesChanged;
+
         internal void startHeartBeatForThisSession()
         {
             if (!this.isHeartBeatEnabled)
@@ -602,15 +649,17 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal bool IsNotOpen()
+        internal virtual bool IsNotOpen()
         {
             return _startTime == 0;
         }
 
-        internal bool IsExpired(long timeoutInSeconds, long utcTimeInSeconds)
+        internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
         {
-            return _startTime + timeoutInSeconds <= utcTimeInSeconds;
+            var hasEverBeenOpened = !IsNotOpen();
+            return hasEverBeenOpened && TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
         }
+
+        internal long GetStartTime() => _startTime;
     }
 }
-
