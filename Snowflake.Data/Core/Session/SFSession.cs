@@ -161,12 +161,12 @@ namespace Snowflake.Data.Core
             try
             {
                 var extractedProperties = propertiesExtractor.ExtractProperties(properties);
+                extractedProperties.CheckPropertiesAreValid();
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
                 InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
-                extractedProperties.CheckPropertiesAreValid();
                 connectionTimeout = extractedProperties.TimeoutDuration();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);

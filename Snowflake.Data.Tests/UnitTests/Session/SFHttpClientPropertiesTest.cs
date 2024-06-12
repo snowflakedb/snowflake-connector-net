@@ -282,7 +282,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = 0,
+                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
