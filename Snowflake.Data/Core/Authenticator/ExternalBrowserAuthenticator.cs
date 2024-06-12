@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "externalbrowser";
+        public const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Core.Authenticator
                     logger.Warn("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
-                
+
                 httpListener.Stop();
             }
 
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core.Authenticator
                     logger.Warn("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
-                
+
                 httpListener.Stop();
             }
 
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 HttpListenerContext context = httpListener.EndGetContext(result);
                 HttpListenerRequest request = context.Request;
-                
+
                 _samlResponseToken = ValidateAndExtractToken(request);
                 HttpListenerResponse response = context.Response;
                 try

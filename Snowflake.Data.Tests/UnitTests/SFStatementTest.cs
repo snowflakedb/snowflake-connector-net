@@ -70,13 +70,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestTrimSqlBlockComment()
         {
-            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
-            sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment*/select 1/*comment*/", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
+            const string SqlSource = "/*comment*/select 1/*comment*/";
+            const string SqlExpected = "select 1";
+
+            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -85,13 +82,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestTrimSqlBlockCommentMultiline()
         {
-            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
-            sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
+            const string SqlSource = "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/";
+            const string SqlExpected = "select 1";
+
+            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -100,13 +94,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestTrimSqlLineComment()
         {
-            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
-            sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
+            const string SqlSource = "--comment\r\nselect 1\r\n--comment";
+            const string SqlExpected = "select 1\r\n--comment";
+
+            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -115,13 +106,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestTrimSqlLineCommentWithClosingNewline()
         {
-            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
-            sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "--comment\r\nselect 1\r\n--comment\r\n", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
+            const string SqlSource = "--comment\r\nselect 1\r\n--comment\r\n";
+            const string SqlExpected = "select 1";
+
+            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         [Test]
