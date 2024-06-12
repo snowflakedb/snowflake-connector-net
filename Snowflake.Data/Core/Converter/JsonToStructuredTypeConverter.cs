@@ -135,6 +135,11 @@ namespace Snowflake.Data.Core.Converter
                     var nestedType = elementType.GetElementType();
                     result[i] = ConvertToArray(elementType, nestedType, elementMetadata.fields, jsonArray[i], constructionMethod);
                 }
+                else if (IsMapMetadata(elementMetadata))
+                {
+                    var keyValueTypes = GetMapKeyValueTypes(elementType);
+                    result[i] = ConvertToMap(elementType, keyValueTypes[0], keyValueTypes[1], elementMetadata.fields, jsonArray[i], constructionMethod);
+                }
                 else
                 {
                     result[i] = ConvertToUnstructuredType(elementMetadata, jsonArray[i]);

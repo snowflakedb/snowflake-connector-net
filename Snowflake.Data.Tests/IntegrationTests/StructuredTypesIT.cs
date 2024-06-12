@@ -197,6 +197,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectArrayOfMap()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arrayOfMap = "ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(MAP(VARCHAR,VARCHAR))";
+                    command.CommandText = $"SELECT {arrayOfMap}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var array = reader.GetArray<Dictionary<string, string>>(0);
+                    Assert.AreEqual(1, array.Length);
+                    var map = array[0];
+                    Assert.NotNull(map);
+                    Assert.AreEqual(1, map.Count);
+                    Assert.AreEqual("b",map["a"]);
+                }
+            }
+        }
+
+        [Test]
         public void TestSelectObjectWithArrays()
         {
             using (var connection = new SnowflakeDbConnection(ConnectionString))
