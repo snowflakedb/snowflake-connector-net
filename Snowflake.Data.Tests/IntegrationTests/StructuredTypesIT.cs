@@ -93,6 +93,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectObjectWithMap()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var objectWithMap = "OBJECT_CONSTRUCT('names', OBJECT_CONSTRUCT('Excellent', '6', 'Poor', '1'))::OBJECT(names MAP(VARCHAR,VARCHAR))";
+                    command.CommandText = $"SELECT {objectWithMap}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var grades = reader.GetObject<GradesWithMap>(0);
+                    Assert.NotNull(grades);
+                    Assert.AreEqual(2, grades.Names.Count);
+                    Assert.AreEqual("6", grades.Names["Excellent"]);
+                    Assert.AreEqual("1", grades.Names["Poor"]);
+                }
+            }
+        }
+
+        [Test]
         public void TestSelectArray()
         {
             using (var connection = new SnowflakeDbConnection(ConnectionString))

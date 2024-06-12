@@ -114,4 +114,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Names = names;
         }
     }
+
+    public class GradesWithMap
+    {
+        public Dictionary<string, string> Names { get; set; }
+
+        public GradesWithMap()
+        {
+        }
+
+        public GradesWithMap(Dictionary<string, string> names)
+        {
+            Names = names;
+        }
+    }
 }

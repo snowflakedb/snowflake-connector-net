@@ -82,6 +82,12 @@ namespace Snowflake.Data.Core.Converter
                         var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
                         objectBuilder.BuildPart(arrayValue);
                     }
+                    else if (IsMapMetadata(fieldMetadata))
+                    {
+                        var keyValueTypes = GetMapKeyValueTypes(fieldType);
+                        var mapValue = ConvertToMap(fieldType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
+                        objectBuilder.BuildPart(mapValue);
+                    }
                     else
                     {
                         var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldValue);
@@ -211,6 +217,17 @@ namespace Snowflake.Data.Core.Converter
             throw new Exception("neither array nor list");
         }
 
+        private static Type[] GetMapKeyValueTypes(Type type)
+        {
+            // TODO: type.GetGenericTypeDefinition() - make sure it is a map
+            var genericParamWithTwoArguments = type.IsGenericType && type.GenericTypeArguments.Length == 2;
+            if (!genericParamWithTwoArguments)
+            {
+                throw new Exception("Could not get key and value types");
+            }
+            return type.GenericTypeArguments;
+        }
+
         private static Type MakeArrayType(Type type, Type elementType)
         {
             if (type.IsArray)
@@ -236,5 +253,8 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsArrayMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.ARRAY.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsMapMetadata(FieldMetadata fieldMetadata) =>
+            SFDataType.MAP.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
     }
 }
