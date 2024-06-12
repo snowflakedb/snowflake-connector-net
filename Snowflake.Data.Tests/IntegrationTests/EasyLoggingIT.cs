@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Directory.CreateDirectory(s_workingDirectory);
             }
         }
-        
+
         [OneTimeTearDown]
         public static void AfterAll()
         {
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Warn);
         }
-        
+
         [Test]
         public void TestEnableEasyLogging()
         {
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // act
                 conn.Open();
-                
+
                 // assert
                 Assert.IsTrue(EasyLoggerManager.HasEasyLoggingAppender());
             }
@@ -65,31 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
-                
-                // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
-            }
-        }
-        
-        [Test]
-        public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-            
-            // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
-            Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-        
-                // act
-                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
-                
+
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
                 Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
@@ -97,22 +73,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Platform(Exclude="Win", Reason="skip test on Windows")]
+        public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
+        {
+            // arrange
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
+            Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+
+                // act
+                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+
+                // assert
+                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
+                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+            }
+        }
+
+        [Test]
+        [Platform(Exclude="Win", Reason="skip test on Windows")]
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-            
             // arrange
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", "/"));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-        
+
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
-                
+
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
                 Assert.That(thrown.InnerException.Message, Does.Contain("Failed to create logs directory"));
