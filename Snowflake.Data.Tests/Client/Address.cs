@@ -50,7 +50,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public override int GetHashCode()
         {
+#if NETFRAMEWORK
+            return prefix.GetHashCode() * 177 + postfix.GetHashCode();
+#else
             return System.HashCode.Combine(prefix, postfix);
+#endif
         }
     }
 
