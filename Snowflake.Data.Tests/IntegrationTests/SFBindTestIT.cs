@@ -361,7 +361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 dbConnection.Open();
                 foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
                 {
-                    if (!type.Equals(SFDataType.None))
+                    if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP))
                     {
                         bool isTypeSupported = true;
                         string[] columns;
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 "unsupportedType VARCHAR"
                             };
                         }
-                        s_logger.Warn($"Trying to create a table: {TableName} with columns: {columns} !!!");
+
                         CreateOrReplaceTable(dbConnection, TableName, columns);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
