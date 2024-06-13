@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -51,7 +50,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(prefix, postfix);
+            return System.HashCode.Combine(prefix, postfix);
         }
     }
 

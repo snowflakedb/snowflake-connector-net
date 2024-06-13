@@ -5,6 +5,7 @@ using Snowflake.Data.Client;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
+    [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AZURE", "GCP" })]
     public class StructuredTypesIT : SFBaseTest
     {
         private static string _tableName = "structured_types_tests";
