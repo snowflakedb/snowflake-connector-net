@@ -11,8 +11,9 @@ echo %SN_KEY% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 REM command to sign with strong name Snowflake.Data.dll should be here
 where sn.exe
 where certutil
-dir "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"
-certutil -decode %SN_KEY% "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\data.txt"
+
+
+certutil -f  -decode %SN_KEY% "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\data.txt"
 "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -R "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\Snowflake.Data\bin\Release\net8.0\Snowflake.Data.dll" "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\data.txt"
 
 "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\Snowflake.Data\bin\Release\net8.0\Snowflake.Data.dll"
