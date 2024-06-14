@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -60,8 +58,8 @@ namespace Snowflake.Data.Core
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
-                netRuntime = "NETCore",
-                netVersion ="2.0",
+                netRuntime = ExtractRuntime(),
+                netVersion = ExtractVersion(),
             };
 
             DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -72,5 +70,15 @@ namespace Snowflake.Data.Core
         internal static string DriverName { get; set; }
         internal static string DriverVersion { get; set; }
         internal static LoginRequestClientEnv ClientEnv { get; private set; }
+
+        internal static string ExtractRuntime()
+        {
+            return RuntimeInformation.FrameworkDescription.Substring(0, RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+        }
+
+        internal static string ExtractVersion()
+        {
+            return RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+        }
     }
 }
