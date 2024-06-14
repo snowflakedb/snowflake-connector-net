@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(expectedRuntime, actualRuntime);
-            //Assert.AreEqual(expectedVersion, actualVersion);
+            Assert.AreEqual(expectedVersion, actualVersion);
         }
     }
 }
