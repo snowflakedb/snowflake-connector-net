@@ -2,12 +2,10 @@ REM Scripts to build .net driver and deploy
 SET VERSION=%1
 SET API_KEY=%2
 
-SET ROOT_DIR=%~dp0 
+SET ROOT_DIR=%~dp0
 cd %ROOT_DIR%
 
-dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n 
-
-REM command to sign with strong name Snowflake.Data.dll should be here
+dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=snKey.snk
 
 dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
 
