@@ -8,7 +8,9 @@ cd %ROOT_DIR%
 
 echo %SN_KEY% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
-certutil -f  -decode "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt" "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
+REM command to sign with strong name Snowflake.Data.dll should be here
+where sn.exe
+sn -R obj\Release\net8.0\Snowflake.Data.dll %SN_KEY%
 
 dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile="C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
 
