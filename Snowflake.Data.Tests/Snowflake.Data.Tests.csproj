@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0;net8.0;net462;net471;net472;net48;net481</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net7.0;net8.0;</TargetFrameworks>
-    <!--<RuntimeFrameworkVersion>8.0.0</RuntimeFrameworkVersion>-->
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
