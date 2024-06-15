@@ -59,7 +59,7 @@ namespace Snowflake.Data.Core
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = System.Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
-                netVersion = ExtractVersion(),
+                netVersion = "netstandard2.0",
             };
 
             DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -74,11 +74,6 @@ namespace Snowflake.Data.Core
         internal static string ExtractRuntime()
         {
             return RuntimeInformation.FrameworkDescription.Substring(0, RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
-        }
-
-        internal static string ExtractVersion()
-        {
-            return RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
         }
     }
 }
