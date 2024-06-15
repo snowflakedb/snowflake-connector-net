@@ -11,12 +11,14 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             string expectedRuntime;
-            string expectedVersion = ".NETStandard2.0";
+            string expectedVersion;
 
 #if NETFRAMEWORK
             expectedRuntime = ".NETFramework";
+            expectedVersion = "4.8";
 #else
             expectedRuntime = ".NET";
+            expectedVersion = "8.0";
 #endif
 
             // Act

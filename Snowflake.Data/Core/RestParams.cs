@@ -81,7 +81,9 @@ namespace Snowflake.Data.Core
 
         internal static string ExtractVersion()
         {
-            return Assembly.GetExecutingAssembly().GetCustomAttributes(true).ToList().OfType<TargetFrameworkAttribute>().First().FrameworkDisplayName.Replace(" ", "");
+            var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+            int index = version.IndexOf('.', version.IndexOf('.') + 1);
+            return version.Substring(0, index);
         }
     }
 }
