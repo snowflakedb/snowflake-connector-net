@@ -11,6 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             string expectedRuntime;
+            string expectedVersion = ".NETStandard2.0";
 
 #if NETFRAMEWORK
             expectedRuntime = ".NETFramework";
@@ -20,9 +21,11 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             var actualRuntime = SFEnvironment.ExtractRuntime();
+            var actualVersion = SFEnvironment.ExtractVersion();
 
             // Assert
             Assert.AreEqual(expectedRuntime, actualRuntime);
+            Assert.AreEqual(expectedVersion, actualVersion);
         }
     }
 }
