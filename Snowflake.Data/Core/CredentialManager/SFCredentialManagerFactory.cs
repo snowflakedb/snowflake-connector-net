@@ -2,17 +2,24 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Log;
 using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core.CredentialManager
 {
+    internal enum TokenType
+    {
+        [StringAttr(value = "ID_TOKEN")]
+        IdToken
+    }
+
     internal class SFCredentialManagerFactory
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFactory>();
 
-        private static ISFCredentialManager s_customCredentialManager = null;
+        private static ISnowflakeCredentialManager s_customCredentialManager = null;
 
         internal static string BuildCredentialKey(string host, string user, TokenType tokenType)
         {
@@ -25,17 +32,17 @@ namespace Snowflake.Data.Core.CredentialManager
             s_customCredentialManager = null;
         }
 
-        public static void SetCredentialManager(ISFCredentialManager customCredentialManager)
+        public static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager)
         {
             s_logger.Info($"Setting the custom credential manager: {customCredentialManager.GetType().Name}");
             s_customCredentialManager = customCredentialManager;
         }
 
-        internal static ISFCredentialManager GetCredentialManager()
+        internal static ISnowflakeCredentialManager GetCredentialManager()
         {
             if (s_customCredentialManager == null)
             {
-                var defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISFCredentialManager)
+                var defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? (ISnowflakeCredentialManager)
                     SFCredentialManagerWindowsNativeImpl.Instance : SFCredentialManagerInMemoryImpl.Instance;
                 s_logger.Info($"Using the default credential manager: {defaultCredentialManager.GetType().Name}");
                 return defaultCredentialManager;

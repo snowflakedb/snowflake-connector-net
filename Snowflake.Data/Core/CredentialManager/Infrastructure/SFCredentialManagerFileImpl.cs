@@ -5,6 +5,7 @@
 using Mono.Unix;
 using Mono.Unix.Native;
 using Newtonsoft.Json;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System;
@@ -16,7 +17,7 @@ using KeyToken = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-    public class SFCredentialManagerFileImpl : ISFCredentialManager
+    internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 

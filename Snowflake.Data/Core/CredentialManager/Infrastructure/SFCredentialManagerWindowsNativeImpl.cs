@@ -3,6 +3,7 @@
  */
 
 using Microsoft.Win32.SafeHandles;
+using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using System;
 using System.Runtime.InteropServices;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-    public class SFCredentialManagerWindowsNativeImpl : ISFCredentialManager
+    internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 

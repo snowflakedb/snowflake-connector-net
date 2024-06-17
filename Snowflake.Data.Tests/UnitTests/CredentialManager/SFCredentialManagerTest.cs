@@ -8,6 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     using Mono.Unix.Native;
     using Moq;
     using NUnit.Framework;
+    using Snowflake.Data.Client;
     using Snowflake.Data.Core.CredentialManager;
     using Snowflake.Data.Core.CredentialManager.Infrastructure;
     using Snowflake.Data.Core.Tools;
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
     public abstract class SFBaseCredentialManagerTest
     {
-        protected ISFCredentialManager _credentialManager;
+        protected ISnowflakeCredentialManager _credentialManager;
 
         [Test]
         public void TestSavingAndRemovingCredentials()
@@ -130,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     [TestFixture]
     class SFCredentialManagerTest
     {
-        ISFCredentialManager _credentialManager;
+        ISnowflakeCredentialManager _credentialManager;
 
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
