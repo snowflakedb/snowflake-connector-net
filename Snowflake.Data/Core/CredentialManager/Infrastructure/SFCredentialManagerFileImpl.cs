@@ -20,6 +20,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 
+        internal const string CredentialCacheDirName = ".snowflake";
+
         internal const string CredentialCacheFileName = "temporary_credential.json";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
@@ -50,7 +52,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath)
         {
             var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
-            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? HomeDirectoryProvider.HomeDirectory(_environmentOperations) : customDirectory;
+            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), CredentialCacheDirName) : customDirectory;
+            if (!_directoryOperations.Exists(_jsonCacheDirectory))
+            {
+                _directoryOperations.CreateDirectory(_jsonCacheDirectory);
+            }
             _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
             s_logger.Info($"Setting the json credential cache path to {_jsonCacheFilePath}");
         }
