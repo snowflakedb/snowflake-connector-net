@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
@@ -98,7 +97,7 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
-        private readonly ISFCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
+        private readonly ISnowflakeCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
 
         internal bool _allowSSOTokenCaching;
 

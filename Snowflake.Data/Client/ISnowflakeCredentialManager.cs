@@ -2,15 +2,9 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Core.CredentialManager.Infrastructure
+namespace Snowflake.Data.Client
 {
-    internal enum TokenType
-    {
-        [StringAttr(value = "ID_TOKEN")]
-        IdToken
-    }
-
-    public interface ISFCredentialManager
+    public interface ISnowflakeCredentialManager
     {
         string GetCredentials(string key);
 
