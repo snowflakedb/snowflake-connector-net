@@ -65,7 +65,7 @@ namespace Snowflake.Data.Core
                 netVersion = ExtractVersion(),
             };
 
-            DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             DriverName = ".NET";
         }
 
