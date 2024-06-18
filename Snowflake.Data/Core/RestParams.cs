@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
@@ -57,7 +60,7 @@ namespace Snowflake.Data.Core
             ClientEnv = new LoginRequestClientEnv()
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString,
+                osVersion = Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
             };
@@ -78,9 +81,10 @@ namespace Snowflake.Data.Core
 
         internal static string ExtractVersion()
         {
-            var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
-            int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
-            return version.Substring(0, secondPeriodIndex);
+            var location = Assembly.GetExecutingAssembly().Location;
+            var lastDir = Path.GetDirectoryName(location);
+            var version = Path.GetFileName(lastDir);
+            return version.Substring(3);
         }
     }
 }
