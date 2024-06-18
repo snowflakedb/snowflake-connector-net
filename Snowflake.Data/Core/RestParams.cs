@@ -82,9 +82,9 @@ namespace Snowflake.Data.Core
         internal static string ExtractVersion()
         {
             var location = Assembly.GetExecutingAssembly().Location;
-            var lastDir = Path.GetDirectoryName(location);
-            var version = Path.GetFileName(lastDir);
-            return version.Substring(3);
+            var dir = Path.GetDirectoryName(location);
+            var version = Path.GetFileName(dir);
+            return version.Substring(version.IndexOf("net") + 3);
         }
     }
 }
