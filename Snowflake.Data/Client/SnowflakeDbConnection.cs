@@ -69,6 +69,8 @@ namespace Snowflake.Data.Client
             get; set;
         }
 
+        public SecureString Passcode { get; set; }
+
         public bool IsOpen()
         {
             return _connectionState == ConnectionState.Open && SfSession != null;
@@ -269,7 +271,7 @@ namespace Snowflake.Data.Client
             try
             {
                 OnSessionConnecting();
-                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password, Passcode);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
@@ -303,7 +305,7 @@ namespace Snowflake.Data.Client
             registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
             return SnowflakeDbConnectionPool
-                .GetSessionAsync(ConnectionString, Password, cancellationToken)
+                .GetSessionAsync(ConnectionString, Password, Passcode, cancellationToken)
                 .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)
