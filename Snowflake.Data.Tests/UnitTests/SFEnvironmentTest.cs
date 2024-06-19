@@ -15,18 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
 #if NETFRAMEWORK
             expectedRuntime += "Framework";
-#endif
-
-#if NET462
-            expectedVersion = "462";
-#elif NET471
-            expectedVersion = "471";
-#elif NET472
-            expectedVersion = "472";
-#elif NET48
-            expectedVersion = "48";
-#elif NET481
-            expectedVersion = "481";
+            expectedVersion = "4.8";
 #elif NET6_0
             expectedVersion = "6.0";
 #elif NET7_0

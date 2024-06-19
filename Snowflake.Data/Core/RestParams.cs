@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -81,10 +80,9 @@ namespace Snowflake.Data.Core
 
         internal static string ExtractVersion()
         {
-            var location = Assembly.GetExecutingAssembly().Location;
-            var dir = Path.GetDirectoryName(location);
-            var version = Path.GetFileName(dir);
-            return version.Substring(version.IndexOf("net") + 3);
+            var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+            int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
+            return version.Substring(0, secondPeriodIndex);
         }
     }
 }
