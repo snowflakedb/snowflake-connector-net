@@ -1,8 +1,5 @@
 using NUnit.Framework;
 using Snowflake.Data.Core;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Versioning;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -13,15 +10,30 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestRuntimeExtraction()
         {
             // Arrange
-            var targetFrameworkAttribute = Assembly.GetExecutingAssembly().GetCustomAttributes(true).ToList().OfType<TargetFrameworkAttribute>().First();
-            var targetFramework = targetFrameworkAttribute.FrameworkName.Split(',');
-            var expectedRuntime = targetFramework[0].Replace("CoreApp", "");
-            var expectedVersion = targetFramework[1].Substring(targetFramework[1].IndexOf("=v") + 2);
+            string expectedRuntime = ".NET";
+            string expectedVersion;
 
-            if (expectedRuntime.Contains("Framework"))
-            {
-                expectedVersion = expectedVersion.Replace(".", "");
-            }
+#if NETFRAMEWORK
+            expectedRuntime += "Framework";
+#endif
+
+#if NET462
+            expectedVersion = "462";
+#elif NET471
+            expectedVersion = "471";
+#elif NET472
+            expectedVersion = "472";
+#elif NET48
+            expectedVersion = "48";
+#elif NET481
+            expectedVersion = "481";
+#elif NET6_0
+            expectedVersion = "6.0";
+#elif NET7_0
+            expectedVersion = "7.0";
+#elif NET8_0
+            expectedVersion = "8.0";
+#endif
 
             // Act
             var actualRuntime = SFEnvironment.ExtractRuntime();
