@@ -5,6 +5,7 @@
 using Newtonsoft.Json;
 using Snowflake.Data.Core;
 using NUnit.Framework;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenClose()
         {
             Mock.MockCloseSessionGone restRequester = new Mock.MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null, restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.close());
         }
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // act
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
             sfSession.UpdateSessionProperties(queryExecResponseData);
 
             // assert
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string schemaName = "SC_TEST";
             string warehouseName = "WH_TEST";
             string roleName = "ROLE_TEST";
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
             sfSession.database = databaseName;
             sfSession.warehouse = warehouseName;
             sfSession.role = roleName;
@@ -90,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 : $"{simpleConnectionString}client_config_file={configPath};";
 
             // act
-            new SFSession(connectionString, null, easyLoggingStarter.Object);
+            new SFSession(connectionString, null, null, easyLoggingStarter.Object);
 
             // assert
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
@@ -112,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
         {
             // Arrange
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
             var changedSessionValue = sessionInitialValue;
 
             // Act
@@ -131,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, null, restRequester);
 
             // act
             sfSession.Open();
@@ -147,6 +148,95 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(loginRequest.data.password, deserializedLoginRequest.data.password);
+        }
+
+        [Test]
+        public void TestHandlePasscodeParameter()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", null, null, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.AreEqual(passcode, loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestHandlePasscodeAsSecureString()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", null, SecureStringHelper.Encode(passcode), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.AreEqual(passcode, loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestHandlePasscodeInPasswordParameter()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", null, null, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestPushWhenNoPasscodeAndPasscodeInPasswordIsFalse()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", null, null, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestPushAsDefaultSecondaryAuthentication()
+        {
+            // arrange
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test", null, null, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
         }
     }
 }

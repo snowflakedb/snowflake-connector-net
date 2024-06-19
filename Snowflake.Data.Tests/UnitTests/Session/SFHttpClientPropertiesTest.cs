@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null, null);
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // act
