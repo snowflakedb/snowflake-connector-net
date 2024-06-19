@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core
 
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
-        // The default Rest timeout. Set to 120 seconds. 
+        // The default Rest timeout. Set to 120 seconds.
         public static int DEFAULT_REST_RETRY_SECONDS_TIMEOUT = 120;
 
         internal Uri Url { get; set; }
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(), 
+            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(),
                 jsonBody.ToString());
         }
 
@@ -259,12 +259,18 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PROOF_KEY", NullValueHandling = NullValueHandling.Ignore)]
         internal string ProofKey { get; set; }
 
+        [JsonProperty(PropertyName = "EXT_AUTHN_DUO_METHOD", NullValueHandling = NullValueHandling.Ignore)]
+        internal string extAuthnDuoMethod { get; set; }
+
+        [JsonProperty(PropertyName = "PASSCODE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string passcode;
+
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
         public override string ToString()
         {
-            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}", 
+            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}",
                 clientAppVersion, accountName, loginName, clientEnv.ToString(), Authenticator);
         }
     }
@@ -291,7 +297,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}", 
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}",
                 application, osVersion, netRuntime, netVersion, insecureMode);
         }
     }

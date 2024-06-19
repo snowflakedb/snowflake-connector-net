@@ -34,6 +34,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
+            SetSecondaryAuthenticationData(ref data);
         }
     }
 
