@@ -244,6 +244,7 @@ namespace Snowflake.Data.Core.Authenticator
                 // Add the token and proof key to the Data
                 data.Token = _samlResponseToken;
                 data.ProofKey = _proofKey;
+                SetSpecializedAuthenticatorData(ref data);
             }
             else
             {
