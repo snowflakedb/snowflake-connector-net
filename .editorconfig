@@ -1,0 +1,43 @@
+root = true
+# yml files
+[*.yml]
+indent_style = space
+indent_size = 2
+
+# All files
+[*.*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+max_line_length = 150
+
+## Interfaces should start with I and PascalCase
+# naming style
+dotnet_naming_style.prefix_and_pascal_case.required_prefix = I
+dotnet_naming_style.prefix_and_pascal_case.capitalization = pascal_case
+
+# naming symbols
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+dotnet_naming_rule.interfaces_begin_with_I.severity = error
+dotnet_naming_rule.interfaces_begin_with_I.symbols = interfaces
+dotnet_naming_rule.interfaces_begin_with_I.style = prefix_and_pascal_case
+
+dotnet_diagnostic.interfaces_begin_with_I.enabled = true
+
+## Static fields should start with _s
+# naming style
+dotnet_naming_style.prefix_s.required_prefix = _s
+dotnet_naming_style.prefix_s.capitalization = camel_case
+
+# naming symbols
+dotnet_naming_rule.static_fields_begin_with_s.style = prefix_s
+dotnet_naming_symbols.static_fields.applicable_kinds = field
+dotnet_naming_symbols.static_fields.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.static_fields.required_modifiers = static
+
+dotnet_naming_rule.static_fields_begin_with_s.severity = error
+dotnet_naming_rule.static_fields_begin_with_s.symbols = static_fields
+dotnet_diagnostic.static_fields_begin_with_s.enabled = true
