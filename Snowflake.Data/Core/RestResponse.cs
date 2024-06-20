@@ -15,10 +15,10 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
-        
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
-        
+
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
 
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Core
         // multiple statements response data
         [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
         internal string resultIds { get; set; }
-        
+
         [JsonProperty(PropertyName = "queryResultFormat", NullValueHandling = NullValueHandling.Ignore)]
         [JsonConverter(typeof(StringEnumConverter))]
         internal ResultFormat queryResultFormat { get; set; }
@@ -295,8 +295,44 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "nullable")]
         internal bool nullable { get; set; }
+
+        [JsonProperty(PropertyName = "fields")]
+        internal List<FieldMetadata> fields { get; set; }// = new List<FieldMetadata>();
     }
-    
+
+    internal class FieldMetadata
+    {
+        [JsonProperty(PropertyName = "name")]
+        internal string name { get; set; }
+
+        [JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
+        private Int64 byteLength { get; set; }
+
+        [JsonProperty(PropertyName = "typeName")]
+        internal string typeName { get; set; }
+
+        [JsonProperty(PropertyName = "type")]
+        internal string type { get; set; }
+
+        [JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 scale { get; set; }
+
+        [JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 precision { get; set; }
+
+        [JsonProperty(PropertyName = "nullable")]
+        internal bool nullable { get; set; }
+
+        [JsonProperty(PropertyName = "fixed")]
+        internal bool isFixed { get; set; }
+
+        [JsonProperty(PropertyName = "base")]
+        internal SFDataType baseType { get; set; } // TODO: use enum
+
+        [JsonProperty(PropertyName = "fields")]
+        internal List<FieldMetadata> fields { get; set; }// = new List<FieldMetadata>();
+    }
+
     internal class ExecResponseChunk
     {
         [JsonProperty(PropertyName = "url")]
@@ -483,4 +519,4 @@ namespace Snowflake.Data.Core
             throw new NotImplementedException();
         }
     }
-} 
+}

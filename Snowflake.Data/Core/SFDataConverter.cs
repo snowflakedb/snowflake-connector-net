@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core
     public enum SFDataType
     {
         None, FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
-        TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY
+        TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY, MAP
     }
 
     static class SFDataConverter
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Core
             try
             {
                 // The most common conversions are checked first for maximum performance
-                if (destType == typeof(Int64)) 
+                if (destType == typeof(Int64))
                 {
                     return FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
                 }
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(char[]))
                 {
-                    byte[] data = srcType == SFDataType.BINARY ? 
+                    byte[] data = srcType == SFDataType.BINARY ?
                         HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
                     return Encoding.UTF8.GetString(data).ToCharArray();
                 }
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.TIME:
                     // Convert fractional seconds since midnight to TimeSpan
-                    //  A single tick represents one hundred nanoseconds or one ten-millionth of a second. 
+                    //  A single tick represents one hundred nanoseconds or one ten-millionth of a second.
                     // There are 10,000 ticks in a millisecond
                     return TimeSpan.FromTicks(GetTicksFromSecondAndNanosecond(srcVal));
                 default:
@@ -183,32 +183,32 @@ namespace Snowflake.Data.Core
                         TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
                         return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
                     }
-                case SFDataType.TIMESTAMP_LTZ:                     
+                case SFDataType.TIMESTAMP_LTZ:
                     return new DateTimeOffset(UnixEpoch.Ticks +
-                        GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime(); 
+                        GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime();
 
                 default:
-                    throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, 
+                    throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal,
                         srcType, typeof(DateTimeOffset).ToString());
             }
         }
 
-        static int[] powersOf10 =  { 
-            1, 
-            10, 
-            100, 
-            1000, 
-            10000, 
-            100000, 
-            1000000, 
-            10000000, 
-            100000000 
+        static int[] powersOf10 =  {
+            1,
+            10,
+            100,
+            1000,
+            10000,
+            100000,
+            1000000,
+            10000000,
+            100000000
         };
 
         /// <summary>
         /// Convert the time value with the format seconds.nanoseconds to a number of
         /// Ticks. A single tick represents one hundred nanoseconds.
-        /// For example, "23:59:59.123456789" is represented by 86399.123456789 and is 
+        /// For example, "23:59:59.123456789" is represented by 86399.123456789 and is
         /// 863991234567 ticks (precision is maximum 7).
         /// </summary>
         /// <param name="srcVal">The source data returned by the server. For example '86399.123456789'</param>

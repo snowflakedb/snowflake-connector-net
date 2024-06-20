@@ -5,13 +5,15 @@
 using System;
 using System.Data.Common;
 using System.Collections;
+using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using System.Text;
-using System.IO;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Tls;
+using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Client
 {
@@ -30,7 +32,7 @@ namespace Snowflake.Data.Client
         private int RecordsAffectedInternal;
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
-        
+
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
@@ -99,7 +101,7 @@ namespace Snowflake.Data.Client
         {
             return resultSet.queryId;
         }
-        
+
         private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
         {
             var table = new DataTable("SchemaTable");
@@ -136,7 +138,7 @@ namespace Snowflake.Data.Client
 
             return table;
         }
-		
+
         public override bool GetBoolean(int ordinal)
         {
             return resultSet.GetBoolean(ordinal);
@@ -255,6 +257,48 @@ namespace Snowflake.Data.Client
             return count;
         }
 
+        public T GetObject<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+            where T : class, new()
+        {
+            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var fields = rowType.fields;
+            if (fields == null || fields.Count == 0)
+            {
+                throw new Exception("Cannot return an object without metadata");
+                // return (T) GetValue(ordinal);
+            }
+            var json = JObject.Parse(GetString(ordinal));
+            return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json, constructionMethod);
+        }
+
+        public T[] GetArray<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        {
+            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var fields = rowType.fields;
+            if (fields == null || fields.Count == 0)
+            {
+                throw new Exception("Cannot return an array without metadata");
+                // return (T[]) GetValue(ordinal);
+            }
+            var json = JArray.Parse(GetString(ordinal));
+            return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json, constructionMethod);
+        }
+
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal,
+            StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        {
+            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var fields = rowType.fields;
+            if (fields == null || fields.Count == 0)
+            {
+                throw new Exception("Cannot return a map without metadata");
+                // return (T) GetValue(ordinal);
+            }
+
+            var json = JObject.Parse(GetString(ordinal));
+            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json, constructionMethod);
+        }
+
         public override bool IsDBNull(int ordinal)
         {
             return resultSet.IsDBNull(ordinal);
@@ -301,5 +345,12 @@ namespace Snowflake.Data.Client
             isClosed = true;
         }
 
+    }
+
+    public enum StructureTypeConstructionMethod
+    {
+        PROPERTIES_ORDER,
+        PROPERTIES_NAMES,
+        CONSTRUCTOR
     }
 }

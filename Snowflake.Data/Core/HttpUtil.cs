@@ -87,7 +87,7 @@ namespace Snowflake.Data.Core
 
         private HttpUtil()
         {
-            // This value is used by AWS SDK and can cause deadlock, 
+            // This value is used by AWS SDK and can cause deadlock,
             // so we need to increase the default value of 2
             // See: https://github.com/aws/aws-sdk-net/issues/152
             ServicePointManager.DefaultConnectionLimit = 50;
@@ -142,6 +142,7 @@ namespace Snowflake.Data.Core
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false, // Disable cookies
                     UseProxy = false
+                    // ,ServerCertificateCustomValidationCallback = (msg, cert, certChain, errorsPolicy) => true
                 };
             }
             // special logic for .NET framework 4.7.1 that
@@ -181,15 +182,15 @@ namespace Snowflake.Data.Core
                     {
                         // Get the original entry
                         entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char 
+                        // . -> [.] because . means any char
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
-                        
+
                         entry = entry.StartsWith("^") ? entry : $"^{entry}";
-                        
+
                         entry = entry.EndsWith("$") ? entry : $"{entry}$";
-                        
+
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
@@ -384,7 +385,7 @@ namespace Snowflake.Data.Core
                             if (httpTimeout.Ticks == 0)
                                 childCts.Cancel();
                             else
-                                childCts.CancelAfter(httpTimeout);                        
+                                childCts.CancelAfter(httpTimeout);
                         }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
