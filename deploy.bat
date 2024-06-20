@@ -10,7 +10,7 @@ echo %SN_KEY% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
 type "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
-certutil -f  -decode "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt" "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
+certutil -decode "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt" "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
 
 type "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
 
