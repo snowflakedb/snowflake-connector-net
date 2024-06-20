@@ -68,14 +68,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 _fileOperations.Write(_jsonCacheFilePath, content);
-                FileInfo info = new FileInfo(_jsonCacheFilePath);
-                FileSecurity security = info.GetAccessControl();
-                FileSystemAccessRule rule = new FileSystemAccessRule(
-                    new SecurityIdentifier(WellKnownSidType.CreatorOwnerSid, null),
-                    FileSystemRights.FullControl,
-                    AccessControlType.Allow);
-                security.SetAccessRule(rule);
-                info.SetAccessControl(security);
             }
             else
             {
