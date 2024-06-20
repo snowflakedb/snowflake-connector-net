@@ -6,10 +6,16 @@
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
 
+- .NET Framework 4.6.2
 - .NET Framework 4.7.1
 - .NET Framework 4.7.2
+- .NET Framework 4.8
+- .NET Framework 4.8.1
 - .NET 6.0
+- .NET 7.0
 - .NET 8.0
+
+Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
 
 Please refer to the [Notice](#notice) section below for information about safe usage of the .NET Driver
 
@@ -144,7 +150,7 @@ Logging description and configuration:
     were not performed where the insecureMode flag was set to false, which is the default setting.
     From version v2.1.5 CRL is working back as intended.
 
-Note that the driver is now targeting .NET 6.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
+Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 
 See more:
 * [Security Policy](SECURITY.md)

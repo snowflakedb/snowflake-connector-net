@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
   # uncomment to run the tests sequentially
-  #SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
+  # SEQUENTIAL_ENV: SEQUENTIAL_TEST_RUN
 
 jobs:
   test-windows:
@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net8.0','net6.0', 'net472', 'net471']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - name: Checkout code
@@ -92,7 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v3
@@ -151,7 +151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
