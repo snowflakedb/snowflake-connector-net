@@ -73,6 +73,8 @@ namespace Snowflake.Data.Core
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
 
+        internal SecureString Passcode { get; }
+
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
         private int _queryContextCacheSize = _defaultQueryContextCacheSize;
@@ -156,19 +158,22 @@ namespace Snowflake.Data.Core
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
             String connectionString,
-            SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
+            SecureString password,
+            SecureString passcode) : this(connectionString, password, passcode, EasyLoggingStarter.Instance)
         {
         }
 
         internal SFSession(
             String connectionString,
             SecureString password,
+            SecureString passcode,
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
             Password = password;
-            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
+            Passcode = passcode;
+            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password, Passcode);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
@@ -218,7 +223,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
+        internal SFSession(String connectionString, SecureString password, SecureString passcode, IMockRestRequester restRequester) : this(connectionString, password, passcode)
         {
             // Inject the HttpClient to use with the Mock requester
             restRequester.setHttpClient(_HttpClient);

@@ -224,6 +224,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             data.RawSamlResponse = _rawSamlTokenHtmlString;
+            SetSecondaryAuthenticationData(ref data);
         }
 
         private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)

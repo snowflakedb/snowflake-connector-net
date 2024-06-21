@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -110,7 +110,11 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "60m")]
         EXPIRATIONTIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
-        POOLINGENABLED
+        POOLINGENABLED,
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
+        PASSCODE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        PASSCODEINPASSWORD
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -179,7 +183,7 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password, SecureString passcode)
         {
             logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
@@ -255,7 +259,13 @@ namespace Snowflake.Data.Core
                 properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(password);
             }
 
+            if (passcode != null && passcode.Length > 0)
+            {
+                properties[SFSessionProperty.PASSCODE] = SecureStringHelper.Decode(passcode);
+            }
+
             ValidateAuthenticator(properties);
+            ValidatePasscodeInPassword(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
@@ -306,6 +316,23 @@ namespace Snowflake.Data.Core
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
+                }
+            }
+        }
+
+        private static void ValidatePasscodeInPassword(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passCodeInPassword))
+            {
+                if (!bool.TryParse(passCodeInPassword, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.PASSCODEINPASSWORD.ToString()} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        "",
+                        SFSessionProperty.PASSCODEINPASSWORD.ToString());
                 }
             }
         }
