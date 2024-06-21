@@ -138,7 +138,6 @@ namespace Snowflake.Data.Core
             throw new NotSupportedException();
         }
 
-        [Obsolete("ExtractCell with columnIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int columnIndex)
         {
             throw new NotSupportedException();

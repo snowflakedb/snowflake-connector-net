@@ -209,10 +209,6 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
-#if NETFRAMEWORK
-            // .net standard would pass here
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-#else
             // hack because of this: https://github.com/dotnet/corefx/issues/10361
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -231,7 +227,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
             }
-#endif
         }
 
         private static string ValidateAndExtractToken(HttpListenerRequest request)

@@ -275,10 +275,18 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestGetTextWithOneChar()
         {
-            var testValues =
-                TestDataGenarator.AsciiCodes.ToCharArray()
-                    .Append(TestDataGenarator.SnowflakeUnicode)
-                    .ToArray();
+            char[] testValues;
+
+#if NET462
+            var charArr = TestDataGenarator.AsciiCodes.ToList();
+            charArr.Add(TestDataGenarator.SnowflakeUnicode);
+            testValues = charArr.ToArray();
+#else
+            testValues =
+            TestDataGenarator.AsciiCodes.ToCharArray()
+                .Append(TestDataGenarator.SnowflakeUnicode)
+                .ToArray();
+#endif
 
             PrepareTestCase(SFDataType.TEXT, 0, testValues);
             
