@@ -33,6 +33,7 @@ namespace Snowflake.Data.Core
         internal int maxHttpRetries;
         internal bool includeRetryReason;
         internal SFSessionHttpClientProxyProperties proxyProperties;
+        internal bool _disableSamlUrlCheck;
         private int _maxPoolSize;
         private int _minPoolSize;
         private ChangedSessionBehavior _changedSession;
@@ -243,7 +244,8 @@ namespace Snowflake.Data.Core
                     _changedSession = ExtractChangedSession(extractor, SFSessionProperty.CHANGEDSESSION),
                     _waitingForSessionIdleTimeout = extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
-                    _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED)
+                    _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
+                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK)
                 };
             }
 

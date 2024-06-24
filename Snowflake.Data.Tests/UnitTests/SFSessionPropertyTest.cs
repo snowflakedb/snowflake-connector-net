@@ -139,6 +139,21 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
         }
 
+        [Test]
+        [TestCase("true")]
+        [TestCase("false")]
+        public void TestValidateDisableSamlUrlCheckProperty(string expectedDisableSamlUrlCheck)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;DISABLE_SAML_URL_CHECK={expectedDisableSamlUrlCheck}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
