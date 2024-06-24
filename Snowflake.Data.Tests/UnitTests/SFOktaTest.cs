@@ -126,6 +126,51 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabled()
+        {
+            try
+            {
+                var restRequester = new Mock.MockOktaRestRequester()
+                {
+                    TokenUrl = "https://snowflakecomputing.okta.com/api/v1/sessions?additionalFields=cookieToken",
+                    SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
+                    ResponseContent = wrongPostbackContent,
+                    MaxRetryCount = MaxRetryCount,
+                    MaxRetryTimeout = MaxRetryTimeout
+                };
+                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                sfSession.Open();
+            }
+            catch (SnowflakeDbException e)
+            {
+                Assert.Fail("Should pass without exception", e);
+            }
+        }
+
+        [Test]
+        public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabledAsync()
+        {
+            try
+            {
+                var restRequester = new Mock.MockOktaRestRequester()
+                {
+                    TokenUrl = "https://snowflakecomputing.okta.com/api/v1/sessions?additionalFields=cookieToken",
+                    SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
+                    ResponseContent = wrongPostbackContent,
+                    MaxRetryCount = MaxRetryCount,
+                    MaxRetryTimeout = MaxRetryTimeout
+                };
+                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+            }
+            catch (SnowflakeDbException e)
+            {
+                Assert.Fail("Should pass without exception", e);
+            }
+        }
+
+        [Test]
         public void TestLoginRequestToString()
         {
             // Arrange
