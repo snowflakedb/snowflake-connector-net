@@ -1,12 +1,52 @@
 REM Scripts to build .net driver and deploy
 SET VERSION=%1
 SET API_KEY=%2
-SET SN_KEY=%3
+SET LINE1=%3
+SET LINE2=%4
+SET LINE3=%5
+SET LINE4=%6
+SET LINE5=%7
+SET LINE6=%8
+SET LINE7=%9
+SET LINE8=%10
+SET LINE9=%11
+SET LINE10=%12
+SET LINE11=%13
+SET LINE12=%14
+SET LINE13=%15
 
 SET ROOT_DIR=%~dp0
 cd %ROOT_DIR%
 
-echo %SN_KEY% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo "-----BEGIN CERTIFICATE-----" > "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE1% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE2% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE3% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE4% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE5% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE6% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE7% >>"C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE8% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE9% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE10% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE11% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE12% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %LINE13% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo "-----END CERTIFICATE-----" >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
 type "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
