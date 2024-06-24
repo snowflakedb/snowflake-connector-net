@@ -18,7 +18,7 @@ SET LINE13="QHLjpqPo7XoSoVrHgIpkRBsMv2c="
 SET ROOT_DIR=%~dp0
 cd %ROOT_DIR%
 
-echo "-----BEGIN CERTIFICATE-----" > "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo -----BEGIN CERTIFICATE----- > "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 echo %LINE1% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 echo %LINE2% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 echo %LINE3% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
