@@ -210,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    //{ SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) }
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) }
                 }
             };
 
