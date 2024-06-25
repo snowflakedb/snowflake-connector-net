@@ -1062,12 +1062,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-
                 // Authenticate using the token
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -2335,14 +2335,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                connectTask = conn.CloseAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-
                 // Authenticate using the token
                 connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                connectTask = conn.CloseAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
     }
