@@ -2329,7 +2329,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString
                     = ConnectionStringWithoutAuth
-                        + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
+                      + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;allow_sso_token_caching=true;";
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
@@ -2348,17 +2348,48 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
+        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestMFATokenCaching()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                //conn.Passcode = SecureStringHelper.Encode("014350");
+                conn.ConnectionString
+                    = ConnectionString
+                      + ";authenticator=username_password_mfa;minPoolSize=2;application=DuoTest;POOLINGENABLED=false;";
+
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                connectTask = conn.CloseAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+
+                // Authenticate using the token
+                connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        //[Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnection()
         {
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.Passcode = SecureStringHelper.Encode("123456");
+                conn.Passcode = SecureStringHelper.Encode("924260");
                 // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
                 conn.ConnectionString = ConnectionString + "minPoolSize=0;application=DuoTest";
 
                 // act
+                conn.Open();
+                conn.Close();
+
                 conn.Open();
 
                 // assert
