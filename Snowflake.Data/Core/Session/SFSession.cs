@@ -109,6 +109,8 @@ namespace Snowflake.Data.Core
 
         internal string _idToken;
 
+        internal SecureString _mfaToken;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -132,6 +134,12 @@ namespace Snowflake.Data.Core
                     _idToken = authnResponse.data.idToken;
                     var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _credManager.SaveCredentials(key, _idToken);
+                }
+                if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
+                {
+                    _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
+                    _credManager.SaveCredentials(key, authnResponse.data.mfaToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -224,8 +232,15 @@ namespace Snowflake.Data.Core
 
                 if (_allowSSOTokenCaching)
                 {
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER],
+                        TokenType.IdToken);
                     _idToken = _credManager.GetCredentials(key);
+                }
+
+                if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
+                {
+                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
+                    _mfaToken = SecureStringHelper.Encode(_credManager.GetCredentials(mfaKey));
                 }
             }
             catch (SnowflakeDbException e)
