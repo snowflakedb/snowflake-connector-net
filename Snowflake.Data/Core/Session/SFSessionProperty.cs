@@ -117,6 +117,8 @@ namespace Snowflake.Data.Core
         DISABLE_SAML_URL_CHECK,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOW_SSO_TOKEN_CACHING,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false", IsSecret = true)]
+        CLIENT_REQUEST_MFA_TOKEN,
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PASSCODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
@@ -317,7 +319,8 @@ namespace Snowflake.Data.Core
                 OktaAuthenticator.AUTH_NAME,
                 OAuthAuthenticator.AUTH_NAME,
                 KeyPairAuthenticator.AUTH_NAME,
-                ExternalBrowserAuthenticator.AUTH_NAME
+                ExternalBrowserAuthenticator.AUTH_NAME,
+                MFACacheAuthenticator.AUTH_NAME
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
