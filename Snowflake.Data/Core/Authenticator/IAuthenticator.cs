@@ -205,6 +205,10 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
+            else if (type.Equals(MFACacheAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new MFACacheAuthenticator(session);
+            }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (type.Contains("okta") && type.StartsWith("https://"))
             {
