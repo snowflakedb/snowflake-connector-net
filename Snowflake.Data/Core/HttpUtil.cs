@@ -408,7 +408,7 @@ namespace Snowflake.Data.Core
                         }
                         else
                         {
-                            //TODO: Should definitly check to see if the error is recoverable or transient; AuthenticationExceptions are treated as nonrecoverable, but there may be more.
+                            //TODO: Should definitely check to see if the error is recoverable or transient; AuthenticationExceptions are treated as nonrecoverable, but there may be more.
                             logger.Warn("Error occurred during request, retrying...", e);
                         }
                     }
