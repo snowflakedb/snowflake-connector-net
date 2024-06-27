@@ -6,4 +6,6 @@ certutil -f -encode "C:\jenkins\workspace\DotNetKeyTest\newkey.snk" "C:\jenkins\
 
 for /f "Tokens=* Delims=" %%x in ("C:\jenkins\workspace\DotNetKeyTest\newkey.snk.asc") do set Content=!Content!%%x
 
-echo %Content%
+echo %Content% > "C:\jenkins\workspace\DotNetKeyTest\snk.txt"
+
+aws s3 cp "C:\jenkins\workspace\DotNetKeyTest\snk.txt" "s3://sfc-eng-jenkins/repository/python_connector/ank.txt"
