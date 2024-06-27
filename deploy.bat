@@ -6,9 +6,7 @@ SET LINE1=%3
 SET ROOT_DIR=%~dp0
 cd %ROOT_DIR%
 
-echo -----BEGIN CERTIFICATE----- > "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 echo %LINE1% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
-echo -----END CERTIFICATE----- >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
 type "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
