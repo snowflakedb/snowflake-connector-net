@@ -110,7 +110,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "60m")]
         EXPIRATIONTIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
-        POOLINGENABLED
+        POOLINGENABLED,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOW_SSO_TOKEN_CACHING
     }
 
     class SFSessionPropertyAttr : Attribute
