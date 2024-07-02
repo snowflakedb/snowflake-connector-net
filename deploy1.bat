@@ -6,7 +6,7 @@ SETLOCAL EnableDelayedExpansion
 
 certutil -f -encode "C:\jenkins\workspace\DotNetKeyTest\newkey.snk" "C:\jenkins\workspace\DotNetKeyTest\newkey.snk.asc"
 
-more +1 "C:\jenkins\workspace\DotNetKeyTest\newkey.snk.asc"|findstr /vX "-----END CERTIFICATE-----" > "C:\jenkins\workspace\DotNetKeyTest\newkey1.snk.asc"
+more +1 "C:\jenkins\workspace\DotNetKeyTest\newkey.snk.asc" > "C:\jenkins\workspace\DotNetKeyTest\newkey1.snk.asc"
 
 for /f "Tokens=* Delims=" %%x in (newkey1.snk.asc) do set Content=!Content!%%x
 
