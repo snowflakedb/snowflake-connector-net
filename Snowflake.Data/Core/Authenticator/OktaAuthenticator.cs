@@ -92,6 +92,10 @@ namespace Snowflake.Data.Core.Authenticator
                     {
                         VerifyPostbackUrl();
                     }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                    }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
                     await LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -149,6 +153,10 @@ namespace Snowflake.Data.Core.Authenticator
                     if (!session._disableSamlUrlCheck)
                     {
                         VerifyPostbackUrl();
+                    }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
                     }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
