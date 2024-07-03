@@ -1,7 +1,7 @@
 REM Scripts to build .net driver and deploy
 SET VERSION=%1
 SET API_KEY=%2
-SET SNKEY=%2
+SET SNKEY=%3
 
 SET ROOT_DIR=%~dp0 
 cd %ROOT_DIR%
