@@ -1,14 +1,18 @@
 REM Scripts to build .net driver and deploy
 SET VERSION=%1
 SET API_KEY=%2
+SET SNKEY=%2
 
 SET ROOT_DIR=%~dp0 
 cd %ROOT_DIR%
 
-dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n 
+echo -----BEGIN CERTIFICATE----- > "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo %SNKEY% >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
+echo -----END CERTIFICATE----- >> "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt"
 
-REM command to sign with strong name Snowflake.Data.dll should be here
+certutil -decode "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\coded.txt" "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk"
 
-dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
+dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile="C:\jenkins\workspace\NugetPushDotNetDriverSignTest\key.snk" 
+"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v "C:\jenkins\workspace\NugetPushDotNetDriverSignTest\Snowflake.Data\bin\Release\netstandard2.0\Snowflake.Data.dll"
 
-dotnet nuget push Snowflake.Data.%VERSION%.nupkg -k %API_KEY% -s https://api.nuget.org/v3/index.json
+
