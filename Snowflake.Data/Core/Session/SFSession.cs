@@ -105,10 +105,6 @@ namespace Snowflake.Data.Core
 
         private readonly ISnowflakeCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
 
-        internal bool _allowSSOTokenCaching;
-
-        internal string _idToken;
-
         internal SecureString _mfaToken;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
@@ -129,12 +125,6 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
-                {
-                    _idToken = authnResponse.data.idToken;
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                    _credManager.SaveCredentials(key, _idToken);
-                }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
@@ -153,17 +143,7 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
-
-                if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
-                {
-                    logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
-                    _idToken = null;
-                    authenticator.Authenticate();
-                }
-                else
-                {
-                    throw e;
-                }
+                throw e;
             }
         }
 
@@ -228,14 +208,6 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
-                _allowSSOTokenCaching = extractedProperties._allowSSOTokenCaching;
-
-                if (_allowSSOTokenCaching)
-                {
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER],
-                        TokenType.IdToken);
-                    _idToken = _credManager.GetCredentials(key);
-                }
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
                 {
