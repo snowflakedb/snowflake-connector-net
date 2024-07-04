@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenClose()
         {
             var restRequester = new MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.close());
         }
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // act
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
             sfSession.UpdateSessionProperties(queryExecResponseData);
 
             // assert
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string schemaName = "SC_TEST";
             string warehouseName = "WH_TEST";
             string roleName = "ROLE_TEST";
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
             sfSession.database = databaseName;
             sfSession.warehouse = warehouseName;
             sfSession.role = roleName;
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var expectedIdToken = "mockIdToken";
             var connectionString = $"account=account;user=user;password=test;allow_sso_token_caching=true";
-            var session = new SFSession(connectionString, null, null);
+            var session = new SFSession(connectionString, null);
             LoginResponse authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var connectionString = "account=test;user=test;password=test;allow_sso_token_caching=true";
-            var session = new SFSession(connectionString, null, null);
+            var session = new SFSession(connectionString, null);
             LoginResponse authnResponse = new LoginResponse
             {
                 code = SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode,
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
         {
             // Arrange
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
             var changedSessionValue = sessionInitialValue;
 
             // Act
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, restRequester);
 
             // act
             sfSession.Open();
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", null, null, restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", null, restRequester);
 
             // act
             sfSession.Open();
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", null, null, restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", null, restRequester);
 
             // act
             sfSession.Open();
@@ -262,7 +262,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", null, null, restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", null, restRequester);
 
             // act
             sfSession.Open();
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test", null, null, restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test", null, restRequester);
 
             // act
             sfSession.Open();
@@ -296,7 +296,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var restRequester = new MockLoginMFATokenCacheRestRequester();
-            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", null, null, restRequester);
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", null, restRequester);
 
             // act
             sfSession.Open();
@@ -315,7 +315,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var testToken = "testToken1234";
             var restRequester = new MockLoginMFATokenCacheRestRequester();
-            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", null, null, restRequester);
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", null, restRequester);
             restRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
@@ -340,14 +340,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var testToken = "testToken1234";
             var restRequester = new MockLoginMFATokenCacheRestRequester();
             var connectionString = $"account=test;user=test;password=test;authenticator=username_password_mfa";
-            var sfSession = new SFSession(connectionString, null, null, restRequester);
+            var sfSession = new SFSession(connectionString, null, restRequester);
             restRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
                 authResponseSessionInfo = new SessionInfo()
             });
             sfSession.Open();
-            var sfSessionWithCachedToken = new SFSession(connectionString, null, null, restRequester);
+            var sfSessionWithCachedToken = new SFSession(connectionString, null, restRequester);
             // act
             sfSessionWithCachedToken.Open();
 

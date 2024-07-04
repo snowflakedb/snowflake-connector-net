@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [TestFixture]
     public class SessionOrCreationTokensTest
     {
-        private SFSession _session = new SFSession("account=test;user=test;password=test", null, null);
+        private SFSession _session = new SFSession("account=test;user=test;password=test", null);
 
         [Test]
         public void TestNoBackgroundSessionsToCreateWhenInitialisedWithSession()

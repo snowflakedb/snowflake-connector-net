@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 authResponseSessionInfo = new SessionInfo()
             });
             // Act
-            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, null, null);
+            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, null);
             Thread.Sleep(3000);
 
             // Assert
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null, null));
+            var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null));
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because passcode was provided using a different authenticator than username_password_mfa"));
         }
 
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;";
             var pool = _connectionPoolManager.GetPool(connectionString);
             // Act
-            var session = _connectionPoolManager.GetSession(connectionString, null, null);
+            var session = _connectionPoolManager.GetSession(connectionString, null);
 
             // Asssert
             // TODO: Review pool config is not the same for session and session pool
