@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -2409,12 +2409,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.Passcode = SecureStringHelper.Encode("924260");
+                conn.Passcode = SecureStringHelper.Encode("323438");
                 // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
-                conn.ConnectionString = ConnectionString + "minPoolSize=0;application=DuoTest";
+                conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
 
                 // act
                 conn.Open();
+                Thread.Sleep(3000);
                 conn.Close();
 
                 conn.Open();
