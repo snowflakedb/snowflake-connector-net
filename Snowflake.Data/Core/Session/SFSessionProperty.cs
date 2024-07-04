@@ -112,6 +112,8 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        DISABLE_SAML_URL_CHECK,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOW_SSO_TOKEN_CACHING
     }
 
