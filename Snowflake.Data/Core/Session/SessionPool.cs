@@ -14,6 +14,9 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
+    using Microsoft.IdentityModel.Tokens;
+    using Snowflake.Data.Core.Authenticator;
+
     sealed class SessionPool : IDisposable
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
@@ -122,9 +125,14 @@ namespace Snowflake.Data.Core.Session
 
         internal void ValidateSecurePassword(SecureString password)
         {
-            if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
+            ValidateSecureCredential(password, Password);
+        }
+
+        internal void ValidateSecureCredential(SecureString newCredential, SecureString storedCredential)
+        {
+            if (!ExtractPassword(storedCredential).Equals(ExtractPassword(newCredential)))
             {
-                var errorMessage = "Could not get a pool because of password mismatch";
+                var errorMessage = "Could not get a pool because of credential mismatch";
                 s_logger.Error(errorMessage + PoolIdentification());
                 throw new Exception(errorMessage);
             }
@@ -136,31 +144,66 @@ namespace Snowflake.Data.Core.Session
         internal SFSession GetSession(string connStr, SecureString password, SecureString passcode)
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
+            SFSession session = null;
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password, passcode);
+            ValidatePoolingIfPasscodeProvided(passcode, sessionProperties);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
             var sessionOrCreateTokens = GetIdleSession(connStr);
+            if(sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME)
+                session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
             ScheduleNewIdleSessions(connStr, password, passcode, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            return sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            return session ?? sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+        }
+
+        private void ValidatePoolingIfPasscodeProvided(SecureString passcode, SFSessionProperties sessionProperties)
+        {
+            if (!GetPooling()) return;
+            if (((passcode != null && !SecureStringHelper.Decode(passcode).IsNullOrEmpty()) ||
+                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODE, out var passcodeValue) && !passcodeValue.IsNullOrEmpty()) ||
+                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) && bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword)))
+            {
+                var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                         authenticator == MFACacheAuthenticator.AUTH_NAME;
+
+                if (isMfaAuthenticator) return;
+                if (sessionProperties.IsPoolingEnabledValueProvided)
+                {
+                    const string ErrorMessage = "Could not get a pool because passcode was provided using a different authenticator than username_password_mfa";
+                    s_logger.Error(ErrorMessage + PoolIdentification());
+                    throw new Exception(ErrorMessage);
+                }
+                s_logger.Warn("Pooling is disabled because passcode was provided using a different authenticator than username_password_mfa" + PoolIdentification());
+                _poolConfig.PoolingEnabled = false;
+            }
         }
 
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
+            SFSession session = null;
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password, passcode);
+            ValidatePoolingIfPasscodeProvided(passcode, sessionProperties);
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
             var sessionOrCreateTokens = GetIdleSession(connStr);
+            if (sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                authenticator == MFACacheAuthenticator.AUTH_NAME)
+                session = sessionOrCreateTokens.Session ??
+                          await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
+                              .ConfigureAwait(false);
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
             ScheduleNewIdleSessions(connStr, password, passcode, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            return sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
+            return session ?? sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
         }
 
         private void ScheduleNewIdleSessions(string connStr, SecureString password, SecureString passcode, List<SessionCreationToken> tokens)
