@@ -215,7 +215,7 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
-                _allowSSOTokenCaching = extractedProperties.allowSSOTokenCaching;
+                _allowSSOTokenCaching = extractedProperties._allowSSOTokenCaching;
 
                 if (_allowSSOTokenCaching)
                 {

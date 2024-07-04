@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
-                allowSSOTokenCaching = clientStoreTemporaryCredential,
+                _allowSSOTokenCaching = clientStoreTemporaryCredential,
                 connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 insecureMode = false,
                 disableRetry = false,
