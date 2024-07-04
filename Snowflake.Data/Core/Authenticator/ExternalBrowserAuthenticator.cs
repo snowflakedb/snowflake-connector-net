@@ -3,10 +3,8 @@
  */
 
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
@@ -45,6 +43,7 @@ namespace Snowflake.Data.Core.Authenticator
         internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
         }
+
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
@@ -192,46 +191,17 @@ namespace Snowflake.Data.Core.Authenticator
             return listener;
         }
 
-        private static void StartBrowser(string url)
+        private void StartBrowser(string url)
         {
             string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
             Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success)
+            if (!m.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 logger.Error("Failed to start browser. Invalid url.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
             }
 
-            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                logger.Error("Failed to start browser. Invalid url.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
-            }
-
-            // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
-#if NETFRAMEWORK
-            // .net standard would pass here
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-#else
-            // hack because of this: https://github.com/dotnet/corefx/issues/10361
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                url = url.Replace("&", "^&");
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { UseShellExecute = true });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", url);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", url);
-            }
-            else
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
-            }
-#endif
+            session._browserOperations.OpenUrl(url);
         }
 
         private static string ValidateAndExtractToken(HttpListenerRequest request)
