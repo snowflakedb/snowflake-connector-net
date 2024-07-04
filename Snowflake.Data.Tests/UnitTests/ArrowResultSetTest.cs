@@ -545,7 +545,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private SFStatement PrepareStatement()
         {
-            SFSession session = new SFSession("user=user;password=password;account=account;", null, null);
+            SFSession session = new SFSession("user=user;password=password;account=account;", null);
             return new SFStatement(session);
         }
 
