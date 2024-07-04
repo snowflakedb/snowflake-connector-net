@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private SFResultSet mockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
         {
             string connectionString = "user=user;password=password;account=account;";
-            SFSession session = new SFSession(connectionString, null , null);
+            SFSession session = new SFSession(connectionString, null);
             List<NameValueParameter> list = new List<NameValueParameter>
             {
                 new NameValueParameter { name = "CLIENT_PREFETCH_THREADS", value = "3" }
