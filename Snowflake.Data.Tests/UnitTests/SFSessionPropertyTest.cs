@@ -22,8 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // act
             var properties = SFSessionProperties.ParseConnectionString(
                 testcase.ConnectionString,
-                testcase.SecurePassword,
-                null);
+                testcase.SecurePassword);
 
             // assert
             CollectionAssert.AreEquivalent(testcase.ExpectedProperties, properties);
@@ -43,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
@@ -63,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
 
             // assert
@@ -78,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, null)
             );
 
             // assert
@@ -97,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, securePassword, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, securePassword)
             );
 
             // assert
@@ -113,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;PASSCODE={expectedPasscode}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -128,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var securePasscode = SecureStringHelper.Encode(expectedPasscode);
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, securePasscode);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null); // TODO, securePasscode);
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -140,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDoNotParsePasscodeWhenNotProvided(string connectionString)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.False(properties.TryGetValue(SFSessionProperty.PASSCODE, out _));
@@ -156,7 +155,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestParsePasscodeInPassword(string connectionString, string expectedPasscodeInPassword)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.IsTrue(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
@@ -170,7 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;passcodeInPassword=abc";
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null, null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
 
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
         }
@@ -186,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.AreEqual(value, properties[sessionProperty]);
@@ -204,7 +203,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
 
             // assert
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
