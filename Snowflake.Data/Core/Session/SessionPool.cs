@@ -111,7 +111,7 @@ namespace Snowflake.Data.Core.Session
         {
             try
             {
-                var properties = SFSessionProperties.ParseConnectionString(connectionString, password, null);
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 extractedProperties.DisablePoolingDefaultIfSecretsProvidedExternally(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);

@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var securePassword = string.IsNullOrEmpty(password) ? null : new NetworkCredential(string.Empty, password).SecurePassword;
 
             // Act/Assert
-            Assert.DoesNotThrow(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, securePassword, null));
+            Assert.DoesNotThrow(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, securePassword));
         }
 
         [TestCase("authenticator=snowflake;", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided.")]
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var securePassword = string.IsNullOrEmpty(password) ? null : new NetworkCredential(string.Empty, password).SecurePassword;
 
             // Act
-            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, securePassword, null));
+            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, securePassword));
 
             // Assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, expectedError);

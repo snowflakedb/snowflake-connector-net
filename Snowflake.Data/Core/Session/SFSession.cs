@@ -194,7 +194,7 @@ namespace Snowflake.Data.Core
         internal SFSession(
             String connectionString,
             SecureString password,
-            SecureString passcode) : this(connectionString, password, passcode, EasyLoggingStarter.Instance)
+            SecureString passcode = null) : this(connectionString, password, passcode, EasyLoggingStarter.Instance)
         {
         }
 
