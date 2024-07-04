@@ -84,7 +84,14 @@ namespace Snowflake.Data.Core.Authenticator
                     samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                     s_logger.Debug("step 5: Verify postback URL in SAML response");
-                    VerifyPostbackUrl();
+                    if (!session._disableSamlUrlCheck)
+                    {
+                        VerifyPostbackUrl();
+                    }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                    }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
                     await LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -139,7 +146,14 @@ namespace Snowflake.Data.Core.Authenticator
                     _rawSamlTokenHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
 
                     s_logger.Debug("step 5: Verify postback URL in SAML response");
-                    VerifyPostbackUrl();
+                    if (!session._disableSamlUrlCheck)
+                    {
+                        VerifyPostbackUrl();
+                    }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                    }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
                     Login();

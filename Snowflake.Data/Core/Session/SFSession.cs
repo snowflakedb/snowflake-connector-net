@@ -87,6 +87,8 @@ namespace Snowflake.Data.Core
 
         private string _user;
 
+        internal bool _disableSamlUrlCheck;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -187,6 +189,7 @@ namespace Snowflake.Data.Core
                 properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
+                _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
             }
             catch (SnowflakeDbException e)
             {
