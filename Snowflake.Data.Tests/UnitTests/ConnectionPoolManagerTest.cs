@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetSessionWorksForSpecifiedConnectionString()
         {
             // Act
-            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null, null);
+            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null);
 
             // Assert
             Assert.AreEqual(ConnectionString1, sfSession.ConnectionString);
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCountingOfSessionProvidedByPool()
         {
             // Act
-            _connectionPoolManager.GetSession(ConnectionString1, null, null);
+            _connectionPoolManager.GetSession(ConnectionString1, null);
 
             // Assert
             var sessionPool = _connectionPoolManager.GetPool(ConnectionString1, null);
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCountingOfSessionReturnedBackToPool()
         {
             // Arrange
-            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null, null);
+            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null);
 
             // Act
             _connectionPoolManager.AddSession(sfSession);
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool.SetMaxPoolSize(requiredCurrentSize);
             for (var i = 0; i < requiredCurrentSize; i++)
             {
-                _connectionPoolManager.GetSession(connectionString, password, passcode);
+                _connectionPoolManager.GetSession(connectionString, password); // TODO , passcode);
             }
             Assert.AreEqual(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
         }

@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Session
 {
     internal interface IConnectionManager
     {
-        SFSession GetSession(string connectionString, SecureString password, SecureString passcode);
+        SFSession GetSession(string connectionString, SecureString password, SecureString passcode = null);
         Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken);
         bool AddSession(SFSession session);
         void ReleaseBusySession(SFSession session);

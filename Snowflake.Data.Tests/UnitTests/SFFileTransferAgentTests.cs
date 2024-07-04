@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
 
-            _session = new SFSession(ConnectionStringMock, null, null);
+            _session = new SFSession(ConnectionStringMock, null);
         }
 
         [TearDown]
