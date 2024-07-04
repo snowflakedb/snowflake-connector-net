@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // given
             var extractor = new SFSessionHttpClientProxyProperties.Extractor();
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
 
             // when
             var proxyProperties = extractor.ExtractProperties(properties);

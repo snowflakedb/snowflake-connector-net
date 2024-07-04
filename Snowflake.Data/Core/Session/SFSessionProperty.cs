@@ -191,7 +191,7 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password, SecureString passcode)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password, SecureString passcode = null)
         {
             logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
