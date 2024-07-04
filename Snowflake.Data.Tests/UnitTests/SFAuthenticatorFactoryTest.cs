@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
         {
             string connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";
-            SFSession session = new SFSession(connectionString, null, null);
+            SFSession session = new SFSession(connectionString, null);
 
             return AuthenticatorFactory.GetAuthenticator(session);
         }
