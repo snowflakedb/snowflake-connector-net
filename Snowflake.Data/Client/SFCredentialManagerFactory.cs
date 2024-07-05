@@ -2,30 +2,24 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.CredentialManager.Infrastructure;
-using Snowflake.Data.Log;
-using System.Runtime.InteropServices;
-
-namespace Snowflake.Data.Core.CredentialManager
+namespace Snowflake.Data.Client
 {
-    internal enum TokenType
-    {
-        [StringAttr(value = "ID_TOKEN")]
-        IdToken,
-        [StringAttr(value = "MFA_TOKEN")]
-        MFAToken
-    }
+    using System;
+    using Snowflake.Data.Core;
+    using Snowflake.Data.Core.CredentialManager;
+    using Snowflake.Data.Core.CredentialManager.Infrastructure;
+    using Snowflake.Data.Log;
+    using System.Runtime.InteropServices;
 
-    internal class SFCredentialManagerFactory
+    public class SFCredentialManagerFactory
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFactory>();
 
         private static ISnowflakeCredentialManager s_customCredentialManager = null;
 
-        internal static string BuildCredentialKey(string host, string user, TokenType tokenType)
+        internal static string BuildCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}";
+            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}:{authenticator?.ToUpper() ?? string.Empty}";
         }
 
         public static void UseDefaultCredentialManager()
@@ -40,7 +34,7 @@ namespace Snowflake.Data.Core.CredentialManager
             s_customCredentialManager = customCredentialManager;
         }
 
-        internal static ISnowflakeCredentialManager GetCredentialManager()
+        public static ISnowflakeCredentialManager GetCredentialManager()
         {
             if (s_customCredentialManager == null)
             {
@@ -49,11 +43,8 @@ namespace Snowflake.Data.Core.CredentialManager
                 s_logger.Info($"Using the default credential manager: {defaultCredentialManager.GetType().Name}");
                 return defaultCredentialManager;
             }
-            else
-            {
-                s_logger.Info($"Using a custom credential manager: {s_customCredentialManager.GetType().Name}");
-                return s_customCredentialManager;
-            }
+            s_logger.Info($"Using a custom credential manager: {s_customCredentialManager.GetType().Name}");
+            return s_customCredentialManager;
         }
     }
 }

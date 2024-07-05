@@ -128,7 +128,7 @@ namespace Snowflake.Data.Core
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
                     _credManager.SaveCredentials(key, authnResponse.data.mfaToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
@@ -143,6 +143,14 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
+                if (e.ErrorCode == SFError.EXT_AUTHN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+                {
+                    logger.Info("MFA Token has expired or not valid.", e);
+                    _mfaToken = null;
+                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
+                    _credManager.RemoveCredentials(mfaKey);
+                }
+
                 throw e;
             }
         }
@@ -211,7 +219,7 @@ namespace Snowflake.Data.Core
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
                 {
-                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
+                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, _authenticatorType);
                     _mfaToken = SecureStringHelper.Encode(_credManager.GetCredentials(mfaKey));
                 }
             }
