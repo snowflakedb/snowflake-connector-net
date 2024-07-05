@@ -289,7 +289,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         static IEnumerable<int> LobSizeTestCases = new[]
         {
-            //SmallSize,
             OriginSize,
             MediumSize,
             LargeSize,
