@@ -2,19 +2,19 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Mono.Unix;
-using Mono.Unix.Native;
-using Newtonsoft.Json;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Log;
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using KeyToken = System.Collections.Generic.Dictionary<string, string>;
-
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
+    using Mono.Unix;
+    using Mono.Unix.Native;
+    using Newtonsoft.Json;
+    using Snowflake.Data.Client;
+    using Snowflake.Data.Core.Tools;
+    using Snowflake.Data.Log;
+    using System;
+    using System.IO;
+    using System.Runtime.InteropServices;
+    using KeyToken = System.Collections.Generic.Dictionary<string, string>;
+
     internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
@@ -103,7 +103,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal KeyToken ReadJsonFile()
         {
-            return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(_jsonCacheFilePath));
+            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _unixOperations.ReadAllText(_jsonCacheFilePath);
+            return JsonConvert.DeserializeObject<KeyToken>(contentFile);
         }
 
         public string GetCredentials(string key)
