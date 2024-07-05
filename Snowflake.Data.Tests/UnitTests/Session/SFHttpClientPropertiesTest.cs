@@ -17,8 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [Test]
         public void TestConvertToMapOnly2Properties(
             [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive,
-            [Values(true, false)] bool clientStoreTemporaryCredential)
+            [Values(true, false)] bool clientSessionKeepAlive)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()

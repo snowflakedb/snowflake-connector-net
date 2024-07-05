@@ -2281,10 +2281,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                //conn.Passcode = SecureStringHelper.Encode("014350");
+                //conn.Passcode = SecureStringHelper.Encode("123456");
                 conn.ConnectionString
                     = ConnectionString
-                      + ";authenticator=username_password_mfa;minPoolSize=2;application=DuoTest;POOLINGENABLED=false;";
+                      + ";authenticator=username_password_mfa;minPoolSize=2;application=DuoTest;authenticator=username_password_mfa;";
 
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
@@ -2292,7 +2292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
-                // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
+                // Authenticate using the MFA token cache
                 connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
@@ -2310,7 +2310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.Passcode = SecureStringHelper.Encode("323438");
+                conn.Passcode = SecureStringHelper.Encode("123456");
                 // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
                 conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
 
