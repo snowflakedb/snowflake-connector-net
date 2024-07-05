@@ -250,3 +250,37 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
+Binding _an array_ As Variable
+------------------------------
+
+Directly binding an array to a variable is not supported currently. Instead, the usual method to pass local arrays as SQL arrays via bind is to use the SQL form `PARSE_JSON(?)`, and then pass a JSON encoded array as string to the variable `?`
+
+Using a stored procedure as an example, which can take an array as an input. Note, you'll need `Newtonsoft.Json` which is already a dependency of the driver.
+```cs
+using Snowflake.Data;
+using Newtonsoft.Json;
+..
+
+                    using (IDbCommand cmd = conn.CreateCommand())
+                    {
+
+                        int[] vals = new int[] { 1, 2, 3 };
+                        string array = JsonConvert.SerializeObject(vals); // alternatively you can do `vals.ToArray()` when passing it to `p1.Value`
+                        string sql = "CALL test_db.public.test(parse_json(?))"; // test SP, returns a single value
+                        // execute this sql with bind variable 'array'
+                        cmd.CommandText = sql;
+
+                        var p1 = cmd.CreateParameter();
+                        p1.ParameterName = "1";
+                        p1.Value = array; // passing the array in the bind variable. 
+                        p1.DbType = DbType.String;
+                        cmd.Parameters.Add(p1);
+
+                        IDataReader reader = cmd.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            Console.WriteLine(reader.GetString(0));
+                        }
+                        conn.Close();
+                    }
+```
