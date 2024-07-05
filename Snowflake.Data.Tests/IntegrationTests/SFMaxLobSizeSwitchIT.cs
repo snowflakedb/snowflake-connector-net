@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.That(e.Message, Does.Contain("exceeds supported length"));
                 }
 
-                //parameter switch
+                //cleanup
                 cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=true";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "select randstr(20000000, random()) as large_str";
