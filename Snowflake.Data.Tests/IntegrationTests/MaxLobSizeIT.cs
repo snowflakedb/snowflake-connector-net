@@ -384,10 +384,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
 
                 //// Alter session max lob
-                // command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
-                // command.ExecuteNonQuery();
-                // command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
-                // command.ExecuteNonQuery();
+                //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
+                //command.ExecuteNonQuery();
+                //command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
+                //command.ExecuteNonQuery();
             }
         }
 

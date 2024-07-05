@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 cmd.CommandText = "alter session unset ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=false";
+                cmd.CommandText = "alter session unset ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT";
                 cmd.ExecuteNonQuery();
             }
         }
