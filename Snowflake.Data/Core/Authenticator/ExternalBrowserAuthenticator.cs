@@ -144,7 +144,7 @@ namespace Snowflake.Data.Core.Authenticator
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
-                logger.Warn("Browser response timeout");
+                logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
 
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (HttpListenerException)
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("HttpListenerException thrown while trying to get context");
+                    logger.Error("HttpListenerException thrown while trying to get context");
                 }
             }
 
@@ -227,12 +227,14 @@ namespace Snowflake.Data.Core.Authenticator
         {
             if (request.HttpMethod != "GET")
             {
+                logger.Error("Failed to extract token due to invalid HTTP method.");
                 _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.Url.Query);
                 return null;
             }
 
             if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
             {
+                logger.Error("Failed to extract token due to invalid query.");
                 _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
                 return null;
             }
