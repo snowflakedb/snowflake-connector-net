@@ -110,7 +110,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("Temporary only. Looking for fix when tests are ran parallel")]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
             try
@@ -170,7 +169,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("Temporary only. Looking for fix when tests are ran parallel")]
         public void TestThatThrowsErrorWhenBrowserRequestMethodIsNotGet()
         {
             try
@@ -196,7 +194,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [Ignore("Temporary only. Looking for fix when tests are ran parallel")]
         public void TestThatThrowsErrorWhenBrowserRequestHasInvalidQuery()
         {
             try

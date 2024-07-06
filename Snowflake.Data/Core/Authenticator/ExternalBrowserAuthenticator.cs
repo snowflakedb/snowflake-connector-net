@@ -35,6 +35,8 @@ namespace Snowflake.Data.Core.Authenticator
         private string _proofKey;
         // Event for successful authentication.
         private ManualResetEvent _successEvent;
+        // Placeholder in case an exception occurs while listening for a browser response.
+        private Exception _eventException;
 
         /// <summary>
         /// Constructor of the External authenticator
@@ -137,6 +139,7 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetRedirectSamlRequest(HttpListener httpListener)
         {
             _successEvent = new ManualResetEvent(false);
+            _eventException = null;
             httpListener.BeginGetContext(GetContextCallback, httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
@@ -144,11 +147,16 @@ namespace Snowflake.Data.Core.Authenticator
                 logger.Warn("Browser response timeout");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
+
+            if (_eventException != null)
+            {
+                throw _eventException;
+            }
         }
 
         private void GetContextCallback(IAsyncResult result)
         {
-            HttpListener httpListener = (HttpListener) result.AsyncState;
+            HttpListener httpListener = (HttpListener)result.AsyncState;
 
             if (httpListener.IsListening)
             {
@@ -156,18 +164,21 @@ namespace Snowflake.Data.Core.Authenticator
                 HttpListenerRequest request = context.Request;
 
                 _samlResponseToken = ValidateAndExtractToken(request);
-                HttpListenerResponse response = context.Response;
-                try
+                if (!string.IsNullOrEmpty(_samlResponseToken))
                 {
-                    using (var output = response.OutputStream)
+                    HttpListenerResponse response = context.Response;
+                    try
                     {
-                        output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                        using (var output = response.OutputStream)
+                        {
+                            output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                        }
                     }
-                }
-                catch
-                {
-                    // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("External browser response not sent out");
+                    catch
+                    {
+                        // Ignore the exception as it does not affect the overall authentication flow
+                        logger.Warn("External browser response not sent out");
+                    }
                 }
             }
 
@@ -204,16 +215,18 @@ namespace Snowflake.Data.Core.Authenticator
             session._browserOperations.OpenUrl(url);
         }
 
-        private static string ValidateAndExtractToken(HttpListenerRequest request)
+        private string ValidateAndExtractToken(HttpListenerRequest request)
         {
             if (request.HttpMethod != "GET")
             {
-                throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.HttpMethod);
+                _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.Url.Query);
+                return null;
             }
 
             if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
             {
-                throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
+                _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
+                return null;
             }
 
             return Uri.UnescapeDataString(request.Url.Query.Substring(TOKEN_REQUEST_PREFIX.Length));
