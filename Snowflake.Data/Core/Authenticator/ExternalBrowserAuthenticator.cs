@@ -185,7 +185,8 @@ namespace Snowflake.Data.Core.Authenticator
                 }
                 catch (HttpListenerException)
                 {
-                    // Don't do anything.
+                    // Ignore the exception as it does not affect the overall authentication flow
+                    logger.Warn("HttpListenerException thrown while trying to get context");
                 }
             }
 
