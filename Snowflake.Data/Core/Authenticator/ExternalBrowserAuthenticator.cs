@@ -54,7 +54,6 @@ namespace Snowflake.Data.Core.Authenticator
             if (string.IsNullOrEmpty(session._idToken))
             {
                 int localPort = GetRandomUnusedPort();
-                Console.WriteLine("External browser port number: " + localPort);
                 using (var httpListener = GetHttpListener(localPort))
                 {
                     httpListener.Start();
@@ -80,6 +79,7 @@ namespace Snowflake.Data.Core.Authenticator
             if (string.IsNullOrEmpty(session._idToken))
             {
                 int localPort = GetRandomUnusedPort();
+                Console.WriteLine("External browser port number: " + localPort);
                 using (var httpListener = GetHttpListener(localPort))
                 {
                     httpListener.Start();
