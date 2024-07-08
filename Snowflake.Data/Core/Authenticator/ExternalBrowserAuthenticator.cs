@@ -162,7 +162,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    Console.WriteLine("External browser result completed: " + result.IsCompleted);
                     if (result.IsCompleted)
                     {
                         HttpListenerContext context = httpListener.EndGetContext(result);
