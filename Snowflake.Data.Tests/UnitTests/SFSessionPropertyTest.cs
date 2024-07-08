@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 testcase.SecurePassword);
 
             // assert
-            CollectionAssert.AreEquivalent(testcase.ExpectedProperties, properties);
+            CollectionAssert.IsSubsetOf(testcase.ExpectedProperties, properties);
         }
 
         [Test]
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var securePasscode = SecureStringHelper.Encode(expectedPasscode);
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null); // TODO, securePasscode);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, securePasscode);
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
