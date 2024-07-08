@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool.SetMaxPoolSize(requiredCurrentSize);
             for (var i = 0; i < requiredCurrentSize; i++)
             {
-                _connectionPoolManager.GetSession(connectionString, password); // TODO , passcode);
+                _connectionPoolManager.GetSession(connectionString, password, passcode);
             }
             Assert.AreEqual(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
         }
