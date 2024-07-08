@@ -162,24 +162,27 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    HttpListenerContext context = httpListener.EndGetContext(result);
-                    HttpListenerRequest request = context.Request;
-
-                    _samlResponseToken = ValidateAndExtractToken(request);
-                    if (!string.IsNullOrEmpty(_samlResponseToken))
+                    if (!_successEvent.WaitOne(0))
                     {
-                        HttpListenerResponse response = context.Response;
-                        try
+                        HttpListenerContext context = httpListener.EndGetContext(result);
+                        HttpListenerRequest request = context.Request;
+
+                        _samlResponseToken = ValidateAndExtractToken(request);
+                        if (!string.IsNullOrEmpty(_samlResponseToken))
                         {
-                            using (var output = response.OutputStream)
+                            HttpListenerResponse response = context.Response;
+                            try
                             {
-                                output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                                using (var output = response.OutputStream)
+                                {
+                                    output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                                }
                             }
-                        }
-                        catch
-                        {
-                            // Ignore the exception as it does not affect the overall authentication flow
-                            logger.Warn("External browser response not sent out");
+                            catch
+                            {
+                                // Ignore the exception as it does not affect the overall authentication flow
+                                logger.Warn("External browser response not sent out");
+                            }
                         }
                     }
                 }
