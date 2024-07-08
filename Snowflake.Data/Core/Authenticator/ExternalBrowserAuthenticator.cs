@@ -54,6 +54,7 @@ namespace Snowflake.Data.Core.Authenticator
             if (string.IsNullOrEmpty(session._idToken))
             {
                 int localPort = GetRandomUnusedPort();
+                Console.WriteLine("External browser port number: " + localPort);
                 using (var httpListener = GetHttpListener(localPort))
                 {
                     httpListener.Start();
@@ -162,27 +163,24 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    if (!_successEvent.WaitOne(0))
-                    {
-                        HttpListenerContext context = httpListener.EndGetContext(result);
-                        HttpListenerRequest request = context.Request;
+                    HttpListenerContext context = httpListener.EndGetContext(result);
+                    HttpListenerRequest request = context.Request;
 
-                        _samlResponseToken = ValidateAndExtractToken(request);
-                        if (!string.IsNullOrEmpty(_samlResponseToken))
+                    _samlResponseToken = ValidateAndExtractToken(request);
+                    if (!string.IsNullOrEmpty(_samlResponseToken))
+                    {
+                        HttpListenerResponse response = context.Response;
+                        try
                         {
-                            HttpListenerResponse response = context.Response;
-                            try
+                            using (var output = response.OutputStream)
                             {
-                                using (var output = response.OutputStream)
-                                {
-                                    output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
-                                }
+                                output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
                             }
-                            catch
-                            {
-                                // Ignore the exception as it does not affect the overall authentication flow
-                                logger.Warn("External browser response not sent out");
-                            }
+                        }
+                        catch
+                        {
+                            // Ignore the exception as it does not affect the overall authentication flow
+                            logger.Warn("External browser response not sent out");
                         }
                     }
                 }
