@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
             try
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestThatThrowsErrorWhenBrowserRequestMethodIsNotGet()
         {
             try
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
         public void TestThatThrowsErrorWhenBrowserRequestHasInvalidQuery()
         {
             try
