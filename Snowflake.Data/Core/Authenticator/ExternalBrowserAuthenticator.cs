@@ -35,8 +35,8 @@ namespace Snowflake.Data.Core.Authenticator
         private string _proofKey;
         // Event for successful authentication.
         private ManualResetEvent _successEvent;
-        // Placeholder in case an exception occurs while listening for a browser response.
-        private Exception _eventException;
+        // Placeholder in case an exception occurs while extracting the token from the browser response.
+        private Exception _tokenExtractionException;
 
         /// <summary>
         /// Constructor of the External authenticator
@@ -139,18 +139,18 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetRedirectSamlRequest(HttpListener httpListener)
         {
             _successEvent = new ManualResetEvent(false);
-            _eventException = null;
+            _tokenExtractionException = null;
             httpListener.BeginGetContext(new AsyncCallback(GetContextCallback), httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
-            if (!_successEvent.WaitOne(timeoutInSec * 1000))
+            var signalReceived = _successEvent.WaitOne(timeoutInSec * 1000);
+            if (_tokenExtractionException != null)
+            {
+                throw _tokenExtractionException;
+            }
+            if (!signalReceived)
             {
                 logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
-            }
-
-            if (_eventException != null)
-            {
-                throw _eventException;
             }
         }
 
@@ -160,13 +160,18 @@ namespace Snowflake.Data.Core.Authenticator
 
             if (httpListener.IsListening)
             {
+                HttpListenerContext context = null;
                 try
                 {
-                    if (!result.IsCompleted)
-                    {
-                        result.AsyncWaitHandle.WaitOne();
-                    }
-                    HttpListenerContext context = httpListener.EndGetContext(result);
+                    context = httpListener.EndGetContext(result);
+                }
+                catch (HttpListenerException ex)
+                {
+                    // Log the error that happens when getting the context from the browser resopnse
+                    logger.Error("HttpListenerException thrown while trying to get context: " + ex.Message);
+                }
+                if (context != null)
+                {
                     HttpListenerRequest request = context.Request;
 
                     _samlResponseToken = ValidateAndExtractToken(request);
@@ -186,11 +191,6 @@ namespace Snowflake.Data.Core.Authenticator
                             logger.Warn("External browser response not sent out");
                         }
                     }
-                }
-                catch (HttpListenerException ex)
-                {
-                    // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Error("HttpListenerException thrown while trying to get context: " + ex.Message);
                 }
             }
 
@@ -232,14 +232,14 @@ namespace Snowflake.Data.Core.Authenticator
             if (request.HttpMethod != "GET")
             {
                 logger.Error("Failed to extract token due to invalid HTTP method.");
-                _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.Url.Query);
+                _tokenExtractionException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.Url.Query);
                 return null;
             }
 
             if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
             {
                 logger.Error("Failed to extract token due to invalid query.");
-                _eventException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
+                _tokenExtractionException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
                 return null;
             }
 
