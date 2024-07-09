@@ -6,7 +6,7 @@ namespace Snowflake.Data.Core.Session
     {
         public SFSession NewSession(string connectionString, SecureString password, SecureString passcode)
         {
-            return new SFSession(connectionString, password, passcode);
+            return new SFSession(connectionString, password, passcode, EasyLoggingStarter.Instance);
         }
     }
 }

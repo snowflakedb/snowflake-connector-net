@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", null, SecureStringHelper.Encode(passcode), restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", null, SecureStringHelper.Encode(passcode), EasyLoggingStarter.Instance, restRequester);
 
             // act
             sfSession.Open();

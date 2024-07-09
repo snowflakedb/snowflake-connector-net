@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.Mock
 
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, Passcode, _restRequester);
+            SfSession = new SFSession(ConnectionString, Password, Passcode, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
