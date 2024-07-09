@@ -142,15 +142,14 @@ namespace Snowflake.Data.Core.Authenticator
             _tokenExtractionException = null;
             httpListener.BeginGetContext(new AsyncCallback(GetContextCallback), httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
-            var signalReceived = _successEvent.WaitOne(timeoutInSec * 1000);
-            if (_tokenExtractionException != null)
-            {
-                throw _tokenExtractionException;
-            }
-            if (!signalReceived)
+            if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
                 logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
+            }
+            if (_tokenExtractionException != null)
+            {
+                throw _tokenExtractionException;
             }
         }
 
@@ -160,36 +159,24 @@ namespace Snowflake.Data.Core.Authenticator
 
             if (httpListener.IsListening)
             {
-                HttpListenerContext context = null;
-                try
-                {
-                    context = httpListener.EndGetContext(result);
-                }
-                catch (HttpListenerException ex)
-                {
-                    // Log the error that happens when getting the context from the browser resopnse
-                    logger.Error("HttpListenerException thrown while trying to get context: " + ex.Message);
-                }
-                if (context != null)
-                {
-                    HttpListenerRequest request = context.Request;
+                HttpListenerContext context = httpListener.EndGetContext(result);
+                HttpListenerRequest request = context.Request;
 
-                    _samlResponseToken = ValidateAndExtractToken(request);
-                    if (!string.IsNullOrEmpty(_samlResponseToken))
+                _samlResponseToken = ValidateAndExtractToken(request);
+                if (!string.IsNullOrEmpty(_samlResponseToken))
+                {
+                    HttpListenerResponse response = context.Response;
+                    try
                     {
-                        HttpListenerResponse response = context.Response;
-                        try
+                        using (var output = response.OutputStream)
                         {
-                            using (var output = response.OutputStream)
-                            {
-                                output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
-                            }
+                            output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
                         }
-                        catch
-                        {
-                            // Ignore the exception as it does not affect the overall authentication flow
-                            logger.Warn("External browser response not sent out");
-                        }
+                    }
+                    catch
+                    {
+                        // Ignore the exception as it does not affect the overall authentication flow
+                        logger.Warn("External browser response not sent out");
                     }
                 }
             }
