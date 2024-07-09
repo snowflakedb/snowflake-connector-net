@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         public SFSession NewSession(string connectionString, SecureString password, SecureString passcode)
         {
-            return new SFSession(connectionString, password, passcode, restRequester);
+            return new SFSession(connectionString, password, passcode, EasyLoggingStarter.Instance, restRequester);
         }
     }
 }
