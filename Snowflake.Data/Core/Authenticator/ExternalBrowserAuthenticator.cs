@@ -144,7 +144,6 @@ namespace Snowflake.Data.Core.Authenticator
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
-                Console.WriteLine("Throw browser response timeout error");
                 logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
@@ -163,14 +162,12 @@ namespace Snowflake.Data.Core.Authenticator
                 HttpListenerContext context = null;
                 try
                 {
-                    Console.WriteLine("Has signal already been received before get context: " + _successEvent.WaitOne(0));
                     context = httpListener.EndGetContext(result);
                 }
                 catch (HttpListenerException ex)
                 {
                     // Log the exception that happens when getting the context from the browser resopnse
                     logger.Error("HttpListenerException caught while trying to get context: " + ex.Message);
-                    Console.WriteLine("Has signal already been received after get context: " + _successEvent.WaitOne(0));
                 }
                 if (context != null)
                 {
