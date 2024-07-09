@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     ProofKey = "mockProofKey",
                 };
-                var sfSession = new SFSession("browser_response_timeout=0;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+                var sfSession = new SFSession("browser_response_timeout=10;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
                 sfSession.Open();
                 Assert.Fail("Should fail");
             }
