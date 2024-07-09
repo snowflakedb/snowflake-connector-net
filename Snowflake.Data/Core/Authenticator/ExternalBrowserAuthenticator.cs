@@ -146,7 +146,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 httpListener.Close();
                 logger.Error("Browser response timeout has been reached");
-                Console.WriteLine("HttpListener before throwing exception: " + httpListener.IsListening);
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
             if (_tokenExtractionException != null)
@@ -158,10 +157,8 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetContextCallback(IAsyncResult result)
         {
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            Console.WriteLine("HttpListener in callback: " + httpListener.IsListening);
             if (httpListener.IsListening)
             {
-                Console.WriteLine("HttpListener before getting context: " + httpListener.IsListening);
                 HttpListenerContext context = httpListener.EndGetContext(result);
                 HttpListenerRequest request = context.Request;
 

@@ -114,11 +114,20 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             try
             {
+                t_browserOperations
+                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                    .Callback(async (string url) => {
+                        await Task.Delay(1000).ContinueWith(_ =>
+                        {
+                            s_httpClient.GetAsync(url);
+                        });
+                    });
+
                 var restRequester = new Mock.MockExternalBrowserRestRequester()
                 {
                     ProofKey = "mockProofKey",
                 };
-                var sfSession = new SFSession("browser_response_timeout=1;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+                var sfSession = new SFSession($"browser_response_timeout=0;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
                 sfSession.Open();
                 Assert.Fail("Should fail");
             }
