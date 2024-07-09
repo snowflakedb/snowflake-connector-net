@@ -12,7 +12,7 @@
         <Company>Snowflake Computing, Inc</Company>
         <Product>Snowflake Connector for .NET</Product>
         <Authors>Snowflake</Authors>
-        <Version>4.0.0</Version>
+        <Version>4.0.1-alpha01</Version>
         <DebugType>Full</DebugType>
         <LangVersion>7.3</LangVersion>
         <RootNamespace>Snowflake.Data.Azure</RootNamespace>
@@ -20,6 +20,7 @@
 
     <ItemGroup>
       <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
+      <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
     </ItemGroup>
 
 </Project>
