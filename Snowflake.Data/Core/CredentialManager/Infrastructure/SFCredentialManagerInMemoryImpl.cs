@@ -3,8 +3,10 @@
  */
 
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System.Collections.Generic;
+using System.Security;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
@@ -12,17 +14,17 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerInMemoryImpl>();
 
-        private Dictionary<string, string> s_credentials = new Dictionary<string, string>();
+        private Dictionary<string, SecureString> s_credentials = new Dictionary<string, SecureString>();
 
         public static readonly SFCredentialManagerInMemoryImpl Instance = new SFCredentialManagerInMemoryImpl();
 
         public string GetCredentials(string key)
         {
             s_logger.Debug($"Getting credentials from memory for key: {key}");
-            string token;
+            SecureString token;
             if (s_credentials.TryGetValue(key, out token))
             {
-                return token;
+                return SecureStringHelper.Decode(token);
             }
             else
             {
@@ -40,7 +42,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public void SaveCredentials(string key, string token)
         {
             s_logger.Debug($"Saving credentials into memory for key: {key}");
-            s_credentials[key] = token;
+            s_credentials[key] = SecureStringHelper.Encode(token);
         }
     }
 }
