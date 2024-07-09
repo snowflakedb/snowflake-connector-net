@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         public SFSession NewSession(string connectionString, SecureString password, SecureString passcode)
         {
-            var mockSfSession = new Mock<SFSession>(connectionString, password, passcode);
+            var mockSfSession = new Mock<SFSession>(connectionString, password, passcode, EasyLoggingStarter.Instance);
             mockSfSession.Setup(x => x.Open()).Verifiable();
             mockSfSession.Setup(x => x.OpenAsync(default)).Returns(Task.FromResult(this));
             mockSfSession.Setup(x => x.IsNotOpen()).Returns(false);
