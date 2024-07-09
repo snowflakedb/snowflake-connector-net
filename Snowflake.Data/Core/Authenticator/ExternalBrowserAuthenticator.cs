@@ -142,15 +142,14 @@ namespace Snowflake.Data.Core.Authenticator
             _tokenExtractionException = null;
             httpListener.BeginGetContext(new AsyncCallback(GetContextCallback), httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
-            var signalReceived = _successEvent.WaitOne(timeoutInSec * 1000);
-            if (_tokenExtractionException != null)
-            {
-                throw _tokenExtractionException;
-            }
-            if (!signalReceived)
+            if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
                 logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
+            }
+            if (_tokenExtractionException != null)
+            {
+                throw _tokenExtractionException;
             }
         }
 
