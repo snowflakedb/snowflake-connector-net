@@ -251,11 +251,11 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password, null, restRequester)
+        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password, null, EasyLoggingStarter.Instance, restRequester)
         {
         }
 
-        internal SFSession(String connectionString, SecureString password, SecureString passcode, IMockRestRequester restRequester) : this(connectionString, password, passcode)
+        internal SFSession(String connectionString, SecureString password, SecureString passcode, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, password, passcode, easyLoggingStarter)
         {
             // Inject the HttpClient to use with the Mock requester
             restRequester.setHttpClient(_HttpClient);
