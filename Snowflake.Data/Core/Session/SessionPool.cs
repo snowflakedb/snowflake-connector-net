@@ -164,23 +164,23 @@ namespace Snowflake.Data.Core.Session
         private void ValidatePoolingIfPasscodeProvided(SecureString passcode, SFSessionProperties sessionProperties)
         {
             if (!GetPooling()) return;
-            if (((passcode != null && !SecureStringHelper.Decode(passcode).IsNullOrEmpty()) ||
-                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODE, out var passcodeValue) && !passcodeValue.IsNullOrEmpty()) ||
-                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) && bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword)))
-            {
-                var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
-                                         authenticator == MFACacheAuthenticator.AUTH_NAME;
+            var isUsingPasscode = ((passcode != null && !SecureStringHelper.Decode(passcode).IsNullOrEmpty()) ||
+                                   sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
+                                   (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
+                                    bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
+            if(!isUsingPasscode) return;
+            var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                     authenticator == MFACacheAuthenticator.AUTH_NAME;
 
-                if (isMfaAuthenticator) return;
-                if (sessionProperties.IsPoolingEnabledValueProvided)
-                {
-                    const string ErrorMessage = "Could not get a pool because passcode was provided using a different authenticator than username_password_mfa";
-                    s_logger.Error(ErrorMessage + PoolIdentification());
-                    throw new Exception(ErrorMessage);
-                }
-                s_logger.Warn("Pooling is disabled because passcode was provided using a different authenticator than username_password_mfa" + PoolIdentification());
-                _poolConfig.PoolingEnabled = false;
+            if (isMfaAuthenticator) return;
+            if (sessionProperties.IsPoolingEnabledValueProvided)
+            {
+                const string ErrorMessage = "Could not get a pool because passcode was provided using a different authenticator than username_password_mfa";
+                s_logger.Error(ErrorMessage + PoolIdentification());
+                throw new Exception(ErrorMessage);
             }
+            s_logger.Warn("Pooling is disabled because passcode was provided using a different authenticator than username_password_mfa" + PoolIdentification());
+            _poolConfig.PoolingEnabled = false;
         }
 
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, SecureString passcode, CancellationToken cancellationToken)
