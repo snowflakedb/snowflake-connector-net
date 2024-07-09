@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecurePassword(notMatchingSecurePassword));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
+            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of credential mismatch"));
         }
     }
 }
