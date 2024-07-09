@@ -17,8 +17,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "alter session set FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY='ENABLED'";
-                cmd.ExecuteNonQuery();
                 cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=false";
                 cmd.ExecuteNonQuery();
 
