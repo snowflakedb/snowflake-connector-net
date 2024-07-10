@@ -28,6 +28,7 @@
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">

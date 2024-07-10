@@ -2263,6 +2263,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Ignore("Ignore this test requires local connection.toml file. Can be run manually.")]
+        public void TestConnectStringReadFromToml()
+        {
+            using (var conn = new SnowflakeDbConnection(true, "testconnection"))
+            {
+
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
         public void TestUseMultiplePoolsConnectionPoolByDefault()
         {
             // act
