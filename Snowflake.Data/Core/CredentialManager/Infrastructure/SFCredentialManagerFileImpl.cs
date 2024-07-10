@@ -112,16 +112,22 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 if (_unixOperations.CheckFileIsNotOwnedByCurrentUser(_jsonCacheFilePath))
                 {
-                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+                    var errorMessage = "Attempting to read a file not owned by the effective user of the current process";
+                    s_logger.Error(errorMessage);
+                    throw new SecurityException(errorMessage);
                 }
                 if (_unixOperations.CheckFileIsNotOwnedByCurrentGroup(_jsonCacheFilePath))
                 {
-                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+                    var errorMessage = "Attempting to read a file not owned by the effective group of the current process";
+                    s_logger.Error(errorMessage);
+                    throw new SecurityException(errorMessage);
                 }
                 if (_unixOperations.CheckFileHasAnyOfPermissions(_jsonCacheFilePath,
                     FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute))
                 {
-                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
+                    var errorMessage = "Attempting to read a file with too broad permissions assigned";
+                    s_logger.Error(errorMessage);
+                    throw new SecurityException(errorMessage);
                 }
 
                 return JsonConvert.DeserializeObject<KeyToken>(_unixOperations.ReadFile(_jsonCacheFilePath));
