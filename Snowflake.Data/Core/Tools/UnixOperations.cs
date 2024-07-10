@@ -4,6 +4,8 @@
 
 using Mono.Unix;
 using Mono.Unix.Native;
+using System.IO;
+using System.Text;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -14,6 +16,18 @@ namespace Snowflake.Data.Core.Tools
         public virtual int CreateFileWithPermissions(string path, FilePermissions permissions)
         {
             return Syscall.creat(path, permissions);
+        }
+
+        public virtual string ReadFile(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            using (var handle = fileInfo.OpenRead())
+            {
+                using (var streamReader = new StreamReader(handle, Encoding.Default))
+                {
+                    return streamReader.ReadToEnd();
+                }
+            }
         }
 
         public virtual int CreateDirectoryWithPermissions(string path, FilePermissions permissions)
@@ -37,6 +51,24 @@ namespace Snowflake.Data.Core.Tools
         {
             var fileInfo = new UnixFileInfo(path);
             return (permissions & fileInfo.FileAccessPermissions) != 0;
+        }
+
+        public virtual bool CheckFileIsNotOwnedByCurrentUser(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            using (var handle = fileInfo.OpenRead())
+            {
+                return handle.OwnerUser.UserId != Syscall.geteuid();
+            }
+        }
+
+        public virtual bool CheckFileIsNotOwnedByCurrentGroup(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            using (var handle = fileInfo.OpenRead())
+            {
+                return handle.OwnerGroup.GroupId != Syscall.getegid();
+            }
         }
     }
 }

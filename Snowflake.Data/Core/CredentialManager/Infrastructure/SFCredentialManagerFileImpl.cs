@@ -11,6 +11,7 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using KeyToken = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
@@ -103,7 +104,28 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal KeyToken ReadJsonFile()
         {
-            return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(_jsonCacheFilePath));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(_jsonCacheFilePath));
+            }
+            else
+            {
+                if (_unixOperations.CheckFileIsNotOwnedByCurrentUser(_jsonCacheFilePath))
+                {
+                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+                }
+                if (_unixOperations.CheckFileIsNotOwnedByCurrentGroup(_jsonCacheFilePath))
+                {
+                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+                }
+                if (_unixOperations.CheckFileHasAnyOfPermissions(_jsonCacheFilePath,
+                    FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute))
+                {
+                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
+                }
+
+                return JsonConvert.DeserializeObject<KeyToken>(_unixOperations.ReadFile(_jsonCacheFilePath));
+            }
         }
 
         public string GetCredentials(string key)

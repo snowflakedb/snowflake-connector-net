@@ -15,6 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     using System;
     using System.IO;
     using System.Runtime.InteropServices;
+    using System.Security;
 
     public abstract class SFBaseCredentialManagerTest
     {
@@ -286,6 +287,93 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // assert
             t_fileOperations.Verify(f => f.Exists(s_customJsonPath), Times.Exactly(2));
+        }
+
+        [Test]
+        public void TestThatJsonFileIsCheckedIfOwnedByCurrentUser()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+
+            // arrange
+            t_unixOperations
+                .Setup(u => u.CheckFileIsNotOwnedByCurrentUser(s_customJsonPath))
+                .Returns(true);
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Returns(CustomJsonDir);
+            t_fileOperations
+                .SetupSequence(f => f.Exists(s_customJsonPath))
+                .Returns(true);
+
+            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+
+            // act
+            var thrown = Assert.Throws<SecurityException>(() => _credentialManager.GetCredentials("key"));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Attempting to read a file not owned by the effective user of the current process"));
+        }
+
+        [Test]
+        public void TestThatJsonFileIsCheckedIfOwnedByCurrentGroup()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+
+            // arrange
+            t_unixOperations
+                .Setup(u => u.CheckFileIsNotOwnedByCurrentGroup(s_customJsonPath))
+                .Returns(true);
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Returns(CustomJsonDir);
+            t_fileOperations
+                .SetupSequence(f => f.Exists(s_customJsonPath))
+                .Returns(true);
+
+            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+
+            // act
+            var thrown = Assert.Throws<SecurityException>(() => _credentialManager.GetCredentials("key"));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Attempting to read a file not owned by the effective group of the current process"));
+        }
+
+        [Test]
+        public void TestThatJsonFileIsCheckedIfItHasTooBroadPermissions()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("skip test on Windows");
+            }
+
+            // arrange
+            t_unixOperations
+                .Setup(u => u.CheckFileHasAnyOfPermissions(s_customJsonPath, FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute))
+                .Returns(true);
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Returns(CustomJsonDir);
+            t_fileOperations
+                .SetupSequence(f => f.Exists(s_customJsonPath))
+                .Returns(true);
+
+            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+
+            // act
+            var thrown = Assert.Throws<SecurityException>(() => _credentialManager.GetCredentials("key"));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Attempting to read a file with too broad permissions assigned"));
         }
     }
 }
