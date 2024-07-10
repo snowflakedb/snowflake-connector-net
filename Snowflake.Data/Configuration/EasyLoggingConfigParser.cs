@@ -7,9 +7,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Security;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Mono.Unix;
+using Mono.Unix.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Tools;
@@ -21,8 +23,6 @@ namespace Snowflake.Data.Configuration
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
 
-        private readonly UnixOperations _unixOperations = UnixOperations.Instance;
-
         public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser();
 
         public virtual ClientConfig Parse(string filePath)
@@ -31,6 +31,16 @@ namespace Snowflake.Data.Configuration
             return configFile.IsNullOrEmpty() ? null : TryToParseFile(configFile);
         }
 
+        /// <summary>
+        /// ReadAllText function reads contents of a file at the <paramref name="filePath"/> making sure, in a way not prone to race-conditions, that:
+        ///  - A file is owned by the same user as effective user of the current process.
+        ///  - A file is owned by the same group as effective group of the current process.
+        ///  - A file permissions do not include `forbiddenPermissions` (any others' permissions by default)
+        ///
+        /// </summary>
+        /// <param name="filePath">The file path of the configuration file</param>
+        /// <returns></returns>
+        /// <exception cref="SecurityException">An exception will be thrown if the file is no owned by the user or group</exception>
         private string TryToReadFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -40,17 +50,19 @@ namespace Snowflake.Data.Configuration
 
             try
             {
-                using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    CheckIfValidPermissions(fileStream, filePath);
+                FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute;
+                var fileInfo = new UnixFileInfo(path: filePath);
 
-                    using (StreamReader reader = new StreamReader(fileStream))
-                    {
-                        string fileContent = reader.ReadToEnd();
+                using var handle = fileInfo.OpenRead();
+                if (handle.OwnerUser.UserId != Syscall.geteuid())
+                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+                if (handle.OwnerGroup.GroupId != Syscall.getegid())
+                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+                if ((handle.FileAccessPermissions & forbiddenPermissions) != 0)
+                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
 
-                        return fileContent;
-                    }
-                }
+                using var streamReader = new StreamReader(handle, Encoding.Default);
+                return streamReader.ReadToEnd();
             }
             catch (Exception e)
             {
@@ -97,28 +109,6 @@ namespace Snowflake.Data.Configuration
                 .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
                 .ToList()
                 .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
-        }
-
-        private void CheckIfValidPermissions(FileStream fileStream, string filePath)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return;
-            }
-
-#if NET8_0_OR_GREATER
-            var unixFileMode = File.GetUnixFileMode(fileStream.SafeFileHandle);
-            var hasGroupOrOtherWritePermissions = (((UnixFileMode.GroupWrite | UnixFileMode.OtherWrite) & unixFileMode) != 0);
-#else
-            var entitlements = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
-            var hasGroupOrOtherWritePermissions = _unixOperations.CheckFileHasAnyOfPermissions(filePath, entitlements);
-#endif
-            if (hasGroupOrOtherWritePermissions)
-            {
-                var errorMessage = $"Error due to other users having permission to modify the config file: {filePath}";
-                s_logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
         }
     }
 }
