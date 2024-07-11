@@ -2,25 +2,28 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Security;
-using System.Threading;
-using NUnit.Framework;
-using Snowflake.Data.Core;
-using Snowflake.Data.Core.Session;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.Util;
+
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
+    using System.Linq;
+    using System.Security;
+    using System.Threading;
     using Mock;
+    using NUnit.Framework;
+    using Snowflake.Data.Core;
+    using Snowflake.Data.Core.Session;
+    using Snowflake.Data.Client;
+    using Snowflake.Data.Core.Tools;
+    using Snowflake.Data.Tests.Util;
 
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     class ConnectionPoolManagerMFATest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
         private const string ConnectionStringMFACache = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa";
+        private const string ConnectionStringMFABasicWithoutPasscode = "db=D2;warehouse=W2;account=A2;user=U2;password=P2;role=R2;minPoolSize=3;";
         private static PoolConfig s_poolConfig;
         private static MockLoginMFATokenCacheRestRequester s_restRequester;
 
@@ -44,6 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void BeforeEach()
         {
             _connectionPoolManager.ClearAllPools();
+            s_restRequester.Reset();
         }
 
         [Test]
@@ -80,30 +84,60 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestPoolManagerShouldOnlyUsePasscodeAsArgumentForFirstSessionWhenNotUsingMFAAuthenticator()
+        {
+            // Arrange
+            const string TestPasscode = "123456";
+            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            {
+                authResponseSessionInfo = new SessionInfo()
+            });
+            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            {
+                authResponseSessionInfo = new SessionInfo()
+            });
+            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            {
+                authResponseSessionInfo = new SessionInfo()
+            });
+            // Act
+            var session = _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
+            Thread.Sleep(3000);
+
+            // Assert
+
+            Assert.AreEqual(3, s_restRequester.LoginRequests.Count);
+            var request = s_restRequester.LoginRequests.ToList();
+            Assert.AreEqual(1, request.Count(r => r.data.extAuthnDuoMethod == "passcode" && r.data.passcode == TestPasscode));
+            Assert.AreEqual(2, request.Count(r => r.data.extAuthnDuoMethod == "push" && r.data.passcode == null));
+        }
+
+        [Test]
         public void TestPoolManagerShouldThrowExceptionIfForcePoolingWithPasscodeNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
             var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null));
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because passcode was provided using a different authenticator than username_password_mfa"));
+            Assert.That(thrown.Message, Does.Contain("Could not use connection pool because passcode was provided using a different authenticator than username_password_mfa"));
         }
 
         [Test]
-        public void TestPoolManagerShouldDisablePoolingWhenPassingPasscodeNotUsingMFATokenCacheAuthenticator()
+        public void TestPoolManagerShouldNotThrowExceptionIfForcePoolingWithPasscodeNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
-            var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;";
-            var pool = _connectionPoolManager.GetPool(connectionString);
-            // Act
-            var session = _connectionPoolManager.GetSession(connectionString, null);
+            var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=false";
+            // Act and assert
+            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null));
+        }
 
-            // Asssert
-            // TODO: Review pool config is not the same for session and session pool
-            // Assert.IsFalse(session.GetPooling());
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
-            Assert.IsFalse(pool.GetPooling());
-
+        [Test]
+        public void TestPoolManagerShouldNotThrowExceptionIfMinPoolSizeZeroNotUsingMFATokenCacheAuthenticator()
+        {
+            // Arrange
+            var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=0;passcode=12345;POOLINGENABLED=true";
+            // Act and assert
+            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null));
         }
     }
 
