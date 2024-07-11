@@ -79,5 +79,11 @@ namespace Snowflake.Data.Tests.Mock
         {
             // Nothing to do
         }
+
+        public void Reset()
+        {
+            LoginRequests.Clear();
+            LoginResponses.Clear();
+        }
     }
 }
