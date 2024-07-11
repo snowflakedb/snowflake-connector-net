@@ -60,10 +60,6 @@ namespace Snowflake.Data.Core
                        && !properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_PWD))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "key pair with private key in a file");
-            } else if (!MFACacheAuthenticator.AUTH_NAME.Equals(authenticator)
-                       && properties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE))
-            {
-                DisablePoolingIfNotExplicitlyEnabled(properties, "mfa authentication without token cache");
             }
         }
 
