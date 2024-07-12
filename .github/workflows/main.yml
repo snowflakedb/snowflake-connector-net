@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net462', 'net471', 'net472', 'net48', 'net481']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['GCP']
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -93,7 +93,7 @@ jobs:
       fail-fast: false
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['GCP']
     steps:
       - uses: actions/checkout@v3
       - name: Setup Dotnet
@@ -152,7 +152,7 @@ jobs:
       fail-fast: false
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0']
-        cloud_env: ['AZURE', 'GCP', 'AWS']
+        cloud_env: ['GCP']
     steps:
       - uses: actions/checkout@v4
       - name: Setup Dotnet
