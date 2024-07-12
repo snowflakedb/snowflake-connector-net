@@ -281,6 +281,7 @@ namespace Snowflake.Data.Core
                 properties.Add(SFSessionProperty.HOST, hostName);
                 logger.Info($"Compose host name: {hostName}");
             }
+            logger.Info(ResolveConnectionAreaMessage(properties[SFSessionProperty.HOST]));
 
             // Trim the account name to remove the region and cloud platform if any were provided
             // because the login request data does not expect region and cloud information to be
@@ -289,6 +290,11 @@ namespace Snowflake.Data.Core
 
             return properties;
         }
+
+        internal static string ResolveConnectionAreaMessage(string host) =>
+            host.EndsWith(".snowflakecomputing.cn", StringComparison.InvariantCultureIgnoreCase)
+                ? "Connecting to CHINA Snowflake domain"
+                : "Connecting to GLOBAL Snowflake domain";
 
         private static void ValidateAuthenticator(SFSessionProperties properties)
         {
