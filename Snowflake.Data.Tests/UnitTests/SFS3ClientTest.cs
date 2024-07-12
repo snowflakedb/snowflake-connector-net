@@ -22,6 +22,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using Amazon.S3.Model;
 
     [TestFixture]
+    [IgnoreOnEnvIs("snowflake_cloud_env",
+        new string[] { "GCP", "AZURE" })]
     class SFS3ClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -81,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void BeforeTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
-            
+
             _fileMetadata = new SFFileMetadata()
             {
                 stageInfo = new PutGetStageInfo()
@@ -274,7 +276,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 iv = MockS3Client.AmzIV,
                 key = MockS3Client.AmzKey,
                 matDesc = MockS3Client.AmzMatdesc
-            }, 
+            },
             _cancellationToken).ConfigureAwait(false);
 
             // Assert
@@ -331,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
             _fileMetadata.stageInfo.location = requestKey;
-            
+
             // Act
             await _client.DownloadFileAsync(_fileMetadata, t_downloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 

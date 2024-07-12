@@ -115,6 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Set the mock GCS client to use
+            // TODO: ISSUE WITH SPLIT ALWAYS USING GCP SPECIFIC CLIENT IN TESTS
             _client = new SFGCSClient(_fileMetadata.stageInfo);
             _fileMetadata.client = _client;
 

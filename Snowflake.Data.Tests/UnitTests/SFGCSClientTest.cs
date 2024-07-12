@@ -19,6 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
 
     [TestFixture]
+    [IgnoreOnEnvIs("snowflake_cloud_env",
+        new string[] { "AWS", "AZURE" })]
     class SFGCSClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -56,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void BeforeTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
-            
+
             _fileMetadata = new SFFileMetadata()
             {
                 stageInfo = new PutGetStageInfo()
