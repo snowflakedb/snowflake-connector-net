@@ -292,7 +292,7 @@ namespace Snowflake.Data.Core
         }
 
         internal static string ResolveConnectionAreaMessage(string host) =>
-            host.EndsWith(".snowflakecomputing.cn", StringComparison.InvariantCultureIgnoreCase)
+            host.EndsWith(".cn", StringComparison.InvariantCultureIgnoreCase)
                 ? "Connecting to CHINA Snowflake domain"
                 : "Connecting to GLOBAL Snowflake domain";
 
