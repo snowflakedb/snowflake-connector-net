@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Title>Snowflake.Data.GCP</Title>
+        <PackageId>Snowflake.Data.GCP</PackageId>
+        <Description>Snowflake Connector GCP dependencies for .NET</Description>
+        <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
+        <Company>Snowflake Computing, Inc</Company>
+        <Product>Snowflake Connector for .NET</Product>
+        <Authors>Snowflake</Authors>
+        <Copyright>Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.</Copyright>
+        <Version>4.0.0</Version>
+        <DebugType>Full</DebugType>
+        <LangVersion>7.3</LangVersion>
+        <RootNamespace>Snowflake.Data.GCP</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
+    </ItemGroup>
+
+</Project>
