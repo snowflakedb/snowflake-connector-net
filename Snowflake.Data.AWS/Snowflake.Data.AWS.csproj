@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Title>Snowflake.Data.AWS</Title>
+        <PackageId>Snowflake.Data.AWS</PackageId>
+        <Description>Snowflake Connector AWS dependencies for .NET</Description>
+        <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
+        <Company>Snowflake Computing, Inc</Company>
+        <Product>Snowflake Connector for .NET</Product>
+        <Authors>Snowflake</Authors>
+        <Version>4.0.1-alpha01</Version>
+        <DebugType>Full</DebugType>
+        <LangVersion>7.3</LangVersion>
+        <RootNamespace>Snowflake.Data.AWS</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
+    </ItemGroup>
+
+</Project>

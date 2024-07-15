@@ -75,6 +75,36 @@ Alternatively, packages can also be downloaded using Package Manager Console:
 PM> Install-Package Snowflake.Data
 ```
 
+# Cloud provider distributions
+
+The Snowflake.Data package includes the full dependencies related to all the supported cloud providers, if you are only interested installing the package and the related dependencies for a specific cloud provider you have to execute the following commands
+
+*Install our library core package*
+
+```{r, engine='bash', code_block_name}
+PM> Install-Package Snowflake.Data.Core
+```
+
+*After that install the specific package for the provider dependencies.*
+
+```{r, engine='bash', code_block_name}
+PM> Install-Package Snowflake.Data.{CLOUD_PROVIDER}
+```
+
+*e.g. AWS provider package*
+
+```{r, engine='bash', code_block_name}
+PM> Install-Package Snowflake.Data.AWS
+```
+
+__Packages by cloud provider__
+
+| Cloud Provider | Package ID             |
+| -------------- | ---------------------- |
+| AWS            | Snowflake.Data.AWS     |
+| Azure          | Snowflake.Data.Azure   |
+| Google Cloud   | Snowflake.Data.GCP     |
+
 # Testing and Code Coverage
 
 [Running tests](doc/Testing.md)

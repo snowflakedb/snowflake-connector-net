@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>Snowflake.Data.Core</Title>
+    <PackageId>Snowflake.Data.Core</PackageId>
+    <Description>Snowflake Connector Core Library for .NET</Description>
+    <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
+    <Company>Snowflake Computing, Inc</Company>
+    <Product>Snowflake Connector for .NET</Product>
+    <Authors>Snowflake</Authors>
+    <Version>4.0.1-alpha01</Version>
+    <DebugType>Full</DebugType>
+    <LangVersion>7.3</LangVersion>
+    <RootNamespace>Snowflake.Data</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0">
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Storage.Common" Version="12.12.0" >
+      <ExcludeAssets>Runtime,Build,Native,Analyzers,BuildTransitive</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Apache.Arrow" Version="14.0.2" />
+    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="log4net" Version="2.0.12" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Release'">
+    <InternalsVisibleTo Include="Snowflake.Data.Tests" />
+    <!--needed by Moq to be able to mock internal interfaces-->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+</Project>
