@@ -19,6 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
 
     [TestFixture]
+    [IgnoreOnEnvIs("snowflake_cloud_env",
+        new string[] { "AZURE", "AWS" })]
     class SFRemoteStorageClientTest : SFBaseTest
     {
         // Mock data for file metadata
