@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to connect"));
+                Assert.That(thrown.Message, Does.Contain("Attempting to read a file with too broad permissions assigned"));
                 Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }

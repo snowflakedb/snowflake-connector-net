@@ -14,6 +14,8 @@ using Mono.Unix;
 using Mono.Unix.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -50,16 +52,16 @@ namespace Snowflake.Data.Configuration
 
             try
             {
-                FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute;
+                FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherWrite | FileAccessPermissions.GroupWrite;
                 var fileInfo = new UnixFileInfo(path: filePath);
 
                 using var handle = fileInfo.OpenRead();
                 if (handle.OwnerUser.UserId != Syscall.geteuid())
-                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR,"Attempting to read a file not owned by the effective user of the current process");
                 if (handle.OwnerGroup.GroupId != Syscall.getegid())
-                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR,"Attempting to read a file not owned by the effective group of the current process");
                 if ((handle.FileAccessPermissions & forbiddenPermissions) != 0)
-                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
+                    throw new SnowflakeDbException( SFError.INTERNAL_ERROR,"Attempting to read a file with too broad permissions assigned");
 
                 using var streamReader = new StreamReader(handle, Encoding.Default);
                 return streamReader.ReadToEnd();
@@ -68,7 +70,7 @@ namespace Snowflake.Data.Configuration
             {
                 var errorMessage = "Finding easy logging configuration failed";
                 s_logger.Error(errorMessage, e);
-                throw new Exception(errorMessage);
+                throw;
             }
         }
 
