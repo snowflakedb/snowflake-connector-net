@@ -155,6 +155,18 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("account.snowflakecomputing.cn", "Connecting to CHINA Snowflake domain")]
+        [TestCase("account.snowflakecomputing.com", "Connecting to GLOBAL Snowflake domain")]
+        public void TestResolveConnectionArea(string host, string expectedMessage)
+        {
+            // act
+            var message = SFSessionProperties.ResolveConnectionAreaMessage(host);
+
+            // assert
+            Assert.AreEqual(expectedMessage, message);
+        }
+
+        [Test]
         [TestCase("true")]
         [TestCase("false")]
         public void TestValidateAllowSSOTokenCachingProperty(string expectedAllowSsoTokenCaching)
