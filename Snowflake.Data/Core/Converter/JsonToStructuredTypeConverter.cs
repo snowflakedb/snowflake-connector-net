@@ -64,39 +64,49 @@ namespace Snowflake.Data.Core.Converter
             }
             var jsonObject = (JObject)json;
             var objectBuilder = ObjectBuilderFactory.Create(type, fields?.Count ?? 0, constructionMethod);
-            using (var jsonEnumerator = jsonObject.GetEnumerator())
+            using (var metadataIterator = fields.GetEnumerator())
             {
-
-                var metadataIterator = fields.GetEnumerator();
-                while (jsonEnumerator.MoveNext() && metadataIterator.MoveNext())
+                using (var jsonEnumerator = jsonObject.GetEnumerator())
                 {
-                    var jsonPropertyWithValue = jsonEnumerator.Current;
-                    var fieldMetadata = metadataIterator.Current;
-                    var key = jsonPropertyWithValue.Key;
-                    var fieldValue = jsonPropertyWithValue.Value;
-                    var fieldType = objectBuilder.MoveNext(key);
-                    if (IsObjectMetadata(fieldMetadata))
+                    do
                     {
-                        var objectValue = ConvertToObject(fieldType, fieldMetadata.fields, fieldValue, constructionMethod);
-                        objectBuilder.BuildPart(objectValue);
-                    }
-                    else if (IsArrayMetadata(fieldMetadata))
-                    {
-                        var nestedType = GetNestedType(fieldType);
-                        var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
-                        objectBuilder.BuildPart(arrayValue);
-                    }
-                    else if (IsMapMetadata(fieldMetadata))
-                    {
-                        var keyValueTypes = GetMapKeyValueTypes(fieldType);
-                        var mapValue = ConvertToMap(fieldType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
-                        objectBuilder.BuildPart(mapValue);
-                    }
-                    else
-                    {
-                        var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldType, fieldValue);
-                        objectBuilder.BuildPart(unstructuredValue);
-                    }
+                        var nextMetadataAvailable = metadataIterator.MoveNext();
+                        var nextJsonAvailable = jsonEnumerator.MoveNext();
+                        if (nextMetadataAvailable ^ nextJsonAvailable) // exclusive or
+                        {
+                            throw new Exception("Internal error: object fields count not matching metadata fields count");
+                        }
+                        if (!nextMetadataAvailable)
+                            break;
+                        var jsonPropertyWithValue = jsonEnumerator.Current;
+                        var fieldMetadata = metadataIterator.Current;
+                        var key = jsonPropertyWithValue.Key;
+                        var fieldValue = jsonPropertyWithValue.Value;
+                        var fieldType = objectBuilder.MoveNext(key);
+                        if (IsObjectMetadata(fieldMetadata))
+                        {
+                            var objectValue = ConvertToObject(fieldType, fieldMetadata.fields, fieldValue, constructionMethod);
+                            objectBuilder.BuildPart(objectValue);
+                        }
+                        else if (IsArrayMetadata(fieldMetadata))
+                        {
+                            var nestedType = GetNestedType(fieldType);
+                            var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
+                            objectBuilder.BuildPart(arrayValue);
+                        }
+                        else if (IsMapMetadata(fieldMetadata))
+                        {
+                            var keyValueTypes = GetMapKeyValueTypes(fieldType);
+                            var mapValue = ConvertToMap(fieldType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue,
+                                constructionMethod);
+                            objectBuilder.BuildPart(mapValue);
+                        }
+                        else
+                        {
+                            var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldType, fieldValue);
+                            objectBuilder.BuildPart(unstructuredValue);
+                        }
+                    } while (true);
                 }
             }
             return objectBuilder.Build();
