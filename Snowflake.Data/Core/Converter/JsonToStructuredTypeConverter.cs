@@ -184,6 +184,11 @@ namespace Snowflake.Data.Core.Converter
                 var value = json.Value<string>();
                 return _timeConverter.Convert(value, SFTimestampType.TIMESTAMP_LTZ, fieldType);
             }
+            if (IsTimestampTz(fieldMetadata))
+            {
+                var value = json.Value<string>();
+                return _timeConverter.Convert(value, SFTimestampType.TIMESTAMP_TZ, fieldType);
+            }
             if (IsTime(fieldMetadata))
             {
                 var value = json.Value<string>();
@@ -351,6 +356,9 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsTimestampLtz(FieldMetadata fieldMetadata) =>
             SFDataType.TIMESTAMP_LTZ.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsTimestampTz(FieldMetadata fieldMetadata) =>
+            SFDataType.TIMESTAMP_TZ.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsTime(FieldMetadata fieldMetadata) =>
             SFDataType.TIME.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
