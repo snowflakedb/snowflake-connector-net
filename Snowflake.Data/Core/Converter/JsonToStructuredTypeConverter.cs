@@ -253,9 +253,9 @@ namespace Snowflake.Data.Core.Converter
         private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, JToken json,
             StructureTypeConstructionMethod constructionMethod)
         {
-            if (keyType != typeof(string))
+            if (keyType != typeof(string) && keyType != typeof(int) && keyType != typeof(long))
             {
-                throw new Exception("Usuported key type in dictionary");
+                throw new Exception("Unsupported key type in dictionary");
             }
             if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -279,7 +279,9 @@ namespace Snowflake.Data.Core.Converter
                 {
                     var jsonPropertyWithValue = jsonEnumerator.Current;
                     var fieldValue = jsonPropertyWithValue.Value;
-                    var key = IsTextMetadata(keyMetadata) ? jsonPropertyWithValue.Key : throw new Exception("Unsupported type of map key");
+                    var key = IsTextMetadata(keyMetadata) || IsFixedMetadata(keyMetadata)
+                        ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key)
+                        : throw new Exception("Unsupported type of map key");
                     if (IsObjectMetadata(fieldMetadata))
                     {
                         var objectValue = ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);

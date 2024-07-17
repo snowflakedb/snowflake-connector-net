@@ -306,6 +306,59 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestSelectMapWithIntegerKeys()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
+                    command.CommandText = $"SELECT {mapSfString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<int, string>(0);
+                    Assert.AreEqual(3, map.Count);
+                    Assert.AreEqual("San Mateo", map[5]);
+                    Assert.AreEqual("CA", map[8]);
+                    Assert.AreEqual("01-234", map[13]);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectMapWithLongKeys()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
+                    command.CommandText = $"SELECT {mapSfString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<long, string>(0);
+                    Assert.AreEqual(3, map.Count);
+                    Assert.AreEqual("San Mateo", map[5L]);
+                    Assert.AreEqual("CA", map[8L]);
+                    Assert.AreEqual("01-234", map[13L]);
+                }
+            }
+        }
 
         [Test]
         public void TestSelectMapOfObjects()
