@@ -26,7 +26,8 @@ namespace Snowflake.Data.Tests.Client
 
         public TimeSpan TimeSpanValue { get; set; }
 
-        // public byte[] BinaryValue { get; set; }
+        public byte[] BinaryValue { get; set; }
+
         // public object ObjectValue { get; set; }
     }
 }

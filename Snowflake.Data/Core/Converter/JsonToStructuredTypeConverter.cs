@@ -209,7 +209,28 @@ namespace Snowflake.Data.Core.Converter
                 var value = json.Value<string>();
                 return _timeConverter.Convert(value, SFTimestampType.DATE, fieldType);
             }
+            if (IsBinaryMetadata(fieldMetadata))
+            {
+                var value = json.Value<string>();
+                if (fieldType == typeof(byte[]))
+                {
+                    return HexStringToBytes(value);
+                }
+                throw new Exception($"Cannot not read BINARY into {fieldType} type");
+            }
             throw new Exception("Case not implemented yet");
+        }
+
+        private static byte[] HexStringToBytes(string hexString)
+        {
+            int hexStringLength = hexString.Length;
+            int bytesLength = hexStringLength / 2;
+            byte[] bytes = new byte[bytesLength];
+            for (var i = 0; i < bytesLength; i++)
+            {
+                bytes[i] = System.Convert.ToByte(hexString.Substring(i * 2, 2), 16);
+            }
+            return bytes;
         }
 
         private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, JToken json, StructureTypeConstructionMethod constructionMethod)
@@ -383,6 +404,9 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsBooleanMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.BOOLEAN.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsBinaryMetadata(FieldMetadata fieldMetadata) =>
+            SFDataType.BINARY.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsArrayMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.ARRAY.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);

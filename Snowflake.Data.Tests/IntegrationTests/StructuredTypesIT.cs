@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Converter;
@@ -469,7 +470,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         'GuidValue', '57af59a1-f010-450a-8c37-8fdc78e6ee93',
                         'DateTimeValue', '2024-07-11 14:20:05'::TIMESTAMP_NTZ,
                         'DateTimeOffsetValue', '2024-07-11 14:20:05'::TIMESTAMP_LTZ,
-                        'TimeSpanValue', '14:20:05'::TIME
+                        'TimeSpanValue', '14:20:05'::TIME,
+                        'BinaryValue', TO_BINARY('this is binary data', 'UTF-8')
                     )::OBJECT(
                         StringValue VARCHAR,
                         CharValue CHAR,
@@ -488,9 +490,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         GuidValue TEXT,
                         DateTimeValue TIMESTAMP_NTZ,
                         DateTimeOffsetValue TIMESTAMP_LTZ,
-                        TimeSpanValue TIME
-                    )";
-
+                        TimeSpanValue TIME,
+                        BinaryValue BINARY
+                    ), TO_BINARY('this is binary data', 'UTF-8')";
+                    var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -518,6 +521,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
                     Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
+                    CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
                 }
             }
         }
