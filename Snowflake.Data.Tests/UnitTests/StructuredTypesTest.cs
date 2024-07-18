@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var timeConverter = new TimeConverter();
-            var sfType = Enum.Parse<SFTimestampType>(sfTypeString);
+            var sfType = (SFTimestampType) Enum.Parse(typeof(SFTimestampType), sfTypeString);
             var csharpType = expected.GetType();
 
             // act

@@ -472,6 +472,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         'DateTimeOffsetValue', '2024-07-11 14:20:05'::TIMESTAMP_LTZ,
                         'TimeSpanValue', '14:20:05'::TIME,
                         'BinaryValue', TO_BINARY('this is binary data', 'UTF-8')
+                        // 'ObjectValue', OBJECT_CONSTRUCT('a', 'b')
                     )::OBJECT(
                         StringValue VARCHAR,
                         CharValue CHAR,
@@ -492,7 +493,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         DateTimeOffsetValue TIMESTAMP_LTZ,
                         TimeSpanValue TIME,
                         BinaryValue BINARY
-                    ), TO_BINARY('this is binary data', 'UTF-8')";
+                        // ObjectValue OBJECT
+                    )";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
