@@ -23,6 +23,6 @@ namespace Snowflake.Data.Tests.Client
         public DateTimeOffset DateTimeOffsetValue { get; set; }
         public TimeSpan TimeSpanValue { get; set; }
         public byte[] BinaryValue { get; set; }
-        // public string ObjectValue { get; set; }
+        public string SemiStructuredValue { get; set; }
     }
 }

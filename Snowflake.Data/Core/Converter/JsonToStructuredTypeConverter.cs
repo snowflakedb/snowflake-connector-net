@@ -83,18 +83,18 @@ namespace Snowflake.Data.Core.Converter
                         var key = jsonPropertyWithValue.Key;
                         var fieldValue = jsonPropertyWithValue.Value;
                         var fieldType = objectBuilder.MoveNext(key);
-                        if (IsObjectMetadata(fieldMetadata))
+                        if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
                         {
                             var objectValue = ConvertToObject(fieldType, fieldMetadata.fields, fieldValue, constructionMethod);
                             objectBuilder.BuildPart(objectValue);
                         }
-                        else if (IsArrayMetadata(fieldMetadata))
+                        else if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
                         {
                             var nestedType = GetNestedType(fieldType);
                             var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
                             objectBuilder.BuildPart(arrayValue);
                         }
-                        else if (IsMapMetadata(fieldMetadata))
+                        else if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
                         {
                             var keyValueTypes = GetMapKeyValueTypes(fieldType);
                             var mapValue = ConvertToMap(fieldType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue,
@@ -114,12 +114,6 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json)
         {
-            // var value = json.Value<string>();
-            // var bytes = Encoding.UTF8.GetBytes(value);
-            // var sfType = Enum.Parse<SFDataType>(fieldMetadata.type, true);
-            // var cSharpVal = SFDataConverter.ConvertToCSharpVal(new UTF8Buffer(bytes), sfType, fieldType);
-            // return cSharpVal == DBNull.Value ? null : cSharpVal;
-
             if (IsTextMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
@@ -218,6 +212,18 @@ namespace Snowflake.Data.Core.Converter
                 }
                 throw new Exception($"Cannot not read BINARY into {fieldType} type");
             }
+            if (IsObjectMetadata(fieldMetadata)) // semi structured object
+            {
+                return json.ToString();
+            }
+            if (IsArrayMetadata(fieldMetadata)) // semi structured array
+            {
+                return json.ToString();
+            }
+            if (IsVariantMetadata(fieldMetadata))
+            {
+                return json.ToString();
+            }
             throw new Exception("Case not implemented yet");
         }
 
@@ -249,11 +255,11 @@ namespace Snowflake.Data.Core.Converter
             var elementMetadata = fields[0];
             for (var i = 0; i < jsonArray.Count; i++)
             {
-                if (IsObjectMetadata(elementMetadata))
+                if (IsObjectMetadata(elementMetadata) && elementMetadata.fields != null)
                 {
                     result[i] = ConvertToObject(elementType, elementMetadata.fields, jsonArray[i], constructionMethod);
                 }
-                else if (IsArrayMetadata(elementMetadata))
+                else if (IsArrayMetadata(elementMetadata) && elementMetadata.fields != null)
                 {
                     var nestedType = elementType.GetElementType();
                     result[i] = ConvertToArray(elementType, nestedType, elementMetadata.fields, jsonArray[i], constructionMethod);
@@ -313,12 +319,12 @@ namespace Snowflake.Data.Core.Converter
                     var key = IsTextMetadata(keyMetadata) || IsFixedMetadata(keyMetadata)
                         ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key)
                         : throw new Exception("Unsupported type of map key");
-                    if (IsObjectMetadata(fieldMetadata))
+                    if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
                     {
                         var objectValue = ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
                         result.Add(key, objectValue);
                     }
-                    else if (IsArrayMetadata(fieldMetadata))
+                    else if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
                     {
                         var nestedType = GetNestedType(valueType);
                         var arrayValue = ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
@@ -410,6 +416,9 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsArrayMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.ARRAY.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsVariantMetadata(FieldMetadata fieldMetadata) =>
+            SFDataType.VARIANT.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsMapMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.MAP.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);

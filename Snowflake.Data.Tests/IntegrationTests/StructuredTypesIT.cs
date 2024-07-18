@@ -471,8 +471,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         'DateTimeValue', '2024-07-11 14:20:05'::TIMESTAMP_NTZ,
                         'DateTimeOffsetValue', '2024-07-11 14:20:05'::TIMESTAMP_LTZ,
                         'TimeSpanValue', '14:20:05'::TIME,
-                        'BinaryValue', TO_BINARY('this is binary data', 'UTF-8')
-                        // 'ObjectValue', OBJECT_CONSTRUCT('a', 'b')
+                        'BinaryValue', TO_BINARY('this is binary data', 'UTF-8'),
+                        'SemiStructuredValue', OBJECT_CONSTRUCT('a', 'b')
                     )::OBJECT(
                         StringValue VARCHAR,
                         CharValue CHAR,
@@ -492,8 +492,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         DateTimeValue TIMESTAMP_NTZ,
                         DateTimeOffsetValue TIMESTAMP_LTZ,
                         TimeSpanValue TIME,
-                        BinaryValue BINARY
-                        // ObjectValue OBJECT
+                        BinaryValue BINARY,
+                        SemiStructuredValue OBJECT
                     )";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
@@ -524,6 +524,89 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
+                    Assert.AreEqual("{\n  \"a\": \"b\"\n}", allTypesObject.SemiStructuredValue);
+                }
+            }
+        }
+
+        [Test]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        public void TestSelectSemiStructuredTypesInObject(string valueSfString, string expectedValue)
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    command.CommandText = $"SELECT {valueSfString}";
+                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var wrapperObject = reader.GetObject<StringWrapper>(0);
+
+                    // assert
+                    Assert.NotNull(wrapperObject);
+                    Assert.AreEqual(expectedValue, wrapperObject.Value);
+                }
+            }
+        }
+
+        [Test]
+        [TestCase(@"ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(OBJECT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'))::ARRAY(ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
+        [TestCase(@"ARRAY_CONSTRUCT(TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::ARRAY(VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        public void TestSelectSemiStructuredTypesInArray(string valueSfString, string expectedValue)
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    command.CommandText = $"SELECT {valueSfString}";
+                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<string>(0);
+
+                    // assert
+                    Assert.NotNull(array);
+                    CollectionAssert.AreEqual(new [] {expectedValue}, array);
+                }
+            }
+        }
+
+        [Test]
+        [TestCase(@"OBJECT_CONSTRUCT('x', OBJECT_CONSTRUCT('a', 'b'))::MAP(VARCHAR,OBJECT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"OBJECT_CONSTRUCT('x', ARRAY_CONSTRUCT('a', 'b'))::MAP(VARCHAR,ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
+        [TestCase(@"OBJECT_CONSTRUCT('x', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::MAP(VARCHAR,VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        public void TestSelectSemiStructuredTypesInMap(string valueSfString, string expectedValue)
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    command.CommandText = $"SELECT {valueSfString}";
+                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var map = reader.GetMap<string, string>(0);
+
+                    // assert
+                    Assert.NotNull(map);
+                    Assert.AreEqual(1, map.Count);
+                    CollectionAssert.AreEqual(expectedValue, map["x"]);
                 }
             }
         }
