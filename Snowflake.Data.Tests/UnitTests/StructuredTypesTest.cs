@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         internal static IEnumerable<object[]> TimeConversionCases()
         {
-            yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ, DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime()};
+            yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime()};
             yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTimeOffset.Parse("2024-07-11 14:20:05Z")};
             yield return new object[] {"2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")};
             yield return new object[] {"2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), DateTime.Parse("2024-07-11 09:20:05").ToUniversalTime()};

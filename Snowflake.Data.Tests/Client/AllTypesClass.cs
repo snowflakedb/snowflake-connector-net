@@ -19,15 +19,10 @@ namespace Snowflake.Data.Tests.Client
         public decimal DecimalValue { get; set; }
         public bool BooleanValue { get; set; }
         public Guid GuidValue { get; set; }
-
         public DateTime DateTimeValue { get; set; }
-
         public DateTimeOffset DateTimeOffsetValue { get; set; }
-
         public TimeSpan TimeSpanValue { get; set; }
-
         public byte[] BinaryValue { get; set; }
-
-        // public object ObjectValue { get; set; }
+        // public string ObjectValue { get; set; }
     }
 }
