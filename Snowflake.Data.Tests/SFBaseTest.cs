@@ -421,10 +421,14 @@ namespace Snowflake.Data.Tests
         private readonly string _key;
 
         private readonly string[] _values;
-        public IgnoreOnEnvIsAttribute(string key, string[] values)
+
+        private readonly string _reason;
+
+        public IgnoreOnEnvIsAttribute(string key, string[] values, string reason = null)
         {
             _key = key;
             _values = values;
+            _reason = reason;
         }
 
         public void BeforeTest(ITest test)
@@ -433,7 +437,7 @@ namespace Snowflake.Data.Tests
             {
                 if (Environment.GetEnvironmentVariable(_key) == value)
                 {
-                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", _key, value);
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1}. {2}", _key, value, _reason);
                 }
             }
         }
@@ -467,5 +471,12 @@ namespace Snowflake.Data.Tests
         }
 
         public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
+    }
+
+    public class IgnoreInGithubActions : IgnoreOnEnvIsAttribute
+    {
+        public IgnoreInGithubActions(string reason = null) : base("GITHUB_ACTIONS", new[] { "true" }, reason)
+        {
+        }
     }
 }
