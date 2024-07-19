@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core
     public class SnowflakeTomlConnectionBuilder
     {
         private const string DefaultConnectionName = "default";
-        private const string DefaultSnowflakeHomeDirectory = "~/.snowflake";
+        private const string DefaultSnowflakeFolder = ".snowflake";
 
         private Dictionary<string, string> TomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
@@ -86,9 +86,8 @@ namespace Snowflake.Data.Core
 
         private string ResolveConnectionTomlFile()
         {
-            var tomlFolder = _environmentOperations.GetEnvironmentVariable(EnvironmentVariables.SnowflakeHome, DefaultSnowflakeHomeDirectory);
-            var homeDirectory = HomeDirectoryProvider.HomeDirectory(_environmentOperations);
-            tomlFolder = tomlFolder.Replace("~/", $"{homeDirectory}/");
+            var defaultDirectory = Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), DefaultSnowflakeFolder);
+            var tomlFolder = _environmentOperations.GetEnvironmentVariable(EnvironmentVariables.SnowflakeHome, defaultDirectory);
             var tomlPath = Path.Combine(tomlFolder, "connections.toml");
             tomlPath = Path.GetFullPath(tomlPath);
             return tomlPath;
