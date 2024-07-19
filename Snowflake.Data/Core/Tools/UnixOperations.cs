@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core.Tools
         /// <returns>The content of the file as a string.</returns>
         /// <exception cref="SecurityException">Thrown if the file is not owned by the effective user or group, or if it has forbidden permissions.</exception>
 
-        public string ReadAllText(string path, FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute)
+        public string ReadAllText(string path, FileAccessPermissions? forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute)
         {
             var fileInfo = new UnixFileInfo(path: path);
 
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Core.Tools
                     throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
                 if (handle.OwnerGroup.GroupId != Syscall.getegid())
                     throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
-                if ((handle.FileAccessPermissions & forbiddenPermissions) != 0)
+                if (forbiddenPermissions.HasValue && (handle.FileAccessPermissions & forbiddenPermissions.Value) != 0)
                     throw new SecurityException("Attempting to read a file with too broad permissions assigned");
                 using (var streamReader = new StreamReader(handle, Encoding.Default))
                 {

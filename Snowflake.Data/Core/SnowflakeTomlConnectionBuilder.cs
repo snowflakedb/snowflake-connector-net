@@ -7,6 +7,7 @@ namespace Snowflake.Data.Core
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
     using Tomlyn;
     using Tomlyn.Model;
@@ -16,11 +17,14 @@ namespace Snowflake.Data.Core
     {
         private const string DefaultConnectionName = "default";
         private const string DefaultSnowflakeFolder = ".snowflake";
+        private const string DefaultTokenPath = "/snowflake/session/token";
 
         private Dictionary<string, string> TomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
             { "DATABASE", "DB" }
         };
+
+
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
@@ -50,13 +54,40 @@ namespace Snowflake.Data.Core
         private string GetConnectionStringFromTomlTable(TomlTable connectionToml)
         {
             var connectionStringBuilder = new StringBuilder();
+            var tokenFilePathValue = string.Empty;
+            var isOauth = connectionToml.TryGetValue("authenticator", out var authenticator) && authenticator.ToString().Equals("oauth");
             foreach (var property in connectionToml.Keys)
             {
+                if (isOauth && property.Equals("token_file_path", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tokenFilePathValue = (string)connectionToml[property];
+                    continue;
+                }
                 var mappedProperty = TomlToNetPropertiesMapper.TryGetValue(property, out var mapped) ? mapped : property;
                 connectionStringBuilder.Append($"{mappedProperty}={(string)connectionToml[property]};");
             }
 
+            if (!isOauth || connectionToml.ContainsKey("token"))
+                return connectionStringBuilder.ToString();
+
+            var token = LoadTokenFromFile(tokenFilePathValue);
+            if (!string.IsNullOrEmpty(token))
+            {
+                connectionStringBuilder.Append($"token={token};");
+            }
+            else
+            {
+                // log warning TODO
+            }
+
+
             return connectionStringBuilder.ToString();
+        }
+
+        private string LoadTokenFromFile(string tokenFilePathValue)
+        {
+            var tokenFile = _fileOperations.Exists(tokenFilePathValue) ? tokenFilePathValue : DefaultTokenPath;
+            return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile) : null;
         }
 
         private TomlTable GetTomlTableFromConfig(string tomlPath, string connectionName)
