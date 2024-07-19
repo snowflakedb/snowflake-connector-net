@@ -83,29 +83,8 @@ namespace Snowflake.Data.Core.Converter
                         var key = jsonPropertyWithValue.Key;
                         var fieldValue = jsonPropertyWithValue.Value;
                         var fieldType = objectBuilder.MoveNext(key);
-                        if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                        {
-                            var objectValue = ConvertToObject(fieldType, fieldMetadata.fields, fieldValue, constructionMethod);
-                            objectBuilder.BuildPart(objectValue);
-                        }
-                        else if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                        {
-                            var nestedType = GetNestedType(fieldType);
-                            var arrayValue = ConvertToArray(fieldType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
-                            objectBuilder.BuildPart(arrayValue);
-                        }
-                        else if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                        {
-                            var keyValueTypes = GetMapKeyValueTypes(fieldType);
-                            var mapValue = ConvertToMap(fieldType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue,
-                                constructionMethod);
-                            objectBuilder.BuildPart(mapValue);
-                        }
-                        else
-                        {
-                            var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, fieldType, fieldValue);
-                            objectBuilder.BuildPart(unstructuredValue);
-                        }
+                        var value = ConvertToStructuredOrUnstructuredValue(fieldType, fieldMetadata, fieldValue, constructionMethod);
+                        objectBuilder.BuildPart(value);
                     } while (true);
                 }
             }
@@ -255,24 +234,7 @@ namespace Snowflake.Data.Core.Converter
             var elementMetadata = fields[0];
             for (var i = 0; i < jsonArray.Count; i++)
             {
-                if (IsObjectMetadata(elementMetadata) && elementMetadata.fields != null)
-                {
-                    result[i] = ConvertToObject(elementType, elementMetadata.fields, jsonArray[i], constructionMethod);
-                }
-                else if (IsArrayMetadata(elementMetadata) && elementMetadata.fields != null)
-                {
-                    var nestedType = elementType.GetElementType();
-                    result[i] = ConvertToArray(elementType, nestedType, elementMetadata.fields, jsonArray[i], constructionMethod);
-                }
-                else if (IsMapMetadata(elementMetadata))
-                {
-                    var keyValueTypes = GetMapKeyValueTypes(elementType);
-                    result[i] = ConvertToMap(elementType, keyValueTypes[0], keyValueTypes[1], elementMetadata.fields, jsonArray[i], constructionMethod);
-                }
-                else
-                {
-                    result[i] = ConvertToUnstructuredType(elementMetadata, elementType, jsonArray[i]);
-                }
+                result[i] = ConvertToStructuredOrUnstructuredValue(elementType, elementMetadata, jsonArray[i], constructionMethod);
             }
             if (type != arrayType)
             {
@@ -319,31 +281,30 @@ namespace Snowflake.Data.Core.Converter
                     var key = IsTextMetadata(keyMetadata) || IsFixedMetadata(keyMetadata)
                         ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key)
                         : throw new Exception("Unsupported type of map key");
-                    if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                    {
-                        var objectValue = ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
-                        result.Add(key, objectValue);
-                    }
-                    else if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                    {
-                        var nestedType = GetNestedType(valueType);
-                        var arrayValue = ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
-                        result.Add(key, arrayValue);
-                    }
-                    else if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
-                    {
-                        var keyValueTypes = GetMapKeyValueTypes(valueType);
-                        var mapValue = ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
-                        result.Add(key, mapValue);
-                    }
-                    else
-                    {
-                        var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue);
-                        result.Add(key, unstructuredValue);
-                    }
+                    var value = ConvertToStructuredOrUnstructuredValue(valueType, fieldMetadata, fieldValue, constructionMethod);
+                    result.Add(key, value);
                 }
             }
             return result;
+        }
+
+        private static object ConvertToStructuredOrUnstructuredValue(Type valueType, FieldMetadata fieldMetadata, JToken fieldValue, StructureTypeConstructionMethod constructionMethod)
+        {
+            if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
+            {
+                return ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
+            }
+            if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
+            {
+                var nestedType = GetNestedType(valueType);
+                return ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
+            }
+            if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
+            {
+                var keyValueTypes = GetMapKeyValueTypes(valueType);
+                return ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
+            }
+            return ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue);
         }
 
         private static Type GetNestedType(Type type)
