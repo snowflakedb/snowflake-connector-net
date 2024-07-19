@@ -558,6 +558,204 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectAllUnstructuredTypesObjectIntoNullableFields()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
+                        'StringValue', 'abc',
+                        'CharValue', 'x',
+                        'ByteValue', 15,
+                        'SByteValue', -14,
+                        'ShortValue', 1200,
+                        'UShortValue', 65000,
+                        'IntValue', 150150,
+                        'UIntValue', 151151,
+                        'LongValue', 9111222333444555666,
+                        'ULongValue', 9111222333444555666,
+                        'FloatValue', 1.23,
+                        'DoubleValue', 1.23,
+                        'DecimalValue', 1.23,
+                        'BooleanValue', true,
+                        'GuidValue', '57af59a1-f010-450a-8c37-8fdc78e6ee93',
+                        'DateTimeValue', '2024-07-11 14:20:05'::TIMESTAMP_NTZ,
+                        'DateTimeOffsetValue', '2024-07-11 14:20:05'::TIMESTAMP_LTZ,
+                        'TimeSpanValue', '14:20:05'::TIME,
+                        'BinaryValue', TO_BINARY('this is binary data', 'UTF-8'),
+                        'SemiStructuredValue', OBJECT_CONSTRUCT('a', 'b')
+                    )::OBJECT(
+                        StringValue VARCHAR,
+                        CharValue CHAR,
+                        ByteValue SMALLINT,
+                        SByteValue SMALLINT,
+                        ShortValue SMALLINT,
+                        UShortValue INTEGER,
+                        IntValue INTEGER,
+                        UIntValue INTEGER,
+                        LongValue BIGINT,
+                        ULongValue BIGINT,
+                        FloatValue FLOAT,
+                        DoubleValue DOUBLE,
+                        DecimalValue REAL,
+                        BooleanValue BOOLEAN,
+                        GuidValue TEXT,
+                        DateTimeValue TIMESTAMP_NTZ,
+                        DateTimeOffsetValue TIMESTAMP_LTZ,
+                        TimeSpanValue TIME,
+                        BinaryValue BINARY,
+                        SemiStructuredValue OBJECT
+                    )";
+                    var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
+                    command.CommandText = $"SELECT {allTypesObjectAsSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var allTypesObject = reader.GetObject<AllTypesClass>(0);
+
+                    // assert
+                    Assert.NotNull(allTypesObject);
+                    Assert.AreEqual("abc", allTypesObject.StringValue);
+                    Assert.AreEqual('x', allTypesObject.CharValue);
+                    Assert.AreEqual(15, allTypesObject.ByteValue);
+                    Assert.AreEqual(-14, allTypesObject.SByteValue);
+                    Assert.AreEqual(1200, allTypesObject.ShortValue);
+                    Assert.AreEqual(65000, allTypesObject.UShortValue);
+                    Assert.AreEqual(150150, allTypesObject.IntValue);
+                    Assert.AreEqual(151151, allTypesObject.UIntValue);
+                    Assert.AreEqual(9111222333444555666, allTypesObject.LongValue);
+                    Assert.AreEqual(9111222333444555666, allTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.AreEqual(1.23f, allTypesObject.FloatValue);
+                    Assert.AreEqual(1.23d, allTypesObject.DoubleValue);
+                    Assert.AreEqual(1.23, allTypesObject.DecimalValue);
+                    Assert.AreEqual(true, allTypesObject.BooleanValue);
+                    Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
+                    Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
+                    Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
+                    Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
+                    CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
+                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectNullIntoUnstructuredTypesObject()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
+                        'StringValue', NULL,
+                        'CharValue', NULL,
+                        'ByteValue', NULL,
+                        'SByteValue', NULL,
+                        'ShortValue', NULL,
+                        'UShortValue', NULL,
+                        'IntValue', NULL,
+                        'UIntValue', NULL,
+                        'LongValue', NULL,
+                        'ULongValue', NULL,
+                        'FloatValue', NULL,
+                        'DoubleValue', NULL,
+                        'DecimalValue', NULL,
+                        'BooleanValue', NULL,
+                        'GuidValue', NULL,
+                        'DateTimeValue', NULL,
+                        'DateTimeOffsetValue', NULL,
+                        'TimeSpanValue', NULL,
+                        'BinaryValue', NULL,
+                        'SemiStructuredValue', NULL
+                    )::OBJECT(
+                        StringValue VARCHAR,
+                        CharValue CHAR,
+                        ByteValue SMALLINT,
+                        SByteValue SMALLINT,
+                        ShortValue SMALLINT,
+                        UShortValue INTEGER,
+                        IntValue INTEGER,
+                        UIntValue INTEGER,
+                        LongValue BIGINT,
+                        ULongValue BIGINT,
+                        FloatValue FLOAT,
+                        DoubleValue DOUBLE,
+                        DecimalValue REAL,
+                        BooleanValue BOOLEAN,
+                        GuidValue TEXT,
+                        DateTimeValue TIMESTAMP_NTZ,
+                        DateTimeOffsetValue TIMESTAMP_LTZ,
+                        TimeSpanValue TIME,
+                        BinaryValue BINARY,
+                        SemiStructuredValue OBJECT
+                    )";
+                    command.CommandText = $"SELECT {allTypesObjectAsSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var allTypesObject = reader.GetObject<AllNullableTypesClass>(0);
+
+                    // assert
+                    Assert.NotNull(allTypesObject);
+                    Assert.IsNull(allTypesObject.StringValue);
+                    Assert.IsNull(allTypesObject.CharValue);
+                    Assert.IsNull(allTypesObject.ByteValue);
+                    Assert.IsNull(allTypesObject.SByteValue);
+                    Assert.IsNull(allTypesObject.ShortValue);
+                    Assert.IsNull(allTypesObject.UShortValue);
+                    Assert.IsNull(allTypesObject.IntValue);
+                    Assert.IsNull(allTypesObject.UIntValue);
+                    Assert.IsNull(allTypesObject.LongValue);
+                    Assert.IsNull(allTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.IsNull(allTypesObject.FloatValue);
+                    Assert.IsNull(allTypesObject.DoubleValue);
+                    Assert.IsNull(allTypesObject.DecimalValue);
+                    Assert.IsNull(allTypesObject.BooleanValue);
+                    Assert.IsNull(allTypesObject.GuidValue);
+                    Assert.IsNull(allTypesObject.DateTimeValue);
+                    Assert.IsNull(allTypesObject.DateTimeOffsetValue);
+                    Assert.IsNull(allTypesObject.TimeSpanValue);
+                    Assert.IsNull(allTypesObject.BinaryValue);
+                    Assert.IsNull(allTypesObject.SemiStructuredValue);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectMapSkippingNullValues()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var mapAsSFString = "OBJECT_CONSTRUCT('a', NULL, 'b', '3')::MAP(VARCHAR, INTEGER)";
+                    command.CommandText = $"SELECT {mapAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, int?>(0);
+                    Assert.AreEqual(1, map.Count);
+                    Assert.AreEqual(3, map["b"]);
+                }
+            }
+        }
+
+        [Test]
         [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\n  \"a\": \"b\"\n}")]
         [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
         [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\n  \"a\": \"b\"\n}")]
@@ -814,6 +1012,56 @@ namespace Snowflake.Data.Tests.IntegrationTests
             yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05Z")};
             yield return new object[] {"2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")};
             yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")};
+        }
+
+        [Test]
+        public void TestSelectStringArrayWithNulls()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arraySFString = "ARRAY_CONSTRUCT('a',NULL,'b')::ARRAY(TEXT)";
+                    command.CommandText = $"SELECT {arraySFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var array = reader.GetArray<string>(0);
+                    Assert.AreEqual(3, array.Length);
+                    CollectionAssert.AreEqual(new[] { "a", null, "b" }, array);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectIntArrayWithNulls()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arrayOfNumberSFString = "ARRAY_CONSTRUCT(3,NULL,5)::ARRAY(INTEGER)";
+                    command.CommandText = $"SELECT {arrayOfNumberSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var array = reader.GetArray<int?>(0);
+                    Assert.AreEqual(3, array.Length);
+                    CollectionAssert.AreEqual(new int?[] { 3, null, 5 }, array);
+                }
+            }
         }
 
         private void EnableStructuredTypes(SnowflakeDbConnection connection)

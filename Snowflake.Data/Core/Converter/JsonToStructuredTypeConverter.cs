@@ -93,14 +93,18 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json)
         {
+            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            {
+                return null;
+            }
             if (IsTextMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                if (fieldType == typeof(char))
+                if (fieldType == typeof(char) || fieldType == typeof(char?))
                 {
                     return char.Parse(value);
                 }
-                if (fieldType == typeof(Guid))
+                if (fieldType == typeof(Guid) || fieldType == typeof(Guid?))
                 {
                     return Guid.Parse(value);
                 }
@@ -109,28 +113,28 @@ namespace Snowflake.Data.Core.Converter
             if (IsFixedMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                if (fieldType == typeof(byte))
+                if (fieldType == typeof(byte) || fieldType == typeof(byte?))
                 {
                     return byte.Parse(value);
                 }
-                if (fieldType == typeof(sbyte))
+                if (fieldType == typeof(sbyte) || fieldType == typeof(sbyte?))
                 {
                     return sbyte.Parse(value);
                 }
-                if (fieldType == typeof(short))
+                if (fieldType == typeof(short) || fieldType == typeof(short?))
                 {
                     return short.Parse(value);
                 }
-                if (fieldType == typeof(ushort))
+                if (fieldType == typeof(ushort) || fieldType == typeof(ushort?))
                 {
                     return ushort.Parse(value);
                 }
-                if (fieldType == typeof(Int32))
+                if (fieldType == typeof(Int32) || fieldType == typeof(Int32?))
                 {
                     var bytes = Encoding.UTF8.GetBytes(value);
                     return FastParser.FastParseInt32(bytes, 0, bytes.Length);
                 }
-                if (fieldType == typeof(Int64))
+                if (fieldType == typeof(Int64) || fieldType == typeof(Int64?))
                 {
                     var bytes = Encoding.UTF8.GetBytes(value);
                     return FastParser.FastParseInt64(bytes, 0, bytes.Length);
@@ -142,11 +146,11 @@ namespace Snowflake.Data.Core.Converter
                 var value = json.Value<string>();
                 var bytes = Encoding.UTF8.GetBytes(value);
                 var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
-                if (fieldType == typeof(float))
+                if (fieldType == typeof(float) || fieldType == typeof(float?))
                 {
                     return (float) decimalValue;
                 }
-                if (fieldType == typeof(double))
+                if (fieldType == typeof(double) || fieldType == typeof(double?))
                 {
                     return (double) decimalValue;
                 }

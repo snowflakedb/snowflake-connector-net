@@ -18,12 +18,12 @@ namespace Snowflake.Data.Core.Converter
             if (timestampType == SFTimestampType.TIMESTAMP_NTZ)
             {
                 var dateTimeUtc = DateTime.Parse(value).ToUniversalTime();
-                if (fieldType == typeof(DateTime))
+                if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return dateTimeUtc;
                 }
 
-                if (fieldType == typeof(DateTimeOffset))
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
                     return (DateTimeOffset) dateTimeUtc;
                 }
@@ -34,11 +34,11 @@ namespace Snowflake.Data.Core.Converter
             if (timestampType == SFTimestampType.TIMESTAMP_TZ)
             {
                 var dateTimeOffset = DateTimeOffset.Parse(value);
-                if (fieldType == typeof(DateTimeOffset))
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
                     return dateTimeOffset;
                 }
-                if (fieldType == typeof(DateTime))
+                if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return dateTimeOffset.ToUniversalTime().DateTime.ToUniversalTime();
                 }
@@ -52,11 +52,11 @@ namespace Snowflake.Data.Core.Converter
                 // var dbOffset = TimeZoneInfo.FindSystemTimeZoneById(dbTimeZone);
                 // var convertedTime = TimeZoneInfo.ConvertTime(dateTimeOffset, dbOffset);
                 // var x = TimeZoneInfo.ConvertTime(dateTimeOffset.UtcDateTime, dbOffset, dbOffset);
-                if (fieldType == typeof(DateTimeOffset))
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
                     return dateTimeOffset;
                 }
-                if (fieldType == typeof(DateTime))
+                if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return dateTimeOffset.UtcDateTime;
                 }
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFTimestampType.TIME)
             {
-                if (fieldType == typeof(TimeSpan))
+                if (fieldType == typeof(TimeSpan) || fieldType == typeof(TimeSpan?))
                 {
                     return TimeSpan.Parse(value);
                 }
@@ -72,11 +72,11 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFTimestampType.DATE)
             {
-                if (fieldType == typeof(DateTimeOffset))
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
                     return DateTimeOffset.Parse(value).ToUniversalTime();
                 }
-                if (fieldType == typeof(DateTime))
+                if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return DateTime.Parse(value).ToUniversalTime();
                 }
