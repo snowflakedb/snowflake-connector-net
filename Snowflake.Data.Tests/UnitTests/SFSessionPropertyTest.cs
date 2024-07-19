@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -152,6 +152,18 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
+        }
+
+        [Test]
+        [TestCase("account.snowflakecomputing.cn", "Connecting to CHINA Snowflake domain")]
+        [TestCase("account.snowflakecomputing.com", "Connecting to GLOBAL Snowflake domain")]
+        public void TestResolveConnectionArea(string host, string expectedMessage)
+        {
+            // act
+            var message = SFSessionProperties.ResolveConnectionAreaMessage(host);
+
+            // assert
+            Assert.AreEqual(expectedMessage, message);
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()
