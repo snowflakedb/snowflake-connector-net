@@ -330,6 +330,12 @@ namespace Snowflake.Data.Core.Converter
                         var arrayValue = ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
                         result.Add(key, arrayValue);
                     }
+                    else if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
+                    {
+                        var keyValueTypes = GetMapKeyValueTypes(valueType);
+                        var mapValue = ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
+                        result.Add(key, mapValue);
+                    }
                     else
                     {
                         var unstructuredValue = ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue);

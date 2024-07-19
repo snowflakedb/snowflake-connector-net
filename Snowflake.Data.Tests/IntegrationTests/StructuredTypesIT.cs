@@ -443,6 +443,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectMapOfMaps()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
+                    command.CommandText = $"SELECT {mapAsSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var map = reader.GetMap<string, Dictionary<string, string>>(0);
+                    Assert.AreEqual(1, map.Count);
+                    var nestedMap = map["a"];
+                    Assert.AreEqual(1, nestedMap.Count);
+                    Assert.AreEqual("c", nestedMap["b"]);
+                }
+            }
+        }
+
+        [Test]
         public void TestSelectAllUnstructuredTypesObject()
         {
             // arrange
