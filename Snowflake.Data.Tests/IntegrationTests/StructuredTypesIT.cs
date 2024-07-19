@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -551,7 +552,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
-                    Assert.AreEqual("{\n  \"a\": \"b\"\n}", allTypesObject.SemiStructuredValue);
+                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
                 }
             }
         }
@@ -578,7 +579,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(wrapperObject);
-                    Assert.AreEqual(expectedValue, wrapperObject.Value);
+                    Assert.AreEqual(ConvertNewlinesOnWindows(expectedValue), wrapperObject.Value);
                 }
             }
         }
@@ -605,7 +606,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(array);
-                    CollectionAssert.AreEqual(new [] {expectedValue}, array);
+                    CollectionAssert.AreEqual(new [] {ConvertNewlinesOnWindows(expectedValue)}, array);
                 }
             }
         }
@@ -633,7 +634,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.NotNull(map);
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(expectedValue, map["x"]);
+                    CollectionAssert.AreEqual(ConvertNewlinesOnWindows(expectedValue), map["x"]);
                 }
             }
         }
@@ -827,5 +828,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
             }
         }
+
+        private string ConvertNewlinesOnWindows(string text) =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? text.Replace("\n", "\r\n")
+                : text;
     }
 }
