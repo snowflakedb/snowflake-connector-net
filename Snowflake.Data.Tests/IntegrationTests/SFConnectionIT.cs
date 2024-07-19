@@ -2264,7 +2264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
-        [IgnoreInGithubActions("This test requires a valid connection string in the configuration file.")]
+        [IgnoreOnCI("This test requires a valid connection string in the configuration file.")]
         public void TestLocalDefaultConnectStringReadFromToml()
         {
             using (var conn = new SnowflakeDbConnection())

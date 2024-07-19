@@ -473,9 +473,9 @@ namespace Snowflake.Data.Tests
         public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 
-    public class IgnoreInGithubActions : IgnoreOnEnvIsAttribute
+    public class IgnoreOnCI : IgnoreOnEnvIsAttribute
     {
-        public IgnoreInGithubActions(string reason = null) : base("GITHUB_ACTIONS", new[] { "true" }, reason)
+        public IgnoreOnCI(string reason = null) : base("CI", new[] { "true" }, reason)
         {
         }
     }
