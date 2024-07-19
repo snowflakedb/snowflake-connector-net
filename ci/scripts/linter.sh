@@ -17,6 +17,11 @@ for file in $changed_files; do
     echo "$file"
 done
 
+if [-z "$changed_files" ]; then
+    echo "no changed files detected"
+    exit 0
+fi
+
 echo "Run dotnet restore"
 dotnet restore
 
