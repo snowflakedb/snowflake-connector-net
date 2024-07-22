@@ -242,7 +242,8 @@ namespace Snowflake.Data.Core.Converter
             }
             if (type != arrayType)
             {
-                var list = (IList) Activator.CreateInstance(type);
+                var listType = type.IsAbstract ? typeof(List<>).MakeGenericType(elementType) : type;
+                var list = (IList) Activator.CreateInstance(listType);
                 for (int i = 0; i < result.Count; i++)
                 {
                     list.Add(result[i]);
@@ -275,7 +276,8 @@ namespace Snowflake.Data.Core.Converter
             var keyMetadata = fields[0];
             var fieldMetadata = fields[1];
             var jsonObject = (JObject)json;
-            var result = (IDictionary) Activator.CreateInstance(type);
+            var dictionaryType = type.IsAbstract ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type;
+            var result = (IDictionary) Activator.CreateInstance(dictionaryType);
             using (var jsonEnumerator = jsonObject.GetEnumerator())
             {
                 while (jsonEnumerator.MoveNext())
@@ -317,7 +319,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 return type.GetElementType();
             }
-            if (IsListType(type))
+            if (IsListType(type) || IsIListType(type))
             {
                 return type.GenericTypeArguments[0];
             }
@@ -326,7 +328,6 @@ namespace Snowflake.Data.Core.Converter
 
         private static Type[] GetMapKeyValueTypes(Type type)
         {
-            // TODO: type.GetGenericTypeDefinition() - make sure it is a map
             var genericParamWithTwoArguments = type.IsGenericType && type.GenericTypeArguments.Length == 2;
             if (!genericParamWithTwoArguments)
             {
@@ -341,7 +342,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 return type;
             }
-            if (IsListType(type))
+            if (IsListType(type) || IsIListType(type))
             {
                 return elementType.MakeArrayType();
             }
@@ -351,6 +352,8 @@ namespace Snowflake.Data.Core.Converter
         // JValue, JObject, JArray ... are elements of JArray
 
         private static bool IsListType(Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
+
+        private static bool IsIListType(Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>);
 
         private static bool IsObjectMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.OBJECT.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);

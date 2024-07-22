@@ -1083,12 +1083,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         'ObjectValue', NULL,
                         'ListValue', NULL,
                         'ArrayValue', NULL,
-                        'MapValue', NULL
+                        'IListValue', NULL,
+                        'MapValue', NULL,
+                        'IMapValue', NULL
                     )::OBJECT(
                         ObjectValue OBJECT(Name TEXT),
                         ListValue ARRAY(TEXT),
                         ArrayValue ARRAY(TEXT),
-                        MapValue MAP(INTEGER, INTEGER)
+                        IListValue ARRAY(TEXT),
+                        MapValue MAP(INTEGER, INTEGER),
+                        IMapValue MAP(INTEGER, INTEGER)
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
 
@@ -1102,9 +1106,60 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsNull(objectWithStructuredTypes.ObjectValue);
                     Assert.IsNull(objectWithStructuredTypes.ListValue);
                     Assert.IsNull(objectWithStructuredTypes.ArrayValue);
+                    Assert.IsNull(objectWithStructuredTypes.IListValue);
                     Assert.IsNull(objectWithStructuredTypes.MapValue);
+                    Assert.IsNull(objectWithStructuredTypes.IMapValue);
                 }
             }
+        }
+
+        [Test]
+        public void TestSelectNestedStructuredTypesNotNull()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
+                        'ObjectValue', OBJECT_CONSTRUCT('Name', 'John'),
+                        'ListValue', ARRAY_CONSTRUCT('a', 'b'),
+                        'ArrayValue', ARRAY_CONSTRUCT('c'),
+                        'IListValue', ARRAY_CONSTRUCT('d', 'e'),
+                        'MapValue', OBJECT_CONSTRUCT('3', '5'),
+                        'IMapValue', OBJECT_CONSTRUCT('8', '13')
+                    )::OBJECT(
+                        ObjectValue OBJECT(Name TEXT),
+                        ListValue ARRAY(TEXT),
+                        ArrayValue ARRAY(TEXT),
+                        IListValue ARRAY(TEXT),
+                        MapValue MAP(INTEGER, INTEGER),
+                        IMapValue MAP(INTEGER, INTEGER)
+                    )";
+                    command.CommandText = $"SELECT {objectSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var objectWithStructuredTypes = reader.GetObject<ObjectArrayMapWrapper>(0);
+                    Assert.NotNull(objectWithStructuredTypes);
+                    Assert.AreEqual(new Identity("John"), objectWithStructuredTypes.ObjectValue);
+                    CollectionAssert.AreEqual(new [] {"a", "b"}, objectWithStructuredTypes.ListValue);
+                    CollectionAssert.AreEqual(new [] {"c"}, objectWithStructuredTypes.ArrayValue);
+                    CollectionAssert.AreEqual(new [] {"d", "e"}, objectWithStructuredTypes.IListValue);
+                    Assert.AreEqual(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
+                    Assert.AreEqual(1, objectWithStructuredTypes.MapValue.Count);
+                    Assert.AreEqual(5, objectWithStructuredTypes.MapValue[3]);
+                    Assert.AreEqual(1, objectWithStructuredTypes.IMapValue.Count);
+                    Assert.AreEqual(13, objectWithStructuredTypes.IMapValue[8]);
+                    Assert.AreEqual(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
+                }
+            }
+
         }
 
         private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
@@ -1135,7 +1190,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
                 }
-                throw new Exception("Could not recognise time zone");
+                throw new Exception($"Could not recognise time zone: {timeZoneString}");
             }
         }
 
