@@ -480,6 +480,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
+                    var timeZone = GetTimeZone(connection);
+                    var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
+                    var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
                         'StringValue', 'abc',
                         'CharValue', 'x',
@@ -522,7 +525,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         TimeSpanValue TIME,
                         BinaryValue BINARY,
                         SemiStructuredValue OBJECT
-                    )";
+                    ), '2024-07-11 14:20:05'::TIMESTAMP_LTZ";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
@@ -549,7 +552,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(true, allTypesObject.BooleanValue);
                     Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
                     Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
-                    Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
+                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
                     Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
@@ -567,6 +570,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
+                    var timeZone = GetTimeZone(connection);
+                    var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
+                    var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
                         'StringValue', 'abc',
                         'CharValue', 'x',
@@ -636,7 +642,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(true, allTypesObject.BooleanValue);
                     Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
                     Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
-                    Assert.AreEqual(DateTimeOffset.Parse("2024-07-11 14:20:05 -07:00"), allTypesObject.DateTimeOffsetValue);
+                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
                     Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
@@ -715,7 +721,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsNull(allTypesObject.IntValue);
                     Assert.IsNull(allTypesObject.UIntValue);
                     Assert.IsNull(allTypesObject.LongValue);
-                    Assert.IsNull(allTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.IsNull(allTypesObject.ULongValue);
                     Assert.IsNull(allTypesObject.FloatValue);
                     Assert.IsNull(allTypesObject.DoubleValue);
                     Assert.IsNull(allTypesObject.DecimalValue);
@@ -1062,6 +1068,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     CollectionAssert.AreEqual(new int?[] { 3, null, 5 }, array);
                 }
             }
+        }
+
+        private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "show parameters like 'timezone'";
+                var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                var timeZoneString = reader.GetString(1);
+                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneString);
+            }
+        }
+
+        private string ToOffsetString(TimeSpan timeSpan)
+        {
+            var offsetString = timeSpan.ToString();
+            var secondsIndex = offsetString.LastIndexOf(":");
+            return offsetString.Substring(0, secondsIndex);
         }
 
         private void EnableStructuredTypes(SnowflakeDbConnection connection)
