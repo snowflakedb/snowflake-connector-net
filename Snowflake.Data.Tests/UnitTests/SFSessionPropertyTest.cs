@@ -155,6 +155,21 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("true")]
+        [TestCase("false")]
+        public void TestValidateAllowSSOTokenCachingProperty(string expectedAllowSsoTokenCaching)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;ALLOW_SSO_TOKEN_CACHING={expectedAllowSsoTokenCaching}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedAllowSsoTokenCaching, properties[SFSessionProperty.ALLOW_SSO_TOKEN_CACHING]);
+        }
+
+        [Test]
         [TestCase("account.snowflakecomputing.cn", "Connecting to CHINA Snowflake domain")]
         [TestCase("account.snowflakecomputing.com", "Connecting to GLOBAL Snowflake domain")]
         public void TestResolveConnectionArea(string host, string expectedMessage)
@@ -222,7 +237,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
 
@@ -258,7 +274,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -296,7 +313,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -336,7 +354,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -375,7 +394,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
             var testCaseWithIncludeRetryReason = new TestCase()
@@ -411,7 +431,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
             var testCaseWithDisableQueryContextCache = new TestCase()
@@ -446,7 +467,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
@@ -483,7 +505,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
@@ -522,7 +545,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
             var testCaseUnderscoredAccountName = new TestCase()
@@ -558,7 +582,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
             var testCaseUnderscoredAccountNameWithEnabledAllowUnderscores = new TestCase()
@@ -594,9 +619,11 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
+
             var testQueryTag = "Test QUERY_TAG 12345";
             var testCaseQueryTag = new TestCase()
             {
@@ -632,7 +659,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT, DefaultValue(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT) },
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
-                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) }
+                    { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.ALLOW_SSO_TOKEN_CACHING, DefaultValue(SFSessionProperty.ALLOW_SSO_TOKEN_CACHING) },
                 }
             };
 
