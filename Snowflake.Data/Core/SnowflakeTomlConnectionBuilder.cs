@@ -7,8 +7,9 @@ namespace Snowflake.Data.Core
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Text;
+    using Client;
+    using Log;
     using Tomlyn;
     using Tomlyn.Model;
     using Tools;
@@ -19,12 +20,12 @@ namespace Snowflake.Data.Core
         private const string DefaultSnowflakeFolder = ".snowflake";
         private const string DefaultTokenPath = "/snowflake/session/token";
 
-        private Dictionary<string, string> TomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        private readonly SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+
+        private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
             { "DATABASE", "DB" }
         };
-
-
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
@@ -41,14 +42,14 @@ namespace Snowflake.Data.Core
 
         public string GetConnectionStringFromToml(string connectionName = null)
         {
+            var connectionString = string.Empty;
             var tomlPath = ResolveConnectionTomlFile();
             var connectionToml = GetTomlTableFromConfig(tomlPath, connectionName);
             if (connectionToml != null)
             {
-                var connectionString = GetConnectionStringFromTomlTable(connectionToml);
-                return connectionString;
+                connectionString = GetConnectionStringFromTomlTable(connectionToml);
             }
-            return string.Empty;
+            return connectionString;
         }
 
         private string GetConnectionStringFromTomlTable(TomlTable connectionToml)
@@ -63,7 +64,7 @@ namespace Snowflake.Data.Core
                     tokenFilePathValue = (string)connectionToml[property];
                     continue;
                 }
-                var mappedProperty = TomlToNetPropertiesMapper.TryGetValue(property, out var mapped) ? mapped : property;
+                var mappedProperty = _tomlToNetPropertiesMapper.TryGetValue(property, out var mapped) ? mapped : property;
                 connectionStringBuilder.Append($"{mappedProperty}={(string)connectionToml[property]};");
             }
 
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                // log warning TODO
+                _logger.Warn("The token has empty value");
             }
 
 
@@ -86,13 +87,13 @@ namespace Snowflake.Data.Core
 
         private string LoadTokenFromFile(string tokenFilePathValue)
         {
-            var tokenFile = _fileOperations.Exists(tokenFilePathValue) ? tokenFilePathValue : DefaultTokenPath;
+            var tokenFile = !string.IsNullOrEmpty(tokenFilePathValue) && _fileOperations.Exists(tokenFilePathValue) ? tokenFilePathValue : DefaultTokenPath;
+            _logger.Debug($"Read token from file path: {tokenFile}");
             return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile) : null;
         }
 
         private TomlTable GetTomlTableFromConfig(string tomlPath, string connectionName)
         {
-            TomlTable result = null;
             if (!_fileOperations.Exists(tomlPath))
             {
                 return null;
@@ -111,7 +112,7 @@ namespace Snowflake.Data.Core
                 throw new Exception("Specified connection name does not exist in connections.toml");
             }
 
-            result = connection as TomlTable;
+            var result = connection as TomlTable;
             return result;
         }
 
