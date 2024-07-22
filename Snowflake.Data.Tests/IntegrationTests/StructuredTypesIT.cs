@@ -5,6 +5,7 @@ using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Converter;
+using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -14,6 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class StructuredTypesIT : SFBaseTest
     {
         private static string _tableName = "structured_types_tests";
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<StructuredTypesIT>();
 
         [Test]
         public void TestInsertStructuredTypeObject()
@@ -549,6 +551,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(true, allTypesObject.BooleanValue);
                     Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
                     Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
+                    s_logger.Warn($"Trying to parse: 2024-07-11 14:20:05 {expectedOffsetString} !!!");
                     Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
