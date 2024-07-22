@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Snowflake.Data.Core;
 using NUnit.Framework;
 using Snowflake.Data.Tests.Mock;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -105,6 +106,48 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
+        [Test]
+        public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
+        {
+            // arrange
+            var expectedIdToken = "mockIdToken";
+            var connectionString = $"account=account;user=user;password=test;allow_sso_token_caching=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = expectedIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, session._idToken);
+        }
+
+        [Test]
+        public void TestThatRetriesAuthenticationForInvalidIdToken()
+        {
+            // arrange
+            var connectionString = "account=test;user=test;password=test;allow_sso_token_caching=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                code = SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode,
+                message = "",
+                success = false
+            };
+
+            // assert
+            Assert.Throws<NullReferenceException>(() => session.ProcessLoginResponse(authnResponse));
+        }
+
+        [Test]
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]

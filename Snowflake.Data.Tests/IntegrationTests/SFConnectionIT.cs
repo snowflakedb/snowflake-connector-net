@@ -17,9 +17,12 @@ using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -1043,6 +1046,71 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, waitSeconds * 1000);
             // and not later than 5s after expected time
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCaching()
+        {
+            /*
+             * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
+             * 1. Login normally using external browser with allow_sso_token_caching enabled
+             * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
+            */
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Set the allow_sso_token_caching property to true to enable token caching
+                // The specified user should be configured for SSO
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithInvalidCachedToken()
+        {
+            /*
+             * This test checks that the connector will attempt to re-authenticate using external browser if the token retrieved from the cache is invalid
+             * 1. Create a credential manager and save credentials for the user with a wrong token
+             * 2. Open a connection which initially should try to use the token and then switch to external browser when the token fails
+            */
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Set the allow_sso_token_caching property to true to enable token caching
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+
+                // Create a credential manager and save a wrong token for the test user
+                var key = SFCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
+                var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+                credentialManager.SaveCredentials(key, "wrongToken");
+
+                // Use the credential manager with the wrong token
+                SFCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+                // Open a connection which should switch to external browser after trying to connect using the wrong token
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                // Switch back to the default credential manager
+                SFCredentialManagerFactory.UseDefaultCredentialManager();
+            }
         }
 
         [Test]
@@ -2269,6 +2337,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCachingAsync()
+        {
+            /*
+             * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
+             * 1. Login normally using external browser with allow_sso_token_caching enabled
+             * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
+            */
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Set the allow_sso_token_caching property to true to enable token caching
+                // The specified user should be configured for SSO
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
+                connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                connectTask = conn.CloseAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
         }
 
         [Test]
