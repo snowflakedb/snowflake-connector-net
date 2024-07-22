@@ -135,8 +135,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arrayOfNumberSFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
-                    command.CommandText = $"SELECT {arrayOfNumberSFString}";
+                    var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
+                    command.CommandText = $"SELECT {arraySFString}";
 
                     // act
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -187,8 +187,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arrayOfObjects = "ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'), ARRAY_CONSTRUCT('c', 'd'))::ARRAY(ARRAY(TEXT))";
-                    command.CommandText = $"SELECT {arrayOfObjects}";
+                    var arrayOfArrays = "ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'), ARRAY_CONSTRUCT('c', 'd'))::ARRAY(ARRAY(TEXT))";
+                    command.CommandText = $"SELECT {arrayOfArrays}";
 
                     // act
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -372,9 +372,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'), 'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567'))::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
-                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
-                    command.CommandText = $"SELECT {addressAsSFString}";
+                    var mapWitObjectValueSFString = "OBJECT_CONSTRUCT('Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'), 'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567'))::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
+                    command.CommandText = $"SELECT {mapWitObjectValueSFString}";
 
                     // act
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -399,9 +398,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
-                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
-                    command.CommandText = $"SELECT {addressAsSFString}";
+                    var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    command.CommandText = $"SELECT {mapWithArrayValueSFString}";
 
                     // act
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -426,9 +424,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
-                    // var addressAsSFString = "{'city': 'San Mateo', 'state': 'CA'}::MAP(VARCHAR, VARCHAR)";
-                    command.CommandText = $"SELECT {addressAsSFString}";
+                    var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    command.CommandText = $"SELECT {mapWithArrayValueSFString}";
 
                     // act
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -878,8 +875,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
-                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var arrayOfLongs = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
+                    command.CommandText = $"SELECT {arrayOfLongs}";
 
                     // act
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
@@ -903,8 +900,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arrayOfIntegers = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
-                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var arrayOfFloats = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
+                    command.CommandText = $"SELECT {arrayOfFloats}";
 
                     // act
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
@@ -928,8 +925,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arrayOfIntegers = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
-                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var arrayOfDoubles = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
+                    command.CommandText = $"SELECT {arrayOfDoubles}";
 
                     // act
                     var reader = (SnowflakeDbDataReader) command.ExecuteReader();
