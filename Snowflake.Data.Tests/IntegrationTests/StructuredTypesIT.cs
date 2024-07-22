@@ -551,7 +551,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(true, allTypesObject.BooleanValue);
                     Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
                     Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
-                    s_logger.Warn($"Trying to parse: 2024-07-11 14:20:05 {expectedOffsetString} !!!");
                     Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
@@ -1144,7 +1143,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var offsetString = timeSpan.ToString();
             var secondsIndex = offsetString.LastIndexOf(":");
-            return offsetString.Substring(0, secondsIndex);
+            var offsetWithoutSeconds = offsetString.Substring(0, secondsIndex);
+            return offsetWithoutSeconds.StartsWith("+") || offsetWithoutSeconds.StartsWith("-")
+                ? offsetWithoutSeconds
+                : "+" + offsetWithoutSeconds;
         }
 
         private void EnableStructuredTypes(SnowflakeDbConnection connection)
