@@ -14,5 +14,6 @@ namespace Snowflake.Data.Core
         QUERY_CONTEXT_CACHE_SIZE,
         DATE_OUTPUT_FORMAT,
         TIME_OUTPUT_FORMAT,
+        CLIENT_STORE_TEMPORARY_CREDENTIAL,
     }
 }

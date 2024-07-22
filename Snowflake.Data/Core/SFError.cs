@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -86,7 +86,10 @@ namespace Snowflake.Data.Core
         EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
 
         [SFErrorAttr(errorCode = 270060)]
-        INCONSISTENT_RESULT_ERROR
+        INCONSISTENT_RESULT_ERROR,
+
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID
     }
 
     class SFErrorAttr : Attribute
