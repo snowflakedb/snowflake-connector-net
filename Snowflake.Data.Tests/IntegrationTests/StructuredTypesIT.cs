@@ -1070,6 +1070,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestSelectStructuredTypesAsNulls()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
+                        'ObjectValue', NULL,
+                        'ListValue', NULL,
+                        'ArrayValue', NULL,
+                        'MapValue', NULL
+                    )::OBJECT(
+                        ObjectValue OBJECT(Name TEXT),
+                        ListValue ARRAY(TEXT),
+                        ArrayValue ARRAY(TEXT),
+                        MapValue MAP(INTEGER, INTEGER)
+                    )";
+                    command.CommandText = $"SELECT {objectSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var objectWithStructuredTypes = reader.GetObject<ObjectArrayMapWrapper>(0);
+                    Assert.NotNull(objectWithStructuredTypes);
+                    Assert.IsNull(objectWithStructuredTypes.ObjectValue);
+                    Assert.IsNull(objectWithStructuredTypes.ListValue);
+                    Assert.IsNull(objectWithStructuredTypes.ArrayValue);
+                    Assert.IsNull(objectWithStructuredTypes.MapValue);
+                }
+            }
+        }
+
         private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
         {
             using (var command = connection.CreateCommand())
