@@ -7,6 +7,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Converter;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -1170,27 +1171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = (SnowflakeDbDataReader) command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 var timeZoneString = reader.GetString(1);
-                return ConvertToTimeZoneInfo(timeZoneString);
-            }
-        }
-
-        private TimeZoneInfo ConvertToTimeZoneInfo(string timeZoneString)
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneString);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                if (timeZoneString == "America/Los_Angeles")
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-                }
-                if (timeZoneString == "Europe/Warsaw")
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
-                }
-                throw new Exception($"Could not recognise time zone: {timeZoneString}");
+                return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);
             }
         }
 
