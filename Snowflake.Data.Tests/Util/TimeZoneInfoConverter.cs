@@ -26,9 +26,9 @@ namespace Snowflake.Data.Tests.Util
 
         private static IEnumerable<KeyValuePair<string, string>> TimeZoneMapping()
         {
-            yield return KeyValuePair.Create("America/Los_Angeles", "Pacific Standard Time");
-            yield return KeyValuePair.Create("Europe/Warsaw", "Central European Standard Time");
-            yield return KeyValuePair.Create("Asia/Tokyo", "Tokyo Standard Time");
+            yield return KeyValuePair.Create<string, string>("America/Los_Angeles", "Pacific Standard Time");
+            yield return KeyValuePair.Create<string, string>("Europe/Warsaw", "Central European Standard Time");
+            yield return KeyValuePair.Create<string, string>("Asia/Tokyo", "Tokyo Standard Time");
         }
     }
 
