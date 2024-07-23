@@ -2,18 +2,16 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Data.Common;
-using Snowflake.Data.Core;
-using System.Security;
-using System.Threading.Tasks;
-using System.Data;
-using System.Threading;
-using Snowflake.Data.Log;
-
 namespace Snowflake.Data.Client
 {
-    using Core.Tools;
+    using System;
+    using System.Data.Common;
+    using Snowflake.Data.Core;
+    using System.Security;
+    using System.Threading.Tasks;
+    using System.Data;
+    using System.Threading;
+    using Snowflake.Data.Log;
 
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
@@ -320,6 +318,7 @@ namespace Snowflake.Data.Client
             }
             registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
+            FillConnectionStringFromTomlConfigIfNotSet();
             return SnowflakeDbConnectionPool
                 .GetSessionAsync(ConnectionString, Password, cancellationToken)
                 .ContinueWith(previousTask =>
