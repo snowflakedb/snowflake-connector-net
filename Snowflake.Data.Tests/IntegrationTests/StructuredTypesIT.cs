@@ -945,7 +945,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [TestCaseSource(nameof(DateTimeConversionCases))]
-        public void TestSelectDateTime(string dbValue, string dbType, DateTime expected, bool possibleForRawValue)
+        public void TestSelectDateTime(string dbValue, string dbType, DateTime? expectedRaw, DateTime expected)
         {
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
@@ -953,6 +953,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
+                    SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
@@ -962,11 +963,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.IsTrue(reader.Read());
-                    if (possibleForRawValue)
+                    if (expectedRaw != null)
                     {
                         var rawValue = reader.GetDateTime(0);
-                        Assert.AreEqual(expected, rawValue);
-                        Assert.AreEqual(expected.Kind, rawValue.Kind);
+                        Assert.AreEqual(expectedRaw, rawValue);
+                        Assert.AreEqual(expectedRaw?.Kind, rawValue.Kind);
                     }
                     var wrappedValue = reader.GetObject<DateTimeWrapper>(1);
                     Assert.AreEqual(expected, wrappedValue.Value);
@@ -977,9 +978,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         internal static IEnumerable<object[]> DateTimeConversionCases()
         {
-            yield return new object[] { "2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), true};
-            yield return new object[] { "2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), DateTime.Parse("2024-07-11 09:20:05").ToUniversalTime(), false};
-            yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("2024-07-11 21:20:05").ToUniversalTime(), false};
+            yield return new object[] { "2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime() };
+            yield return new object[] { "2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05").ToUniversalTime() };
+            yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05").ToUniversalTime() };
+            yield return new object[] { "2024-07-11 14:20:05.123456789", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05.1234568").ToUniversalTime()};
+            yield return new object[] { "2024-07-11 14:20:05.123456789 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05.1234568").ToUniversalTime() };
+            yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05.1234568").ToUniversalTime() };
         }
 
         [Test]
@@ -992,6 +996,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
+                    SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
@@ -1018,6 +1023,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05Z")};
             yield return new object[] {"2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")};
             yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")};
+            yield return new object[] {"2024-07-11 14:20:05.123456789", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05.1234568Z")};
+            yield return new object[] {"2024-07-11 14:20:05.123456789 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 +5:00")};
+            yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")};
         }
 
         [Test]
@@ -1183,6 +1191,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return offsetWithoutSeconds.StartsWith("+") || offsetWithoutSeconds.StartsWith("-")
                 ? offsetWithoutSeconds
                 : "+" + offsetWithoutSeconds;
+        }
+
+        private void SetTimePrecision(SnowflakeDbConnection connection, int precision)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"ALTER SESSION SET TIMESTAMP_NTZ_OUTPUT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF{precision}'";
+                command.ExecuteNonQuery();
+                command.CommandText = $"ALTER SESSION SET TIMESTAMP_OUTPUT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF{precision} TZHTZM'";
+                command.ExecuteNonQuery();
+
+            }
         }
 
         private void EnableStructuredTypes(SnowflakeDbConnection connection)
