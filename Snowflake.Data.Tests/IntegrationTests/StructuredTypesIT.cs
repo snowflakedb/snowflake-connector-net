@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Converter;
 using Snowflake.Data.Tests.Client;
 using Snowflake.Data.Tests.Util;
@@ -1333,6 +1334,78 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestThrowExceptionForInvalidObject()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var objectSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
+                    command.CommandText = $"SELECT {objectSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetObject<Identity>(0));
+                    Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object"));
+                }
+            }
+        }
+
+        [Test]
+        public void TestThrowExceptionForInvalidArray()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arraySFString = "ARRAY_CONSTRUCT('x', 'y')::ARRAY";
+                    command.CommandText = $"SELECT {arraySFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<string>(0));
+                    Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array"));
+                }
+            }
+        }
+
+        [Test]
+        public void TestThrowExceptionForInvalidMap()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var invalidMapSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
+                    command.CommandText = $"SELECT {invalidMapSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetMap<string, string>(0));
+                    Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a map"));
+                }
+            }
+        }
+
         private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
         {
             using (var command = connection.CreateCommand())
@@ -1371,10 +1444,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var command = connection.CreateCommand())
             {
-                // command.CommandText = "ALTER SESSION SET FEATURE_STRUCTURED_TYPES = enabled";
-                // command.ExecuteNonQuery();
-                // command.CommandText = "ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_FDN_TABLES = true";
-                // command.ExecuteNonQuery();
                 command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT=JSON";
                 command.ExecuteNonQuery();
             }

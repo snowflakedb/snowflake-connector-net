@@ -86,7 +86,10 @@ namespace Snowflake.Data.Core
         EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
 
         [SFErrorAttr(errorCode = 270060)]
-        INCONSISTENT_RESULT_ERROR
+        INCONSISTENT_RESULT_ERROR,
+
+        [SFErrorAttr(errorCode = 270061)]
+        STRUCTURED_TYPE_READ_ERROR
     }
 
     class SFErrorAttr : Attribute

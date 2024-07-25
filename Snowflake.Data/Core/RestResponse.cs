@@ -323,14 +323,8 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "nullable")]
         internal bool nullable { get; set; }
 
-        [JsonProperty(PropertyName = "fixed")]
-        internal bool isFixed { get; set; }
-
-        [JsonProperty(PropertyName = "base")]
-        internal SFDataType baseType { get; set; } // TODO: use enum
-
         [JsonProperty(PropertyName = "fields")]
-        internal List<FieldMetadata> fields { get; set; }// = new List<FieldMetadata>();
+        internal List<FieldMetadata> fields { get; set; }
     }
 
     internal class ExecResponseChunk
