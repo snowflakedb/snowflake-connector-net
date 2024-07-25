@@ -83,8 +83,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(Boolean))
                 {
-                    var val = srcVal.Buffer[srcVal.offset];
-                    return val == '1' || val == 't' || val == 'T';
+                    return ConvertToBooleanValue(srcVal);
                 }
                 else if (destType == typeof(byte[]))
                 {
@@ -132,7 +131,13 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal static object ConvertToTimeSpan(UTF8Buffer srcVal, SFDataType srcType)
+        internal static bool ConvertToBooleanValue(UTF8Buffer srcVal)
+        {
+            var val = srcVal.Buffer[srcVal.offset];
+            return val == '1' || val == 't' || val == 'T';
+        }
+
+        private static object ConvertToTimeSpan(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
@@ -146,7 +151,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType)
+        private static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
@@ -164,7 +169,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SFDataType srcType)
+        private static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SFDataType srcType)
         {
             switch (srcType)
             {
@@ -314,7 +319,7 @@ namespace Snowflake.Data.Core
             return hexBuilder.ToString();
         }
 
-        private static byte[] HexToBytes(string hex)
+        internal static byte[] HexToBytes(string hex)
         {
             int NumberChars = hex.Length;
             byte[] bytes = new byte[NumberChars / 2];

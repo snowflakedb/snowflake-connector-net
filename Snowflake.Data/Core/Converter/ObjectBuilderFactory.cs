@@ -8,17 +8,17 @@ namespace Snowflake.Data.Core.Converter
 {
     internal static class ObjectBuilderFactory
     {
-        public static IObjectBuilder Create(Type type, int fieldsCount, StructureTypeConstructionMethod constructionMethod)
+        public static IObjectBuilder Create(Type type, int fieldsCount, SnowflakeObjectConstructionMethod constructionMethod)
         {
-            if (constructionMethod == StructureTypeConstructionMethod.PROPERTIES_NAMES)
+            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
             {
                 return new ObjectBuilderByPropertyNames(type);
             }
-            if (constructionMethod == StructureTypeConstructionMethod.PROPERTIES_ORDER)
+            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
             {
                 return new ObjectBuilderByPropertyOrder(type);
             }
-            if (constructionMethod == StructureTypeConstructionMethod.CONSTRUCTOR)
+            if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
             {
                 return new ObjectBuilderByConstructor(type, fieldsCount);
             }
@@ -30,21 +30,34 @@ namespace Snowflake.Data.Core.Converter
     {
         void BuildPart(object value);
 
-        Type MoveNext(string propertyName);
+        Type MoveNext(string sfPropertyName);
 
         object Build();
     }
 
     internal class ObjectBuilderByPropertyNames : IObjectBuilder
     {
-        private Type _type;
-        private List<Tuple<PropertyInfo, object>> _result;
+        private readonly Type _type;
+        private readonly List<Tuple<PropertyInfo, object>> _result;
         private PropertyInfo _currentProperty;
+        private readonly Dictionary<string, string> _sfToClientPropertyNames;
 
         public ObjectBuilderByPropertyNames(Type type)
         {
             _type = type;
             _result = new List<Tuple<PropertyInfo, object>>();
+            _sfToClientPropertyNames = new Dictionary<string, string>();
+            foreach (var property in type.GetProperties())
+            {
+                var sfPropertyName = GetSnowflakeName(property);
+                _sfToClientPropertyNames.Add(sfPropertyName, property.Name);
+            }
+        }
+
+        private string GetSnowflakeName(PropertyInfo propertyInfo)
+        {
+            var sfAnnotation = propertyInfo.GetCustomAttributes<SnowflakeColumn>().FirstOrDefault();
+            return string.IsNullOrEmpty(sfAnnotation?.Name) ? propertyInfo.Name : sfAnnotation.Name;
         }
 
         public void BuildPart(object value)
@@ -52,12 +65,16 @@ namespace Snowflake.Data.Core.Converter
             _result.Add(Tuple.Create(_currentProperty, value));
         }
 
-        public Type MoveNext(string propertyName)
+        public Type MoveNext(string sfPropertyName)
         {
-            _currentProperty = _type.GetProperty(propertyName);
+            if (!_sfToClientPropertyNames.TryGetValue(sfPropertyName, out var clientPropertyName))
+            {
+                throw new Exception($"Could not find property: {sfPropertyName}");
+            }
+            _currentProperty = _type.GetProperty(clientPropertyName);
             if (_currentProperty == null)
             {
-                throw new Exception($"Could not find property: {propertyName}");
+                throw new Exception($"Could not find property: {sfPropertyName}");
             }
             return _currentProperty.PropertyType;
         }
@@ -72,18 +89,24 @@ namespace Snowflake.Data.Core.Converter
 
     internal class ObjectBuilderByPropertyOrder : IObjectBuilder
     {
-        private Type _type;
-        private PropertyInfo[] _properties;
+        private readonly Type _type;
+        private readonly PropertyInfo[] _properties;
         private int _index;
-        private List<Tuple<PropertyInfo, object>> _result;
+        private readonly List<Tuple<PropertyInfo, object>> _result;
         private PropertyInfo _currentProperty;
 
         public ObjectBuilderByPropertyOrder(Type type)
         {
             _type = type;
-            _properties = type.GetProperties();
+            _properties = type.GetProperties().Where(property => !IsIgnoredForPropertiesOrder(property)).ToArray();
             _index = -1;
             _result = new List<Tuple<PropertyInfo, object>>();
+        }
+
+        private bool IsIgnoredForPropertiesOrder(PropertyInfo property)
+        {
+            var sfAnnotation = property.GetCustomAttributes<SnowflakeColumn>().FirstOrDefault();
+            return sfAnnotation != null && sfAnnotation.IgnoreForPropertyOrder;
         }
 
         public void BuildPart(object value)
@@ -91,7 +114,7 @@ namespace Snowflake.Data.Core.Converter
             _result.Add(Tuple.Create(_currentProperty, value));
         }
 
-        public Type MoveNext(string propertyName)
+        public Type MoveNext(string sfPropertyName)
         {
             _index++;
             _currentProperty = _properties[_index];
@@ -129,7 +152,7 @@ namespace Snowflake.Data.Core.Converter
             _result = new List<object>();
         }
 
-        public Type MoveNext(string propertyName)
+        public Type MoveNext(string sfPropertyName)
         {
             _index++;
             return _parameters[_index];

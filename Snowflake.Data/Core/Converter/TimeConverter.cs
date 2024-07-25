@@ -48,10 +48,6 @@ namespace Snowflake.Data.Core.Converter
             if (timestampType == SFTimestampType.TIMESTAMP_LTZ)
             {
                 var dateTimeOffset = DateTimeOffset.Parse(value);
-                //     .ToUniversalTime();
-                // var dbOffset = TimeZoneInfo.FindSystemTimeZoneById(dbTimeZone);
-                // var convertedTime = TimeZoneInfo.ConvertTime(dateTimeOffset, dbOffset);
-                // var x = TimeZoneInfo.ConvertTime(dateTimeOffset.UtcDateTime, dbOffset, dbOffset);
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
                     return dateTimeOffset;
@@ -82,7 +78,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 throw new Exception($"Cannot not read DATE into {fieldType} type");
             }
-            throw new Exception("Case not implemented yet");
+            throw new Exception($"Unsupported time conversion of {timestampType.ToString()} into {fieldType} type");
         }
     }
 }

@@ -257,46 +257,73 @@ namespace Snowflake.Data.Client
             return count;
         }
 
-        public T GetObject<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        public T GetObject<T>(int ordinal)
             where T : class, new()
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-            var fields = rowType.fields;
-            if (fields == null || fields.Count == 0)
+            try
             {
-                throw new Exception("Cannot return an object without metadata");
-                // return (T) GetValue(ordinal);
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0)
+                {
+                    throw new Exception("Method can be used only for structured object");
+                }
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertObject<T>(rowType.type, fields, json);
             }
-            var json = JObject.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json, constructionMethod);
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, "when getting an object", e.Message);
+            }
         }
 
-        public T[] GetArray<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        public T[] GetArray<T>(int ordinal)
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-            var fields = rowType.fields;
-            if (fields == null || fields.Count == 0)
+            try
             {
-                throw new Exception("Cannot return an array without metadata");
-                // return (T[]) GetValue(ordinal);
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0)
+                {
+                    throw new Exception("Method can be used only for structured array");
+                }
+
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JArray.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json);
             }
-            var json = JArray.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json, constructionMethod);
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, "when getting an array", e.Message);
+            }
         }
 
-        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal,
-            StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-            var fields = rowType.fields;
-            if (fields == null || fields.Count == 0)
+            try
             {
-                throw new Exception("Cannot return a map without metadata");
-                // return (T) GetValue(ordinal);
-            }
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0)
+                {
+                    throw new Exception("Method can be used only for structured map");
+                }
 
-            var json = JObject.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json, constructionMethod);
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json);
+            }
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, "when getting a map", e.Message);
+            }
         }
 
         public override bool IsDBNull(int ordinal)
@@ -344,13 +371,5 @@ namespace Snowflake.Data.Client
             resultSet.close();
             isClosed = true;
         }
-
-    }
-
-    public enum StructureTypeConstructionMethod
-    {
-        PROPERTIES_ORDER,
-        PROPERTIES_NAMES,
-        CONSTRUCTOR
     }
 }
