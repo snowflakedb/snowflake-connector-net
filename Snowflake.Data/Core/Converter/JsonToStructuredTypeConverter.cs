@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Converter
 
         private static TimeConverter _timeConverter = new TimeConverter();
 
-        public static T Convert<T>(string sourceTypeName, List<FieldMetadata> fields, JObject value)
+        public static T ConvertObject<T>(string sourceTypeName, List<FieldMetadata> fields, JObject value)
         {
             var type = typeof(T);
             if (SFDataType.OBJECT.ToString().Equals(sourceTypeName, StringComparison.OrdinalIgnoreCase))
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertToObject(Type type, List<FieldMetadata> fields, JToken json)
         {
-            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
                 return null;
             }
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json)
         {
-            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
                 return null;
             }
@@ -230,7 +230,7 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, JToken json)
         {
-            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
                 return null;
             }
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 throw new Exception("Unsupported key type in dictionary");
             }
-            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
                 return null;
             }

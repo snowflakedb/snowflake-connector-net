@@ -267,8 +267,9 @@ namespace Snowflake.Data.Client
                 throw new Exception("Cannot return an object without metadata");
                 // return (T) GetValue(ordinal);
             }
-            var json = JObject.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json);
+            var stringValue = GetString(ordinal);
+            var json = stringValue == null ? null : JObject.Parse(stringValue);
+            return JsonToStructuredTypeConverter.ConvertObject<T>(rowType.type, fields, json);
         }
 
         public T[] GetArray<T>(int ordinal)
@@ -278,9 +279,9 @@ namespace Snowflake.Data.Client
             if (fields == null || fields.Count == 0)
             {
                 throw new Exception("Cannot return an array without metadata");
-                // return (T[]) GetValue(ordinal);
             }
-            var json = JArray.Parse(GetString(ordinal));
+            var stringValue = GetString(ordinal);
+            var json = stringValue == null ? null : JArray.Parse(stringValue);
             return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json);
         }
 
@@ -294,8 +295,8 @@ namespace Snowflake.Data.Client
                 throw new Exception("Cannot return a map without metadata");
                 // return (T) GetValue(ordinal);
             }
-
-            var json = JObject.Parse(GetString(ordinal));
+            var stringValue = GetString(ordinal);
+            var json = stringValue == null ? null : JObject.Parse(stringValue);
             return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json);
         }
 

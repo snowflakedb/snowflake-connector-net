@@ -1264,6 +1264,75 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestSelectNullObject()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var nullObjectSFString = "NULL::OBJECT(Name TEXT)";
+                    command.CommandText = $"SELECT {nullObjectSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var nullObject = reader.GetObject<Identity>(0);
+                    Assert.IsNull(nullObject);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectNullArray()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var nullArraySFString = "NULL::ARRAY(TEXT)";
+                    command.CommandText = $"SELECT {nullArraySFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var nullArray = reader.GetArray<string>(0);
+                    Assert.IsNull(nullArray);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectNullMap()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                // arrange
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var nullMapSFString = "NULL::MAP(TEXT,TEXT)";
+                    command.CommandText = $"SELECT {nullMapSFString}";
+
+                    // act
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    // assert
+                    Assert.IsTrue(reader.Read());
+                    var nullMap = reader.GetMap<string, string>(0);
+                    Assert.IsNull(nullMap);
+                }
+            }
+        }
+
         private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
         {
             using (var command = connection.CreateCommand())
