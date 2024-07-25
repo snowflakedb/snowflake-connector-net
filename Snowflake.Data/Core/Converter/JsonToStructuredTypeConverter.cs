@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
@@ -12,47 +13,44 @@ namespace Snowflake.Data.Core.Converter
 
         private static TimeConverter _timeConverter = new TimeConverter();
 
-        public static T Convert<T>(string sourceTypeName, List<FieldMetadata> fields, JObject value,
-            StructureTypeConstructionMethod constructionMethod)
+        public static T Convert<T>(string sourceTypeName, List<FieldMetadata> fields, JObject value)
         {
             var type = typeof(T);
             if (SFDataType.OBJECT.ToString().Equals(sourceTypeName, StringComparison.OrdinalIgnoreCase))
             {
-                return (T) ConvertToObject(type, fields, value, constructionMethod);
+                return (T) ConvertToObject(type, fields, value);
             }
 
             throw new Exception("Case not supported");
         }
 
-        public static T[] ConvertArray<T>(string sourceTypeName, List<FieldMetadata> fields, JArray value,
-            StructureTypeConstructionMethod constructionMethod)
+        public static T[] ConvertArray<T>(string sourceTypeName, List<FieldMetadata> fields, JArray value)
         {
             var type = typeof(T[]);
             var elementType = typeof(T);
             if (SFDataType.ARRAY.ToString().Equals(sourceTypeName, StringComparison.OrdinalIgnoreCase))
             {
-                return (T[]) ConvertToArray(type, elementType, fields, value, constructionMethod);
+                return (T[]) ConvertToArray(type, elementType, fields, value);
             }
 
             throw new Exception("Case not supported");
         }
 
-        public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(string sourceTypeName, List<FieldMetadata> fields, JObject value,
-            StructureTypeConstructionMethod constructionMethod)
+        public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(string sourceTypeName, List<FieldMetadata> fields, JObject value)
         {
             var type = typeof(Dictionary<TKey, TValue>);
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
             if (SFDataType.MAP.ToString().Equals(sourceTypeName, StringComparison.OrdinalIgnoreCase))
             {
-                return (Dictionary<TKey, TValue>) ConvertToMap(type, keyType, valueType, fields, value, constructionMethod);
+                return (Dictionary<TKey, TValue>) ConvertToMap(type, keyType, valueType, fields, value);
             }
 
             throw new Exception("Case not supported");
         }
 
 
-        private static object ConvertToObject(Type type, List<FieldMetadata> fields, JToken json, StructureTypeConstructionMethod constructionMethod)
+        private static object ConvertToObject(Type type, List<FieldMetadata> fields, JToken json)
         {
             if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -63,6 +61,7 @@ namespace Snowflake.Data.Core.Converter
                 throw new Exception("Json is not an object");
             }
             var jsonObject = (JObject)json;
+            var constructionMethod = GetConstructionMethod(type);
             var objectBuilder = ObjectBuilderFactory.Create(type, fields?.Count ?? 0, constructionMethod);
             using (var metadataIterator = fields.GetEnumerator())
             {
@@ -83,12 +82,19 @@ namespace Snowflake.Data.Core.Converter
                         var key = jsonPropertyWithValue.Key;
                         var fieldValue = jsonPropertyWithValue.Value;
                         var fieldType = objectBuilder.MoveNext(key);
-                        var value = ConvertToStructuredOrUnstructuredValue(fieldType, fieldMetadata, fieldValue, constructionMethod);
+                        var value = ConvertToStructuredOrUnstructuredValue(fieldType, fieldMetadata, fieldValue);
                         objectBuilder.BuildPart(value);
                     } while (true);
                 }
             }
             return objectBuilder.Build();
+        }
+
+        private static SnowflakeObjectConstructionMethod GetConstructionMethod(Type type)
+        {
+            return type.GetCustomAttributes(false).Where(attribute => attribute.GetType() == typeof(SnowflakeObject))
+                .Select(attribute => ((SnowflakeObject)attribute).ConstructionMethod)
+                .FirstOrDefault();
         }
 
         private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json)
@@ -222,7 +228,7 @@ namespace Snowflake.Data.Core.Converter
             return bytes;
         }
 
-        private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, JToken json, StructureTypeConstructionMethod constructionMethod)
+        private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, JToken json)
         {
             if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -238,7 +244,7 @@ namespace Snowflake.Data.Core.Converter
             var elementMetadata = fields[0];
             for (var i = 0; i < jsonArray.Count; i++)
             {
-                result[i] = ConvertToStructuredOrUnstructuredValue(elementType, elementMetadata, jsonArray[i], constructionMethod);
+                result[i] = ConvertToStructuredOrUnstructuredValue(elementType, elementMetadata, jsonArray[i]);
             }
             if (type != arrayType)
             {
@@ -254,8 +260,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, JToken json,
-            StructureTypeConstructionMethod constructionMethod)
+        private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, JToken json)
         {
             if (keyType != typeof(string) && keyType != typeof(int) && keyType != typeof(long))
             {
@@ -287,28 +292,28 @@ namespace Snowflake.Data.Core.Converter
                     var key = IsTextMetadata(keyMetadata) || IsFixedMetadata(keyMetadata)
                         ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key)
                         : throw new Exception("Unsupported type of map key");
-                    var value = ConvertToStructuredOrUnstructuredValue(valueType, fieldMetadata, fieldValue, constructionMethod);
+                    var value = ConvertToStructuredOrUnstructuredValue(valueType, fieldMetadata, fieldValue);
                     result.Add(key, value);
                 }
             }
             return result;
         }
 
-        private static object ConvertToStructuredOrUnstructuredValue(Type valueType, FieldMetadata fieldMetadata, JToken fieldValue, StructureTypeConstructionMethod constructionMethod)
+        private static object ConvertToStructuredOrUnstructuredValue(Type valueType, FieldMetadata fieldMetadata, JToken fieldValue)
         {
             if (IsObjectMetadata(fieldMetadata) && fieldMetadata.fields != null)
             {
-                return ConvertToObject(valueType, fieldMetadata.fields, fieldValue, constructionMethod);
+                return ConvertToObject(valueType, fieldMetadata.fields, fieldValue);
             }
             if (IsArrayMetadata(fieldMetadata) && fieldMetadata.fields != null)
             {
                 var nestedType = GetNestedType(valueType);
-                return ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue, constructionMethod);
+                return ConvertToArray(valueType, nestedType, fieldMetadata.fields, fieldValue);
             }
             if (IsMapMetadata(fieldMetadata) && fieldMetadata.fields != null)
             {
                 var keyValueTypes = GetMapKeyValueTypes(valueType);
-                return ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue, constructionMethod);
+                return ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, fieldValue);
             }
             return ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue);
         }

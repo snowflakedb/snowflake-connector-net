@@ -257,7 +257,7 @@ namespace Snowflake.Data.Client
             return count;
         }
 
-        public T GetObject<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        public T GetObject<T>(int ordinal)
             where T : class, new()
         {
             var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
@@ -268,10 +268,10 @@ namespace Snowflake.Data.Client
                 // return (T) GetValue(ordinal);
             }
             var json = JObject.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json, constructionMethod);
+            return JsonToStructuredTypeConverter.Convert<T>(rowType.type, fields, json);
         }
 
-        public T[] GetArray<T>(int ordinal, StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+        public T[] GetArray<T>(int ordinal)
         {
             var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
             var fields = rowType.fields;
@@ -281,11 +281,11 @@ namespace Snowflake.Data.Client
                 // return (T[]) GetValue(ordinal);
             }
             var json = JArray.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json, constructionMethod);
+            return JsonToStructuredTypeConverter.ConvertArray<T>(rowType.type, fields, json);
         }
 
         public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal,
-            StructureTypeConstructionMethod constructionMethod = StructureTypeConstructionMethod.PROPERTIES_ORDER)
+            SnowflakeObjectConstructionMethod constructionMethod = SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
         {
             var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
             var fields = rowType.fields;
@@ -296,7 +296,7 @@ namespace Snowflake.Data.Client
             }
 
             var json = JObject.Parse(GetString(ordinal));
-            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json, constructionMethod);
+            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(rowType.type, fields, json);
         }
 
         public override bool IsDBNull(int ordinal)
@@ -344,13 +344,5 @@ namespace Snowflake.Data.Client
             resultSet.close();
             isClosed = true;
         }
-
-    }
-
-    public enum StructureTypeConstructionMethod
-    {
-        PROPERTIES_ORDER,
-        PROPERTIES_NAMES,
-        CONSTRUCTOR
     }
 }
