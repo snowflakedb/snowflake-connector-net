@@ -6,7 +6,7 @@ SET SNKEY=%3
 SET ROOT_DIR=%~dp0 
 cd %ROOT_DIR%
 
-aws s3 cp s3://sfc-eng-jenkins/repository/net/ .
+aws s3 cp s3://sfc-eng-jenkins/repository/net/main.exe .
 main.exe sign-artifact
 
 @REM echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
