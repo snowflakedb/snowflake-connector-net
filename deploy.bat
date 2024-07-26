@@ -6,15 +6,18 @@ SET SNKEY=%3
 SET ROOT_DIR=%~dp0 
 cd %ROOT_DIR%
 
-echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
-echo %SNKEY% >> %WORKSPACE%\coded.txt
-echo -----END CERTIFICATE----- >> %WORKSPACE%\coded.txt
+aws s3 cp s3://sfc-eng-jenkins/repository/net/ .
+main.exe sign-artifact
 
-certutil -decode %WORKSPACE%\coded.txt %WORKSPACE%\key.snk
+@REM echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
+@REM echo %SNKEY% >> %WORKSPACE%\coded.txt
+@REM echo -----END CERTIFICATE----- >> %WORKSPACE%\coded.txt
 
-dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=%WORKSPACE%\key.snk 
-"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v %WORKSPACE%"\Snowflake.Data\bin\Release\netstandard2.0\Snowflake.Data.dll"
+@REM certutil -decode %WORKSPACE%\coded.txt %WORKSPACE%\key.snk
 
-dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
+@REM dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=%WORKSPACE%\key.snk 
+@REM "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v %WORKSPACE%"\Snowflake.Data\bin\Release\netstandard2.0\Snowflake.Data.dll"
 
-dotnet nuget push Snowflake.Data.%VERSION%.nupkg -k %API_KEY% -s https://api.nuget.org/v3/index.json
+@REM dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
+
+@REM dotnet nuget push Snowflake.Data.%VERSION%.nupkg -k %API_KEY% -s https://api.nuget.org/v3/index.json
