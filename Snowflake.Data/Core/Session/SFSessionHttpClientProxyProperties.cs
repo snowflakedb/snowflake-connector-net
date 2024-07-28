@@ -24,10 +24,7 @@ namespace Snowflake.Data.Core
             {
                 var properties = new SFSessionHttpClientProxyProperties();
 
-                if (propertiesDictionary.TryGetValue(SFSessionProperty.USEPROXY, out string stringUseProxy))
-                {
-                    properties.useProxy = Boolean.Parse(stringUseProxy);
-                }
+                properties.useProxy = Boolean.Parse(propertiesDictionary[SFSessionProperty.USEPROXY]);
 
                 if (properties.useProxy)
                 {
