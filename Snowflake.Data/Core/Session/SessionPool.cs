@@ -9,13 +9,12 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
-    using Microsoft.IdentityModel.Tokens;
-    using Snowflake.Data.Core.Authenticator;
 
     sealed class SessionPool : IDisposable
     {
@@ -125,14 +124,9 @@ namespace Snowflake.Data.Core.Session
 
         internal void ValidateSecurePassword(SecureString password)
         {
-            ValidateSecureCredential(password, Password);
-        }
-
-        internal void ValidateSecureCredential(SecureString newCredential, SecureString storedCredential)
-        {
-            if (!ExtractPassword(storedCredential).Equals(ExtractPassword(newCredential)))
+            if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
             {
-                var errorMessage = "Could not get a pool because of credential mismatch";
+                var errorMessage = "Could not get a pool because of password mismatch";
                 s_logger.Error(errorMessage + PoolIdentification());
                 throw new Exception(errorMessage);
             }
@@ -144,11 +138,11 @@ namespace Snowflake.Data.Core.Session
         internal SFSession GetSession(string connStr, SecureString password, SecureString passcode)
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
-            SFSession session = null;
             var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
             ValidatePoolingIfPasscodeProvided(sessionProperties);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
+            SFSession session = null;
             var sessionOrCreateTokens = GetIdleSession(connStr);
             if(sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME)
                 session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
@@ -163,7 +157,7 @@ namespace Snowflake.Data.Core.Session
 
         private void ValidatePoolingIfPasscodeProvided(SFSessionProperties sessionProperties)
         {
-            if (!GetPooling() || _poolConfig.MinPoolSize == 0) return;
+            if (!GetPooling() || !IsMultiplePoolsVersion() || _poolConfig.MinPoolSize == 0) return;
             var isUsingPasscode = (sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
                                    (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
                                     bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
