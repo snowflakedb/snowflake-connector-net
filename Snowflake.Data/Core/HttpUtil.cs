@@ -17,6 +17,8 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
+    using Client;
+
     public class HttpClientConfig
     {
         public HttpClientConfig(
@@ -87,7 +89,7 @@ namespace Snowflake.Data.Core
 
         private HttpUtil()
         {
-            // This value is used by AWS SDK and can cause deadlock, 
+            // This value is used by AWS SDK and can cause deadlock,
             // so we need to increase the default value of 2
             // See: https://github.com/aws/aws-sdk-net/issues/152
             ServicePointManager.DefaultConnectionLimit = 50;
@@ -181,15 +183,15 @@ namespace Snowflake.Data.Core
                     {
                         // Get the original entry
                         entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char 
+                        // . -> [.] because . means any char
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
-                        
+
                         entry = entry.StartsWith("^") ? entry : $"^{entry}";
-                        
+
                         entry = entry.EndsWith("$") ? entry : $"{entry}$";
-                        
+
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
@@ -373,7 +375,7 @@ namespace Snowflake.Data.Core
 
                 while (true)
                 {
-
+                    Exception toThrow = null;
                     try
                     {
                         childCts = null;
@@ -384,7 +386,7 @@ namespace Snowflake.Data.Core
                             if (httpTimeout.Ticks == 0)
                                 childCts.Cancel();
                             else
-                                childCts.CancelAfter(httpTimeout);                        
+                                childCts.CancelAfter(httpTimeout);
                         }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
@@ -406,6 +408,7 @@ namespace Snowflake.Data.Core
                             //TODO: Should probably check to see if the error is recoverable or transient.
                             logger.Warn("Error occurred during request, retrying...", e);
                         }
+                        toThrow = e;
                     }
 
                     if (childCts != null)
@@ -454,7 +457,16 @@ namespace Snowflake.Data.Core
                         {
                             return response;
                         }
-                        throw new OperationCanceledException($"http request failed and max retry {maxRetryCount} reached");
+
+
+                        throw new SnowflakeDbException(toThrow, SFError.INTERNAL_ERROR,
+                            $"Http request failed and max retry {maxRetryCount} reached");
+
+                    }
+
+                    if (childCts.IsCancellationRequested)
+                    {
+                        throw new OperationCanceledException($"cancelado!!!");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
