@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
+        public void TestConnectionIsNotMarkedAsOpenWhenWfasNotCorrectlyOpenedWithUsingClause()
         {
             for (int i = 0; i < 2; ++i)
             {
@@ -2270,6 +2270,53 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        }
+
+        [Test]
+        public async Task TestShouldThrowExceptionWhenTaskCanceledWhenOpenAsync()
+        {
+            // act
+            var connectionString = "account=myaccount.servername; " +
+                                      " user=admin; password=password; role=ACCOUNTADMIN;" +
+                                      " DB=TEST_DB; warehouse=COMPUTE_WH;" +
+                                      " useproxy=true;proxyhost=no.such.pro.xy;proxyport=8080";
+
+            using (var connection = new SnowflakeDbConnection())
+            {
+                try{
+                    connection.ConnectionString = connectionString;
+                    Task t = connection.OpenAsync();
+                    t.Wait();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestConnectionAsyncTimeoutWithMaxRetryReached()
+        {
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
+            {
+                _forceTimeoutForNonLoginRequestsOnly = false
+            };
+
+            using (DbConnection connection = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=true";
+
+                connection.ConnectionString = maxRetryConnStr;
+                try{
+                    Task t = connection.OpenAsync();
+                    t.Wait();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+                }
+            }
         }
     }
 }

@@ -458,15 +458,13 @@ namespace Snowflake.Data.Core
                             return response;
                         }
 
-
+                        if (toThrow is TaskCanceledException)
+                        {
+                            throw toThrow;
+                        }
                         throw new SnowflakeDbException(toThrow, SFError.INTERNAL_ERROR,
                             $"Http request failed and max retry {maxRetryCount} reached");
 
-                    }
-
-                    if (childCts.IsCancellationRequested)
-                    {
-                        throw new OperationCanceledException($"cancelado!!!");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
