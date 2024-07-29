@@ -2,14 +2,15 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+
+using System.Collections.Generic;
+using System.Security;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
+
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Log;
-    using System.Collections.Generic;
-    using System.Security;
-    using Tools;
-
     internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerInMemoryImpl>();

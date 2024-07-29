@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core.Authenticator
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
             data.SessionParameters[SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN] = true;
-            if (!string.IsNullOrEmpty(session._mfaToken.ToString()))
+            if (!string.IsNullOrEmpty(session._mfaToken?.ToString()))
             {
                 data.Token = SecureStringHelper.Decode(session._mfaToken);
             }
