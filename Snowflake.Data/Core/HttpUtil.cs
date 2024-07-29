@@ -21,6 +21,7 @@ namespace Snowflake.Data.Core
     {
         public HttpClientConfig(
             bool crlCheckEnabled,
+            bool allowEmptyProxy,
             bool useProxy,
             string proxyHost,
             string proxyPort,
@@ -33,6 +34,7 @@ namespace Snowflake.Data.Core
             bool includeRetryReason = true)
         {
             CrlCheckEnabled = crlCheckEnabled;
+            AllowEmptyProxy = allowEmptyProxy;
             UseProxy = useProxy;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
@@ -47,6 +49,7 @@ namespace Snowflake.Data.Core
             ConfKey = string.Join(";",
                 new string[] {
                     crlCheckEnabled.ToString(),
+                    allowEmptyProxy.ToString(),
                     useProxy.ToString(),
                     proxyHost,
                     proxyPort,
@@ -60,6 +63,7 @@ namespace Snowflake.Data.Core
         }
 
         public readonly bool CrlCheckEnabled;
+        public readonly bool AllowEmptyProxy;
         public readonly bool UseProxy;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
@@ -158,60 +162,62 @@ namespace Snowflake.Data.Core
                 };
             }
 
-            // Add a proxy if necessary
-            if (!config.UseProxy)
+            httpHandler.UseProxy = config.UseProxy && (config.AllowEmptyProxy || !string.IsNullOrEmpty(config.ProxyHost));
+
+            if (httpHandler.UseProxy && !string.IsNullOrEmpty(config.ProxyHost))
             {
-                httpHandler.UseProxy = false;
+                logger.Info("Configuring proxy based on connection string properties");
+                var proxy = ConfigureWebProxy(config);
+                httpHandler.Proxy = proxy;
             }
-            else
+            else if (httpHandler.UseProxy)
             {
-                // Proxy needed
-                httpHandler.UseProxy = true;
-
-                if (!String.IsNullOrEmpty(config.ProxyHost))
-                {
-                    // Host explicitly specified, do not use default proxy
-                    WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
-
-                    // Add credential if provided
-                    if (!String.IsNullOrEmpty(config.ProxyUser))
-                    {
-                        ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
-                        proxy.Credentials = credentials;
-                    }
-
-                    // Add bypasslist if provided
-                    if (!String.IsNullOrEmpty(config.NoProxyList))
-                    {
-                        string[] bypassList = config.NoProxyList.Split(
-                            new char[] { '|' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        // Convert simplified syntax to standard regular expression syntax
-                        string entry = null;
-                        for (int i = 0; i < bypassList.Length; i++)
-                        {
-                            // Get the original entry
-                            entry = bypassList[i].Trim();
-                            // . -> [.] because . means any char
-                            entry = entry.Replace(".", "[.]");
-                            // * -> .*  because * is a quantifier and need a char or group to apply to
-                            entry = entry.Replace("*", ".*");
-
-                            entry = entry.StartsWith("^") ? entry : $"^{entry}";
-
-                            entry = entry.EndsWith("$") ? entry : $"{entry}$";
-
-                            // Replace with the valid entry syntax
-                            bypassList[i] = entry;
-
-                        }
-                        proxy.BypassList = bypassList;
-                    }
-
-                    httpHandler.Proxy = proxy;
-                }
+                logger.Info("Proxy enabled, but not configured due to allowEmptyProxy property set to true");
             }
+
             return httpHandler;
+        }
+
+        private WebProxy ConfigureWebProxy(HttpClientConfig config)
+        {
+            WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
+
+            // Add credential if provided
+            if (!String.IsNullOrEmpty(config.ProxyUser))
+            {
+                ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
+                proxy.Credentials = credentials;
+            }
+
+            // Add bypasslist if provided
+            if (!String.IsNullOrEmpty(config.NoProxyList))
+            {
+                string[] bypassList = config.NoProxyList.Split(
+                    new char[] { '|' },
+                    StringSplitOptions.RemoveEmptyEntries);
+                // Convert simplified syntax to standard regular expression syntax
+                string entry = null;
+                for (int i = 0; i < bypassList.Length; i++)
+                {
+                    // Get the original entry
+                    entry = bypassList[i].Trim();
+                    // . -> [.] because . means any char
+                    entry = entry.Replace(".", "[.]");
+                    // * -> .*  because * is a quantifier and need a char or group to apply to
+                    entry = entry.Replace("*", ".*");
+
+                    entry = entry.StartsWith("^") ? entry : $"^{entry}";
+
+                    entry = entry.EndsWith("$") ? entry : $"{entry}$";
+
+                    // Replace with the valid entry syntax
+                    bypassList[i] = entry;
+
+                }
+                proxy.BypassList = bypassList;
+            }
+
+            return proxy;
         }
 
         /// <summary>

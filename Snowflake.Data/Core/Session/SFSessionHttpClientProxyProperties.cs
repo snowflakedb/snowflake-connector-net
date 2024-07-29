@@ -6,6 +6,7 @@ namespace Snowflake.Data.Core
 
     internal class SFSessionHttpClientProxyProperties
     {
+        internal bool allowEmptyProxy = false;
         internal bool useProxy = false;
         internal string proxyHost = null;
         internal string proxyPort = null;
@@ -29,6 +30,7 @@ namespace Snowflake.Data.Core
                 if (properties.useProxy)
                 {
                     // Let's try to get the associated RestRequester
+                    properties.allowEmptyProxy = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWEMPTYPROXY]);
                     propertiesDictionary.TryGetValue(SFSessionProperty.PROXYHOST, out properties.proxyHost);
                     propertiesDictionary.TryGetValue(SFSessionProperty.PROXYPORT, out properties.proxyPort);
                     propertiesDictionary.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out properties.nonProxyHosts);
@@ -38,7 +40,7 @@ namespace Snowflake.Data.Core
                     if (!String.IsNullOrEmpty(properties.nonProxyHosts))
                     {
                         // The list is url-encoded
-                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
+                        // Host names are separated with a URL-escaped pipe symbol (%7C).
                         properties.nonProxyHosts = HttpUtility.UrlDecode(properties.nonProxyHosts);
                     }
                 }

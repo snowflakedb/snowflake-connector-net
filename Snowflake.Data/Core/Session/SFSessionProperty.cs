@@ -112,7 +112,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        DISABLE_SAML_URL_CHECK
+        DISABLE_SAML_URL_CHECK,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOWEMPTYPROXY
     }
 
     class SFSessionPropertyAttr : Attribute

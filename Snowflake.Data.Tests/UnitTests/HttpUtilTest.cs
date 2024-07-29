@@ -1,18 +1,17 @@
-/*
+﻿/*
  * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
  */
 
 using System.Net.Http;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using RichardSzalay.MockHttp;
+using System.Threading.Tasks;
+using System.Net;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using RichardSzalay.MockHttp;
-    using System.Threading.Tasks;
-    using System.Net;
-    using System;
-
     [TestFixture]
     class HttpUtilTest
     {
@@ -102,11 +101,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithExplicitProxy()
+        public void TestCreateHttpClientHandlerWithExplicitProxy([Values] bool allowEmptyProxy)
         {
             // given
             var config = new HttpClientConfig(
                 true,
+                allowEmptyProxy,
                 true,
                 "snowflake.com",
                 "123",
@@ -127,10 +127,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithImplicitProxy()
+        public void TestCreateHttpClientHandlerWithImplicitProxy()
         {
             // given
             var config = new HttpClientConfig(
+                true,
                 true,
                 true,
                 null,
@@ -152,11 +153,38 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithoutProxy()
+        public void TestDoNotCreateHttpClientHandlerWithImplicitProxyWhenEmptyProxyNotAllowed()
+        {
+            // given
+            var config = new HttpClientConfig(
+                true,
+                false,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                7
+            );
+
+            // when
+            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // then
+            Assert.IsFalse(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
+        }
+
+        [Test]
+        public void ShouldCreateHttpClientHandlerWithoutProxy([Values] bool allowEmptyProxy)
         {
             // given
             var config = new HttpClientConfig(
                 false,
+                allowEmptyProxy,
                 false,
                 null,
                 null,

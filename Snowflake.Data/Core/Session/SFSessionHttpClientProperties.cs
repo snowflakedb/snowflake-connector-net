@@ -179,6 +179,7 @@ namespace Snowflake.Data.Core
         {
             return new HttpClientConfig(
                 !insecureMode,
+                proxyProperties.allowEmptyProxy,
                 proxyProperties.useProxy,
                 proxyProperties.proxyHost,
                 proxyProperties.proxyPort,
