@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
@@ -52,19 +53,18 @@ namespace Snowflake.Data.Configuration
 
             try
             {
-                FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherWrite | FileAccessPermissions.GroupWrite;
-                var fileInfo = new UnixFileInfo(path: filePath);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    using var streamReader = new StreamReader(filePath, Encoding.Default);
+                    return streamReader.ReadToEnd();
+                }
+                else
+                {
+                    var handle = VerifyUnixPermissions(filePath);
 
-                using var handle = fileInfo.OpenRead();
-                if (handle.OwnerUser.UserId != Syscall.geteuid())
-                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR,"Attempting to read a file not owned by the effective user of the current process");
-                if (handle.OwnerGroup.GroupId != Syscall.getegid())
-                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR,"Attempting to read a file not owned by the effective group of the current process");
-                if ((handle.FileAccessPermissions & forbiddenPermissions) != 0)
-                    throw new SnowflakeDbException( SFError.INTERNAL_ERROR,"Attempting to read a file with too broad permissions assigned");
-
-                using var streamReader = new StreamReader(handle, Encoding.Default);
-                return streamReader.ReadToEnd();
+                    using var streamReader = new StreamReader(handle, Encoding.Default);
+                    return streamReader.ReadToEnd();
+                }
             }
             catch (Exception e)
             {
@@ -72,6 +72,21 @@ namespace Snowflake.Data.Configuration
                 s_logger.Error(errorMessage, e);
                 throw;
             }
+        }
+
+        private static UnixStream VerifyUnixPermissions(string filePath)
+        {
+            FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherWrite | FileAccessPermissions.GroupWrite;
+            var fileInfo = new UnixFileInfo(path: filePath);
+
+            using var handle = fileInfo.OpenRead();
+            if (handle.OwnerUser.UserId != Syscall.geteuid())
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Attempting to read a file not owned by the effective user of the current process");
+            if (handle.OwnerGroup.GroupId != Syscall.getegid())
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Attempting to read a file not owned by the effective group of the current process");
+            if ((handle.FileAccessPermissions & forbiddenPermissions) != 0)
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Attempting to read a file with too broad permissions assigned");
+            return handle;
         }
 
         private ClientConfig TryToParseFile(string fileContent)
