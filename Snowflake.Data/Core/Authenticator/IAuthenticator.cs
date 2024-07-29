@@ -143,10 +143,6 @@ namespace Snowflake.Data.Core.Authenticator
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
-
-
-
-
             SetSpecializedAuthenticatorData(ref data);
 
             return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });

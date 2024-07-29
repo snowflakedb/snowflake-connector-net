@@ -2,15 +2,16 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using Microsoft.Win32.SafeHandles;
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
+
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-    using Microsoft.Win32.SafeHandles;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Log;
-    using System;
-    using System.Runtime.InteropServices;
-    using System.Text;
-    using Tools;
 
     internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
     {
