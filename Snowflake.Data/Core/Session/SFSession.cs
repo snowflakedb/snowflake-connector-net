@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
@@ -73,6 +74,8 @@ namespace Snowflake.Data.Core
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
 
+        internal SecureString Passcode { get; }
+
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
         private int _queryContextCacheSize = _defaultQueryContextCacheSize;
@@ -98,6 +101,10 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
+        private readonly ISnowflakeCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
+
+        internal SecureString _mfaToken;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -116,6 +123,12 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
+                if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
+                {
+                    _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
+                    _credManager.SaveCredentials(key, authnResponse.data.mfaToken);
+                }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
@@ -128,6 +141,14 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
+                if (e.ErrorCode == SFError.EXT_AUTHN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+                {
+                    logger.Info("MFA Token has expired or not valid.", e);
+                    _mfaToken = null;
+                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
+                    _credManager.RemoveCredentials(mfaKey);
+                }
+
                 throw e;
             }
         }
@@ -158,19 +179,22 @@ namespace Snowflake.Data.Core
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
             String connectionString,
-            SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
+            SecureString password,
+            SecureString passcode = null) : this(connectionString, password, passcode, EasyLoggingStarter.Instance)
         {
         }
 
         internal SFSession(
             String connectionString,
             SecureString password,
+            SecureString passcode,
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
             Password = password;
-            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
+            Passcode = passcode;
+            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password, Passcode);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
@@ -190,6 +214,12 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
+
+                if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
+                {
+                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, _authenticatorType);
+                    _mfaToken = SecureStringHelper.Encode(_credManager.GetCredentials(mfaKey));
+                }
             }
             catch (SnowflakeDbException e)
             {
@@ -221,7 +251,11 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
+        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password, null, EasyLoggingStarter.Instance, restRequester)
+        {
+        }
+
+        internal SFSession(String connectionString, SecureString password, SecureString passcode, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, password, passcode, easyLoggingStarter)
         {
             // Inject the HttpClient to use with the Mock requester
             restRequester.setHttpClient(_HttpClient);

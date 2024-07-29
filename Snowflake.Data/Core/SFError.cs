@@ -86,7 +86,10 @@ namespace Snowflake.Data.Core
         EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
 
         [SFErrorAttr(errorCode = 270060)]
-        INCONSISTENT_RESULT_ERROR
+        INCONSISTENT_RESULT_ERROR,
+
+        [SFErrorAttr(errorCode = 390127)]
+        EXT_AUTHN_INVALID
     }
 
     class SFErrorAttr : Attribute

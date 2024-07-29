@@ -15,10 +15,10 @@ namespace Snowflake.Data.Core
     {
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
-        
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
-        
+
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
 
@@ -91,6 +91,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
         internal int masterValidityInSeconds { get; set; }
+
+        [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string mfaToken { get; set; }
     }
 
     internal class AuthenticatorResponseData
@@ -222,7 +225,7 @@ namespace Snowflake.Data.Core
         // multiple statements response data
         [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
         internal string resultIds { get; set; }
-        
+
         [JsonProperty(PropertyName = "queryResultFormat", NullValueHandling = NullValueHandling.Ignore)]
         [JsonConverter(typeof(StringEnumConverter))]
         internal ResultFormat queryResultFormat { get; set; }
@@ -296,7 +299,7 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "nullable")]
         internal bool nullable { get; set; }
     }
-    
+
     internal class ExecResponseChunk
     {
         [JsonProperty(PropertyName = "url")]
@@ -483,4 +486,4 @@ namespace Snowflake.Data.Core
             throw new NotImplementedException();
         }
     }
-} 
+}

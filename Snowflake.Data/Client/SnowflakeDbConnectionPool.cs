@@ -30,16 +30,16 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal static SFSession GetSession(string connectionString, SecureString password)
+        internal static SFSession GetSession(string connectionString, SecureString password, SecureString passcode)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSession");
-            return ConnectionManager.GetSession(connectionString, password);
+            return ConnectionManager.GetSession(connectionString, password, passcode);
         }
 
-        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
-            return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
+            return ConnectionManager.GetSessionAsync(connectionString, password, passcode, cancellationToken);
         }
 
         public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)

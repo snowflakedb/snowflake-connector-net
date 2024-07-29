@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    class BasicAuthenticator : BaseAuthenticator, IAuthenticator
-    {
-        public const string AUTH_NAME = "snowflake";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
+    using Tools;
 
-        internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
+    class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
+    {
+        public const string AUTH_NAME = "username_password_mfa";
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<MFACacheAuthenticator>();
+
+        internal MFACacheAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
         }
 
@@ -34,6 +36,11 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
+            data.SessionParameters[SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN] = true;
+            if (!string.IsNullOrEmpty(session._mfaToken?.ToString()))
+            {
+                data.Token = SecureStringHelper.Decode(session._mfaToken);
+            }
             SetSecondaryAuthenticationData(ref data);
         }
     }
