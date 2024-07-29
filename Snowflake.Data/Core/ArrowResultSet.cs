@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -398,7 +398,7 @@ namespace Snowflake.Data.Core
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
-            session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
+            session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
         

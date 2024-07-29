@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -13,6 +13,7 @@ using Snowflake.Data.Client;
 using System.Text;
 using System.Web;
 using System.Linq;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -21,6 +22,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
+        public const string AUTH_NAME = "okta";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
 
         internal const string RetryCountHeader = "RetryCount";
@@ -38,7 +40,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// </summary>
         /// <param name="session"></param>
         /// <param name="oktaUriString"></param>
-        internal OktaAuthenticator(SFSession session, string oktaUriString) : 
+        internal OktaAuthenticator(SFSession session, string oktaUriString) :
             base(session, oktaUriString)
         {
             _oktaUrl = new Uri(oktaUriString);
@@ -80,13 +82,16 @@ namespace Snowflake.Data.Core.Authenticator
                     s_logger.Debug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
                     samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
-#if NETFRAMEWORK                    
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-#else
-                    _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-#endif                    
                     s_logger.Debug("step 5: Verify postback URL in SAML response");
-                    VerifyPostbackUrl();
+                    if (!session._disableSamlUrlCheck)
+                    {
+                        VerifyPostbackUrl();
+                    }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                    }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
                     await LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -141,7 +146,14 @@ namespace Snowflake.Data.Core.Authenticator
                     _rawSamlTokenHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
 
                     s_logger.Debug("step 5: Verify postback URL in SAML response");
-                    VerifyPostbackUrl();
+                    if (!session._disableSamlUrlCheck)
+                    {
+                        VerifyPostbackUrl();
+                    }
+                    else
+                    {
+                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                    }
 
                     s_logger.Debug("step 6: Send SAML response to Snowflake to login");
                     Login();
@@ -270,10 +282,11 @@ namespace Snowflake.Data.Core.Authenticator
                 throw e;
             }
         }
-        
+
         private bool RetryLimitIsNotReached(int retryCount, int timeoutElapsed)
         {
-            return retryCount < session._maxRetryCount && timeoutElapsed < session._maxRetryTimeout;
+            var elapsedMillis = timeoutElapsed * 1000;
+            return retryCount < session._maxRetryCount && !TimeoutHelper.IsExpired(elapsedMillis, session._maxRetryTimeout);
         }
 
         private bool IsPostbackUrlNotFound(Exception ex)
@@ -293,10 +306,10 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 errorMessage = $"The retry count has reached its limit of {session._maxRetryCount}";
             }
-            if (timeoutElapsed >= session._maxRetryTimeout)
+            if (TimeoutHelper.IsExpired(timeoutElapsed * 1000, session._maxRetryTimeout))
             {
                 errorMessage += string.IsNullOrEmpty(errorMessage) ? "The" : " and the";
-                errorMessage += $" timeout elapsed has reached its limit of {session._maxRetryTimeout}";
+                errorMessage += $" timeout elapsed has reached its limit of {session._maxRetryTimeout.TotalSeconds}";
 
             }
             errorMessage += " while trying to authenticate through Okta";
@@ -307,11 +320,11 @@ namespace Snowflake.Data.Core.Authenticator
     }
 
     internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
-    {   
+    {
         private static readonly MediaTypeWithQualityHeaderValue s_jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
         internal IdpTokenRequest JsonBody { get; set; }
-            
+
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             HttpRequestMessage message = newMessage(method, Url);

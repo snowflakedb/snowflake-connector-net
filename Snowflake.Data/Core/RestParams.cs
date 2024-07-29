@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -59,17 +59,12 @@ namespace Snowflake.Data.Core
             ClientEnv = new LoginRequestClientEnv()
             {
                 application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-                osVersion = System.Environment.OSVersion.VersionString,
-#if NETFRAMEWORK
-                netRuntime = "NETFramework",
-                netVersion = "4.7.1",
-#else
-                netRuntime = "NETCore",
-                netVersion ="2.0",
-#endif
+                osVersion = Environment.OSVersion.VersionString,
+                netRuntime = ExtractRuntime(),
+                netVersion = ExtractVersion(),
             };
 
-            DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             DriverName = ".NET";
         }
 
@@ -77,5 +72,17 @@ namespace Snowflake.Data.Core
         internal static string DriverName { get; set; }
         internal static string DriverVersion { get; set; }
         internal static LoginRequestClientEnv ClientEnv { get; private set; }
+
+        internal static string ExtractRuntime()
+        {
+            return RuntimeInformation.FrameworkDescription.Substring(0, RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+        }
+
+        internal static string ExtractVersion()
+        {
+            var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
+            int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
+            return version.Substring(0, secondPeriodIndex);
+        }
     }
 }

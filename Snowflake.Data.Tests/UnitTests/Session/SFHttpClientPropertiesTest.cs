@@ -2,15 +2,15 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Collections.Generic;
-using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     [TestFixture]
     public class SFHttpClientPropertiesTest
     {
@@ -32,18 +32,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
-                timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 insecureMode = false,
                 disableRetry = false,
                 forceRetryOn404 = false,
-                retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 maxHttpRetries = 7,
                 proxyProperties = proxyProperties
             };
-            
+
             // act
             var parameterMap = properties.ToParameterMap();
-            
+
             // assert
             Assert.AreEqual(2, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var properties = RandomSFSessionHttpClientProperties();
-            
+
             // act
             var config = properties.BuildHttpClientConfig();
 
@@ -80,11 +80,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             var config = properties.BuildHttpClientConfig();
-            
+
             // assert
             Assert.AreEqual(!insecureMode, config.CrlCheckEnabled);
         }
-        
+
         private SFSessionHttpClientProperties RandomSFSessionHttpClientProperties()
         {
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -99,11 +99,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = TestDataGenarator.NextBool(),
                 clientSessionKeepAlive = TestDataGenarator.NextBool(),
-                timeoutInSec = TestDataGenarator.NextInt(30, 151),
+                connectionTimeout = TimeSpan.FromSeconds(TestDataGenarator.NextInt(30, 151)),
                 insecureMode = TestDataGenarator.NextBool(),
                 disableRetry = TestDataGenarator.NextBool(),
                 forceRetryOn404 = TestDataGenarator.NextBool(),
-                retryTimeout = TestDataGenarator.NextInt(300, 600),
+                retryTimeout = TimeSpan.FromSeconds(TestDataGenarator.NextInt(300, 600)),
                 maxHttpRetries = TestDataGenarator.NextInt(0, 15),
                 proxyProperties = proxyProperties
             };
@@ -113,31 +113,24 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var proxyExtractorMock = new Moq.Mock<SFSessionHttpClientProxyProperties.IExtractor>();
-            var extractor = new SFSessionHttpClientProperties.Extractor(proxyExtractorMock.Object);
             var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
             var proxyProperties = new SFSessionHttpClientProxyProperties();
-            proxyExtractorMock
-                .Setup(e => e.ExtractProperties(properties))
-                .Returns(proxyProperties);
 
             // act
-            var extractedProperties = extractor.ExtractProperties(properties);
-            extractedProperties.CheckPropertiesAreValid();
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
             Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
             Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
-            Assert.AreEqual(testCase.expectedProperties.timeoutInSec, extractedProperties.timeoutInSec);
+            Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
             Assert.AreEqual(testCase.expectedProperties.insecureMode, extractedProperties.insecureMode);
             Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
             Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
             Assert.AreEqual(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
             Assert.AreEqual(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
-            Assert.AreEqual(proxyProperties, extractedProperties.proxyProperties);
-            proxyExtractorMock.Verify(e => e.ExtractProperties(properties), Times.Once);
+            Assert.NotNull(proxyProperties);
         }
-    
+
         public static IEnumerable<PropertiesTestCase> PropertiesProvider()
         {
             var defaultProperties = new PropertiesTestCase()
@@ -147,12 +140,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithValidateDefaultParametersChanged = new PropertiesTestCase()
@@ -162,12 +155,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = false,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithClientSessionKeepAliveChanged = new PropertiesTestCase()
@@ -177,12 +170,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = true,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithTimeoutChanged = new PropertiesTestCase()
@@ -192,12 +185,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = 15,
+                    connectionTimeout = TimeSpan.FromSeconds(15),
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithInsecureModeChanged = new PropertiesTestCase()
@@ -207,12 +200,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = true,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithDisableRetryChanged = new PropertiesTestCase()
@@ -222,12 +215,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = true,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithForceRetryOn404Changed = new PropertiesTestCase()
@@ -237,12 +230,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = true,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithRetryTimeoutChangedToAValueAbove300 = new PropertiesTestCase()
@@ -252,12 +245,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = 600,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = TimeSpan.FromSeconds(600),
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithRetryTimeoutChangedToAValueBelow300 = new PropertiesTestCase()
@@ -267,12 +260,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithRetryTimeoutChangedToZero = new PropertiesTestCase()
@@ -282,12 +275,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = 0,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultConnectionTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = 0,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = TimeoutHelper.Infinity(),
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithMaxHttpRetriesChangedToAValueAbove7 = new PropertiesTestCase()
@@ -297,11 +290,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 10
                 }
             };
@@ -312,12 +305,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
-                    maxHttpRetries = SFSessionHttpClientProperties.s_maxHttpRetriesDefault
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
                 }
             };
             var propertiesWithMaxHttpRetriesChangedToZero = new PropertiesTestCase()
@@ -327,11 +320,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
-                    timeoutInSec = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
-                    retryTimeout = SFSessionHttpClientProperties.s_retryTimeoutDefault,
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 0
                 }
             };

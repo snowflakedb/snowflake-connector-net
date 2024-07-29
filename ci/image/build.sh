@@ -8,6 +8,7 @@ source $THIS_DIR/../_init.sh
 
 for name in "${!BUILD_IMAGE_NAMES[@]}"; do
     docker build \
+        --platform=linux/amd64 \
         --file $THIS_DIR/Dockerfile.$name-build \
         --label snowflake \
         --label $DRIVER_NAME \
@@ -16,6 +17,7 @@ done
 
 for name in "${!TEST_IMAGE_NAMES[@]}"; do
     docker build \
+        --platform=linux/amd64 \
         --file $THIS_DIR/Dockerfile.$name-test \
         --label snowflake \
         --label $DRIVER_NAME \

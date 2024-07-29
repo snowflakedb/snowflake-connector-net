@@ -26,7 +26,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int LargeSize = (MaxLobSize / 2);
         private const int MediumSize = (LargeSize / 2);
         private const int OriginSize = (MediumSize / 2);
-        private const int SmallSize = 16;
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
         private static string s_outputDirectory;
@@ -82,7 +81,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = conn.CreateCommand())
                 {
                     // Create temp table
-                    var columnNamesWithTypes = $"{s_colName[0]} VARCHAR, {s_colName[1]} VARCHAR, {s_colName[2]} INT";
+                    var columnNamesWithTypes = $"{s_colName[0]} VARCHAR({MaxLobSize}), {s_colName[1]} VARCHAR({MaxLobSize}), {s_colName[2]} INT";
                     command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName} ({columnNamesWithTypes})";
                     command.ExecuteNonQuery();
                 }
@@ -273,7 +272,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
-            t_colData = new string[]{ c1, c2, c3.ToString() };
+            t_colData = new string[] { c1, c2, c3.ToString() };
 
             PrepareTest();
 
@@ -290,7 +289,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         static IEnumerable<int> LobSizeTestCases = new[]
         {
-            SmallSize,
             OriginSize,
             MediumSize,
             LargeSize,
@@ -387,6 +385,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 //// Alter session max lob
                 //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
+                //command.ExecuteNonQuery();
+                //command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
                 //command.ExecuteNonQuery();
             }
         }

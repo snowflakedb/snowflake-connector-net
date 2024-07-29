@@ -111,6 +111,8 @@ namespace Snowflake.Data.Core
 
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
 
+        private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
+
         private const int SF_QUERY_IN_PROGRESS = 333333;
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
@@ -122,8 +124,8 @@ namespace Snowflake.Data.Core
         private readonly IRestRequester _restRequester;
 
         private CancellationTokenSource _timeoutTokenSource;
-        
-        // Merged cancellation token source for all cancellation signal. 
+
+        // Merged cancellation token source for all cancellation signal.
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSource;
 
@@ -141,10 +143,20 @@ namespace Snowflake.Data.Core
         // the query id of the last query
         string _lastQueryId = null;
 
+        private string _queryTag = null;
+
         internal SFStatement(SFSession session)
         {
             SfSession = session;
             _restRequester = session.restRequester;
+            _queryTag = session._queryTag;
+        }
+
+        internal SFStatement(SFSession session, string queryTag)
+        {
+            SfSession = session;
+            _restRequester = session.restRequester;
+            _queryTag = queryTag ?? session._queryTag;
         }
 
         internal string GetBindStage() => _bindStage;
@@ -153,7 +165,7 @@ namespace Snowflake.Data.Core
         {
             lock (_requestIdLock)
             {
-                
+
                 if (_requestId != null)
                 {
                     logger.Info("Another query is running.");
@@ -195,6 +207,15 @@ namespace Snowflake.Data.Core
                 // remove it from parameter bindings so it won't break
                 // parameter binding feature
                 bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
+            }
+
+            if (_queryTag != null)
+            {
+                if (bodyParameters == null)
+                {
+                    bodyParameters = new Dictionary<string, string>();
+                }
+                bodyParameters[SF_PARAM_QUERY_TAG] = _queryTag;
             }
 
             QueryRequest postBody = new QueryRequest();
@@ -296,7 +317,7 @@ namespace Snowflake.Data.Core
             this._timeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) :
                                                      new CancellationTokenSource(Timeout.InfiniteTimeSpan);
         }
-        
+
         /// <summary>
         ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
         ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
@@ -342,7 +363,7 @@ namespace Snowflake.Data.Core
             }
 
             registerQueryCancellationCallback(timeout, cancellationToken);
-            
+
             int arrayBindingThreshold = 0;
             if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
             {
@@ -436,10 +457,10 @@ namespace Snowflake.Data.Core
                     {
                         throw new NotImplementedException("Get and Put are not supported in async execution mode");
                     }
-                    return ExecuteSqlWithPutGet(timeout, trimmedSql, bindings, describeOnly);
+                    return ExecuteSqlWithPutGet(timeout, sql, trimmedSql, bindings, describeOnly);
                 }
 
-                return ExecuteSqlOtherThanPutGet(timeout, trimmedSql, bindings, describeOnly, asyncExec);
+                return ExecuteSqlOtherThanPutGet(timeout, sql, bindings, describeOnly, asyncExec);
             }
             finally
             {
@@ -448,7 +469,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, string trimmedSql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
             try
             {
@@ -463,7 +484,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
 
                 SFFileTransferAgent fileTransferAgent =
-                    new SFFileTransferAgent(sql, SfSession, response.data, CancellationToken.None);
+                    new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
 
                 // Start the file transfer
                 fileTransferAgent.execute();
@@ -486,7 +507,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
         }
-        
+
         private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             try
@@ -541,7 +562,7 @@ namespace Snowflake.Data.Core
                 throw;
             }
         }
-        
+
         internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
         {
             var req = BuildResultRequestWithId(resultId);
@@ -917,7 +938,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="originalSql">The original sql query.</param>
         /// <returns>The query without the blanks and comments at the beginning.</returns>
-        private string TrimSql(string originalSql)
+        internal static string TrimSql(string originalSql)
         {
             char[] sqlQueryBuf = originalSql.ToCharArray();
             var builder = new StringBuilder();
@@ -1033,7 +1054,7 @@ namespace Snowflake.Data.Core
                      false);
 
             PutGetStageInfo stageInfo = new PutGetStageInfo();
-            
+
             SFFileTransferAgent fileTransferAgent =
                         new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
 
