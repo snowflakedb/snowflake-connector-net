@@ -55,14 +55,14 @@ namespace Snowflake.Data.Configuration
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    using var streamReader = new StreamReader(filePath, Encoding.Default);
+                    var streamReader = new StreamReader(filePath, Encoding.Default);
                     return streamReader.ReadToEnd();
                 }
                 else
                 {
                     var handle = VerifyUnixPermissions(filePath);
 
-                    using var streamReader = new StreamReader(handle, Encoding.Default);
+                    var streamReader = new StreamReader(handle, Encoding.Default);
                     return streamReader.ReadToEnd();
                 }
             }
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Configuration
             FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherWrite | FileAccessPermissions.GroupWrite;
             var fileInfo = new UnixFileInfo(path: filePath);
 
-            using var handle = fileInfo.OpenRead();
+            var handle = fileInfo.OpenRead();
             if (handle.OwnerUser.UserId != Syscall.geteuid())
                 throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Attempting to read a file not owned by the effective user of the current process");
             if (handle.OwnerGroup.GroupId != Syscall.getegid())
