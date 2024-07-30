@@ -8,7 +8,6 @@ using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
@@ -18,7 +17,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [NonParallelizable]
     public class ConnectionMultiplePoolsIT: SFBaseTest
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
         [SetUp]
@@ -339,7 +337,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             WaitUntilAllSessionsCreatedOrTimeout(pool);
-            LogState(pool, "expecting 4 sections to be busy");
             var beforeSleepMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             Thread.Sleep(TimeSpan.FromSeconds(ExpirationTimeoutInSeconds));
             conn1.Close();
@@ -348,28 +345,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn4.Close();
 
             // assert
-            LogState(pool, "expecting 2 sections to be idle after closing all sessions");
             Assert.AreEqual(2, pool.GetCurrentPoolSize()); // 2 idle sessions, but expired because close doesn't remove expired sessions
 
             // act
             WaitUntilAllSessionsCreatedOrTimeout(pool);
-            LogState(pool, "before opening the next connection");
             var conn5 = OpenConnection(connectionString);
             WaitUntilAllSessionsCreatedOrTimeout(pool);
 
             // assert
-            LogState(pool, "after opening the next connection");
             Assert.AreEqual(2, pool.GetCurrentPoolSize()); // 1 idle session and 1 busy
             var sessionStartTimes = pool.GetIdleSessionsStartTimes();
             Assert.AreEqual(1, sessionStartTimes.Count);
             Assert.That(sessionStartTimes.First(), Is.GreaterThan(beforeSleepMillis));
             Assert.That(conn5.SfSession.GetStartTime(), Is.GreaterThan(beforeSleepMillis));
-        }
-
-        private void LogState(SessionPool pool, string context)
-        {
-            var state = pool.GetCurrentState();
-            s_logger.Warn($"{context}: {state}");
         }
 
         [Test]

@@ -89,7 +89,10 @@ namespace Snowflake.Data.Core
         INCONSISTENT_RESULT_ERROR,
 
         [SFErrorAttr(errorCode = 270061)]
-        STRUCTURED_TYPE_READ_ERROR
+        STRUCTURED_TYPE_READ_ERROR,
+
+        [SFErrorAttr(errorCode = 270062)]
+        STRUCTURED_TYPE_READ_DETAILED_ERROR
     }
 
     class SFErrorAttr : Attribute

@@ -131,7 +131,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal static bool ConvertToBooleanValue(UTF8Buffer srcVal)
+        private static bool ConvertToBooleanValue(UTF8Buffer srcVal)
         {
             var val = srcVal.Buffer[srcVal.offset];
             return val == '1' || val == 't' || val == 'T';

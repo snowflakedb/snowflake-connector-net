@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Converter
             s_logger.Debug("Exception caught when reading structured types", exception);
             if (exception is StructuredTypesReadingException)
             {
-                return new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, context, exception.Message);
+                return new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR, context, exception.Message);
             }
             return new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, context);
         }
