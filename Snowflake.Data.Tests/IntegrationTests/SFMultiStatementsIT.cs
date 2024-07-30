@@ -291,8 +291,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "use schema public;"+
-                                      "use schema public;"+
+                    cmd.CommandText = $"use schema {testConfig.schema};"+
+                                      $"use schema {testConfig.schema};"+
                                       $"create or replace table {TableName}(cola integer, colb string);" +
                                       $"insert into {TableName} values (?, ?);" +
                                       $"insert into {TableName} values (?, ?), (?, ?);" +
