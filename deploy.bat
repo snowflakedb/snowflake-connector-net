@@ -12,6 +12,8 @@ echo -----END CERTIFICATE----- >> %WORKSPACE%\coded.txt
 
 certutil -decode %WORKSPACE%\coded.txt %WORKSPACE%\key.snk
 
+SET VERSION=1.0.2
+
 dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=%WORKSPACE%\key.snk
 "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v %WORKSPACE%"\Snowflake.Data\bin\Release\netstandard2.0\Snowflake.Data.dll"
 
@@ -21,5 +23,7 @@ dir
 
 aws s3 cp s3://sfc-eng-jenkins/repository/net/sign-artifact.exe .
 sign-artifact.exe sign-artifact -o snowflakedb -r snowflake-connector-net -t v%VERSION%  -l 20 -v -f Snowflake.Data.%VERSION%.nupkg
+
+dir
 
 @REM dotnet nuget push Snowflake.Data.%VERSION%.nupkg -k %API_KEY% -s https://api.nuget.org/v3/index.json
