@@ -216,9 +216,12 @@ namespace Snowflake.Data.Client
                 return DBNull.Value;
         }
 
+        /// <summary>
+        /// Prepares the command for execution.
+        /// This method is currently not implemented and acts as a no-operation (Noop).
+        /// </summary>
         public override void Prepare()
         {
-            throw new NotImplementedException();
         }
 
         public string GetQueryId()

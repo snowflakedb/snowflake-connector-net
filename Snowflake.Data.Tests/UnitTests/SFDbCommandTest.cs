@@ -60,9 +60,9 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestCommandPrepareThrowsNotImplemented()
+        public void TestCommandPrepareShouldNotThrowsException()
         {
-            Assert.Throws<NotImplementedException>(() => _command.Prepare());
+            Assert.DoesNotThrow(() => command.Prepare());
         }
     }
 }
