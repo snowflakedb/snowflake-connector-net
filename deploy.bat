@@ -6,23 +6,23 @@ SET SNKEY=%3
 SET ROOT_DIR=%~dp0 
 cd %ROOT_DIR%
 
-echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
-echo %SNKEY% >> %WORKSPACE%\coded.txt
-echo -----END CERTIFICATE----- >> %WORKSPACE%\coded.txt
+@REM echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
+@REM echo %SNKEY% >> %WORKSPACE%\coded.txt
+@REM echo -----END CERTIFICATE----- >> %WORKSPACE%\coded.txt
 
-certutil -decode %WORKSPACE%\coded.txt %WORKSPACE%\key.snk
+@REM certutil -decode %WORKSPACE%\coded.txt %WORKSPACE%\key.snk
 
-SET VERSION=3.0.0
+@REM SET VERSION=3.0.0
 
 @REM dotnet build Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=%WORKSPACE%\key.snk
 @REM "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64"\sn.exe -v %WORKSPACE%"\Snowflake.Data\bin\Release\netstandard2.0\Snowflake.Data.dll"
 
-dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
+@REM dotnet pack Snowflake.Data\Snowflake.Data.csproj -c Release --force -v n --no-build  --output %ROOT_DIR%
 
-dir
+@REM dir
 
 aws s3 cp s3://sfc-eng-jenkins/repository/net/sign-artifact.exe .
-sign-artifact.exe sign-artifact -o snowflakedb -r snowflake-connector-net -t v%VERSION%  -l 20 -v -f Snowflake.Data.%VERSION%.nupkg
+sign-artifact.exe sign-artifact -o snowflakedb -r release-orchestration -t test_tag  -l 20 -v -u -f README.md
 
 dir
 
