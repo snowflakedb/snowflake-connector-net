@@ -7,5 +7,5 @@ export WORKSPACE=${WORKSPACE:-/mnt/workspace}
 
 cd $SOURCE_ROOT
 cp Snowflake.Data.Tests/parameters-local.json Snowflake.Data.Tests/parameters.json
-# todo unignore MaxLobSizeIT after SNOW-1058345 is fixed
-dotnet test -f net6.0 -l "console;verbosity=normal" --logger:"junit;LogFilePath=$WORKSPACE/junit-dotnet.xml" --filter "FullyQualifiedName!=Snowflake.Data.Tests.IntegrationTests.MaxLobSizeIT" 
+
+dotnet test -f net6.0 -l "console;verbosity=normal" --logger:"junit;LogFilePath=$WORKSPACE/junit-dotnet.xml"
