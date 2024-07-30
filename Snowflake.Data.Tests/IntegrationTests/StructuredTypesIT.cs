@@ -538,30 +538,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var allTypesObject = reader.GetObject<AllTypesClass>(0);
+                    var allUnstructuredTypesObject = reader.GetObject<AllUnstructuredTypesClass>(0);
 
                     // assert
-                    Assert.NotNull(allTypesObject);
-                    Assert.AreEqual("abc", allTypesObject.StringValue);
-                    Assert.AreEqual('x', allTypesObject.CharValue);
-                    Assert.AreEqual(15, allTypesObject.ByteValue);
-                    Assert.AreEqual(-14, allTypesObject.SByteValue);
-                    Assert.AreEqual(1200, allTypesObject.ShortValue);
-                    Assert.AreEqual(65000, allTypesObject.UShortValue);
-                    Assert.AreEqual(150150, allTypesObject.IntValue);
-                    Assert.AreEqual(151151, allTypesObject.UIntValue);
-                    Assert.AreEqual(9111222333444555666, allTypesObject.LongValue);
-                    Assert.AreEqual(9111222333444555666, allTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
-                    Assert.AreEqual(1.23f, allTypesObject.FloatValue);
-                    Assert.AreEqual(1.23d, allTypesObject.DoubleValue);
-                    Assert.AreEqual(1.23, allTypesObject.DecimalValue);
-                    Assert.AreEqual(true, allTypesObject.BooleanValue);
-                    Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
-                    Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
-                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
-                    Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
-                    CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
-                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
+                    Assert.NotNull(allUnstructuredTypesObject);
+                    Assert.AreEqual("abc", allUnstructuredTypesObject.StringValue);
+                    Assert.AreEqual('x', allUnstructuredTypesObject.CharValue);
+                    Assert.AreEqual(15, allUnstructuredTypesObject.ByteValue);
+                    Assert.AreEqual(-14, allUnstructuredTypesObject.SByteValue);
+                    Assert.AreEqual(1200, allUnstructuredTypesObject.ShortValue);
+                    Assert.AreEqual(65000, allUnstructuredTypesObject.UShortValue);
+                    Assert.AreEqual(150150, allUnstructuredTypesObject.IntValue);
+                    Assert.AreEqual(151151, allUnstructuredTypesObject.UIntValue);
+                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.LongValue);
+                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.AreEqual(1.23f, allUnstructuredTypesObject.FloatValue);
+                    Assert.AreEqual(1.23d, allUnstructuredTypesObject.DoubleValue);
+                    Assert.AreEqual(1.23, allUnstructuredTypesObject.DecimalValue);
+                    Assert.AreEqual(true, allUnstructuredTypesObject.BooleanValue);
+                    Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allUnstructuredTypesObject.GuidValue);
+                    Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allUnstructuredTypesObject.DateTimeValue);
+                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
+                    Assert.AreEqual(TimeSpan.Parse("14:20:05"), allUnstructuredTypesObject.TimeSpanValue);
+                    CollectionAssert.AreEqual(bytesForBinary, allUnstructuredTypesObject.BinaryValue);
+                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allUnstructuredTypesObject.SemiStructuredValue);
                 }
             }
         }
@@ -628,30 +628,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var allTypesObject = reader.GetObject<AllTypesClass>(0);
+                    var allUnstructuredTypesObject = reader.GetObject<AllUnstructuredTypesClass>(0);
 
                     // assert
-                    Assert.NotNull(allTypesObject);
-                    Assert.AreEqual("abc", allTypesObject.StringValue);
-                    Assert.AreEqual('x', allTypesObject.CharValue);
-                    Assert.AreEqual(15, allTypesObject.ByteValue);
-                    Assert.AreEqual(-14, allTypesObject.SByteValue);
-                    Assert.AreEqual(1200, allTypesObject.ShortValue);
-                    Assert.AreEqual(65000, allTypesObject.UShortValue);
-                    Assert.AreEqual(150150, allTypesObject.IntValue);
-                    Assert.AreEqual(151151, allTypesObject.UIntValue);
-                    Assert.AreEqual(9111222333444555666, allTypesObject.LongValue);
-                    Assert.AreEqual(9111222333444555666, allTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
-                    Assert.AreEqual(1.23f, allTypesObject.FloatValue);
-                    Assert.AreEqual(1.23d, allTypesObject.DoubleValue);
-                    Assert.AreEqual(1.23, allTypesObject.DecimalValue);
-                    Assert.AreEqual(true, allTypesObject.BooleanValue);
-                    Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allTypesObject.GuidValue);
-                    Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allTypesObject.DateTimeValue);
-                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allTypesObject.DateTimeOffsetValue);
-                    Assert.AreEqual(TimeSpan.Parse("14:20:05"), allTypesObject.TimeSpanValue);
-                    CollectionAssert.AreEqual(bytesForBinary, allTypesObject.BinaryValue);
-                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allTypesObject.SemiStructuredValue);
+                    Assert.NotNull(allUnstructuredTypesObject);
+                    Assert.AreEqual("abc", allUnstructuredTypesObject.StringValue);
+                    Assert.AreEqual('x', allUnstructuredTypesObject.CharValue);
+                    Assert.AreEqual(15, allUnstructuredTypesObject.ByteValue);
+                    Assert.AreEqual(-14, allUnstructuredTypesObject.SByteValue);
+                    Assert.AreEqual(1200, allUnstructuredTypesObject.ShortValue);
+                    Assert.AreEqual(65000, allUnstructuredTypesObject.UShortValue);
+                    Assert.AreEqual(150150, allUnstructuredTypesObject.IntValue);
+                    Assert.AreEqual(151151, allUnstructuredTypesObject.UIntValue);
+                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.LongValue);
+                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.AreEqual(1.23f, allUnstructuredTypesObject.FloatValue);
+                    Assert.AreEqual(1.23d, allUnstructuredTypesObject.DoubleValue);
+                    Assert.AreEqual(1.23, allUnstructuredTypesObject.DecimalValue);
+                    Assert.AreEqual(true, allUnstructuredTypesObject.BooleanValue);
+                    Assert.AreEqual(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allUnstructuredTypesObject.GuidValue);
+                    Assert.AreEqual(DateTime.Parse("2024-07-11 14:20:05"), allUnstructuredTypesObject.DateTimeValue);
+                    Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
+                    Assert.AreEqual(TimeSpan.Parse("14:20:05"), allUnstructuredTypesObject.TimeSpanValue);
+                    CollectionAssert.AreEqual(bytesForBinary, allUnstructuredTypesObject.BinaryValue);
+                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allUnstructuredTypesObject.SemiStructuredValue);
                 }
             }
         }
@@ -714,30 +714,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var allTypesObject = reader.GetObject<AllNullableTypesClass>(0);
+                    var allUnstructuredTypesObject = reader.GetObject<AllNullableUnstructuredTypesClass>(0);
 
                     // assert
-                    Assert.NotNull(allTypesObject);
-                    Assert.IsNull(allTypesObject.StringValue);
-                    Assert.IsNull(allTypesObject.CharValue);
-                    Assert.IsNull(allTypesObject.ByteValue);
-                    Assert.IsNull(allTypesObject.SByteValue);
-                    Assert.IsNull(allTypesObject.ShortValue);
-                    Assert.IsNull(allTypesObject.UShortValue);
-                    Assert.IsNull(allTypesObject.IntValue);
-                    Assert.IsNull(allTypesObject.UIntValue);
-                    Assert.IsNull(allTypesObject.LongValue);
-                    Assert.IsNull(allTypesObject.ULongValue);
-                    Assert.IsNull(allTypesObject.FloatValue);
-                    Assert.IsNull(allTypesObject.DoubleValue);
-                    Assert.IsNull(allTypesObject.DecimalValue);
-                    Assert.IsNull(allTypesObject.BooleanValue);
-                    Assert.IsNull(allTypesObject.GuidValue);
-                    Assert.IsNull(allTypesObject.DateTimeValue);
-                    Assert.IsNull(allTypesObject.DateTimeOffsetValue);
-                    Assert.IsNull(allTypesObject.TimeSpanValue);
-                    Assert.IsNull(allTypesObject.BinaryValue);
-                    Assert.IsNull(allTypesObject.SemiStructuredValue);
+                    Assert.NotNull(allUnstructuredTypesObject);
+                    Assert.IsNull(allUnstructuredTypesObject.StringValue);
+                    Assert.IsNull(allUnstructuredTypesObject.CharValue);
+                    Assert.IsNull(allUnstructuredTypesObject.ByteValue);
+                    Assert.IsNull(allUnstructuredTypesObject.SByteValue);
+                    Assert.IsNull(allUnstructuredTypesObject.ShortValue);
+                    Assert.IsNull(allUnstructuredTypesObject.UShortValue);
+                    Assert.IsNull(allUnstructuredTypesObject.IntValue);
+                    Assert.IsNull(allUnstructuredTypesObject.UIntValue);
+                    Assert.IsNull(allUnstructuredTypesObject.LongValue);
+                    Assert.IsNull(allUnstructuredTypesObject.ULongValue);
+                    Assert.IsNull(allUnstructuredTypesObject.FloatValue);
+                    Assert.IsNull(allUnstructuredTypesObject.DoubleValue);
+                    Assert.IsNull(allUnstructuredTypesObject.DecimalValue);
+                    Assert.IsNull(allUnstructuredTypesObject.BooleanValue);
+                    Assert.IsNull(allUnstructuredTypesObject.GuidValue);
+                    Assert.IsNull(allUnstructuredTypesObject.DateTimeValue);
+                    Assert.IsNull(allUnstructuredTypesObject.DateTimeOffsetValue);
+                    Assert.IsNull(allUnstructuredTypesObject.TimeSpanValue);
+                    Assert.IsNull(allUnstructuredTypesObject.BinaryValue);
+                    Assert.IsNull(allUnstructuredTypesObject.SemiStructuredValue);
                 }
             }
         }

@@ -2,7 +2,7 @@ using System;
 
 namespace Snowflake.Data.Tests.Client
 {
-    public class AllNullableTypesClass
+    public class AllNullableUnstructuredTypesClass
     {
         public string StringValue { get; set; }
         public char? CharValue { get; set; }
