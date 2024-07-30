@@ -13,12 +13,12 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     class SFDbCommandTest
     {
-        SnowflakeDbCommand command;
+        SnowflakeDbCommand _command;
 
         [SetUp]
         public void BeforeTest()
         {
-            command = new SnowflakeDbCommand();
+            _command = new SnowflakeDbCommand();
         }
 
         [Test]
@@ -29,18 +29,18 @@ namespace Snowflake.Data.Tests.UnitTests
             string commandText = "select 1";
 
             // Act
-            command = new SnowflakeDbCommand(conn, commandText);
+            _command = new SnowflakeDbCommand(conn, commandText);
 
             // Assert
-            Assert.AreEqual(conn, command.Connection);
-            Assert.AreEqual(commandText, command.CommandText);
+            Assert.AreEqual(conn, _command.Connection);
+            Assert.AreEqual(commandText, _command.CommandText);
         }
 
         [Test]
         public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Act
-            var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
+            var thrown = Assert.Throws<Exception>(() => _command.ExecuteScalar());
 
             // Assert
             Assert.AreEqual(thrown.Message, "Unable to execute command due to command text not being set");
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Arrange
-            Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
+            Task<object> commandTask = _command.ExecuteScalarAsync(CancellationToken.None);
 
             // Act
             var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestCommandPrepareThrowsNotImplemented()
         {
-            Assert.Throws<NotImplementedException>(() => command.Prepare());
+            Assert.Throws<NotImplementedException>(() => _command.Prepare());
         }
     }
 }
