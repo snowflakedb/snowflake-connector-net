@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 return new ObjectBuilderByConstructor(type, fieldsCount);
             }
-            throw new Exception("Unknown construction method");
+            throw new StructuredTypesReadingException("Unknown construction method");
         }
     }
 
@@ -69,12 +69,12 @@ namespace Snowflake.Data.Core.Converter
         {
             if (!_sfToClientPropertyNames.TryGetValue(sfPropertyName, out var clientPropertyName))
             {
-                throw new Exception($"Could not find property: {sfPropertyName}");
+                throw new StructuredTypesReadingException($"Could not find property: {sfPropertyName}");
             }
             _currentProperty = _type.GetProperty(clientPropertyName);
             if (_currentProperty == null)
             {
-                throw new Exception($"Could not find property: {sfPropertyName}");
+                throw new StructuredTypesReadingException($"Could not find property: {sfPropertyName}");
             }
             return _currentProperty.PropertyType;
         }
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Core.Converter
                 .ToList();
             if (matchingConstructors.Count == 0)
             {
-                throw new Exception($"Proper constructor not found for type: {type}");
+                throw new StructuredTypesReadingException($"Proper constructor not found for type: {type}");
             }
             var constructor = matchingConstructors.First();
             _parameters = constructor.GetParameters().Select(p => p.ParameterType).ToArray();

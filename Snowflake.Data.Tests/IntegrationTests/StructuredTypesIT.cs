@@ -1313,6 +1313,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
                     Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object"));
+                    Assert.That(thrown.Message, Does.Contain("Method GetObject<Snowflake.Data.Tests.Client.Identity> can be used only for structured object"));
                 }
             }
         }
@@ -1338,6 +1339,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
                     Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array"));
+                    Assert.That(thrown.Message, Does.Contain("Method GetArray<System.String> can be used only for structured array"));
                 }
             }
         }
@@ -1363,6 +1365,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(SFError.STRUCTURED_TYPE_READ_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
                     Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a map"));
+                    Assert.That(thrown.Message, Does.Contain("Method GetMap<System.String, System.String> can be used only for structured map"));
                 }
             }
         }
