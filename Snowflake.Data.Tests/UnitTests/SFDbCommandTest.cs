@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestCommandPrepareShouldNotThrowsException()
         {
-            Assert.DoesNotThrow(() => command.Prepare());
+            Assert.DoesNotThrow(() => _command.Prepare());
         }
     }
 }
