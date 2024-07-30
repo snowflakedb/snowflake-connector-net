@@ -413,29 +413,28 @@ namespace Snowflake.Data.Core
                         case "SCHEMA":
                         case "WAREHOUSE":
                         case "ROLE":
-                        {
-                            if (tokens.Length == 2)
+                            {
+                                if (tokens.Length == 2)
+                                {
+                                    var sessionProperty = (SFSessionProperty)Enum.Parse(
+                                        typeof(SFSessionProperty), propertyName);
+                                    properties[sessionProperty] = ProcessObjectEscapedCharacters(tokens[1]);
+                                }
+
+                                break;
+                            }
+                        case "USER":
+                        case "PASSWORD":
                             {
                                 var sessionProperty = (SFSessionProperty)Enum.Parse(
                                     typeof(SFSessionProperty), propertyName);
-                                properties[sessionProperty] = ProcessObjectEscapedCharacters(tokens[1]);
+                                if (!properties.ContainsKey(sessionProperty))
+                                {
+                                    properties.Add(sessionProperty, "");
+                                }
+
+                                break;
                             }
-
-                            break;
-                        }
-                        case "USER":
-                        case "PASSWORD":
-                        {
-
-                            var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), propertyName);
-                            if (!properties.ContainsKey(sessionProperty))
-                            {
-                                properties.Add(sessionProperty, "");
-                            }
-
-                            break;
-                        }
                     }
                 }
             }
