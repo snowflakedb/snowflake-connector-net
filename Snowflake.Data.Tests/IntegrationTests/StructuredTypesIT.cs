@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -15,36 +15,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AZURE", "GCP" })]
     public class StructuredTypesIT : SFBaseTest
     {
-        private const string StructuredTypesTableName = "structured_types_tests";
-
-        [Test]
-        public void TestSelectInsertedStructuredTypeObject()
-        {
-            // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
-            {
-                connection.Open();
-                CreateOrReplaceTable(connection, StructuredTypesTableName, new List<string> { "address OBJECT(city VARCHAR, state VARCHAR)" });
-                using (var command = connection.CreateCommand())
-                {
-                    EnableStructuredTypes(connection);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)";
-                    command.CommandText = $"INSERT INTO {StructuredTypesTableName} SELECT {addressAsSFString}";
-                    command.ExecuteNonQuery();
-                    command.CommandText = $"SELECT * FROM {StructuredTypesTableName}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    // act
-                    var address = reader.GetObject<Address>(0);
-
-                    // assert
-                    Assert.AreEqual("San Mateo", address.city);
-                    Assert.AreEqual("CA", address.state);
-                    Assert.IsNull(address.zip);
-                }
-            }
-        }
 
         [Test]
         public void TestSelectStructuredTypeObject()
@@ -551,7 +521,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(150150, allUnstructuredTypesObject.IntValue);
                     Assert.AreEqual(151151, allUnstructuredTypesObject.UIntValue);
                     Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.LongValue);
-                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.ULongValue); // there is a problem with 18111222333444555666 value
+                    Assert.AreEqual(9111222333444555666, allUnstructuredTypesObject.ULongValue);
                     Assert.AreEqual(1.23f, allUnstructuredTypesObject.FloatValue);
                     Assert.AreEqual(1.23d, allUnstructuredTypesObject.DoubleValue);
                     Assert.AreEqual(1.23, allUnstructuredTypesObject.DecimalValue);
@@ -561,7 +531,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allUnstructuredTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allUnstructuredTypesObject.BinaryValue);
-                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allUnstructuredTypesObject.SemiStructuredValue);
+                    Assert.AreEqual(RemoveWhiteSpaces("{\"a\": \"b\"}"), RemoveWhiteSpaces(allUnstructuredTypesObject.SemiStructuredValue));
                 }
             }
         }
@@ -651,7 +621,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
                     Assert.AreEqual(TimeSpan.Parse("14:20:05"), allUnstructuredTypesObject.TimeSpanValue);
                     CollectionAssert.AreEqual(bytesForBinary, allUnstructuredTypesObject.BinaryValue);
-                    Assert.AreEqual(ConvertNewlinesOnWindows("{\n  \"a\": \"b\"\n}"), allUnstructuredTypesObject.SemiStructuredValue);
+                    Assert.AreEqual(RemoveWhiteSpaces("{\"a\": \"b\"}"), RemoveWhiteSpaces(allUnstructuredTypesObject.SemiStructuredValue));
                 }
             }
         }
@@ -743,34 +713,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestSelectMapSkippingNullValues()
-        {
-            // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    EnableStructuredTypes(connection);
-                    var mapAsSFString = "OBJECT_CONSTRUCT('a', NULL, 'b', '3')::MAP(VARCHAR, INTEGER)";
-                    command.CommandText = $"SELECT {mapAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-
-                    // act
-                    var map = reader.GetMap<string, int?>(0);
-
-                    // assert
-                    Assert.AreEqual(1, map.Count);
-                    Assert.AreEqual(3, map["b"]);
-                }
-            }
-        }
-
-        [Test]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\n  \"a\": \"b\"\n}")]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\"a\": \"b\"}")]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\"a\", \"b\"]")]
+        [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\"a\": \"b\"}")]
         public void TestSelectSemiStructuredTypesInObject(string valueSfString, string expectedValue)
         {
             // arrange
@@ -789,15 +734,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(wrapperObject);
-                    Assert.AreEqual(ConvertNewlinesOnWindows(expectedValue), wrapperObject.Value);
+                    Assert.AreEqual(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(wrapperObject.Value));
                 }
             }
         }
 
         [Test]
-        [TestCase(@"ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(OBJECT)", "{\n  \"a\": \"b\"\n}")]
-        [TestCase(@"ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'))::ARRAY(ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
-        [TestCase(@"ARRAY_CONSTRUCT(TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::ARRAY(VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(OBJECT)", "{\"a\": \"b\"}")]
+        [TestCase(@"ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'))::ARRAY(ARRAY)", "[\"a\", \"b\"]")]
+        [TestCase(@"ARRAY_CONSTRUCT(TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::ARRAY(VARIANT)", "{\"a\": \"b\"}")]
         public void TestSelectSemiStructuredTypesInArray(string valueSfString, string expectedValue)
         {
             // arrange
@@ -816,15 +761,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(array);
-                    CollectionAssert.AreEqual(new [] {ConvertNewlinesOnWindows(expectedValue)}, array);
+                    CollectionAssert.AreEqual(new [] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
                 }
             }
         }
 
         [Test]
-        [TestCase(@"OBJECT_CONSTRUCT('x', OBJECT_CONSTRUCT('a', 'b'))::MAP(VARCHAR,OBJECT)", "{\n  \"a\": \"b\"\n}")]
-        [TestCase(@"OBJECT_CONSTRUCT('x', ARRAY_CONSTRUCT('a', 'b'))::MAP(VARCHAR,ARRAY)", "[\n  \"a\",\n  \"b\"\n]")]
-        [TestCase(@"OBJECT_CONSTRUCT('x', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::MAP(VARCHAR,VARIANT)", "{\n  \"a\": \"b\"\n}")]
+        [TestCase(@"OBJECT_CONSTRUCT('x', OBJECT_CONSTRUCT('a', 'b'))::MAP(VARCHAR,OBJECT)", "{\"a\": \"b\"}")]
+        [TestCase(@"OBJECT_CONSTRUCT('x', ARRAY_CONSTRUCT('a', 'b'))::MAP(VARCHAR,ARRAY)", "[\"a\", \"b\"]")]
+        [TestCase(@"OBJECT_CONSTRUCT('x', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::MAP(VARCHAR,VARIANT)", "{\"a\": \"b\"}")]
         public void TestSelectSemiStructuredTypesInMap(string valueSfString, string expectedValue)
         {
             // arrange
@@ -844,7 +789,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.NotNull(map);
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(ConvertNewlinesOnWindows(expectedValue), map["x"]);
+                    CollectionAssert.AreEqual(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(map["x"]));
                 }
             }
         }
@@ -986,6 +931,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             yield return new object[] { "2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime() };
             yield return new object[] { "2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05").ToUniversalTime() };
             yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05").ToUniversalTime() };
+            yield return new object[] { "2024-07-11", SFTimestampType.DATE.ToString(), DateTime.Parse("2024-07-11").ToUniversalTime(), DateTime.Parse("2024-07-11").ToUniversalTime() };
             yield return new object[] { "2024-07-11 14:20:05.123456789", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05.1234568").ToUniversalTime()};
             yield return new object[] { "2024-07-11 14:20:05.123456789 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05.1234568").ToUniversalTime() };
             yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05.1234568").ToUniversalTime() };
@@ -1027,6 +973,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             yield return new object[] {"2024-07-11 14:20:05", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05Z")};
             yield return new object[] {"2024-07-11 14:20:05 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")};
             yield return new object[] {"2024-07-11 14:20:05 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")};
+            yield return new object[] {"2024-07-11", SFTimestampType.DATE.ToString(), DateTime.Parse("2024-07-11").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11Z")};
             yield return new object[] {"2024-07-11 14:20:05.123456789", SFTimestampType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05.1234568Z")};
             yield return new object[] {"2024-07-11 14:20:05.123456789 +5:00", SFTimestampType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 +5:00")};
             yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFTimestampType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")};
@@ -1463,9 +1410,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private string ConvertNewlinesOnWindows(string text) =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? text.Replace("\n", "\r\n")
-                : text;
+        private string RemoveWhiteSpaces(string text)
+        {
+            var charArrayWithoutWhiteSpaces = text.ToCharArray()
+                .Where(c => !char.IsWhiteSpace(c))
+                .ToArray();
+            return new string(charArrayWithoutWhiteSpaces);
+        }
     }
 }

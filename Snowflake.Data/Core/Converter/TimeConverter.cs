@@ -28,7 +28,7 @@ namespace Snowflake.Data.Core.Converter
                     return (DateTimeOffset) dateTimeUtc;
                 }
 
-                throw new Exception($"Cannot not read TIMESTAMP_NTZ into {fieldType} type");
+                throw new Exception($"Cannot read TIMESTAMP_NTZ into {fieldType} type");
             }
 
             if (timestampType == SFTimestampType.TIMESTAMP_TZ)
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core.Converter
                     return dateTimeOffset.ToUniversalTime().DateTime.ToUniversalTime();
                 }
 
-                throw new Exception($"Cannot not read TIMESTAMP_TZ into {fieldType} type");
+                throw new Exception($"Cannot read TIMESTAMP_TZ into {fieldType} type");
             }
             if (timestampType == SFTimestampType.TIMESTAMP_LTZ)
             {
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Core.Converter
                 {
                     return dateTimeOffset.UtcDateTime;
                 }
-                throw new Exception($"Cannot not read TIMESTAMP_LTZ into {fieldType} type");
+                throw new Exception($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }
             if (timestampType == SFTimestampType.TIME)
             {
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core.Converter
                 {
                     return TimeSpan.Parse(value);
                 }
-                throw new Exception($"Cannot not read TIME into {fieldType} type");
+                throw new Exception($"Cannot read TIME into {fieldType} type");
             }
             if (timestampType == SFTimestampType.DATE)
             {
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 throw new Exception($"Cannot not read DATE into {fieldType} type");
             }
-            throw new Exception($"Unsupported time conversion of {timestampType.ToString()} into {fieldType} type");
+            throw new Exception($"Unsupported conversion from {timestampType.ToString()} to {fieldType} type");
         }
     }
 }
