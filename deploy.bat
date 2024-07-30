@@ -7,7 +7,7 @@ SET ROOT_DIR=%~dp0
 cd %ROOT_DIR%
 
 aws s3 cp s3://sfc-eng-jenkins/repository/net/sign-artifact.exe .
-sign-artifact.exe sign-artifact -o snowflakedb -r snowflake-connector-net -l 20 -v -u -d -f Snowflake.Data.%VERSION%.nupkg
+sign-artifact.exe sign-artifact -o snowflakedb -r snowflake-connector-net -t v%VERSION%  -l 20 -v -u -d -f Snowflake.Data.%VERSION%.nupkg
 dir
 @REM echo -----BEGIN CERTIFICATE----- > %WORKSPACE%\coded.txt
 @REM echo %SNKEY% >> %WORKSPACE%\coded.txt
