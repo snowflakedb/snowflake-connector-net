@@ -3,7 +3,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class StructuredTypesIT : SFBaseTest
+    public abstract class StructuredTypesIT : SFBaseTest
     {
         protected void EnableStructuredTypes(SnowflakeDbConnection connection)
         {
@@ -11,7 +11,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 command.CommandText = "alter session set ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE=true";
                 command.ExecuteNonQuery();
-
+                command.CommandText = "ALTER SESSION SET FEATURE_STRUCTURED_TYPES = enabled";
+                command.ExecuteNonQuery();
                 command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT=JSON";
                 command.ExecuteNonQuery();
             }
