@@ -297,7 +297,7 @@ namespace Snowflake.Data.Core
         internal bool nullable { get; set; }
 
         [JsonProperty(PropertyName = "fields")]
-        internal List<FieldMetadata> fields { get; set; }// = new List<FieldMetadata>();
+        internal List<FieldMetadata> fields { get; set; }
     }
 
     internal class FieldMetadata

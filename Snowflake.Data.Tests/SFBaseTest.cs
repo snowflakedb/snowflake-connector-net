@@ -61,7 +61,6 @@ namespace Snowflake.Data.Tests
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
-                                                               // + ";useProxy=true;proxyHost=localhost;proxyPort=8080";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
@@ -436,6 +435,30 @@ namespace Snowflake.Data.Tests
                 {
                     Assert.Ignore("Test is ignored when environment variable {0} is {1} ", _key, value);
                 }
+            }
+        }
+
+        public void AfterTest(ITest test)
+        {
+        }
+
+        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
+    }
+
+    public class IgnoreOnEnvIsSetAttribute : Attribute, ITestAction
+    {
+        private readonly string _key;
+
+        public IgnoreOnEnvIsSetAttribute(string key)
+        {
+            _key = key;
+        }
+
+        public void BeforeTest(ITest test)
+        {
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
+            {
+                Assert.Ignore("Test is ignored when environment variable {0} is set ", _key);
             }
         }
 

@@ -2,20 +2,15 @@ using System;
 
 namespace Snowflake.Data.Core.Converter
 {
-    internal enum SFTimestampType
-    {
-        TIME, DATE, TIMESTAMP_TZ, TIMESTAMP_LTZ, TIMESTAMP_NTZ
-    }
-
     internal class TimeConverter
     {
-        public object Convert(string value, SFTimestampType timestampType, Type fieldType)
+        public object Convert(string value, SFDataType timestampType, Type fieldType)
         {
             if (fieldType == typeof(string))
             {
                 return value;
             }
-            if (timestampType == SFTimestampType.TIMESTAMP_NTZ)
+            if (timestampType == SFDataType.TIMESTAMP_NTZ)
             {
                 var dateTimeUtc = DateTime.Parse(value).ToUniversalTime();
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
@@ -28,10 +23,10 @@ namespace Snowflake.Data.Core.Converter
                     return (DateTimeOffset) dateTimeUtc;
                 }
 
-                throw new Exception($"Cannot read TIMESTAMP_NTZ into {fieldType} type");
+                throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_NTZ into {fieldType} type");
             }
 
-            if (timestampType == SFTimestampType.TIMESTAMP_TZ)
+            if (timestampType == SFDataType.TIMESTAMP_TZ)
             {
                 var dateTimeOffset = DateTimeOffset.Parse(value);
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
@@ -43,9 +38,9 @@ namespace Snowflake.Data.Core.Converter
                     return dateTimeOffset.ToUniversalTime().DateTime.ToUniversalTime();
                 }
 
-                throw new Exception($"Cannot read TIMESTAMP_TZ into {fieldType} type");
+                throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_TZ into {fieldType} type");
             }
-            if (timestampType == SFTimestampType.TIMESTAMP_LTZ)
+            if (timestampType == SFDataType.TIMESTAMP_LTZ)
             {
                 var dateTimeOffset = DateTimeOffset.Parse(value);
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
@@ -56,17 +51,17 @@ namespace Snowflake.Data.Core.Converter
                 {
                     return dateTimeOffset.UtcDateTime;
                 }
-                throw new Exception($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
+                throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }
-            if (timestampType == SFTimestampType.TIME)
+            if (timestampType == SFDataType.TIME)
             {
                 if (fieldType == typeof(TimeSpan) || fieldType == typeof(TimeSpan?))
                 {
                     return TimeSpan.Parse(value);
                 }
-                throw new Exception($"Cannot read TIME into {fieldType} type");
+                throw new StructuredTypesReadingException($"Cannot read TIME into {fieldType} type");
             }
-            if (timestampType == SFTimestampType.DATE)
+            if (timestampType == SFDataType.DATE)
             {
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
@@ -76,9 +71,9 @@ namespace Snowflake.Data.Core.Converter
                 {
                     return DateTime.Parse(value).ToUniversalTime();
                 }
-                throw new Exception($"Cannot not read DATE into {fieldType} type");
+                throw new StructuredTypesReadingException($"Cannot not read DATE into {fieldType} type");
             }
-            throw new Exception($"Unsupported conversion from {timestampType.ToString()} to {fieldType} type");
+            throw new StructuredTypesReadingException($"Unsupported conversion from {timestampType.ToString()} to {fieldType} type");
         }
     }
 }
