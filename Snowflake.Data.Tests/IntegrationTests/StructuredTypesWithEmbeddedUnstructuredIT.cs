@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
                     var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
-                        'StringValue', 'abc',
+                        'StringValue', 'abcąęśźń',
                         'CharValue', 'x',
                         'ByteValue', 15,
                         'SByteValue', -14,
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(allUnstructuredTypesObject);
-                    Assert.AreEqual("abc", allUnstructuredTypesObject.StringValue);
+                    Assert.AreEqual("abcąęśźń", allUnstructuredTypesObject.StringValue);
                     Assert.AreEqual('x', allUnstructuredTypesObject.CharValue);
                     Assert.AreEqual(15, allUnstructuredTypesObject.ByteValue);
                     Assert.AreEqual(-14, allUnstructuredTypesObject.SByteValue);
