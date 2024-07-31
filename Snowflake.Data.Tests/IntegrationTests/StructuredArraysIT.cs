@@ -9,8 +9,8 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AZURE", "GCP" })]
-    [IgnoreOnEnvIsSet("JENKINS_HOME")]
+    // [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AZURE", "GCP" })]
+    // [IgnoreOnEnvIsSet("JENKINS_HOME")]
     public class StructuredArraysIT: StructuredTypesIT
     {
         [Test]
