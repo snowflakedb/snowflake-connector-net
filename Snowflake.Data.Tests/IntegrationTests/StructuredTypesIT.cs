@@ -9,11 +9,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "alter session set ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE=true";
+                command.CommandText = "alter session set ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE = true";
                 command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET FEATURE_STRUCTURED_TYPES = enabled";
+                command.CommandText = "lter session set IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true";
                 command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT=JSON";
+                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON";
                 command.ExecuteNonQuery();
             }
         }
