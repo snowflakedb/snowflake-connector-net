@@ -285,7 +285,8 @@ namespace Snowflake.Data.Client
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
                 var fields = rowType.fields;
-                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsArrayType(rowType.type))
+                if (fields == null || fields.Count == 0 ||
+                    !(JsonToStructuredTypeConverter.IsArrayType(rowType.type) || JsonToStructuredTypeConverter.IsVectorType(rowType.type)))
                 {
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array");
                 }
