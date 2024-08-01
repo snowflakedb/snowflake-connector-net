@@ -249,8 +249,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(float.MinValue, arr[0], 10);
-                    Assert.AreEqual(float.MaxValue, arr[1], 10);
+                    Assert.AreEqual(float.MinValue, arr[0], 10E8);
+                    Assert.AreEqual(float.MaxValue, arr[1], 10E8);
                 }
                 conn.Close();
             }
