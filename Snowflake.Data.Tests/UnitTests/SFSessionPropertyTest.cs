@@ -9,6 +9,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -177,6 +178,58 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedAllowEmptyProxy, properties[SFSessionProperty.ALLOWEMPTYPROXY]);
+        }
+
+        [Test]
+        public void TestFailWhenProxyConfiguredWithoutPort()
+        {
+            // arrange
+            var connectionString = "ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;proxyHost=localhost";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, null));
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.MISSING_CONNECTION_PROPERTY);
+            Assert.That(thrown.Message, Does.Contain("Required property PROXYPORT is not provided"));
+        }
+
+        [Test]
+        public void TestFailWhenProxyUserProvidedWithoutProxyPassword()
+        {
+            // arrange
+            var connectionString = "ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;proxyHost=localhost;proxyPort=1234;proxyUser=testUser";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, null));
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.MISSING_CONNECTION_PROPERTY);
+            Assert.That(thrown.Message, Does.Contain("Required property PROXYPASSWORD is not provided"));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;proxyPort=1234;proxyPassword=xyz", SFSessionProperty.PROXYPORT)]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;proxyUser=testUser;proxyPassword=xyz", SFSessionProperty.PROXYUSER)]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;proxyPassword=xyz", SFSessionProperty.PROXYPASSWORD)]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;useProxy=true;nonProxyHosts=xyz", SFSessionProperty.NONPROXYHOSTS)]
+        public void TestFailWhenConfiguringProxyDetailsWithoutProxyHost(string connectionString, SFSessionProperty unwantedProperty)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, null));
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.INVALID_CONNECTION_STRING);
+            Assert.That(thrown.Message, Does.Contain($"Proxy property {unwantedProperty.ToString()} provided while PROXYHOST is missing"));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;proxyHost=localhost")]
+        [TestCase("ACCOUNT=account;USER=test;PASSWORD=test;useProxy=false;proxyHost=localhost;proxyPort=1234;proxyUser=testUser")]
+        public void TestProxyValidationsOnlyWhenProxyEnabledAndProxyHostConfigured(string connectionString)
+        {
+            // act
+            Assert.DoesNotThrow(() => SFSessionProperties.ParseConnectionString(connectionString, null));
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()
