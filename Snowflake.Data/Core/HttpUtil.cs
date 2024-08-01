@@ -21,7 +21,6 @@ namespace Snowflake.Data.Core
     {
         public HttpClientConfig(
             bool crlCheckEnabled,
-            bool allowEmptyProxy,
             bool useProxy,
             string proxyHost,
             string proxyPort,
@@ -34,7 +33,6 @@ namespace Snowflake.Data.Core
             bool includeRetryReason = true)
         {
             CrlCheckEnabled = crlCheckEnabled;
-            AllowEmptyProxy = allowEmptyProxy;
             UseProxy = useProxy;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
@@ -49,7 +47,6 @@ namespace Snowflake.Data.Core
             ConfKey = string.Join(";",
                 new string[] {
                     crlCheckEnabled.ToString(),
-                    allowEmptyProxy.ToString(),
                     useProxy.ToString(),
                     proxyHost,
                     proxyPort,
@@ -63,7 +60,6 @@ namespace Snowflake.Data.Core
         }
 
         public readonly bool CrlCheckEnabled;
-        public readonly bool AllowEmptyProxy;
         public readonly bool UseProxy;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
@@ -162,17 +158,17 @@ namespace Snowflake.Data.Core
                 };
             }
 
-            httpHandler.UseProxy = config.UseProxy && (config.AllowEmptyProxy || !string.IsNullOrEmpty(config.ProxyHost));
+            httpHandler.UseProxy = config.UseProxy;
 
-            if (httpHandler.UseProxy && !string.IsNullOrEmpty(config.ProxyHost))
+            if (config.UseProxy && !string.IsNullOrEmpty(config.ProxyHost))
             {
-                logger.Info("Configuring proxy based on connection string properties");
+                logger.Info("Configuring proxy based on connection properties");
                 var proxy = ConfigureWebProxy(config);
                 httpHandler.Proxy = proxy;
             }
-            else if (httpHandler.UseProxy)
+            else if (config.UseProxy)
             {
-                logger.Info("Proxy enabled, but not configured due to allowEmptyProxy property set to true");
+                logger.Info("Using a default proxy");
             }
 
             return httpHandler;

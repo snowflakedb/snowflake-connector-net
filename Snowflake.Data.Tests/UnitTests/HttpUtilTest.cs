@@ -101,12 +101,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestCreateHttpClientHandlerWithExplicitProxy([Values] bool allowEmptyProxy)
+        public void TestCreateHttpClientHandlerWithExplicitProxy()
         {
             // given
             var config = new HttpClientConfig(
                 true,
-                allowEmptyProxy,
                 true,
                 "snowflake.com",
                 "123",
@@ -127,11 +126,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestCreateHttpClientHandlerWithImplicitProxy()
+        public void TestCreateHttpClientHandlerWithDefaultProxy()
         {
             // given
             var config = new HttpClientConfig(
-                true,
                 true,
                 true,
                 null,
@@ -153,21 +151,20 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestDoNotCreateHttpClientHandlerWithImplicitProxyWhenEmptyProxyNotAllowed()
+        public void TestCreateHttpClientHandlerWithoutProxy()
         {
             // given
             var config = new HttpClientConfig(
-                true,
-                false,
-                true,
-                null,
-                null,
-                null,
-                null,
-                null,
                 false,
                 false,
-                7
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                0
             );
 
             // when
@@ -179,21 +176,20 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithoutProxy([Values] bool allowEmptyProxy)
+        public void TestIgnoreProxyDetailsIfProxyDisabled()
         {
             // given
             var config = new HttpClientConfig(
+                true,
                 false,
-                allowEmptyProxy,
-                false,
-                null,
-                null,
-                null,
-                null,
-                null,
+                "snowflake.com",
+                "123",
+                "testUser",
+                "proxyPassword",
+                "localhost",
                 false,
                 false,
-                0
+                7
             );
 
             // when
