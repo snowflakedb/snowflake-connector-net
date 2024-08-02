@@ -331,7 +331,7 @@ namespace Snowflake.Data.Client
                         logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
                     }
-                }, TaskContinuationOptions.None);
+                }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
         }
 
         public Mutex GetArrayBindingMutex()

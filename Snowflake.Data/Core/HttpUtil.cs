@@ -374,7 +374,6 @@ namespace Snowflake.Data.Core
 
                 while (true)
                 {
-                    TaskCanceledException cancelException = null;
                     try
                     {
                         childCts = null;
@@ -407,8 +406,6 @@ namespace Snowflake.Data.Core
                             //TODO: Should probably check to see if the error is recoverable or transient.
                             logger.Warn("Error occurred during request, retrying...", e);
                         }
-                        if (e is TaskCanceledException)
-                            cancelException = (TaskCanceledException) e;
                     }
 
                     if (childCts != null)
@@ -457,12 +454,8 @@ namespace Snowflake.Data.Core
                         {
                             return response;
                         }
-
-                        if (cancelException != null)
-                            throw cancelException;
-
-                        throw new SnowflakeDbException(cancelException, SFError.INTERNAL_ERROR,
-                            $"Http request failed and max retry {maxRetryCount} reached");
+                        throw new SnowflakeDbException(new OperationCanceledException($"http request failed and max retry {maxRetryCount} reached"),
+                            SFError.INTERNAL_ERROR, "Unable to connect");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
