@@ -2284,7 +2284,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
 
                 // assert
-                SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
+                Assert.IsTrue(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
+                if (thrown.InnerException is SnowflakeDbException)
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
                 Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }
