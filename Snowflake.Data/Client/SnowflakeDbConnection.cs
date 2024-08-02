@@ -318,6 +318,12 @@ namespace Snowflake.Data.Client
                            SFError.INTERNAL_ERROR,
                            "Unable to connect");
                     }
+                    else if (previousTask.IsCanceled)
+                    {
+                        _connectionState = ConnectionState.Closed;
+                        logger.Debug("Connection canceled");
+                        throw new TaskCanceledException("Connecting was cancelled");
+                    }
                     else
                     {
                         // Only continue if the session was opened successfully
@@ -325,8 +331,7 @@ namespace Snowflake.Data.Client
                         logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
                     }
-                },
-                TaskContinuationOptions.NotOnCanceled);
+                }, TaskContinuationOptions.None);
         }
 
         public Mutex GetArrayBindingMutex()

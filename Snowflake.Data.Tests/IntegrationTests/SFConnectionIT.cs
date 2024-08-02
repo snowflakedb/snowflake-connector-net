@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestConnectionIsNotMarkedAsOpenWhenWfasNotCorrectlyOpenedWithUsingClause()
+        public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
         {
             for (int i = 0; i < 2; ++i)
             {
@@ -2273,49 +2273,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestShouldThrowExceptionWhenTaskCanceledWhenOpenAsync()
+        public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost()
         {
-            // act
-            var connectionString = "account=myaccount.servername; " +
-                                      " user=admin; password=password; role=ACCOUNTADMIN;" +
-                                      " DB=TEST_DB; warehouse=COMPUTE_WH;" +
-                                      " useproxy=true;proxyhost=no.such.pro.xy;proxyport=8080";
-
-            using (var connection = new SnowflakeDbConnection())
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;"
+                                   + "connection_timeout=5;";
+            using (var connection = new SnowflakeDbConnection(connectionString))
             {
-                try{
-                    connection.ConnectionString = connectionString;
-                    Task t = connection.OpenAsync();
-                    t.Wait();
-                }
-                catch (Exception e)
-                {
-                    Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
-                }
+                // act
+                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
+
+                // assert
+                SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
+                Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }
 
         [Test]
-        public async Task TestConnectionAsyncTimeoutWithMaxRetryReached()
+        public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
         {
-            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;";
+            using (var connection = new SnowflakeDbConnection(connectionString))
             {
-                _forceTimeoutForNonLoginRequestsOnly = false
-            };
+                var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            using (DbConnection connection = new MockSnowflakeDbConnection(mockRestRequester))
-            {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=true";
+                // act
+                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
 
-                connection.ConnectionString = maxRetryConnStr;
-                try{
-                    Task t = connection.OpenAsync();
-                    t.Wait();
-                }
-                catch (Exception e)
-                {
-                    Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
-                }
+                // assert
+                Assert.IsInstanceOf<TaskCanceledException>(thrown.InnerException);
+                Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }
     }

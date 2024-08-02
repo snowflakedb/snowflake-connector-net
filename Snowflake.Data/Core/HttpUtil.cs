@@ -13,12 +13,11 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Linq;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Core
 {
-    using Client;
-
     public class HttpClientConfig
     {
         public HttpClientConfig(
@@ -375,7 +374,7 @@ namespace Snowflake.Data.Core
 
                 while (true)
                 {
-                    Exception toThrow = null;
+                    TaskCanceledException cancelException = null;
                     try
                     {
                         childCts = null;
@@ -408,7 +407,8 @@ namespace Snowflake.Data.Core
                             //TODO: Should probably check to see if the error is recoverable or transient.
                             logger.Warn("Error occurred during request, retrying...", e);
                         }
-                        toThrow = e;
+                        if (e is TaskCanceledException)
+                            cancelException = (TaskCanceledException) e;
                     }
 
                     if (childCts != null)
@@ -458,13 +458,11 @@ namespace Snowflake.Data.Core
                             return response;
                         }
 
-                        if (toThrow is TaskCanceledException)
-                        {
-                            throw toThrow;
-                        }
-                        throw new SnowflakeDbException(toThrow, SFError.INTERNAL_ERROR,
-                            $"Http request failed and max retry {maxRetryCount} reached");
+                        if (cancelException != null)
+                            throw cancelException;
 
+                        throw new SnowflakeDbException(cancelException, SFError.INTERNAL_ERROR,
+                            $"Http request failed and max retry {maxRetryCount} reached");
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
