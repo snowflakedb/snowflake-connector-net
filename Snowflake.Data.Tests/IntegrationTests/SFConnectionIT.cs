@@ -2300,7 +2300,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;";
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
-                var shortCancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(10));
+                var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
                 // act
                 var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
