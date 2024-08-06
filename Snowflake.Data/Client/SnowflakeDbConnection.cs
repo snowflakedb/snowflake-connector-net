@@ -322,6 +322,7 @@ namespace Snowflake.Data.Client
                     {
                         _connectionState = ConnectionState.Closed;
                         logger.Debug("Connection canceled");
+                        throw new TaskCanceledException("Connecting was cancelled");
                     }
                     else
                     {
@@ -330,8 +331,7 @@ namespace Snowflake.Data.Client
                         logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
                     }
-                },
-                cancellationToken);
+                }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
         }
 
         public Mutex GetArrayBindingMutex()
