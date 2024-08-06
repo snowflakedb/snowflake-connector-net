@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -14,6 +14,15 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using System.IO;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Utilities.Encoders;
+using LruCacheNet;
+using Org.BouncyCastle.Math;
 
 namespace Snowflake.Data.Core
 {
@@ -141,7 +150,100 @@ namespace Snowflake.Data.Core
                     SslProtocols = SslProtocols.Tls12,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false, // Disable cookies
-                    UseProxy = false
+                    UseProxy = false,
+                    ServerCertificateCustomValidationCallback = (sender, cert, chain, error) =>
+                    {
+                        // Get the content of the ocsp cache
+                        var content = File.ReadAllText("C:\\Users\\lfarol\\AppData\\Local\\Snowflake\\Caches\\ocsp_response_cache.json");
+
+                        // Parse the ocsp cache
+                        var cache = JsonConvert.DeserializeObject<Dictionary<string, List<object>>>(content).ToList();
+
+                        // Store all entries in cache into the in-memory LRU cache
+                        LruCache<string, List<object>> cacheDict = new LruCache<string, List<object>>();
+
+                        for (int i = 0; i < cache.Count; i++)
+                        {
+                            // Decode the OCSP request
+                            byte[] requestBytes = Convert.FromBase64String(cache[i].Key);
+                            Asn1Sequence rawCertId = (Asn1Sequence)Asn1Object.FromByteArray(requestBytes);
+                            Asn1OctetString issuerNameHash = Asn1OctetString.GetInstance(rawCertId[1]);
+                            string issuerKeyHash = Asn1OctetString.GetInstance(rawCertId[2]).ToString().Substring(1);
+                            DerInteger serialNumber = DerInteger.GetInstance(rawCertId[3]);
+
+                            // Get the certificate
+                            var certificate = chain.ChainElements[0].Certificate;
+                            X500DistinguishedName certIssuer = certificate.IssuerName;
+                            string certIssuerName = Hex.ToHexString(certificate.IssuerName.RawData);
+                            string certKeyHash = Hex.ToHexString(certificate.GetCertHash());
+                            string certSerial = certificate.GetSerialNumberString();
+
+
+
+                            // Use the decoded OCSP request as key and the OCSP response as values for thr in-memory cache
+                            cacheDict.Add(issuerKeyHash+serialNumber.ToString(), cache[i].Value);
+                        }
+
+                        // Loop for all certificates in the chain
+                        for (int i = 0; i < chain.ChainElements.Count; i++)
+                        {
+                            // Get the certificate
+                            var certificate = chain.ChainElements[i].Certificate;
+
+                            // Validate the certificate
+                            if (!certificate.Verify())
+                            {
+                                throw new Exception("Certificate is not valid");
+                            }
+
+                            if (DateTime.Now > certificate.NotAfter || DateTime.Now < certificate.NotBefore)
+                            {
+                                throw new Exception("Certificate is expired");
+                            }
+
+                            // Get the corresponding entry from the ocsp cache to get the OCSP response
+                            X500DistinguishedName certIssuer = certificate.IssuerName;
+                            string certIssuerName = Hex.ToHexString(certificate.IssuerName.RawData);
+                            string certKeyHash = Hex.ToHexString(certificate.GetCertHash());
+                            string certSerial = certificate.GetSerialNumberString();
+
+                            if(cacheDict.ContainsKey(certKeyHash))
+                            {
+                                var entry = cacheDict.Get(certKeyHash);
+
+                                // Decode the OCSP response
+                                var responseBytes = Convert.FromBase64String(entry[1].ToString());
+                                OcspResp ocspResp = new OcspResp(responseBytes);
+
+                                // Check the OCSP response status
+                                if (ocspResp.Status != OcspResponseStatus.Successful)
+                                {
+                                    throw new Exception("The OCSP response status is not successful");
+                                }
+
+                                // Check the basic OCSP response expiration
+                                var basicOcspResp = (BasicOcspResp)(ocspResp.GetResponseObject());
+                                if (basicOcspResp.Responses.Length > 0)
+                                {
+                                    var singleResp = basicOcspResp.Responses[0];
+
+                                    int MaxClockSkew = 36000000;
+                                    if (Math.Abs(singleResp.ThisUpdate.Ticks - DateTime.Now.Ticks) > MaxClockSkew)
+                                    {
+                                        throw new Exception("Max clock skew reached.");
+                                    }
+
+                                    if (singleResp.NextUpdate != null &&
+                                        singleResp.NextUpdate.Value.Ticks <= DateTime.Now.Ticks)
+                                    {
+                                        throw new Exception("Invalid next update.");
+                                    }
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
                 };
             }
             // special logic for .NET framework 4.7.1 that

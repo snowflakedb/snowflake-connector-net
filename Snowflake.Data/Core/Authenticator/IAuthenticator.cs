@@ -1,8 +1,9 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -88,6 +89,17 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.Authenticate"/>
         protected void Login()
         {
+            var uri = new Uri("http://ocsp.snowflakecomputing.com/ocsp_response_cache.json");
+            var ocspResponse = session.restRequester.Get(new SFRestRequest()
+            {
+                Url = uri,
+                authorizationToken = "123",
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan,
+            });
+            var ocspCache = Task.Run(async () => await ocspResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
+            File.WriteAllText("C:\\Users\\lfarol\\AppData\\Local\\Snowflake\\Caches\\ocsp_response_cache_test.json", ocspCache);
+
             var loginRequest = BuildLoginRequest();
 
             var response = session.restRequester.Post<LoginResponse>(loginRequest);
