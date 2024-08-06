@@ -2271,6 +2271,45 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
         }
+
+        [Test]
+        [TestCase("connection_timeout=5;")]
+        [TestCase("")]
+        public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;" +
+                                   extraParameters;
+            using (var connection = new SnowflakeDbConnection(connectionString))
+            {
+                // act
+                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
+
+                // assert
+                Assert.IsTrue(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
+                if (thrown.InnerException is SnowflakeDbException)
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
+                Assert.AreEqual(ConnectionState.Closed, connection.State);
+            }
+        }
+
+        [Test]
+        public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;";
+            using (var connection = new SnowflakeDbConnection(connectionString))
+            {
+                var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+                // act
+                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
+
+                // assert
+                Assert.IsInstanceOf<TaskCanceledException>(thrown.InnerException);
+                Assert.AreEqual(ConnectionState.Closed, connection.State);
+            }
+        }
     }
 }
 
