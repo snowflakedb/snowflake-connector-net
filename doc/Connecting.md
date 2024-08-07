@@ -4,7 +4,7 @@ To connect to Snowflake, specify a valid connection string composed of key-value
 i.e "\<key1\>=\<value1\>;\<key2\>=\<value2\>...".
 
 **Note**: If the value specified in the connection string contains any signs like semicolon (`;`) or equal sign (`=`) or any phrases which can interfere with parsing the connection string,
-please surround the value with double quotation marks (`""`). For example `password="=;;;=dummy==password;;"`.
+please surround the value with double quotation marks (`""`). For example `password=""=;;;=dummy==password;;""`.
 
 The following table lists all valid connection properties:
 <br />
