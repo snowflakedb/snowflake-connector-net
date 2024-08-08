@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
@@ -69,6 +70,8 @@ namespace Snowflake.Data.Core
 
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
+        internal readonly BrowserOperations _browserOperations = BrowserOperations.Instance;
+
         private long _startTime = 0;
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
@@ -98,6 +101,12 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
+        private readonly ISnowflakeCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
+
+        internal bool _allowSSOTokenCaching;
+
+        internal string _idToken;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -116,6 +125,12 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
+                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                {
+                    _idToken = authnResponse.data.idToken;
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    _credManager.SaveCredentials(key, _idToken);
+                }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
@@ -128,7 +143,17 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
-                throw e;
+
+                if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+                {
+                    logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
+                    _idToken = null;
+                    authenticator.Authenticate();
+                }
+                else
+                {
+                    throw e;
+                }
             }
         }
 
@@ -190,6 +215,13 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
+                _allowSSOTokenCaching = extractedProperties._allowSSOTokenCaching;
+
+                if (_allowSSOTokenCaching)
+                {
+                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    _idToken = _credManager.GetCredentials(key);
+                }
             }
             catch (SnowflakeDbException e)
             {
@@ -227,6 +259,11 @@ namespace Snowflake.Data.Core
             restRequester.setHttpClient(_HttpClient);
             // Override the Rest requester with the mock for testing
             this.restRequester = restRequester;
+        }
+
+        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, BrowserOperations browserOperations) : this(connectionString, password, restRequester)
+        {
+            _browserOperations = browserOperations;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
