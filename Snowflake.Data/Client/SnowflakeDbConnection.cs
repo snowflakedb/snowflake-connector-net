@@ -2,17 +2,17 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Data.Common;
-using Snowflake.Data.Core;
-using System.Security;
-using System.Threading.Tasks;
-using System.Data;
-using System.Threading;
-using Snowflake.Data.Log;
-
 namespace Snowflake.Data.Client
 {
+    using System;
+    using System.Data.Common;
+    using Snowflake.Data.Core;
+    using System.Security;
+    using System.Threading.Tasks;
+    using System.Data;
+    using System.Threading;
+    using Snowflake.Data.Log;
+
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
@@ -37,6 +37,8 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
+        private readonly SnowflakeTomlConnectionBuilder _tomlConnectionBuilder;
+
         protected enum TransactionRollbackStatus
         {
             Undefined, // used to indicate ignored transaction status when pool disabled
@@ -44,19 +46,24 @@ namespace Snowflake.Data.Client
             Failure
         }
 
-        public SnowflakeDbConnection()
+        public SnowflakeDbConnection() : this(new SnowflakeTomlConnectionBuilder())
         {
+        }
+
+        public SnowflakeDbConnection(string connectionString) : this()
+        {
+            ConnectionString = connectionString;
+        }
+
+        internal SnowflakeDbConnection(SnowflakeTomlConnectionBuilder tomlConnectionBuilder)
+        {
+            _tomlConnectionBuilder = tomlConnectionBuilder;
             _connectionState = ConnectionState.Closed;
             _connectionTimeout =
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
             _isArrayBindStageCreated = false;
             ExplicitTransaction = null;
-        }
-
-        public SnowflakeDbConnection(string connectionString) : this()
-        {
-            ConnectionString = connectionString;
         }
 
         public override string ConnectionString
@@ -268,6 +275,7 @@ namespace Snowflake.Data.Client
             }
             try
             {
+                FillConnectionStringFromTomlConfigIfNotSet();
                 OnSessionConnecting();
                 SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
                 if (SfSession == null)
@@ -292,6 +300,14 @@ namespace Snowflake.Data.Client
             }
         }
 
+        internal void FillConnectionStringFromTomlConfigIfNotSet()
+        {
+            if (string.IsNullOrEmpty(ConnectionString))
+            {
+                ConnectionString = _tomlConnectionBuilder.GetConnectionStringFromToml();
+            }
+        }
+
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Connection Async.");
@@ -302,6 +318,7 @@ namespace Snowflake.Data.Client
             }
             registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
+            FillConnectionStringFromTomlConfigIfNotSet();
             return SnowflakeDbConnectionPool
                 .GetSessionAsync(ConnectionString, Password, cancellationToken)
                 .ContinueWith(previousTask =>

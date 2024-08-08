@@ -2262,6 +2262,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+
+        [Test]
+        [IgnoreOnCI("This test requires a valid connection string in the configuration file.")]
+        public void TestLocalDefaultConnectStringReadFromToml()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
         [Test]
         public void TestUseMultiplePoolsConnectionPoolByDefault()
         {

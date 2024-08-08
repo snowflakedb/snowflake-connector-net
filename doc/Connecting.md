@@ -295,3 +295,43 @@ Examples:
 - `myaccount.snowflakecomputing.com` (Not bypassed).
 - `*myaccount.snowflakecomputing.com` (Bypassed).
 
+### Snowflake credentials using a configuration file
+
+.NET Drivers allows to add connections definitions to a configuration file. For this connection all supported parameters in .NET could be defined and will be use to generate our connection string.
+
+.NET Driver looks for the `connection.toml` in the following locations, in order.
+
+* `$SNOWFLAKE_HOME` environment variable,  You can modify the environment variable to use a different location.
+* If the environment variable is not specified will use `~/.snowflake` directory if exists.
+* Otherwise, for others OS Systems `${HOME_DIRECTORY}/.snowflake`.
+
+For MacOS and Linux systems, .NET Driver requires the connections.toml file to limit its file permissions to read and write for the file owner only. To set the file required file permissions execute the following commands:
+
+``` BASH
+chown $USER connections.toml
+chmod 0600 connections.toml
+```
+
+In the C# code to use this mechanism you should not specify any connection and it will try to use the configuration file.
+
+``` toml
+[myconnection]
+account = "myaccount"
+user = "jdoe"
+password = "xyz1234"
+```
+
+```cs
+using (IDbConnection conn = new SnowflakeDbConnection())
+{
+    conn.Open(); // Reads connection definition from configuration file.
+
+    conn.Close();
+}
+```
+
+By default the name of the connection will be `default`. You can also change the default connection by setting the SNOWFLAKE_DEFAULT_CONNECTION_NAME environment variable, as shown:
+
+``` bash
+export SNOWFLAKE_DEFAULT_CONNECTION_NAME="my_prod_connection"
+```
