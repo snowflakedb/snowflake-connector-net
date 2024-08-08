@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core
         internal readonly SFStatementType statementType;
 
         internal readonly List<Tuple<SFDataType, Type>> columnTypes;
-        
+
         /// <summary>
         ///     This map is used to cache column name to column index. Index is 0-based.
         /// </summary>
@@ -96,12 +96,12 @@ namespace Snowflake.Data.Core
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
-                    indexCounter++; 
+                    indexCounter++;
                 }
             }
             return -1;
         }
-        
+
         internal SFDataType GetColumnTypeByIndex(int targetIndex)
         {
             return columnTypes[targetIndex].Item1;
@@ -117,6 +117,12 @@ namespace Snowflake.Data.Core
             return rowTypes[targetIndex].scale;
         }
 
+        internal bool IsStructuredType(int targetIndex)
+        {
+            var fields = rowTypes[targetIndex].fields;
+            return fields != null && fields.Count > 0;
+        }
+
         private SFDataType GetSFDataType(string type)
         {
             SFDataType rslt;
@@ -124,7 +130,7 @@ namespace Snowflake.Data.Core
                 return rslt;
 
             throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                $"Unknow column type: {type}"); 
+                $"Unknow column type: {type}");
         }
 
         private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
@@ -138,7 +144,8 @@ namespace Snowflake.Data.Core
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                case SFDataType.ARRAY:    
+                case SFDataType.ARRAY:
+                case SFDataType.MAP:
                     return typeof(string);
                 case SFDataType.DATE:
                 case SFDataType.TIME:
@@ -156,10 +163,10 @@ namespace Snowflake.Data.Core
                         $"Unknow column type: {sfType}");
             }
         }
-        
+
         internal Type GetCSharpTypeByIndex(int targetIndex)
         {
-            return columnTypes[targetIndex].Item2;  
+            return columnTypes[targetIndex].Item2;
         }
 
         internal string GetColumnNameByIndex(int targetIndex)
@@ -203,7 +210,7 @@ namespace Snowflake.Data.Core
     internal enum SFStatementType
     {
         [SFStatementTypeAttr(typeId = 0x0000)]
-        UNKNOWN, 
+        UNKNOWN,
 
         [SFStatementTypeAttr(typeId = 0x1000)]
         SELECT,
@@ -212,7 +219,7 @@ namespace Snowflake.Data.Core
         EXPLAIN,
 
         /// <remark>
-        ///     Data Manipulation Language 
+        ///     Data Manipulation Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x3000)]
         DML,
@@ -257,7 +264,7 @@ namespace Snowflake.Data.Core
         ///     Transaction Command Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x5000)]
-        TCL, 
+        TCL,
 
         /// <remark>
         ///     Data Definition Language

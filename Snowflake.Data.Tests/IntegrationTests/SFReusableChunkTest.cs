@@ -1,15 +1,15 @@
 using System;
+using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
+using NUnit.Framework;
+using System.Data;
+using System.IO;
+using System.Threading.Tasks;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using System.Data;
-    using System.IO;
-    using Core;
-    using Client;
-    using System.Threading.Tasks;
-    
+
     [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
@@ -63,12 +63,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(1);
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
 
@@ -78,8 +78,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
 insert into {TableName} (
-select parse_json('{{ 
-    ""date"" : ""2017 - 04 - 28"", 
+select parse_json('{{
+    ""date"" : ""2017 - 04 - 28"",
     ""dealership"" : ""Valley View Auto Sales"",
     ""salesperson"" : {{
                     ""id"": ""55"",
@@ -125,12 +125,12 @@ select parse_json('{{
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                 CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
@@ -172,15 +172,15 @@ select parse_json('{{
 
         [Test]
         public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
-        {            
+        {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
+
                 CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -188,7 +188,7 @@ select parse_json('{{
 
                 int largeTableRowCount = 100000;
                 string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand; 
+                cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
                 Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
@@ -223,13 +223,13 @@ select parse_json('{{
         {
             private int _exceptionsThrown;
             private readonly int _expectedExceptionsNumber;
-                
+
             public TestChunkParserFactory(int exceptionsToThrow)
             {
                 _expectedExceptionsNumber = exceptionsToThrow;
                 _exceptionsThrown = 0;
             }
-            
+
             public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
                 if (++_exceptionsThrown <= _expectedExceptionsNumber)
@@ -242,7 +242,7 @@ select parse_json('{{
         class ThrowingReusableChunkParser : IChunkParser
         {
             public Task ParseChunk(IResultChunk chunk)
-            { 
+            {
                 throw new Exception("json parsing error.");
             }
         }
