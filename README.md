@@ -121,10 +121,10 @@ Logging description and configuration:
 1.  CVE-2019-0820 -
     This CVE has been reported in systems.text.regularexpressions.dll which is used by the regular expressions packages - systems.text.regularexpressions.4.3.1.nupkg. This vulnerability manifests itself ONLY when the following .NET runtime environments are being used:
 
-      * v1.0 branch: 1.0 - 1.0.16 (exclusive)
-      * v1.1 branch: 1.1 - 1.1.13 (exclusive)
-      * v2.1 branch: 2.1 - 2.1.11 (exclusive)
-      * v2.2 branch: 2.2 - 2.2.5  (exclusive)
+        * v1.0 branch: 1.0 - 1.0.16 (exclusive)
+        * v1.1 branch: 1.1 - 1.1.13 (exclusive)
+        * v2.1 branch: 2.1 - 2.1.11 (exclusive)
+        * v2.2 branch: 2.2 - 2.2.5  (exclusive)
 
     In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability.
 
