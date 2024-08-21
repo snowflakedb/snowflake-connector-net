@@ -310,7 +310,7 @@ namespace Snowflake.Data.Core
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
-                logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Error($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
 
             logger.Debug($"Session closed: {sessionId}");
