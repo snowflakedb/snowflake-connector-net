@@ -2310,6 +2310,55 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }
+
+        [Test]
+        public void TestCloseSessionWhenGarbageCollectorFinalizesConnection()
+        {
+            // arrange
+            var session = GetSessionFromForgottenConnection();
+            Assert.NotNull(session);
+            Assert.NotNull(session.sessionId);
+            Assert.NotNull(session.sessionToken);
+
+            // act
+            GC.Collect();
+            Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(15));
+
+            // assert
+            Assert.IsNull(session.sessionToken);
+        }
+
+        private SFSession GetSessionFromForgottenConnection()
+        {
+            var connection = new SnowflakeDbConnection(ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
+            connection.Open();
+            return connection.SfSession;
+        }
+
+        [Test]
+        public void TestHangingCloseIsNotBlocking()
+        {
+            // arrange
+            var restRequester = new MockCloseHangingRestRequester();
+            var session = new SFSession("account=test;user=test;password=test", null, restRequester);
+            session.Open();
+            var watch = new Stopwatch();
+
+            // act
+            watch.Start();
+            session.closeNonBlocking();
+            watch.Stop();
+            var closeDuration = watch.Elapsed.Duration();
+            watch.Restart();
+            Awaiter.WaitUntilConditionOrTimeout(() => restRequester.CloseRequests.Count > 0, TimeSpan.FromSeconds(15));
+            watch.Stop();
+            var backgroundTaskDuration = watch.Elapsed.Duration();
+
+            // assert
+            Assert.AreEqual(1, restRequester.CloseRequests.Count);
+            Assert.Less(closeDuration, TimeSpan.FromSeconds(5)); // close executed immediately
+            Assert.GreaterOrEqual(backgroundTaskDuration, TimeSpan.FromSeconds(10)); // while background task took more time
+        }
     }
 }
 
