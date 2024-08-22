@@ -2,12 +2,13 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using Mono.Unix;
 
 namespace Snowflake.Data.Core.Tools
 {
-    using System.Runtime.InteropServices;
-    using Mono.Unix;
 
     internal class FileOperations
     {
@@ -21,12 +22,12 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual string ReadAllText(string path)
         {
-            return ReadAllText(path, FileAccessPermissions.OtherReadWriteExecute);
+            return ReadAllText(path, null);
         }
 
-        public virtual string ReadAllText(string path, FileAccessPermissions? forbiddenPermissions)
+        public virtual string ReadAllText(string path, Action<UnixStream> validator)
         {
-            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(path) : _unixOperations.ReadAllText(path, forbiddenPermissions);
+            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || validator == null ? File.ReadAllText(path) : _unixOperations.ReadAllText(path, validator);
             return contentFile;
         }
     }

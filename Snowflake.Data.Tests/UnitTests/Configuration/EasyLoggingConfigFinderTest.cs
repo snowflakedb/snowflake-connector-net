@@ -238,7 +238,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static void MockFileFromEnvironmentalVariable()
         {
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName, null))
+                .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName))
                 .Returns(EnvironmentalConfigFilePath);
         }
 

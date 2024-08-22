@@ -3,6 +3,8 @@
  */
 
 
+using System;
+
 namespace Snowflake.Data.Tests.Tools
 {
     using System.IO;
@@ -49,7 +51,7 @@ namespace Snowflake.Data.Tests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
             // act
-            var result = s_fileOperations.ReadAllText(filePath);
+            var result = s_fileOperations.ReadAllText(filePath, GetTestFileValidation());
 
             // assert
             Assert.AreEqual(content, result);
@@ -69,14 +71,14 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_fileOperations.ReadAllText(filePath);
+            var result = s_fileOperations.ReadAllText(filePath, GetTestFileValidation());
 
             // assert
             Assert.AreEqual(content, result);
         }
 
         [Test]
-        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText()
+        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -89,8 +91,22 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath),
+            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, GetTestFileValidation()),
                 "Attempting to read a file with too broad permissions assigned");
+        }
+
+        private Action<UnixStream> GetTestFileValidation()
+        {
+            return stream =>
+            {
+                const FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute;
+                if (stream.OwnerUser.UserId != Syscall.geteuid())
+                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+                if (stream.OwnerGroup.GroupId != Syscall.getegid())
+                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+                if ((stream.FileAccessPermissions & forbiddenPermissions) != 0)
+                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
+            };
         }
     }
 }
