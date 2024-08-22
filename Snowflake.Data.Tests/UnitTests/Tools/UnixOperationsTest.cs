@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.Tools
 {
-    using System.Security;
-
     [TestFixture, NonParallelizable]
     public class UnixOperationsTest
     {
@@ -96,14 +96,16 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath);
+            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations());
 
             // assert
             Assert.AreEqual(content, result);
         }
 
         [Test]
-        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText()
+        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute)]
+        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute)]
+        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText(FileAccessPermissions filePermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -111,11 +113,10 @@ namespace Snowflake.Data.Tests.Tools
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            var filePermissions = FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath), "Attempting to read a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations()), "Attempting to read a file with too broad permissions assigned");
         }
 
         public static IEnumerable<FilePermissions> UserPermissions()

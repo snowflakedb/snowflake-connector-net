@@ -2,17 +2,17 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+using System.Data;
+using System.Data.Common;
+using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Core;
+using Snowflake.Data.Log;
+
 namespace Snowflake.Data.Client
 {
-    using System;
-    using System.Data.Common;
-    using Snowflake.Data.Core;
-    using System.Security;
-    using System.Threading.Tasks;
-    using System.Data;
-    using System.Threading;
-    using Snowflake.Data.Log;
-
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
@@ -37,7 +37,7 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
-        private readonly SnowflakeTomlConnectionBuilder _tomlConnectionBuilder;
+        private readonly TomlConnectionBuilder _tomlConnectionBuilder;
 
         protected enum TransactionRollbackStatus
         {
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Client
             Failure
         }
 
-        public SnowflakeDbConnection() : this(new SnowflakeTomlConnectionBuilder())
+        public SnowflakeDbConnection() : this(TomlConnectionBuilder.Instance)
         {
         }
 
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Client
             ConnectionString = connectionString;
         }
 
-        internal SnowflakeDbConnection(SnowflakeTomlConnectionBuilder tomlConnectionBuilder)
+        internal SnowflakeDbConnection(TomlConnectionBuilder tomlConnectionBuilder)
         {
             _tomlConnectionBuilder = tomlConnectionBuilder;
             _connectionState = ConnectionState.Closed;

@@ -297,15 +297,16 @@ Examples:
 
 ### Snowflake credentials using a configuration file
 
-.NET Drivers allows to add connections definitions to a configuration file. For this connection all supported parameters in .NET could be defined and will be use to generate our connection string.
+.NET Drivers allows to add connections definitions to a configuration file. For a connection defined in this way all supported parameters in .NET could be defined and will be used to generate our connection string.
 
-.NET Driver looks for the `connection.toml` in the following locations, in order.
+.NET Driver looks for the `connections.toml` in the following locations, in order.
 
-* `$SNOWFLAKE_HOME` environment variable,  You can modify the environment variable to use a different location.
-* If the environment variable is not specified will use `~/.snowflake` directory if exists.
-* Otherwise, for others OS Systems `${HOME_DIRECTORY}/.snowflake`.
+* `SNOWFLAKE_HOME` environment variable,  You can modify the environment variable to use a different location.
+* Otherwise, it uses the `connections.toml` file in `.snowflake` subfolder of the home directory, that is, based on your operating system:
+  * MacOS/Linux: `~/.snowflake/connections.toml`
+  * Windows: `%USERPROFILE%\.snowflake\connections.toml`
 
-For MacOS and Linux systems, .NET Driver requires the connections.toml file to limit its file permissions to read and write for the file owner only. To set the file required file permissions execute the following commands:
+For MacOS and Linux systems, .NET Driver demands the connections.toml file to  have limited file permissions to read and write for the file owner only. To set the file required file permissions execute the following commands:
 
 ``` BASH
 chown $USER connections.toml
@@ -330,8 +331,46 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 }
 ```
 
-By default the name of the connection will be `default`. You can also change the default connection by setting the SNOWFLAKE_DEFAULT_CONNECTION_NAME environment variable, as shown:
+By default the name of the connection will be `default`. You can also change the default connection name by setting the SNOWFLAKE_DEFAULT_CONNECTION_NAME environment variable, as shown:
 
-``` bash
-export SNOWFLAKE_DEFAULT_CONNECTION_NAME="my_prod_connection"
+```bash
+set SNOWFLAKE_DEFAULT_CONNECTION_NAME=my_prod_connection
 ```
+
+The following examples show how you can include different types of special characters in a toml key value pair string:
+
+- To include a single quote (') character:
+
+  ```toml
+  [default]
+  host = "fakeaccount.snowflakecomputing.com"
+  user = "fakeuser"
+  password = "fake\'password"
+  ```
+
+- To include a double quote (") character:
+
+  ```toml
+  [default]
+  host = "fakeaccount.snowflakecomputing.com"
+  user = "fakeuser"
+  password = "fake\"password"
+  ```
+
+- To include a semicolon (;):
+
+  ```toml
+  [default]
+  host = "fakeaccount.snowflakecomputing.com"
+  user = "fakeuser"
+  password = "\";fakepassword\""
+  ```
+
+- To include an equal sign (=):
+
+  ```toml
+  [default]
+  host = "fakeaccount.snowflakecomputing.com"
+  user = "fakeuser"
+  password = "fake=password"
+  ```

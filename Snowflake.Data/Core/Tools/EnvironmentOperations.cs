@@ -13,9 +13,9 @@ namespace Snowflake.Data.Core.Tools
         public static readonly EnvironmentOperations Instance = new EnvironmentOperations();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EnvironmentOperations>();
 
-        public virtual string GetEnvironmentVariable(string variable, string defaultValue = null)
+        public virtual string GetEnvironmentVariable(string variable)
         {
-            return Environment.GetEnvironmentVariable(variable) ?? defaultValue;
+            return Environment.GetEnvironmentVariable(variable);
         }
 
         public virtual string GetFolderPath(Environment.SpecialFolder folder)
