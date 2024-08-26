@@ -397,7 +397,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    SfSession?.closeNonBlocking();
+                    SfSession?.CloseNonBlocking();
                     SfSession = null;
                     _connectionState = ConnectionState.Closed;
                 }

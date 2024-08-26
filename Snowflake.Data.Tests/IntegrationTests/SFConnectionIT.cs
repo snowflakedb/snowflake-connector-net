@@ -2342,22 +2342,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var restRequester = new MockCloseHangingRestRequester();
             var session = new SFSession("account=test;user=test;password=test", null, restRequester);
             session.Open();
-            var watch = new Stopwatch();
+            var watchClose = new Stopwatch();
+            var watchClosedFinished = new Stopwatch();
 
             // act
-            watch.Start();
-            session.closeNonBlocking();
-            watch.Stop();
-            var closeDuration = watch.Elapsed.Duration();
-            watch.Restart();
+            watchClose.Start();
+            watchClosedFinished.Start();
+            session.CloseNonBlocking();
+            watchClose.Stop();
             Awaiter.WaitUntilConditionOrTimeout(() => restRequester.CloseRequests.Count > 0, TimeSpan.FromSeconds(15));
-            watch.Stop();
-            var backgroundTaskDuration = watch.Elapsed.Duration();
+            watchClosedFinished.Stop();
 
             // assert
             Assert.AreEqual(1, restRequester.CloseRequests.Count);
-            Assert.Less(closeDuration, TimeSpan.FromSeconds(5)); // close executed immediately
-            Assert.GreaterOrEqual(backgroundTaskDuration, TimeSpan.FromSeconds(10)); // while background task took more time
+            Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
+            Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
         }
     }
 }

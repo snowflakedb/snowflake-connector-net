@@ -281,11 +281,10 @@ namespace Snowflake.Data.Core
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
             PostCloseSession(closeSessionRequest, restRequester);
-            // Just in case the session won't be closed twice
             sessionToken = null;
         }
 
-        internal void closeNonBlocking()
+        internal void CloseNonBlocking()
         {
             // Nothing to do if the session is not open
             if (!IsEstablished()) return;
@@ -293,7 +292,6 @@ namespace Snowflake.Data.Core
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
             Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
-            // Just in case the session won't be closed twice
             sessionToken = null;
         }
 
@@ -306,15 +304,14 @@ namespace Snowflake.Data.Core
 
             var closeSessionRequest = PrepareCloseSessionRequest();
 
-            logger.Debug($"Send async closeSessionRequest");
+            logger.Debug($"Closing session async");
             var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
-                logger.Error($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
 
             logger.Debug($"Session closed: {sessionId}");
-            // Just in case the session won't be closed twice
             sessionToken = null;
         }
 
@@ -322,18 +319,18 @@ namespace Snowflake.Data.Core
         {
             try
             {
-                logger.Debug($"Send closeSessionRequest");
+                logger.Debug($"Closing session");
                 var response = restRequester.Post<CloseResponse>(closeSessionRequest);
                 if (!response.success)
                 {
-                    logger.Error($"Failed to delete session: {closeSessionRequest.sid}, error ignored. Code: {response.code} Message: {response.message}");
+                    logger.Error($"Failed to close session: {closeSessionRequest.sid}, error ignored. Code: {response.code} Message: {response.message}");
                 }
 
                 logger.Debug($"Session closed: {closeSessionRequest.sid}");
             }
             catch (Exception)
             {
-                logger.Error($"Failed to delete session: {closeSessionRequest.sid}, because of exception.");
+                logger.Error($"Failed to close session: {closeSessionRequest.sid}, because of exception.");
                 throw;
             }
         }

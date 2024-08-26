@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var restRequester = new MockCloseSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
             sfSession.Open();
-            Assert.DoesNotThrow(() => sfSession.closeNonBlocking());
+            Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());
         }
 
         [Test]
