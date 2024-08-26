@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -277,6 +278,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
                     Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a map"));
                     Assert.That(thrown.Message, Does.Contain("Method GetMap<System.String, System.String> can be used only for structured map"));
+                }
+            }
+        }
+
+        [Test]
+        public void TestThrowExceptionForInvalidMapElement()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var invalidMapSFString = @"OBJECT_CONSTRUCT(
+                        'x', 'a76dacad-0e35-497b-bf9b-7cd49262b68b',
+                        'y', 'z76dacad-0e35-497b-bf9b-7cd49262b68b'
+                    )::MAP(TEXT,TEXT)";
+                    command.CommandText = $"SELECT {invalidMapSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetMap<string, Guid>(0));
+
+                    // assert
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
                 }
             }
         }
