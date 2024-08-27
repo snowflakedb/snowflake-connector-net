@@ -279,29 +279,19 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            var closeSessionRequest = PrepareCloseSessionRequest();
+            PostCloseSession(closeSessionRequest, restRequester);
+            sessionToken = null;
+        }
 
-            // Send a close session request
-            var queryParams = new Dictionary<string, string>();
-            queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
-            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
-
-            SFRestRequest closeSessionRequest = new SFRestRequest
-            {
-                Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
-                sid = sessionId
-            };
-
-            logger.Debug($"Send closeSessionRequest");
-            var response = restRequester.Post<CloseResponse>(closeSessionRequest);
-            if (!response.success)
-            {
-                logger.Debug($"Failed to delete session: {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
-            }
-
-            logger.Debug($"Session closed: {sessionId}");
-            // Just in case the session won't be closed twice
+        internal void CloseNonBlocking()
+        {
+            // Nothing to do if the session is not open
+            if (!IsEstablished()) return;
+            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+            stopHeartBeatForThisSession();
+            var closeSessionRequest = PrepareCloseSessionRequest();
+            Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
             sessionToken = null;
         }
 
@@ -312,29 +302,52 @@ namespace Snowflake.Data.Core
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
 
-            // Send a close session request
+            var closeSessionRequest = PrepareCloseSessionRequest();
+
+            logger.Debug($"Closing session async");
+            var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+            if (!response.success)
+            {
+                logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
+            }
+
+            logger.Debug($"Session closed: {sessionId}");
+            sessionToken = null;
+        }
+
+        private static void PostCloseSession(SFRestRequest closeSessionRequest, IRestRequester restRequester)
+        {
+            try
+            {
+                logger.Debug($"Closing session");
+                var response = restRequester.Post<CloseResponse>(closeSessionRequest);
+                if (!response.success)
+                {
+                    logger.Error($"Failed to close session: {closeSessionRequest.sid}, error ignored. Code: {response.code} Message: {response.message}");
+                }
+
+                logger.Debug($"Session closed: {closeSessionRequest.sid}");
+            }
+            catch (Exception)
+            {
+                logger.Error($"Failed to close session: {closeSessionRequest.sid}, because of exception.");
+                throw;
+            }
+        }
+
+        private SFRestRequest PrepareCloseSessionRequest()
+        {
             var queryParams = new Dictionary<string, string>();
             queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-            SFRestRequest closeSessionRequest = new SFRestRequest()
+            return new SFRestRequest
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
                 sid = sessionId
             };
-
-            logger.Debug($"Send async closeSessionRequest");
-            var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
-            if (!response.success)
-            {
-                logger.Debug($"Failed to delete session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
-            }
-
-            logger.Debug($"Session closed: {sessionId}");
-            // Just in case the session won't be closed twice
-            sessionToken = null;
         }
 
         internal bool IsEstablished() => sessionToken != null;
