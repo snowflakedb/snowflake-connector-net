@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core
                             .ConfigureAwait(false);
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Debug($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                         }
                         else
                         {
