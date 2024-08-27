@@ -409,5 +409,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+
+        [Test]
+        public void TestThrowExceptionForInvalidPropertyType()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var objectSFString = "OBJECT_CONSTRUCT('x', 'a', 'y', 'b')::OBJECT(x VARCHAR, y VARCHAR)";
+                    command.CommandText = $"SELECT {objectSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetObject<AnnotatedClassForConstructorConstruction>(0));
+
+                    // assert
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]."));
+                    Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                }
+            }
+        }
     }
 }

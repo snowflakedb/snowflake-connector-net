@@ -83,7 +83,8 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(Boolean))
                 {
-                    return ConvertToBooleanValue(srcVal);
+                    var val = srcVal.Buffer[srcVal.offset];
+                    return val == '1' || val == 't' || val == 'T';
                 }
                 else if (destType == typeof(byte[]))
                 {
@@ -129,12 +130,6 @@ namespace Snowflake.Data.Core
             {
                 throw new OverflowException($"Error converting '{srcVal} to {destType.Name}'. Use GetString() to handle very large values", e);
             }
-        }
-
-        private static bool ConvertToBooleanValue(UTF8Buffer srcVal)
-        {
-            var val = srcVal.Buffer[srcVal.offset];
-            return val == '1' || val == 't' || val == 'T';
         }
 
         private static object ConvertToTimeSpan(UTF8Buffer srcVal, SFDataType srcType)

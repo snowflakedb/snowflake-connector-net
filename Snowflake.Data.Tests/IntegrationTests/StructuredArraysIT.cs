@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -341,5 +342,59 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+
+        [Test]
+        public void TestThrowExceptionForInvalidArrayElement()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arraySFString = "ARRAY_CONSTRUCT('a76dacad-0e35-497b-bf9b-7cd49262b68b', 'z76dacad-0e35-497b-bf9b-7cd49262b68b')::ARRAY(TEXT)";
+                    command.CommandText = $"SELECT {arraySFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<Guid>(0));
+
+                    // assert
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                }
+            }
+        }
+
+        [Test]
+        public void TestThrowExceptionForNextedInvalidElement()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arraySFString = @"ARRAY_CONSTRUCT(
+                        OBJECT_CONSTRUCT('x', 'a', 'y', 'b')
+                    )::ARRAY(OBJECT(x VARCHAR, y VARCHAR))";
+                    command.CommandText = $"SELECT {arraySFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
+
+                    // assert
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
+                    Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                }
+            }
+        }
+
     }
 }
