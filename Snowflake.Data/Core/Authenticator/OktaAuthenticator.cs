@@ -105,6 +105,7 @@ namespace Snowflake.Data.Core.Authenticator
                 finally
                 {
                     samlRawResponse?.Dispose();
+                    samlRawResponse = null;
                 }
             } // while retry
 
@@ -171,6 +172,7 @@ namespace Snowflake.Data.Core.Authenticator
                 finally
                 {
                     samlRawResponse?.Dispose();
+                    samlRawResponse = null;
                 }
             } // while retry
 
