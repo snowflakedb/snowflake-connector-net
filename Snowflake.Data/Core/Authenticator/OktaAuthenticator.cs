@@ -102,6 +102,10 @@ namespace Snowflake.Data.Core.Authenticator
                     lastRetryException = ex;
                     HandleAuthenticatorException(ex, samlRawResponse, ref retryCount, ref timeoutElapsed);
                 }
+                finally
+                {
+                    samlRawResponse?.Dispose();
+                }
             } // while retry
 
             // Throw exception if max retry count or max timeout has been reached
@@ -137,7 +141,7 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     s_logger.Debug("step 3: Get IdP one-time token");
                     IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-                    var idpResponse =  session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+                    var idpResponse = session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
                     string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
                     s_logger.Debug("step 4: Get SAML response from SSO");
@@ -159,10 +163,14 @@ namespace Snowflake.Data.Core.Authenticator
                     Login();
                     return;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     lastRetryException = ex;
                     HandleAuthenticatorException(ex, samlRawResponse, ref retryCount, ref timeoutElapsed);
+                }
+                finally
+                {
+                    samlRawResponse?.Dispose();
                 }
             } // while retry
 
