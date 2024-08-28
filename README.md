@@ -104,6 +104,10 @@ Snowflake data types and their .NET types is covered in: [Data Types and Data Fo
 How execute a query, use query bindings, run queries synchronously and asynchronously:
 [Running Queries and Reading Results](doc/QueryingData.md)
 
+## Structured types
+
+Using structured types: [Structured types](doc/StructuredTypes.md)
+
 ## Stage Files
 
 Using stage files within PUT/GET commands:
