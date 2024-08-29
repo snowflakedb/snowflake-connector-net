@@ -75,26 +75,36 @@ namespace Snowflake.Data.Core
 
                 StringBuilder sBuffer = new StringBuilder();
                 MemoryStream ms = new MemoryStream();
-                StreamWriter tw = new StreamWriter(ms);
-
-                for (int i = startIndex; i < rowNum; i++)
-                {
-                    sBuffer.Append(dataRows[i]);
-                }
-                tw.Write(sBuffer.ToString());
-                tw.Flush();
-
                 try
                 {
-                    string fileName = (++fileCount).ToString();
-                    UploadStream(ref ms, fileName);
-                    startIndex = rowNum;
-                    curBytes = 0;
+                    using (StreamWriter tw = new StreamWriter(ms))
+                    {
+
+                        for (int i = startIndex; i < rowNum; i++)
+                        {
+                            sBuffer.Append(dataRows[i]);
+                        }
+
+                        tw.Write(sBuffer.ToString());
+                        tw.Flush();
+
+                        try
+                        {
+                            string fileName = (++fileCount).ToString();
+                            UploadStream(ref ms, fileName);
+                            startIndex = rowNum;
+                            curBytes = 0;
+                        }
+                        catch (IOException e)
+                        {
+                            // failure using stream put
+                            throw new Exception("file stream upload error." + e.ToString());
+                        }
+                    }
                 }
-                catch (IOException e)
+                finally
                 {
-                    // failure using stream put
-                    throw new Exception("file stream upload error." + e.ToString());
+                    ms.Dispose();
                 }
             }
         }
@@ -122,27 +132,29 @@ namespace Snowflake.Data.Core
                 }
 
                 StringBuilder sBuffer = new StringBuilder();
-                MemoryStream ms = new MemoryStream();
-                StreamWriter tw = new StreamWriter(ms);
+                using (MemoryStream ms = new MemoryStream())
+                using (StreamWriter tw = new StreamWriter(ms))
+                {
+                    for (int i = startIndex; i < rowNum; i++)
+                    {
+                        sBuffer.Append(dataRows[i]);
+                    }
 
-                for (int i = startIndex; i < rowNum; i++)
-                {
-                    sBuffer.Append(dataRows[i]);
-                }
-                tw.Write(sBuffer.ToString());
-                tw.Flush();
+                    tw.Write(sBuffer.ToString());
+                    tw.Flush();
 
-                try
-                {
-                    string fileName = (++fileCount).ToString();
-                    await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
-                    startIndex = rowNum;
-                    curBytes = 0;
-                }
-                catch (IOException e)
-                {
-                    // failure using stream put
-                    throw new Exception("file stream upload error." + e.ToString());
+                    try
+                    {
+                        string fileName = (++fileCount).ToString();
+                        await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
+                        startIndex = rowNum;
+                        curBytes = 0;
+                    }
+                    catch (IOException e)
+                    {
+                        // failure using stream put
+                        throw new Exception("file stream upload error." + e.ToString());
+                    }
                 }
             }
         }
@@ -152,7 +164,7 @@ namespace Snowflake.Data.Core
             List<BindingDTO> arrbinds = bindings.Values.ToList();
             List<List<object>> bindList = new List<List<object>>();
             List<string> types = new List<string>(); // for the binding types
-            dataRows = new List<string>(); // for the converted data string 
+            dataRows = new List<string>(); // for the converted data string
             int rowSize = ((List<object>)arrbinds[0].value).Count;
             int paramSize = arrbinds.Count;
 
@@ -202,7 +214,7 @@ namespace Snowflake.Data.Core
             SFStatement statement = new SFStatement(session);
             statement.SetUploadStream(stream, destFileName, stagePath);
             statement.ExecuteTransfer(putStmt);
-            
+
         }
 
         internal async Task UploadStreamAsync(MemoryStream stream, string destFileName, CancellationToken cancellationToken)
@@ -224,7 +236,7 @@ namespace Snowflake.Data.Core
             statement.SetUploadStream(stream, destFileName, stagePath);
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
-        
+
         internal string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
@@ -264,7 +276,7 @@ namespace Snowflake.Data.Core
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
                     long nsFromEpochTz = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
-                    int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m 
+                    int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
                     DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
                     TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
                     DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);

@@ -2,13 +2,14 @@
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Tests.Util;
+using NUnit.Framework;
+using System;
+using System.IO;
+using System.Text;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using System;
-    using System.IO;
-    using System.Text;
 
     [TestFixture]
     class ConcatenatedStreamTest

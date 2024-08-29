@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core.FileTransfer
             }
 
             // Create stream object for reader and writer
-            Stream stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath));
+            using (Stream stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath)))
             using (var fileStream = File.Create(output))
             {
                 // Write file
