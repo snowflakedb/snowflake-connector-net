@@ -406,20 +406,12 @@ namespace Snowflake.Data.Core
                         else if (e is HttpRequestException && e.InnerException is AuthenticationException)
                         {
                             logger.Error("Non-retryable error encountered: ", e);
-                            if (e.InnerException != null)
-                            {
-                                logger.Error("Details on inner exception: ", e.InnerException);
-                            }
                             throw;
                         }
                         else
                         {
                             //TODO: Should probably check to see if the error is recoverable or transient.
                             logger.Warn("Error occurred during request, retrying...", e);
-                            if (e.InnerException != null)
-                            {
-                                logger.Warn("Details on inner exception: ", e.InnerException);
-                            }
                         }
                     }
 
@@ -470,11 +462,7 @@ namespace Snowflake.Data.Core
                             return response;
                         }
                         var errorMessage = $"http request failed and max retry {maxRetryCount} reached.\n";
-                        errorMessage += $"Last exception encountered: {lastException.Message}\n";
-                        if (lastException.InnerException != null)
-                        {
-                            errorMessage += $"Details on inner exception: {lastException.InnerException.Message}";
-                        }
+                        errorMessage += $"Last exception encountered: {lastException}";
                         logger.Error(errorMessage);
                         throw new OperationCanceledException(errorMessage);
                     }
