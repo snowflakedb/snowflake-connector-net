@@ -21,6 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
+    using System.Security.Authentication;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -571,6 +572,39 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
                     SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
+                }
+                catch (Exception unexpected)
+                {
+                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+
+        [Test]
+        public void TestAuthenticationExceptionThrowsExceptionAndNotRetried()
+        {
+            var mockRestRequester = new MockInfiniteTimeout();
+
+            using (var conn = new MockSnowflakeDbConnection(mockRestRequester))
+            {
+                string invalidConnectionString = "host=google.com/404;"
+                    + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
+                conn.ConnectionString = invalidConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                try
+                {
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (AggregateException e)
+                {
+                    Assert.IsInstanceOf<HttpRequestException>(e.InnerException);
+                    Assert.IsInstanceOf<AuthenticationException>(e.InnerException.InnerException);
+                    Assert.IsTrue(e.InnerException.InnerException.Message.Contains("The remote certificate is invalid because of errors in the certificate chain: RevocationStatusUnknown"));
                 }
                 catch (Exception unexpected)
                 {
