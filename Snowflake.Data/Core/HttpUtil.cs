@@ -401,6 +401,10 @@ namespace Snowflake.Data.Core
                             logger.Warn("Http request timeout. Retry the request");
                             totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
+                        else if (e is HttpRequestException && e.InnerException is AuthenticationException)
+                        {
+                            throw;
+                        }
                         else
                         {
                             //TODO: Should probably check to see if the error is recoverable or transient.
