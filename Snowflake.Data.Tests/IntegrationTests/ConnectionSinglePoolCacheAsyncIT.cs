@@ -205,7 +205,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // intentionally not using await so the connection
                     // will be disposed with invalid underlying session
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     conn.OpenAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 };
                 // wait 100ms each time so the invalid sessions are generated
                 // roughly at the same speed as connections for query tasks

@@ -23,13 +23,15 @@ namespace Snowflake.Data.Tests.UnitTests
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
+#pragma warning disable CS0618 // Type or member is obsolete
             Assert.AreEqual("1", chunk.ExtractCell(0,0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
             Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
-            
+
             Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
             Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
             Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [Test]
@@ -42,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("1", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual("abcde", chunk.ExtractCell(2).SafeToString());
-            
+
             chunk.Next();
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("5.678", chunk.ExtractCell(1).SafeToString());
@@ -59,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
-            
+
             chunk.Next();
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
@@ -76,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
-            
+
             chunk.Next();
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
@@ -93,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
-            
+
             chunk.Next();
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
@@ -111,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
-            
+
             chunk.Next();
             Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
             Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
@@ -140,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Unterminated string
             string data = "[ [\"åäö";
-            
+
             try
             {
                 await PrepareChunkAsync(data, 1, 1);
@@ -177,7 +179,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             Assert.IsFalse(chunk.Next());
         }
-        
+
         [Test]
         public void TestRewindIteratesThroughAllRecords()
         {
@@ -190,14 +192,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 chunk.Next();
             }
             chunk.Next();
-            
+
             for (var i = 0; i < RowCount; ++i)
             {
                 Assert.IsTrue(chunk.Rewind());
             }
             Assert.IsFalse(chunk.Rewind());
         }
-        
+
         [Test]
         public void TestResetClearsChunkData()
         {
@@ -211,14 +213,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 uncompressedSize = 100,
                 rowCount = 200
             };
-            
+
             chunk.Reset(chunkInfo, 0);
-            
+
             Assert.AreEqual(0, chunk.ChunkIndex);
             Assert.AreEqual(chunkInfo.url, chunk.Url);
             Assert.AreEqual(chunkInfo.rowCount, chunk.RowCount);
         }
-      
+
         private async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(stringData);
@@ -234,7 +236,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             SFReusableChunk chunk = new SFReusableChunk(colCount);
             chunk.Reset(chunkInfo, 0);
-            
+
             await parser.ParseChunk(chunk);
             return chunk;
         }
