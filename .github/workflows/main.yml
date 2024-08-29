@@ -71,12 +71,13 @@ jobs:
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -130,12 +131,12 @@ jobs:
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -189,12 +190,12 @@ jobs:
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
