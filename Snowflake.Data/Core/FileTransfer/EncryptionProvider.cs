@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static Stream EncryptFile(
+        public static StreamPair EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
         /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        public static Stream EncryptStream(
+        public static StreamPair EncryptStream(
             Stream inputStream,
             PutGetEncryptionMaterial encryptionMaterial,
             SFEncryptionMetadata encryptionMetadata,
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes.</returns>
-        private static Stream CreateEncryptedBytesStream(
+        private static StreamPair CreateEncryptedBytesStream(
             Stream inputStream,
             byte[] key,
             byte[] iv,
@@ -157,8 +157,8 @@ namespace Snowflake.Data.Core.FileTransfer
 
                 var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
                 using (var encryptor = aes.CreateEncryptor())
-                using (CryptoStream cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write))
                 {
+                    CryptoStream cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write);
                     byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
                     int bytesRead;
                     while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
@@ -167,7 +167,11 @@ namespace Snowflake.Data.Core.FileTransfer
                     }
                     cryptoStream.FlushFinalBlock();
 
-                    return targetStream;
+                    return new StreamPair
+                    {
+                        MainStream = targetStream,
+                        HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
+                    };
                 }
             }
         }
@@ -204,7 +208,7 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
 
             // Create key decipher with decoded key and AES ECB
-            using (var decryptedBytesStream = CreateDecryptedBytesStream(
+            using (var decryptedBytesStreamPair = CreateDecryptedBytesStream(
                        inFile,
                        decryptedFileKey,
                        ivBytes,
@@ -212,6 +216,7 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 using (var decryptedFileStream = File.Create(tempFileName))
                 {
+                    var decryptedBytesStream = decryptedBytesStreamPair.MainStream;
                     decryptedBytesStream.Position = 0;
                     decryptedBytesStream.CopyTo(decryptedFileStream);
                 }
@@ -234,8 +239,8 @@ namespace Snowflake.Data.Core.FileTransfer
                 aes.Padding = PaddingMode.PKCS7;
 
                 using (MemoryStream cipherStream = new MemoryStream())
-                using (var encryptor = aes.CreateDecryptor())
-                using (CryptoStream cryptoStream = new CryptoStream(cipherStream, encryptor, CryptoStreamMode.Write))
+                using (var decryptor = aes.CreateDecryptor())
+                using (CryptoStream cryptoStream = new CryptoStream(cipherStream, decryptor, CryptoStreamMode.Write))
                 {
                     cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
                     cryptoStream.FlushFinalBlock();
@@ -252,7 +257,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
         /// <returns>The decrypted bytes stream</returns>
-        private static Stream CreateDecryptedBytesStream(
+        private static StreamPair CreateDecryptedBytesStream(
             string inFile,
             byte[] key,
             byte[] iv,
@@ -267,15 +272,19 @@ namespace Snowflake.Data.Core.FileTransfer
 
                 var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
                 using (var decryptor = aes.CreateDecryptor())
-                using (CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write))
                 {
+                    CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
                     using (Stream inStream = File.OpenRead(inFile))
                     {
                         inStream.CopyTo(cryptoStream);
                     }
                     cryptoStream.FlushFinalBlock();
 
-                    return targetStream;
+                    return new StreamPair
+                    {
+                        MainStream = targetStream,
+                        HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
+                    };
                 }
             }
         }
