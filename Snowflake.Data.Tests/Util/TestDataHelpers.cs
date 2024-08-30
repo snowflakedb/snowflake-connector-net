@@ -30,11 +30,11 @@ namespace Snowflake.Data.Tests.Util
             return destination;
         }
 
-        internal static object[] NullEachNthValueBesidesFirst(object[] sourceRow, int nullEachNthItem)
+        internal static object?[] NullEachNthValueBesidesFirst(object?[] sourceRow, int nullEachNthItem)
         {
-            var ret = new object[sourceRow.Length];
+            object?[] ret = new object[sourceRow.Length];
             foreach (var column in Enumerable.Range(0, sourceRow.Length))
-                ret[column] = (column > 0 && nullEachNthItem % (column + 1) == 0 ? null : sourceRow[column])!;
+                ret[column] = column > 0 && nullEachNthItem % (column + 1) == 0 ? null : sourceRow[column];
             return ret;
         }
 
