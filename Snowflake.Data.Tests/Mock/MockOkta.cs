@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.Mock
     {
         public string TokenUrl { get; set; }
         public string SSOUrl { get; set; }
-        public StringContent ResponseContent { get; set; }
+        public string ResponseContent { get; set; }
         public int MaxRetryCount { get; set; }
         public int MaxRetryTimeout { get; set; }
 
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.Mock
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-            response.Content = ResponseContent;
+            response.Content = new StringContent(ResponseContent);
             response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, MaxRetryCount.ToString());
             response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, MaxRetryTimeout.ToString());
             return Task.FromResult(response);

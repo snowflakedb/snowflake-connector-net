@@ -841,7 +841,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
                 SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
-                ResponseContent = new StringContent("<form=error}"),
+                ResponseContent = "<form=error}",
                 MaxRetryCount = expectedMaxRetryCount,
                 MaxRetryTimeout = expectedMaxConnectionTimeout
             };
@@ -2258,7 +2258,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
                 SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
-                ResponseContent = new StringContent("<form=error}"),
+                ResponseContent = "<form=error}",
                 MaxRetryCount = expectedMaxRetryCount,
                 MaxRetryTimeout = expectedMaxConnectionTimeout
             };
