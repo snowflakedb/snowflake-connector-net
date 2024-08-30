@@ -392,6 +392,12 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
+                        Console.WriteLine("Http Exception: " + e.Message);
+                        if (e.InnerException != null)
+                        {
+                            Console.WriteLine("Inner Exception: " + e.InnerException.Message);
+                        }
+
                         lastException = e;
                         if (cancellationToken.IsCancellationRequested)
                         {
