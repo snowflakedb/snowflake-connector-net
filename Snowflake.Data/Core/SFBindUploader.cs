@@ -75,36 +75,29 @@ namespace Snowflake.Data.Core
 
                 StringBuilder sBuffer = new StringBuilder();
                 MemoryStream ms = new MemoryStream();
-                try
+                using (StreamWriter tw = new StreamWriter(ms))
                 {
-                    using (StreamWriter tw = new StreamWriter(ms))
+
+                    for (int i = startIndex; i < rowNum; i++)
                     {
-
-                        for (int i = startIndex; i < rowNum; i++)
-                        {
-                            sBuffer.Append(dataRows[i]);
-                        }
-
-                        tw.Write(sBuffer.ToString());
-                        tw.Flush();
-
-                        try
-                        {
-                            string fileName = (++fileCount).ToString();
-                            UploadStream(ref ms, fileName);
-                            startIndex = rowNum;
-                            curBytes = 0;
-                        }
-                        catch (IOException e)
-                        {
-                            // failure using stream put
-                            throw new Exception("file stream upload error." + e.ToString());
-                        }
+                        sBuffer.Append(dataRows[i]);
                     }
-                }
-                finally
-                {
-                    ms.Dispose();
+
+                    tw.Write(sBuffer.ToString());
+                    tw.Flush();
+
+                    try
+                    {
+                        string fileName = (++fileCount).ToString();
+                        UploadStream(ref ms, fileName);
+                        startIndex = rowNum;
+                        curBytes = 0;
+                    }
+                    catch (IOException e)
+                    {
+                        // failure using stream put
+                        throw new Exception("file stream upload error." + e.ToString());
+                    }
                 }
             }
         }
@@ -132,7 +125,7 @@ namespace Snowflake.Data.Core
                 }
 
                 StringBuilder sBuffer = new StringBuilder();
-                using (MemoryStream ms = new MemoryStream())
+                MemoryStream ms = new MemoryStream();
                 using (StreamWriter tw = new StreamWriter(ms))
                 {
                     for (int i = startIndex; i < rowNum; i++)

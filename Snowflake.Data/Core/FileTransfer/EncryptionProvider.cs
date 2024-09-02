@@ -122,7 +122,7 @@ namespace Snowflake.Data.Core.FileTransfer
                 aes.Mode = CipherMode.ECB;
                 aes.Padding = PaddingMode.PKCS7;
 
-                using (MemoryStream cipherStream = new MemoryStream())
+                MemoryStream cipherStream = new MemoryStream();
                 using (var encryptor = aes.CreateEncryptor())
                 using (CryptoStream cryptoStream = new CryptoStream(cipherStream, encryptor, CryptoStreamMode.Write))
                 {
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Core.FileTransfer
                 aes.Mode = CipherMode.ECB;
                 aes.Padding = PaddingMode.PKCS7;
 
-                using (MemoryStream cipherStream = new MemoryStream())
+                MemoryStream cipherStream = new MemoryStream();
                 using (var decryptor = aes.CreateDecryptor())
                 using (CryptoStream cryptoStream = new CryptoStream(cipherStream, decryptor, CryptoStreamMode.Write))
                 {
