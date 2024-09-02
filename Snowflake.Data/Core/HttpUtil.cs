@@ -504,7 +504,7 @@ namespace Snowflake.Data.Core
         {
             if (forceRetryOn404 && statusCode == 404)
                 return true;
-            return 500 <= statusCode && statusCode < 600 ||
+            return (500 <= statusCode && statusCode < 600) ||
             // Forbidden
             (statusCode == 403) ||
             // Request timeout
