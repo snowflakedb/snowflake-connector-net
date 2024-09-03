@@ -139,7 +139,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
             var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidatePoolingIfPasscodeProvided(sessionProperties);
+            ValidateMinPoolSizeWithPasscode(sessionProperties);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Core.Session
             return session;
         }
 
-        private void ValidatePoolingIfPasscodeProvided(SFSessionProperties sessionProperties)
+        private void ValidateMinPoolSizeWithPasscode(SFSessionProperties sessionProperties)
         {
             if (!GetPooling() || !IsMultiplePoolsVersion() || _poolConfig.MinPoolSize == 0) return;
             var isUsingPasscode = (sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Core.Session
                                      authenticator == MFACacheAuthenticator.AUTH_NAME;
             if(isUsingPasscode && !isMfaAuthenticator)
             {
-                const string ErrorMessage = "Could not use connection pool because passcode was provided using a different authenticator than username_password_mfa";
+                const string ErrorMessage = "Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication";
                 s_logger.Error(ErrorMessage + PoolIdentification());
                 throw new Exception(ErrorMessage);
             }
@@ -177,24 +177,29 @@ namespace Snowflake.Data.Core.Session
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
-            SFSession session = null;
             var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidatePoolingIfPasscodeProvided(sessionProperties);
+            ValidateMinPoolSizeWithPasscode(sessionProperties);
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
-            var sessionOrCreateTokens = GetIdleSession(connStr);
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : Int32.MaxValue);
             WarnAboutOverridenConfig();
-            if (sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
-                authenticator == MFACacheAuthenticator.AUTH_NAME)
-                session = sessionOrCreateTokens.Session ??
-                          await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
-                              .ConfigureAwait(false);
+
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
-            return session ?? sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
+            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
+            WarnAboutOverridenConfig();
+            var session = sessionOrCreateTokens.Session ??
+                          await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
+                              .ConfigureAwait(false);
+            if (isMfaAuthentication)
+            {
+                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+            }
+            return session;
+
         }
 
         private void ScheduleNewIdleSessions(string connStr, SecureString password, List<SessionCreationToken> tokens)

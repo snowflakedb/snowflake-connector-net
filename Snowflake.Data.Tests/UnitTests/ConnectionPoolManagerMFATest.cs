@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests
             });
             // Act
             var session = _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
-            Thread.Sleep(3000);
+            Thread.Sleep(5000);
 
             // Assert
 
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
             var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null));
-            Assert.That(thrown.Message, Does.Contain("Could not use connection pool because passcode was provided using a different authenticator than username_password_mfa"));
+            Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
         [Test]
