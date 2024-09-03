@@ -132,6 +132,7 @@ the database object field `nearestCity` would be mapped to the `city` property o
 Using the `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.CONSTRUCTOR)]` annotation on the customer class enables the creation of objects by a constructor.
 In this creation method, an object with all its fields is created by a constructor.
 A constructor with the exact number of parameters as the number of database object fields should exist because such a constructor would be chosen to instantiate a customer object.
+Database object fields are mapped to customer object constructor parameters based on their order.
 
 Example:
 ```csharp
