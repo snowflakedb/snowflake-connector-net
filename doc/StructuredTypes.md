@@ -7,7 +7,7 @@ Snowflake offers a way to store structured types which can be:
 - arrays, e.g. ```ARRAY(NUMBER)```
 - maps, e.g. ```MAP(VARCHAR, VARCHAR)```
 
-The driver is allowed to read and cast such structured objects into customer classes.
+The driver allows reading and casting such structured objects into customer classes.
 
 **Note**: Currently, reading structured types is available only for JSON result format.
 
