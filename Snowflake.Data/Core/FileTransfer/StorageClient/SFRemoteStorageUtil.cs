@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
-    /// The class containing file header information. 
+    /// The class containing file header information.
     /// </summary>
     internal class FileHeader
     {
@@ -21,12 +21,12 @@ namespace Snowflake.Data.Core.FileTransfer
     }
 
     /// <summary>
-    /// The interface for the storage clients. 
+    /// The interface for the storage clients.
     /// </summary>
     class SFRemoteStorageUtil
     {
         /// <summary>
-        /// Strings to indicate specific storage type. 
+        /// Strings to indicate specific storage type.
         /// </summary>
         public const string S3_FS = "S3";
         public const string AZURE_FS = "AZURE";
@@ -34,12 +34,12 @@ namespace Snowflake.Data.Core.FileTransfer
         public const string LOCAL_FS = "LOCAL_FS";
 
         /// <summary>
-        /// Amount of concurrency to use by default. 
+        /// Amount of concurrency to use by default.
         /// </summary>
         const int DEFAULT_CONCURRENCY = 1;
 
         /// <summary>
-        /// Maximum amount of times to retry. 
+        /// Maximum amount of times to retry.
         /// </summary>
         const int DEFAULT_MAX_RETRY = 5;
 
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static void UploadOneFile(SFFileMetadata fileMetadata)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            using (var fileBytesStream = GetFileBytesStream(fileMetadata, encryptionMetadata))
+            using (var fileBytesStreamPair = GetFileBytesStream(fileMetadata, encryptionMetadata))
             {
 
                 int maxConcurrency = fileMetadata.parallel;
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     if (fileMetadata.overwrite || fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                     {
                         // Upload the file
-                        client.UploadFile(fileMetadata, fileBytesStream, encryptionMetadata);
+                        client.UploadFile(fileMetadata, fileBytesStreamPair.MainStream, encryptionMetadata);
                     }
 
                     if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
@@ -149,7 +149,7 @@ namespace Snowflake.Data.Core.FileTransfer
         internal static async Task UploadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            using (var fileBytesStream = GetFileBytesStream(fileMetadata, encryptionMetadata))
+            using (var fileBytesStreamPair = GetFileBytesStream(fileMetadata, encryptionMetadata))
             {
 
                 int maxConcurrency = fileMetadata.parallel;
@@ -180,7 +180,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         // Upload the file
                         await client
-                            .UploadFileAsync(fileMetadata, fileBytesStream, encryptionMetadata, cancellationToken)
+                            .UploadFileAsync(fileMetadata, fileBytesStreamPair.MainStream, encryptionMetadata, cancellationToken)
                             .ConfigureAwait(false);
                     }
 
@@ -516,8 +516,8 @@ namespace Snowflake.Data.Core.FileTransfer
                 System.Threading.Thread.Sleep(sleepingTime);
             }
         }
-        
-        private static Stream GetFileBytesStream(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+
+        private static StreamPair GetFileBytesStream(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
             // If encryption enabled, encrypt the file to be uploaded
             if (fileMetadata.encryptionMaterial != null)
@@ -543,11 +543,11 @@ namespace Snowflake.Data.Core.FileTransfer
             {
                 if (fileMetadata.memoryStream != null)
                 {
-                    return fileMetadata.memoryStream;
+                    return new StreamPair { MainStream = fileMetadata.memoryStream };
                 }
                 else
                 {
-                    return File.OpenRead(fileMetadata.realSrcFilePath);
+                    return new StreamPair { MainStream = File.OpenRead(fileMetadata.realSrcFilePath) };
                 }
             }
         }
