@@ -1,12 +1,12 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Tests.Util
 {
     /// <summary>
     ///     Used to concat multiple streams without copying. Since we need to preappend '[' and append ']'

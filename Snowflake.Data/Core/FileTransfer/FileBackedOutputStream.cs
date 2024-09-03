@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             return _fileOutputStream != null;
         }
-        
+
         private void SwitchFromMemoryToTempFile()
         {
             _fileName = GenerateTempFilePath();

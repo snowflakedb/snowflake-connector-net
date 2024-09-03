@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const bool IsAsync = true;
 
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TearDown]
-        public void AfterTest()
+        public new void AfterTest()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))
@@ -527,14 +527,14 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Get encrypted stream from file
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            Stream stream = EncryptionProvider.EncryptFile(
+            StreamPair streamPair = EncryptionProvider.EncryptFile(
                 t_downloadFileName,
                 _fileMetadata.encryptionMaterial,
                 encryptionMetadata,
                 FileTransferConfiguration.FromFileMetadata(_fileMetadata));
 
             // Set up the stream and metadata for decryption
-            MockRemoteStorageClient.SetEncryptionData(stream, encryptionMetadata.iv, encryptionMetadata.key);
+            MockRemoteStorageClient.SetEncryptionData(streamPair.MainStream, encryptionMetadata.iv, encryptionMetadata.key);
         }
 
         [Test]
