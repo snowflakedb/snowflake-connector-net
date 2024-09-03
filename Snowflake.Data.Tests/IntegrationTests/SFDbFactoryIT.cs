@@ -2,11 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using NUnit.Framework;
+using System.Data;
+using System.Data.Common;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using System.Data;
-    using System.Data.Common;
 
     [TestFixture]
     class SFDbFactoryIT : SFBaseTest
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         DbConnection _connection;
 
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
 #if NETFRAMEWORK
             _factory = DbProviderFactories.GetFactory("Snowflake.Data");
@@ -24,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // In .NET Standard, DbProviderFactories is gone.
             // Reference https://weblog.west-wind.com/posts/2017/Nov/27/Working-around-the-lack-of-dynamic-DbProviderFactory-loading-in-NET-Core
             // for more details
-            _factory = Client.SnowflakeDbFactory.Instance;
+            _factory = Snowflake.Data.Client.SnowflakeDbFactory.Instance;
 #endif
 
             _command = _factory.CreateCommand();
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [TearDown]
-        public void AfterTest()
+        public new void AfterTest()
         {
             _connection.Close();
         }
