@@ -142,17 +142,20 @@ namespace Snowflake.Data.Core.Session
             ValidatePoolingIfPasscodeProvided(sessionProperties);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
-            SFSession session = null;
-            var sessionOrCreateTokens = GetIdleSession(connStr);
-            if(sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME)
-                session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : Int32.MaxValue);
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            return session ?? sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            var session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            if (isMfaAuthentication)
+            {
+                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+            }
+            return session;
         }
 
         private void ValidatePoolingIfPasscodeProvided(SFSessionProperties sessionProperties)
@@ -228,7 +231,7 @@ namespace Snowflake.Data.Core.Session
             _sessionPoolEventHandler = sessionPoolEventHandler;
         }
 
-        private SessionOrCreationTokens GetIdleSession(string connStr)
+        private SessionOrCreationTokens GetIdleSession(string connStr, int maxSessions)
         {
             s_logger.Debug("SessionPool::GetIdleSession" + PoolIdentification());
             lock (_sessionPoolLock)
@@ -246,7 +249,7 @@ namespace Snowflake.Data.Core.Session
                         return new SessionOrCreationTokens(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool" + PoolIdentification());
-                    var sessionsCount = Math.Min(1, AllowedNumberOfNewSessionCreations(1));
+                    var sessionsCount = Math.Min(maxSessions, AllowedNumberOfNewSessionCreations(1));
                     if (sessionsCount > 0)
                     {
                         // there is no need to wait for a session since we can create new ones
