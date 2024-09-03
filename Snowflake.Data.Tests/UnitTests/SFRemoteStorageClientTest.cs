@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const bool IsAsync = true;
 
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TearDown]
-        public void AfterTest()
+        public new void AfterTest()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))

@@ -35,7 +35,7 @@ jobs:
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
@@ -44,7 +44,7 @@ jobs:
             8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -69,17 +69,18 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
@@ -95,7 +96,7 @@ jobs:
         dotnet: ['net6.0', 'net7.0', 'net8.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
@@ -104,7 +105,7 @@ jobs:
             8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -128,17 +129,17 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
@@ -163,7 +164,7 @@ jobs:
             8.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -187,17 +188,17 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: tests-performance
+          name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}

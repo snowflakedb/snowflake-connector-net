@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         DbConnection _connection;
 
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
 #if NETFRAMEWORK
             _factory = DbProviderFactories.GetFactory("Snowflake.Data");
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [TearDown]
-        public void AfterTest()
+        public new void AfterTest()
         {
             _connection.Close();
         }
