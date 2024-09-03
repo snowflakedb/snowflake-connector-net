@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.Util
             {
                 if (ex.Message.Contains("invalid parameter"))
                     return;
-                throw ex;
+                throw;
             }
         }
 
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.Util
             {
                 if (ex.Message.Contains("invalid parameter"))
                     return;
-                throw ex;
+                throw;
             }
         }
 

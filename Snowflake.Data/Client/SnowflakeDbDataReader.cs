@@ -5,13 +5,14 @@
 using System;
 using System.Data.Common;
 using System.Collections;
+using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using System.Text;
-using System.IO;
+using Newtonsoft.Json.Linq;
+using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Client
 {
@@ -30,7 +31,7 @@ namespace Snowflake.Data.Client
         private int RecordsAffectedInternal;
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
-        
+
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
@@ -99,7 +100,7 @@ namespace Snowflake.Data.Client
         {
             return resultSet.queryId;
         }
-        
+
         private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
         {
             var table = new DataTable("SchemaTable");
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Client
 
             return table;
         }
-		
+
         public override bool GetBoolean(int ordinal)
         {
             return resultSet.GetBoolean(ordinal);
@@ -255,6 +256,75 @@ namespace Snowflake.Data.Client
             return count;
         }
 
+        public T GetObject<T>(int ordinal)
+            where T : class, new()
+        {
+            try
+            {
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsObjectType(rowType.type))
+                {
+                    throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
+                }
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+            }
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an object");
+            }
+        }
+
+        public T[] GetArray<T>(int ordinal)
+        {
+            try
+            {
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsArrayType(rowType.type))
+                {
+                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array");
+                }
+
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JArray.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+            }
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an array");
+            }
+        }
+
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
+        {
+            try
+            {
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsMapType(rowType.type))
+                {
+                    throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
+                }
+
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+            }
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting a map");
+            }
+        }
+
         public override bool IsDBNull(int ordinal)
         {
             return resultSet.IsDBNull(ordinal);
@@ -300,6 +370,5 @@ namespace Snowflake.Data.Client
             resultSet.close();
             isClosed = true;
         }
-
     }
 }

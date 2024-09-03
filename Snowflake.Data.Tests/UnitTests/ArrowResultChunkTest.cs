@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
         internal static readonly RecordBatch RecordBatchWithNullValue = new RecordBatch.Builder()
             .Append("Col_Int32", false, col => col.Int32(array => array.AppendNull()))
             .Build();
-        
+
         [Test]
         public void TestResultFormatIsArrow()
         {
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestNextIteratesThroughAllRecordsOfOneBatch()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
-            
+
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
                 Assert.IsTrue(chunk.Next());
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
             chunk.AddRecordBatch(_recordBatchTwo);
-            
+
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
                 Assert.IsTrue(chunk.Next());
@@ -87,30 +87,30 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // move to the end of the batch
             while (chunk.Next()) {}
-            
+
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
                 Assert.IsTrue(chunk.Rewind());
             }
             Assert.IsFalse(chunk.Rewind());
         }
-        
+
         [Test]
         public void TestRewindIteratesThroughAllRecordsOfTwoBatches()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
             chunk.AddRecordBatch(_recordBatchTwo);
-            
+
             // move to the end of the batch
             while (chunk.Next()) {}
-            
+
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
                 Assert.IsTrue(chunk.Rewind());
             }
             Assert.IsFalse(chunk.Rewind());
         }
-        
+
         [Test]
         public void TestResetClearsChunkData()
         {
@@ -121,14 +121,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 rowCount = 2
             };
             var chunk = new ArrowResultChunk(_recordBatchOne);
-            
+
             chunk.Reset(chunkInfo, 0);
-            
+
             Assert.AreEqual(0, chunk.ChunkIndex);
             Assert.AreEqual(chunkInfo.url, chunk.Url);
             Assert.AreEqual(chunkInfo.rowCount, chunk.RowCount);
         }
-        
+
         [Test]
         public void TestRowCountReturnsNumberOfRows()
         {
@@ -144,16 +144,19 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.AreEqual(-1, chunk.ChunkIndex);
         }
-        
+
         [Test]
         public void TestUnusedExtractCellThrowsNotSupportedException()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
 
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0));
+            // Disable warning as we are testing the obsolete method behavior
+#pragma warning disable CS0618 // Type or member is obsolete
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, 0));
+#pragma warning restore CS0618 // Type or member is obsolete
         }
-        
+
         [Test]
         public void TestExtractCellReturnsNull()
         {
@@ -192,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
             chunk.Next();
-            
+
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0));
         }
 
@@ -201,7 +204,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
             var sfType = SFDataType.FIXED;
-            
+
             for (var scale = 0; scale <= 9; ++scale)
             {
                 TestExtractCell(testValues, sfType, scale, (long)Math.Pow(10, scale));
@@ -219,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 TestExtractCell(testValues, sfType, scale, (long)Math.Pow(10, scale));
             }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsNumber32()
         {
@@ -229,9 +232,9 @@ namespace Snowflake.Data.Tests.UnitTests
             for (var scale = 0; scale <= 9; ++scale)
             {
                 TestExtractCell(testValues, sfType, scale, (long)Math.Pow(10, scale));
-            }        
+            }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsNumber16()
         {
@@ -243,7 +246,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 TestExtractCell(testValues, sfType, scale, (long)Math.Pow(10, scale));
             }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsNumber8()
         {
@@ -255,7 +258,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 TestExtractCell(testValues, sfType, scale, (long)Math.Pow(10, scale));
             }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsBoolean()
         {
@@ -265,7 +268,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             TestExtractCell(testValues, sfType, scale);
         }
-        
+
         [Test]
         public void TestExtractCellReturnsReal()
         {
@@ -275,7 +278,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             TestExtractCell(testValues, sfType, scale);
         }
-        
+
         [Test]
         public void TestExtractCellReturnsText()
         {
@@ -289,7 +292,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             TestExtractCell(testValues, sfType, scale);
         }
-        
+
         [Test]
         public void TestExtractCellReturnsArray()
         {
@@ -332,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             TestExtractCell(testValues, sfType, scale);
         }
-        
+
         [Test]
         public void TestExtractCellReturnsTime()
         {
@@ -343,14 +346,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 DateTime.Parse("9999-12-31 23:59:59.9999999")
             };
             var sfType = SFDataType.TIME;
-            
+
             for (var scale = 0; scale <= 8; ++scale)
             {
                 var values = TruncateValues(testValues, scale);
                 TestExtractCell(values, sfType, scale);
-            }        
+            }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsTimestampTz()
         {
@@ -364,14 +367,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000"),
             };
             var sfType = SFDataType.TIMESTAMP_TZ;
-            
+
             for (var scale = 0; scale <= 9; ++scale)
             {
                 var values = TruncateValues(testValues, scale);
                 TestExtractCell(values, sfType, scale);
             }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsTimestampLtz()
         {
@@ -389,7 +392,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 TestExtractCell(values, sfType, scale);
             }
         }
-        
+
         [Test]
         public void TestExtractCellReturnsTimestampNtz()
         {
@@ -400,14 +403,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 DateTime.Parse("9999-12-31 23:59:59.9999999")
             };
             var sfType = SFDataType.TIMESTAMP_NTZ;
-            
+
             for (var scale = 0; scale <= 9; ++scale)
             {
                 var values = TruncateValues(testValues, scale);
                 TestExtractCell(values, sfType, scale);
             }
         }
-        
+
         void TestExtractCell(IEnumerable testValues, SFDataType sfType, long scale, long divider = 0)
         {
             var recordBatch = PrepareRecordBatch(sfType, scale, testValues);
@@ -429,15 +432,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 case SFDataType.FIXED:
                     switch (values)
                     {
-                        case decimal[] val: 
+                        case decimal[] val:
                             column = new Decimal128Array.Builder(new Decimal128Type(100, (int)scale))
                                 .AppendRange(val.Select(v => v / (decimal)Math.Pow(10, scale)))
                                 .Build();
                             break;
-                        case long[] val: 
+                        case long[] val:
                             column = new Int64Array.Builder().AppendRange(val).Build();
                             break;
-                        case int[] val: 
+                        case int[] val:
                             column = new Int32Array.Builder().AppendRange(val).Build();
                             break;
                         case short[] val:
@@ -481,7 +484,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     }
                     break;
 
-                case SFDataType.BINARY: 
+                case SFDataType.BINARY:
                     column = new BinaryArray.Builder()
                         .AppendRange(values as byte[][])
                         .Build();
@@ -615,7 +618,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Append("TestColumn", false, column)
                 .Build();
         }
-        
+
         private static long ConvertTicksToInt64(long ticks, long scale)
         {
             long ticksFromEpoch = ticks - SFDataConverter.UnixEpoch.Ticks;
@@ -624,7 +627,7 @@ namespace Snowflake.Data.Tests.UnitTests
             else
                 return ticksFromEpoch * (long)Math.Pow(10, scale - 7);
         }
-        
+
         public static DateTime[] TruncateValues(DateTime[] testValues, int scale)
         {
             DateTime[] ret = new DateTime[testValues.Length];
