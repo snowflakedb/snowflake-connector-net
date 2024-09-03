@@ -1,5 +1,7 @@
 ## Concept
 
+Snowflake structured types documentation is available here: [Snowflake Structured Types Documentation](https://docs.snowflake.com/en/sql-reference/data-types-structured).
+
 Snowflake offers a way to store structured types which can be:
 - objects, e.g. ```OBJECT(city VARCHAR, state VARCHAR)```
 - arrays, e.g. ```ARRAY(NUMBER)```
