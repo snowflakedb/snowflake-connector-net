@@ -14,6 +14,7 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using static Snowflake.Data.Core.SFRestRequest;
 
 namespace Snowflake.Data.Core
 {
@@ -357,8 +358,8 @@ namespace Snowflake.Data.Core
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
                 p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 
-                TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
-                TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
+                TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
+                TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY];
 
                 if (logger.IsDebugEnabled())
                 {
@@ -503,7 +504,7 @@ namespace Snowflake.Data.Core
         {
             if (forceRetryOn404 && statusCode == 404)
                 return true;
-            return (500 <= statusCode) && (statusCode < 600) ||
+            return (500 <= statusCode && statusCode < 600) ||
             // Forbidden
             (statusCode == 403) ||
             // Request timeout
