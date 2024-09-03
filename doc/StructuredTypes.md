@@ -7,18 +7,18 @@ Snowflake offers a way to store structured types which can be:
 - arrays, e.g. ```ARRAY(NUMBER)```
 - maps, e.g. ```MAP(VARCHAR, VARCHAR)```
 
-The driver allows to read and cast such structured objects into customer classes.
+The driver is allowed to read and cast such structured objects into customer classes.
 
 **Note**: Currently, reading structured types is available only for JSON result format.
 
 ## Enabling the feature
 
-Currently, reading structured types is available only for JSON result format, so you can make sure you are using JSON result format by:
+Reading structured types is available only for JSON result format, so you can make sure you are using JSON result format by:
 ```sql
 ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON;
 ```
 
-You can enable the feature by:
+You can enable the feature by setting session parameters:
 ```sql
 ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE = true;
 ALTER SESSION SET IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true;
@@ -26,25 +26,25 @@ ALTER SESSION SET IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true;
 
 ## Structured types vs semi-structured types
 
-The difference between structured types and semi-structured types is the fact that structured type contain a type definition for given object/array/map.
+The difference between structured types and semi-structured types is that structured types contain a type definition for a given object/array/map.
 
-For example for given object:
+E.g. for a given object:
 ```sql
 SELECT OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)
 ```
 
-The part indicating the type of object is `::OBJECT(city VARCHAR, state VARCHAR)`. This type definition then can be then used to convert the object into the customer class instance.
+The part indicating the type of object is `::OBJECT(city VARCHAR, state VARCHAR)`. This type of definition can then be used to convert the object into the customer class instance.
 
-Whereas corresponding semi-structured type does not contain detailed type definition, for instance:
+Whereas the corresponding semi-structured type does not contain a detailed type definition, for instance:
 ```sql
 SELECT OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT
 ```
 
-which makes the semi-structured types can be returned only as a json string.
+which means the semi-structured types are returned only as a JSON string.
 
 ## Handling objects
 
-You can construct structured objects by using object constructor and providing type details:
+You can construct structured objects by using an object constructor and providing type details:
 
 ```sql
 SELECT OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)
@@ -69,7 +69,7 @@ public class Address
 ```
 
 There are a few possible ways of constructing an object of a customer class.
-The customer object (e.g. Address) can be created either:
+The customer object (e.g. `Address`) can be created either:
 - by the properties order, which is a default method
 - by properties names
 - by the constructor.
@@ -77,7 +77,7 @@ The customer object (e.g. Address) can be created either:
 ### Creating objects by properties order
 
 Creating objects by properties order is a default construction method.
-Objects are created by the non-parametrised constructor, and then the n-th Snowflake object field is converted into the n-th customer object property, one by one.
+Objects are created by the non-parametrized constructor, and then the n-th Snowflake object field is converted into the n-th customer object property, one by one.
 
 You can annotate your class with `SnowflakeObject` annotation to make sure this creation method would be chosen (however it is not necessary since it is a default method):
 ```csharp
@@ -90,8 +90,8 @@ public class Address
 }
 ```
 
-If you would like to skip any customer property, you could use a `[SnowflakeColumn(IgnoreForPropertyOrder = true)]` annotation for given property.
-For instances annotation used in the following class definition makes the `city` be skipped when mapping the properties:
+If you would like to skip any customer property, you could use a `[SnowflakeColumn(IgnoreForPropertyOrder = true)]` annotation for a given property.
+For instance, the annotation used in the following class definition makes the `city` be skipped when mapping the properties:
 ```csharp
 public class Address
 {
@@ -102,14 +102,14 @@ public class Address
 }
 ```
 
-So the first field from database object would be mapped to `state` property, because `city` is skipped.
+So, the first field from the database object would be mapped to the `state` property because `city` is skipped.
 
-### Creating objects by properties names
+### Creating objects by property names
 
-Creating objects by properties names can be enabled by using `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)]` annotation on the customer class.
+Using the `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)]` annotation on the customer class can enable the creation of objects by their property names.
 In this creation method, objects are created by the non-parametrised constructor, and then for each of the database object fields a property of the same name is set with the field value.
-It is crucial that database object field names should be the same as customer properties names, otherwise given database object field value would not be set in the customer object.
-You can use annotation `SnowflakeColumn` to rename the customer object property to mach database object field name.
+It is crucial that database object field names are the same as customer property names; otherwise, a given database object field value would not be set in the customer object.
+You can use the annotation `SnowflakeColumn` to rename the customer object property to the match database object field name.
 
 In the example:
 
@@ -128,9 +128,9 @@ the database object field `nearestCity` would be mapped to the `city` property o
 
 ### Creating objects by the constructor
 
-Creating objects by properties names can be enabled by using `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.CONSTRUCTOR)]` annotation on the customer class.
-In this creation method, object with all its fields is created by a constructor.
-There should exist a constructor with the exact number of parameters as the number of database object fields, because such a constructor would be chosen to instantiate a customer object.
+Using the `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.CONSTRUCTOR)]` annotation on the customer class enables the creation of objects by property names.
+In this creation method, an object with all its fields is created by a constructor.
+A constructor with the exact number of parameters as the number of database object fields should exist because such a constructor would be chosen to instantiate a customer object.
 
 Example:
 ```csharp
@@ -154,7 +154,7 @@ public class Address
 
 ## Handling arrays
 
-You can construct structured arrays like that:
+You can construct structured arrays like this:
 
 ```sql
 SELECT ARRAY_CONSTRUCT('a', 'b', 'c')::ARRAY(TEXT)
@@ -170,7 +170,7 @@ var array = reader.GetArray<string>(0);
 
 ## Handling maps
 
-You can construct structured maps like that:
+You can construct structured maps like this:
 
 ```sql
 SELECT OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)
