@@ -13,27 +13,28 @@ The driver allows reading and casting such structured objects into customer clas
 
 ## Enabling the feature
 
-Reading structured types is available only for JSON result format, so you can make sure you are using JSON result format by:
+Currently, reading structured types is available only for JSON result format, so you can make sure you are using JSON result format by:
 ```sql
 ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON;
 ```
 
-You can enable the feature by setting session parameters:
+You can enable the feature by setting parameters:
 ```sql
 ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE = true;
-ALTER SESSION SET IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true;
+ALTER SESSION SET IGNORE_CLIENT_VERSION_IN_STRUCTURED_TYPES_RESPONSE = true;
 ```
 
 ## Structured types vs semi-structured types
 
-The difference between structured types and semi-structured types is that structured types contain a type definition for a given object/array/map.
+The difference between structured types and semi-structured types is that structured types contain types definitions for given objects/arrays/maps.
 
 E.g. for a given object:
 ```sql
 SELECT OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)
 ```
 
-The part indicating the type of object is `::OBJECT(city VARCHAR, state VARCHAR)`. This type of definition can then be used to convert the object into the customer class instance.
+The part indicating the type of object is `::OBJECT(city VARCHAR, state VARCHAR)`.
+This part of definition is essential for structured types because it is used to convert the object into the customer class instance.
 
 Whereas the corresponding semi-structured type does not contain a detailed type definition, for instance:
 ```sql
@@ -124,11 +125,11 @@ public class Address
 }
 ```
 
-the database object field `nearestCity` would be mapped to the `city` property of `Adrress` class.
+the database object field `nearestCity` would be mapped to the `city` property of `Address` class.
 
 ### Creating objects by the constructor
 
-Using the `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.CONSTRUCTOR)]` annotation on the customer class enables the creation of objects by property names.
+Using the `[SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.CONSTRUCTOR)]` annotation on the customer class enables the creation of objects by a constructor.
 In this creation method, an object with all its fields is created by a constructor.
 A constructor with the exact number of parameters as the number of database object fields should exist because such a constructor would be chosen to instantiate a customer object.
 
