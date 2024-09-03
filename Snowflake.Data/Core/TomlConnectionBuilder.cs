@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
 
-        internal static readonly TomlConnectionBuilder Instance = new TomlConnectionBuilder();
+        public static readonly TomlConnectionBuilder Instance = new TomlConnectionBuilder();
 
         private TomlConnectionBuilder() : this(FileOperations.Instance, EnvironmentOperations.Instance)
         {
@@ -118,7 +118,8 @@ namespace Snowflake.Data.Core
             }
 
             var connectionExists = toml.TryGetValue(connectionName, out var connection);
-            // In the case where the connection name is the default connection name and does not exist, we will not use the toml builder feature.
+            // Avoid handling error when default connection does not exist, user could not want to use toml configuration and forgot to provide the
+            // connection string, this error should be thrown later when the undefined connection string is used.
             if (!connectionExists && connectionName != DefaultConnectionName)
             {
                 throw new Exception("Specified connection name does not exist in connections.toml");

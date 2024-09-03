@@ -356,6 +356,14 @@ The following examples show how you can include different types of special chara
   user = "fakeuser"
   password = "fake\"password"
   ```
+  - In case that double quote is use with other character that requires be wrap with double quoted it shoud use \\"\\" for a ":
+
+    ```toml
+    [default]
+    host = "fakeaccount.snowflakecomputing.com"
+    user = "fakeuser"
+    password = "\";fake\"\"password\""
+    ```
 
 - To include a semicolon (;):
 
