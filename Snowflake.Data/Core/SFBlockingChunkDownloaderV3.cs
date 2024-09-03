@@ -70,11 +70,11 @@ namespace Snowflake.Data.Core
 
             for (int i=0; i<prefetchSlot; i++)
             {
-                BaseResultChunk resultChunk = 
+                BaseResultChunk resultChunk =
                     resultFormat == ResultFormat.ARROW ? (BaseResultChunk)
                         new ArrowResultChunk(colCount) :
                         new SFReusableChunk(colCount);
-                
+
                 resultChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
                 chunkDatas.Add(resultChunk);
 
@@ -173,17 +173,19 @@ namespace Snowflake.Data.Core
                         {
                             if (String.Compare(encoding.First(), "gzip", true) == 0)
                             {
-                                Stream stream_gzip = new GZipStream(stream, CompressionMode.Decompress);
-                                await ParseStreamIntoChunk(stream_gzip, chunk);
+                                using (Stream streamGzip = new GZipStream(stream, CompressionMode.Decompress))
+                                {
+                                    await ParseStreamIntoChunk(streamGzip, chunk).ConfigureAwait(false);
+                                }
                             }
                             else
                             {
-                                await ParseStreamIntoChunk(stream, chunk);
+                                await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            await ParseStreamIntoChunk(stream, chunk);
+                            await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
                         }
                     }
                     catch (Exception e)
@@ -214,7 +216,7 @@ namespace Snowflake.Data.Core
             logger.Info($"Succeed downloading chunk #{chunk.ChunkIndex}");
             return chunk;
         }
-        
+
         private async Task ParseStreamIntoChunk(Stream content, BaseResultChunk resultChunk)
         {
             IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
