@@ -103,9 +103,9 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute)]
-        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText(FileAccessPermissions filePermissions)
+        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
+            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FilePermissions groupOrOthersWritablePermissions,
+            [ValueSource(nameof(GroupOrOthersReadablePermissions))] FilePermissions groupOrOthersReadablePermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -113,7 +113,9 @@ namespace Snowflake.Data.Tests.Tools
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            Syscall.chmod(filePath, (FilePermissions)filePermissions);
+
+            var filePermissions = userPermissions | groupOrOthersWritablePermissions | groupOrOthersReadablePermissions;
+            Syscall.chmod(filePath, filePermissions);
 
             // act and assert
             Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations()), "Attempting to read a file with too broad permissions assigned");
@@ -148,6 +150,19 @@ namespace Snowflake.Data.Tests.Tools
             yield return FilePermissions.S_IROTH;
             yield return FilePermissions.S_IXOTH;
             yield return FilePermissions.S_IROTH | FilePermissions.S_IXOTH;
+        }
+
+        public static IEnumerable<FilePermissions> UserReadWritePermissions()
+        {
+            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR;
+        }
+
+        public static IEnumerable<FilePermissions> GroupOrOthersReadablePermissions()
+        {
+            yield return 0;
+            yield return FilePermissions.S_IRGRP;
+            yield return FilePermissions.S_IROTH;
+            yield return FilePermissions.S_IRGRP | FilePermissions.S_IROTH;
         }
     }
 }

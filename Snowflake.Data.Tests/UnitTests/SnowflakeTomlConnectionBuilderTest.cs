@@ -476,6 +476,40 @@ authenticator = ""oauth""");
             // Assert
             Assert.AreEqual($"account=testaccountname;authenticator=oauth;", connectionString);
         }
+
+        [Test]
+        [TestCase("\\\"password;default\\\"", "password;default")]
+        [TestCase("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
+        [TestCase("p\\\"assworddefault", "p\"assworddefault")]
+        [TestCase("password\\\"default", "password\"default")]
+        [TestCase("password\'default", "password\'default")]
+        [TestCase("password=default", "password=default")]
+        [TestCase("\\\"pa=ss\\\"\\\"word;def\'ault\\\"", "pa=ss\"word;def\'ault")]
+        public void TestConnectionMapPropertiesWithSpecialCharacters(string passwordValueWithSpecialCharacter, string expectedValue)
+        {
+            // Arrange
+            var mockFileOperations = new Mock<FileOperations>();
+            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
+            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Returns($"{Path.DirectorySeparatorChar}home");
+            mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
+                .Returns($@"
+[default]
+account = ""defaultaccountname""
+user = ""defaultusername""
+password = ""{passwordValueWithSpecialCharacter}""
+");
+
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+
+            // Act
+            var connectionString = reader.GetConnectionStringFromToml();
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // Assert
+            Assert.AreEqual(expectedValue, properties[SFSessionProperty.PASSWORD]);
+        }
     }
 
 }
