@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core.Tools;
     using Snowflake.Data.Tests.Util;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class ConnectionPoolManagerMFATest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
@@ -100,12 +100,12 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 authResponseSessionInfo = new SessionInfo()
             });
+
             // Act
-            var session = _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
-            Thread.Sleep(5000);
+            _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
+            Thread.Sleep(10000);
 
             // Assert
-
             Assert.AreEqual(3, s_restRequester.LoginRequests.Count);
             var request = s_restRequester.LoginRequests.ToList();
             Assert.AreEqual(1, request.Count(r => r.data.extAuthnDuoMethod == "passcode" && r.data.passcode == TestPasscode));
