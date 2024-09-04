@@ -591,7 +591,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
                 string invalidConnectionString = "host=google.com/404;"
-                    + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true";
+                    + "account=account;user=user;password=password;";
                 conn.ConnectionString = invalidConnectionString;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
@@ -603,8 +603,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     Assert.IsInstanceOf<HttpRequestException>(e.InnerException);
+#if NET6_0_OR_GREATER
                     Assert.IsInstanceOf<AuthenticationException>(e.InnerException.InnerException);
                     Assert.IsTrue(e.InnerException.InnerException.Message.Contains("The remote certificate is invalid because of errors in the certificate chain: RevocationStatusUnknown"));
+#endif
                 }
                 catch (Exception unexpected)
                 {

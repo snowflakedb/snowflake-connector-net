@@ -394,6 +394,9 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         lastException = e;
+                        Exception mostInnerException = e;
+                        while (mostInnerException.InnerException != null) mostInnerException = mostInnerException.InnerException;
+
                         if (cancellationToken.IsCancellationRequested)
                         {
                             logger.Debug("SF rest request timeout or explicit cancel called.");
@@ -404,7 +407,7 @@ namespace Snowflake.Data.Core
                             logger.Warn("Http request timeout. Retry the request");
                             totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
-                        else if (e is HttpRequestException && e.InnerException is AuthenticationException)
+                        else if (mostInnerException is AuthenticationException)
                         {
                             logger.Error("Non-retryable error encountered: ", e);
                             throw;
