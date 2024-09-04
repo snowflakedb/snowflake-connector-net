@@ -380,11 +380,8 @@ namespace Snowflake.Data.Core
                     {
                         childCts = null;
 
-                        Console.WriteLine("Http Timeout: " + httpTimeout);
-                        Console.WriteLine("Timeout.InfiniteTimeSpan: " + Timeout.InfiniteTimeSpan);
                         if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan))
                         {
-                            Console.WriteLine("Cancelling after timeout...");
                             childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                             if (httpTimeout.Ticks == 0)
                                 childCts.Cancel();
@@ -396,12 +393,6 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Http Exception: " + e.Message);
-                        if (e.InnerException != null)
-                        {
-                            Console.WriteLine("Inner Exception: " + e.InnerException.Message);
-                        }
-
                         lastException = e;
                         if (cancellationToken.IsCancellationRequested)
                         {
