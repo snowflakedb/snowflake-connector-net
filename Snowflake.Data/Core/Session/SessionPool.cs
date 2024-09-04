@@ -143,7 +143,7 @@ namespace Snowflake.Data.Core.Session
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
-            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : Int32.MaxValue);
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
