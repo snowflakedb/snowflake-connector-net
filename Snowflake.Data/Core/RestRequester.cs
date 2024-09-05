@@ -93,8 +93,10 @@ namespace Snowflake.Data.Core
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
-            HttpRequestMessage message = request.ToRequestMessage(method);
-            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid()).ConfigureAwait(false);
+            using (HttpRequestMessage message = request.ToRequestMessage(method))
+            {
+                return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid()).ConfigureAwait(false);
+            }
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
@@ -130,7 +132,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        // Disposing of the response if not null now that we don't need it anymore 
+                        // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)
                         {
