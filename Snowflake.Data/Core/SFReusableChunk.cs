@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core
     class SFReusableChunk : BaseResultChunk
     {
         internal override ResultFormat ResultFormat => ResultFormat.JSON;
-        
+
         private readonly BlockResultData data;
 
         private int _currentRowIndex = -1;
@@ -29,11 +29,18 @@ namespace Snowflake.Data.Core
             data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
+        internal override void Reset()
+        {
+            base.Reset();
+            _currentRowIndex = -1;
+            data.Reset();
+        }
+
         internal override void ResetForRetry()
         {
             data.ResetForRetry();
         }
-        
+
         [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
@@ -62,7 +69,7 @@ namespace Snowflake.Data.Core
             _currentRowIndex += 1;
             return _currentRowIndex < RowCount;
         }
-        
+
         internal override bool Rewind()
         {
             _currentRowIndex -= 1;
@@ -101,6 +108,20 @@ namespace Snowflake.Data.Core
                 int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
                 this.blockCount = getBlock(bytesNeeded - 1) + 1;
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+            }
+
+            internal void Reset()
+            {
+                savedRowCount = 0;
+                savedColCount = 0;
+                currentDatOffset = 0;
+                nextIndex = 0;
+                blockCount = 0;
+                metaBlockCount = 0;
+
+                data.Clear();
+                offsets.Clear();
+                lengths.Clear();
             }
 
             internal void ResetForRetry()
