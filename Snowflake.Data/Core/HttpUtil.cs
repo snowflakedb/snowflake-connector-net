@@ -100,16 +100,16 @@ namespace Snowflake.Data.Core
 
         private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
 
-        internal HttpClient GetHttpClient(HttpClientConfig config)
+        internal HttpClient GetHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null)
         {
             lock (httpClientProviderLock)
             {
-                return RegisterNewHttpClientIfNecessary(config);
+                return RegisterNewHttpClientIfNecessary(config, customHandler);
             }
         }
 
 
-        private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
+        private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config, DelegatingHandler customHandler = null)
         {
             string name = config.ConfKey;
             if (!_HttpClients.ContainsKey(name))
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Core
                 logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
-                    new RetryHandler(SetupCustomHttpHandler(config), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
+                    new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
                 {
                     Timeout = Timeout.InfiniteTimeSpan
                 };
@@ -129,8 +129,13 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config)
+        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config, DelegatingHandler customHandler = null)
         {
+            if (customHandler != null)
+            {
+                return customHandler;
+            }
+
             HttpMessageHandler httpHandler;
             try
             {
@@ -394,9 +399,6 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         lastException = e;
-                        Exception mostInnerException = e;
-                        while (mostInnerException.InnerException != null) mostInnerException = mostInnerException.InnerException;
-
                         if (cancellationToken.IsCancellationRequested)
                         {
                             logger.Debug("SF rest request timeout or explicit cancel called.");
@@ -407,15 +409,21 @@ namespace Snowflake.Data.Core
                             logger.Warn("Http request timeout. Retry the request");
                             totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
-                        else if (mostInnerException is AuthenticationException)
-                        {
-                            logger.Error("Non-retryable error encountered: ", e);
-                            throw;
-                        }
                         else
                         {
-                            //TODO: Should probably check to see if the error is recoverable or transient.
-                            logger.Warn("Error occurred during request, retrying...", e);
+                            Exception innermostException = e;
+                            while (innermostException.InnerException != null) innermostException = innermostException.InnerException;
+
+                            if (innermostException is AuthenticationException)
+                            {
+                                logger.Error("Non-retryable error encountered: ", e);
+                                throw;
+                            }
+                            else
+                            {
+                                //TODO: Should probably check to see if the error is recoverable or transient.
+                                logger.Warn("Error occurred during request, retrying...", e);
+                            }
                         }
                     }
 

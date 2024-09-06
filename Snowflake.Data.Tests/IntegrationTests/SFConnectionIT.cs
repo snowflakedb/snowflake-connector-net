@@ -22,6 +22,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Runtime.InteropServices;
     using System.Net.Http;
     using System.Security.Authentication;
+    using Moq.Protected;
+    using Moq;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -584,13 +586,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
-        public void TestAuthenticationExceptionThrowsExceptionAndNotRetried()
+        public void TestNonRetryableHttpExceptionThrowsError()
         {
-            var mockRestRequester = new MockInfiniteTimeout();
+            var handler = new Mock<DelegatingHandler>();
+            handler.Protected()
+              .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("https://authenticationexceptiontest.com/")),
+                ItExpr.IsAny<CancellationToken>())
+              .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
+
+            var httpClient = HttpUtil.Instance.GetHttpClient(
+                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7),
+                handler.Object);
+
+            var mockRestRequester = new MockInfiniteTimeout(httpClient);
 
             using (var conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
-                string invalidConnectionString = "host=google.com/404;"
+                string invalidConnectionString = "host=authenticationexceptiontest.com;"
                     + "account=account;user=user;password=password;";
                 conn.ConnectionString = invalidConnectionString;
 
@@ -603,10 +617,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     Assert.IsInstanceOf<HttpRequestException>(e.InnerException);
-#if NET6_0_OR_GREATER
                     Assert.IsInstanceOf<AuthenticationException>(e.InnerException.InnerException);
-                    Assert.IsTrue(e.InnerException.InnerException.Message.Contains("The remote certificate is invalid because of errors in the certificate chain: RevocationStatusUnknown"));
-#endif
                 }
                 catch (Exception unexpected)
                 {

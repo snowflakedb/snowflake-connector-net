@@ -13,14 +13,23 @@ namespace Snowflake.Data.Tests.Mock
 
     class MockInfiniteTimeout : RestRequester, IMockRestRequester
     {
-        public MockInfiniteTimeout() : base(null)
+        HttpClient mockHttpClient;
+
+        public MockInfiniteTimeout(HttpClient mockHttpClient = null) : base(null)
         {
-            // Does nothing
+            this.mockHttpClient = mockHttpClient;
         }
 
         public void setHttpClient(HttpClient httpClient)
         {
-            base._HttpClient = httpClient;
+            if (mockHttpClient != null)
+            {
+                base._HttpClient = mockHttpClient;
+            }
+            else
+            {
+                base._HttpClient = httpClient;
+            }
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
