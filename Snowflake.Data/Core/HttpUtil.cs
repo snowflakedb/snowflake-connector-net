@@ -94,7 +94,7 @@ namespace Snowflake.Data.Core
             ServicePointManager.DefaultConnectionLimit = 50;
         }
 
-        internal static HttpUtil Instance { get; } = new HttpUtil();
+        public static HttpUtil Instance { get; } = new HttpUtil();
 
         private readonly object httpClientProviderLock = new object();
 
@@ -105,6 +105,18 @@ namespace Snowflake.Data.Core
             lock (httpClientProviderLock)
             {
                 return RegisterNewHttpClientIfNecessary(config);
+            }
+        }
+
+        public void CleanUp()
+        {
+            lock (httpClientProviderLock)
+            {
+                foreach (var client in _HttpClients)
+                {
+                    client.Value.Dispose();
+                }
+                _HttpClients.Clear();
             }
         }
 

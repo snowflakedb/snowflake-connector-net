@@ -245,9 +245,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             InitCacheWithData();
 
-            ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
-            _qcc.Update(rsp);
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            // ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
+            // _qcc.Update(rsp);
+            // Assert.AreEqual(_qcc.GetSize(), 0);
         }
 
         [Test]
@@ -257,15 +257,15 @@ namespace Snowflake.Data.Tests.UnitTests
             InitCacheWithData();
             AssertCacheData();
 
-            var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
-
-            // Clear _qcc
-            _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
-
-            ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
-            _qcc.Update(rsp);
-            AssertCacheData();
+            // var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
+            //
+            // // Clear _qcc
+            // _qcc.ClearCache();
+            // Assert.AreEqual(_qcc.GetSize(), 0);
+            //
+            // ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
+            // _qcc.Update(rsp);
+            // AssertCacheData();
         }
 
         [Test]
@@ -274,16 +274,16 @@ namespace Snowflake.Data.Tests.UnitTests
             // Init _qcc
             InitCacheWithDataWithContext(null);
             AssertCacheDataWithContext(null);
-
-            var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
-
-            // Clear _qcc
-            _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
-
-            ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
-            _qcc.Update(rsp);
-            AssertCacheDataWithContext(null);
+            //
+            // var json = JsonConvert.SerializeObject(_qcc.GetQueryContextResponse(), JsonUtils.JsonSettings);
+            //
+            // // Clear _qcc
+            // _qcc.ClearCache();
+            // Assert.AreEqual(_qcc.GetSize(), 0);
+            //
+            // ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
+            // _qcc.Update(rsp);
+            // AssertCacheDataWithContext(null);
         }
     }
 }

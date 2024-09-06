@@ -1,35 +1,30 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
     abstract class BaseRestResponse
     {
-        [JsonProperty(PropertyName = "message")]
-        internal String message { get; set; }
+        [JsonPropertyName("message")]
+        public String message { get; set; }
 
-        [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
-        internal int code { get; set; }
+        [JsonPropertyName("code")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? code { get; set; }
 
-        [JsonProperty(PropertyName = "success")]
-        internal bool success { get; set; }
+        [JsonPropertyName("success")]
+        public bool success { get; set; }
 
         internal void FilterFailedResponse()
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code ?? default, message, "");
                 throw e;
             }
-
         }
     }
 
@@ -43,109 +38,112 @@ namespace Snowflake.Data.Core
     internal class BaseQueryExecResponse<T> : BaseRestResponse
     where T : IQueryExecResponseData
     {
-        [JsonProperty(PropertyName = "data")]
-        internal T data { get; set; }
+        [JsonPropertyName("data")]
+        public T data { get; set; }
     }
 
     class NullDataResponse : BaseRestResponse
     {
-        [JsonProperty(PropertyName = "data")]
-        internal object data { get; set; }
+        [JsonPropertyName("data")]
+        public object data { get; set; }
     }
 
     internal class AuthenticatorResponse : BaseRestResponse
     {
-        [JsonProperty(PropertyName = "data")]
-        internal AuthenticatorResponseData data { get; set; }
-    }
-    internal class LoginResponse : BaseRestResponse
-    {
-        [JsonProperty(PropertyName = "data")]
-        internal LoginResponseData data { get; set; }
+        [JsonPropertyName("data")]
+        public AuthenticatorResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class LoginResponse : BaseRestResponse
+    {
+        [JsonPropertyName("data")]
+        public LoginResponseData data { get; set; }
+    }
+
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonPropertyName("data")]
+        public RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
-        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-        internal string sessionId { get; set; }
+        [JsonPropertyName("sessionId")]
+        [JsonConverter(typeof(JsonUtils.AnyToStringJsonConverter))]
+        public string sessionId { get; set; }
 
-        [JsonProperty(PropertyName = "token", NullValueHandling = NullValueHandling.Ignore)]
-        internal string token { get; set; }
+        [JsonPropertyName("token")]
+        public string token { get; set; }
 
-        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-        internal string masterToken { get; set; }
+        [JsonPropertyName("masterToken")]
+        public string masterToken { get; set; }
 
-        [JsonProperty(PropertyName = "serverVersion", NullValueHandling = NullValueHandling.Ignore)]
-        internal string serverVersion { get; set; }
+        [JsonPropertyName("serverVersion")]
+        public string serverVersion { get; set; }
 
-        [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<NameValueParameter> nameValueParameter { get; set; }
+        [JsonPropertyName("parameters")]
+        public List<NameValueParameter> nameValueParameter { get; set; }
 
-        [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
-        internal SessionInfo authResponseSessionInfo { get; set; }
+        [JsonPropertyName("sessionInfo")]
+        public SessionInfo authResponseSessionInfo { get; set; }
 
-        [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
-        internal int masterValidityInSeconds { get; set; }
+        [JsonPropertyName("masterValidityInSeconds")]
+        public int masterValidityInSeconds { get; set; }
     }
 
     internal class AuthenticatorResponseData
     {
-        [JsonProperty(PropertyName = "tokenUrl", NullValueHandling = NullValueHandling.Ignore)]
-        internal string tokenUrl { get; set; }
+        [JsonPropertyName("tokenUrl")]
+        public string tokenUrl { get; set; }
 
-        [JsonProperty(PropertyName = "ssoUrl", NullValueHandling = NullValueHandling.Ignore)]
-        internal string ssoUrl { get; set; }
+        [JsonPropertyName("ssoUrl")]
+        public string ssoUrl { get; set; }
 
-        [JsonProperty(PropertyName = "proofKey", NullValueHandling = NullValueHandling.Ignore)]
-        internal string proofKey { get; set; }
+        [JsonPropertyName("proofKey")]
+        public string proofKey { get; set; }
     }
 
+    internal class RenewSessionResponseData
+    {
+        [JsonPropertyName("sessionToken")]
+        public string sessionToken { get; set; }
 
-	internal class RenewSessionResponseData {
+        [JsonPropertyName("validityInSecondsST")]
+        public Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonPropertyName("masterToken")]
+        public string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonPropertyName("validityInSecondsMT")]
+        public Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
-
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
-
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonPropertyName("sessionId")]
+        public Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {
-        [JsonProperty(PropertyName = "databaseName")]
-        internal string databaseName { get; set; }
+        [JsonPropertyName("databaseName")]
+        public string databaseName { get; set; }
 
-        [JsonProperty(PropertyName = "schemaName")]
-        internal string schemaName { get; set; }
+        [JsonPropertyName("schemaName")]
+        public string schemaName { get; set; }
 
-        [JsonProperty(PropertyName = "warehouseName")]
-        internal string warehouseName { get; set; }
+        [JsonPropertyName("warehouseName")]
+        public string warehouseName { get; set; }
 
-        [JsonProperty(PropertyName = "roleName")]
-        internal string roleName { get; set; }
+        [JsonPropertyName("roleName")]
+        public string roleName { get; set; }
     }
 
     internal class NameValueParameter
     {
-        [JsonProperty(PropertyName = "name")]
-        internal string name { get; set; }
+        [JsonPropertyName("name")]
+        public string name { get; set; }
 
-        [JsonProperty(PropertyName = "value")]
-        internal string value { get; set; }
+        [JsonPropertyName("value")]
+        [JsonConverter(typeof(JsonUtils.AnyToStringJsonConverter))]
+        public string value { get; set; }
     }
 
     internal class QueryExecResponse : BaseQueryExecResponse<QueryExecResponseData>
@@ -155,113 +153,103 @@ namespace Snowflake.Data.Core
 
     internal class QueryExecResponseData : IQueryExecResponseData
     {
-        [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<NameValueParameter> parameters { get; set; }
+        [JsonPropertyName("parameters")]
+        public List<NameValueParameter> parameters { get; set; }
 
-        [JsonProperty(PropertyName = "rowtype", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<ExecResponseRowType> rowType { get; set; }
+        [JsonPropertyName("rowtype")]
+        public List<ExecResponseRowType> rowType { get; set; }
 
-        [JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
-        internal string[,] rowSet { get; set; }
+        [JsonPropertyName("rowset")]
+        public string[,] rowSet { get; set; }
 
-        [JsonProperty(PropertyName = "total", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 total { get; set; }
+        [JsonPropertyName("total")]
+        public Int64 total { get; set; }
 
-        [JsonProperty(PropertyName = "returned", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 returned { get; set; }
+        [JsonPropertyName("returned")]
+        public Int64 returned { get; set; }
 
-        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("queryId")]
         public string queryId { get; set; }
 
-        [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("sqlState")]
         public string sqlState { get; set; }
 
-        [JsonProperty(PropertyName = "databaseProvider", NullValueHandling = NullValueHandling.Ignore)]
-        internal string databaseProvider { get; set; }
+        [JsonPropertyName("databaseProvider")]
+        public string databaseProvider { get; set; }
 
-        [JsonProperty(PropertyName = "finalDatabaseName", NullValueHandling = NullValueHandling.Ignore)]
-        internal string finalDatabaseName { get; set; }
+        [JsonPropertyName("finalDatabaseName")]
+        public string finalDatabaseName { get; set; }
 
-        [JsonProperty(PropertyName = "finalSchemaName", NullValueHandling = NullValueHandling.Ignore)]
-        internal string finalSchemaName { get; set; }
+        [JsonPropertyName("finalSchemaName")]
+        public string finalSchemaName { get; set; }
 
-        [JsonProperty(PropertyName = "finalWarehouseName", NullValueHandling = NullValueHandling.Ignore)]
-        internal string finalWarehouseName { get; set; }
+        [JsonPropertyName("finalWarehouseName")]
+        public string finalWarehouseName { get; set; }
 
-        [JsonProperty(PropertyName = "finalRoleName", NullValueHandling = NullValueHandling.Ignore)]
-        internal string finalRoleName { get; set; }
+        [JsonPropertyName("finalRoleName")]
+        public string finalRoleName { get; set; }
 
-        [JsonProperty(PropertyName = "numberOfBinds", NullValueHandling = NullValueHandling.Ignore)]
-        internal int numberOfBinds { get; set; }
+        [JsonPropertyName("numberOfBinds")]
+        public int numberOfBinds { get; set; }
 
-        [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 statementTypeId { get; set; }
+        [JsonPropertyName("statementTypeId")]
+        public Int64 statementTypeId { get; set; }
 
-        [JsonProperty(PropertyName = "version", NullValueHandling = NullValueHandling.Ignore)]
-        internal int version { get; set; }
+        [JsonPropertyName("version")]
+        public int version { get; set; }
 
-        [JsonProperty(PropertyName = "chunks", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<ExecResponseChunk> chunks { get; set; }
+        [JsonPropertyName("chunks")]
+        public List<ExecResponseChunk> chunks { get; set; }
 
-        [JsonProperty(PropertyName = "qrmk", NullValueHandling = NullValueHandling.Ignore)]
-        internal string qrmk { get; set; }
+        [JsonPropertyName("qrmk")]
+        public string qrmk { get; set; }
 
-        [JsonProperty(PropertyName = "chunkHeaders", NullValueHandling = NullValueHandling.Ignore)]
-        internal Dictionary<string, string> chunkHeaders { get; set; }
+        [JsonPropertyName("chunkHeaders")]
+        public Dictionary<string, string> chunkHeaders { get; set; }
 
-        // ping pong response data
-        [JsonProperty(PropertyName = "getResultUrl", NullValueHandling = NullValueHandling.Ignore)]
-        internal string getResultUrl { get; set; }
+        [JsonPropertyName("getResultUrl")]
+        public string getResultUrl { get; set; }
 
-        [JsonProperty(PropertyName = "progressDesc", NullValueHandling = NullValueHandling.Ignore)]
-        internal string progressDesc { get; set; }
+        [JsonPropertyName("progressDesc")]
+        public string progressDesc { get; set; }
 
-        [JsonProperty(PropertyName = "queryAbortAfterSecs", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 queryAbortAfterSecs { get; set; }
+        [JsonPropertyName("queryAbortAfterSecs")]
+        public Int64 queryAbortAfterSecs { get; set; }
 
-        // multiple statements response data
-        [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
-        internal string resultIds { get; set; }
+        [JsonPropertyName("resultIds")]
+        public string resultIds { get; set; }
 
-        [JsonProperty(PropertyName = "queryResultFormat", NullValueHandling = NullValueHandling.Ignore)]
-        [JsonConverter(typeof(StringEnumConverter))]
-        internal ResultFormat queryResultFormat { get; set; }
+        [JsonPropertyName("queryResultFormat")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ResultFormat queryResultFormat { get; set; }
 
-        [JsonProperty(PropertyName = "rowsetBase64", NullValueHandling = NullValueHandling.Ignore)]
-        internal string rowsetBase64 { get; set; }
+        [JsonPropertyName("rowsetBase64")]
+        public string rowsetBase64 { get; set; }
 
-        // query context
-        [JsonProperty(PropertyName = "queryContext", NullValueHandling = NullValueHandling.Ignore)]
-        internal ResponseQueryContext QueryContext { get; set; }
+        [JsonPropertyName("queryContext")]
+        public ResponseQueryContext QueryContext { get; set; }
     }
 
-    // The query context in query response
     internal class ResponseQueryContext
     {
-        [JsonProperty(PropertyName = "entries")]
-        internal List<ResponseQueryContextElement> Entries { get; set; }
+        [JsonPropertyName("entries")]
+        public List<ResponseQueryContextElement> Entries { get; set; }
     }
 
-    // The query context in query response
     internal class ResponseQueryContextElement
     {
-        // database id as key. (bigint)
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public long Id { get; set; }
 
-        // When the query context read (bigint). Compare for same id.
-        [JsonProperty(PropertyName = "timestamp")]
+        [JsonPropertyName("timestamp")]
         public long ReadTimestamp { get; set; }
 
-        // Priority of the query context (bigint). Compare for different ids.
-        [JsonProperty(PropertyName = "priority")]
+        [JsonPropertyName("priority")]
         public long Priority { get; set; }
 
-        // Opaque information (object with a value of base64 encoded string).
-        [JsonProperty(PropertyName = "context", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("context")]
         public string Context { get; set; }
 
-        // default constructor for JSON converter
         public ResponseQueryContextElement() { }
 
         public ResponseQueryContextElement(QueryContextElement elem)
@@ -275,77 +263,77 @@ namespace Snowflake.Data.Core
 
     internal class ExecResponseRowType
     {
-        [JsonProperty(PropertyName = "name")]
-        internal string name { get; set; }
+        [JsonPropertyName("name")]
+        public string name { get; set; }
 
-        [JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 byteLength { get; set; }
+        [JsonPropertyName("byteLength")]
+        public Int64? byteLength { get; set; }
 
-        [JsonProperty(PropertyName = "length", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 length { get; set; }
+        [JsonPropertyName("length")]
+        public Int64? length { get; set; }
 
-        [JsonProperty(PropertyName = "type")]
-        internal string type { get; set; }
+        [JsonPropertyName("type")]
+        public string type { get; set; }
 
-        [JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 scale { get; set; }
+        [JsonPropertyName("scale")]
+        public Int64? scale { get; set; }
 
-        [JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 precision { get; set; }
+        [JsonPropertyName("precision")]
+        public Int64? precision { get; set; }
 
-        [JsonProperty(PropertyName = "nullable")]
-        internal bool nullable { get; set; }
+        [JsonPropertyName("nullable")]
+        public bool nullable { get; set; }
 
-        [JsonProperty(PropertyName = "fields")]
-        internal List<FieldMetadata> fields { get; set; }
+        [JsonPropertyName("fields")]
+        public List<FieldMetadata> fields { get; set; }
     }
 
     internal class FieldMetadata
     {
-        [JsonProperty(PropertyName = "name")]
-        internal string name { get; set; }
+        [JsonPropertyName("name")]
+        public string name { get; set; }
 
-        [JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
-        private Int64 byteLength { get; set; }
+        [JsonPropertyName("byteLength")]
+        public Int64 byteLength { get; set; }
 
-        [JsonProperty(PropertyName = "typeName")]
-        internal string typeName { get; set; }
+        [JsonPropertyName("typeName")]
+        public string typeName { get; set; }
 
-        [JsonProperty(PropertyName = "type")]
-        internal string type { get; set; }
+        [JsonPropertyName("type")]
+        public string type { get; set; }
 
-        [JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 scale { get; set; }
+        [JsonPropertyName("scale")]
+        public Int64 scale { get; set; }
 
-        [JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 precision { get; set; }
+        [JsonPropertyName("precision")]
+        public Int64 precision { get; set; }
 
-        [JsonProperty(PropertyName = "nullable")]
-        internal bool nullable { get; set; }
+        [JsonPropertyName("nullable")]
+        public bool nullable { get; set; }
 
-        [JsonProperty(PropertyName = "fields")]
-        internal List<FieldMetadata> fields { get; set; }
+        [JsonPropertyName("fields")]
+        public List<FieldMetadata> fields { get; set; }
     }
 
     internal class ExecResponseChunk
     {
-        [JsonProperty(PropertyName = "url")]
-        internal string url { get; set; }
+        [JsonPropertyName("url")]
+        public string url { get; set; }
 
-        [JsonProperty(PropertyName = "rowCount")]
-        internal int rowCount { get; set; }
+        [JsonPropertyName("rowCount")]
+        public int rowCount { get; set; }
 
-        [JsonProperty(PropertyName = "uncompressedSize")]
-        internal int uncompressedSize { get; set; }
+        [JsonPropertyName("uncompressedSize")]
+        public int uncompressedSize { get; set; }
 
-        [JsonProperty(PropertyName = "compressedSize")]
-        internal int compressedSize { get; set; }
+        [JsonPropertyName("compressedSize")]
+        public int compressedSize { get; set; }
     }
 
     internal class CloseResponse : BaseRestResponse
     {
-        [JsonProperty(PropertyName = "data")]
-        internal object data { get; set; }
+        [JsonPropertyName("data")]
+        public object data { get; set; }
     }
 
     internal class PutGetExecResponse : BaseQueryExecResponse<PutGetResponseData>
@@ -355,160 +343,151 @@ namespace Snowflake.Data.Core
 
     internal class PutGetResponseData : IQueryExecResponseData
     {
-        [JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
-        internal string command { get; set; }
+        [JsonPropertyName("command")]
+        public string command { get; set; }
 
-        [JsonProperty(PropertyName = "localLocation", NullValueHandling = NullValueHandling.Ignore)]
-        internal string localLocation { get; set; }
+        [JsonPropertyName("localLocation")]
+        public string localLocation { get; set; }
 
-        [JsonProperty(PropertyName = "src_locations", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<string> src_locations { get; set; }
+        [JsonPropertyName("src_locations")]
+        public List<string> src_locations { get; set; }
 
-        [JsonProperty(PropertyName = "parallel", NullValueHandling = NullValueHandling.Ignore)]
-        internal int parallel { get; set; }
+        [JsonPropertyName("parallel")]
+        public int parallel { get; set; }
 
-        [JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
-        internal long threshold { get; set; }
+        [JsonPropertyName("threshold")]
+        public long threshold { get; set; }
 
-        [JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
-        internal bool autoCompress { get; set; }
+        [JsonPropertyName("autoCompress")]
+        public bool autoCompress { get; set; }
 
-        [JsonProperty(PropertyName = "overwrite", NullValueHandling = NullValueHandling.Ignore)]
-        internal bool overwrite { get; set; }
+        [JsonPropertyName("overwrite")]
+        public bool overwrite { get; set; }
 
-        [JsonProperty(PropertyName = "sourceCompression", NullValueHandling = NullValueHandling.Ignore)]
-        internal string sourceCompression { get; set; }
+        [JsonPropertyName("sourceCompression")]
+        public string sourceCompression { get; set; }
 
-        [JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
-        internal PutGetStageInfo stageInfo { get; set; }
+        [JsonPropertyName("stageInfo")]
+        public PutGetStageInfo stageInfo { get; set; }
 
-        [JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("encryptionMaterial")]
         [JsonConverter(typeof(SingleOrArrayConverter<PutGetEncryptionMaterial>))]
-        internal List<PutGetEncryptionMaterial> encryptionMaterial { get; set; }
+        public List<PutGetEncryptionMaterial> encryptionMaterial { get; set; }
 
-        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("queryId")]
         public string queryId { get; set; }
 
-        [JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("sqlState")]
         public string sqlState { get; set; }
 
-        [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
-        internal string presignedUrl { get; set; }
+        [JsonPropertyName("presignedUrl")]
+        public string presignedUrl { get; set; }
 
-        [JsonProperty(PropertyName = "presignedUrls", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<string> presignedUrls { get; set; }
+        [JsonPropertyName("presignedUrls")]
+        public List<string> presignedUrls { get; set; }
 
-        [JsonProperty(PropertyName = "rowtype", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<ExecResponseRowType> rowType { get; set; }
+        [JsonPropertyName("rowtype")]
+        public List<ExecResponseRowType> rowType { get; set; }
 
-        [JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
-        internal string[,] rowSet { get; set; }
+        [JsonPropertyName("rowset")]
+        [JsonConverter(typeof(Array2DConverter))]
+        public string[,] rowSet { get; set; }
 
-        [JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<NameValueParameter> parameters { get; set; }
+        [JsonPropertyName("parameters")]
+        public List<NameValueParameter> parameters { get; set; }
 
-        [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int64 statementTypeId { get; set; }
+        [JsonPropertyName("statementTypeId")]
+        public Int64 statementTypeId { get; set; }
     }
 
     internal class PutGetStageInfo
     {
-        [JsonProperty(PropertyName = "locationType", NullValueHandling = NullValueHandling.Ignore)]
-        internal string locationType { get; set; }
+        [JsonPropertyName("locationType")]
+        public string locationType { get; set; }
 
-        [JsonProperty(PropertyName = "location", NullValueHandling = NullValueHandling.Ignore)]
-        internal string location { get; set; }
+        [JsonPropertyName("location")]
+        public string location { get; set; }
 
-        [JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
-        internal string path { get; set; }
+        [JsonPropertyName("path")]
+        public string path { get; set; }
 
-        [JsonProperty(PropertyName = "region", NullValueHandling = NullValueHandling.Ignore)]
-        internal string region { get; set; }
+        [JsonPropertyName("region")]
+        public string region { get; set; }
 
-        [JsonProperty(PropertyName = "storageAccount", NullValueHandling = NullValueHandling.Ignore)]
-        internal string storageAccount { get; set; }
+        [JsonPropertyName("storageAccount")]
+        public string storageAccount { get; set; }
 
-        [JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
-        internal bool isClientSideEncrypted { get; set; }
+        [JsonPropertyName("isClientSideEncrypted")]
+        public bool isClientSideEncrypted { get; set; }
 
-        [JsonProperty(PropertyName = "creds", NullValueHandling = NullValueHandling.Ignore)]
-        internal Dictionary<string, string> stageCredentials { get; set; }
+        [JsonPropertyName("creds")]
+        public Dictionary<string, string> stageCredentials { get; set; }
 
-        [JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
-        internal string presignedUrl { get; set; }
+        [JsonPropertyName("presignedUrl")]
+        public string presignedUrl { get; set; }
 
-        [JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
-        internal string endPoint { get; set; }
+        [JsonPropertyName("endPoint")]
+        public string endPoint { get; set; }
     }
 
     internal class PutGetEncryptionMaterial
     {
-        [JsonProperty(PropertyName = "queryStageMasterKey", NullValueHandling = NullValueHandling.Ignore)]
-        internal string queryStageMasterKey { get; set; }
+        [JsonPropertyName("queryStageMasterKey")]
+        public string queryStageMasterKey { get; set; }
 
-        [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-        internal string queryId { get; set; }
+        [JsonPropertyName("queryId")]
+        public string queryId { get; set; }
 
-        [JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
-        internal long smkId { get; set; }
+        [JsonPropertyName("smkId")]
+        public long smkId { get; set; }
     }
 
     internal class QueryStatusResponse : BaseRestResponse
     {
-
-        [JsonProperty(PropertyName = "data")]
-        internal QueryStatusData data { get; set; }
+        [JsonPropertyName("data")]
+        public QueryStatusData data { get; set; }
     }
 
     internal class QueryStatusData
     {
-        [JsonProperty(PropertyName = "queries", NullValueHandling = NullValueHandling.Ignore)]
-        internal List<QueryStatusDataQueries> queries { get; set; }
+        [JsonPropertyName("queries")]
+        public List<QueryStatusDataQueries> queries { get; set; }
     }
 
     internal class QueryStatusDataQueries
     {
-        [JsonProperty(PropertyName = "id", NullValueHandling = NullValueHandling.Ignore)]
-        internal string id { get; set; }
+        [JsonPropertyName("id")]
+        public string id { get; set; }
 
-        [JsonProperty(PropertyName = "status", NullValueHandling = NullValueHandling.Ignore)]
-        internal string status { get; set; }
+        [JsonPropertyName("status")]
+        public string status { get; set; }
 
-        [JsonProperty(PropertyName = "state", NullValueHandling = NullValueHandling.Ignore)]
-        internal string state { get; set; }
+        [JsonPropertyName("state")]
+        public string state { get; set; }
 
-        [JsonProperty(PropertyName = "errorCode", NullValueHandling = NullValueHandling.Ignore)]
-        internal string errorCode { get; set; }
+        [JsonPropertyName("errorCode")]
+        public string errorCode { get; set; }
 
-        [JsonProperty(PropertyName = "errorMessage", NullValueHandling = NullValueHandling.Ignore)]
-        internal string errorMessage { get; set; }
+        [JsonPropertyName("errorMessage")]
+        public string errorMessage { get; set; }
     }
 
-    // Retrieved from: https://stackoverflow.com/a/18997172
-    internal class SingleOrArrayConverter<T> : JsonConverter
+    internal class SingleOrArrayConverter<T> : JsonConverter<List<T>>
     {
-        public override bool CanConvert(Type objecType)
+        public override List<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return (objecType == typeof(List<T>));
-        }
-
-        public override object ReadJson(JsonReader reader, Type objecType, object existingValue,
-            JsonSerializer serializer)
-        {
-            JToken token = JToken.Load(reader);
-            if (token.Type == JTokenType.Array)
+            if (reader.TokenType == JsonTokenType.StartArray)
             {
-                return token.ToObject<List<T>>();
+                return JsonSerializer.Deserialize<List<T>>(ref reader, options);
             }
-            return new List<T> { token.ToObject<T>() };
+            else
+            {
+                var singleValue = JsonSerializer.Deserialize<T>(ref reader, options);
+                return new List<T> { singleValue };
+            }
         }
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, List<T> value, JsonSerializerOptions options)
         {
             throw new NotImplementedException();
         }

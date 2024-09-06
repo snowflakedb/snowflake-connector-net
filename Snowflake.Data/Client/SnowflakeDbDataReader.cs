@@ -11,11 +11,13 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Client
 {
+    using System.Text.Json;
+    using Newtonsoft.Json.Linq;
+
     public class SnowflakeDbDataReader : DbDataReader
     {
         static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
@@ -120,11 +122,12 @@ namespace Snowflake.Data.Client
             {
                 var row = table.NewRow();
 
+
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
-                row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
-                row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
+                row[SchemaTableColumn.ColumnSize] = (int)(rowType.length.HasValue ? rowType.length.Value : default);
+                row[SchemaTableColumn.NumericPrecision] = (int)(rowType.precision.HasValue ? rowType.precision.Value : default);
+                row[SchemaTableColumn.NumericScale] = (int)(rowType.scale.HasValue ? rowType.scale.Value : default);
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
 
                 Tuple<SFDataType, Type> types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
@@ -268,7 +271,7 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
                 var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                JsonElement json = stringValue == null ? default(JsonElement) : JsonDocument.Parse(stringValue).RootElement;
                 return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
             }
             catch (Exception e)
@@ -291,7 +294,7 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JArray.Parse(stringValue);
+                var json = stringValue == null ? default : JsonDocument.Parse(stringValue).RootElement;
                 return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
             }
             catch (Exception e)
@@ -314,7 +317,7 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
+                var json = stringValue == null ? default : JsonDocument.Parse(stringValue).RootElement;
                 return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
             }
             catch (Exception e)

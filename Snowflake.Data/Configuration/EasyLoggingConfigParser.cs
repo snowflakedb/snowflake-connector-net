@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Configuration
 {
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+
     internal class EasyLoggingConfigParser
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Configuration
         private ClientConfig TryToParseFile(string fileContent)
         {
             try {
-                var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
+                var config = System.Text.Json.JsonSerializer.Deserialize<ClientConfig>(fileContent);
                 Validate(config);
                 CheckForUnknownFields(fileContent);
                 return config;
@@ -71,14 +72,22 @@ namespace Snowflake.Data.Configuration
         {
             // Parse the specified config file and get the key-value pairs from the "common" section
             List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
-                .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
+                .Select(property => property.GetCustomAttribute<JsonPropertyNameAttribute>().Name)
                 .ToList();
 
-            JObject.Parse(fileContent).GetValue("common", StringComparison.OrdinalIgnoreCase)?
-                .Cast<JProperty>()
-                .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
-                .ToList()
-                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
+            using (JsonDocument document = JsonDocument.Parse(fileContent))
+            {
+                if (document.RootElement.TryGetProperty("common", out JsonElement commonElement))
+                {
+                    foreach (JsonProperty property in commonElement.EnumerateObject())
+                    {
+                        if (!knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                        {
+                            s_logger.Warn($"Unknown field from config: {property.Name}");
+                        }
+                    }
+                }
+            }
         }
     }
 }

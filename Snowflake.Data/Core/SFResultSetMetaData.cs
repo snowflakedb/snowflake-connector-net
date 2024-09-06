@@ -114,7 +114,7 @@ namespace Snowflake.Data.Core
 
         internal long GetScaleByIndex(int targetIndex)
         {
-            return rowTypes[targetIndex].scale;
+            return rowTypes[targetIndex].scale ?? default;
         }
 
         internal bool IsStructuredType(int targetIndex)

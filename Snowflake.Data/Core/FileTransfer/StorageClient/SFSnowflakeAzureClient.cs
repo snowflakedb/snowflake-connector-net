@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-            dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
+            dynamic encryptionData = JsonSerializer.Deserialize<dynamic>(response.Metadata["encryptiondata"]);
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
             {
                 iv = encryptionData["ContentEncryptionIV"],
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string>metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the JSON for the encryption data header
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            string encryptionData = JsonSerializer.Serialize(new EncryptionData
             {
                 EncryptionMode = "FullBlob",
                 WrappedContentKey = new WrappedContentInfo

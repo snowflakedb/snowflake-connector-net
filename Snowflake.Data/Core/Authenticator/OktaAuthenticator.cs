@@ -1,9 +1,5 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -17,9 +13,8 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    /// <summary>
-    /// OktaAuthenticator would perform several steps of authentication with Snowflake and Okta IdP
-    /// </summary>
+    using System.Text.Json.Serialization;
+
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "okta";
@@ -28,25 +23,15 @@ namespace Snowflake.Data.Core.Authenticator
         internal const string RetryCountHeader = "RetryCount";
         internal const string TimeoutElapsedHeader = "TimeoutElapsed";
 
-        /// <summary>
-        /// url of the okta idp
-        /// </summary>
         private readonly Uri _oktaUrl;
-
         private string _rawSamlTokenHtmlString;
 
-        /// <summary>
-        /// Constructor of the Okta authenticator
-        /// </summary>
-        /// <param name="session"></param>
-        /// <param name="oktaUriString"></param>
         internal OktaAuthenticator(SFSession session, string oktaUriString) :
             base(session, oktaUriString)
         {
             _oktaUrl = new Uri(oktaUriString);
         }
 
-        /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             s_logger.Info("Okta Authentication");
@@ -69,7 +54,6 @@ namespace Snowflake.Data.Core.Authenticator
             Exception lastRetryException = null;
             HttpResponseMessage samlRawResponse = null;
 
-            // If VerifyPostbackUrl() fails, retry with new one-time token
             while (RetryLimitIsNotReached(retryCount, timeoutElapsed))
             {
                 try
@@ -107,9 +91,8 @@ namespace Snowflake.Data.Core.Authenticator
                     samlRawResponse?.Dispose();
                     samlRawResponse = null;
                 }
-            } // while retry
+            }
 
-            // Throw exception if max retry count or max timeout has been reached
             ThrowRetryLimitException(retryCount, timeoutElapsed, lastRetryException);
         }
 
@@ -135,7 +118,6 @@ namespace Snowflake.Data.Core.Authenticator
             Exception lastRetryException = null;
             HttpResponseMessage samlRawResponse = null;
 
-            // If VerifyPostbackUrl() fails, retry with new one-time token
             while (RetryLimitIsNotReached(retryCount, timeoutElapsed))
             {
                 try
@@ -174,9 +156,8 @@ namespace Snowflake.Data.Core.Authenticator
                     samlRawResponse?.Dispose();
                     samlRawResponse = null;
                 }
-            } // while retry
+            }
 
-            // Throw exception if max retry count or max timeout has been reached
             ThrowRetryLimitException(retryCount, timeoutElapsed, lastRetryException);
         }
 
@@ -193,7 +174,6 @@ namespace Snowflake.Data.Core.Authenticator
                     throw new SnowflakeDbException(ex, SFError.IDP_SAML_POSTBACK_INVALID);
                 }
 
-                // Get the current retry count and timeout elapsed from the response headers
                 retryCount += int.Parse(samlRawResponse.Content.Headers.GetValues(RetryCountHeader).First());
                 timeoutElapsed += int.Parse(samlRawResponse.Content.Headers.GetValues(TimeoutElapsedHeader).First());
             }
@@ -244,7 +224,6 @@ namespace Snowflake.Data.Core.Authenticator
             };
         }
 
-        /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             data.RawSamlResponse = _rawSamlTokenHtmlString;
@@ -265,7 +244,6 @@ namespace Snowflake.Data.Core.Authenticator
         {
             int formIndex = _rawSamlTokenHtmlString.IndexOf("<form");
 
-            // skip 'action="' (length = 8)
             int startIndex = _rawSamlTokenHtmlString.IndexOf("action=", formIndex) + 8;
             int length = _rawSamlTokenHtmlString.IndexOf('"', startIndex) - startIndex;
 
@@ -332,16 +310,33 @@ namespace Snowflake.Data.Core.Authenticator
     internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
     {
         private static readonly MediaTypeWithQualityHeaderValue s_jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
+        private IdpTokenRequest jsonBody;
 
-        internal IdpTokenRequest JsonBody { get; set; }
+        internal IdpTokenRequest JsonBody
+        {
+            get
+            {
+                return jsonBody;
+            }
+            set
+            {
+                JsonBodySerialized = null;
+                jsonBody = value;
+            }
+        }
+
+        private string JsonBodySerialized { get; set; }
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             HttpRequestMessage message = newMessage(method, Url);
             message.Headers.Accept.Add(s_jsonHeader);
 
-            var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
-            message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            if (JsonBodySerialized != null)
+            {
+                JsonBodySerialized = JsonSerializer.Serialize(JsonBody);
+            }
+            message.Content = new StringContent(JsonBodySerialized, Encoding.UTF8, "application/json");
 
             return message;
         }
@@ -349,18 +344,18 @@ namespace Snowflake.Data.Core.Authenticator
 
     class IdpTokenRequest
     {
-        [JsonProperty(PropertyName = "username")]
+        [JsonPropertyName("username")]
         internal String Username { get; set; }
 
-        [JsonProperty(PropertyName = "password")]
+        [JsonPropertyName("password")]
         internal String Password { get; set; }
     }
 
     class IdpTokenResponse
     {
-        [JsonProperty(PropertyName = "cookieToken")]
+        [JsonPropertyName("cookieToken")]
         internal String CookieToken { get; set; }
-        [JsonProperty(PropertyName = "sessionToken")]
+        [JsonPropertyName("sessionToken")]
         internal String SessionToken { get; set; }
     }
 

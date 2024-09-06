@@ -1,13 +1,10 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
 using System;
 using System.Text;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Snowflake.Data.Core
 {
@@ -27,7 +24,7 @@ namespace Snowflake.Data.Core
 
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
-        // The default Rest timeout. Set to 120 seconds. 
+        // The default Rest timeout. Set to 120 seconds.
         public static int DEFAULT_REST_RETRY_SECONDS_TIMEOUT = 120;
 
         internal Uri Url { get; set; }
@@ -133,7 +130,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(), 
+            return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(),
                 jsonBody.ToString());
         }
 
@@ -142,7 +139,7 @@ namespace Snowflake.Data.Core
             var message = newMessage(method, Url);
             if (method != HttpMethod.Get && jsonBody != null)
             {
-                var json = JsonConvert.SerializeObject(jsonBody, JsonUtils.JsonSettings);
+                var json = JsonSerializer.Serialize(jsonBody, JsonUtils.JsonOptions);
                 //TODO: Check if we should use other encodings...
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
@@ -183,7 +180,7 @@ namespace Snowflake.Data.Core
 
     class AuthenticatorRequest
     {
-        [JsonProperty(PropertyName = "data")]
+        [JsonPropertyName("data")]
         internal AuthenticatorRequestData Data { get; set; }
 
         public override string ToString()
@@ -194,19 +191,19 @@ namespace Snowflake.Data.Core
 
     class AuthenticatorRequestData
     {
-        [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("ACCOUNT_NAME")]
         internal String AccountName { get; set; }
 
-        [JsonProperty(PropertyName = "AUTHENTICATOR")]
+        [JsonPropertyName("AUTHENTICATOR")]
         internal String Authenticator { get; set; }
 
-        [JsonProperty(PropertyName = "BROWSER_MODE_REDIRECT_PORT", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("BROWSER_MODE_REDIRECT_PORT")]
         internal String BrowserModeRedirectPort { get; set; }
 
-        [JsonProperty(PropertyName = "CLIENT_APP_ID", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("CLIENT_APP_ID")]
         internal String DriverName { get; set; }
 
-        [JsonProperty(PropertyName = "CLIENT_APP_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("CLIENT_APP_VERSION")]
         internal String DriverVersion { get; set; }
 
         public override string ToString()
@@ -218,8 +215,8 @@ namespace Snowflake.Data.Core
 
     class LoginRequest
     {
-        [JsonProperty(PropertyName = "data")]
-        internal LoginRequestData data { get; set; }
+        [JsonPropertyName("data")]
+        public LoginRequestData data { get; set; }
 
         public override string ToString()
         {
@@ -229,102 +226,102 @@ namespace Snowflake.Data.Core
 
     class LoginRequestData
     {
-        [JsonProperty(PropertyName = "CLIENT_APP_ID")]
-        internal String clientAppId { get; set; }
+        [JsonPropertyName("CLIENT_APP_ID")]
+        public String clientAppId { get; set; }
 
-        [JsonProperty(PropertyName = "CLIENT_APP_VERSION")]
-        internal String clientAppVersion { get; set; }
+        [JsonPropertyName("CLIENT_APP_VERSION")]
+        public String clientAppVersion { get; set; }
 
-        [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
-        internal String accountName { get; set; }
+        [JsonPropertyName("ACCOUNT_NAME")]
+        public String accountName { get; set; }
 
-        [JsonProperty(PropertyName = "LOGIN_NAME", NullValueHandling = NullValueHandling.Ignore)]
-        internal String loginName { get; set; }
+        [JsonPropertyName("LOGIN_NAME")]
+        public String loginName { get; set; }
 
-        [JsonProperty(PropertyName = "PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
-        internal String password { get; set; }
+        [JsonPropertyName("PASSWORD")]
+        public String password { get; set; }
 
-        [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
-        internal String Authenticator { get; set; }
+        [JsonPropertyName("AUTHENTICATOR")]
+        public String Authenticator { get; set; }
 
-        [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
-        internal LoginRequestClientEnv clientEnv { get; set; }
+        [JsonPropertyName("CLIENT_ENVIRONMENT")]
+        public LoginRequestClientEnv clientEnv { get; set; }
 
-        [JsonProperty(PropertyName = "RAW_SAML_RESPONSE", NullValueHandling = NullValueHandling.Ignore)]
-        internal String RawSamlResponse { get; set; }
+        [JsonPropertyName("RAW_SAML_RESPONSE")]
+        public String RawSamlResponse { get; set; }
 
-        [JsonProperty(PropertyName = "TOKEN", NullValueHandling = NullValueHandling.Ignore)]
-        internal string Token { get; set; }
+        [JsonPropertyName("TOKEN")]
+        public string Token { get; set; }
 
-        [JsonProperty(PropertyName = "PROOF_KEY", NullValueHandling = NullValueHandling.Ignore)]
-        internal string ProofKey { get; set; }
+        [JsonPropertyName("PROOF_KEY")]
+        public string ProofKey { get; set; }
 
-        [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
-        internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
+        [JsonPropertyName("SESSION_PARAMETERS")]
+        public Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
         public override string ToString()
         {
-            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}", 
+            return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}",
                 clientAppVersion, accountName, loginName, clientEnv.ToString(), Authenticator);
         }
     }
 
     class LoginRequestClientEnv
     {
-        [JsonProperty(PropertyName = "APPLICATION")]
-        internal String application { get; set; }
+        [JsonPropertyName("APPLICATION")]
+        public String application { get; set; }
 
-        [JsonProperty(PropertyName = "OS_VERSION")]
-        internal String osVersion { get; set; }
+        [JsonPropertyName("OS_VERSION")]
+        public String osVersion { get; set; }
 
-        [JsonProperty(PropertyName = "NET_RUNTIME")]
-        internal String netRuntime { get; set; }
+        [JsonPropertyName("NET_RUNTIME")]
+        public String netRuntime { get; set; }
 
-        [JsonProperty(PropertyName = "NET_VERSION")]
-        internal string netVersion { get; set; }
+        [JsonPropertyName("NET_VERSION")]
+        public string netVersion { get; set; }
 
-        [JsonProperty(PropertyName = "INSECURE_MODE")]
-        internal string insecureMode { get; set; }
+        [JsonPropertyName("INSECURE_MODE")]
+        public string insecureMode { get; set; }
 
         [JsonIgnore]
         internal bool IsNetFramework => netRuntime.Contains("NETFramework");
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}", 
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}",
                 application, osVersion, netRuntime, netVersion, insecureMode);
         }
     }
 
     class QueryRequest
     {
-        [JsonProperty(PropertyName = "sqlText")]
-        internal string sqlText { get; set; }
+        [JsonPropertyName("sqlText")]
+        public string sqlText { get; set; }
 
-        [JsonProperty(PropertyName = "describeOnly")]
-        internal bool describeOnly { get; set; }
+        [JsonPropertyName("describeOnly")]
+        public bool describeOnly { get; set; }
 
-        [JsonProperty(PropertyName = "bindings")]
-        internal Dictionary<string, BindingDTO> parameterBindings { get; set; }
+        [JsonPropertyName("bindings")]
+        public Dictionary<string, BindingDTO> parameterBindings { get; set; }
 
-        [JsonProperty(PropertyName = "bindStage")]
-        internal string bindStage { get; set; }
+        [JsonPropertyName("bindStage")]
+        public string bindStage { get; set; }
 
-        [JsonProperty(PropertyName = "parameters")]
-        internal Dictionary<string, string> parameters { get; set; }
+        [JsonPropertyName("parameters")]
+        public Dictionary<string, string> parameters { get; set; }
 
-        [JsonProperty(PropertyName = "queryContextDTO", NullValueHandling = NullValueHandling.Ignore)]
-        internal RequestQueryContext QueryContextDTO { get; set; }
+        [JsonPropertyName("queryContextDTO")]
+        public RequestQueryContext QueryContextDTO { get; set; }
 
-        [JsonProperty(PropertyName = "asyncExec")]
-        internal bool asyncExec { get; set; }
+        [JsonPropertyName("asyncExec")]
+        public bool asyncExec { get; set; }
     }
 
     // The query context in query response
     internal class RequestQueryContext
     {
-        [JsonProperty(PropertyName = "entries")]
-        internal List<RequestQueryContextElement> Entries { get; set; }
+        [JsonPropertyName("entries")]
+        public List<RequestQueryContextElement> Entries { get; set; }
     }
 
     // The empty query context value in request
@@ -337,7 +334,7 @@ namespace Snowflake.Data.Core
     internal class QueryContextValue
     {
         // base64 encoded string of Opaque information
-        [JsonProperty(PropertyName = "base64Data")]
+        [JsonPropertyName("base64Data")]
         public string Base64Data { get; set; }
 
         public QueryContextValue(string context)
@@ -350,19 +347,19 @@ namespace Snowflake.Data.Core
     internal class RequestQueryContextElement
     {
         // database id as key. (bigint)
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public long Id { get; set; }
 
         // When the query context read (bigint). Compare for same id.
-        [JsonProperty(PropertyName = "timestamp")]
+        [JsonPropertyName("timestamp")]
         public long ReadTimestamp { get; set; }
 
         // Priority of the query context (bigint). Compare for different ids.
-        [JsonProperty(PropertyName = "priority")]
+        [JsonPropertyName("priority")]
         public long Priority { get; set; }
 
         // Opaque information (object with a value of base64 encoded string).
-        [JsonProperty(PropertyName = "context")]
+        [JsonPropertyName("context")]
         public object Context{ get; set; }
 
         public void SetContext(string context)
@@ -391,16 +388,16 @@ namespace Snowflake.Data.Core
 
     class QueryCancelRequest
     {
-        [JsonProperty(PropertyName = "requestId")]
-        internal string requestId { get; set; }
+        [JsonPropertyName("requestId")]
+        public string requestId { get; set; }
     }
 
     class RenewSessionRequest
     {
-        [JsonProperty(PropertyName = "oldSessionToken")]
-        internal string oldSessionToken { get; set; }
+        [JsonPropertyName("oldSessionToken")]
+        public string oldSessionToken { get; set; }
 
-        [JsonProperty(PropertyName = "requestType")]
-        internal string requestType { get; set; }
+        [JsonPropertyName("requestType")]
+        public string requestType { get; set; }
     }
 }

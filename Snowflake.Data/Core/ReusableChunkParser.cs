@@ -4,7 +4,7 @@
 
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Snowflake.Data.Core
 {

@@ -13,9 +13,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Diagnostics;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json.Serialization;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core

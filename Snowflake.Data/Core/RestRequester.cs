@@ -3,7 +3,7 @@
  */
 
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Core
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                return JsonSerializer.Deserialize<T>(json, JsonUtils.JsonOptions);
             }
         }
 
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                return JsonSerializer.Deserialize<T>(json, JsonUtils.JsonOptions);
             }
         }
 
@@ -116,7 +116,8 @@ namespace Snowflake.Data.Core
                         logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
 
                         response = await _HttpClient
-                            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                            .SendAsync(message, HttpCompletionOption.
+                                ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         if (!response.IsSuccessStatusCode)
                         {

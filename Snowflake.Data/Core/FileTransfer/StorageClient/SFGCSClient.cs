@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Snowflake.Data.Log;
 using System.Net;
 
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private String GetUploadEncryptionData(SFEncryptionMetadata encryptionMetadata)
         {
             // Create the encryption header value
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            string encryptionData = JsonSerializer.Serialize(new EncryptionData
             {
                 EncryptionMode = "FullBlob",
                 WrappedContentKey = new WrappedContentInfo
@@ -349,7 +349,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;                
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
@@ -415,7 +415,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             WebHeaderCollection headers = response.Headers;
 
             // Get header values
-            dynamic encryptionData = JsonConvert.DeserializeObject(headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP));
+            dynamic encryptionData = JsonSerializer.Deserialize<dynamic>(headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP));
             string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
 
             // Get encryption metadata from encryption data header value
@@ -444,7 +444,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
             Logger.Error("Failed to get file header for presigned url: " + ex.Message);
-            
+
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized ||
                 response.StatusCode == HttpStatusCode.Forbidden ||

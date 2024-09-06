@@ -309,7 +309,7 @@ namespace Snowflake.Data.Core
             }
 
             throw new SnowflakeDbException(response.data.sqlState,
-                response.code, response.message, response.data.queryId);
+                response.code ?? default, response.message, response.data.queryId);
         }
 
         private void SetTimeout(int timeout)
@@ -696,7 +696,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new SnowflakeDbException(
                         response.data.sqlState,
-                        response.code,
+                        response.code ?? default,
                         response.message,
                         response.data.queryId);
                 }
@@ -783,7 +783,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new SnowflakeDbException(
                         response.data.sqlState,
-                        response.code,
+                        response.code ?? default,
                         response.message,
                         response.data.queryId);
                 }
@@ -854,7 +854,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new SnowflakeDbException(
                         response.data.queries[0].state,
-                        response.code,
+                        response.code ?? default,
                         response.message,
                         queryId);
                 }
@@ -909,7 +909,7 @@ namespace Snowflake.Data.Core
                 {
                     throw new SnowflakeDbException(
                         response.data.queries[0].state,
-                        response.code,
+                        response.code ?? default,
                         response.message,
                         queryId);
                 }

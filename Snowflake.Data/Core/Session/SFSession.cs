@@ -123,7 +123,7 @@ namespace Snowflake.Data.Core
             {
                 SnowflakeDbException e = new SnowflakeDbException
                     (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    authnResponse.code,
+                    authnResponse.code ?? default,
                     authnResponse.message,
                     "");
 
@@ -359,7 +359,7 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, sessionId);
+                    response.code ?? default, response.message, sessionId);
                 logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Core
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, sessionId);
+                    response.code ?? default, response.message, sessionId);
                 logger.Error($"Renew session (ID: {sessionId}) failed", e);
                 throw e;
             }
