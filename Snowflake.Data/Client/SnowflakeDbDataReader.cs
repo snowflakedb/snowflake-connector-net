@@ -256,7 +256,7 @@ namespace Snowflake.Data.Client
             return count;
         }
 
-        public T GetObject<T>(int ordinal)
+        internal T GetObject<T>(int ordinal)
             where T : class, new()
         {
             try
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public T[] GetArray<T>(int ordinal)
+        internal T[] GetArray<T>(int ordinal)
         {
             try
             {
@@ -302,7 +302,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
+        internal Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
         {
             try
             {
