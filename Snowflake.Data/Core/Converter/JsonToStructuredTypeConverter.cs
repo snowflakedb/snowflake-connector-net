@@ -156,27 +156,28 @@ namespace Snowflake.Data.Core.Converter
             {
                 var value = json.Value<string>();
                 var bytes = Encoding.UTF8.GetBytes(value);
-                if (value.Contains("E"))
+                try
                 {
+                    var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
                     if (fieldType == typeof(float) || fieldType == typeof(float?))
                     {
-                        return float.Parse(value);
+                        return (float)decimalValue;
                     }
                     if (fieldType == typeof(double) || fieldType == typeof(double?))
                     {
-                        return double.Parse(value);
+                        return (double)decimalValue;
                     }
+                    return decimalValue;
                 }
-                var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
-                if (fieldType == typeof(float) || fieldType == typeof(float?))
+                catch (FormatException)
                 {
-                    return (float) decimalValue;
+                    var doubleValue = double.Parse(value);
+                    if (fieldType == typeof(float) || fieldType == typeof(float?))
+                    {
+                        return (float)doubleValue;
+                    }
+                    return doubleValue;
                 }
-                if (fieldType == typeof(double) || fieldType == typeof(double?))
-                {
-                    return (double) decimalValue;
-                }
-                return decimalValue;
             }
             if (IsBooleanMetadata(fieldMetadata))
             {
