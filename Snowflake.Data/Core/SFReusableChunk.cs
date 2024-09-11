@@ -81,10 +81,10 @@ namespace Snowflake.Data.Core
             private static readonly int NULL_VALUE = -100;
             private int blockCount;
 
-            private static int blockLengthBits = 24;
+            private static int blockLengthBits = 23;
             private static int blockLength = 1 << blockLengthBits;
             int metaBlockCount;
-            private static int metaBlockLengthBits = 15;
+            private static int metaBlockLengthBits = 17;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
             private readonly List<byte[]> data = new List<byte[]>();
@@ -105,8 +105,7 @@ namespace Snowflake.Data.Core
                 savedColCount = colCount;
                 currentDatOffset = 0;
                 nextIndex = 0;
-                int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-                this.blockCount = getBlock(bytesNeeded - 1) + 1;
+                this.blockCount = 1; // init with 1 block only
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
             }
 
@@ -178,6 +177,11 @@ namespace Snowflake.Data.Core
 
             public void add(byte[] bytes, int length)
             {
+                // check if a new block for data is needed
+                if (getBlock(currentDatOffset) == blockCount - 1 && spaceLeftOnBlock(currentDatOffset) <= length)
+                {
+                    blockCount++;
+                }
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
                     allocateArrays();
