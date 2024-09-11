@@ -132,6 +132,7 @@ namespace Snowflake.Data.Client
             {
                 if (s_connectionManager != null)
                     return;
+                Diagnostics.LogDiagnostics();
                 s_connectionManager?.ClearAllPools();
                 if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
                 {
