@@ -215,7 +215,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (ArgumentException e)
                 {
-                    logger.Warn($"Property {keys[i]} not found ignored.", e);
+                    logger.Debug($"Property {keys[i]} not found ignored.");
                 }
             }
 

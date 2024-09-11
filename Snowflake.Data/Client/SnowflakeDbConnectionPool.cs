@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -129,6 +130,8 @@ namespace Snowflake.Data.Client
         {
             lock (s_connectionManagerInstanceLock)
             {
+                if (s_connectionManager != null)
+                    return;
                 s_connectionManager?.ClearAllPools();
                 if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
                 {
