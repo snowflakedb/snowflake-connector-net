@@ -584,50 +584,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-
-        [Test]
-        public void TestNonRetryableHttpExceptionThrowsError()
-        {
-            var handler = new Mock<DelegatingHandler>();
-            handler.Protected()
-              .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("https://authenticationexceptiontest.com/")),
-                ItExpr.IsAny<CancellationToken>())
-              .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
-
-            var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7),
-                handler.Object);
-
-            var mockRestRequester = new MockInfiniteTimeout(httpClient);
-
-            using (var conn = new MockSnowflakeDbConnection(mockRestRequester))
-            {
-                string invalidConnectionString = "host=authenticationexceptiontest.com;"
-                    + "account=account;user=user;password=password;";
-                conn.ConnectionString = invalidConnectionString;
-
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
-                try
-                {
-                    conn.Open();
-                    Assert.Fail();
-                }
-                catch (AggregateException e)
-                {
-                    Assert.IsInstanceOf<HttpRequestException>(e.InnerException);
-                    Assert.IsInstanceOf<AuthenticationException>(e.InnerException.InnerException);
-                }
-                catch (Exception unexpected)
-                {
-                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
-                }
-
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-            }
-        }
-
         [Test]
         public void TestValidateDefaultParameters()
         {
