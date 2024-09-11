@@ -21,9 +21,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
-    using System.Security.Authentication;
-    using Moq.Protected;
-    using Moq;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
