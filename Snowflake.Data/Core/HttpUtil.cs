@@ -412,7 +412,8 @@ namespace Snowflake.Data.Core
                         else
                         {
                             Exception innermostException = e;
-                            while (innermostException.InnerException != null) innermostException = innermostException.InnerException;
+                            while (innermostException.InnerException != null && innermostException != innermostException.InnerException)
+                                innermostException = innermostException.InnerException;
 
                             if (innermostException is AuthenticationException)
                             {
