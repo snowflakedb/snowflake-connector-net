@@ -178,9 +178,14 @@ namespace Snowflake.Data.Core
             public void add(byte[] bytes, int length)
             {
                 // check if a new block for data is needed
-                if (getBlock(currentDatOffset) == blockCount - 1 && spaceLeftOnBlock(currentDatOffset) <= length)
+                if (getBlock(currentDatOffset) == blockCount - 1)
                 {
-                    blockCount++;
+                    var neededSize = length - spaceLeftOnBlock(currentDatOffset);
+                    while (neededSize >= 0)
+                    {
+                        blockCount++;
+                        neededSize -= blockLength;
+                    }
                 }
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
@@ -257,12 +262,12 @@ namespace Snowflake.Data.Core
             {
                 while (data.Count < blockCount)
                 {
-                    data.Add(new byte[1 << blockLengthBits]);
+                    data.Add(new byte[blockLength]);
                 }
                 while (offsets.Count < metaBlockCount)
                 {
-                    offsets.Add(new int[1 << metaBlockLengthBits]);
-                    lengths.Add(new int[1 << metaBlockLengthBits]);
+                    offsets.Add(new int[metaBlockLength]);
+                    lengths.Add(new int[metaBlockLength]);
                 }
             }
         }
