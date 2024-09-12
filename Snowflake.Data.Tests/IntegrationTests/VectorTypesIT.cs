@@ -17,18 +17,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly ResultFormat _resultFormat;
 
-        [ThreadStatic] private static string t_tableName;
-
         public VectorTypesIT(ResultFormat resultFormat)
         {
             _resultFormat = resultFormat;
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
-            t_tableName = $"VECTOR_TABLE_{threadSuffix}";
         }
 
         [Test]
@@ -42,21 +33,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName} (a VECTOR(INT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {TableName} (a VECTOR(INT, 3));";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [1,2,3]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [1,2,3]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [4,5,6]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [4,5,6]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [7,8,9]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [7,8,9]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {t_tableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {t_tableName};";
+                    command.CommandText = $"SELECT * FROM {TableName};";
                     reader = command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[1,2,3]", reader.GetString(0));
@@ -65,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[7,8,9]", reader.GetString(0));
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {t_tableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
                 }
                 conn.Close();
@@ -83,21 +74,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName} (a VECTOR(FLOAT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {TableName} (a VECTOR(FLOAT, 3));";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {t_tableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {TableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {t_tableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {t_tableName};";
+                    command.CommandText = $"SELECT * FROM {TableName};";
                     reader = command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[1.100000,2.200000,3.300000]", reader.GetString(0));
@@ -106,7 +97,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[7.700000,8.800000,9.900000]", reader.GetString(0));
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {t_tableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
                 }
                 conn.Close();
