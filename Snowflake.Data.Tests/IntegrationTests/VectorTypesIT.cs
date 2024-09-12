@@ -43,18 +43,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.ExecuteNonQuery();
 
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
-                    var reader = command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
-                    reader = command.ExecuteReader();
+                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[1,2,3]", reader.GetString(0));
+                    var arr = reader.GetArray<int>(0);
+                    Assert.AreEqual(1, arr[0]);
+                    Assert.AreEqual(2, arr[1]);
+                    Assert.AreEqual(3, arr[2]);
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[4,5,6]", reader.GetString(0));
+                    arr = reader.GetArray<int>(0);
+                    Assert.AreEqual(4, arr[0]);
+                    Assert.AreEqual(5, arr[1]);
+                    Assert.AreEqual(6, arr[2]);
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[7,8,9]", reader.GetString(0));
+                    arr = reader.GetArray<int>(0);
+                    Assert.AreEqual(7, arr[0]);
+                    Assert.AreEqual(8, arr[1]);
+                    Assert.AreEqual(9, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
@@ -84,18 +99,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.ExecuteNonQuery();
 
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
-                    var reader = command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
-                    reader = command.ExecuteReader();
+                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[1.100000,2.200000,3.300000]", reader.GetString(0));
+                    var arr = reader.GetArray<float>(0);
+                    Assert.AreEqual(1.100000f, arr[0]);
+                    Assert.AreEqual(2.200000f, arr[1]);
+                    Assert.AreEqual(3.300000f, arr[2]);
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[4.400000,5.500000,6.600000]", reader.GetString(0));
+                    arr = reader.GetArray<float>(0);
+                    Assert.AreEqual(4.400000f, arr[0]);
+                    Assert.AreEqual(5.500000f, arr[1]);
+                    Assert.AreEqual(6.600000f, arr[2]);
+
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[7.700000,8.800000,9.900000]", reader.GetString(0));
+                    arr = reader.GetArray<float>(0);
+                    Assert.AreEqual(7.700000f, arr[0]);
+                    Assert.AreEqual(8.800000f, arr[1]);
+                    Assert.AreEqual(9.900000f, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
