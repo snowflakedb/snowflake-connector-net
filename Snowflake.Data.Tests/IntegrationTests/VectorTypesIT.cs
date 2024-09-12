@@ -239,9 +239,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("[1.100000,2.220000,3.333000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.1, arr[0], 0.1);
-                    Assert.AreEqual(2.22, arr[1], 0.1);
-                    Assert.AreEqual(3.333, arr[2], 0.1);
+                    Assert.AreEqual(1.1f, arr[0]);
+                    Assert.AreEqual(2.22f, arr[1]);
+                    Assert.AreEqual(3.333f, arr[2]);
                 }
             }
         }
@@ -292,9 +292,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("[1.000000,2.000000,3.000000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1, arr[0]);
-                    Assert.AreEqual(2, arr[1]);
-                    Assert.AreEqual(3, arr[2]);
+                    Assert.AreEqual(1f, arr[0]);
+                    Assert.AreEqual(2f, arr[1]);
+                    Assert.AreEqual(3f, arr[2]);
                 }
             }
         }
@@ -317,9 +317,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("[1.123457,2.123457,3.123457]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.123456789, arr[0], 0.1);
-                    Assert.AreEqual(2.123456789, arr[1], 0.1);
-                    Assert.AreEqual(3.123456789, arr[2], 0.1);
+                    Assert.AreEqual(1.123456789f, arr[0], 0.000001f);
+                    Assert.AreEqual(2.123456789f, arr[1], 0.000001f);
+                    Assert.AreEqual(3.123456789f, arr[2], 0.000001f);
                 }
             }
         }
