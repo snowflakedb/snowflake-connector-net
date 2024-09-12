@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestIntVectorTable()
+        public void TestSelectIntVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestFloatVectorTable()
+        public void TestSelectFloatVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
