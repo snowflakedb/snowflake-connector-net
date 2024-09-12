@@ -156,20 +156,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 var value = json.Value<string>();
                 var bytes = Encoding.UTF8.GetBytes(value);
-                try
-                {
-                    var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
-                    if (fieldType == typeof(float) || fieldType == typeof(float?))
-                    {
-                        return (float)decimalValue;
-                    }
-                    if (fieldType == typeof(double) || fieldType == typeof(double?))
-                    {
-                        return (double)decimalValue;
-                    }
-                    return decimalValue;
-                }
-                catch (FormatException)
+                if (value.Contains("E"))
                 {
                     var doubleValue = double.Parse(value);
                     if (fieldType == typeof(float) || fieldType == typeof(float?))
@@ -178,6 +165,16 @@ namespace Snowflake.Data.Core.Converter
                     }
                     return doubleValue;
                 }
+                var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
+                if (fieldType == typeof(float) || fieldType == typeof(float?))
+                {
+                    return (float)decimalValue;
+                }
+                if (fieldType == typeof(double) || fieldType == typeof(double?))
+                {
+                    return (double)decimalValue;
+                }
+                return decimalValue;
             }
             if (IsBooleanMetadata(fieldMetadata))
             {
