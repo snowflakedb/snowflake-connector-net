@@ -2,14 +2,14 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using System.Data.Common;
+using Snowflake.Data.Core;
+using System;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using System.Data.Common;
-    using Snowflake.Data.Core;
-    using System;
-
     [TestFixture]
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
