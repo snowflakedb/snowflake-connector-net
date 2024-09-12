@@ -74,7 +74,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
                 }
-                conn.Close();
             }
         }
 
@@ -130,7 +129,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
                 }
-                conn.Close();
             }
         }
 
@@ -156,7 +154,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(2, arr[1]);
                     Assert.AreEqual(3, arr[2]);
                 }
-                conn.Close();
             }
         }
 
@@ -181,7 +178,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(Int32.MinValue, arr[0]);
                     Assert.AreEqual(Int32.MaxValue, arr[1]);
                 }
-                conn.Close();
             }
         }
 
@@ -202,7 +198,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.That(thrown.Message, Does.Contain("Array-like value being cast to a vector has incorrect dimension"));
                 }
-                conn.Close();
             }
         }
 
@@ -223,7 +218,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.That(thrown.Message, Does.Contain("invalid identifier"));
                 }
-                conn.Close();
             }
         }
 
@@ -249,7 +243,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(2.22, arr[1], 0.1);
                     Assert.AreEqual(3.333, arr[2], 0.1);
                 }
-                conn.Close();
             }
         }
 
@@ -278,7 +271,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(float.MaxValue, arr[1]);
 #endif
                 }
-                conn.Close();
             }
         }
 
@@ -304,7 +296,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(2, arr[1]);
                     Assert.AreEqual(3, arr[2]);
                 }
-                conn.Close();
             }
         }
 
@@ -330,7 +321,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(2.123456789, arr[1], 0.1);
                     Assert.AreEqual(3.123456789, arr[2], 0.1);
                 }
-                conn.Close();
             }
         }
 
@@ -351,7 +341,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.That(thrown.Message, Does.Contain("invalid identifier"));
                 }
-                conn.Close();
             }
         }
 
