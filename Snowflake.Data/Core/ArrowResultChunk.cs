@@ -215,7 +215,7 @@ namespace Snowflake.Data.Core
                         _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
 
                 case SFDataType.VECTOR:
-                    var col = ((FixedSizeListArray)column);
+                    var col = (FixedSizeListArray)column;
                     var values = col.Values;
                     var vectorLength = values.Length / col.Length;
                     StringBuilder sb = new StringBuilder("[");
