@@ -156,9 +156,8 @@ namespace Snowflake.Data.Core.Converter
             {
                 var value = json.Value<string>();
                 var bytes = Encoding.UTF8.GetBytes(value);
-                if (value.Contains("E"))
+                if ((value.Contains("e") || value.Contains("E")) && double.TryParse(value, out double doubleValue))
                 {
-                    var doubleValue = double.Parse(value);
                     if (fieldType == typeof(float) || fieldType == typeof(float?))
                     {
                         return (float)doubleValue;
