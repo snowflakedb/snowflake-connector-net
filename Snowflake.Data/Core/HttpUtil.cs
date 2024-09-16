@@ -411,9 +411,7 @@ namespace Snowflake.Data.Core
                         }
                         else
                         {
-                            Exception innermostException = e;
-                            while (innermostException.InnerException != null && innermostException != innermostException.InnerException)
-                                innermostException = innermostException.InnerException;
+                            Exception innermostException = GetInnerMostException(e);
 
                             if (innermostException is AuthenticationException)
                             {
@@ -515,6 +513,13 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        static private Exception GetInnerMostException(Exception innermostException)
+        {
+            while (innermostException.InnerException != null && innermostException != innermostException.InnerException)
+                innermostException = innermostException.InnerException;
+            return innermostException;
         }
 
         /// <summary>
