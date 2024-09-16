@@ -457,10 +457,16 @@ namespace Snowflake.Data.Core
                     {
                         throw new NotImplementedException("Get and Put are not supported in async execution mode");
                     }
+
                     return ExecuteSqlWithPutGet(timeout, sql, trimmedSql, bindings, describeOnly);
                 }
 
                 return ExecuteSqlOtherThanPutGet(timeout, sql, bindings, describeOnly, asyncExec);
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Something fails {e.Message}",e);
+                return null;
             }
             finally
             {

@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
-    interface IChunkDownloader
+    using System;
+
+    interface IChunkDownloader: IDisposable
     {
         Task<BaseResultChunk> GetNextChunkAsync();
     }

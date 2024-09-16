@@ -6,7 +6,7 @@ using log4net;
 
 namespace Snowflake.Data.Log
 {
-    class SFLoggerFactory
+    public class SFLoggerFactory
     {
         private static bool isLoggerEnabled = true;
 
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Log
         }
 
         public static void Instance(SFLogger customLogger)
-        {            
+        {
             logger = customLogger;
         }
 

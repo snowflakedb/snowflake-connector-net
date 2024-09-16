@@ -20,7 +20,11 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class SFBlockingChunkDownloaderV3 : IChunkDownloader
+    using Client;
+    using Session;
+    using Tools;
+
+    class SFBlockingChunkDownloaderV3 : IChunkDownloader, IDisposable
     {
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
 
@@ -35,7 +39,7 @@ namespace Snowflake.Data.Core
         // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
-        private readonly int prefetchSlot;
+        private int prefetchSlot;
 
         private readonly IRestRequester _RestRequester;
 
@@ -48,6 +52,7 @@ namespace Snowflake.Data.Core
         private readonly List<ExecResponseChunk> chunkInfos;
 
         private readonly List<Task<BaseResultChunk>> taskQueues;
+        private readonly long chunkBlockSize;
 
         public SFBlockingChunkDownloaderV3(int colCount,
             List<ExecResponseChunk> chunkInfos, string qrmk,
@@ -64,16 +69,30 @@ namespace Snowflake.Data.Core
             this.sessionProperies = ResultSet.sfStatement.SfSession.properties;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
             this.chunkInfos = chunkInfos;
+            this.chunkBlockSize = this.calculateChunkBlockSize(this.chunkInfos);
             this.nextChunkToConsumeIndex = 0;
             this.taskQueues = new List<Task<BaseResultChunk>>();
             externalCancellationToken = cancellationToken;
+
+            if (chunkInfos.Any(c => c.uncompressedSize == 0))
+            {
+                logger.Debug("DEBUG: Found chunk with no data, skipping download");
+                int i = 0;
+                chunkInfos.ForEach(c =>
+                {
+                    logger.Debug($"DEBUG: Chunk # {i} info: {JsonConvert.SerializeObject(c)}");
+                    i++;
+                });
+            }
+
+            EnsureMemorySpaceForChunkDownloader();
 
             for (int i=0; i<prefetchSlot; i++)
             {
                 BaseResultChunk resultChunk =
                     resultFormat == ResultFormat.ARROW ? (BaseResultChunk)
                         new ArrowResultChunk(colCount) :
-                        new SFReusableChunk(colCount);
+                        new SFReusableChunk(colCount, chunkBlockSize);
 
                 resultChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
                 chunkDatas.Add(resultChunk);
@@ -88,6 +107,61 @@ namespace Snowflake.Data.Core
 
                 nextChunkToDownloadIndex++;
             }
+        }
+
+        private void EnsureMemorySpaceForChunkDownloader()
+        {
+            var hasMemory = true;
+            var chunkAvailableSlots = this.prefetchSlot;
+            logger.Info($"Requesting memory for chunk downloader: {chunkAvailableSlots}, available memory: {SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable()}");
+
+            while(chunkAvailableSlots >= 2)
+            {
+                var memoryAvailable = SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable();
+                var initialMemory = SFChunkMemoryManager.Instance.GetInitialMemoryAvailable();
+                if (memoryAvailable < initialMemory * .3 && chunkAvailableSlots > 2)
+                {
+                    chunkAvailableSlots = 2;
+                }else if (memoryAvailable < initialMemory * .5 && chunkAvailableSlots > 2)
+                {
+                    chunkAvailableSlots = (int)(Math.Max(2, chunkAvailableSlots / 2));
+                }
+
+                if(SFChunkMemoryManager.Instance.TryRetainMemory((int)chunkBlockSize * chunkAvailableSlots))
+                {
+                    logger.Info($"Retained chunks for chunk downloader: {chunkAvailableSlots}, available memory: {SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable()}");
+                    this.prefetchSlot = chunkAvailableSlots;
+                    return;
+                }
+                chunkAvailableSlots--;
+            }
+
+            chunkAvailableSlots = 2;
+            logger.Info($"Waiting for chunks to be available: {chunkAvailableSlots}, available memory: {SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable()}");
+
+            hasMemory &= SFChunkMemoryManager.Instance.WaitForMemoryAvailable(chunkBlockSize * chunkAvailableSlots);
+            if (!hasMemory)
+            {
+                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Not enough memory available for chunk downloader");
+            }
+            else
+            {
+                logger.Info($"Obtained chunks after wait for: {chunkAvailableSlots}, available memory: {SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable()}");
+
+            }
+
+            this.prefetchSlot = chunkAvailableSlots;
+
+        }
+
+
+
+        private long calculateChunkBlockSize(List<ExecResponseChunk> execResponseChunks)
+        {
+            // Assuming execResponseChunks is a collection of objects with a property uncompressedSize
+            long largestUncompressedChunk = execResponseChunks.Max(chunk => chunk.uncompressedSize);
+            var chunkBlockSize = Math.Min(largestUncompressedChunk, 1 << 24);
+            return 1 << 24;
         }
 
         private int GetPrefetchThreads(SFBaseResultSet resultSet)
@@ -145,6 +219,11 @@ namespace Snowflake.Data.Core
             {
                 retry = false;
 
+                if(chunk.UncompressedSize == 0) {
+                    logger.Info($"Chunk {chunk.ChunkIndex} has no data, skipping download");
+                    return chunk;
+                }
+
                 S3DownloadRequest downloadRequest =
                     new S3DownloadRequest()
                     {
@@ -190,6 +269,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
+                        logger.Error($"Exception when trying to parse chunk {e.Message}", e);
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
                             retry = true;
@@ -222,6 +302,21 @@ namespace Snowflake.Data.Core
             IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
             await parser.ParseChunk(resultChunk);
         }
+
+        public void Dispose()
+        {
+            foreach (var chunk in chunkDatas)
+            {
+                SFChunkMemoryManager.Instance.ReleaseMemory(this.chunkBlockSize);
+                chunk.Dispose();
+            }
+            logger.Info($"Returned memory and slots {this.prefetchSlot}, available memory {SFChunkMemoryManager.Instance.GetAmountOfMemoryAvailable()}");
+
+            SFChunkMemoryManager.Instance.FreeMemoryChunks(this.prefetchSlot);
+
+            logger.Info($"Free chuncks");
+
+        }
     }
 
     class DownloadContextV3
@@ -233,5 +328,117 @@ namespace Snowflake.Data.Core
         public Dictionary<string, string> chunkHeaders { get; set; }
 
         public CancellationToken cancellationToken { get; set; }
+    }
+
+    public class SFChunkMemoryManager
+    {
+
+        private Func<long> GetMemoryAvailable = () => -1;
+
+        private readonly object _memoryLock = new object();
+        private long occupiedMemory;
+
+        private IWaitingQueue _waitingForIdleSessionQueue = new WaitingQueue();
+
+        private long initialMemoryAvailable;
+
+
+        const long memoryBlockSize = (long)(1 >> 24);
+
+        long?  availableMemory { get; set; }
+
+        public static SFChunkMemoryManager Instance { get; } = new SFChunkMemoryManager();
+
+        public void SetMemoryHandlerResolver(Func<long> memoryHandler)
+        {
+            GetMemoryAvailable = memoryHandler;
+        }
+
+        internal bool WaitForMemoryAvailable(long size)
+        {
+            var waitingTimeout = TimeSpan.FromSeconds(360);
+            var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long nowTimeMillis = beforeWaitingTimeMillis;
+            while (!TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, waitingTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
+            {
+                var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, waitingTimeout);
+                var successful = this._waitingForIdleSessionQueue.Wait((int)timeoutLeftMillis, CancellationToken.None);
+                if (successful)
+                {
+                    lock (_memoryLock)
+                    {
+                        if (TryRetainMemory(size))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                nowTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            }
+
+            return false;
+        }
+
+        internal void FreeMemoryChunks(int chunksAvailable)
+        {
+            int i = 0;
+            while (i < Math.Max(chunksAvailable/2, 1))
+            {
+                this._waitingForIdleSessionQueue.OnResourceIncrease();
+                i++;
+            }
+        }
+
+        internal bool TryRetainMemory(long size)
+        {
+            lock (_memoryLock)
+            {
+                if (!availableMemory.HasValue)
+                {
+                    availableMemory = GetMemoryAvailable();
+                    this.initialMemoryAvailable = availableMemory.Value;
+                }
+
+                if (availableMemory < 0)
+                {
+                    return true;
+                }
+
+
+                var requiredMemory = Math.Max(memoryBlockSize, size);
+
+                if(((requiredMemory * 1.20) + this.occupiedMemory) > (availableMemory * 0.60))
+                {
+                    return false;
+                }
+
+                this.occupiedMemory += (long)(requiredMemory * 1.2);
+                return true;
+            }
+        }
+
+        internal long GetAmountOfMemoryAvailable()
+        {
+            if (!availableMemory.HasValue)
+            {
+                availableMemory = GetMemoryAvailable();
+                this.initialMemoryAvailable = availableMemory.Value;
+
+            }
+            return availableMemory.Value - occupiedMemory;
+        }
+
+        internal long GetInitialMemoryAvailable()
+        {
+            return this.initialMemoryAvailable;
+        }
+
+        internal void ReleaseMemory(long size)
+        {
+            lock (_memoryLock)
+            {
+                this.occupiedMemory -= (long)(size * 1.2);
+            }
+        }
     }
 }

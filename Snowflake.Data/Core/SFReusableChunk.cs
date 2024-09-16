@@ -8,10 +8,17 @@ using System.Text;
 
 namespace Snowflake.Data.Core
 {
+    using System.Buffers;
+    using Log;
+    using log4net;
+    using log4net.Repository.Hierarchy;
+
     class SFReusableChunk : BaseResultChunk
     {
+        private static SFLogger logger = SFLoggerFactory.GetLogger<SFReusableChunk>();
+
         internal override ResultFormat ResultFormat => ResultFormat.JSON;
-        
+
         private readonly BlockResultData data;
 
         private int _currentRowIndex = -1;
@@ -20,6 +27,13 @@ namespace Snowflake.Data.Core
         {
             ColumnCount = columnCount;
             data = new BlockResultData();
+        }
+
+        internal SFReusableChunk(int columnCount, double chunkBlockSize)
+        {
+            ColumnCount = columnCount;
+            data = new BlockResultData(chunkBlockSize);
+
         }
 
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
@@ -33,7 +47,7 @@ namespace Snowflake.Data.Core
         {
             data.ResetForRetry();
         }
-        
+
         [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
@@ -62,7 +76,7 @@ namespace Snowflake.Data.Core
             _currentRowIndex += 1;
             return _currentRowIndex < RowCount;
         }
-        
+
         internal override bool Rewind()
         {
             _currentRowIndex -= 1;
@@ -71,6 +85,8 @@ namespace Snowflake.Data.Core
 
         private class BlockResultData
         {
+            private static SFLogger logger = SFLoggerFactory.GetLogger<BlockResultData>();
+
             private static readonly int NULL_VALUE = -100;
             private int blockCount;
 
@@ -80,9 +96,9 @@ namespace Snowflake.Data.Core
             private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
-            private readonly List<byte[]> data = new List<byte[]>();
-            private readonly List<int[]> offsets = new List<int[]>();
-            private readonly List<int[]> lengths = new List<int[]>();
+            private List<byte[]> data = new List<byte[]>();
+            private List<int[]> offsets = new List<int[]>();
+            private List<int[]> lengths = new List<int[]>();
             private int nextIndex = 0;
             private int currentDatOffset = 0;
 
@@ -91,6 +107,12 @@ namespace Snowflake.Data.Core
 
             internal BlockResultData()
             { }
+
+            public BlockResultData(double chunkBlockSize)
+            {
+                blockLengthBits = Math.Min(24, (int)Math.Ceiling(Math.Log(chunkBlockSize/2, 2)));
+                blockLength = 1 << blockLengthBits;
+            }
 
             internal void Reset(int rowCount, int colCount, int uncompressedSize)
             {
@@ -101,6 +123,7 @@ namespace Snowflake.Data.Core
                 int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
                 this.blockCount = getBlock(bytesNeeded - 1) + 1;
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+                this.freeData();
             }
 
             internal void ResetForRetry()
@@ -153,6 +176,31 @@ namespace Snowflake.Data.Core
                         return new UTF8Buffer(data[getBlock(offset)], getBlockOffset(offset), length);
                     }
                 }
+            }
+
+
+            public void freeData()
+            {
+                var pool = ArrayPool<byte>.Shared;
+                var poolInt = ArrayPool<int>.Shared;
+                foreach (var d in data)
+                {
+                    pool.Return(d);
+                }
+                foreach (var l in lengths)
+                {
+                    poolInt.Return(l);
+                }
+                foreach (var o in offsets)
+                {
+                    poolInt.Return(o);
+                }
+                this.data.Clear();
+                this.lengths.Clear();
+                this.offsets.Clear();
+                this.data = new List<byte[]>();
+                this.lengths = new List<int[]>();
+                this.offsets = new List<int[]>();
             }
 
             public void add(byte[] bytes, int length)
@@ -230,16 +278,29 @@ namespace Snowflake.Data.Core
 
             private void allocateArrays()
             {
+                logger.Debug($"DEBUG: Allocating arrays for BlockResultData {blockCount}");
+                var sharedByte = ArrayPool<byte>.Shared;
+                var sharedInt = ArrayPool<int>.Shared;
                 while (data.Count < blockCount)
                 {
-                    data.Add(new byte[1 << blockLengthBits]);
+                    data.Add(sharedByte.Rent(1 << blockLengthBits));
                 }
                 while (offsets.Count < metaBlockCount)
                 {
-                    offsets.Add(new int[1 << metaBlockLengthBits]);
-                    lengths.Add(new int[1 << metaBlockLengthBits]);
+                    offsets.Add(sharedInt.Rent(1 << metaBlockLengthBits));
+                    lengths.Add(sharedInt.Rent(1 << metaBlockLengthBits));
                 }
             }
+
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.data.freeData();
+            }
+            base.Dispose(disposing);
         }
     }
 }

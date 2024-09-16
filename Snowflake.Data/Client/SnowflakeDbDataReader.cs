@@ -368,6 +368,7 @@ namespace Snowflake.Data.Client
         {
             base.Close();
             resultSet.close();
+            resultSet.Dispose();
             isClosed = true;
         }
     }

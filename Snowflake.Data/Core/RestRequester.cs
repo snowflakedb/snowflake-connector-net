@@ -56,10 +56,22 @@ namespace Snowflake.Data.Core
 
         public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
+            logger.Debug("DEBUG: Start Post Async Request");
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
-                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                if (response.IsSuccessStatusCode)
+                {
+                    logger.Debug("DEBUG: Processing response from Post Async Request");
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    logger.Debug("DEBUG: Deserializing from Post Async Request");
+                    return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                }
+                else
+                {
+                    logger.Debug($"DEBUG: Bad Response from Post Async Request {response.StatusCode}");
+                    throw new Exception("Failed to get response from PostAsync");
+                }
             }
         }
 
@@ -73,8 +85,16 @@ namespace Snowflake.Data.Core
         {
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
             {
-                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+                }
+                else
+                {
+                    logger.Debug($"DEBUG: Bad Response from Get Async Request {response.StatusCode}");
+                    throw new Exception("Failed to get response from GetAsync");
+                }
             }
         }
 

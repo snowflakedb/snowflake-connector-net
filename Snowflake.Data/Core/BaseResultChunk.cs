@@ -6,24 +6,24 @@ using System;
 
 namespace Snowflake.Data.Core
 {
-    public abstract class BaseResultChunk : IResultChunk
+    public abstract class BaseResultChunk : IResultChunk, IDisposable
     {
         internal abstract ResultFormat ResultFormat { get; }
-        
+
         public int RowCount { get; protected set; }
-        
+
         public int ColumnCount { get; protected set; }
-        
+
         public int ChunkIndex { get; protected set; }
 
         internal int CompressedSize;
-        
+
         internal int UncompressedSize;
 
         internal string Url { get; set; }
 
         internal string[,] RowSet { get; set; }
-        
+
         public int GetRowCount() => RowCount;
 
         public int GetChunkIndex() => ChunkIndex;
@@ -32,11 +32,11 @@ namespace Snowflake.Data.Core
         public abstract UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
 
         public abstract UTF8Buffer ExtractCell(int columnIndex);
-        
+
         internal abstract bool Next();
-        
+
         internal abstract bool Rewind();
-        
+
         internal virtual void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
             RowCount = chunkInfo.rowCount;
@@ -46,8 +46,24 @@ namespace Snowflake.Data.Core
             UncompressedSize = chunkInfo.uncompressedSize;
         }
 
+
         internal virtual void ResetForRetry()
         {
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // TODO release managed resources here
+                this.RowSet = null;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

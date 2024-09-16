@@ -270,7 +270,9 @@ namespace Snowflake.Data.Core
                 authenticator = AuthenticatorFactory.GetAuthenticator(this);
             }
 
+            logger.Debug("DEBUG: Start Calling authenticate async");
             await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+            logger.Debug("DEBUG: End Calling authenticate async");
         }
 
         internal void close()

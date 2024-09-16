@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
+    using System.Buffers;
+
     // Optimized for maximum speed when adding one byte at a time to short buffers
     public class FastMemoryStream
     {
@@ -17,7 +19,8 @@ namespace Snowflake.Data.Core
 
         public FastMemoryStream()
         {
-            _buffer = new byte[DEFAULT_BUFFER_SIZE];
+            var sharedByte = ArrayPool<byte>.Shared;
+            _buffer = sharedByte.Rent(DEFAULT_BUFFER_SIZE);
             _size = 0;
         }
 
@@ -48,7 +51,14 @@ namespace Snowflake.Data.Core
             // Create a new array with double the size and copy existing elements to the new array
             byte[] newBuffer = new byte[_buffer.Length * 2];
             Array.Copy(_buffer, newBuffer, _size);
+            ArrayPool<byte>.Shared.Return(_buffer);
             _buffer = newBuffer;
+        }
+
+        public void ReturnBuffer()
+        {
+            ArrayPool<byte>.Shared.Return(_buffer);
+            _buffer = null;
         }
     }
 }

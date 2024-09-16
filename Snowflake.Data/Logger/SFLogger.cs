@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Snowflake.Data.Log
 {
-    interface SFLogger
+    public interface SFLogger
     {
         bool IsDebugEnabled();
 

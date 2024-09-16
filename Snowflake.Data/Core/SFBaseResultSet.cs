@@ -11,10 +11,10 @@ using Snowflake.Data.Client;
 namespace Snowflake.Data.Core
 {
 
-    abstract class SFBaseResultSet
+    abstract class SFBaseResultSet: IDisposable
     {
         internal abstract ResultFormat ResultFormat { get; }
-        
+
         internal SFStatement sfStatement;
 
         internal SFResultSetMetaData sfResultSetMetaData;
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core
         internal int columnCount;
 
         internal bool isClosed;
-        
+
         internal string queryId;
 
         internal abstract bool Next();
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Core
         protected SFBaseResultSet()
         {
         }
-        
+
         internal abstract bool IsDBNull(int ordinal);
 
         internal abstract object GetValue(int ordinal);
@@ -78,12 +78,12 @@ namespace Snowflake.Data.Core
         internal abstract long GetInt64(int ordinal);
 
         internal abstract string GetString(int ordinal);
-        
+
         internal void close()
         {
             isClosed = true;
         }
-        
+
         internal void ThrowIfClosed()
         {
             if (isClosed)
@@ -96,5 +96,17 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, ordinal);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

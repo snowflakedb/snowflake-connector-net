@@ -387,8 +387,11 @@ namespace Snowflake.Data.Core
                             else
                                 childCts.CancelAfter(httpTimeout);
                         }
+                        logger.Debug($"DEBUG: Try send async #{retryCount}");
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
+
+                        logger.Debug($"DEBUG: End Try send async #{retryCount}");
                     }
                     catch (Exception e)
                     {
@@ -459,6 +462,7 @@ namespace Snowflake.Data.Core
                     }
 
                     // Disposing of the response if not null now that we don't need it anymore
+                    logger.Debug($"DEBUG Trying to dispose response #{retryCount}");
                     response?.Dispose();
 
                     requestMessage.RequestUri = updater.Update(errorReason);

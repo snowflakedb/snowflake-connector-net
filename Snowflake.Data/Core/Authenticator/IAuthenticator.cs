@@ -78,10 +78,14 @@ namespace Snowflake.Data.Core.Authenticator
         //// <see cref="IAuthenticator.AuthenticateAsync"/>
         protected async Task LoginAsync(CancellationToken cancellationToken)
         {
+
+            logger.Debug("DEBUG: BUILD Login Request");
             var loginRequest = BuildLoginRequest();
 
-            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
+            logger.Debug("DEBUG: Start Post Login Request");
+            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+            logger.Debug("DEBUG: End Post Login Request");
             session.ProcessLoginResponse(response);
         }
 
