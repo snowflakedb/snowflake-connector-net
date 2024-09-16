@@ -270,7 +270,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(float.MinValue, arr[0]);
                     Assert.AreEqual(float.MaxValue, arr[1]);
 #endif
-
                 }
             }
         }
@@ -318,9 +317,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("[1.123457,2.123457,3.123457]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.123456789f, arr[0], 0.000001f);
-                    Assert.AreEqual(2.123456789f, arr[1], 0.000001f);
-                    Assert.AreEqual(3.123456789f, arr[2], 0.000001f);
+                    Assert.AreEqual(1.123457f, arr[0]);
+                    Assert.AreEqual(2.123457f, arr[1]);
+                    Assert.AreEqual(3.123457f, arr[2]);
                 }
             }
         }
