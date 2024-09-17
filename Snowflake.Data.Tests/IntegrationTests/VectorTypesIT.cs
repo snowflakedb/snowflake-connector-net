@@ -109,23 +109,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[1.100000,2.200000,3.300000]", reader.GetString(0));
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.100000f, arr[0]);
-                    Assert.AreEqual(2.200000f, arr[1]);
-                    Assert.AreEqual(3.300000f, arr[2]);
+                    Assert.AreEqual(1.1f, arr[0]);
+                    Assert.AreEqual(2.2f, arr[1]);
+                    Assert.AreEqual(3.3f, arr[2]);
 
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[4.400000,5.500000,6.600000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(4.400000f, arr[0]);
-                    Assert.AreEqual(5.500000f, arr[1]);
-                    Assert.AreEqual(6.600000f, arr[2]);
+                    Assert.AreEqual(4.4f, arr[0]);
+                    Assert.AreEqual(5.5f, arr[1]);
+                    Assert.AreEqual(6.6f, arr[2]);
 
                     Assert.IsTrue(reader.Read());
                     Assert.AreEqual("[7.700000,8.800000,9.900000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(7.700000f, arr[0]);
-                    Assert.AreEqual(8.800000f, arr[1]);
-                    Assert.AreEqual(9.900000f, arr[2]);
+                    Assert.AreEqual(7.7f, arr[0]);
+                    Assert.AreEqual(8.8f, arr[1]);
+                    Assert.AreEqual(9.9f, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
