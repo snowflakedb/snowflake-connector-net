@@ -515,8 +515,9 @@ namespace Snowflake.Data.Core
             }
         }
 
-        static private Exception GetInnerMostException(Exception innermostException)
+        static private Exception GetInnerMostException(Exception exception)
         {
+            var innermostException = exception;
             while (innermostException.InnerException != null && innermostException != innermostException.InnerException)
                 innermostException = innermostException.InnerException;
             return innermostException;
