@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using System.Data.Common;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 using System;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -340,6 +341,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<SnowflakeDbException>(() => command.ExecuteReader());
 
                     Assert.That(thrown.Message, Does.Contain("invalid identifier"));
+                }
+            }
+        }
+
+        [Test]
+        public void TestThrowExceptionForInvalidVectorType()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+                AlterSessionSettings(conn);
+
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "SELECT ARRAY_CONSTRUCT(1.1)::ARRAY(DOUBLE)";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<double>(0));
+
+                    // assert
+                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a vector"));
+                    Assert.That(thrown.Message, Does.Contain("Method GetArray<System.Double> can be used only for vector types"));
                 }
             }
         }
