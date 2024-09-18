@@ -160,9 +160,12 @@ namespace Snowflake.Data.Core.Converter
                 {
                     if (fieldType == typeof(float) || fieldType == typeof(float?))
                     {
-                        return (float)doubleValue;
+                        return float.Parse(value);
                     }
-                    return doubleValue;
+                    if (fieldType == typeof(double) || fieldType == typeof(double?))
+                    {
+                        return double.Parse(value);
+                    }
                 }
                 var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
                 if (fieldType == typeof(float) || fieldType == typeof(float?))
