@@ -213,7 +213,7 @@ namespace Snowflake.Data.Core
                     }
                 }
             } while (retry);
-            logger.Info($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
             return chunk;
         }
 

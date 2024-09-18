@@ -3,8 +3,12 @@
  */
 
 using System;
+using System.Collections;
+using System.Linq;
 using Newtonsoft.Json;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -113,7 +117,9 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
-                        logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
+                        message.Headers.Add("threadid", Thread.CurrentThread.ManagedThreadId.ToString());
+
+                        logger.Debug($"### Request: {sid}\n{message.Method}\n{message.RequestUri}\nHTTP/{message.Version}\n{ObfuscateHttpHeaders(message.Headers)}\n{message.Content?.ReadAsStringAsync().Result}");
 
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
@@ -126,8 +132,19 @@ namespace Snowflake.Data.Core
                         {
                             logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
                         }
-                        response.EnsureSuccessStatusCode();
 
+                        if (response.RequestMessage.RequestUri.ToString().Contains("snowflakecomputing.com"))
+                        {
+                            logger.Debug(
+                                $"### Response: {sid} {response.RequestMessage.RequestUri}\nHTTP/{response.Version} {(int)response.StatusCode} {response.StatusCode}\n{ObfuscateHttpHeaders(response.Headers)}\n{response.Content?.ReadAsStringAsync().Result}");
+                        }
+                        else
+                        {
+                            logger.Debug(
+                                $"### Response: {sid} {response.RequestMessage.RequestUri}\nHTTP/{response.Version} {(int)response.StatusCode} {response.StatusCode}\n{ObfuscateHttpHeaders(response.Headers)}");
+                        }
+
+                        response.EnsureSuccessStatusCode();
                         return response;
                     }
                     catch (Exception e)
@@ -142,6 +159,26 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        private static string ObfuscateHttpHeaders(HttpHeaders httpRequestHeaders)
+        {
+            var s = httpRequestHeaders.ToString();
+            var lines = s.Split('\n');
+            var safe = new StringBuilder();
+            foreach(var l in lines)
+            {
+                if (l.StartsWith("x-ms-encryption-key"))
+                {
+                    var pair = l.Split(':');
+                    safe.AppendLine($"{pair[0]}: ***");
+                }
+                else
+                    safe.AppendLine(l);
+            }
+
+            var headers = safe.ToString();
+            return headers;
         }
     }
 }
