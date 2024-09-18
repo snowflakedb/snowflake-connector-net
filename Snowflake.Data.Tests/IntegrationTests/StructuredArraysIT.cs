@@ -262,7 +262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetStucturedArray<double>(0);
 
                     // assert
-                    Assert.AreEqual(1, array.Length);
+                    Assert.AreEqual(2, array.Length);
                     CollectionAssert.AreEqual(new[] { 1.0e100d, 1.0e-100d }, array);
                 }
             }
