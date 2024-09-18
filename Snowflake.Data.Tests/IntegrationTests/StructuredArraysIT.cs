@@ -244,6 +244,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectArrayOfDoublesWithExponentNotation()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arrayOfDoubles = $"ARRAY_CONSTRUCT({double.MinValue}, {double.MaxValue})::ARRAY(DOUBLE)";
+                    command.CommandText = $"SELECT {arrayOfDoubles}";
+                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetStucturedArray<double>(0);
+
+                    // assert
+                    Assert.AreEqual(2, array.Length);
+                    CollectionAssert.AreEqual(new[] { double.MinValue, double.MaxValue }, array);
+                }
+            }
+        }
+
+        [Test]
         public void TestSelectStringArrayWithNulls()
         {
             // arrange
