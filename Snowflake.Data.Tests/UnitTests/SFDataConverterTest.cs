@@ -325,5 +325,6 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
+
     }
 }
