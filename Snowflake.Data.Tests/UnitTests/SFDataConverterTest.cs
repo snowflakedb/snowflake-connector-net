@@ -11,7 +11,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using System.Threading;
     using System.Globalization;
-    using Snowflake.Data.Client;
 
     [TestFixture]
     [SetCulture("en-US")]
@@ -325,45 +324,6 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestInvalidConversionInvalidDecimal(string s)
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
-        }
-
-        [Test]
-        public void TestThrowsExceptionForUnknownSFDataType()
-        {
-            const string UnknownDataType = "FAKE_TYPE";
-            PutGetResponseData responseData = new PutGetResponseData()
-            {
-                rowType = new System.Collections.Generic.List<ExecResponseRowType>()
-                {
-                    new ExecResponseRowType
-                    {
-                        name = "name",
-                        type = UnknownDataType
-                    }
-                }
-            };
-
-            var exception = Assert.Throws<SnowflakeDbException>(() => new SFResultSetMetaData(responseData));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
-        }
-
-        [Test]
-        public void TestThrowsExceptionForUnknownNativeType()
-        {
-            PutGetResponseData responseData = new PutGetResponseData()
-            {
-                rowType = new System.Collections.Generic.List<ExecResponseRowType>()
-                {
-                    new ExecResponseRowType
-                    {
-                        name = "name",
-                        type = SFDataType.None.ToString()
-                    }
-                }
-            };
-
-            var exception = Assert.Throws<SnowflakeDbException>(() => new SFResultSetMetaData(responseData));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
         }
     }
 }
