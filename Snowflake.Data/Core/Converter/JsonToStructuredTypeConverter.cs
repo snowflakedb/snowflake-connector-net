@@ -162,7 +162,7 @@ namespace Snowflake.Data.Core.Converter
                     {
                         return float.Parse(value);
                     }
-                    if (fieldType == typeof(double) || fieldType == typeof(double?))
+                    else
                     {
                         return double.Parse(value);
                     }
