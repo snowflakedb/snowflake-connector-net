@@ -544,7 +544,10 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                if (TransferMetadata.encryptionMaterial?.Any() ?? false)
+                {
+                    EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                }
             }
         }
 
