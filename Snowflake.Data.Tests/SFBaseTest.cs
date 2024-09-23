@@ -444,4 +444,28 @@ namespace Snowflake.Data.Tests
 
         public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
+
+    public class IgnoreOnEnvIsSetAttribute : Attribute, ITestAction
+    {
+        private readonly string _key;
+
+        public IgnoreOnEnvIsSetAttribute(string key)
+        {
+            _key = key;
+        }
+
+        public void BeforeTest(ITest test)
+        {
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
+            {
+                Assert.Ignore("Test is ignored when environment variable {0} is set ", _key);
+            }
+        }
+
+        public void AfterTest(ITest test)
+        {
+        }
+
+        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
+    }
 }

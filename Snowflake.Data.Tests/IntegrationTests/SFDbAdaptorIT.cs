@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private SnowflakeDbCommand _command;
 
         [SetUp]
-        public void BeforeTest()
+        public new void BeforeTest()
         {
             _adapter = new SnowflakeDbDataAdapter();
             _command = new SnowflakeDbCommand();

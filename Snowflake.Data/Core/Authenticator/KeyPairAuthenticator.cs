@@ -100,36 +100,29 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    PemReader pr = null;
-                    if (null != pkPwd)
+                    using (PemReader pr = CreatePemReader(tr, pkPwd))
                     {
-                        IPasswordFinder ipwdf = new PasswordFinder(pkPwd);
-                        pr = new PemReader(tr, ipwdf);
-                    }
-                    else
-                    {
-                        pr = new PemReader(tr);
-                    }
+                        object key = pr.ReadObject();
+                        // Infer what the pem reader is sending back based on the object properties
+                        if (key.GetType().GetProperty("Private") != null)
+                        {
+                            // PKCS1 key
+                            keypair = (AsymmetricCipherKeyPair)key;
+                            rsaParams = DotNetUtilities.ToRSAParameters(
+                                keypair.Private as RsaPrivateCrtKeyParameters);
+                        }
+                        else
+                        {
+                            // PKCS8 key
+                            RsaPrivateCrtKeyParameters pk = (RsaPrivateCrtKeyParameters)key;
+                            rsaParams = DotNetUtilities.ToRSAParameters(pk);
+                            keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
+                        }
 
-                    object key = pr.ReadObject();
-                    // Infer what the pem reader is sending back based on the object properties
-                    if (key.GetType().GetProperty("Private") != null)
-                    {
-                        // PKCS1 key
-                        keypair = (AsymmetricCipherKeyPair)key;
-                        rsaParams = DotNetUtilities.ToRSAParameters(
-                        keypair.Private as RsaPrivateCrtKeyParameters);
-                    }
-                    else
-                    {
-                        // PKCS8 key
-                        RsaPrivateCrtKeyParameters pk = (RsaPrivateCrtKeyParameters)key;
-                        rsaParams = DotNetUtilities.ToRSAParameters(pk);
-                        keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
-                    }
-                    if (keypair == null)
-                    {
-                        throw new Exception("Unknown error.");
+                        if (keypair == null)
+                        {
+                            throw new Exception("Unknown error.");
+                        }
                     }
                 }
                 catch (Exception e)
@@ -205,6 +198,19 @@ namespace Snowflake.Data.Core.Authenticator
             string jwtToken = handler.WriteToken(token);
 
             return jwtToken;
+        }
+
+        private PemReader CreatePemReader(TextReader textReader, string privateKeyPassword)
+        {
+            if (null != privateKeyPassword)
+            {
+                IPasswordFinder ipwdf = new PasswordFinder(privateKeyPassword);
+                return new PemReader(textReader, ipwdf);
+            }
+            else
+            {
+                return new PemReader(textReader);
+            }
         }
 
         /// <summary>
