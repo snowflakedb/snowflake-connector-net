@@ -13,6 +13,7 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Snowflake.Data.Core.Authenticator;
 using static Snowflake.Data.Core.SFRestRequest;
 
@@ -136,31 +137,8 @@ namespace Snowflake.Data.Core
                 return customHandler;
             }
 
-            HttpMessageHandler httpHandler;
-            try
-            {
-                httpHandler = new HttpClientHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
-                };
-            }
-            // special logic for .NET framework 4.7.1 that
-            // CheckCertificateRevocationList and SslProtocols are not supported
-            catch (PlatformNotSupportedException)
-            {
-                httpHandler = new HttpClientHandler()
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
-                };
-            }
+            SocketsHttpHandler httpHandler = CreateHttpHandler(config);
+
 
             // Add a proxy if necessary
             if (null != config.ProxyHost)
@@ -203,12 +181,25 @@ namespace Snowflake.Data.Core
                     proxy.BypassList = bypassList;
                 }
 
-                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
+                SocketsHttpHandler httpHandlerWithProxy = (SocketsHttpHandler) httpHandler;
                 httpHandlerWithProxy.UseProxy = true;
                 httpHandlerWithProxy.Proxy = proxy;
                 return httpHandlerWithProxy;
             }
             return httpHandler;
+        }
+
+        private static SocketsHttpHandler CreateHttpHandler(HttpClientConfig config)
+        {
+            SocketsHttpHandler socketsHttpHandler = new SocketsHttpHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false, // Disable cookies
+                UseProxy = false
+            };
+            socketsHttpHandler.SslOptions.EnabledSslProtocols = SslProtocols.Tls12;
+            socketsHttpHandler.SslOptions.CertificateRevocationCheckMode = config.CrlCheckEnabled ? X509RevocationMode.Online : X509RevocationMode.NoCheck;
+            return socketsHttpHandler;
         }
 
         /// <summary>
