@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void BeforeAllTests()
         {
             s_previousPoolConfigRestorer = new PoolConfig();
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
         }
 
         [SetUp]

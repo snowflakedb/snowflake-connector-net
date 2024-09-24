@@ -192,6 +192,7 @@ namespace Snowflake.Data.Core
                     {
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
+                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
@@ -208,7 +209,8 @@ namespace Snowflake.Data.Core
                         else
                         {
                             //parse error
-                            throw new Exception("parse stream to Chunk error. " + e);
+                            logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
+                            throw new Exception("Parse stream to chunk error: " + e.Message);
                         }
                     }
                 }

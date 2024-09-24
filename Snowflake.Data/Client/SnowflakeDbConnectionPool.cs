@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -25,7 +26,7 @@ namespace Snowflake.Data.Client
             {
                 if (s_connectionManager != null)
                     return s_connectionManager;
-                SetConnectionPoolVersion(DefaultConnectionPoolType);
+                SetConnectionPoolVersion(DefaultConnectionPoolType, false);
                 return s_connectionManager;
             }
         }
@@ -122,13 +123,16 @@ namespace Snowflake.Data.Client
 
         public static void SetOldConnectionPoolVersion()
         {
-            SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
         }
 
-        internal static void SetConnectionPoolVersion(ConnectionPoolType requestedPoolType)
+        private static void SetConnectionPoolVersion(ConnectionPoolType requestedPoolType, bool force)
         {
             lock (s_connectionManagerInstanceLock)
             {
+                if (s_connectionManager != null && !force)
+                    return;
+                Diagnostics.LogDiagnostics();
                 s_connectionManager?.ClearAllPools();
                 if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
                 {
@@ -141,6 +145,11 @@ namespace Snowflake.Data.Client
                     s_logger.Warn("SnowflakeDbConnectionPool - connection cache enabled");
                 }
             }
+        }
+
+        internal static void ForceConnectionPoolVersion(ConnectionPoolType requestedPoolType)
+        {
+            SetConnectionPoolVersion(requestedPoolType, true);
         }
 
         internal static ConnectionPoolType GetConnectionPoolVersion()
