@@ -13,6 +13,7 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Linq;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using Snowflake.Data.Core.Authenticator;
 using static Snowflake.Data.Core.SFRestRequest;
@@ -31,7 +32,8 @@ namespace Snowflake.Data.Core
             bool disableRetry,
             bool forceRetryOn404,
             int maxHttpRetries,
-            bool includeRetryReason = true)
+            bool includeRetryReason = true,
+            string tlsCipherSuite = "")
         {
             CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
@@ -43,6 +45,7 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
+            TlsCipherSuite = tlsCipherSuite;
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -55,7 +58,9 @@ namespace Snowflake.Data.Core
                     disableRetry.ToString(),
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
-                    includeRetryReason.ToString()});
+                    includeRetryReason.ToString(),
+                    tlsCipherSuite
+                });
         }
 
         public readonly bool CrlCheckEnabled;
@@ -68,6 +73,7 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
+        public readonly string TlsCipherSuite;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -199,6 +205,17 @@ namespace Snowflake.Data.Core
             };
             socketsHttpHandler.SslOptions.EnabledSslProtocols = SslProtocols.Tls12;
             socketsHttpHandler.SslOptions.CertificateRevocationCheckMode = config.CrlCheckEnabled ? X509RevocationMode.Online : X509RevocationMode.NoCheck;
+            if (!string.IsNullOrEmpty(config.TlsCipherSuite))
+            {
+                var cipherSuite = Enum.Parse<TlsCipherSuite>(config.TlsCipherSuite, true);
+                socketsHttpHandler.SslOptions.CipherSuitesPolicy = new CipherSuitesPolicy(new [] { cipherSuite });
+                logger.Info($"!!!Using cipher suite: {config.TlsCipherSuite}");
+                logger.Info($"!!!Using cipher suite: {socketsHttpHandler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites}");
+            }
+            else
+            {
+                logger.Info("!!!Using cipher suite not defined");
+            }
             return socketsHttpHandler;
         }
 

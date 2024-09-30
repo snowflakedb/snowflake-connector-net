@@ -40,6 +40,7 @@ namespace Snowflake.Data.Core
         private TimeSpan _waitingForSessionIdleTimeout;
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
+        private string tlsCipherSuite;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -187,7 +188,8 @@ namespace Snowflake.Data.Core
                 disableRetry,
                 forceRetryOn404,
                 maxHttpRetries,
-                includeRetryReason);
+                includeRetryReason,
+                tlsCipherSuite);
         }
 
         public ConnectionPoolConfig BuildConnectionPoolConfig() =>
@@ -245,7 +247,8 @@ namespace Snowflake.Data.Core
                     _waitingForSessionIdleTimeout = extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
-                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK)
+                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
+                    tlsCipherSuite = propertiesDictionary[SFSessionProperty.TLSCIPHERSUITE]
                 };
             }
 
