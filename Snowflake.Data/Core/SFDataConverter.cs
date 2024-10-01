@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
                     var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
-                    return UnixEpoch.AddTicks(tickDiff);
+                    return DateTime.SpecifyKind(UnixEpoch.AddTicks(tickDiff), DateTimeKind.Unspecified);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
