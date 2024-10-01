@@ -113,7 +113,7 @@ namespace Snowflake.Data.Core
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLE_SAML_URL_CHECK,
-        [SFSessionPropertyAttr(required = false)]
+        [SFSessionPropertyAttr(required = false, defaultValue = "")]
         TLSCIPHERSUITE
     }
 
