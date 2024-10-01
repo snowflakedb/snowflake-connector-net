@@ -298,7 +298,7 @@ namespace Snowflake.Data.Client
             {
                 if (e is SnowflakeDbException)
                     throw;
-                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting a vector");
+                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an array");
             }
         }
 

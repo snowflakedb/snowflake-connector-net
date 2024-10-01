@@ -365,7 +365,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a vector"));
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array"));
                     Assert.That(thrown.Message, Does.Contain("Method GetArray<System.Double> can be used only for vector types"));
                 }
             }
