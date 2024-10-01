@@ -207,10 +207,12 @@ namespace Snowflake.Data.Core
             socketsHttpHandler.SslOptions.CertificateRevocationCheckMode = config.CrlCheckEnabled ? X509RevocationMode.Online : X509RevocationMode.NoCheck;
             if (!string.IsNullOrEmpty(config.TlsCipherSuite))
             {
-                var cipherSuite = Enum.Parse<TlsCipherSuite>(config.TlsCipherSuite, true);
-                socketsHttpHandler.SslOptions.CipherSuitesPolicy = new CipherSuitesPolicy(new [] { cipherSuite });
-                logger.Info($"!!!Using cipher suite: {config.TlsCipherSuite}");
-                logger.Info($"!!!Using cipher suite: {socketsHttpHandler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites}");
+                var cipherSuites = config.TlsCipherSuite.Split(":", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(cipherString => Enum.Parse<TlsCipherSuite>(cipherString, true))
+                    .ToArray();
+                socketsHttpHandler.SslOptions.CipherSuitesPolicy = new CipherSuitesPolicy(cipherSuites);
+                logger.Info($"!!!Using cipher suites: {config.TlsCipherSuite}");
+                logger.Info($"!!!Using cipher suites: {socketsHttpHandler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites}");
             }
             else
             {
