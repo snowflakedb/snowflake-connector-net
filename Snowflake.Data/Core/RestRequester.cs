@@ -114,9 +114,10 @@ namespace Snowflake.Data.Core
                     try
                     {
                         logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
-
+                        var isLogin = message.RequestUri.AbsolutePath == RestPath.SF_LOGIN_PATH;
+                        var completionOption = isLogin ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
                         response = await _HttpClient
-                            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
+                            .SendAsync(message, completionOption, linkedCts.Token)
                             .ConfigureAwait(false);
                         if (!response.IsSuccessStatusCode)
                         {
@@ -133,6 +134,7 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         // Disposing of the response if not null now that we don't need it anymore
+                        response?.Content?.Dispose();
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)
                         {
