@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
@@ -457,6 +458,45 @@ namespace Snowflake.Data.Tests.UnitTests
                     Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
                 }
             }
+        }
+
+        [Test]
+        public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
+        {
+            const string UnknownDataType = "FAKE_TYPE";
+            QueryExecResponseData responseData = new QueryExecResponseData()
+            {
+                rowType = new List<ExecResponseRowType>()
+                {
+                    new ExecResponseRowType
+                    {
+                        name = "name",
+                        type = UnknownDataType
+                    }
+                }
+            };
+
+            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
+            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
+        }
+
+        [Test]
+        public void TestThrowsExceptionForResultSetWithUnknownNativeType()
+        {
+            QueryExecResponseData responseData = new QueryExecResponseData()
+            {
+                rowType = new List<ExecResponseRowType>()
+                {
+                    new ExecResponseRowType
+                    {
+                        name = "name",
+                        type = SFDataType.None.ToString()
+                    }
+                }
+            };
+
+            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
+            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
         }
 
         private void PrepareTestCase(SFDataType sfType, long scale, object values)

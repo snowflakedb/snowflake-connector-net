@@ -361,7 +361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 dbConnection.Open();
                 foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
                 {
-                    if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP))
+                    if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP) && !type.Equals(SFDataType.VECTOR))
                     {
                         bool isTypeSupported = true;
                         string[] columns;
