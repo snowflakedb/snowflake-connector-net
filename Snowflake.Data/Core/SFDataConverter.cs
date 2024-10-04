@@ -152,7 +152,7 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.DATE:
                     long srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
-                    return UnixEpoch.AddDays(srcValLong);
+                    return DateTime.SpecifyKind(UnixEpoch.AddDays(srcValLong), DateTimeKind.Unspecified);;
 
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:

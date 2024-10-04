@@ -63,14 +63,14 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.DATE)
             {
-                var dateTime = DateTime.SpecifyKind(DateTime.Parse(value), DateTimeKind.Utc);
-                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
-                {
-                    return (DateTimeOffset) dateTime;
-                }
+                var dateTime = DateTime.Parse(value);
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return dateTime;
+                }
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
+                {
+                    return (DateTimeOffset) DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
                 }
                 throw new StructuredTypesReadingException($"Cannot not read DATE into {fieldType} type");
             }

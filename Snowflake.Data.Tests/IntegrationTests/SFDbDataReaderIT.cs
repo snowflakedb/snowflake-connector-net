@@ -179,7 +179,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("1900-09-03 00:00:00.0000000")]
         public void TestGetDate(string inputTimeStr)
         {
-            TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE, DateTimeKind.Utc);
+            TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE, DateTimeKind.Unspecified);
         }
 
         [Test]

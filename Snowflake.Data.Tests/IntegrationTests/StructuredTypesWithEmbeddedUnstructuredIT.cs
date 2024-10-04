@@ -337,8 +337,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 "2024-07-11",
                 SFDataType.DATE.ToString(),
-                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Utc),
-                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Utc)
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified),
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified)
             };
             yield return new object[]
             {
@@ -421,7 +421,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 "2024-07-11",
                 SFDataType.DATE.ToString(),
-                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Utc),
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified),
                 DateTimeOffset.Parse("2024-07-11Z")
             };
             yield return new object[]
