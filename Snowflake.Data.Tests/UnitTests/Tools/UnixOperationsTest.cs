@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        public void TestReadAllTextCheckingPermissions()
+        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -96,17 +96,22 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations());
+            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.AreEqual(content, result);
         }
 
         [Test]
-        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadAllText([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
-            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FilePermissions groupOrOthersWritablePermissions,
-            [ValueSource(nameof(GroupOrOthersReadablePermissions))] FilePermissions groupOrOthersReadablePermissions)
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
+            [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
+            [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
         {
+            if(groupPermissions == 0 && othersPermissions == 0)
+            {
+                Assert.Ignore("Skip test when group and others have no permissions");
+            }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Assert.Ignore("skip test on Windows");
@@ -114,11 +119,11 @@ namespace Snowflake.Data.Tests.Tools
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
-            var filePermissions = userPermissions | groupOrOthersWritablePermissions | groupOrOthersReadablePermissions;
+            var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations()), "Attempting to read a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
         public static IEnumerable<FilePermissions> UserPermissions()
@@ -127,6 +132,24 @@ namespace Snowflake.Data.Tests.Tools
             yield return FilePermissions.S_IWUSR;
             yield return FilePermissions.S_IXUSR;
             yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR;
+        }
+
+        public static IEnumerable<FilePermissions> GroupPermissions()
+        {
+            yield return 0;
+            yield return FilePermissions.S_IRGRP;
+            yield return FilePermissions.S_IWGRP;
+            yield return FilePermissions.S_IXGRP;
+            yield return FilePermissions.S_IRGRP | FilePermissions.S_IWGRP | FilePermissions.S_IXGRP;
+        }
+
+        public static IEnumerable<FilePermissions> OthersPermissions()
+        {
+            yield return 0;
+            yield return FilePermissions.S_IROTH;
+            yield return FilePermissions.S_IWOTH;
+            yield return FilePermissions.S_IXOTH;
+            yield return FilePermissions.S_IROTH | FilePermissions.S_IWOTH | FilePermissions.S_IXOTH;
         }
 
         public static IEnumerable<FilePermissions> GroupOrOthersWritablePermissions()

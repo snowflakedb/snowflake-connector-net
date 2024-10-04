@@ -52,14 +52,14 @@ namespace Snowflake.Data.Tests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
             // act
-            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations());
+            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.AreEqual(content, result);
         }
 
         [Test]
-        public void TestReadAllTextCheckingPermissions()
+        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations());
+            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.AreEqual(content, result);
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.GetFileValidations()),
+            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions),
                 "Attempting to read a file with too broad permissions assigned");
         }
     }

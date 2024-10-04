@@ -22,18 +22,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "tomlconfig", Path.GetRandomFileName());
+        private static string s_workingDirectory;
 
 
         [SetUp]
         public new void BeforeTest()
         {
+            s_workingDirectory ??= Path.Combine(TestContext.CurrentContext.WorkDirectory, "../../..", "toml_config_folder");
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
             }
-            var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
+            CreateTomlConfigBaseOnConnectionString(ConnectionString);
         }
 
         [TearDown]
@@ -42,37 +42,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Directory.Delete(s_workingDirectory, true);
         }
 
-        public static void CreateTomlConfigBaseOnConnectionString(string connectionString)
-        {
-            var tomlModel = new TomlTable();
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
-
-            var defaultTomlTable = new TomlTable();
-            tomlModel.Add("default", defaultTomlTable);
-
-            foreach (var property in properties)
-            {
-                defaultTomlTable.Add(property.Key.ToString(), property.Value);
-            }
-
-            var filePath = Path.Combine(s_workingDirectory, "connections.toml");
-            using (var writer = File.CreateText(filePath))
-            {
-                writer.Write(Toml.FromModel(tomlModel));
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return;
-
-            Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-
-        }
-
         [Test]
         public void TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            CreateTomlConfigBaseOnConnectionString(ConnectionString);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
             try
             {
@@ -93,7 +66,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             var connectionName = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName);
-            CreateTomlConfigBaseOnConnectionString(ConnectionString);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName, "notfoundconnection");
             try
@@ -114,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, Path.Combine(s_workingDirectory, "InvalidFolder"));
             try
             {
                 using (var conn = new SnowflakeDbConnection())
@@ -125,6 +97,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
             finally
             {
                 Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, snowflakeHome);
+            }
+        }
+
+        private static void CreateTomlConfigBaseOnConnectionString(string connectionString)
+        {
+            var tomlModel = new TomlTable();
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            var defaultTomlTable = new TomlTable();
+            tomlModel.Add("default", defaultTomlTable);
+
+            foreach (var property in properties)
+            {
+                defaultTomlTable.Add(property.Key.ToString(), property.Value);
+            }
+
+            var filePath = Path.Combine(s_workingDirectory, "connections.toml");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                using (var writer = File.CreateText(filePath))
+                {
+                    writer.Write(Toml.FromModel(tomlModel));
+                }
+            }
+            else
+            {
+                using (var writer = File.CreateText(filePath))
+                {
+                    writer.Write(string.Empty);
+                }
+                Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
+                using (var writer = File.CreateText(filePath))
+                {
+                    writer.Write(Toml.FromModel(tomlModel));
+                }
+                Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
             }
         }
     }
