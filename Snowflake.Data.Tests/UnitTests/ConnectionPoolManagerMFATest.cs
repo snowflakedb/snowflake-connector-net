@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             s_poolConfig = new PoolConfig();
             s_restRequester = new MockLoginMFATokenCacheRestRequester();
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SessionPool.SessionFactory = new MockSessionFactoryMFA(s_restRequester);
         }
 
