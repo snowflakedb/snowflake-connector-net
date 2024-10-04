@@ -100,7 +100,7 @@ namespace Snowflake.Data.Core
         {
             var tokenFile = !string.IsNullOrEmpty(tokenFilePathValue) && _fileOperations.Exists(tokenFilePathValue) ? tokenFilePathValue : DefaultTokenPath;
             s_logger.Debug($"Read token from file path: {tokenFile}");
-            return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile, GetFileValidations()) : null;
+            return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile, ValidateFilePermissions) : null;
         }
 
         private TomlTable GetTomlTableFromConfig(string tomlPath, string connectionName)
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Core
                 return null;
             }
 
-            var tomlContent = _fileOperations.ReadAllText(tomlPath, GetFileValidations()) ?? string.Empty;
+            var tomlContent = _fileOperations.ReadAllText(tomlPath, ValidateFilePermissions) ?? string.Empty;
             var toml = Toml.ToModel(tomlContent);
             if (string.IsNullOrEmpty(connectionName))
             {
@@ -134,22 +134,18 @@ namespace Snowflake.Data.Core
             var defaultDirectory = Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), DefaultSnowflakeFolder);
             var tomlFolder = _environmentOperations.GetEnvironmentVariable(SnowflakeHome) ?? defaultDirectory;
             var tomlPath = Path.Combine(tomlFolder, "connections.toml");
-            tomlPath = Path.GetFullPath(tomlPath);
             return tomlPath;
         }
 
-        internal static Action<UnixStream> GetFileValidations()
+        internal static void ValidateFilePermissions(UnixStream stream)
         {
-            return stream =>
-            {
-                const FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute;
-                if (stream.OwnerUser.UserId != Syscall.geteuid())
-                    throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
-                if (stream.OwnerGroup.GroupId != Syscall.getegid())
-                    throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
-                if ((stream.FileAccessPermissions & forbiddenPermissions) != 0)
-                    throw new SecurityException("Attempting to read a file with too broad permissions assigned");
-            };
+            const FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute;
+            if (stream.OwnerUser.UserId != Syscall.geteuid())
+                throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
+            if (stream.OwnerGroup.GroupId != Syscall.getegid())
+                throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+            if ((stream.FileAccessPermissions & forbiddenPermissions) != 0)
+                throw new SecurityException("Attempting to read a file with too broad permissions assigned");
         }
     }
 }
