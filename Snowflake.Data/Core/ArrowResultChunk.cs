@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Apache.Arrow;
 
 namespace Snowflake.Data.Core
@@ -214,13 +215,47 @@ namespace Snowflake.Data.Core
                         _int[columnIndex][_currentRecordIndex],
                         _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
 
+                case SFDataType.VECTOR:
+                    var col = (FixedSizeListArray)column;
+                    var values = col.Values;
+                    var vectorLength = values.Length / col.Length;
+                    StringBuilder sb = new StringBuilder("[");
+                    switch (values)
+                    {
+                        case Int32Array array:
+                            for (int i = 0; i < vectorLength; i++)
+                            {
+                                sb.Append(array.GetValue(i + (_currentRecordIndex * vectorLength)));
+                                sb.Append(',');
+                            }
+                            break;
+                        case FloatArray array:
+                            for (int i = 0; i < vectorLength; i++)
+                            {
+                                float.TryParse(array.GetValue(i + (_currentRecordIndex * vectorLength)).ToString(), out float val);
+                                if (val.ToString().Contains("E"))
+                                {
+                                    sb.Append(val);
+                                }
+                                else
+                                {
+                                    sb.Append(val.ToString("N6"));
+                                }
+                                sb.Append(',');
+                            }
+                            break;
+                    }
+                    sb.Length--;
+                    sb.Append("]");
+                    return sb.ToString();
+
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
 
                 case SFDataType.DATE:
                     if (_int[columnIndex] == null)
                         _int[columnIndex] = ((Date32Array)column).Values.ToArray();
-                    return DateTime.SpecifyKind(SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay), DateTimeKind.Unspecified);
+                    return SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay);
 
                 case SFDataType.TIME:
                 {

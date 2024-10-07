@@ -156,14 +156,25 @@ namespace Snowflake.Data.Core.Converter
             {
                 var value = json.Value<string>();
                 var bytes = Encoding.UTF8.GetBytes(value);
+                if ((value.Contains("e") || value.Contains("E")))
+                {
+                    if (fieldType == typeof(float) || fieldType == typeof(float?))
+                    {
+                        return float.Parse(value);
+                    }
+                    else
+                    {
+                        return double.Parse(value);
+                    }
+                }
                 var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
                 if (fieldType == typeof(float) || fieldType == typeof(float?))
                 {
-                    return (float) decimalValue;
+                    return (float)decimalValue;
                 }
                 if (fieldType == typeof(double) || fieldType == typeof(double?))
                 {
-                    return (double) decimalValue;
+                    return (double)decimalValue;
                 }
                 return decimalValue;
             }
@@ -412,6 +423,9 @@ namespace Snowflake.Data.Core.Converter
 
         internal static bool IsArrayType(string type) =>
             SFDataType.ARRAY.ToString().Equals(type, StringComparison.OrdinalIgnoreCase);
+
+        internal static bool IsVectorType(string type) =>
+            SFDataType.VECTOR.ToString().Equals(type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsVariantMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.VARIANT.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
