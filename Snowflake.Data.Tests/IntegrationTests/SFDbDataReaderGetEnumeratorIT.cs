@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateAndPopulateTestTable(conn, out var cmd);
+                CreateAndPopulateTestTable(conn);
 
                 string selectCommandText = $"select * from {TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
@@ -42,11 +42,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 var enumerator = reader.GetEnumerator();
                 Assert.IsTrue(enumerator.MoveNext());
-                Assert.AreEqual(1, (enumerator.Current as DbDataRecord).GetInt64(0));
-                Assert.IsTrue(enumerator.MoveNext());
-                Assert.AreEqual(2, (enumerator.Current as DbDataRecord).GetInt64(0));
-                Assert.IsTrue(enumerator.MoveNext());
                 Assert.AreEqual(3, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.IsTrue(enumerator.MoveNext());
+                Assert.AreEqual(5, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.IsTrue(enumerator.MoveNext());
+                Assert.AreEqual(8, (enumerator.Current as DbDataRecord).GetInt64(0));
                 Assert.IsFalse(enumerator.MoveNext());
 
                 reader.Close();
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateAndPopulateTestTable(conn, out var cmd);
+                CreateAndPopulateTestTable(conn);
 
                 string selectCommandText = $"select * from {TableName} WHERE cola > 10";
                 IDbCommand selectCmd = conn.CreateCommand();
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateAndPopulateTestTable(conn, out var cmd);
+                CreateAndPopulateTestTable(conn);
 
                 string selectCommandText = $"select * from {TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateAndPopulateTestTable(conn, out var cmd);
+                CreateAndPopulateTestTable(conn);
 
                 string selectCommandText = $"select * from {TableName} WHERE cola > 10";
                 IDbCommand selectCmd = conn.CreateCommand();
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateAndPopulateTestTable(conn, out var cmd);
+                CreateAndPopulateTestTable(conn);
 
                 string selectCommandText = $"select * from {TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
@@ -152,13 +152,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             CloseConnection(conn);
         }
 
-        private void CreateAndPopulateTestTable(DbConnection conn, out IDbCommand cmd)
+        private void CreateAndPopulateTestTable(DbConnection conn)
         {
             CreateOrReplaceTable(conn, TableName, new []{"cola NUMBER"});
 
-            cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {TableName} values (1),(2),(3)";
+            string insertCommand = $"insert into {TableName} values (3),(5),(8)";
             cmd.CommandText = insertCommand;
             cmd.ExecuteNonQuery();
         }
