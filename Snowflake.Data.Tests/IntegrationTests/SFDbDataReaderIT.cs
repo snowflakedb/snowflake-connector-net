@@ -179,7 +179,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("1900-09-03 00:00:00.0000000")]
         public void TestGetDate(string inputTimeStr)
         {
-            TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE, DateTimeKind.Unspecified);
+            TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
         [Test]
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("1900-09-03 12:12:12.1212121", 1)]
         public void TestGetTime(string inputTimeStr, int? precision)
         {
-            TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME, DateTimeKind.Unspecified);
+            TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
         }
 
         [Test]
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private void TestGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType, DateTimeKind expectedKind)
+        private void TestGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
         {
             // Can't use DateTime object as test case, must parse.
             DateTime inputTime;
@@ -457,7 +457,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                 }
 
-                Assert.AreEqual(expectedKind, actualTime.Kind);
+                // DATE, TIME and TIMESTAMP_NTZ should be returned with DateTimeKind.Unspecified
+                Assert.AreEqual(DateTimeKind.Unspecified, actualTime.Kind);
 
                 reader.Close();
 
@@ -482,7 +483,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("1900-09-03 12:12:12.0000000", 1)]
         public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
         {
-            TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ, DateTimeKind.Unspecified);
+            TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
         }
 
 
