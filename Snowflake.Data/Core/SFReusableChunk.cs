@@ -84,7 +84,7 @@ namespace Snowflake.Data.Core
             private static int blockLengthBits = 23;
             private static int blockLength = 1 << blockLengthBits;
             int metaBlockCount;
-            private static int metaBlockLengthBits = 17;
+            private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
             private readonly List<byte[]> data = new List<byte[]>();
