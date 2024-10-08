@@ -254,7 +254,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.DATE:
                     if (_int[columnIndex] == null)
                         _int[columnIndex] = ((Date32Array)column).Values.ToArray();
-                    return SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay);
+                    return DateTime.SpecifyKind(SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay), DateTimeKind.Unspecified);
 
                 case SFDataType.TIME:
                 {
