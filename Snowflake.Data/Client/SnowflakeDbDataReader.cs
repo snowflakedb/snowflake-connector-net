@@ -189,10 +189,7 @@ namespace Snowflake.Data.Client
             return resultSet.GetDouble(ordinal);
         }
 
-        public override IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
         public override Type GetFieldType(int ordinal)
         {
