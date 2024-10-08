@@ -41,7 +41,6 @@ namespace Snowflake.Data.Core
         private byte[][] _byte;
         private double[][] _double;
 
-
         private int _currentBatchIndex;
         private int _currentRecordIndex = -1;
 
