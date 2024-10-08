@@ -152,12 +152,12 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.DATE:
                     long srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
-                    return UnixEpoch.AddDays(srcValLong);
+                    return DateTime.SpecifyKind(UnixEpoch.AddDays(srcValLong), DateTimeKind.Unspecified);;
 
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
                     var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
-                    return UnixEpoch.AddTicks(tickDiff);
+                    return DateTime.SpecifyKind(UnixEpoch.AddTicks(tickDiff), DateTimeKind.Unspecified);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
