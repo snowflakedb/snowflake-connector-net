@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public static void BeforeAllTests()
         {
             s_poolConfig = new PoolConfig();
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SessionPool.SessionFactory = new MockSessionFactory();
         }
 

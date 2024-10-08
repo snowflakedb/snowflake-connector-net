@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -104,46 +104,31 @@ namespace Snowflake.Data.Core
             {
                 Task<BaseResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
 
-                if (nextChunkToConsumeIndex > 0)
+                if (nextChunkToDownloadIndex < chunkInfos.Count && nextChunkToConsumeIndex > 0)
                 {
-                    if (nextChunkToDownloadIndex < chunkInfos.Count)
+                    BaseResultChunk reusableChunk = chunkDatas[nextChunkToDownloadIndex % prefetchSlot];
+                    reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
+
+                    taskQueues[nextChunkToDownloadIndex % prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
                     {
-                        BaseResultChunk reusableChunk = chunkDatas[nextChunkToDownloadIndex % prefetchSlot];
-                        reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
-
-                        taskQueues[nextChunkToDownloadIndex % prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
-                        {
-                            chunk = reusableChunk,
-                            qrmk = this.qrmk,
-                            chunkHeaders = this.chunkHeaders,
-                            cancellationToken = externalCancellationToken
-                        });
-
-                        // in case of one slot we need to return the chunk already downloaded
-                        if (prefetchSlot == 1)
-                        {
-                            chunk = taskQueues[0];
-                        }
-                    }
-                    else
-                    {
-                        chunkDatas[nextChunkToDownloadIndex % prefetchSlot].Reset();
-                        chunkDatas[nextChunkToDownloadIndex % prefetchSlot] = null;
-                    }
-
+                        chunk = reusableChunk,
+                        qrmk = this.qrmk,
+                        chunkHeaders = this.chunkHeaders,
+                        cancellationToken = externalCancellationToken
+                    });
                     nextChunkToDownloadIndex++;
-                }
 
+                    // in case of one slot we need to return the chunk already downloaded
+                    if (prefetchSlot == 1)
+                    {
+                        chunk = taskQueues[0];
+                    }
+                }
                 nextChunkToConsumeIndex++;
                 return await chunk;
             }
             else
             {
-                if (chunkInfos.Count > 0)
-                {
-                    chunkDatas[nextChunkToDownloadIndex % prefetchSlot].Reset();
-                    chunkDatas[nextChunkToDownloadIndex % prefetchSlot] = null;
-                }
                 return await Task.FromResult<BaseResultChunk>(null);
             }
         }

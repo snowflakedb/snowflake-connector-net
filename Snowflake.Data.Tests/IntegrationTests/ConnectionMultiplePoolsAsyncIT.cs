@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 

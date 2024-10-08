@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(_connectionPoolTypeUnderTest);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(_connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ClearAllPools();
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
             {
