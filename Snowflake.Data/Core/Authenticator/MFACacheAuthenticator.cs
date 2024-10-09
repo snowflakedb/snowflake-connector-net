@@ -1,19 +1,16 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    using Tools;
-
     class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "username_password_mfa";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<MFACacheAuthenticator>();
 
         internal MFACacheAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {

@@ -29,7 +29,7 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        public SFSession GetSession(string connectionString, SecureString password, SecureString passcode = null)
+        public SFSession GetSession(string connectionString, SecureString password, SecureString passcode)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSession");
             return GetPool(connectionString, password).GetSession(passcode);

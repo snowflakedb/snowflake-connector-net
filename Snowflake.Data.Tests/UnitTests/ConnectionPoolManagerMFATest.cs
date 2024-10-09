@@ -9,7 +9,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Linq;
     using System.Security;
-    using System.Threading;
     using Mock;
     using NUnit.Framework;
     using Snowflake.Data.Core;
@@ -66,21 +65,20 @@ namespace Snowflake.Data.Tests.UnitTests
                 authResponseSessionInfo = new SessionInfo()
             });
             // Act
-            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, null);
-            Thread.Sleep(3000);
+            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, null, null);
 
             // Assert
-
+            Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
             Assert.AreEqual(2, s_restRequester.LoginRequests.Count);
             var loginRequest1 = s_restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(loginRequest1.data.Token, string.Empty);
-            Assert.AreEqual(SecureStringHelper.Decode(session._mfaToken), testToken);
+            Assert.AreEqual(string.Empty, loginRequest1.data.Token);
+            Assert.AreEqual(testToken, SecureStringHelper.Decode(session._mfaToken));
             Assert.IsTrue(loginRequest1.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
             Assert.AreEqual("passcode", loginRequest1.data.extAuthnDuoMethod);
             var loginRequest2 = s_restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(loginRequest2.data.Token, testToken);
+            Assert.AreEqual(testToken, loginRequest2.data.Token);
             Assert.IsTrue(loginRequest2.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value1) && (bool)value1);
-            Assert.AreEqual("passcode", loginRequest1.data.extAuthnDuoMethod);
+            Assert.AreEqual("passcode", loginRequest2.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -103,9 +101,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
-            Thread.Sleep(10000);
 
             // Assert
+            Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 3, TimeSpan.FromSeconds(15));
             Assert.AreEqual(3, s_restRequester.LoginRequests.Count);
             var request = s_restRequester.LoginRequests.ToList();
             Assert.AreEqual(1, request.Count(r => r.data.extAuthnDuoMethod == "passcode" && r.data.passcode == TestPasscode));
@@ -118,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null));
+            var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null,null));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
@@ -128,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=false";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null));
+            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null, null));
         }
 
         [Test]
@@ -137,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=0;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null));
+            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null, null));
         }
     }
 
