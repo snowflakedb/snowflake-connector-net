@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -259,8 +260,9 @@ namespace Snowflake.Data.Core
                     DateTime time = epoch.AddTicks(nsSinceMidnight/100);
                     return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
-                    long nsFromEpochLtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
-                    DateTime ltz = epoch.AddTicks(nsFromEpochLtz/100);
+                    BigInteger nsFromEpochLtz = BigInteger.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
+                    BigInteger ticksFromEpochLtz = nsFromEpochLtz/100;
+                    DateTime ltz = epoch.AddTicks((long)ticksFromEpochLtz);
                     return ltz.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
                     long nsFromEpochNtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
@@ -268,9 +270,10 @@ namespace Snowflake.Data.Core
                     return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
-                    long nsFromEpochTz = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
-                    int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
-                    DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
+                    BigInteger nsFromEpochTz = BigInteger.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
+                    int timeZoneOffset = int.Parse(tstzString[1])-1440; // SFDateConverter provides in minutes increased by 1440m
+                    BigInteger ticksFromEpoch = nsFromEpochTz/100;
+                    DateTime timestamp = epoch.AddTicks((long)ticksFromEpoch).AddMinutes(timeZoneOffset);
                     TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
                     DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
