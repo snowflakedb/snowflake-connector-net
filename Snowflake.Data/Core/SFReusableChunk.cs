@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
-        private readonly BlockResultData data;
+        internal readonly BlockResultData data;
 
         private int _currentRowIndex = -1;
 
@@ -29,11 +29,11 @@ namespace Snowflake.Data.Core
             data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
-        internal override void Reset()
+        internal override void Clear()
         {
-            base.Reset();
+            base.Clear();
             _currentRowIndex = -1;
-            data.Reset();
+            data.Clear();
         }
 
         internal override void ResetForRetry()
@@ -76,14 +76,15 @@ namespace Snowflake.Data.Core
             return _currentRowIndex >= 0;
         }
 
-        private class BlockResultData
+        internal class BlockResultData
         {
             private static readonly int NULL_VALUE = -100;
-            private int blockCount;
 
+            internal int blockCount;
             private static int blockLengthBits = 23;
             private static int blockLength = 1 << blockLengthBits;
-            int metaBlockCount;
+
+            internal int metaBlockCount;
             private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
@@ -109,7 +110,7 @@ namespace Snowflake.Data.Core
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
             }
 
-            internal void Reset()
+            internal void Clear()
             {
                 savedRowCount = 0;
                 savedColCount = 0;

@@ -46,7 +46,7 @@ namespace Snowflake.Data.Core
             UncompressedSize = chunkInfo.uncompressedSize;
         }
 
-        internal virtual void Reset()
+        internal virtual void Clear()
         {
             RowCount = 0;
             Url = null;
