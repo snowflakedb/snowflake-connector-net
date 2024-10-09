@@ -30,9 +30,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 return "";
             }
 
-            var critCred = new CriticalCredentialHandle(nCredPtr);
-            Credential cred = critCred.GetCredential();
-            return cred.CredentialBlob;
+            using (var critCred = new CriticalCredentialHandle(nCredPtr))
+            {
+                var cred = critCred.GetCredential();
+                return cred.CredentialBlob;
+            }
         }
 
         public void RemoveCredentials(string key)

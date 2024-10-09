@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetSessionWorksForSpecifiedConnectionString()
         {
             // Act
-            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null);
+            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null, null);
 
             // Assert
             Assert.AreEqual(ConnectionString1, sfSession.ConnectionString);
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCountingOfSessionProvidedByPool()
         {
             // Act
-            _connectionPoolManager.GetSession(ConnectionString1, null);
+            _connectionPoolManager.GetSession(ConnectionString1, null, null);
 
             // Assert
             var sessionPool = _connectionPoolManager.GetPool(ConnectionString1, null);
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCountingOfSessionReturnedBackToPool()
         {
             // Arrange
-            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null);
+            var sfSession = _connectionPoolManager.GetSession(ConnectionString1, null, null);
 
             // Act
             _connectionPoolManager.AddSession(sfSession);

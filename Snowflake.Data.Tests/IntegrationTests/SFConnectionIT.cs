@@ -2276,36 +2276,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        //[Ignore("This test requires manual interaction and therefore cannot be run in CI")]
-        public void TestMFATokenCaching()
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                //conn.Passcode = SecureStringHelper.Encode("123456");
                 conn.ConnectionString
                     = ConnectionString
-                      + ";authenticator=username_password_mfa;minPoolSize=2;application=DuoTest;authenticator=username_password_mfa;";
+                      + ";authenticator=username_password_mfa;application=DuoTest;Passcode=123456;";
 
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
-
-                // Authenticate using the MFA token cache
-                connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
-
-                connectTask = conn.CloseAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
 
         [Test]
-        //[Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
-        public void TestMfaWithPasswordConnection()
+        [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
+        public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -2315,15 +2305,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
 
                 // act
-                conn.Open();
-                Thread.Sleep(3000);
-                conn.Close();
-
-                conn.Open();
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
 
                 // assert
                 Assert.AreEqual(ConnectionState.Open, conn.State);
-                // manual action: verify that you have received no push request for given connection
             }
         }
 

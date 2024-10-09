@@ -2,6 +2,8 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using Snowflake.Data.Core;
+
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
     using Mono.Unix;
@@ -9,7 +11,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     using Moq;
     using NUnit.Framework;
     using Snowflake.Data.Client;
-    using Snowflake.Data.Core.CredentialManager;
     using Snowflake.Data.Core.CredentialManager.Infrastructure;
     using Snowflake.Data.Core.Tools;
     using System;
@@ -48,31 +49,24 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var firstExpectedToken = "mockToken1";
             var secondExpectedToken = "mockToken2";
 
-            try
-            {
-                // act
-                _credentialManager.SaveCredentials(key, firstExpectedToken);
+            // act
+            _credentialManager.SaveCredentials(key, firstExpectedToken);
 
-                // assert
-                Assert.AreEqual(firstExpectedToken, _credentialManager.GetCredentials(key));
+            // assert
+            Assert.AreEqual(firstExpectedToken, _credentialManager.GetCredentials(key));
 
-                // act
-                _credentialManager.SaveCredentials(key, secondExpectedToken);
+            // act
+            _credentialManager.SaveCredentials(key, secondExpectedToken);
 
-                // assert
-                Assert.AreEqual(secondExpectedToken, _credentialManager.GetCredentials(key));
+            // assert
+            Assert.AreEqual(secondExpectedToken, _credentialManager.GetCredentials(key));
 
-                // act
-                _credentialManager.RemoveCredentials(key);
+            // act
+            _credentialManager.RemoveCredentials(key);
 
-                // assert
-                Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
-            }
-            catch (Exception ex)
-            {
-                // assert
-                Assert.Fail("Should not throw an exception: " + ex.Message);
-            }
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+
         }
 
         [Test]
@@ -81,19 +75,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // arrange
             var key = "mockKey";
 
-            try
-            {
-                // act
-                _credentialManager.RemoveCredentials(key);
+            // act
+            _credentialManager.RemoveCredentials(key);
 
-                // assert
-                Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
-            }
-            catch (Exception ex)
-            {
-                // assert
-                Assert.Fail("Should not throw an exception: " + ex.Message);
-            }
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
     }
 
@@ -124,11 +110,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SetUp]
         public void SetUp()
         {
-            _credentialManager = SFCredentialManagerFileImpl.Instance;
+            _credentialManager = SnowflakeCredentialManagerFileImpl.Instance;
         }
     }
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFCredentialManagerTest
     {
         ISnowflakeCredentialManager _credentialManager;
@@ -147,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
         private const string CustomJsonDir = "testdirectory";
 
-        private static readonly string s_customJsonPath = Path.Combine(CustomJsonDir, SFCredentialManagerFileImpl.CredentialCacheFileName);
+        private static readonly string s_customJsonPath = Path.Combine(CustomJsonDir, SnowflakeCredentialManagerFileImpl.CredentialCacheFileName);
 
         [SetUp] public void SetUp()
         {
@@ -155,22 +141,22 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_directoryOperations = new Mock<DirectoryOperations>();
             t_unixOperations = new Mock<UnixOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            SFCredentialManagerFactory.SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance);
         }
 
         [TearDown] public void TearDown()
         {
-            SFCredentialManagerFactory.UseDefaultCredentialManager();
+            SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }
 
         [Test]
         public void TestUsingDefaultCredentialManager()
         {
             // arrange
-            SFCredentialManagerFactory.UseDefaultCredentialManager();
+            SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
 
             // act
-            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -187,13 +173,13 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         public void TestSettingCustomCredentialManager()
         {
             // arrange
-            SFCredentialManagerFactory.SetCredentialManager(SFCredentialManagerFileImpl.Instance);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
 
             // act
-            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerFileImpl>(_credentialManager);
+            Assert.IsInstanceOf<SnowflakeCredentialManagerFileImpl>(_credentialManager);
         }
 
         [Test]
@@ -213,10 +199,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
                 .Returns(-1);
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Setup(e => e.GetEnvironmentVariable(SnowflakeCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
                 .Returns(CustomJsonDir);
-            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
-            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act
             var thrown = Assert.Throws<Exception>(() => _credentialManager.SaveCredentials("key", "token"));
@@ -242,10 +228,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Setup(u => u.GetFilePermissions(s_customJsonPath))
                 .Returns(FileAccessPermissions.AllPermissions);
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Setup(e => e.GetEnvironmentVariable(SnowflakeCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
                 .Returns(CustomJsonDir);
-            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
-            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act
             var thrown = Assert.Throws<Exception>(() => _credentialManager.SaveCredentials("key", "token"));
@@ -271,15 +257,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Setup(u => u.GetFilePermissions(s_customJsonPath))
                 .Returns(FileAccessPermissions.UserReadWriteExecute);
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
+                .Setup(e => e.GetEnvironmentVariable(SnowflakeCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
                 .Returns(CustomJsonDir);
             t_fileOperations
                 .SetupSequence(f => f.Exists(s_customJsonPath))
                 .Returns(false)
                 .Returns(true);
 
-            SFCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
-            _credentialManager = SFCredentialManagerFactory.GetCredentialManager();
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SnowflakeCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object));
+            _credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // act
             _credentialManager.SaveCredentials("key", "token");
