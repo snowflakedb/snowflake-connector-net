@@ -14,5 +14,7 @@ namespace Snowflake.Data.Core.Tools
         {
             return File.Exists(path);
         }
+
+        public virtual void Write(string path, string content) => File.WriteAllText(path, content);
     }
 }
