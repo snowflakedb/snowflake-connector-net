@@ -88,6 +88,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270060)]
         INCONSISTENT_RESULT_ERROR,
 
+        [SFErrorAttr(errorCode = 390127)]
+        EXT_AUTHN_INVALID,
+
         [SFErrorAttr(errorCode = 270061)]
         STRUCTURED_TYPE_READ_ERROR,
 

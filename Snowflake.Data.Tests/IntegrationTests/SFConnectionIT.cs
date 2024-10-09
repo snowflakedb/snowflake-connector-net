@@ -5,6 +5,7 @@
 using System.Data.Common;
 using System.Net;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -21,6 +22,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
+    using Snowflake.Data.Core.CredentialManager;
+    using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -2270,6 +2273,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestMFATokenCachingWithPasscodeFromConnectionString()
+        {
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionString
+                      + ";authenticator=username_password_mfa;application=DuoTest;Passcode=123456;";
+
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
+        public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
+        {
+            // arrange
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.Passcode = SecureStringHelper.Encode("123456");
+                // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
+                conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
+
+                // act
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+
+                // assert
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
         }
 
         [Test]
