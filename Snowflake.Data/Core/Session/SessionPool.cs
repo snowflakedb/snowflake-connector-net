@@ -257,6 +257,7 @@ namespace Snowflake.Data.Core.Session
                     var sessionsCount = Math.Min(maxSessions, AllowedNumberOfNewSessionCreations(1));
                     if (sessionsCount > 0)
                     {
+                        s_logger.Debug($"SessionPool::GetIdleSession - register creation of {sessionsCount} sessions" + PoolIdentification());
                         // there is no need to wait for a session since we can create new ones
                         return new SessionOrCreationTokens(RegisterSessionCreations(sessionsCount));
                     }
@@ -497,7 +498,7 @@ namespace Snowflake.Data.Core.Session
                 ReleaseBusySession(session);
                 if (ensureMinPoolSize)
                 {
-                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsToEnsureMinPoolSize()); // passcode is probably not fresh - it could be improved
+                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsToEnsureMinPoolSize());
                 }
                 return false;
             }

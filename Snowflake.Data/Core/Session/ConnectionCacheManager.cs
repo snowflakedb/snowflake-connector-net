@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Session
     internal sealed class ConnectionCacheManager : IConnectionManager
     {
         private readonly SessionPool _sessionPool = SessionPool.CreateSessionCache();
-        public SFSession GetSession(string connectionString, SecureString password, SecureString passcode = null) => _sessionPool.GetSession(connectionString, password, passcode);
+        public SFSession GetSession(string connectionString, SecureString password, SecureString passcode) => _sessionPool.GetSession(connectionString, password, passcode);
         public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken)
             => _sessionPool.GetSessionAsync(connectionString, password, passcode, cancellationToken);
         public bool AddSession(SFSession session) => _sessionPool.AddSession(session, false);

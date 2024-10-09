@@ -1,6 +1,6 @@
-// <copyright file="StringUtils.cs" company="Snowflake Inc">
-//         Copyright (c) 2019-2024 Snowflake Inc. All rights reserved.
-//  </copyright>
+/*
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
+ */
 
 namespace Snowflake.Data.Core.Tools
 {
