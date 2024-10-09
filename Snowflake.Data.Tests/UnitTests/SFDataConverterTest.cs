@@ -339,8 +339,12 @@ namespace Snowflake.Data.Tests.UnitTests
             object unsupportedObject;
             if (unsupportedType == typeof(DateTimeOffset))
                 unsupportedObject = new DateTimeOffset();
-            else
+            else if (unsupportedType == typeof(DateTime))
                 unsupportedObject = new DateTime();
+            else
+                unsupportedObject = null;
+
+            Assert.NotNull(unsupportedType);
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.csharpValToSfVal(dataType, unsupportedObject));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
