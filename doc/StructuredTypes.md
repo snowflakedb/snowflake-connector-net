@@ -18,11 +18,7 @@ Currently, reading structured types is available only for JSON result format, so
 ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON;
 ```
 
-You can enable the feature by setting parameters:
-```sql
-ALTER SESSION SET ENABLE_STRUCTURED_TYPES_IN_CLIENT_RESPONSE = true;
-ALTER SESSION SET IGNORE_CLIENT_VERSION_IN_STRUCTURED_TYPES_RESPONSE = true;
-```
+The structured types feature is enabled starting from v4.2.0 driver version.
 
 ## Structured types vs semi-structured types
 

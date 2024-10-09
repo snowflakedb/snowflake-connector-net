@@ -108,6 +108,10 @@ How execute a query, use query bindings, run queries synchronously and asynchron
 
 Using structured types: [Structured types](doc/StructuredTypes.md)
 
+## Vector type
+
+Using vector type: [Vector type](doc/VectorType.md)
+
 ## Stage Files
 
 Using stage files within PUT/GET commands:
