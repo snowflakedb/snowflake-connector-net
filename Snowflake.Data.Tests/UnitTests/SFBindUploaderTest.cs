@@ -49,6 +49,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(SFDataType.TIMESTAMP_LTZ, "1341136800000000000", "2012-07-01T12:00:00.0000000+02:00")]
         [TestCase(SFDataType.TIMESTAMP_LTZ, "352245599987654000", "1981-02-28T23:59:59.9876540+02:00")]
         [TestCase(SFDataType.TIMESTAMP_LTZ, "1678868249207000000", "2023/03/15T13:17:29.207+05:00")]
+        [TestCase(SFDataType.TIMESTAMP_LTZ, "253402214400000000000", "9999-12-31T00:00:00.0000000+00:00")]
+        [TestCase(SFDataType.TIMESTAMP_LTZ, "-62135596800000000000", "0001-01-01T00:00:00.0000000+00:00")]
         public void TestCsvDataConversionForTimestampLtz(SFDataType dbType, string input, string expected)
         {
             // Arrange
@@ -63,6 +65,8 @@ namespace Snowflake.Data.Tests.UnitTests
         
         [TestCase(SFDataType.TIMESTAMP_TZ, "1341136800000000000 1560", "2012-07-01 12:00:00.000000 +02:00")]
         [TestCase(SFDataType.TIMESTAMP_TZ, "352245599987654000 1560", "1981-02-28 23:59:59.987654 +02:00")]
+        [TestCase(SFDataType.TIMESTAMP_TZ, "253402214400000000000 1440", "9999-12-31 00:00:00.000000 +00:00")]
+        [TestCase(SFDataType.TIMESTAMP_TZ, "-62135596800000000000 1440", "0001-01-01 00:00:00.000000 +00:00")]
         public void TestCsvDataConversionForTimestampTz(SFDataType dbType, string input, string expected)
         {
             // Arrange
