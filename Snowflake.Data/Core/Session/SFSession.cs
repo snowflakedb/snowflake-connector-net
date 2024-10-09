@@ -101,8 +101,6 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
-        private readonly ISnowflakeCredentialManager _credManager = SFCredentialManagerFactory.GetCredentialManager();
-
         internal SecureString _mfaToken;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
@@ -126,8 +124,8 @@ namespace Snowflake.Data.Core
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
-                    _credManager.SaveCredentials(key, authnResponse.data.mfaToken);
+                    var key = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(key, authnResponse.data.mfaToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -145,8 +143,8 @@ namespace Snowflake.Data.Core
                 {
                     logger.Info("MFA Token has expired or not valid.", e);
                     _mfaToken = null;
-                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
-                    _credManager.RemoveCredentials(mfaKey);
+                    var mfaKey = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(mfaKey);
                 }
 
                 throw e;
@@ -217,8 +215,8 @@ namespace Snowflake.Data.Core
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
                 {
-                    var mfaKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, _authenticatorType);
-                    _mfaToken = SecureStringHelper.Encode(_credManager.GetCredentials(mfaKey));
+                    var mfaKey = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, _authenticatorType);
+                    _mfaToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(mfaKey));
                 }
             }
             catch (SnowflakeDbException e)

@@ -11,11 +11,11 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using KeyToken = System.Collections.Generic.Dictionary<string, string>;
+using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
-namespace Snowflake.Data.Core.CredentialManager.Infrastructure
+namespace Snowflake.Data.Core
 {
-    internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
+    public class SnowflakeCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal const string CredentialCacheFileName = "temporary_credential.json";
 
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFileImpl>();
 
         private readonly string _jsonCacheDirectory;
 
@@ -37,9 +37,9 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private readonly EnvironmentOperations _environmentOperations;
 
-        public static readonly SFCredentialManagerFileImpl Instance = new SFCredentialManagerFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly SnowflakeCredentialManagerFileImpl Instance = new SnowflakeCredentialManagerFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
 
-        internal SFCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
+        internal SnowflakeCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
             _directoryOperations = directoryOperations;
@@ -101,10 +101,10 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             }
         }
 
-        internal KeyToken ReadJsonFile()
+        internal KeyTokenDict ReadJsonFile()
         {
             var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _unixOperations.ReadAllText(_jsonCacheFilePath);
-            return JsonConvert.DeserializeObject<KeyToken>(contentFile);
+            return JsonConvert.DeserializeObject<KeyTokenDict>(contentFile);
         }
 
         public string GetCredentials(string key)
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         {
             s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
             var hashKey = key.ToSha256Hash();
-            KeyToken keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyToken();
+            KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
             keyTokenPairs[hashKey] = token;
 
             string jsonString = JsonConvert.SerializeObject(keyTokenPairs);

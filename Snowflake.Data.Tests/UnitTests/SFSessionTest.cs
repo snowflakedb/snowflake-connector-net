@@ -7,7 +7,6 @@ using Snowflake.Data.Core;
 using NUnit.Framework;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
-using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {

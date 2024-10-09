@@ -44,16 +44,6 @@ namespace Snowflake.Data.Core.Tools
             return (permissions & fileInfo.FileAccessPermissions) != 0;
         }
 
-
-        /// <summary>
-        /// Reads all text from a file at the specified path, ensuring the file is owned by the effective user and group of the current process,
-        /// and does not have broader permissions than specified.
-        /// </summary>
-        /// <param name="path">The path to the file.</param>
-        /// <param name="forbiddenPermissions">Permissions that are not allowed for the file. Defaults to OtherReadWriteExecute.</param>
-        /// <returns>The content of the file as a string.</returns>
-        /// <exception cref="SecurityException">Thrown if the file is not owned by the effective user or group, or if it has forbidden permissions.</exception>
-
         public string ReadAllText(string path, FileAccessPermissions forbiddenPermissions = FileAccessPermissions.OtherReadWriteExecute)
         {
             var fileInfo = new UnixFileInfo(path: path);
