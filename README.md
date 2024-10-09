@@ -118,6 +118,10 @@ Using stage files within PUT/GET commands:
 Logging description and configuration:
 [Logging and Easy Logging](doc/Logging.md)
 
+## Certificate validation
+Method of validating the connection's certificates in the .NET driver differs from the rest of the Snowflake drivers.
+Read more in [certificate validation](doc/CertficateValidation.md) docs.
+
 ---------------
 
 ## Notice

@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(true);
         }

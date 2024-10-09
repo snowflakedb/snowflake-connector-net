@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.Util
 
         public void Reset()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(_connectionPoolType);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(_connectionPoolType);
             if (_connectionPoolType == ConnectionPoolType.MultipleConnectionPool)
                 return; // for multiple connection pool setting parameters for all the pools doesn't work by design
             SnowflakeDbConnectionPool.SetMaxPoolSize(_maxPoolSize);

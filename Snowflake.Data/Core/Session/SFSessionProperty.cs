@@ -213,9 +213,9 @@ namespace Snowflake.Data.Core
                                 typeof(SFSessionProperty), keys[i].ToUpper());
                     properties.Add(p, values[i]);
                 }
-                catch (ArgumentException e)
+                catch (ArgumentException)
                 {
-                    logger.Warn($"Property {keys[i]} not found ignored.", e);
+                    logger.Debug($"Property {keys[i]} not found ignored.");
                 }
             }
 
