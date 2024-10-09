@@ -4,6 +4,8 @@
 
 using System;
 using System.Text;
+using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -36,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 Thread.CurrentThread.CurrentCulture = ci;
 
-                System.Tuple<string, string> t = 
+                System.Tuple<string, string> t =
                     SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
 
                 Assert.AreEqual("REAL", t.Item1);
@@ -109,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var tickDiff = val.Ticks;
             var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
             inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
-    
+
             // Run the conversion
             var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItComesBackFromDatabase), SFDataType.TIME, typeof(TimeSpan));
 
@@ -326,5 +328,21 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
+        [Test]
+        [TestCase(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
+        [TestCase(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
+        [TestCase(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
+        [TestCase(SFDataType.TIME, typeof(DateTimeOffset))]
+        [TestCase(SFDataType.DATE, typeof(DateTimeOffset))]
+        public void TestInvalidTimestampConversion(SFDataType dataType, Type unsupportedType)
+        {
+            object unsupportedObject;
+            if (unsupportedType == typeof(DateTimeOffset))
+                unsupportedObject = new DateTimeOffset();
+            else
+                unsupportedObject = new DateTime();
+            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.csharpValToSfVal(dataType, unsupportedObject));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
     }
 }
