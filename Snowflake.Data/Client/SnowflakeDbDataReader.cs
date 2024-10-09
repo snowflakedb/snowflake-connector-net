@@ -286,7 +286,7 @@ namespace Snowflake.Data.Client
                                       JsonToStructuredTypeConverter.IsVectorType(rowType.type);
                 if (fields == null || fields.Count == 0 || !isArrayOrVector)
                 {
-                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for for structured array or vector types");
+                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
 
                 var stringValue = GetString(ordinal);
