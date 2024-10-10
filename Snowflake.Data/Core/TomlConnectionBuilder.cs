@@ -52,6 +52,7 @@ namespace Snowflake.Data.Core
         {
             var tomlPath = ResolveConnectionTomlFile();
             var connectionToml = GetTomlTableFromConfig(tomlPath, connectionName);
+            s_logger.Debug($"Reading connection parameters from file using key: {connectionName} and path: {tomlPath}");
             return connectionToml == null ? string.Empty : GetConnectionStringFromTomlTable(connectionToml);
         }
 
@@ -72,8 +73,7 @@ namespace Snowflake.Data.Core
                 connectionStringBuilder.Append($"{mappedProperty}={propertyValue};");
             }
 
-            AppendTokenFromFileIfNotGivenExplicitly(connectionToml, isOauth, connectionStringBuilder, tokenFilePathValue);
-
+            AppendTokenFromFileIfNotGivenExplicitly(connectionToml, isOauth, connectionStringBuilder, tokenFilePathValue);");
             return connectionStringBuilder.ToString();
         }
 
@@ -85,6 +85,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
+            s_logger.Debug($"Reading token from file {tokenFilePathValue}");
             var token = LoadTokenFromFile(tokenFilePathValue);
             if (!string.IsNullOrEmpty(token))
             {
