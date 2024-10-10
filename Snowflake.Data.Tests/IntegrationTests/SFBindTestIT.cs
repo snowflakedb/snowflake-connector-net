@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
-                    string colName = null;
+                    string colName;
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
-                    string colName = null;
+                    string colName;
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
