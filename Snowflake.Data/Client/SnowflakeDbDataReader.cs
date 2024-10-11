@@ -189,10 +189,7 @@ namespace Snowflake.Data.Client
             return resultSet.GetDouble(ordinal);
         }
 
-        public override IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
         public override Type GetFieldType(int ordinal)
         {
@@ -279,7 +276,30 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal T[] GetArray<T>(int ordinal)
+        public T[] GetArray<T>(int ordinal)
+        {
+            try
+            {
+                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                var fields = rowType.fields;
+                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsVectorType(rowType.type))
+                {
+                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for vector types");
+                }
+
+                var stringValue = GetString(ordinal);
+                var json = stringValue == null ? null : JArray.Parse(stringValue);
+                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+            }
+            catch (Exception e)
+            {
+                if (e is SnowflakeDbException)
+                    throw;
+                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an array");
+            }
+        }
+
+        internal T[] GetStucturedArray<T>(int ordinal)
         {
             try
             {

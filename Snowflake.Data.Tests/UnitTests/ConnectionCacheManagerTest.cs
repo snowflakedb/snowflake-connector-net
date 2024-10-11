@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public static void BeforeAllTests()
         {
             s_poolConfig = new PoolConfig();
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SessionPool.SessionFactory = new MockSessionFactory();
         }
 
