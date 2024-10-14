@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.Mock
 
             if (httpStatusCode is null)
             {
-                throw new WebException("Mock GCS Error", null, 0, null);
+                throw new WebException("Mock GCS Error - no response", null, 0, null);
             }
             else if (httpStatusCode == HttpStatusCode.OK)
             {
