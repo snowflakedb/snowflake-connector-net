@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Thread.CurrentThread.CurrentCulture = ci;
 
                 System.Tuple<string, string> t =
-                    SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
+                    SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
 
                 Assert.AreEqual("REAL", t.Item1);
                 Assert.AreEqual("1.2345", t.Item2);
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private void internalTestConvertDate(DateTime dtExpected, DateTime testValue)
         {
-            var result = SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
             // Convert result to DateTime for easier interpretation
             var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime dtResult = unixEpoch.AddMilliseconds(Int64.Parse(result.Item2));
@@ -344,8 +344,8 @@ namespace Snowflake.Data.Tests.UnitTests
             else
                 unsupportedObject = null;
 
-            Assert.NotNull(unsupportedType);
-            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.csharpValToSfVal(dataType, unsupportedObject));
+            Assert.NotNull(unsupportedObject);
+            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.CSharpValToSfVal(dataType, unsupportedObject));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
     }

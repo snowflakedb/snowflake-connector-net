@@ -251,35 +251,35 @@ namespace Snowflake.Data.Core
                         return '"' + sValue.Replace("\"", "\"\"") + '"';
                     return sValue;
                 case "DATE":
-                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ms] from Epoch
+                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ms] from Epoch
                     DateTime date = epoch.AddMilliseconds(msFromEpoch);
                     return date.ToShortDateString();
                 case "TIME":
-                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Midnight
+                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
                     DateTime time = epoch.AddTicks(nsSinceMidnight/100);
                     return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
                     long ticksFromEpochLtz =
-                        long.TryParse(sValue, out var nssLtz) ?
-                            nssLtz / 100 :
-                            (long)(decimal.Parse(sValue) / 100);
+                        long.TryParse(sValue, out var nsLtz)
+                            ? nsLtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
 
                     DateTime ltz = epoch.AddTicks(ticksFromEpochLtz);
                     return ltz.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
                     long ticksFromEpochNtz =
-                        long.TryParse(sValue, out var nsNtz) ?
-                            nsNtz / 100 :
-                            (long)(decimal.Parse(sValue) / 100);
+                        long.TryParse(sValue, out var nsNtz)
+                            ? nsNtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
 
                     DateTime ntz = epoch.AddTicks(ticksFromEpochNtz);
                     return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
                     long ticksFromEpochTz =
-                        long.TryParse(tstzString[0], out var nsTz) ?
-                            nsTz / 100 :
-                            (long)(decimal.Parse(tstzString[0]) / 100);
+                        long.TryParse(tstzString[0], out var nsTz)
+                            ? nsTz / 100
+                            : (long)(decimal.Parse(tstzString[0]) / 100);
 
                     int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
                     DateTime timestamp = epoch.AddTicks(ticksFromEpochTz).AddMinutes(timeZoneOffset);

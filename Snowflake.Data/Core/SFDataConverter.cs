@@ -240,7 +240,7 @@ namespace Snowflake.Data.Core
 
         }
 
-        internal static Tuple<string, string> csharpTypeValToSfTypeVal(DbType srcType, object srcVal)
+        internal static Tuple<string, string> CSharpTypeValToSfTypeVal(DbType srcType, object srcVal)
         {
             SFDataType destType;
             string destVal;
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Core
                 default:
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_DOTNET_TYPE, srcType);
             }
-            destVal = csharpValToSfVal(destType, srcVal);
+            destVal = CSharpValToSfVal(destType, srcVal);
             return Tuple.Create(destType.ToString(), destVal);
         }
 
@@ -323,10 +323,8 @@ namespace Snowflake.Data.Core
             return bytes;
         }
 
-        internal static string csharpValToSfVal(SFDataType sfDataType, object srcVal)
+        internal static string CSharpValToSfVal(SFDataType sfDataType, object srcVal)
         {
-            string TicksToNanoSecondsString(long tickDiff) => tickDiff == 0 ? "0" : $"{tickDiff}00";
-
             string destVal = null;
 
             if (srcVal != DBNull.Value && srcVal != null)
@@ -431,7 +429,9 @@ namespace Snowflake.Data.Core
             return destVal;
         }
 
-        internal static string toDateString(DateTime date, string formatter)
+        private static string TicksToNanoSecondsString(long tickDiff) => tickDiff == 0 ? "0" : $"{tickDiff}00";
+
+        internal static string ToDateString(DateTime date, string formatter)
         {
             // change formatter from "YYYY-MM-DD" to "yyyy-MM-dd"
             formatter = formatter.Replace("Y", "y").Replace("m", "M").Replace("D", "d");
