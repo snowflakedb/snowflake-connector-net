@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
+#nullable enable
+
 using System;
 using System.Data;
 using System.Linq;
@@ -1107,3 +1109,5 @@ namespace Snowflake.Data.Tests.IntegrationTests
         internal static bool IsOffsetType(SFDataType type) => type == SFDataType.TIMESTAMP_LTZ || type == SFDataType.TIMESTAMP_TZ;
     }
 }
+
+#nullable restore

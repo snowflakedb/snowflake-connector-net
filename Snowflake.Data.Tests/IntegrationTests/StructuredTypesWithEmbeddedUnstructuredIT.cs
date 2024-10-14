@@ -496,10 +496,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "9999-12-31 23:59:59.999999 +1:00",
+                "9999-12-31 23:59:59.999999 +13:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +1:00")
+                DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +13:00")
             };
             yield return new object[]
             {
