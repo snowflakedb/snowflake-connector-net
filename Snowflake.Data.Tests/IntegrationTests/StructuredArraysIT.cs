@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<string>(0);
+                    var array = reader.GetArray<string>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<Identity>(0);
+                    var array = reader.GetArray<Identity>(0);
 
                     // assert
                     Assert.AreEqual(2, array.Length);
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<string[]>(0);
+                    var array = reader.GetArray<string[]>(0);
 
                     // assert
                     Assert.AreEqual(2, array.Length);
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<Dictionary<string, string>>(0);
+                    var array = reader.GetArray<Dictionary<string, string>>(0);
 
                     // assert
                     Assert.AreEqual(1, array.Length);
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<string>(0);
+                    var array = reader.GetArray<string>(0);
 
                     // assert
                     Assert.NotNull(array);
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<int>(0);
+                    var array = reader.GetArray<int>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<long>(0);
+                    var array = reader.GetArray<long>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<float>(0);
+                    var array = reader.GetArray<float>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -234,7 +234,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<double>(0);
+                    var array = reader.GetArray<double>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -259,7 +259,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<double>(0);
+                    var array = reader.GetArray<double>(0);
 
                     // assert
                     Assert.AreEqual(2, array.Length);
@@ -284,7 +284,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<string>(0);
+                    var array = reader.GetArray<string>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -309,7 +309,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetStucturedArray<int?>(0);
+                    var array = reader.GetArray<int?>(0);
 
                     // assert
                     Assert.AreEqual(3, array.Length);
@@ -334,7 +334,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var nullArray = reader.GetStucturedArray<string>(0);
+                    var nullArray = reader.GetArray<string>(0);
 
                     // assert
                     Assert.IsNull(nullArray);
@@ -358,7 +358,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetStucturedArray<string>(0));
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<string>(0));
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
@@ -384,7 +384,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetStucturedArray<Guid>(0));
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<Guid>(0));
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
@@ -411,7 +411,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetStucturedArray<AnnotatedClassForConstructorConstruction>(0));
+                    var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
