@@ -504,7 +504,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to upload file. ", ex);
+            Logger.Error("Failed to upload file: " + ex.Message);
 
             fileMetadata.lastError = ex;
 

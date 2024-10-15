@@ -386,7 +386,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    logger.Warn($"Exception encountered trying to upload binds to stage. Attaching binds in payload instead.", e);
+                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
                 }
                 finally
                 {
@@ -538,7 +538,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        logger.Warn( $"Exception encountered trying to upload binds to stage. Attaching binds in payload instead.", e);
+                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
                     }
                     finally
                     {
