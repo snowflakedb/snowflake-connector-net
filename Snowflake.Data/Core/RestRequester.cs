@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Newtonsoft.Json.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -59,6 +60,10 @@ namespace Snowflake.Data.Core
             using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
             {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                if (SFStatement.PutGetQueryLogEnabled)
+                {
+                    logger.Debug($"PostAsync: convert response content to JSON\n {JObject.Parse(json)}");
+                }
                 return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
             }
         }

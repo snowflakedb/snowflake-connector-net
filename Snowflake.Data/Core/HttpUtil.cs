@@ -14,6 +14,7 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using Newtonsoft.Json.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -386,8 +387,17 @@ namespace Snowflake.Data.Core
                             else
                                 childCts.CancelAfter(httpTimeout);                        
                         }
+
+                        if (SFStatement.PutGetQueryLogEnabled)
+                        {
+                            logger.Debug($"SendAsync: sending request\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(requestMessage))}");
+                        }
                         response = await base.SendAsync(requestMessage, childCts == null ?
                             cancellationToken : childCts.Token).ConfigureAwait(false);
+                        if (SFStatement.PutGetQueryLogEnabled)
+                        {
+                            logger.Debug($"SendAsync: received response\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(response))}");
+                        }
                     }
                     catch (Exception e)
                     {

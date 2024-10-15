@@ -11,6 +11,7 @@ using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -97,6 +98,8 @@ namespace Snowflake.Data.Core
 
     class SFStatement
     {
+        static internal bool PutGetQueryLogEnabled = false;
+
         static private SFLogger logger = SFLoggerFactory.GetLogger<SFStatement>();
 
         internal SFSession SfSession { get; set; }
@@ -473,13 +476,26 @@ namespace Snowflake.Data.Core
         {
             try
             {
+                logger.Debug($"ExecuteSqlWithPutGet start");
+
                 isPutGetQuery = true;
+                PutGetQueryLogEnabled = true;
                 PutGetExecResponse response =
                     ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
                         timeout,
                         sql,
                         bindings,
                         describeOnly);
+
+                logger.Debug($"ExecuteSqlWithPutGet: Response\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(response.data))}");
+                if (response.data == null)
+                {
+                    logger.Debug($"ExecuteSqlWithPutGet: Response Data is null");
+                }
+                else if (response.data.encryptionMaterial == null)
+                {
+                    logger.Debug($"ExecuteSqlWithPutGet: Response encryption material is null");
+                }
 
                 logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
 
@@ -491,6 +507,8 @@ namespace Snowflake.Data.Core
 
                 if (response.data != null)
                     _lastQueryId = response.data.queryId;
+
+                logger.Debug($"ExecuteSqlWithPutGet end");
 
                 // Get the results of the upload/download
                 return fileTransferAgent.result();
@@ -505,6 +523,10 @@ namespace Snowflake.Data.Core
             {
                 logger.Error("Query execution failed.", ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
+            }
+            finally
+            {
+                PutGetQueryLogEnabled = false;
             }
         }
 
@@ -647,12 +669,15 @@ namespace Snowflake.Data.Core
             where T : BaseQueryExecResponse<U>
             where U : IQueryExecResponseData
         {
+            logger.Debug($"ExecuteHelper start");
+
             registerQueryCancellationCallback(timeout, CancellationToken.None);
             var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
             try
             {
                 T response = null;
                 bool receivedFirstQueryResponse = false;
+                logger.Debug($"ExecuteHelper: Getting Response");
                 while (!receivedFirstQueryResponse)
                 {
                     response = _restRequester.Post<T>(queryRequest);
@@ -666,6 +691,7 @@ namespace Snowflake.Data.Core
                         receivedFirstQueryResponse = true;
                     }
                 }
+                logger.Debug($"ExecuteHelper: Received Response\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(response))}");
 
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
@@ -711,6 +737,7 @@ namespace Snowflake.Data.Core
             finally
             {
                 ClearQueryRequestId();
+                logger.Debug($"ExecuteHelper end");
             }
         }
 

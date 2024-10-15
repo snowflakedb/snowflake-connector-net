@@ -82,8 +82,10 @@ namespace Snowflake.Data.Log
          * The characters are special character group element.
          * To match them in a character group, they must be escaped.
          */
-        private const string AwsKeyPattern = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'";
+        private const string AwsKeyPattern = @"(location|path|region|queryStageMasterKey|aws_id|aws_key|aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)['""]([^'""]+)['""]";
         private const string AwsTokenPattern = @"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""";
+        private const string SmkIdPattern = @"(smkid\""\:\s*)([0-9]{6,})";
+        private const string SrcPattern = @"(src_locations\""\:\s*)\[\s*([0-9a-zA-Z""\/\.\:]+)\s*\]";
         private const string AwsServerSidePattern = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+";
         private const string SasTokenPattern = @"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})";
         private const string PrivateKeyPattern = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----"; // pragma: allowlist secret
@@ -95,6 +97,8 @@ namespace Snowflake.Data.Log
         private const string PasswordPropertyPattern = @"(password|proxypassword|private_key_pwd)(\s*=)(.*)";
 
         private static readonly Func<string, string>[] s_maskFunctions = {
+            MaskSrc,
+            MaskSmkId,
             MaskAWSServerSide,
             MaskAWSKeys,
             MaskSASTokens,
@@ -107,6 +111,18 @@ namespace Snowflake.Data.Log
             MaskConnectionTokens,
             MaskTokenProperty
         };
+
+        private static string MaskSrc(string text)
+        {
+            return Regex.Replace(text, SrcPattern, @"$1'****'",
+                                         RegexOptions.IgnoreCase);
+        }
+
+        private static string MaskSmkId(string text)
+        {
+            return Regex.Replace(text, SmkIdPattern, @"$1'****'",
+                                         RegexOptions.IgnoreCase);
+        }
 
         private static string MaskAWSKeys(string text)
         {

@@ -2,6 +2,7 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
@@ -152,12 +153,19 @@ namespace Snowflake.Data.Core
             PutGetResponseData responseData,
             CancellationToken cancellationToken)
         {
+            Logger.Debug($"SFFileTransferAgent constructor start");
+
             Query = query;
             Session = session;
+
+            Logger.Debug($"SFFileTransferAgent constructor: responseData\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(responseData))}");
+
             TransferMetadata = responseData;
             TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
             externalCancellationToken = cancellationToken;
+
+            Logger.Debug($"SFFileTransferAgent constructor end");
         }
         public SFFileTransferAgent(
             string query,
@@ -168,8 +176,13 @@ namespace Snowflake.Data.Core
             string stagePath,
             CancellationToken cancellationToken)
         {
+            Logger.Debug($"SFFileTransferAgent constructor start");
+
             Query = query;
             Session = session;
+
+            Logger.Debug($"SFFileTransferAgent constructor: responseData\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(responseData))}");
+
             TransferMetadata = responseData;
             TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
             memoryStream = inputStream;
@@ -177,6 +190,8 @@ namespace Snowflake.Data.Core
             destStagePath = stagePath;
             CommandType = CommandTypes.UPLOAD;
             externalCancellationToken = cancellationToken;
+
+            Logger.Debug($"SFFileTransferAgent constructor end");
         }
 
 
@@ -185,8 +200,12 @@ namespace Snowflake.Data.Core
         /// </summary>
         public void execute()
         {
+            Logger.Debug($"SFFileTransferAgent execute start");
+
             try
             {
+                Logger.Debug($"SFFileTransferAgent execute: TransferMetadata\n {JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(TransferMetadata))}");
+
                 // Initialize the encryption metadata
                 initEncryptionMaterial();
 
@@ -241,6 +260,8 @@ namespace Snowflake.Data.Core
                 }
                 throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
+
+            Logger.Debug($"SFFileTransferAgent execute end");
         }
 
         public async Task executeAsync(CancellationToken cancellationToken)
@@ -542,10 +563,29 @@ namespace Snowflake.Data.Core
         /// </summary>
         private void initEncryptionMaterial()
         {
+            Logger.Debug($"initEncryptionMaterial start");
+
             if (CommandTypes.UPLOAD == CommandType)
             {
+                //TransferMetadata.encryptionMaterial = null;
+                Logger.Debug($"initEncryptionMaterial: \n{JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(TransferMetadata))}");
+                if (TransferMetadata == null)
+                {
+                    Logger.Debug($"initEncryptionMaterial: TransferMetadata is null");
+                }
+                else if (TransferMetadata.encryptionMaterial == null)
+                {
+                    Logger.Debug($"initEncryptionMaterial: TransferMetadata.encryptionMaterial is null");
+                }
+                else if (TransferMetadata.encryptionMaterial[0] == null)
+                {
+                    Logger.Debug($"initEncryptionMaterial: TransferMetadata.encryptionMaterial first item is null");
+                }
+
                 EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
             }
+
+            Logger.Debug($"initEncryptionMaterial end");
         }
 
         /// <summary>
