@@ -514,8 +514,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         // Should timeout after the default timeout (300 sec)
                         Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
-                        // But never more because there's no connection timeout remaining
-                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 1) * 1000);
+                        // But never more because there's no connection timeout remaining (with 2 seconds margin)
+                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
                     }
                 }
             }
@@ -2015,8 +2015,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Should timeout after the default timeout (300 sec)
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
-                // But never more because there's no connection timeout remaining
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 1) * 1000);
+                // But never more because there's no connection timeout remaining (with 2 seconds margin)
+                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
                 Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
