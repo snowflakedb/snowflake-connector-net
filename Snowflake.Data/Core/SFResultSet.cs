@@ -283,7 +283,7 @@ namespace Snowflake.Data.Core
                     var val = GetValue(ordinal);
                     if (val == DBNull.Value)
                         return null;
-                    return SFDataConverter.toDateString((DateTime)val, sfResultSetMetaData.dateOutputFormat);
+                    return SFDataConverter.ToDateString((DateTime)val, sfResultSetMetaData.dateOutputFormat);
                 
                 default:
                     return GetObjectInternal(ordinal).SafeToString(); 

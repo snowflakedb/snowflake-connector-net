@@ -392,7 +392,7 @@ namespace Snowflake.Data.Core
                     return ret;
                 case DateTime ret:
                     if (type == SFDataType.DATE)
-                        return SFDataConverter.toDateString(ret, sfResultSetMetaData.dateOutputFormat);
+                        return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);
                     break;
             }
 

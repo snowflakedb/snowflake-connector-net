@@ -47,6 +47,18 @@ namespace Snowflake.Data.Tests.UnitTests
             yield return new object[] {"2024-07-11 14:20:05.123456 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTimeOffset.Parse("2024-07-11 14:20:05.123456 -7:00")};
             yield return new object[] {"2024-07-11 14:20:05.123456 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("2024-07-11 21:20:05.123456").ToLocalTime()};
             yield return new object[] {"14:20:05.123456", SFDataType.TIME.ToString(), TimeSpan.Parse("14:20:05.123456")};
+            yield return new object[] {"9999-12-31 23:59:59.999999", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("9999-12-31 23:59:59.999999")};
+            yield return new object[] {"9999-12-31 23:59:59.999999", SFDataType.TIMESTAMP_NTZ.ToString(), DateTimeOffset.Parse("9999-12-31 23:59:59.999999Z")};
+            yield return new object[] {"9999-12-31 23:59:59.999999 +1:00", SFDataType.TIMESTAMP_TZ.ToString(), DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +1:00")};
+            yield return new object[] {"9999-12-31 23:59:59.999999 +1:00", SFDataType.TIMESTAMP_TZ.ToString(), DateTime.SpecifyKind(DateTime.Parse("9999-12-31 22:59:59.999999"), DateTimeKind.Utc)};
+            yield return new object[] {"9999-12-31 23:59:59.999999 +1:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +1:00")};
+            yield return new object[] {"9999-12-31 23:59:59.999999 +13:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("9999-12-31 10:59:59.999999").ToLocalTime()};
+            yield return new object[] {"0001-01-01 00:00:00.123456", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("0001-01-01 00:00:00.123456")};
+            yield return new object[] {"0001-01-01 00:00:00.123456", SFDataType.TIMESTAMP_NTZ.ToString(), DateTimeOffset.Parse("0001-01-01 00:00:00.123456Z")};
+            yield return new object[] {"0001-01-01 00:00:00.123456 -1:00", SFDataType.TIMESTAMP_TZ.ToString(), DateTimeOffset.Parse("0001-01-01 00:00:00.123456 -1:00")};
+            yield return new object[] {"0001-01-01 00:00:00.123456 -1:00", SFDataType.TIMESTAMP_TZ.ToString(), DateTime.SpecifyKind(DateTime.Parse("0001-01-01 01:00:00.123456"), DateTimeKind.Utc)};
+            yield return new object[] {"0001-01-01 00:00:00.123456 -1:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTimeOffset.Parse("0001-01-01 00:00:00.123456 -1:00")};
+            yield return new object[] {"0001-01-01 00:00:00.123456 -13:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("0001-01-01 13:00:00.123456").ToLocalTime()};
         }
     }
 }
