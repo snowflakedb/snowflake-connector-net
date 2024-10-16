@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using Snowflake.Data.Client;
 
@@ -152,7 +153,7 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.DATE:
                     long srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
-                    return DateTime.SpecifyKind(UnixEpoch.AddDays(srcValLong), DateTimeKind.Unspecified);;
+                    return DateTime.SpecifyKind(UnixEpoch.AddDays(srcValLong), DateTimeKind.Unspecified);
 
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
@@ -339,7 +340,14 @@ namespace Snowflake.Data.Core
                         }
                         else
                         {
-                            destVal = ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
+                            DateTimeOffset dtOffset = (DateTimeOffset)srcVal;
+
+                            BigInteger utcTicksBig = new BigInteger(dtOffset.UtcTicks);
+                            BigInteger unixEpochTicksBig = new BigInteger(UnixEpoch.Ticks);
+
+                            BigInteger tickDiffBig = (utcTicksBig - unixEpochTicksBig) * 100;
+
+                            destVal = tickDiffBig.ToString();
                         }
                         break;
 
@@ -404,7 +412,11 @@ namespace Snowflake.Data.Core
                         else
                         {
                             DateTimeOffset dtOffset = (DateTimeOffset)srcVal;
-                            destVal = String.Format("{0} {1}", (dtOffset.UtcTicks - UnixEpoch.Ticks) * 100L,
+                            BigInteger utcTicksBig = new BigInteger(dtOffset.UtcTicks);
+                            BigInteger unixEpochTicksBig = new BigInteger(UnixEpoch.Ticks);
+                            BigInteger tickDiffBig = (utcTicksBig - unixEpochTicksBig) * 100;
+
+                            destVal = String.Format("{0} {1}", tickDiffBig.ToString(),
                                 dtOffset.Offset.TotalMinutes + 1440);
                         }
                         break;
