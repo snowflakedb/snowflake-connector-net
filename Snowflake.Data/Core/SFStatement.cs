@@ -383,11 +383,14 @@ namespace Snowflake.Data.Core
                     SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                     await uploader.UploadAsync(bindings, cancellationToken).ConfigureAwait(false);
                     _bindStage = uploader.getStagePath();
-                    ClearQueryRequestId();
                 }
                 catch (Exception e)
                 {
-                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
+                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                }
+                finally
+                {
+                    ClearQueryRequestId();
                 }
             }
 
@@ -532,13 +535,14 @@ namespace Snowflake.Data.Core
                         SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                         uploader.Upload(bindings);
                         _bindStage = uploader.getStagePath();
-                        ClearQueryRequestId();
                     }
                     catch (Exception e)
                     {
-                        logger.Warn(
-                            "Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}",
-                            e);
+                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                    }
+                    finally
+                    {
+                        ClearQueryRequestId();
                     }
                 }
 

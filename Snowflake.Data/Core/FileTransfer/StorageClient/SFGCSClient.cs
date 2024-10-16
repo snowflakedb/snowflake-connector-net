@@ -349,7 +349,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             try
             {
                 // Issue the GET request
-                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;                
+                WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
@@ -444,7 +444,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
             Logger.Error("Failed to get file header for presigned url: " + ex.Message);
-            
+
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized ||
                 response.StatusCode == HttpStatusCode.Forbidden ||
@@ -509,7 +509,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.lastError = ex;
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
-            if (response.StatusCode == HttpStatusCode.BadRequest && GCS_ACCESS_TOKEN != null)
+            if (response is null)
+            {
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            else if (response.StatusCode == HttpStatusCode.BadRequest && GCS_ACCESS_TOKEN != null)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
@@ -539,7 +543,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             fileMetadata.lastError = ex;
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            if (response is null)
+            {
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            else if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
