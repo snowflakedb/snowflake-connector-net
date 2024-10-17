@@ -36,7 +36,9 @@ namespace Snowflake.Data.Client
         {
             lock (credentialManagerLock)
             {
-                s_logger.Info($"Setting the custom credential manager: {customCredentialManager.GetType().Name}");
+                s_logger.Info(customCredentialManager == null
+                    ? "Clearing the custom credential manager"
+                    : $"Setting the custom credential manager: {customCredentialManager?.GetType()?.Name}");
                 s_customCredentialManager = customCredentialManager;
             }
         }

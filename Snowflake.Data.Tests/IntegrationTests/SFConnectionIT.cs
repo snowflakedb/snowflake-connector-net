@@ -2297,6 +2297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
+            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
