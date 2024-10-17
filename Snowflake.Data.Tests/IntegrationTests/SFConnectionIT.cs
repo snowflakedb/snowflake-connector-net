@@ -2279,11 +2279,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
+            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
+            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
                     = ConnectionString
-                      + ";authenticator=username_password_mfa;application=DuoTest;Passcode=123456;";
+                      + ";authenticator=username_password_mfa;application=DuoTest;minPoolSize=0;";
 
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
@@ -2297,6 +2301,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
+            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
+            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {

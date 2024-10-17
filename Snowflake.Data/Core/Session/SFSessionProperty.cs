@@ -113,8 +113,6 @@ namespace Snowflake.Data.Core
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLE_SAML_URL_CHECK,
-        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        CLIENT_REQUEST_MFA_TOKEN,
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PASSCODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]

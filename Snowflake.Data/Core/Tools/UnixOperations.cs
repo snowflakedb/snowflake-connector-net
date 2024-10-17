@@ -11,11 +11,6 @@ using Mono.Unix.Native;
 
 namespace Snowflake.Data.Core.Tools
 {
-    using System.IO;
-    using System.Security;
-    using System.Text;
-    using Mono.Unix;
-    using Mono.Unix.Native;
 
     internal class UnixOperations
     {

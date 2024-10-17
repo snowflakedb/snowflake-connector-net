@@ -34,9 +34,32 @@ namespace Snowflake.Data.Client
 
         public static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager)
         {
+            SetCredentialManager(customCredentialManager, true);
+        }
+
+        public static void UseInMemoryCredentialManager()
+        {
+            SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance, false);
+        }
+
+        public static void UseFileCredentialManager()
+        {
+            SetCredentialManager(SFCredentialManagerFileImpl.Instance, false);
+        }
+
+        public static void UseWindowsCredentialManager()
+        {
+            SetCredentialManager(SFCredentialManagerWindowsNativeImpl.Instance, false);
+        }
+
+        internal static void SetCredentialManager(ISnowflakeCredentialManager customCredentialManager, bool isCustomCredential)
+        {
             lock (credentialManagerLock)
             {
-                s_logger.Info($"Setting the custom credential manager: {customCredentialManager.GetType().Name}");
+                var customText = isCustomCredential ? "custom " : string.Empty;
+                s_logger.Info(customCredentialManager == null
+                    ? $"Clearing the {customText}credential manager:"
+                    : $"Setting the {customText}credential manager: {customCredentialManager?.GetType()?.Name}");
                 s_customCredentialManager = customCredentialManager;
             }
         }
