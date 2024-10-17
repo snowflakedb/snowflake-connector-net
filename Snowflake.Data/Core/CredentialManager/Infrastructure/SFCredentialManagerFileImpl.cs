@@ -13,9 +13,9 @@ using System.IO;
 using System.Runtime.InteropServices;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-    public class SnowflakeCredentialManagerFileImpl : ISnowflakeCredentialManager
+    internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
         internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
 
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core
 
         internal const string CredentialCacheFileName = "temporary_credential.json";
 
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFileImpl>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
 
         private readonly string _jsonCacheDirectory;
 
@@ -37,9 +37,9 @@ namespace Snowflake.Data.Core
 
         private readonly EnvironmentOperations _environmentOperations;
 
-        public static readonly SnowflakeCredentialManagerFileImpl Instance = new SnowflakeCredentialManagerFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly SFCredentialManagerFileImpl Instance = new SFCredentialManagerFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
 
-        internal SnowflakeCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
+        internal SFCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
         {
             _fileOperations = fileOperations;
             _directoryOperations = directoryOperations;
