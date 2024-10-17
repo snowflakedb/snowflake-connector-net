@@ -182,7 +182,7 @@ namespace Snowflake.Data.Core.Session
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
-            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : Int32.MaxValue);
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             WarnAboutOverridenConfig();
 
             if (sessionOrCreateTokens.Session != null)
@@ -254,10 +254,9 @@ namespace Snowflake.Data.Core.Session
                         return new SessionOrCreationTokens(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool" + PoolIdentification());
-                    var sessionsCount = Math.Min(maxSessions, AllowedNumberOfNewSessionCreations(1));
+                    var sessionsCount = AllowedNumberOfNewSessionCreations(1, maxSessions);
                     if (sessionsCount > 0)
                     {
-                        s_logger.Debug($"SessionPool::GetIdleSession - register creation of {sessionsCount} sessions" + PoolIdentification());
                         // there is no need to wait for a session since we can create new ones
                         return new SessionOrCreationTokens(RegisterSessionCreations(sessionsCount));
                     }
@@ -277,7 +276,7 @@ namespace Snowflake.Data.Core.Session
                 .Select(_ => _sessionCreationTokenCounter.NewToken())
                 .ToList();
 
-        private int AllowedNumberOfNewSessionCreations(int atLeastCount)
+        private int AllowedNumberOfNewSessionCreations(int atLeastCount, int maxSessionsLimit = int.MaxValue)
         {
             // we are expecting to create atLeast 1 session in case of opening a connection (atLeastCount = 1)
             // but we have no expectations when closing a connection (atLeastCount = 0)
@@ -292,7 +291,7 @@ namespace Snowflake.Data.Core.Session
             {
                 var maxSessionsToCreate = _poolConfig.MaxPoolSize - currentSize;
                 var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, atLeastCount);
-                var sessionsToCreate = Math.Min(sessionsNeeded, maxSessionsToCreate);
+                var sessionsToCreate = Math.Min(maxSessionsLimit, Math.Min(sessionsNeeded, maxSessionsToCreate));
                 s_logger.Debug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
                 return sessionsToCreate;
             }

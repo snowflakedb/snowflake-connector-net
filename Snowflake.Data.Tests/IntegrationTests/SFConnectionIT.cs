@@ -2,28 +2,25 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using System.Data;
-    using System;
-    using Snowflake.Data.Core;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Snowflake.Data.Log;
-    using System.Diagnostics;
-    using Snowflake.Data.Tests.Mock;
-    using System.Runtime.InteropServices;
-    using System.Net.Http;
-    using Snowflake.Data.Core.CredentialManager;
-    using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -2279,11 +2276,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
+            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
+            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
                     = ConnectionString
-                      + ";authenticator=username_password_mfa;application=DuoTest;Passcode=123456;";
+                      + ";authenticator=username_password_mfa;application=DuoTest;minPoolSize=0;";
 
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
@@ -2297,6 +2298,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
+            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
+            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
