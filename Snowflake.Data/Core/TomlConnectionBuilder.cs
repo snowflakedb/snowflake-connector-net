@@ -73,7 +73,7 @@ namespace Snowflake.Data.Core
                 connectionStringBuilder.Append($"{mappedProperty}={propertyValue};");
             }
 
-            AppendTokenFromFileIfNotGivenExplicitly(connectionToml, isOauth, connectionStringBuilder, tokenFilePathValue);");
+            AppendTokenFromFileIfNotGivenExplicitly(connectionToml, isOauth, connectionStringBuilder, tokenFilePathValue);
             return connectionStringBuilder.ToString();
         }
 
