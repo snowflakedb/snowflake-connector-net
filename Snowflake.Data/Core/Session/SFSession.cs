@@ -139,9 +139,9 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
-                if (e.ErrorCode == SFError.EXT_AUTHN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+                if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
                 {
-                    logger.Info("MFA Token has expired or not valid.", e);
+                    logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
                     _mfaToken = null;
                     var mfaKey = SnowflakeCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken, properties[SFSessionProperty.AUTHENTICATOR]);
                     SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(mfaKey);
