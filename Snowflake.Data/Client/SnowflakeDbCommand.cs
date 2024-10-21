@@ -393,7 +393,7 @@ namespace Snowflake.Data.Client
                             if (parameter.SFDataType == SFDataType.None)
                             {
                                 Tuple<string, string> typeAndVal = SFDataConverter
-                                    .csharpTypeValToSfTypeVal(parameter.DbType, val);
+                                    .CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
                                 bindingType = typeAndVal.Item1;
                                 vals.Add(typeAndVal.Item2);
@@ -401,7 +401,7 @@ namespace Snowflake.Data.Client
                             else
                             {
                                 bindingType = parameter.SFDataType.ToString();
-                                vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
+                                vals.Add(SFDataConverter.CSharpValToSfVal(parameter.SFDataType, val));
                             }
                         }
                         bindingVal = vals;
@@ -411,14 +411,14 @@ namespace Snowflake.Data.Client
                         if (parameter.SFDataType == SFDataType.None)
                         {
                             Tuple<string, string> typeAndVal = SFDataConverter
-                                .csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                                .CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
                             bindingType = typeAndVal.Item1;
                             bindingVal = typeAndVal.Item2;
                         }
                         else
                         {
                             bindingType = parameter.SFDataType.ToString();
-                            bindingVal = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
+                            bindingVal = SFDataConverter.CSharpValToSfVal(parameter.SFDataType, parameter.Value);
                         }
                     }
 
