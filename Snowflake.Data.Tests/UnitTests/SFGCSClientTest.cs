@@ -223,16 +223,14 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public void TestUploadFile(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
             mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
             mockWebRequest.Setup(client => client.GetResponse())
-                .Returns(() =>
-                {
-                    return MockGCSClient.CreateResponseForUploadFile(httpStatusCode);
-                });
+                .Returns(() => MockGCSClient.CreateResponseForUploadFile(httpStatusCode));
             mockWebRequest.Setup(client => client.GetRequestStream())
                 .Returns(() => new MemoryStream());
             _client.SetCustomWebRequest(mockWebRequest.Object);
@@ -257,16 +255,14 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public async Task TestUploadFileAsync(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
             mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
             mockWebRequest.Setup(client => client.GetResponseAsync())
-                .Returns(() =>
-                {
-                    return Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode));
-                });
+                .Returns(() => Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode)));
             mockWebRequest.Setup(client => client.GetRequestStreamAsync())
                 .Returns(() => Task.FromResult((Stream) new MemoryStream()));
             _client.SetCustomWebRequest(mockWebRequest.Object);
@@ -301,7 +297,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public void TestDownloadFile(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
@@ -325,7 +322,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public async Task TestDownloadFileAsync(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
