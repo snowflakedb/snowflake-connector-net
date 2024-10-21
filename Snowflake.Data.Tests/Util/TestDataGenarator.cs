@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Util
         public static char SnowflakeUnicode => '\u2744';
         public static string EmojiUnicode => "\uD83D\uDE00";
         public static string StringWithUnicode => AsciiCodes + SnowflakeUnicode + EmojiUnicode;
-        
+
         public static bool NextBool()
         {
             return s_random.Next(0, 1) == 1;
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.Util
         {
             return s_random.Next(minValueInclusive, maxValueExclusive);
         }
-        
+
         public static string NextAlphaNumeric()
         {
             return NextAlphaNumeric(s_random.Next(5, 12));
@@ -72,17 +72,24 @@ namespace Snowflake.Data.Tests.Util
             }
             return new string(buffer);
         }
-        
+
+        public static byte[] NextBytes(int length)
+        {
+            var buffer = new byte[length];
+            s_random.NextBytes(buffer);
+            return buffer;
+        }
+
         private static char NextAlphaNumericChar() => NextChar(s_alphanumericChars);
-        
+
         public static string NextNonZeroDigitAsString() => NextNonZeroDigitChar().ToString();
 
         private static char NextNonZeroDigitChar() => NextChar(s_nonZeroDigits);
-        
-        private static string NextDigitAsString() => NextDigitChar().ToString(); 
-        
+
+        private static string NextDigitAsString() => NextDigitChar().ToString();
+
         private static char NextDigitChar() => NextChar(s_digitChars);
-        
+
         private static string NextLetterAsString() => NextLetterChar().ToString();
 
         private static char NextLetterChar() => NextChar(s_letterChars);
