@@ -22,7 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
         private const string ConnectionStringMFACache = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa";
-        private const string ConnectionStringMFABasicWithoutPasscode = "db=D2;warehouse=W2;account=A2;user=U2;password=P2;role=R2;minPoolSize=3;";
         private static PoolConfig s_poolConfig;
         private static MockLoginMFATokenCacheRestRequester s_restRequester;
 
@@ -82,41 +81,22 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestPoolManagerShouldOnlyUsePasscodeAsArgumentForFirstSessionWhenNotUsingMFAAuthenticator()
-        {
-            // Arrange
-            const string TestPasscode = "123456";
-            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
-            {
-                authResponseSessionInfo = new SessionInfo()
-            });
-            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
-            {
-                authResponseSessionInfo = new SessionInfo()
-            });
-            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
-            {
-                authResponseSessionInfo = new SessionInfo()
-            });
-
-            // Act
-            _connectionPoolManager.GetSession(ConnectionStringMFABasicWithoutPasscode, null, SecureStringHelper.Encode(TestPasscode));
-
-            // Assert
-            Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 3, TimeSpan.FromSeconds(15));
-            Assert.AreEqual(3, s_restRequester.LoginRequests.Count);
-            var request = s_restRequester.LoginRequests.ToList();
-            Assert.AreEqual(1, request.Count(r => r.data.extAuthnDuoMethod == "passcode" && r.data.passcode == TestPasscode));
-            Assert.AreEqual(2, request.Count(r => r.data.extAuthnDuoMethod == "push" && r.data.passcode == null));
-        }
-
-        [Test]
         public void TestPoolManagerShouldThrowExceptionIfForcePoolingWithPasscodeNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            var thrown = Assert.Throws<Exception>(() =>_connectionPoolManager.GetSession(connectionString, null,null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, null,null));
+            Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
+        }
+
+        [Test]
+        public void TestPoolManagerShouldThrowExceptionIfForcePoolingWithPasscodeAsSecureStringNotUsingMFATokenCacheAuthenticator()
+        {
+            // Arrange
+            var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;POOLINGENABLED=true";
+            // Act and assert
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, null,SecureStringHelper.Encode("12345")));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 

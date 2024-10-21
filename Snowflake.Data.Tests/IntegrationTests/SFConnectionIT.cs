@@ -2279,10 +2279,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
-            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=123456"
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
             // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
-            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
+            // SnowflakeCredentialManagerFactory.UseFileCredentialManager();
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
@@ -2301,10 +2301,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
-            // Use a connection with MFA enabled and set value of encode from mfa authenticator in the passcode property.
+            // Use a connection with MFA enabled and Passcode property on connection instance.
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
             // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
-            // SnowflakeCredentialManagerFactory.SetCredentialManager(SnowflakeCredentialManagerFileImpl.Instance);
+            // SnowflakeCredentialManagerFactory.UseFileCredentialManager();
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
