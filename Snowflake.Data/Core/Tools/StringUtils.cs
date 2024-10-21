@@ -2,11 +2,11 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+using System.Security.Cryptography;
+
 namespace Snowflake.Data.Core.Tools
 {
-    using System;
-    using System.Security.Cryptography;
-
     public static class StringUtils
     {
         internal static string ToSha256Hash(this string text)
@@ -14,9 +14,10 @@ namespace Snowflake.Data.Core.Tools
             if (string.IsNullOrEmpty(text))
                 return string.Empty;
 
-            using (var sha = new SHA256Managed())
+            using (var sha256Encoder = SHA256.Create())
             {
-                return BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(text))).Replace("-", string.Empty);
+                var sha256Hash = sha256Encoder.ComputeHash(System.Text.Encoding.UTF8.GetBytes(text));
+                return BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
             }
         }
     }

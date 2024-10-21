@@ -2,21 +2,19 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core;
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using Mono.Unix;
+using Mono.Unix.Native;
+using Moq;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    using Mono.Unix;
-    using Mono.Unix.Native;
-    using Moq;
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core.CredentialManager.Infrastructure;
-    using Snowflake.Data.Core.Tools;
-    using System;
-    using System.IO;
-    using System.Runtime.InteropServices;
-
     public abstract class SFBaseCredentialManagerTest
     {
         protected ISnowflakeCredentialManager _credentialManager;
@@ -193,6 +191,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
             // assert
             Assert.IsInstanceOf<SFCredentialManagerFileImpl>(_credentialManager);
+        }
+
+        [Test]
+        public void TestThatThrowsErrorWhenTryingToSetCredentialManagerToNull()
+        {
+            // act and assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => SnowflakeCredentialManagerFactory.SetCredentialManager(null));
+            Assert.IsTrue(exception.Message.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method."));
+
         }
 
         [Test]

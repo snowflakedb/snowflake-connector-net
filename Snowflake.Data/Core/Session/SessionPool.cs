@@ -139,7 +139,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
             var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidateMinPoolSizeWithPasscode(sessionProperties);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
@@ -158,19 +158,19 @@ namespace Snowflake.Data.Core.Session
             return session;
         }
 
-        private void ValidateMinPoolSizeWithPasscode(SFSessionProperties sessionProperties)
+        private void ValidateMinPoolSizeWithPasscode(SFSessionProperties sessionProperties, SecureString passcode)
         {
             if (!GetPooling() || !IsMultiplePoolsVersion() || _poolConfig.MinPoolSize == 0) return;
-            var isUsingPasscode = (sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
-                                   (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
-                                    bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
+            var isUsingPasscode = (passcode != null && passcode.Length > 0) || (sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
+                                                                                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
+                                                                                 bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
             var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
                                      authenticator == MFACacheAuthenticator.AUTH_NAME;
             if(isUsingPasscode && !isMfaAuthenticator)
             {
                 const string ErrorMessage = "Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication";
                 s_logger.Error(ErrorMessage + PoolIdentification());
-                throw new Exception(ErrorMessage);
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, ErrorMessage);
             }
         }
 
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
             var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidateMinPoolSizeWithPasscode(sessionProperties);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
