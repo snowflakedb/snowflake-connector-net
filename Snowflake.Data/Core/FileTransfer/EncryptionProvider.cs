@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
     /// The encryptor/decryptor for PUT/GET files.
-    /// Handles encryption and decryption using EAS CBC (for files) and ECB (for keys).
+    /// Handles encryption and decryption using AES CBC (for files) and ECB (for keys).
     /// </summary>
     class EncryptionProvider
     {

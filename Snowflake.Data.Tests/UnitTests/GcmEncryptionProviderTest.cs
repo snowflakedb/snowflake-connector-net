@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture]
     public class GcmEncryptionProviderTest
     {
-        private const string PlainText = "there is no rose without a smoke";
+        private const string PlainText = "there is no rose without thorns";
         private static readonly byte[] s_plainTextBytes = Encoding.UTF8.GetBytes(PlainText);
         private static readonly byte[] s_qsmkBytes = TestDataGenarator.NextBytes(GcmEncryptionProvider.BlockSizeInBytes);
         private static readonly string s_qsmk = Convert.ToBase64String(s_qsmkBytes);
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestEncryptAndDEncryptWithAad()
+        public void TestEncryptAndDecryptWithAad()
         {
             // arrange
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
