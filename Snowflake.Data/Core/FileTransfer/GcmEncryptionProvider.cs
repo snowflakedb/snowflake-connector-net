@@ -159,9 +159,12 @@ namespace Snowflake.Data.Core.FileTransfer
                 {
                     cipherStream.Write(buffer, 0, bytesRead);
                 }
-
                 cipherStream.Flush(); // we cannot close or dispose cipherStream because closing cipherStream would close target stream
-                contentCipher.DoFinal(); // in case of decrypting we ignore the result which has to be empty
+                var lastBytes = contentCipher.DoFinal();
+                if (lastBytes != null && lastBytes.Length > 0)
+                {
+                    targetStream.Write(lastBytes, 0, lastBytes.Length);
+                }
                 return targetStream;
             }
             catch (Exception)

@@ -27,6 +27,9 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string InvalidAad = "invalid additional information";
         private static readonly byte[] s_invalidAadBytes = Encoding.UTF8.GetBytes(InvalidAad);
         private static readonly string s_invalidAadBase64 = Convert.ToBase64String(s_invalidAadBytes);
+        private static readonly string s_emptyAad = string.Empty;
+        private static readonly byte[] s_emptyAadBytes = Encoding.UTF8.GetBytes(s_emptyAad);
+        private static readonly string s_emptyAadBase64 = Convert.ToBase64String(s_emptyAadBytes);
         private static readonly PutGetEncryptionMaterial s_encryptionMaterial = new PutGetEncryptionMaterial
         {
             queryStageMasterKey = s_qsmk,
@@ -48,8 +51,8 @@ namespace Snowflake.Data.Tests.UnitTests
             // act
             using (var encryptedStream = GcmEncryptionProvider.Encrypt(
                        s_encryptionMaterial,
-                       encryptionMetadata,
-                       s_fileTransferConfiguration,// this is output parameter
+                       encryptionMetadata, // this is output parameter
+                       s_fileTransferConfiguration,
                        new MemoryStream(s_plainTextBytes),
                        null,
                        null))
@@ -62,6 +65,40 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.matDesc);
                 Assert.IsNull(encryptionMetadata.keyAad);
                 Assert.IsNull(encryptionMetadata.aad);
+
+                // act
+                using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
+                {
+                    // assert
+                    var decryptedText = ExtractContent(decryptedStream);
+                    CollectionAssert.AreEqual(s_plainTextBytes, decryptedText);
+                }
+            }
+        }
+
+        [Test]
+        public void TestEncryptAndDecryptWithEmptyAad()
+        {
+            // arrange
+            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+
+            // act
+            using (var encryptedStream = GcmEncryptionProvider.Encrypt(
+                       s_encryptionMaterial,
+                       encryptionMetadata, // this is output parameter
+                       s_fileTransferConfiguration,
+                       new MemoryStream(s_plainTextBytes),
+                       s_emptyAadBytes,
+                       s_emptyAadBytes))
+            {
+                var encryptedContent = ExtractContentBytes(encryptedStream);
+
+                // assert
+                Assert.NotNull(encryptionMetadata.key);
+                Assert.NotNull(encryptionMetadata.iv);
+                Assert.NotNull(encryptionMetadata.matDesc);
+                Assert.AreEqual(s_emptyAadBase64, encryptionMetadata.keyAad);
+                Assert.AreEqual(s_emptyAadBase64, encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
