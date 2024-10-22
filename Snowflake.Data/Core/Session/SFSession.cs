@@ -460,6 +460,19 @@ namespace Snowflake.Data.Core
             };
         }
 
+        internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body, TimeSpan httpTimeout)
+        {
+            return new SFRestRequest()
+            {
+                jsonBody = body,
+                Url = uri,
+                authorizationToken = SF_AUTHORIZATION_BASIC,
+                RestTimeout = connectionTimeout,
+                HttpTimeout = httpTimeout,
+                _isLogin = true
+            };
+        }
+
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");

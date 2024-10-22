@@ -2,6 +2,7 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Tools;
@@ -34,6 +35,7 @@ namespace Snowflake.Data.Core.Authenticator
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
             data.SessionParameters[SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN] = true;
+            data.HttpTimeout = TimeSpan.FromSeconds(60);
             if (!string.IsNullOrEmpty(session._mfaToken?.ToString()))
             {
                 data.Token = SecureStringHelper.Decode(session._mfaToken);

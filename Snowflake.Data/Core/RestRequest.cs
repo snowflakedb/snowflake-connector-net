@@ -268,6 +268,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
+        [JsonIgnore]
+        internal TimeSpan? HttpTimeout { get; set; }
+
         public override string ToString()
         {
             return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}",
