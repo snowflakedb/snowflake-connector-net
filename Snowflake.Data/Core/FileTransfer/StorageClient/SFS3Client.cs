@@ -525,12 +525,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             switch (ex)
             {
-                case AmazonS3Exception err:
-                    if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == HttpStatusCode.BadRequest.ToString())
+                case AmazonS3Exception exAws:
+                    if (exAws.ErrorCode == EXPIRED_TOKEN || exAws.ErrorCode == HttpStatusCode.BadRequest.ToString())
                     {
                         fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                     }
-                    else if (err.ErrorCode == NO_SUCH_KEY)
+                    else if (exAws.ErrorCode == NO_SUCH_KEY)
                     {
                         fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
                     }
@@ -541,7 +541,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                     break;
                 default:
-                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();;
+                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                     break;
             }
         }
@@ -557,20 +557,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             switch (ex)
             {
-                case AmazonS3Exception err:
-                    if (err.ErrorCode == EXPIRED_TOKEN)
+                case AmazonS3Exception exAws:
+                    if (exAws.ErrorCode == EXPIRED_TOKEN)
                     {
                         fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                     }
                     else
                     {
-                        fileMetadata.lastError = err;
+                        fileMetadata.lastError = exAws;
                         fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                     }
                     break;
 
-                default:
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();;
+                case Exception exOther:
+                    fileMetadata.lastError = exOther;
+                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                     break;
             }
         }
@@ -586,20 +587,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             switch (ex)
             {
-                case AmazonS3Exception err:
-                    if (err.ErrorCode == EXPIRED_TOKEN)
+                case AmazonS3Exception exAws:
+                    if (exAws.ErrorCode == EXPIRED_TOKEN)
                     {
                         fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
                     }
                     else
                     {
-                        fileMetadata.lastError = err;
+                        fileMetadata.lastError = exAws;
                         fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                     }
                     break;
 
-                default:
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();;
+                case Exception exOther:
+                    fileMetadata.lastError = exOther;
+                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                     break;
             }
         }
