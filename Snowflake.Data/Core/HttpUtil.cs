@@ -406,7 +406,7 @@ namespace Snowflake.Data.Core
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
-                            logger.Warn("Http request timeout. Retry the request");
+                            logger.Warn($"Http request timeout. Retry the request after {backOffInSec} sec.");
                         }
                         else
                         {
