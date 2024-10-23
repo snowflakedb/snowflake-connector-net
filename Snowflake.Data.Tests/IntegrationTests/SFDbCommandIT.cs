@@ -8,6 +8,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using System.Linq;
+using System.IO;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -1672,6 +1674,86 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
                 Assert.AreEqual("--", reader.GetString(0));
+            }
+        }
+
+        [Test]
+        public void TestExecuteNonQueryReturnsCorrectRowCountForUploadWithMultipleFiles()
+        {
+            const int NumberOfFiles = 5;
+            const int NumberOfRows = 3;
+            const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                    var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+                    for (int i = 0; i < NumberOfFiles; i++)
+                    {
+                        File.WriteAllText(prefix + $"_{i}.csv", data);
+                    }
+                    CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                    cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                    var reader = cmd.ExecuteReader();
+
+                    // Act
+                    cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                    int actualRowCount = cmd.ExecuteNonQuery();
+
+                    // Assert
+                    Assert.AreEqual(ExpectedRowCount, actualRowCount);
+
+                    for (int i = 0; i < NumberOfRows; i++)
+                    {
+                        File.Delete(prefix + $"_{i}.csv");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestExecuteNonQueryAsyncReturnsCorrectRowCountForUploadWithMultipleFiles()
+        {
+            const int NumberOfFiles = 5;
+            const int NumberOfRows = 3;
+            const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                    var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+                    for (int i = 0; i < NumberOfFiles; i++)
+                    {
+                        File.WriteAllText(prefix + $"_{i}.csv", data);
+                    }
+                    CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                    cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                    var reader = cmd.ExecuteReader();
+
+                    // Act
+                    cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                    int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                    // Assert
+                    Assert.AreEqual(ExpectedRowCount, actualRowCount);
+
+                    for (int i = 0; i < NumberOfRows; i++)
+                    {
+                        File.Delete(prefix + $"_{i}.csv");
+                    }
+                }
             }
         }
     }
