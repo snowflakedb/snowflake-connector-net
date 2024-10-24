@@ -2,25 +2,24 @@
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
+using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using System.Data;
-    using System;
-    using Snowflake.Data.Core;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Snowflake.Data.Log;
-    using System.Diagnostics;
-    using Snowflake.Data.Tests.Mock;
-    using System.Runtime.InteropServices;
-    using System.Net.Http;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
