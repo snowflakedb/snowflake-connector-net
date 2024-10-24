@@ -1691,18 +1691,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+                    var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
 
                     try
                     {
                         // Arrange
+                        Directory.CreateDirectory(tempFolder);
                         var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                         for (int i = 0; i < NumberOfFiles; i++)
                         {
-                            File.WriteAllText(prefix + $"_{i}.csv", data);
+                            File.WriteAllText(Path.Combine(tempFolder, $"{i}.csv"), data);
                         }
                         CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
-                        cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 
                         // Act
@@ -1714,10 +1715,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     finally
                     {
-                        for (int i = 0; i < NumberOfRows; i++)
-                        {
-                            File.Delete(prefix + $"_{i}.csv");
-                        }
+                        Directory.Delete(tempFolder, true);
                     }
                 }
             }
@@ -1737,18 +1735,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+                    var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
 
                     try
                     {
                         // Arrange
+                        Directory.CreateDirectory(tempFolder);
                         var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                         for (int i = 0; i < NumberOfFiles; i++)
                         {
-                            File.WriteAllText(prefix + $"_{i}.csv", data);
+                            File.WriteAllText(Path.Combine(tempFolder, $"{i}.csv"), data);
                         }
                         CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
-                        cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 
                         // Act
@@ -1760,10 +1759,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     finally
                     {
-                        for (int i = 0; i < NumberOfRows; i++)
-                        {
-                            File.Delete(prefix + $"_{i}.csv");
-                        }
+                        Directory.Delete(tempFolder, true);
                     }
                 }
             }
