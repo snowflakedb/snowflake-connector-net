@@ -1691,27 +1691,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    // Arrange
-                    var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                     var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
-                    for (int i = 0; i < NumberOfFiles; i++)
+
+                    try
                     {
-                        File.WriteAllText(prefix + $"_{i}.csv", data);
+                        // Arrange
+                        var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                        for (int i = 0; i < NumberOfFiles; i++)
+                        {
+                            File.WriteAllText(prefix + $"_{i}.csv", data);
+                        }
+                        CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                        var reader = cmd.ExecuteReader();
+
+                        // Act
+                        cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        int actualRowCount = cmd.ExecuteNonQuery();
+
+                        // Assert
+                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
                     }
-                    CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
-                    cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
-                    var reader = cmd.ExecuteReader();
-
-                    // Act
-                    cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
-                    int actualRowCount = cmd.ExecuteNonQuery();
-
-                    // Assert
-                    Assert.AreEqual(ExpectedRowCount, actualRowCount);
-
-                    for (int i = 0; i < NumberOfRows; i++)
+                    finally
                     {
-                        File.Delete(prefix + $"_{i}.csv");
+                        for (int i = 0; i < NumberOfRows; i++)
+                        {
+                            File.Delete(prefix + $"_{i}.csv");
+                        }
                     }
                 }
             }
@@ -1731,27 +1737,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
                 {
-                    // Arrange
-                    var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                     var prefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
-                    for (int i = 0; i < NumberOfFiles; i++)
+
+                    try
                     {
-                        File.WriteAllText(prefix + $"_{i}.csv", data);
+                        // Arrange
+                        var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                        for (int i = 0; i < NumberOfFiles; i++)
+                        {
+                            File.WriteAllText(prefix + $"_{i}.csv", data);
+                        }
+                        CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
+                        var reader = cmd.ExecuteReader();
+
+                        // Act
+                        cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                        // Assert
+                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
                     }
-                    CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
-                    cmd.CommandText = $"PUT file://{prefix + "_*.csv"} @%{TableName} AUTO_COMPRESS=FALSE";
-                    var reader = cmd.ExecuteReader();
-
-                    // Act
-                    cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
-                    int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    // Assert
-                    Assert.AreEqual(ExpectedRowCount, actualRowCount);
-
-                    for (int i = 0; i < NumberOfRows; i++)
+                    finally
                     {
-                        File.Delete(prefix + $"_{i}.csv");
+                        for (int i = 0; i < NumberOfRows; i++)
+                        {
+                            File.Delete(prefix + $"_{i}.csv");
+                        }
                     }
                 }
             }
