@@ -36,9 +36,18 @@ namespace Snowflake.Data.Core
                     var index = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_loaded");
                     if (index >= 0)
                     {
-                        resultSet.Next();
-                        updateCount = resultSet.GetInt64(index);
-                        resultSet.Rewind();
+                        int rewindCount = 1;
+                        while (resultSet.Next())
+                        {
+                            updateCount += resultSet.GetInt64(index);
+                            rewindCount++;
+                        }
+
+                        while (rewindCount > 0)
+                        {
+                            resultSet.Rewind();
+                            rewindCount--;
+                        }
                     }
                     break;
                 case SFStatementType.COPY_UNLOAD:
