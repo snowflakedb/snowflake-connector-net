@@ -2273,10 +2273,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        // [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
-            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=123456"
+            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
             // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
             // SnowflakeCredentialManagerFactory.UseFileCredentialManager();
@@ -2305,7 +2305,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.Passcode = SecureStringHelper.Encode("123456");
+                conn.Passcode = SecureStringHelper.Encode("$(set proper passcode)");
                 // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
                 conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
 

@@ -17,8 +17,7 @@ namespace Snowflake.Data.Client
         private static readonly object s_credentialManagerLock = new object();
 
         private static ISnowflakeCredentialManager s_credentialManager;
-        private static bool s_isDefaultCredentialManager = true;
-        private static ISnowflakeCredentialManager s_defaultCredentialManager;
+        private static bool s_isDefaultCredentialManager = false;
 
         internal static string BuildCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
         {
@@ -55,7 +54,11 @@ namespace Snowflake.Data.Client
                         "Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.");
                 }
 
-                if (customCredentialManager == s_credentialManager) return;
+                if (customCredentialManager == s_credentialManager)
+                {
+                    s_logger.Info($"Credential manager is already set to: {customCredentialManager.GetType().Name}");
+                    return;
+                }
 
                 s_isDefaultCredentialManager = customCredentialManager == GetDefaultCredentialManager();
                 s_logger.Info($"Setting the credential manager: {customCredentialManager.GetType().Name}");
@@ -83,15 +86,10 @@ namespace Snowflake.Data.Client
 
         private static ISnowflakeCredentialManager GetDefaultCredentialManager()
         {
-            if (s_defaultCredentialManager == null)
-            {
-                s_defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? (ISnowflakeCredentialManager)
-                    SFCredentialManagerWindowsNativeImpl.Instance
-                    : SFCredentialManagerInMemoryImpl.Instance;
-            }
-
-            return s_defaultCredentialManager;
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? (ISnowflakeCredentialManager)
+                SFCredentialManagerWindowsNativeImpl.Instance
+                : SFCredentialManagerInMemoryImpl.Instance;;
         }
     }
 }
