@@ -1700,7 +1700,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                         for (int i = 0; i < NumberOfFiles; i++)
                         {
-                            File.WriteAllText(Path.Combine(tempFolder, $"{i}.csv"), data);
+                            File.WriteAllText(Path.Combine(tempFolder, $"{TestContext.CurrentContext.Test.Name}_{i}.csv"), data);
                         }
                         CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
                         cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
@@ -1744,7 +1744,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
                         for (int i = 0; i < NumberOfFiles; i++)
                         {
-                            File.WriteAllText(Path.Combine(tempFolder, $"{i}.csv"), data);
+                            File.WriteAllText(Path.Combine(tempFolder, $"{TestContext.CurrentContext.Test.Name}_{i}.csv"), data);
                         }
                         CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
                         cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
