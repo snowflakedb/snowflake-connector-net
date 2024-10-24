@@ -10,19 +10,8 @@ using System.Security.Cryptography;
 namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
-    /// The encryption materials.
-    /// </summary>
-    internal class MaterialDescriptor
-    {
-        public string smkId { get; set; }
-
-        public string queryId { get; set; }
-
-        public string keySize { get; set; }
-    }
-
-    /// <summary>
     /// The encryptor/decryptor for PUT/GET files.
+    /// Handles encryption and decryption using AES CBC (for files) and ECB (for keys).
     /// </summary>
     class EncryptionProvider
     {
