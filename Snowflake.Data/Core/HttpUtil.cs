@@ -378,9 +378,9 @@ namespace Snowflake.Data.Core
                 UriUpdater updater = new UriUpdater(requestMessage.RequestUri, includeRetryReason);
                 int retryCount = 0;
 
+                long startTimeInMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 while (true)
                 {
-
                     try
                     {
                         childCts = null;
@@ -401,13 +401,12 @@ namespace Snowflake.Data.Core
                         lastException = e;
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            logger.Debug("SF rest request timeout or explicit cancel called.");
+                            logger.Info("SF rest request timeout or explicit cancel called.");
                             cancellationToken.ThrowIfCancellationRequested();
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
-                            logger.Warn("Http request timeout. Retry the request");
-                            totalRetryTime += (int)httpTimeout.TotalSeconds;
+                            logger.Warn($"Http request timeout. Retry the request after {backOffInSec} sec.");
                         }
                         else
                         {
@@ -425,6 +424,8 @@ namespace Snowflake.Data.Core
                             }
                         }
                     }
+
+                    totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
 
                     if (childCts != null)
                     {
@@ -464,6 +465,19 @@ namespace Snowflake.Data.Core
                         logger.Info("Response returned was null.");
                     }
 
+                    if (restTimeout.TotalSeconds > 0 && totalRetryTime > restTimeout.TotalSeconds)
+                    {
+                        logger.Debug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
+                        if (response != null)
+                        {
+                            return response;
+                        }
+                        var errorMessage = $"http request failed and connection_timeout {restTimeout.TotalSeconds} sec. reached.\n";
+                        errorMessage += $"Last exception encountered: {lastException}";
+                        logger.Error(errorMessage);
+                        throw new OperationCanceledException(errorMessage);
+                    }
+
                     retryCount++;
                     if ((maxRetryCount > 0) && (retryCount > maxRetryCount))
                     {
@@ -486,7 +500,6 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
-                    totalRetryTime += backOffInSec;
 
                     var jitter = GetJitter(backOffInSec);
 
@@ -504,12 +517,14 @@ namespace Snowflake.Data.Core
                         backOffInSec *= 2;
                     }
 
+                    totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
                     if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
                     {
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
-                        // then use the remaining connection timeout
-                        backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime);
+                        // then use the remaining connection timeout.
+                        // Math.Max with 0 in case totalRetryTime > restTimeout.TotalSeconds
+                        backOffInSec = Math.Max(Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime), 0);
                     }
                 }
             }
