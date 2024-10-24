@@ -15,10 +15,9 @@ namespace Snowflake.Data.Client
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFactory>();
 
         private static readonly object s_credentialManagerLock = new object();
+        private static readonly ISnowflakeCredentialManager s_defaultCredentialManager = GetDefaultCredentialManager();
 
         private static ISnowflakeCredentialManager s_credentialManager;
-        private static bool s_isDefaultCredentialManager = true;
-        private static ISnowflakeCredentialManager s_defaultCredentialManager;
 
         internal static string BuildCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
         {
@@ -55,9 +54,12 @@ namespace Snowflake.Data.Client
                         "Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.");
                 }
 
-                if (customCredentialManager == s_credentialManager) return;
+                if (customCredentialManager == s_credentialManager)
+                {
+                    s_logger.Info($"Credential manager is already set to: {customCredentialManager.GetType().Name}");
+                    return;
+                }
 
-                s_isDefaultCredentialManager = customCredentialManager == GetDefaultCredentialManager();
                 s_logger.Info($"Setting the credential manager: {customCredentialManager.GetType().Name}");
                 s_credentialManager = customCredentialManager;
             }
@@ -71,27 +73,23 @@ namespace Snowflake.Data.Client
                 {
                     if (s_credentialManager == null)
                     {
-                        s_isDefaultCredentialManager = true;
-                        s_credentialManager = GetDefaultCredentialManager();
+                        s_credentialManager = s_defaultCredentialManager;
                     }
                 }
             }
-            var typeCredentialText = s_isDefaultCredentialManager ? "default" : "custom";
-            s_logger.Info($"Using {typeCredentialText} credential manager: {s_credentialManager?.GetType().Name}");
-            return s_credentialManager;
+
+            var credentialManager = s_credentialManager;
+            var typeCredentialText = credentialManager == s_defaultCredentialManager ? "default" : "custom";
+            s_logger.Info($"Using {typeCredentialText} credential manager: {credentialManager?.GetType().Name}");
+            return credentialManager;
         }
 
         private static ISnowflakeCredentialManager GetDefaultCredentialManager()
         {
-            if (s_defaultCredentialManager == null)
-            {
-                s_defaultCredentialManager = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? (ISnowflakeCredentialManager)
-                    SFCredentialManagerWindowsNativeImpl.Instance
-                    : SFCredentialManagerInMemoryImpl.Instance;
-            }
-
-            return s_defaultCredentialManager;
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? (ISnowflakeCredentialManager)
+                SFCredentialManagerWindowsNativeImpl.Instance
+                : SFCredentialManagerInMemoryImpl.Instance;
         }
     }
 }
