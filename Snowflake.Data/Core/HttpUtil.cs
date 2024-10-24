@@ -523,8 +523,7 @@ namespace Snowflake.Data.Core
                         // No need to wait more than necessary if it can be avoided.
                         // If the rest timeout will be reached before the next back-off,
                         // then use the remaining connection timeout.
-                        // Math.Max with 0 in case totalRetryTime > restTimeout.TotalSeconds
-                        backOffInSec = Math.Max(Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime), 0);
+                        backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime + 1);
                     }
                 }
             }
