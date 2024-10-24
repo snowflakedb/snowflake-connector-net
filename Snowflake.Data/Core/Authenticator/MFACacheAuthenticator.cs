@@ -1,19 +1,19 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Log;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    class BasicAuthenticator : BaseAuthenticator, IAuthenticator
+    class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public const string AUTH_NAME = "snowflake";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
+        public const string AUTH_NAME = "username_password_mfa";
 
-        internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
+        internal MFACacheAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
         }
 
@@ -34,6 +34,12 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
+            data.SessionParameters[SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN] = true;
+            data.HttpTimeout = TimeSpan.FromSeconds(60);
+            if (!string.IsNullOrEmpty(session._mfaToken?.ToString()))
+            {
+                data.Token = SecureStringHelper.Decode(session._mfaToken);
+            }
             SetSecondaryAuthenticationData(ref data);
         }
     }
