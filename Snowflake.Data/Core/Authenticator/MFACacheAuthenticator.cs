@@ -12,6 +12,7 @@ namespace Snowflake.Data.Core.Authenticator
     class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "username_password_mfa";
+        private const int _MFA_LOGIN_HTTP_TIMEOUT = 60;
 
         internal MFACacheAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Core.Authenticator
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
             data.SessionParameters[SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN] = true;
-            data.HttpTimeout = TimeSpan.FromSeconds(60);
+            data.HttpTimeout = TimeSpan.FromSeconds(_MFA_LOGIN_HTTP_TIMEOUT);
             if (!string.IsNullOrEmpty(session._mfaToken?.ToString()))
             {
                 data.Token = SecureStringHelper.Decode(session._mfaToken);

@@ -145,7 +145,9 @@ namespace Snowflake.Data.Core.Authenticator
             };
             SetSpecializedAuthenticatorData(ref data);
 
-            return data.HttpTimeout.HasValue ? session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) : session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
     }
 
