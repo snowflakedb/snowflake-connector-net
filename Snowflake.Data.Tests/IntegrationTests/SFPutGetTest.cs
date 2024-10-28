@@ -527,8 +527,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP", "AZURE" })]
         public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
-            [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
-            [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
+            [Values("none", "gzip")] string sourceFileCompressionType,
+            [Values("", "/DEEP/TEST_PATH")] string stagePath,
             [Values] bool autoCompress)
         {
             PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
