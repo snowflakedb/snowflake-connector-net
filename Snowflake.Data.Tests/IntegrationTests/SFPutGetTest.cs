@@ -31,6 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_schemaName;
         [ThreadStatic] private static string t_tableName;
         [ThreadStatic] private static string t_stageName;
+        [ThreadStatic] private static string t_stageNameSse; // server side encryption without client side encryption
         [ThreadStatic] private static string t_fileName;
         [ThreadStatic] private static string t_outputFileName;
         [ThreadStatic] private static string t_inputFilePath;
@@ -41,12 +42,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_destCompressionType;
         [ThreadStatic] private static bool t_autoCompress;
         [ThreadStatic] private static List<string> t_filesToDelete;
-        
+
         public enum StageType
         {
             USER,
             TABLE,
-            NAMED
+            NAMED,
+            NAMED_SSE // without client side encryption
         }
 
         [OneTimeSetUp]
@@ -63,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Delete temp output directory and downloaded files
             Directory.Delete(s_outputDirectory, true);
         }
-        
+
         [SetUp]
         public void SetUp()
         {
@@ -73,6 +75,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_schemaName = testConfig.schema;
             t_tableName = $"TABLE_{threadSuffix}";
             t_stageName = $"STAGE_{threadSuffix}";
+            t_stageNameSse = $"STAGE_{threadSuffix}_SSE";
             t_filesToDelete = new List<string>();
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -87,6 +90,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Create temp stage
                     command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageName}";
+                    command.ExecuteNonQuery();
+
+                    // Create temp stage without client side encryption
+                    command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageNameSse} ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')";
                     command.ExecuteNonQuery();
                 }
             }
@@ -109,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.ExecuteNonQuery();
                 }
             }
-            
+
             // Delete temp files if necessary
             if (t_filesToDelete != null)
             {
@@ -130,7 +137,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 $"{absolutePathPrefix}_three.csv"
             };
             PrepareFileData(files);
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{absolutePathPrefix}*";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -142,7 +149,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutFileAsteriskWildcardWithExtension()
         {
@@ -167,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutFileQuestionMarkWildcard()
         {
@@ -180,7 +187,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             PrepareFileData(files);
             // Create file which should be omitted during the transfer
             PrepareFileData($"{absolutePathPrefix}_four.csv");
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{absolutePathPrefix}_?.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -192,14 +199,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutFileRelativePathWithoutDirectory()
         {
             // Set the PUT query variables
             t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-            
+
             PrepareFileData(t_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -226,7 +233,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
             }
         }
-        
+
         [Test]
         public void TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
         {
@@ -236,7 +243,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
-                conn.Open(); 
+                conn.Open();
                 var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
                 using (var command = conn.CreateCommand())
                 {
@@ -246,7 +253,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        
+
         [Test]
         public void TestPutNonExistentFileThrowsWithQueryId()
         {
@@ -256,14 +263,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
-                conn.Open(); 
+                conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 Assert.IsNotNull(snowflakeDbException);
                 Assert.IsNotNull(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
-        
+
         [Test]
         public void TestPutFileProvidesQueryIdOnFailure()
         {
@@ -285,7 +292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
-        
+
         [Test]
         public void TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
         {
@@ -308,7 +315,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.That(snowflakeDbException.InnerException, Is.Null);
             }
         }
-        
+
         [Test]
         public void TestPutFileProvidesQueryIdOnSuccess()
         {
@@ -323,7 +330,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 var queryId = PutFile(conn);
-                
+
                 // Assert
                 Assert.IsNotNull(queryId);
                 Assert.DoesNotThrow(()=>Guid.Parse(queryId));
@@ -337,11 +344,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var guid = Guid.NewGuid();
             var relativePath = $"{guid}";
             Directory.CreateDirectory(relativePath);
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-            
+
             PrepareFileData(t_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -351,7 +358,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutFileRelativePathAsteriskWildcard()
         {
@@ -374,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         // presigned url is enabled on CI so we need to disable the test
         // it should be enabled when downscoped credential is the default option
@@ -384,7 +391,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Set the PUT query variables
             t_inputFilePath = $"{Guid.NewGuid()}.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-            
+
             PrepareFileData(t_inputFilePath);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -395,18 +402,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
             }
         }
-        
+
         [Test]
         public void TestPutFileWithOverwriteFlagRunsSecondUpload()
         {
             var overwriteAttribute = "OVERWRITE=TRUE";
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{Guid.NewGuid()}.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-            
+
             PrepareFileData(t_inputFilePath);
-            
+
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
@@ -415,7 +422,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
             }
         }
-        
+
         [Test]
         public void TestPutDirectoryAsteriskWildcard()
         {
@@ -431,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -459,7 +466,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -471,7 +478,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutDirectoryMixedWildcard()
         {
@@ -487,7 +494,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 PrepareFileData(fullPath);
                 files.Add(fullPath);
             }
-            
+
             // Set the PUT query variables
             t_inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -499,7 +506,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
-        
+
         [Test]
         public void TestPutGetCommand(
             [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
@@ -517,7 +524,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 GetFile(conn);
             }
         }
-        
+
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
         [Test]
         [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AWS", "AZURE" })]
@@ -536,14 +543,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 GetFile(conn);
             }
         }
-        
+
         private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath, bool autoCompress)
         {
             t_stageType = stageType;
             t_sourceCompressionType = sourceFileCompressionType;
             t_autoCompress = autoCompress;
             // Prepare temp file name with specified file extension
-            t_fileName = Guid.NewGuid() + ".csv" + 
+            t_fileName = Guid.NewGuid() + ".csv" +
                         (t_autoCompress? SFFileCompressionTypes.LookUpByName(t_sourceCompressionType).FileExtension: "");
             t_inputFilePath = Path.GetTempPath() + t_fileName;
             if (IsCompressedByTheDriver())
@@ -572,6 +579,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 case StageType.NAMED:
                     t_internalStagePath = $"@{t_schemaName}.{t_stageName}{stagePath}";
                     break;
+                case StageType.NAMED_SSE:
+                    t_internalStagePath = $"@{t_schemaName}.{t_stageNameSse}{stagePath}";
+                    break;
             }
         }
 
@@ -579,11 +589,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             return t_sourceCompressionType == "none" && t_autoCompress;
         }
-        
+
         // PUT - upload file from local directory to the stage
         string PutFile(
-            SnowflakeDbConnection conn, 
-            String additionalAttribute = "", 
+            SnowflakeDbConnection conn,
+            String additionalAttribute = "",
             ResultStatus expectedStatus = ResultStatus.UPLOADED)
         {
             string queryId;
@@ -704,7 +714,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             switch (command)
             {
-                case "GET": 
+                case "GET":
                     GetFile(connection);
                     break;
                 case "PUT":
@@ -747,7 +757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Prepare csv raw data and write to temp files
             var rawDataRow = string.Join(",", s_colData) + "\n";
             var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NumberOfRows));
-            
+
             File.WriteAllText(file, rawData);
             t_filesToDelete.Add(file);
         }
