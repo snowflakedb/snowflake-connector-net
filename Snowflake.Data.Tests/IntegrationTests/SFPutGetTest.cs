@@ -47,8 +47,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             USER,
             TABLE,
-            NAMED,
-            NAMED_SSE // without client side encryption
+            NAMED
         }
 
         [OneTimeSetUp]
@@ -510,7 +509,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutGetCommand(
             [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
-            [Values(StageType.USER, StageType.TABLE, StageType.NAMED)] StageType stageType,
+            [Values] StageType stageType,
             [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
             [Values] bool autoCompress)
         {
@@ -527,13 +526,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP", "AZURE" })]
-        public void TestPutGetCommandWithoutClientSideEncryption(
+        public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
             [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
-            [Values(StageType.NAMED_SSE)] StageType stageType,
             [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
             [Values] bool autoCompress)
         {
-            PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
+            PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
 
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -563,7 +561,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath, bool autoCompress)
+        private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
+            bool autoCompress, bool clientEncryption = true)
         {
             t_stageType = stageType;
             t_sourceCompressionType = sourceFileCompressionType;
@@ -596,10 +595,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     t_internalStagePath = $"@{t_schemaName}.%{t_tableName}{stagePath}";
                     break;
                 case StageType.NAMED:
-                    t_internalStagePath = $"@{t_schemaName}.{t_stageName}{stagePath}";
-                    break;
-                case StageType.NAMED_SSE:
-                    t_internalStagePath = $"@{t_schemaName}.{t_stageNameSse}{stagePath}";
+                    t_internalStagePath = clientEncryption
+                        ? $"@{t_schemaName}.{t_stageName}{stagePath}"
+                        : $"@{t_schemaName}.{t_stageNameSse}{stagePath}";
                     break;
             }
         }
