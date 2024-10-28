@@ -525,7 +525,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP", "AZURE" })]
         public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
             [Values("none", "gzip")] string sourceFileCompressionType,
             [Values("", "/DEEP/TEST_PATH")] string stagePath,

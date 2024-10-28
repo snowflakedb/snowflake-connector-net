@@ -422,10 +422,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
             };
 
-            // Populate the S3 Request Metadata
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
-            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
+            if (stageInfo.isClientSideEncrypted)
+            {
+                // Populate the S3 Request Metadata
+                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
+                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
+                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
+            }
 
             return putObjectRequest;
         }
