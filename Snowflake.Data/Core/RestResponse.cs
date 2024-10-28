@@ -382,9 +382,6 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal PutGetStageInfo stageInfo { get; set; }
 
-        [JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
-        internal bool isClientSideEncrypted { get; set; }
-
         [JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
         [JsonConverter(typeof(SingleOrArrayConverter<PutGetEncryptionMaterial>))]
         internal List<PutGetEncryptionMaterial> encryptionMaterial { get; set; }

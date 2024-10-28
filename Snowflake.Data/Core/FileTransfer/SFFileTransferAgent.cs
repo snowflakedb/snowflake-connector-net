@@ -544,7 +544,7 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                if (TransferMetadata.isClientSideEncrypted)
+                if (TransferMetadata.encryptionMaterial.Count > 0)
                 {
                     EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
                 }
@@ -673,7 +673,7 @@ namespace Snowflake.Data.Core
                         overwrite = TransferMetadata.overwrite,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         parallel = TransferMetadata.parallel,
-                        encryptionMaterial = TransferMetadata.isClientSideEncrypted
+                        encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
                             ? TransferMetadata.encryptionMaterial[index]
                             : null,
                         MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
