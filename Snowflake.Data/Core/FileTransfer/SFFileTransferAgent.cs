@@ -544,7 +544,7 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                if (TransferMetadata.encryptionMaterial.Count > 0)
+                if (TransferMetadata.stageInfo.isClientSideEncrypted)
                 {
                     EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
                 }

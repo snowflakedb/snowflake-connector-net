@@ -510,7 +510,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutGetCommand(
             [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
-            [Values] StageType stageType,
+            [Values(StageType.USER, StageType.TABLE, StageType.NAMED)] StageType stageType,
+            [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
+            [Values] bool autoCompress)
+        {
+            PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
+
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                PutFile(conn);
+                CopyIntoTable(conn);
+                GetFile(conn);
+            }
+        }
+
+        [Test]
+        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP", "AZURE" })]
+        public void TestPutGetCommandWithoutClientSideEncryption(
+            [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
+            [Values(StageType.NAMED_SSE)] StageType stageType,
             [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
             [Values] bool autoCompress)
         {

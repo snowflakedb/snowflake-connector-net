@@ -428,6 +428,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "storageAccount", NullValueHandling = NullValueHandling.Ignore)]
         internal string storageAccount { get; set; }
 
+        [JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool isClientSideEncrypted { get; set; }
+
         [JsonProperty(PropertyName = "creds", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<string, string> stageCredentials { get; set; }
 
