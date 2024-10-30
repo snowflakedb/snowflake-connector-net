@@ -3,6 +3,7 @@
  */
 
 using Mono.Unix;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -309,7 +310,7 @@ token_file_path = ""{tokenFilePath}""");
         }
 
         [Test]
-        public void TestConnectionWithOauthAuthenticatorFromDefaultIfTokenFilePathNotExists()
+        public void TestConnectionWithOauthAuthenticatorThrowsExceptionIfTokenFilePathNotExists()
         {
             // Arrange
             var tokenFilePath = "/Users/testuser/token";
@@ -337,11 +338,9 @@ token_file_path = ""{tokenFilePath}""");
 
             var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
 
-            // Act
-            var connectionString = reader.GetConnectionStringFromToml();
-
-            // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;token={defaultToken};", connectionString);
+            // Act and assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => reader.GetConnectionStringFromToml());
+            Assert.IsTrue(exception.Message.StartsWith("Error: Invalid parameter value /Users/testuser/token for token_file_path"));
         }
 
         [Test]

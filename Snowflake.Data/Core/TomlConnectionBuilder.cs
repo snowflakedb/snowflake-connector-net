@@ -99,7 +99,21 @@ namespace Snowflake.Data.Core
 
         private string LoadTokenFromFile(string tokenFilePathValue)
         {
-            var tokenFile = !string.IsNullOrEmpty(tokenFilePathValue) && _fileOperations.Exists(tokenFilePathValue) ? tokenFilePathValue : DefaultTokenPath;
+            string tokenFile;
+            if(string.IsNullOrEmpty(tokenFilePathValue))
+            {
+                tokenFile = DefaultTokenPath;
+            }
+            else
+            {
+                if (!_fileOperations.Exists(tokenFilePathValue))
+                {
+                    s_logger.Debug($"Specified file {tokenFilePathValue} does not exists.");
+                    throw new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, tokenFilePathValue, "token_file_path");
+                }
+
+                tokenFile = tokenFilePathValue;
+            }
             s_logger.Debug($"Read token from file path: {tokenFile}");
             return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile, ValidateFilePermissions) : null;
         }
