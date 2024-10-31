@@ -468,7 +468,7 @@ namespace Snowflake.Data.Core
 
                         fileMeta.stageInfo = response.data.stageInfo;
                         fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }                    
+                    }
                 }
                 else if (CommandTypes.DOWNLOAD == CommandType)
                 {
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Core
                         FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                     }
                 }
-            }            
+            }
         }
 
         /// <summary>
@@ -544,7 +544,10 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                if (TransferMetadata.stageInfo.isClientSideEncrypted)
+                {
+                    EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                }
             }
         }
 
@@ -670,7 +673,9 @@ namespace Snowflake.Data.Core
                         overwrite = TransferMetadata.overwrite,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         parallel = TransferMetadata.parallel,
-                        encryptionMaterial = TransferMetadata.encryptionMaterial[index],
+                        encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
+                            ? TransferMetadata.encryptionMaterial[index]
+                            : null,
                         MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
                         _operationType = CommandTypes.DOWNLOAD
                     };
@@ -715,7 +720,7 @@ namespace Snowflake.Data.Core
                 return FileTransferConfiguration.DefaultMaxBytesInMemory;
             }
         }
-            
+
         /// <summary>
         /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
         /// Also replace the relative paths to the absolute paths for the files if needed.
@@ -731,7 +736,7 @@ namespace Snowflake.Data.Core
             var directoryName = Path.GetDirectoryName(location);
             var foundDirectories = ExpandDirectories(directoryName);
             var filePaths = new List<string>();
-            
+
             if (ContainsWildcard(fileName))
             {
                 foreach (var directory in foundDirectories)
@@ -756,8 +761,8 @@ namespace Snowflake.Data.Core
                     {
                         filePaths.AddRange(
                             Directory.GetFiles(
-                                directory, 
-                                fileName, 
+                                directory,
+                                fileName,
                                 SearchOption.TopDirectoryOnly));
                     }
                 }
@@ -788,7 +793,7 @@ namespace Snowflake.Data.Core
 
             return filePaths;
         }
-        
+
         /// <summary>
         /// Expand the wildcards in the directory path to generate the list of directories to be searched for the files.
         /// </summary>
@@ -803,7 +808,7 @@ namespace Snowflake.Data.Core
             {
                 return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
             }
-            
+
             var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
             var resolvedPaths = new List<string>();
 
@@ -863,7 +868,7 @@ namespace Snowflake.Data.Core
         private static string ExpandHomeDirectoryIfNeeded(string directoryPath)
         {
             if (!directoryPath.Contains('~')) return directoryPath;
-            
+
             var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
                             Environment.OSVersion.Platform == PlatformID.MacOSX)
                 ? Environment.GetEnvironmentVariable("HOME")
@@ -1036,7 +1041,7 @@ namespace Snowflake.Data.Core
               {
                   await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
               }
-              
+
               // Break out of loop if file is successfully uploaded or already exists
               if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                   fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
@@ -1429,7 +1434,7 @@ namespace Snowflake.Data.Core
                 throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
             }
         }
-        
+
         private static bool IsDirectory(string path)
         {
             var attr = File.GetAttributes(path);

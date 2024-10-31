@@ -240,11 +240,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
-            String encryptionData = GetUploadEncryptionData(encryptionMetadata);
-
             try
             {
-                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
 
                 Stream dataStream = request.GetRequestStream();
                 fileBytesStream.Position = 0;
@@ -271,11 +269,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileByteStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
-            String encryptionData = GetUploadEncryptionData(encryptionMetadata);
-
             try
             {
-                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata, encryptionData);
+                WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
 
                 Stream dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
                 fileByteStream.Position = 0;
@@ -294,14 +290,19 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
         }
 
-        private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata, String encryptionData)
+        private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
             // Issue the POST/PUT request
             WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
 
             request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
-            request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
-            request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
+            if (fileMetadata.stageInfo.isClientSideEncrypted)
+            {
+                String encryptionData = GetUploadEncryptionData(ref fileMetadata, encryptionMetadata);
+
+                request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
+                request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
+            }
 
             return request;
         }
@@ -311,7 +312,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         /// <returns>Stream content.</returns>
-        private String GetUploadEncryptionData(SFEncryptionMetadata encryptionMetadata)
+        private String GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the encryption header value
             string encryptionData = JsonConvert.SerializeObject(new EncryptionData
@@ -415,20 +416,23 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             WebHeaderCollection headers = response.Headers;
 
             // Get header values
-            dynamic encryptionData = JsonConvert.DeserializeObject(headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP));
-            string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
-
-            // Get encryption metadata from encryption data header value
-            SFEncryptionMetadata encryptionMetadata = null;
-            if (encryptionData != null)
+            var encryptionDataStr = headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP);
+            if (encryptionDataStr != null)
             {
-                encryptionMetadata = new SFEncryptionMetadata
+                dynamic encryptionData = JsonConvert.DeserializeObject(encryptionDataStr);
+                string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
+
+                // Get encryption metadata from encryption data header value
+                if (encryptionData != null)
                 {
-                    iv = encryptionData["ContentEncryptionIV"],
-                    key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                    matDesc = matDesc
-                };
-                fileMetadata.encryptionMetadata = encryptionMetadata;
+                    SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+                    {
+                        iv = encryptionData["ContentEncryptionIV"],
+                        key = encryptionData["WrappedContentKey"]["EncryptedKey"],
+                        matDesc = matDesc
+                    };
+                    fileMetadata.encryptionMetadata = encryptionMetadata;
+                }
             }
 
             fileMetadata.sha256Digest = headers.Get(GCS_METADATA_SFC_DIGEST);
