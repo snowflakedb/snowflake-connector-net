@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core
         {
             var tomlPath = ResolveConnectionTomlFile();
             var connectionToml = GetTomlTableFromConfig(tomlPath, connectionName);
-            s_logger.Debug($"Reading connection parameters from file using key: {connectionName} and path: {tomlPath}");
+            s_logger.Info($"Reading connection parameters from file using key: {connectionName} and path: {tomlPath}");
             return connectionToml == null ? string.Empty : GetConnectionStringFromTomlTable(connectionToml);
         }
 
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            s_logger.Debug($"Reading token from file {tokenFilePathValue}");
+            s_logger.Info($"Trying to load token from file {tokenFilePathValue}");
             var token = LoadTokenFromFile(tokenFilePathValue);
             if (!string.IsNullOrEmpty(token))
             {
@@ -108,13 +108,13 @@ namespace Snowflake.Data.Core
             {
                 if (!_fileOperations.Exists(tokenFilePathValue))
                 {
-                    s_logger.Debug($"Specified file {tokenFilePathValue} does not exists.");
+                    s_logger.Info($"Specified token file {tokenFilePathValue} does not exists.");
                     throw new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, tokenFilePathValue, "token_file_path");
                 }
 
                 tokenFile = tokenFilePathValue;
             }
-            s_logger.Debug($"Read token from file path: {tokenFile}");
+            s_logger.Info($"Read token from file path: {tokenFile}");
             return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile, ValidateFilePermissions) : null;
         }
 
