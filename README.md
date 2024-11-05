@@ -84,9 +84,9 @@ Steps to verify the signature:
 3. Download the signatures file from the release, e.g.: https://github.com/snowflakedb/snowflake-connector-net/releases/tag/v4.2.0
 4. Verify the signature, e.g:
 ```shell
-./cosign verify-blob snowflake.data.4.2.0.nupkg \
---key snowflake.data.v4.2.0.pub \
---signature snowflake.data.v4.2.0.pub.sig
+cosign verify-blob snowflake.data.4.2.0.nupkg \
+--key snowflake-connector-net-v4.2.0.pub \
+--signature Snowflake.Data.4.2.0.nupkg.sig
 
 Verified OK
 ```
