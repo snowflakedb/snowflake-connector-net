@@ -75,6 +75,22 @@ Alternatively, packages can also be downloaded using Package Manager Console:
 PM> Install-Package Snowflake.Data
 ```
 
+# Verifying the package signature
+
+Starting from version v4.2.0 the driver package is signed with a signature allowing to verify its authenticity and integrity.
+Steps to verify the signature:
+1. Install `cosign`
+2. Download the driver package file (`.nupkg`) from nuget, e.g.: https://www.nuget.org/packages/Snowflake.Data/4.2.0
+3. Download the signatures file from the release, e.g.: https://github.com/snowflakedb/snowflake-connector-net/releases/tag/v4.2.0
+4. Verify the signature, e.g:
+```shell
+cosign verify-blob snowflake.data.4.2.0.nupkg \
+--key snowflake-connector-net-v4.2.0.pub \
+--signature Snowflake.Data.4.2.0.nupkg.sig
+
+Verified OK
+```
+
 # Testing and Code Coverage
 
 [Running tests](doc/Testing.md)
