@@ -178,6 +178,8 @@ Read more in [certificate validation](doc/CertficateValidation.md) docs.
     were not performed where the insecureMode flag was set to false, which is the default setting.
     From version v2.1.5 CRL is working back as intended.
 
+5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
+
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 
 See more:

@@ -406,7 +406,7 @@ namespace Snowflake.Data.Core
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
-                            logger.Warn($"Http request timeout. Retry the request after {backOffInSec} sec.");
+                            logger.Warn($"Http request timeout. Retry the request after max {backOffInSec} sec.");
                         }
                         else
                         {
@@ -465,7 +465,7 @@ namespace Snowflake.Data.Core
                         logger.Info("Response returned was null.");
                     }
 
-                    if (restTimeout.TotalSeconds > 0 && totalRetryTime > restTimeout.TotalSeconds)
+                    if (restTimeout.TotalSeconds > 0 && totalRetryTime >= restTimeout.TotalSeconds)
                     {
                         logger.Debug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
                         if (response != null)
@@ -476,6 +476,12 @@ namespace Snowflake.Data.Core
                         errorMessage += $"Last exception encountered: {lastException}";
                         logger.Error(errorMessage);
                         throw new OperationCanceledException(errorMessage);
+                    }
+
+                    if (restTimeout.TotalSeconds > 0 && totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
+                    {
+                        // No need to wait more than necessary if it can be avoided.
+                        backOffInSec = (int)restTimeout.TotalSeconds - totalRetryTime;
                     }
 
                     retryCount++;
@@ -515,15 +521,6 @@ namespace Snowflake.Data.Core
                     {
                         // Multiply sleep by 2 for non-login requests
                         backOffInSec *= 2;
-                    }
-
-                    totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
-                    if ((restTimeout.TotalSeconds > 0) && (totalRetryTime + backOffInSec > restTimeout.TotalSeconds))
-                    {
-                        // No need to wait more than necessary if it can be avoided.
-                        // If the rest timeout will be reached before the next back-off,
-                        // then use the remaining connection timeout.
-                        backOffInSec = Math.Min(backOffInSec, (int)restTimeout.TotalSeconds - totalRetryTime + 1);
                     }
                 }
             }
