@@ -84,7 +84,8 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations()
+        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
+            [ValueSource(nameof(UserAllowedPermissions))] FilePermissions userAllowedPermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -92,8 +93,7 @@ namespace Snowflake.Data.Tests.Tools
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            var filePermissions = FileAccessPermissions.UserReadWriteExecute;
-            Syscall.chmod(filePath, (FilePermissions)filePermissions);
+            Syscall.chmod(filePath, userAllowedPermissions);
 
             // act
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -177,7 +177,13 @@ namespace Snowflake.Data.Tests.Tools
 
         public static IEnumerable<FilePermissions> UserReadWritePermissions()
         {
-            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR;
+            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
+        }
+
+        public static IEnumerable<FilePermissions> UserAllowedPermissions()
+        {
+            yield return FilePermissions.S_IRUSR;
+            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
         }
 
         public static IEnumerable<FilePermissions> GroupOrOthersReadablePermissions()

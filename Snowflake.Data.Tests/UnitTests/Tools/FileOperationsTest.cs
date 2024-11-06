@@ -2,21 +2,19 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
-
-using System;
+using System.Collections.Generic;
 using Snowflake.Data.Core;
+using System.IO;
+using System.Runtime.InteropServices;
+using Mono.Unix;
+using Mono.Unix.Native;
+using NUnit.Framework;
+using Snowflake.Data.Core.Tools;
+using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
+using System.Security;
 
 namespace Snowflake.Data.Tests.Tools
 {
-    using System.IO;
-    using System.Runtime.InteropServices;
-    using Mono.Unix;
-    using Mono.Unix.Native;
-    using NUnit.Framework;
-    using Snowflake.Data.Core.Tools;
-    using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
-    using System.Security;
-
     [TestFixture, NonParallelizable]
     public class FileOperationsTest
     {
@@ -59,7 +57,9 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations()
+        public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
+            [ValueSource(nameof(UserAllowedFilePermissions))]
+            FileAccessPermissions userAllowedFilePermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -68,8 +68,9 @@ namespace Snowflake.Data.Tests.Tools
 
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            var filePermissions = FileAccessPermissions.UserReadWriteExecute;
-            Syscall.chmod(filePath, (FilePermissions)filePermissions);
+            var filePermissions = userAllowedFilePermissions;
+
+        Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -79,7 +80,9 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile()
+        public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
+            [ValueSource(nameof(UserAllowedFilePermissions))]
+            FileAccessPermissions userAllowedFilePermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -88,12 +91,20 @@ namespace Snowflake.Data.Tests.Tools
 
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            var filePermissions = FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
+            var filePermissions = userAllowedFilePermissions | FileAccessPermissions.OtherReadWriteExecute;
+
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
             Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions),
                 "Attempting to read a file with too broad permissions assigned");
+        }
+
+
+        public static IEnumerable<FileAccessPermissions> UserAllowedFilePermissions()
+        {
+            yield return FileAccessPermissions.UserRead;
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
         }
     }
 }
