@@ -10,8 +10,8 @@ namespace Snowflake.Data.Core.FileTransfer
 {
     internal class GcmEncryptionProvider
     {
-        private const int AesTagSizeInBits = 128;
-        internal const int TagSizeInBytes = AesTagSizeInBits / 8;
+        private const int TagSizeInBits = 128;
+        internal const int TagSizeInBytes = TagSizeInBits / 8;
         private const int InitVectorSizeInBytes = 12;
         private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
 
@@ -180,8 +180,8 @@ namespace Snowflake.Data.Core.FileTransfer
             var cipher = CipherUtilities.GetCipher(AesGcmNoPaddingCipher);
             KeyParameter keyParameter = new KeyParameter(keyBytes);
             var keyParameterAead = aadData == null
-                ? new AeadParameters(keyParameter, AesTagSizeInBits, initialisationVector)
-                : new AeadParameters(keyParameter, AesTagSizeInBits, initialisationVector, aadData);
+                ? new AeadParameters(keyParameter, TagSizeInBits, initialisationVector)
+                : new AeadParameters(keyParameter, TagSizeInBits, initialisationVector, aadData);
             cipher.Init(forEncryption, keyParameterAead);
             return cipher;
         }
