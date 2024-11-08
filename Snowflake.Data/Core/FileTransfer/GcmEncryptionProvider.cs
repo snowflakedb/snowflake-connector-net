@@ -10,8 +10,9 @@ namespace Snowflake.Data.Core.FileTransfer
 {
     internal class GcmEncryptionProvider
     {
-        private const int AesBlockSize = 128;
-        internal const int BlockSizeInBytes = AesBlockSize / 8;
+        private const int AesTagSizeInBits = 128;
+        internal const int TagSizeInBytes = AesTagSizeInBits / 8;
+        private const int InitVectorSizeInBytes = 12;
         private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<GcmEncryptionProvider>();
@@ -57,8 +58,8 @@ namespace Snowflake.Data.Core.FileTransfer
             int masterKeySize = decodedMasterKey.Length;
             s_logger.Debug($"Master key size : {masterKeySize}");
 
-            var contentIV = new byte[BlockSizeInBytes];
-            var keyIV = new byte[BlockSizeInBytes];
+            var contentIV = new byte[InitVectorSizeInBytes];
+            var keyIV = new byte[InitVectorSizeInBytes];
             var fileKeyBytes = new byte[masterKeySize]; // we choose a random fileKey to encrypt it with qsmk key with GCM
             s_random.NextBytes(contentIV);
             s_random.NextBytes(keyIV);
@@ -179,8 +180,8 @@ namespace Snowflake.Data.Core.FileTransfer
             var cipher = CipherUtilities.GetCipher(AesGcmNoPaddingCipher);
             KeyParameter keyParameter = new KeyParameter(keyBytes);
             var keyParameterAead = aadData == null
-                ? new AeadParameters(keyParameter, AesBlockSize, initialisationVector)
-                : new AeadParameters(keyParameter, AesBlockSize, initialisationVector, aadData);
+                ? new AeadParameters(keyParameter, AesTagSizeInBits, initialisationVector)
+                : new AeadParameters(keyParameter, AesTagSizeInBits, initialisationVector, aadData);
             cipher.Init(forEncryption, keyParameterAead);
             return cipher;
         }
