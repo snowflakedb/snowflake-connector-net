@@ -159,13 +159,17 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-            dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
-            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+            SFEncryptionMetadata encryptionMetadata = null;
+            if (response.Metadata.TryGetValue("encryptiondata", out var encryptionDataStr))
             {
-                iv = encryptionData["ContentEncryptionIV"],
-                key = encryptionData.WrappedContentKey["EncryptedKey"],
-                matDesc = response.Metadata["matdesc"]
-            };
+                dynamic encryptionData = JsonConvert.DeserializeObject(encryptionDataStr);
+                encryptionMetadata = new SFEncryptionMetadata
+                {
+                    iv = encryptionData["ContentEncryptionIV"],
+                    key = encryptionData.WrappedContentKey["EncryptedKey"],
+                    matDesc = response.Metadata["matdesc"]
+                };
+            }
 
             return new FileHeader
             {
@@ -243,31 +247,35 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string>metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
-            // Create the JSON for the encryption data header
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            if (fileMetadata.stageInfo.isClientSideEncrypted)
             {
-                EncryptionMode = "FullBlob",
-                WrappedContentKey = new WrappedContentInfo
+                // Create the JSON for the encryption data header
+                string encryptionData = JsonConvert.SerializeObject(new EncryptionData
                 {
-                    KeyId = "symmKey1",
-                    EncryptedKey = encryptionMetadata.key,
-                    Algorithm = "AES_CBC_256"
-                },
-                EncryptionAgent = new EncryptionAgentInfo
-                {
-                    Protocol = "1.0",
-                    EncryptionAlgorithm = "AES_CBC_256"
-                },
-                ContentEncryptionIV = encryptionMetadata.iv,
-                KeyWrappingMetadata = new KeyWrappingMetadataInfo
-                {
-                    EncryptionLibrary = "Java 5.3.0"
-                }
-            });
+                    EncryptionMode = "FullBlob",
+                    WrappedContentKey = new WrappedContentInfo
+                    {
+                        KeyId = "symmKey1",
+                        EncryptedKey = encryptionMetadata.key,
+                        Algorithm = "AES_CBC_256"
+                    },
+                    EncryptionAgent = new EncryptionAgentInfo
+                    {
+                        Protocol = "1.0",
+                        EncryptionAlgorithm = "AES_CBC_256"
+                    },
+                    ContentEncryptionIV = encryptionMetadata.iv,
+                    KeyWrappingMetadata = new KeyWrappingMetadataInfo
+                    {
+                        EncryptionLibrary = "Java 5.3.0"
+                    }
+                });
 
-            // Create the metadata to use for the header
-            metadata.Add("encryptiondata", encryptionData);
-            metadata.Add("matdesc", encryptionMetadata.matDesc);
+                // Create the metadata to use for the header
+                metadata.Add("encryptiondata", encryptionData);
+                metadata.Add("matdesc", encryptionMetadata.matDesc);
+            }
+
             metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;

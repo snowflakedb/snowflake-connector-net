@@ -69,7 +69,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = EndPoint,
-                    isClientSideEncrypted = true,
                     location = Location,
                     locationType = SFRemoteStorageUtil.AZURE_FS,
                     path = LocationPath,

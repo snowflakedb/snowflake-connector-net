@@ -11,7 +11,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>4.1.0</Version>
+    <Version>4.2.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
@@ -30,6 +30,7 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">

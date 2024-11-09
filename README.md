@@ -75,6 +75,22 @@ Alternatively, packages can also be downloaded using Package Manager Console:
 PM> Install-Package Snowflake.Data
 ```
 
+# Verifying the package signature
+
+Starting from version v4.2.0 the driver package is signed with a signature allowing to verify its authenticity and integrity.
+Steps to verify the signature:
+1. Install `cosign`
+2. Download the driver package file (`.nupkg`) from nuget, e.g.: https://www.nuget.org/packages/Snowflake.Data/4.2.0
+3. Download the signatures file from the release, e.g.: https://github.com/snowflakedb/snowflake-connector-net/releases/tag/v4.2.0
+4. Verify the signature, e.g:
+```shell
+cosign verify-blob snowflake.data.4.2.0.nupkg \
+--key snowflake-connector-net-v4.2.0.pub \
+--signature Snowflake.Data.4.2.0.nupkg.sig
+
+Verified OK
+```
+
 # Testing and Code Coverage
 
 [Running tests](doc/Testing.md)
@@ -103,6 +119,14 @@ Snowflake data types and their .NET types is covered in: [Data Types and Data Fo
 
 How execute a query, use query bindings, run queries synchronously and asynchronously:
 [Running Queries and Reading Results](doc/QueryingData.md)
+
+## Structured types
+
+Using structured types: [Structured types](doc/StructuredTypes.md)
+
+## Vector type
+
+Using vector type: [Vector type](doc/VectorType.md)
 
 ## Stage Files
 
@@ -153,6 +177,8 @@ Read more in [certificate validation](doc/CertficateValidation.md) docs.
     Snowflake has identified vulnerability where the checks against the Certificate Revocation List (CRL)
     were not performed where the insecureMode flag was set to false, which is the default setting.
     From version v2.1.5 CRL is working back as intended.
+
+5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
 
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 

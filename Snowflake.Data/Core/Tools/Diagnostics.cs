@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core.Tools
         private static string OsName()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return "UNIX";
+                return "LINUX";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return "WINDOWS";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))

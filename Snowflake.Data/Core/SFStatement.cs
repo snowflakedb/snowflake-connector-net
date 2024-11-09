@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core
 
     class SFStatement
     {
-        static private ILogger logger = SFLoggerFactory.GetLogger<SFStatement>();
+        static private ILogger s_logger = SFLoggerFactory.GetLogger<SFStatement>();
 
         internal SFSession SfSession { get; set; }
 
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Core
 
                 if (_requestId != null)
                 {
-                    logger.LogInformation("Another query is running.");
+                    s_logger.LogInformation("Another query is running.");
                     throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
                 }
 
@@ -341,7 +341,7 @@ namespace Snowflake.Data.Core
                     catch (Exception ex)
                     {
                         // Prevent an unhandled exception from being thrown
-                        logger.LogError("Unable to cancel query.", ex);
+                        s_logger.LogError("Unable to cancel query.", ex);
                     }
                 });
             }
@@ -384,11 +384,14 @@ namespace Snowflake.Data.Core
                     SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                     await uploader.UploadAsync(bindings, cancellationToken).ConfigureAwait(false);
                     _bindStage = uploader.getStagePath();
-                    ClearQueryRequestId();
                 }
                 catch (Exception e)
                 {
-                    logger.LogWarning("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
+                    s_logger.LogWarning("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                }
+                finally
+                {
+                    ClearQueryRequestId();
                 }
             }
 
@@ -422,7 +425,7 @@ namespace Snowflake.Data.Core
 
                         if (SessionExpired(response))
                         {
-                            logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
+                            s_logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
                             await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                         }
                         else
@@ -436,7 +439,7 @@ namespace Snowflake.Data.Core
             }
             catch
             {
-                logger.LogError("Query execution failed.");
+                s_logger.LogError("Query execution failed.");
                 throw;
             }
             finally
@@ -482,7 +485,7 @@ namespace Snowflake.Data.Core
                         bindings,
                         describeOnly);
 
-                logger.LogDebug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
+                s_logger.LogDebug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
 
                 SFFileTransferAgent fileTransferAgent =
                     new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
@@ -498,13 +501,13 @@ namespace Snowflake.Data.Core
             }
             catch (SnowflakeDbException ex)
             {
-                logger.LogError($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
+                s_logger.LogError($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError("Query execution failed.", ex);
+                s_logger.LogError("Query execution failed.", ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
         }
@@ -533,13 +536,14 @@ namespace Snowflake.Data.Core
                         SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                         uploader.Upload(bindings);
                         _bindStage = uploader.getStagePath();
-                        ClearQueryRequestId();
                     }
                     catch (Exception e)
                     {
-                        logger.LogWarning(
-                            "Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}",
-                            e);
+                        s_logger.LogWarning("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                    }
+                    finally
+                    {
+                        ClearQueryRequestId();
                     }
                 }
 
@@ -555,7 +559,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                logger.LogError("Query execution failed.", ex);
+                s_logger.LogError("Query execution failed.", ex);
                 if (ex is SnowflakeDbException snowflakeDbException)
                 {
                     _lastQueryId = snowflakeDbException.QueryId ?? _lastQueryId;
@@ -621,11 +625,11 @@ namespace Snowflake.Data.Core
 
             if (response.success)
             {
-                logger.LogInformation("Query cancellation succeed");
+                s_logger.LogInformation("Query cancellation succeed");
             }
             else
             {
-                logger.LogWarning("Query cancellation failed.");
+                s_logger.LogWarning("Query cancellation failed.");
             }
             CleanUpCancellationTokenSources();
         }
@@ -682,7 +686,7 @@ namespace Snowflake.Data.Core
 
                             if (SessionExpired(response))
                             {
-                                logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
+                                s_logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
                                 SfSession.renewSession();
                             }
                             else
@@ -706,7 +710,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                logger.LogError("Query execution failed.", ex);
+                s_logger.LogError("Query execution failed.", ex);
                 throw;
             }
             finally
@@ -769,7 +773,7 @@ namespace Snowflake.Data.Core
 
                             if (SessionExpired(response))
                             {
-                                logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
+                                s_logger.LogInformation("Ping pong request failed with session expired, trying to renew the session.");
                                 await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                             }
                             else
@@ -793,7 +797,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                logger.LogError("Query execution failed.", ex);
+                s_logger.LogError("Query execution failed.", ex);
                 throw;
             }
             finally
@@ -870,7 +874,7 @@ namespace Snowflake.Data.Core
             }
             catch
             {
-                logger.LogError("Query execution failed.");
+                s_logger.LogError("Query execution failed.");
                 throw;
             }
             finally
@@ -925,7 +929,7 @@ namespace Snowflake.Data.Core
             }
             catch
             {
-                logger.LogError("Query execution failed.");
+                s_logger.LogError("Query execution failed.");
                 throw;
             }
             finally
@@ -988,7 +992,7 @@ namespace Snowflake.Data.Core
 
             var trimmedQuery = builder.ToString();
             trimmedQuery = trimmedQuery.Trim();
-            logger.LogDebug("Trimmed query : " + trimmedQuery);
+            s_logger.LogDebug("Trimmed query : " + trimmedQuery);
 
             return trimmedQuery;
         }

@@ -190,10 +190,7 @@ namespace Snowflake.Data.Client
             return resultSet.GetDouble(ordinal);
         }
 
-        public override IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
         public override Type GetFieldType(int ordinal)
         {
@@ -257,7 +254,7 @@ namespace Snowflake.Data.Client
             return count;
         }
 
-        internal T GetObject<T>(int ordinal)
+        public T GetObject<T>(int ordinal)
             where T : class, new()
         {
             try
@@ -286,9 +283,11 @@ namespace Snowflake.Data.Client
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
                 var fields = rowType.fields;
-                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsVectorType(rowType.type))
+                var isArrayOrVector = JsonToStructuredTypeConverter.IsArrayType(rowType.type) ||
+                                      JsonToStructuredTypeConverter.IsVectorType(rowType.type);
+                if (fields == null || fields.Count == 0 || !isArrayOrVector)
                 {
-                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for vector types");
+                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
 
                 var stringValue = GetString(ordinal);
@@ -303,30 +302,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal T[] GetStucturedArray<T>(int ordinal)
-        {
-            try
-            {
-                var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-                var fields = rowType.fields;
-                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsArrayType(rowType.type))
-                {
-                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array");
-                }
-
-                var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JArray.Parse(stringValue);
-                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
-            }
-            catch (Exception e)
-            {
-                if (e is SnowflakeDbException)
-                    throw;
-                throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an array");
-            }
-        }
-
-        internal Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
         {
             try
             {

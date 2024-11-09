@@ -48,6 +48,7 @@ for name in "${!TARGET_TEST_IMAGES[@]}"; do
         -e RUNNER_TRACKING_ID \
         -e JOB_NAME \
         -e BUILD_NUMBER \
+        -e CI \
         ${TEST_IMAGE_NAMES[$name]} \
         /mnt/host/ci/container/test_component.sh
         echo "[INFO] Test Results: $WORKSPACE/junit-dotnet.xml"
