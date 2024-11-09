@@ -15,6 +15,7 @@ using System.Text;
 using System.Globalization;
 using System.Collections.Generic;
 using Snowflake.Data.Tests.Util;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
         [Test]
         public void TestArrayBind()
@@ -896,7 +897,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
             var smallBatchRowCount = 2;
             var bigBatchRowCount = bindingThreshold / 2;
-            s_logger.Info(testCase);
+            s_logger.LogInformation(testCase);
 
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -925,7 +926,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var row = 0;
                 using (var select = conn.CreateCommand($"select id, ts from {TableName} order by id"))
                 {
-                    s_logger.Debug(select.CommandText);
+                    s_logger.LogDebug(select.CommandText);
                     var reader = select.ExecuteReader();
                     while (reader.Read())
                     {
@@ -956,7 +957,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 // Act
-                s_logger.Info(sqlInsert);
+                s_logger.LogInformation(sqlInsert);
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
@@ -982,7 +983,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 // Act
-                s_logger.Debug(sqlInsert);
+                s_logger.LogDebug(sqlInsert);
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert

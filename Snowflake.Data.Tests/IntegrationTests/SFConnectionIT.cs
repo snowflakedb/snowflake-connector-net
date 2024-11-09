@@ -21,11 +21,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Tests.Mock;
     using System.Runtime.InteropServices;
     using System.Net.Http;
+    using Microsoft.Extensions.Logging;
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [Test]
         public void TestBasicConnection()
@@ -83,14 +84,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     try
                     {
                         conn.Open();
-                        s_logger.Debug("{appName}");
+                        s_logger.LogDebug("{appName}");
                         Assert.Fail();
 
                     }
                     catch (SnowflakeDbException e)
                     {
                         // Expected
-                        s_logger.Debug("Failed opening connection ", e);
+                        s_logger.LogDebug("Failed opening connection ", e);
                         AssertIsConnectionFailure(e);
                     }
 
@@ -127,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    s_logger.Debug("Failed opening connection ", e);
+                    s_logger.LogDebug("Failed opening connection ", e);
                     AssertIsConnectionFailure(e);
                 }
 
@@ -142,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             for (int i = 0; i < 2; ++i)
             {
-                s_logger.Debug($"Running try #{i}");
+                s_logger.LogDebug($"Running try #{i}");
                 SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
@@ -168,7 +169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             for (int i = 0; i < 2; ++i)
             {
-                s_logger.Debug($"Running try #{i}");
+                s_logger.LogDebug($"Running try #{i}");
                 SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
@@ -1559,7 +1560,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // Expected
-                    s_logger.Debug("Failed opening connection ", e);
+                    s_logger.LogDebug("Failed opening connection ", e);
                     Assert.AreEqual(270001, e.ErrorCode); //Internal error
                     AssertIsConnectionFailure(e);
                 }
@@ -1868,7 +1869,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFConnectionITAsync : SFBaseTestAsync
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
+        private static ILogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
         [Test]
@@ -1898,7 +1899,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Cancel the connection because it will never succeed since there is no
                 // connection_timeout defined
-                logger.Debug("connectionCancelToken.Cancel ");
+                logger.LogDebug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
 
                 try

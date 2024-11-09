@@ -9,12 +9,13 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.Mock
 {
     class MockSnowflakeDbConnection : SnowflakeDbConnection
     {
-        private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+        private ILogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
         private IMockRestRequester _restRequester;
 
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override void Open()
         {
-            logger.Debug("Open Connection.");
+            logger.LogDebug("Open Connection.");
             SetMockSession();
             try
             {
@@ -41,7 +42,7 @@ namespace Snowflake.Data.Tests.Mock
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = System.Data.ConnectionState.Closed;
-                logger.Error("Unable to connect", e);
+                logger.LogError("Unable to connect", e);
                 throw;
             }
             OnSessionEstablished();
@@ -61,14 +62,14 @@ namespace Snowflake.Data.Tests.Mock
                     // Exception from SfSession.OpenAsync
                     Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx);
+                        logger.LogError("Unable to connect", sfSessionEx);
                         throw //sfSessionEx.InnerException;
                         new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, "Unable to connect");
                     }
                     if (previousTask.IsCanceled)
                     {
                         _connectionState = ConnectionState.Closed;
-                        logger.Debug("Connection canceled");
+                        logger.LogDebug("Connection canceled");
                     }
                     else
                     {

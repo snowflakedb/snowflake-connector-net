@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private readonly ILogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         [SetUp]
         public new void BeforeTest()

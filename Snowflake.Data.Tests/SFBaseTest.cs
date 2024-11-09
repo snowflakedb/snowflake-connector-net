@@ -14,6 +14,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+using Microsoft.Extensions.Logging;
 
 [assembly:LevelOfParallelism(10)]
 
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Tests
     #endif
     public class SFBaseTestAsync
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests
             var columnsStr = string.Join(", ", columns);
             var cmd = conn.CreateCommand();
             cmd.CommandText = $"CREATE OR REPLACE {tableType} TABLE {tableName}({columnsStr}) {additionalQueryStr}";
-            s_logger.Debug(cmd.CommandText);
+            s_logger.LogDebug(cmd.CommandText);
             cmd.ExecuteNonQuery();
 
             _tablesToRemove.Add(tableName);
@@ -186,14 +187,19 @@ namespace Snowflake.Data.Tests
         public void Setup()
         {
 #if NETFRAMEWORK
-            log4net.GlobalContext.Properties["framework"] = "net471";
-            log4net.Config.XmlConfigurator.Configure();
-
+            Environment.SetEnvironmentVariable("net_test_framework", "net471");
 #else
-            log4net.GlobalContext.Properties["framework"] = "net6.0";
-            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
-            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
+            Environment.SetEnvironmentVariable("net_test_framework", "net6.0");
 #endif
+            ILoggerFactory factory = LoggerFactory.Create(
+                builder => builder
+                .AddLog4Net()
+                .SetMinimumLevel(LogLevel.Debug));
+
+            var logger = factory.CreateLogger("SFBaseTest");
+            SFLoggerFactory.SetCustomLogger(logger);
+            SFLoggerFactory.EnableLogger();
+
             var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
