@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -13,12 +13,13 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Converter;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Client
 {
     public class SnowflakeDbDataReader : DbDataReader
     {
-        static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+        static private readonly ILogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
 
         private SnowflakeDbCommand dbCommand;
 

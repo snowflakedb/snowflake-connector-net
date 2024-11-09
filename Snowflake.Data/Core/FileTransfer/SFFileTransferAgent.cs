@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
 
         /// <summary>
         /// Auto-detect keyword for source compression type auto detection.
@@ -230,7 +231,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception e)
             {
-                Logger.Error("Error while transferring file(s): " + e.Message);
+                logger.LogError("Error while transferring file(s): " + e.Message);
                 if (e is SnowflakeDbException snowflakeException)
                 {
                     if (snowflakeException.QueryId == null)
@@ -346,19 +347,19 @@ namespace Snowflake.Data.Core
             //For each file, using the remote client
             if (0 < LargeFilesMetas.Count)
             {
-                Logger.Debug("Start uploading large files");
+                logger.LogDebug("Start uploading large files");
                 foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
                 {
                     UploadFilesInSequential(fileMetadata);
                 }
-                Logger.Debug("End uploading large files");
+                logger.LogDebug("End uploading large files");
             }
 
             if (0 < SmallFilesMetas.Count)
             {
-                Logger.Debug("Start uploading small files");
+                logger.LogDebug("Start uploading small files");
                 UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-                Logger.Debug("End uploading small files");
+                logger.LogDebug("End uploading small files");
             }
         }
 
@@ -372,19 +373,19 @@ namespace Snowflake.Data.Core
             //For each file, using the remote client
             if (0 < LargeFilesMetas.Count)
             {
-                Logger.Debug("Start uploading large files");
+                logger.LogDebug("Start uploading large files");
                 foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
                 {
                     await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
                 }
-                Logger.Debug("End uploading large files");
+                logger.LogDebug("End uploading large files");
             }
 
             if (0 < SmallFilesMetas.Count)
             {
-                Logger.Debug("Start uploading small files");
+                logger.LogDebug("Start uploading small files");
                 await UploadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
-                Logger.Debug("End uploading small files");
+                logger.LogDebug("End uploading small files");
             }
         }
 
@@ -399,18 +400,18 @@ namespace Snowflake.Data.Core
             //For each file, using the remote client
             if (0 < LargeFilesMetas.Count)
             {
-                Logger.Debug("Start uploading large files");
+                logger.LogDebug("Start uploading large files");
                 foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
                 {
                     DownloadFilesInSequential(fileMetadata);
                 }
-                Logger.Debug("End uploading large files");
+                logger.LogDebug("End uploading large files");
             }
             if (0 < SmallFilesMetas.Count)
             {
-                Logger.Debug("Start uploading small files");
+                logger.LogDebug("Start uploading small files");
                 DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-                Logger.Debug("End uploading small files");
+                logger.LogDebug("End uploading small files");
             }
         }
 
@@ -424,18 +425,18 @@ namespace Snowflake.Data.Core
             //For each file, using the remote client
             if (0 < LargeFilesMetas.Count)
             {
-                Logger.Debug("Start uploading large files");
+                logger.LogDebug("Start uploading large files");
                 foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
                 {
                     await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
                 }
-                Logger.Debug("End uploading large files");
+                logger.LogDebug("End uploading large files");
             }
             if (0 < SmallFilesMetas.Count)
             {
-                Logger.Debug("Start uploading small files");
+                logger.LogDebug("Start uploading small files");
                 await DownloadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
-                Logger.Debug("End uploading small files");
+                logger.LogDebug("End uploading small files");
             }
         }
 
@@ -571,7 +572,7 @@ namespace Snowflake.Data.Core
                         // Auto-detect source compression type
                         // Will return NONE if no matching type is found
                         compressionType = SFFileCompressionTypes.GuessCompressionType(file);
-                        Logger.Debug($"File compression detected as {compressionType.Name} for: {file}");
+                        logger.LogDebug($"File compression detected as {compressionType.Name} for: {file}");
                     }
                     else
                     {
@@ -711,7 +712,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception)
             {
-                Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
+                logger.LogWarning("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
                 return FileTransferConfiguration.DefaultMaxBytesInMemory;
             }
         }
@@ -777,12 +778,12 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (Logger.IsDebugEnabled())
+            if (logger.IsEnabled(LogLevel.Debug))
             {
-                Logger.Debug("Expand " + location + " into: ");
+                logger.LogDebug("Expand " + location + " into: ");
                 foreach (var filepath in filePaths)
                 {
-                    Logger.Debug("\t" + filepath );
+                    logger.LogDebug("\t" + filepath );
                 }
             }
 
@@ -896,7 +897,7 @@ namespace Snowflake.Data.Core
                         }
                     }
 
-                    Logger.Debug($"Compressed {fileToCompress.Name} to {fileMetadata.realSrcFilePath}");
+                    logger.LogDebug($"Compressed {fileToCompress.Name} to {fileMetadata.realSrcFilePath}");
                     FileInfo destInfo = new FileInfo(fileMetadata.realSrcFilePath);
                     fileMetadata.destFileSize = destInfo.Length;
                 }
@@ -1230,7 +1231,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                Logger.Debug("Unhandled exception while uploading file.", ex);
+                logger.LogDebug("Unhandled exception while uploading file.", ex);
                 throw;
             }
             finally
@@ -1279,7 +1280,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+                logger.LogError("UploadSingleFileAsync encountered an error: " + ex.Message);
                 throw;
             }
             finally
@@ -1317,7 +1318,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+                logger.LogError("DownloadSingleFile encountered an error: " + ex.Message);
                 throw;
             }
             finally
@@ -1355,7 +1356,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+                logger.LogError("DownloadSingleFileAsync encountered an error: " + ex.Message);
                 throw;
             }
             finally

@@ -12,6 +12,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -71,7 +72,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFS3Client>();
 
         /// <summary>
         /// The underlying S3 client.
@@ -88,7 +89,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             int parallel,
             ProxyCredentials proxyCredentials)
         {
-            Logger.Debug("Setting up a new AWS client ");
+            logger.LogDebug("Setting up a new AWS client ");
 
             // Get the key id and secret key from the response
             stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
@@ -522,7 +523,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file metadata.</returns>
         private SFFileMetadata HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to get file header: " + ex.Message);
+            logger.LogError("Failed to get file header: " + ex.Message);
 
             AmazonS3Exception err = (AmazonS3Exception)ex;
             if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == HttpStatusCode.BadRequest.ToString())
@@ -548,7 +549,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file metadata.</returns>
         private SFFileMetadata HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to upload file: " + ex.Message);
+            logger.LogError("Failed to upload file: " + ex.Message);
 
             AmazonS3Exception err = (AmazonS3Exception)ex;
             if (err.ErrorCode == EXPIRED_TOKEN)
@@ -571,7 +572,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file metadata.</returns>
         private SFFileMetadata HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to download file: " + ex.Message);
+            logger.LogError("Failed to download file: " + ex.Message);
 
             AmazonS3Exception err = (AmazonS3Exception)ex;
             if (err.ErrorCode == EXPIRED_TOKEN)

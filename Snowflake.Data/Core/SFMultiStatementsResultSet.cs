@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -15,7 +16,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => curResultSet.ResultFormat;
 
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFMultiStatementsResultSet>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFMultiStatementsResultSet>();
 
         private string[] resultIds;
 

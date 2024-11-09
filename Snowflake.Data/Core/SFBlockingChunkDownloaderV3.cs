@@ -17,12 +17,13 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using Newtonsoft.Json.Serialization;
 using Snowflake.Data.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
     class SFBlockingChunkDownloaderV3 : IChunkDownloader
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
+        static private ILogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
 
         private List<BaseResultChunk> chunkDatas = new List<BaseResultChunk>();
 
@@ -99,7 +100,7 @@ namespace Snowflake.Data.Core
 
         public async Task<BaseResultChunk> GetNextChunkAsync()
         {
-            logger.Info($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
+            logger.LogInformation($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
             if (nextChunkToConsumeIndex < chunkInfos.Count)
             {
                 Task<BaseResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
@@ -192,7 +193,7 @@ namespace Snowflake.Data.Core
                     {
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
-                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
+                            logger.LogDebug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
@@ -209,13 +210,13 @@ namespace Snowflake.Data.Core
                         else
                         {
                             //parse error
-                            logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
+                            logger.LogError("Failed retries of parse stream to chunk error: " + e.Message);
                             throw new Exception("Parse stream to chunk error: " + e.Message);
                         }
                     }
                 }
             } while (retry);
-            logger.Info($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            logger.LogInformation($"Succeed downloading chunk #{chunk.ChunkIndex}");
             return chunk;
         }
 

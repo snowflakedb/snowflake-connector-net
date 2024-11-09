@@ -13,6 +13,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Core.Authenticator
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "externalbrowser";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
@@ -47,14 +48,14 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
-            logger.Info("External Browser Authentication");
+            logger.LogInformation("External Browser Authentication");
 
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
                 httpListener.Start();
 
-                logger.Debug("Get IdpUrl and ProofKey");
+                logger.LogDebug("Get IdpUrl and ProofKey");
                 string loginUrl;
                 if (session._disableConsoleLogin)
                 {
@@ -75,37 +76,37 @@ namespace Snowflake.Data.Core.Authenticator
                     loginUrl = GetLoginUrl(_proofKey, localPort);
                 }
 
-                logger.Debug("Open browser");
+                logger.LogDebug("Open browser");
                 StartBrowser(loginUrl);
 
-                logger.Debug("Get the redirect SAML request");
+                logger.LogDebug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
                 httpListener.BeginGetContext(GetContextCallback, httpListener);
                 var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    logger.Warn("Browser response timeout");
+                    logger.LogWarning("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
 
                 httpListener.Stop();
             }
 
-            logger.Debug("Send login request");
+            logger.LogDebug("Send login request");
             await base.LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <see cref="IAuthenticator"/>
         void IAuthenticator.Authenticate()
         {
-            logger.Info("External Browser Authentication");
+            logger.LogInformation("External Browser Authentication");
 
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
                 httpListener.Start();
 
-                logger.Debug("Get IdpUrl and ProofKey");
+                logger.LogDebug("Get IdpUrl and ProofKey");
                 string loginUrl;
                 if (session._disableConsoleLogin)
                 {
@@ -122,23 +123,23 @@ namespace Snowflake.Data.Core.Authenticator
                     loginUrl = GetLoginUrl(_proofKey, localPort);
                 }
 
-                logger.Debug("Open browser");
+                logger.LogDebug("Open browser");
                 StartBrowser(loginUrl);
 
-                logger.Debug("Get the redirect SAML request");
+                logger.LogDebug("Get the redirect SAML request");
                 _successEvent = new ManualResetEvent(false);
                 httpListener.BeginGetContext(GetContextCallback, httpListener);
                 var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
                 if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    logger.Warn("Browser response timeout");
+                    logger.LogWarning("Browser response timeout");
                     throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
 
                 httpListener.Stop();
             }
 
-            logger.Debug("Send login request");
+            logger.LogDebug("Send login request");
             base.Login();
         }
 
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch
                 {
                     // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("External browser response not sent out");
+                    logger.LogWarning("External browser response not sent out");
                 }
             }
 
@@ -193,13 +194,13 @@ namespace Snowflake.Data.Core.Authenticator
             Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
             if (!m.Success)
             {
-                logger.Error("Failed to start browser. Invalid url.");
+                logger.LogError("Failed to start browser. Invalid url.");
                 throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
             }
 
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
-                logger.Error("Failed to start browser. Invalid url.");
+                logger.LogError("Failed to start browser. Invalid url.");
                 throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL);
             }
 

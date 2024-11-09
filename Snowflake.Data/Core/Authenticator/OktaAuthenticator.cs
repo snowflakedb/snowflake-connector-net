@@ -14,6 +14,7 @@ using System.Text;
 using System.Web;
 using System.Linq;
 using Snowflake.Data.Core.Tools;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -23,7 +24,7 @@ namespace Snowflake.Data.Core.Authenticator
     class OktaAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "okta";
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
 
         internal const string RetryCountHeader = "RetryCount";
         internal const string TimeoutElapsedHeader = "TimeoutElapsed";
@@ -49,19 +50,19 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
-            s_logger.Info("Okta Authentication");
+            s_logger.LogInformation("Okta Authentication");
 
-            s_logger.Debug("step 1: Get SSO and token URL");
+            s_logger.LogDebug("step 1: Get SSO and token URL");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
             var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
             authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
-            s_logger.Debug("step 2: Verify URLs fetched from step 1");
-            s_logger.Debug("Checking SSO Okta URL");
+            s_logger.LogDebug("step 2: Verify URLs fetched from step 1");
+            s_logger.LogDebug("Checking SSO Okta URL");
             VerifyUrls(ssoUrl, _oktaUrl);
-            s_logger.Debug("Checking token URL");
+            s_logger.LogDebug("Checking token URL");
             VerifyUrls(tokenUrl, _oktaUrl);
 
             int retryCount = 0;
@@ -74,26 +75,26 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    s_logger.Debug("step 3: Get IdP one-time token");
+                    s_logger.LogDebug("step 3: Get IdP one-time token");
                     IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
                     var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
                     string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
-                    s_logger.Debug("step 4: Get SAML response from SSO");
+                    s_logger.LogDebug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
                     samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    s_logger.Debug("step 5: Verify postback URL in SAML response");
+                    s_logger.LogDebug("step 5: Verify postback URL in SAML response");
                     if (!session._disableSamlUrlCheck)
                     {
                         VerifyPostbackUrl();
                     }
                     else
                     {
-                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                        s_logger.LogDebug("The saml url check is disabled. Skipping step 5");
                     }
 
-                    s_logger.Debug("step 6: Send SAML response to Snowflake to login");
+                    s_logger.LogDebug("step 6: Send SAML response to Snowflake to login");
                     await LoginAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 }
@@ -115,19 +116,19 @@ namespace Snowflake.Data.Core.Authenticator
 
         void IAuthenticator.Authenticate()
         {
-            s_logger.Info("Okta Authentication");
+            s_logger.LogInformation("Okta Authentication");
 
-            s_logger.Debug("step 1: Get SSO and token URL");
+            s_logger.LogDebug("step 1: Get SSO and token URL");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
             var authenticatorResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
             authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
-            s_logger.Debug("step 2: Verify URLs fetched from step 1");
-            s_logger.Debug("Checking SSO Okta URL");
+            s_logger.LogDebug("step 2: Verify URLs fetched from step 1");
+            s_logger.LogDebug("Checking SSO Okta URL");
             VerifyUrls(ssoUrl, _oktaUrl);
-            s_logger.Debug("Checking token URL");
+            s_logger.LogDebug("Checking token URL");
             VerifyUrls(tokenUrl, _oktaUrl);
 
             int retryCount = 0;
@@ -140,27 +141,27 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    s_logger.Debug("step 3: Get IdP one-time token");
+                    s_logger.LogDebug("step 3: Get IdP one-time token");
                     IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
                     var idpResponse = session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
                     string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
-                    s_logger.Debug("step 4: Get SAML response from SSO");
+                    s_logger.LogDebug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
                     samlRawResponse = session.restRequester.Get(samlRestRequest);
                     _rawSamlTokenHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
 
-                    s_logger.Debug("step 5: Verify postback URL in SAML response");
+                    s_logger.LogDebug("step 5: Verify postback URL in SAML response");
                     if (!session._disableSamlUrlCheck)
                     {
                         VerifyPostbackUrl();
                     }
                     else
                     {
-                        s_logger.Debug("The saml url check is disabled. Skipping step 5");
+                        s_logger.LogDebug("The saml url check is disabled. Skipping step 5");
                     }
 
-                    s_logger.Debug("step 6: Send SAML response to Snowflake to login");
+                    s_logger.LogDebug("step 6: Send SAML response to Snowflake to login");
                     Login();
                     return;
                 }
@@ -184,12 +185,12 @@ namespace Snowflake.Data.Core.Authenticator
         {
             if (IsPostbackUrlNotFound(ex))
             {
-                s_logger.Debug("Refreshing token for Okta re-authentication and starting from step 3 again");
+                s_logger.LogDebug("Refreshing token for Okta re-authentication and starting from step 3 again");
 
                 if (samlRawResponse is null)
                 {
                     var errorNullSamlResponse = "Failure getting SAML response from Okta SSO";
-                    s_logger.Error(errorNullSamlResponse);
+                    s_logger.LogError(errorNullSamlResponse);
                     throw new SnowflakeDbException(ex, SFError.IDP_SAML_POSTBACK_INVALID);
                 }
 
@@ -199,7 +200,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
             else
             {
-                s_logger.Error("Failed to get the correct SAML response from Okta SSO", ex);
+                s_logger.LogError("Failed to get the correct SAML response from Okta SSO", ex);
                 throw ex;
             }
         }
@@ -256,7 +257,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 var e = new SnowflakeDbException(
                     SFError.IDP_SSO_TOKEN_URL_MISMATCH, tokenOrSsoUrl.ToString(), _oktaUrl.ToString());
-                s_logger.Error("Different urls", e);
+                s_logger.LogError("Different urls", e);
                 throw e;
             }
         }
@@ -275,7 +276,7 @@ namespace Snowflake.Data.Core.Authenticator
                 postBackUrl = new Uri(HttpUtility.HtmlDecode(_rawSamlTokenHtmlString.Substring(startIndex, length)));
             } catch (Exception e)
             {
-                s_logger.Error("Fail to extract SAML from html", e);
+                s_logger.LogError("Fail to extract SAML from html", e);
                 throw new SnowflakeDbException(e, SFError.IDP_SAML_POSTBACK_NOTFOUND);
             }
 
@@ -288,7 +289,7 @@ namespace Snowflake.Data.Core.Authenticator
                     SFError.IDP_SAML_POSTBACK_INVALID,
                     postBackUrl.ToString(),
                     sessionScheme + ":\\\\" + sessionHost);
-                s_logger.Error("Different urls", e);
+                s_logger.LogError("Different urls", e);
                 throw e;
             }
         }
@@ -324,7 +325,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
             errorMessage += " while trying to authenticate through Okta";
 
-            s_logger.Error(errorMessage);
+            s_logger.LogError(errorMessage);
             throw new SnowflakeDbException(lastRetryException, SFError.INTERNAL_ERROR, errorMessage);
         }
     }

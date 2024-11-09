@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Apache.Arrow.Ipc;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
         
         private readonly int _totalChunkCount;
         private BaseResultChunk _currentChunk;
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Core
             }
             catch(Exception ex)
             {
-                s_logger.Error("Result set error queryId="+responseData.queryId, ex);
+                s_logger.LogError("Result set error queryId="+responseData.queryId, ex);
                 throw;
             }
         }
@@ -86,7 +87,7 @@ namespace Snowflake.Data.Core
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                s_logger.LogDebug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                                $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
@@ -105,7 +106,7 @@ namespace Snowflake.Data.Core
             
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
+                s_logger.LogDebug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                                $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
@@ -149,7 +150,7 @@ namespace Snowflake.Data.Core
 
             if (_currentChunk.ChunkIndex > 0)
             {
-                s_logger.Warn("Unable to rewind to the previous chunk");
+                s_logger.LogWarning("Unable to rewind to the previous chunk");
             }
 
             return false;

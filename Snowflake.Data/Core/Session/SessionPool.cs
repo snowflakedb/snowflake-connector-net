@@ -11,12 +11,13 @@ using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Session
 {
     sealed class SessionPool : IDisposable
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
         private static ISessionFactory s_sessionFactory = new SessionFactory();
 
@@ -63,9 +64,9 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
         {
-            s_logger.Debug("Creating a connection pool");
+            s_logger.LogDebug("Creating a connection pool");
             var extracted = ExtractConfig(connectionString, password);
-            s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
+            s_logger.LogDebug("Creating a connection pool identified by: " + extracted.Item2);
             return new SessionPool(connectionString, password, extracted.Item1, extracted.Item2);
         }
 
@@ -88,7 +89,7 @@ namespace Snowflake.Data.Core.Session
 
         private void CleanExpiredSessions()
         {
-            s_logger.Debug("SessionPool::CleanExpiredSessions" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::CleanExpiredSessions" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Core.Session
             }
             catch (Exception exception)
             {
-                s_logger.Error("Failed to extract pool configuration", exception);
+                s_logger.LogError("Failed to extract pool configuration", exception);
                 throw;
             }
         }
@@ -125,7 +126,7 @@ namespace Snowflake.Data.Core.Session
             if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
             {
                 var errorMessage = "Could not get a pool because of password mismatch";
-                s_logger.Error(errorMessage + PoolIdentification());
+                s_logger.LogError(errorMessage + PoolIdentification());
                 throw new Exception(errorMessage);
             }
         }
@@ -135,7 +136,7 @@ namespace Snowflake.Data.Core.Session
 
         internal SFSession GetSession(string connStr, SecureString password)
         {
-            s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::GetSession" + PoolIdentification());
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password);
             var sessionOrCreateTokens = GetIdleSession(connStr);
@@ -150,7 +151,7 @@ namespace Snowflake.Data.Core.Session
 
         internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
         {
-            s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::GetSessionAsync" + PoolIdentification());
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, cancellationToken).ConfigureAwait(false);
             var sessionOrCreateTokens = GetIdleSession(connStr);
@@ -181,7 +182,7 @@ namespace Snowflake.Data.Core.Session
         {
             if (IsConfigOverridden() && GetPooling() && IsMultiplePoolsVersion())
             {
-                s_logger.Warn("Providing a connection from a pool for which technical configuration has been overriden by the user");
+                s_logger.LogWarning("Providing a connection from a pool for which technical configuration has been overriden by the user");
             }
         }
 
@@ -199,22 +200,22 @@ namespace Snowflake.Data.Core.Session
 
         private SessionOrCreationTokens GetIdleSession(string connStr)
         {
-            s_logger.Debug("SessionPool::GetIdleSession" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::GetIdleSession" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 if (_waitingForIdleSessionQueue.IsAnyoneWaiting())
                 {
-                    s_logger.Debug("SessionPool::GetIdleSession - someone is already waiting for a session, request is going to be queued" + PoolIdentification());
+                    s_logger.LogDebug("SessionPool::GetIdleSession - someone is already waiting for a session, request is going to be queued" + PoolIdentification());
                 }
                 else
                 {
                     var session = ExtractIdleSession(connStr);
                     if (session != null)
                     {
-                        s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, an idle session was retrieved from the pool" + PoolIdentification());
+                        s_logger.LogDebug("SessionPool::GetIdleSession - no thread was waiting for a session, an idle session was retrieved from the pool" + PoolIdentification());
                         return new SessionOrCreationTokens(session);
                     }
-                    s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool" + PoolIdentification());
+                    s_logger.LogDebug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool" + PoolIdentification());
                     var sessionsCount = AllowedNumberOfNewSessionCreations(1);
                     if (sessionsCount > 0)
                     {
@@ -244,7 +245,7 @@ namespace Snowflake.Data.Core.Session
             if (!IsMultiplePoolsVersion())
             {
                 if (atLeastCount > 0)
-                    s_logger.Debug($"SessionPool - creating of new sessions is not limited");
+                    s_logger.LogDebug($"SessionPool - creating of new sessions is not limited");
                 return atLeastCount; // we are either in old pool or there is no pooling
             }
             var currentSize = GetCurrentPoolSize();
@@ -253,10 +254,10 @@ namespace Snowflake.Data.Core.Session
                 var maxSessionsToCreate = _poolConfig.MaxPoolSize - currentSize;
                 var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, atLeastCount);
                 var sessionsToCreate = Math.Min(sessionsNeeded, maxSessionsToCreate);
-                s_logger.Debug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
+                s_logger.LogDebug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
                 return sessionsToCreate;
             }
-            s_logger.Debug($"SessionPool - not allowed to create a session, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
+            s_logger.LogDebug($"SessionPool - not allowed to create a session, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
             return 0;
         }
 
@@ -266,7 +267,7 @@ namespace Snowflake.Data.Core.Session
         {
             if (TimeoutHelper.IsInfinite(_poolConfig.WaitingForIdleSessionTimeout))
                 throw new Exception("WaitingForIdleSessionTimeout cannot be infinite");
-            s_logger.Info($"SessionPool::WaitForSession for {(long) _poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout" + PoolIdentification());
+            s_logger.LogInformation($"SessionPool::WaitForSession for {(long) _poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout" + PoolIdentification());
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTimeMillis = beforeWaitingTimeMillis;
@@ -277,25 +278,25 @@ namespace Snowflake.Data.Core.Session
                 var successful = _waitingForIdleSessionQueue.Wait((int) timeoutLeftMillis, CancellationToken.None);
                 if (successful)
                 {
-                    s_logger.Debug($"SessionPool::WaitForSession - woken with a session granted" + PoolIdentification());
+                    s_logger.LogDebug($"SessionPool::WaitForSession - woken with a session granted" + PoolIdentification());
                     _sessionPoolEventHandler.OnWaitingForSessionSuccessful(this);
                     lock (_sessionPoolLock)
                     {
                         var session = ExtractIdleSession(connStr);
                         if (session != null)
                         {
-                            s_logger.Debug("SessionPool::WaitForSession - provided an idle session" + PoolIdentification());
+                            s_logger.LogDebug("SessionPool::WaitForSession - provided an idle session" + PoolIdentification());
                             return session;
                         }
                     }
                 }
                 else
                 {
-                    s_logger.Debug("SessionPool::WaitForSession - woken without a session granted" + PoolIdentification());
+                    s_logger.LogDebug("SessionPool::WaitForSession - woken without a session granted" + PoolIdentification());
                 }
                 nowTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
-            s_logger.Info("SessionPool::WaitForSession - could not find any idle session available withing a given timeout" + PoolIdentification());
+            s_logger.LogInformation("SessionPool::WaitForSession - could not find any idle session available withing a given timeout" + PoolIdentification());
             throw WaitingFailedException();
         }
 
@@ -317,7 +318,7 @@ namespace Snowflake.Data.Core.Session
                     }
                     else
                     {
-                        s_logger.Debug($"reuse pooled session with sid {session.sessionId}" + PoolIdentification());
+                        s_logger.LogDebug($"reuse pooled session with sid {session.sessionId}" + PoolIdentification());
                         _busySessionsCounter.Increase();
                         return session;
                     }
@@ -331,19 +332,19 @@ namespace Snowflake.Data.Core.Session
 
         private SFSession NewSession(String connectionString, SecureString password, SessionCreationToken sessionCreationToken)
         {
-            s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::NewSession" + PoolIdentification());
             try
             {
                 var session = s_sessionFactory.NewSession(connectionString, password);
                 session.Open();
-                s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
+                s_logger.LogDebug("SessionPool::NewSession - opened" + PoolIdentification());
                 if (GetPooling() && !_underDestruction)
                 {
                     lock (_sessionPoolLock)
                     {
                         _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                         _busySessionsCounter.Increase();
-                        s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
+                        s_logger.LogDebug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                     }
                 }
                 _sessionPoolEventHandler.OnNewSessionCreated(this);
@@ -358,7 +359,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     lock (_sessionPoolLock)
                     {
-                        s_logger.Debug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
+                        s_logger.LogDebug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
                     }
                 }
                 if (e is SnowflakeDbException)
@@ -379,7 +380,7 @@ namespace Snowflake.Data.Core.Session
 
         private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
-            s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::NewSessionAsync" + PoolIdentification());
             var session = s_sessionFactory.NewSession(connectionString, password);
             return session
                 .OpenAsync(cancellationToken)
@@ -392,7 +393,7 @@ namespace Snowflake.Data.Core.Session
                         {
                             lock (_sessionPoolLock)
                             {
-                                s_logger.Debug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
+                                s_logger.LogDebug($"Failed to create a new session {GetCurrentState()}" + PoolIdentification());
                             }
                         }
                     }
@@ -414,7 +415,7 @@ namespace Snowflake.Data.Core.Session
                             {
                                 _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
                                 _busySessionsCounter.Increase();
-                                s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
+                                s_logger.LogDebug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                             }
                         }
 
@@ -427,19 +428,19 @@ namespace Snowflake.Data.Core.Session
 
         internal void ReleaseBusySession(SFSession session)
         {
-            s_logger.Debug("SessionPool::ReleaseBusySession" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::ReleaseBusySession" + PoolIdentification());
             SessionPoolState poolState;
             lock (_sessionPoolLock)
             {
                 _busySessionsCounter.Decrease();
                 poolState = GetCurrentState();
             }
-            s_logger.Debug($"After releasing a busy session from the pool {poolState}" + PoolIdentification());
+            s_logger.LogDebug($"After releasing a busy session from the pool {poolState}" + PoolIdentification());
         }
 
         internal bool AddSession(SFSession session, bool ensureMinPoolSize)
         {
-            s_logger.Debug("SessionPool::AddSession" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::AddSession" + PoolIdentification());
 
             if (!GetPooling() || _underDestruction)
                 return false;
@@ -448,7 +449,7 @@ namespace Snowflake.Data.Core.Session
                 session.SessionPropertiesChanged &&
                 _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
             {
-                s_logger.Debug($"Session returning to pool was changed. Destroying the session: {session.sessionId}.");
+                s_logger.LogDebug($"Session returning to pool was changed. Destroying the session: {session.sessionId}.");
                 session.SetPooling(false);
             }
 
@@ -481,7 +482,7 @@ namespace Snowflake.Data.Core.Session
                         ? RegisterSessionCreationsWhenReturningSessionToPool()
                         : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                     var poolState = GetCurrentState();
-                    s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
+                    s_logger.LogDebug($"Could not return session to pool {poolState}" + PoolIdentification());
                     return Tuple.Create(false, sessionCreationTokens);
                 }
             }
@@ -496,13 +497,13 @@ namespace Snowflake.Data.Core.Session
                         ? RegisterSessionCreationsWhenReturningSessionToPool()
                         : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                     var poolState = GetCurrentState();
-                    s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
+                    s_logger.LogDebug($"Could not return session to pool {poolState}" + PoolIdentification());
                     return Tuple.Create(false, sessionCreationTokens);
                 }
                 var poolStateBeforeReturningToPool = GetCurrentState();
                 if (poolStateBeforeReturningToPool.Count() >= _poolConfig.MaxPoolSize)
                 {
-                    s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId} {poolStateBeforeReturningToPool}");
+                    s_logger.LogWarning($"Pool is full - unable to add session with sid {session.sessionId} {poolStateBeforeReturningToPool}");
                     return Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
                 }
                 _idleSessions.Add(session);
@@ -511,14 +512,14 @@ namespace Snowflake.Data.Core.Session
                     ? RegisterSessionCreationsWhenReturningSessionToPool()
                     : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                 var poolStateAfterReturningToPool = GetCurrentState();
-                s_logger.Debug($"returned session with sid {session.sessionId} to pool {poolStateAfterReturningToPool}" + PoolIdentification());
+                s_logger.LogDebug($"returned session with sid {session.sessionId} to pool {poolStateAfterReturningToPool}" + PoolIdentification());
                 return Tuple.Create(true, sessionCreationTokensAfterReturningToPool);
             }
         }
 
         internal void DestroyPool()
         {
-            s_logger.Debug("SessionPool::DestroyPool" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::DestroyPool" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 _underDestruction = true;
@@ -531,7 +532,7 @@ namespace Snowflake.Data.Core.Session
 
         internal void DestroyPoolAsync()
         {
-            s_logger.Debug("SessionPool::DestroyPoolAsync" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::DestroyPoolAsync" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 _underDestruction = true;
@@ -544,7 +545,7 @@ namespace Snowflake.Data.Core.Session
 
         internal void ClearSessions()
         {
-            s_logger.Debug($"SessionPool::ClearSessions" + PoolIdentification());
+            s_logger.LogDebug($"SessionPool::ClearSessions" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 _busySessionsCounter.Reset();
@@ -555,7 +556,7 @@ namespace Snowflake.Data.Core.Session
 
         internal void ClearIdleSessions()
         {
-            s_logger.Debug("SessionPool::ClearIdleSessions" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::ClearIdleSessions" + PoolIdentification());
             lock (_sessionPoolLock)
             {
                 foreach (SFSession session in _idleSessions)
@@ -568,7 +569,7 @@ namespace Snowflake.Data.Core.Session
 
         internal async void ClearIdleSessionsAsync()
         {
-            s_logger.Debug("SessionPool::ClearIdleSessionsAsync" + PoolIdentification());
+            s_logger.LogDebug("SessionPool::ClearIdleSessionsAsync" + PoolIdentification());
             IEnumerable<SFSession> idleSessionsCopy;
             lock (_sessionPoolLock)
             {
@@ -583,7 +584,7 @@ namespace Snowflake.Data.Core.Session
 
         public void SetMaxPoolSize(int size)
         {
-            s_logger.Debug($"SessionPool::SetMaxPoolSize({size})" + PoolIdentification());
+            s_logger.LogDebug($"SessionPool::SetMaxPoolSize({size})" + PoolIdentification());
             _poolConfig.MaxPoolSize = size;
             _configOverriden = true;
         }
@@ -614,7 +615,7 @@ namespace Snowflake.Data.Core.Session
 
         public void SetTimeout(long seconds)
         {
-            s_logger.Debug($"SessionPool::SetTimeout({seconds})" + PoolIdentification());
+            s_logger.LogDebug($"SessionPool::SetTimeout({seconds})" + PoolIdentification());
             var timeout = seconds < 0 ? TimeoutHelper.Infinity() : TimeSpan.FromSeconds(seconds);
             _poolConfig.ExpirationTimeout = timeout;
             _configOverriden = true;
@@ -643,7 +644,7 @@ namespace Snowflake.Data.Core.Session
 
         public bool SetPooling(bool isEnable)
         {
-            s_logger.Info($"SessionPool::SetPooling({isEnable})" + PoolIdentification());
+            s_logger.LogInformation($"SessionPool::SetPooling({isEnable})" + PoolIdentification());
             if (_poolConfig.PoolingEnabled == isEnable)
                 return false;
             _poolConfig.PoolingEnabled = isEnable;

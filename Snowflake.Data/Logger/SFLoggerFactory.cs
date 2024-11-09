@@ -2,50 +2,55 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log
 {
-    class SFLoggerFactory
+    public class SFLoggerFactory
     {
-        private static bool isLoggerEnabled = true;
+        private static bool isLoggerEnabled = false;
 
-        private static SFLogger logger = null;
+        private static ILogger logger = null;
 
         private SFLoggerFactory()
         {
         }
 
-        public static void disableLogger()
+        public static void DisableLogger()
         {
             isLoggerEnabled = false;
         }
 
-        public static void enableLogger()
+        public static void EnableLogger()
         {
             isLoggerEnabled = true;
         }
 
-        public static void useDefaultLogger()
+        public static void UseDefaultLogger()
         {
             logger = null;
         }
 
-        public static void Instance(SFLogger customLogger)
+        public static void SetCustomLogger(ILogger customLogger)
         {            
             logger = customLogger;
         }
 
-        public static SFLogger GetLogger<T>()
+        internal static ILogger GetLogger<T>()
         {
             // If true, return the default/specified logger
             if (isLoggerEnabled)
             {
-                // If no logger specified, use the default logger: log4net
+                // If no logger specified, use the default logger: Microsoft's console logger
                 if (logger == null)
                 {
-                    ILog loggerL = LogManager.GetLogger(typeof(T));
-                    return new Log4NetImpl(loggerL);
+                    ILoggerFactory factory = LoggerFactory.Create(
+                        builder => builder
+                        .AddConsole()
+                        .SetMinimumLevel(LogLevel.Trace)
+                    );
+
+                    return factory.CreateLogger<T>();
                 }
                 return logger;
             }
@@ -56,5 +61,4 @@ namespace Snowflake.Data.Log
             }
         }
     }
-
 }

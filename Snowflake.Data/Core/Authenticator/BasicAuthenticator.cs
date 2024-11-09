@@ -5,13 +5,14 @@
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "snowflake";
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
 
         internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {

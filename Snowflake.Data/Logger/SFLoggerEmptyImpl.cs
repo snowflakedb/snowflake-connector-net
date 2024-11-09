@@ -1,62 +1,28 @@
 ﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
- 
- using System;
+
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace Snowflake.Data.Log
 {
     // Empty implementation of SFLogger
     // Used when SFLoggerFactory.disableLogger() is called.
 
-    class SFLoggerEmptyImpl : SFLogger
+    class SFLoggerEmptyImpl : ILogger
     {
-        public bool IsDebugEnabled()
+        IDisposable ILogger.BeginScope<TState>(TState state)
+        {
+            throw new NotImplementedException();
+        }
+
+        bool ILogger.IsEnabled(LogLevel logLevel)
         {
             return false;
         }
 
-        public bool IsInfoEnabled()
-        {
-            return false;
-        }
-
-        public bool IsWarnEnabled()
-        {
-            return false;
-        }
-
-        public bool IsErrorEnabled()
-        {
-            return false;
-        }
-
-        public bool IsFatalEnabled()
-        {
-            return false;
-        }
-
-        public void Debug(string msg, Exception ex)
-        {
-            return;
-        }
-
-        public void Info(string msg, Exception ex)
-        {
-            return;
-        }
-
-        public void Warn(string msg, Exception ex)
-        {
-            return;
-        }
-
-        public void Error(string msg, Exception ex)
-        {
-            return;
-        }
-
-        public void Fatal(string msg, Exception ex)
+        void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             return;
         }

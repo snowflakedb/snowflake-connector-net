@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Core
 
     internal class RestRequester : IRestRequester
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+        private static ILogger logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         protected HttpClient _HttpClient;
 
@@ -113,18 +114,18 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
-                        logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
+                        logger.LogDebug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
 
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            logger.LogError($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                         }
                         else
                         {
-                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
+                            logger.LogDebug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
                         }
                         response.EnsureSuccessStatusCode();
 

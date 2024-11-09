@@ -1,15 +1,16 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using Snowflake.Data.Log;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Tools
 {
     internal class HomeDirectoryProvider
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
 
         public static string HomeDirectory(EnvironmentOperations _environmentOperations) {
             try
@@ -23,7 +24,7 @@ namespace Snowflake.Data.Core.Tools
             }
             catch (Exception e)
             {
-                s_logger.Error($"Error while trying to retrieve the home directory: {e}");
+                s_logger.LogError($"Error while trying to retrieve the home directory: {e}");
                 return null;
             }
         }

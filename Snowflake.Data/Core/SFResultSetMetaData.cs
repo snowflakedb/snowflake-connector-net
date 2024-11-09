@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Data;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
     class SFResultSetMetaData
     {
-        static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
+        static private readonly ILogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
 
         private int columnCount;
 
@@ -92,7 +93,7 @@ namespace Snowflake.Data.Core
                 {
                     if (String.Compare(rowType.name, targetColumnName, false) == 0 )
                     {
-                        logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
+                        logger.LogInformation($"Found column name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }

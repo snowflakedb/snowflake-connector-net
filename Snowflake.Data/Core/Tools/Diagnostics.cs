@@ -5,15 +5,16 @@ using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text;
 using Snowflake.Data.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Tools
 {
     internal class Diagnostics
     {
         private const int PadRight = -25;
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<Diagnostics>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<Diagnostics>();
 
-        public static void LogDiagnostics() => s_logger.Info(GetDiagnosticInfo());
+        public static void LogDiagnostics() => s_logger.LogInformation(GetDiagnosticInfo());
 
         private static string GetDiagnosticInfo()
         {

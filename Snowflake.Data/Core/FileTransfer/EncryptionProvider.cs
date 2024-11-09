@@ -6,6 +6,7 @@ using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -33,7 +34,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
+        private static readonly ILogger logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
 
         /// <summary>
         /// Encrypt data and write to the outStream.
@@ -71,7 +72,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
-            Logger.Debug($"Master key size : {masterKeySize}");
+            logger.LogDebug($"Master key size : {masterKeySize}");
 
             // Generate file key
             byte[] ivData = new byte[blockSize];
