@@ -172,7 +172,8 @@ namespace Snowflake.Data.Tests.UnitTests
             public void SetUp()
             {
                 var loggerSerilog = new LoggerConfiguration()
-                    .ReadFrom.Xml("TestSerilog.Config")
+                    .MinimumLevel.Verbose()
+                    .WriteTo.File("test_serilog.log")
                     .CreateLogger();
                 var serilogLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
                 SFLoggerFactory.SetCustomLogger(serilogLogger);
