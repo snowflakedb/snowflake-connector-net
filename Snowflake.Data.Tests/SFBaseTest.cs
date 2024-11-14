@@ -187,9 +187,9 @@ namespace Snowflake.Data.Tests
         public void Setup()
         {
 #if NETFRAMEWORK
-            Environment.SetEnvironmentVariable("net_test_framework", "net471");
+            Environment.SetEnvironmentVariable("NET_TEST_FRAMEWORK", "net471");
 #else
-            Environment.SetEnvironmentVariable("net_test_framework", "net6.0");
+            Environment.SetEnvironmentVariable("NET_TEST_FRAMEWORK", "net6.0");
 #endif
             ILoggerFactory factory = LoggerFactory.Create(
                 builder => builder

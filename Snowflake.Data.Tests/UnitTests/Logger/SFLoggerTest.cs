@@ -10,6 +10,7 @@ using NLog.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
 using System.IO;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -21,6 +22,10 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string WarnMessage = "Warn message";
         private const string ErrorMessage = "Error message";
         private const string CriticalMessage = "critical message";
+
+        private const string Log4NetFileName = "test_log4net.log";
+        private const string SerilogFileName = "test_serilog.log";
+        private const string NlogFileName = "test_nlog.log";
 
         public abstract class SFBaseLoggerTest
         {
@@ -154,6 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [OneTimeSetUp]
             public void SetUp()
             {
+                Environment.SetEnvironmentVariable("TEST_LOG4NET_FILE_NAME", Log4NetFileName);
                 var factory = LoggerFactory.Create(
                     builder => builder
                     .AddLog4Net("TestLog4Net.config")
@@ -161,7 +167,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 var log4netLogger = factory.CreateLogger("Log4NetTest");
                 SFLoggerFactory.SetCustomLogger(log4netLogger);
-                _logFile = "test_log4net.log";
+                _logFile = Log4NetFileName;
             }
         }
 
@@ -173,11 +179,12 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 var loggerSerilog = new LoggerConfiguration()
                     .MinimumLevel.Verbose()
-                    .WriteTo.File("test_serilog.log")
+                    .WriteTo.File(SerilogFileName)
                     .CreateLogger();
+
                 var serilogLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
                 SFLoggerFactory.SetCustomLogger(serilogLogger);
-                _logFile = "test_serilog.log";
+                _logFile = SerilogFileName;
             }
         }
 
@@ -187,6 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [OneTimeSetUp]
             public void SetUp()
             {
+                Environment.SetEnvironmentVariable("TEST_NLOG_FILE_NAME", NlogFileName);
                 var factory = LoggerFactory.Create(
                     builder => builder
                     .AddNLog("TestNLog.config")
@@ -194,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 var nlogLogger = factory.CreateLogger("NlogTest");
                 SFLoggerFactory.SetCustomLogger(nlogLogger);
-                _logFile = "test_nlog.log";
+                _logFile = NlogFileName;
             }
         }
     }
