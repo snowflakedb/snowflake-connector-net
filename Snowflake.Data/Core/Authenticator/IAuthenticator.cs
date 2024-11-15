@@ -134,9 +134,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 loginName = session.properties[SFSessionProperty.USER],
                 accountName = session.properties[SFSessionProperty.ACCOUNT],
-                // TODO LOCAL TEST MFA temp change should be removed before merge
-                // clientAppId = "JDBC",//SFEnvironment.DriverName,
-                // clientAppVersion = "3.12.16", // SFEnvironment.DriverVersion,
                 clientAppId = SFEnvironment.DriverName,
                 clientAppVersion = SFEnvironment.DriverVersion,
                 clientEnv = ClientEnv,
