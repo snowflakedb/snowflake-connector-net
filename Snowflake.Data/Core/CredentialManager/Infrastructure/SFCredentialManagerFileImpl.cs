@@ -79,7 +79,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     s_logger.Info($"The existing json file for credential cache in {_jsonCacheFilePath} will be overwritten");
                 }
                 var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
                 if (createFileResult == -1)
                 {
                     var errorMessage = "Failed to create the JSON token cache file";
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
 
                 var jsonPermissions = _unixOperations.GetFilePermissions(_jsonCacheFilePath);
-                if (jsonPermissions != FileAccessPermissions.UserReadWriteExecute)
+                if (jsonPermissions != (FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite))
                 {
                     var errorMessage = "Permission for the JSON token cache file should contain only the owner access";
                     s_logger.Error(errorMessage);
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal KeyTokenDict ReadJsonFile()
         {
-            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _unixOperations.ReadAllText(_jsonCacheFilePath);
+            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _fileOperations.ReadAllText(_jsonCacheFilePath, TomlConnectionBuilder.ValidateFilePermissions);
             return JsonConvert.DeserializeObject<KeyTokenDict>(contentFile);
         }
 
