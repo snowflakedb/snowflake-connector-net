@@ -113,8 +113,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
-                var hashKey = key.ToSha256Hash();
-                if (keyTokenPairs.TryGetValue(hashKey, out string token))
+                if (keyTokenPairs.TryGetValue(key, out string token))
                 {
                     return token;
                 }
@@ -130,8 +129,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 var keyTokenPairs = ReadJsonFile();
-                var hashKey = key.ToSha256Hash();
-                keyTokenPairs.Remove(hashKey);
+                keyTokenPairs.Remove(key);
                 WriteToJsonFile(JsonConvert.SerializeObject(keyTokenPairs));
             }
         }
@@ -139,9 +137,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public void SaveCredentials(string key, string token)
         {
             s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
-            var hashKey = key.ToSha256Hash();
             KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
-            keyTokenPairs[hashKey] = token;
+            keyTokenPairs[key] = token;
 
             string jsonString = JsonConvert.SerializeObject(keyTokenPairs);
             WriteToJsonFile(jsonString);

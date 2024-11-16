@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -19,10 +20,11 @@ namespace Snowflake.Data.Client
 
         private static ISnowflakeCredentialManager s_credentialManager;
 
-        internal static string BuildCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
+        internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}:{authenticator?.ToUpper() ?? string.Empty}";
+            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}:{authenticator?.ToUpper() ?? string.Empty}".ToSha256Hash();
         }
+
 
         public static void UseDefaultCredentialManager()
         {

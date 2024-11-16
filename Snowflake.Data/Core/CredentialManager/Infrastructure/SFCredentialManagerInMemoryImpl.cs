@@ -22,8 +22,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public string GetCredentials(string key)
         {
             s_logger.Debug($"Getting credentials from memory for key: {key}");
-            var hashKey = key.ToSha256Hash();
-            if (s_credentials.TryGetValue(hashKey, out var secureToken))
+            if (s_credentials.TryGetValue(key, out var secureToken))
             {
                 return SecureStringHelper.Decode(secureToken);
             }
@@ -36,16 +35,14 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public void RemoveCredentials(string key)
         {
-            var hashKey = key.ToSha256Hash();
             s_logger.Debug($"Removing credentials from memory for key: {key}");
-            s_credentials.Remove(hashKey);
+            s_credentials.Remove(key);
         }
 
         public void SaveCredentials(string key, string token)
         {
-            var hashKey = key.ToSha256Hash();
-            s_logger.Debug($"Saving credentials into memory for key: {hashKey}");
-            s_credentials[hashKey] = SecureStringHelper.Encode(token);
+            s_logger.Debug($"Saving credentials into memory for key: {key}");
+            s_credentials[key] = SecureStringHelper.Encode(token);
         }
     }
 }

@@ -22,9 +22,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public string GetCredentials(string key)
         {
             s_logger.Debug($"Getting the credentials for key: {key}");
-            var hashKey = key.ToSha256Hash();
             IntPtr nCredPtr;
-            if (!CredRead(hashKey, 1 /* Generic */, 0, out nCredPtr))
+            if (!CredRead(key, 1 /* Generic */, 0, out nCredPtr))
             {
                 s_logger.Info($"Unable to get credentials for key: {key}");
                 return "";
@@ -41,8 +40,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         {
             s_logger.Debug($"Removing the credentials for key: {key}");
 
-            var hashKey = key.ToSha256Hash();
-            if (!CredDelete(hashKey, 1 /* Generic */, 0))
+            if (!CredDelete(key, 1 /* Generic */, 0))
             {
                 s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
             }
@@ -51,7 +49,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public void SaveCredentials(string key, string token)
         {
             s_logger.Debug($"Saving the credentials for key: {key}");
-            var hashKey = key.ToSha256Hash();
             byte[] byteArray = Encoding.Unicode.GetBytes(token);
             Credential credential = new Credential();
             credential.AttributeCount = 0;
@@ -61,7 +58,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             credential.Type = 1; // Generic
             credential.Persist = 2; // Local Machine
             credential.CredentialBlobSize = (uint)(byteArray == null ? 0 : byteArray.Length);
-            credential.TargetName = hashKey;
+            credential.TargetName = key;
             credential.CredentialBlob = token;
             credential.UserName = Environment.UserName;
 
