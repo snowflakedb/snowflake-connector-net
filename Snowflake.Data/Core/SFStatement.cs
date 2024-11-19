@@ -285,7 +285,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
+        internal SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
             if ((response.data != null) && (response.data.queryId != null))
             {
@@ -309,8 +309,8 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            throw new SnowflakeDbException(response.data.sqlState,
-                response.code, response.message, response.data.queryId);
+            throw new SnowflakeDbException(response.data?.sqlState,
+                response.code, response.message, response.data?.queryId);
         }
 
         private void SetTimeout(int timeout)
