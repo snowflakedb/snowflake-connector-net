@@ -6,6 +6,7 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -17,52 +18,78 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
         public static readonly SFCredentialManagerWindowsNativeImpl Instance = new SFCredentialManagerWindowsNativeImpl();
 
         public string GetCredentials(string key)
         {
-            s_logger.Debug($"Getting the credentials for key: {key}");
-            IntPtr nCredPtr;
-            if (!CredRead(key, 1 /* Generic */, 0, out nCredPtr))
+            try
             {
-                s_logger.Info($"Unable to get credentials for key: {key}");
-                return "";
-            }
+                _lock.EnterReadLock();
+                s_logger.Debug($"Getting the credentials for key: {key}");
+                IntPtr nCredPtr;
+                if (!CredRead(key, 1 /* Generic */, 0, out nCredPtr))
+                {
+                    s_logger.Info($"Unable to get credentials for key: {key}");
+                    return "";
+                }
 
-            using (var critCred = new CriticalCredentialHandle(nCredPtr))
+                using (var critCred = new CriticalCredentialHandle(nCredPtr))
+                {
+                    var cred = critCred.GetCredential();
+                    return cred.CredentialBlob;
+                }
+            }
+            finally
             {
-                var cred = critCred.GetCredential();
-                return cred.CredentialBlob;
+                _lock.ExitReadLock();
             }
         }
 
         public void RemoveCredentials(string key)
         {
-            s_logger.Debug($"Removing the credentials for key: {key}");
-
-            if (!CredDelete(key, 1 /* Generic */, 0))
+            try
             {
-                s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
+                _lock.EnterWriteLock();
+                s_logger.Debug($"Removing the credentials for key: {key}");
+
+                if (!CredDelete(key, 1 /* Generic */, 0))
+                {
+                    s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
         public void SaveCredentials(string key, string token)
         {
-            s_logger.Debug($"Saving the credentials for key: {key}");
-            byte[] byteArray = Encoding.Unicode.GetBytes(token);
-            Credential credential = new Credential();
-            credential.AttributeCount = 0;
-            credential.Attributes = IntPtr.Zero;
-            credential.Comment = IntPtr.Zero;
-            credential.TargetAlias = IntPtr.Zero;
-            credential.Type = 1; // Generic
-            credential.Persist = 2; // Local Machine
-            credential.CredentialBlobSize = (uint)(byteArray == null ? 0 : byteArray.Length);
-            credential.TargetName = key;
-            credential.CredentialBlob = token;
-            credential.UserName = Environment.UserName;
+            try
+            {
+                _lock.EnterWriteLock();
+                s_logger.Debug($"Saving the credentials for key: {key}");
+                byte[] byteArray = Encoding.Unicode.GetBytes(token);
+                Credential credential = new Credential();
+                credential.AttributeCount = 0;
+                credential.Attributes = IntPtr.Zero;
+                credential.Comment = IntPtr.Zero;
+                credential.TargetAlias = IntPtr.Zero;
+                credential.Type = 1; // Generic
+                credential.Persist = 2; // Local Machine
+                credential.CredentialBlobSize = (uint)(byteArray == null ? 0 : byteArray.Length);
+                credential.TargetName = key;
+                credential.CredentialBlob = token;
+                credential.UserName = Environment.UserName;
 
-            CredWrite(ref credential, 0);
+                CredWrite(ref credential, 0);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

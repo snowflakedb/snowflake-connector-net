@@ -11,6 +11,7 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
@@ -24,6 +25,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         internal const string CredentialCacheFileName = "temporary_credential.json";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
+
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         private readonly string _jsonCacheDirectory;
 
@@ -88,7 +91,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
                 else
                 {
-                    _fileOperations.Write(_jsonCacheFilePath, content);
+                    _fileOperations.Write(_jsonCacheFilePath, content, UnixOperations.ValidateFileWhenWriteIsAccessedOnlyByItsOwner);
                 }
 
                 var jsonPermissions = _unixOperations.GetFilePermissions(_jsonCacheFilePath);
@@ -103,45 +106,69 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal KeyTokenDict ReadJsonFile()
         {
-            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _fileOperations.ReadAllText(_jsonCacheFilePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _fileOperations.ReadAllText(_jsonCacheFilePath, UnixOperations.ValidateFileWhenReadIsAccessedOnlyByItsOwner);
             return JsonConvert.DeserializeObject<KeyTokenDict>(contentFile);
         }
 
         public string GetCredentials(string key)
         {
-            s_logger.Debug($"Getting credentials from json file in {_jsonCacheFilePath} for key: {key}");
-            if (_fileOperations.Exists(_jsonCacheFilePath))
+            try
             {
-                var keyTokenPairs = ReadJsonFile();
-                if (keyTokenPairs.TryGetValue(key, out string token))
+                _lock.EnterReadLock();
+                s_logger.Debug($"Getting credentials from json file in {_jsonCacheFilePath} for key: {key}");
+                if (_fileOperations.Exists(_jsonCacheFilePath))
                 {
-                    return token;
+                    var keyTokenPairs = ReadJsonFile();
+                    if (keyTokenPairs.TryGetValue(key, out string token))
+                    {
+                        return token;
+                    }
                 }
-            }
 
-            s_logger.Info("Unable to get credentials for the specified key");
-            return "";
+                s_logger.Info("Unable to get credentials for the specified key");
+                return "";
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         public void RemoveCredentials(string key)
         {
-            s_logger.Debug($"Removing credentials from json file in {_jsonCacheFilePath} for key: {key}");
-            if (_fileOperations.Exists(_jsonCacheFilePath))
+            try
             {
-                var keyTokenPairs = ReadJsonFile();
-                keyTokenPairs.Remove(key);
-                WriteToJsonFile(JsonConvert.SerializeObject(keyTokenPairs));
+                _lock.EnterWriteLock();
+                s_logger.Debug($"Removing credentials from json file in {_jsonCacheFilePath} for key: {key}");
+                if (_fileOperations.Exists(_jsonCacheFilePath))
+                {
+                    var keyTokenPairs = ReadJsonFile();
+                    keyTokenPairs.Remove(key);
+                    WriteToJsonFile(JsonConvert.SerializeObject(keyTokenPairs));
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
         public void SaveCredentials(string key, string token)
         {
-            s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
-            KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
-            keyTokenPairs[key] = token;
+            try
+            {
+                _lock.EnterWriteLock();
+                s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
+                KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
+                keyTokenPairs[key] = token;
 
-            string jsonString = JsonConvert.SerializeObject(keyTokenPairs);
-            WriteToJsonFile(jsonString);
+                string jsonString = JsonConvert.SerializeObject(keyTokenPairs);
+                WriteToJsonFile(jsonString);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
     }
 }

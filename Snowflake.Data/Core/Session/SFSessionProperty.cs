@@ -314,7 +314,7 @@ namespace Snowflake.Data.Core
                 OAuthAuthenticator.AUTH_NAME,
                 KeyPairAuthenticator.AUTH_NAME,
                 ExternalBrowserAuthenticator.AUTH_NAME,
-                MFACacheAuthenticator.AUTH_NAME
+                MFACacheAuthenticator.AuthName
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))

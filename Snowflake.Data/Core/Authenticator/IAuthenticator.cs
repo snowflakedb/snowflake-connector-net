@@ -206,7 +206,7 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
-            else if (type.Equals(MFACacheAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (type.Equals(MFACacheAuthenticator.AuthName, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new MFACacheAuthenticator(session);
             }

@@ -142,7 +142,7 @@ namespace Snowflake.Data.Core.Session
             ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, password, passcode);
-            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AuthName;
             var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             if (sessionOrCreateTokens.Session != null)
             {
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Core.Session
                                                                                 (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
                                                                                  bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
             var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
-                                     authenticator == MFACacheAuthenticator.AUTH_NAME;
+                                     authenticator == MFACacheAuthenticator.AuthName;
             if(isUsingPasscode && !isMfaAuthenticator)
             {
                 const string ErrorMessage = "Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication";
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Core.Session
             ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
                 return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
-            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AUTH_NAME;
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) && authenticator == MFACacheAuthenticator.AuthName;
             var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             WarnAboutOverridenConfig();
 

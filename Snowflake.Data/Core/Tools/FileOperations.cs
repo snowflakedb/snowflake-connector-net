@@ -20,7 +20,17 @@ namespace Snowflake.Data.Core.Tools
             return File.Exists(path);
         }
 
-        public virtual void Write(string path, string content) => File.WriteAllText(path, content);
+        public virtual void Write(string path, string content, Action<UnixStream> validator = null)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || validator == null)
+            {
+                File.WriteAllText(path, content);
+            }
+            else
+            {
+                _unixOperations.WriteAllText(path, content, validator);
+            }
+        }
 
         public virtual string ReadAllText(string path)
         {
