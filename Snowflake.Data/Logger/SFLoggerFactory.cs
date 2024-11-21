@@ -11,10 +11,24 @@ namespace Snowflake.Data.Log
     {
         private static bool isLoggerEnabled = false;
 
-        private static ILogger logger = null;
+        private static bool isSimpleLoggerEnabled = true;
+
+        private static SFLogger simpleLogger = null;
+
+        private static ILogger customLogger = null;
 
         private SFLoggerFactory()
         {
+        }
+
+        public static void DisableSimpleLogger()
+        {
+            isSimpleLoggerEnabled = false;
+        }
+
+        public static void EnableSimpleLogger()
+        {
+            isSimpleLoggerEnabled = true;
         }
 
         public static void DisableLogger()
@@ -29,18 +43,18 @@ namespace Snowflake.Data.Log
 
         public static void UseDefaultLogger()
         {
-            logger = null;
+            customLogger = null;
         }
 
         public static void SetCustomLogger(ILogger customLogger)
-        {            
-            logger = customLogger;
+        {
+            SFLoggerFactory.customLogger = customLogger;
         }
 
         internal static SFLogger GetSimpleLogger<T>()
         {
             // If true, return the default/specified logger
-            if (isLoggerEnabled)
+            if (isSimpleLoggerEnabled)
             {
                 ILog loggerL = LogManager.GetLogger(typeof(T));
                 return new Log4NetImpl(loggerL);
@@ -58,7 +72,7 @@ namespace Snowflake.Data.Log
             if (isLoggerEnabled)
             {
                 // If no logger specified, use the default logger: Microsoft's console logger
-                if (logger == null)
+                if (customLogger == null)
                 {
                     ILoggerFactory factory = LoggerFactory.Create(
                         builder => builder
@@ -68,7 +82,7 @@ namespace Snowflake.Data.Log
 
                     return factory.CreateLogger<T>();
                 }
-                return logger;
+                return customLogger;
             }
             // Else, return the empty logger implementation which outputs nothing
             else

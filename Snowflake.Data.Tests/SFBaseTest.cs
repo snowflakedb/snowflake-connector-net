@@ -195,15 +195,6 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-            ILoggerFactory factory = LoggerFactory.Create(
-                builder => builder
-                .AddLog4Net()
-                .SetMinimumLevel(LogLevel.Debug));
-
-            var logger = factory.CreateLogger("SFBaseTest");
-            SFLoggerFactory.SetCustomLogger(logger);
-            SFLoggerFactory.EnableLogger();
-
             var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
