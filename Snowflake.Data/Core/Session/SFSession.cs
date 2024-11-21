@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -67,6 +67,8 @@ namespace Snowflake.Data.Core
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
         internal int masterValidityInSeconds = 0;
+
+        private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
         internal string ConnectionString { get; }
@@ -157,8 +159,16 @@ namespace Snowflake.Data.Core
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
             String connectionString,
-            SecureString password)
+            SecureString password) : this(connectionString, password, EasyLoggingStarter.Instance)
         {
+        }
+
+        internal SFSession(
+            String connectionString,
+            SecureString password,
+            EasyLoggingStarter easyLoggingStarter)
+        {
+            _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
             Password = password;
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password);
@@ -175,6 +185,8 @@ namespace Snowflake.Data.Core
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
+                properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
+                _easyLoggingStarter.Init(easyLoggingConfigFile);
                 properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;

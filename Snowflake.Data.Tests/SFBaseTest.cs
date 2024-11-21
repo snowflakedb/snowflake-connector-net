@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -187,9 +187,13 @@ namespace Snowflake.Data.Tests
         public void Setup()
         {
 #if NETFRAMEWORK
-            Environment.SetEnvironmentVariable("NET_TEST_FRAMEWORK", "net471");
+            log4net.GlobalContext.Properties["framework"] = "net471";
+            log4net.Config.XmlConfigurator.Configure();
+
 #else
-            Environment.SetEnvironmentVariable("NET_TEST_FRAMEWORK", "net6.0");
+            log4net.GlobalContext.Properties["framework"] = "net6.0";
+            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
             ILoggerFactory factory = LoggerFactory.Create(
                 builder => builder

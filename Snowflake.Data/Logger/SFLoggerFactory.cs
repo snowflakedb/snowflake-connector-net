@@ -1,7 +1,8 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using log4net;
 using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log
@@ -34,6 +35,21 @@ namespace Snowflake.Data.Log
         public static void SetCustomLogger(ILogger customLogger)
         {            
             logger = customLogger;
+        }
+
+        internal static SFLogger GetSimpleLogger<T>()
+        {
+            // If true, return the default/specified logger
+            if (isLoggerEnabled)
+            {
+                ILog loggerL = LogManager.GetLogger(typeof(T));
+                return new Log4NetImpl(loggerL);
+            }
+            // Else, return the empty logger implementation which outputs nothing
+            else
+            {
+                return new SFLoggerEmptySimpleImpl();
+            }
         }
 
         internal static ILogger GetLogger<T>()

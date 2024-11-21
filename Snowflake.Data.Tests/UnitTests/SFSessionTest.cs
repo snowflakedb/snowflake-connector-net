@@ -85,6 +85,26 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(roleName, sfSession.role);
         }
 
+        [Test]
+        [TestCase(null)]
+        [TestCase("/some-path/config.json")]
+        [TestCase("C:\\some-path\\config.json")]
+        public void TestThatConfiguresEasyLogging(string configPath)
+        {
+            // arrange
+            var easyLoggingStarter = new Moq.Mock<EasyLoggingStarter>();
+            var simpleConnectionString = "account=test;user=test;password=test;";
+            var connectionString = configPath == null
+                ? simpleConnectionString
+                : $"{simpleConnectionString}client_config_file={configPath};";
+
+            // act
+            new SFSession(connectionString, null, easyLoggingStarter.Object);
+
+            // assert
+            easyLoggingStarter.Verify(starter => starter.Init(configPath));
+        }
+
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]

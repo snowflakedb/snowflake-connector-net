@@ -23,5 +23,17 @@ namespace Snowflake.Data.Core.Tools
         {
             return Environment.GetFolderPath(folder);
         }
+
+        public virtual string GetExecutionDirectory()
+        {
+            var executablePath = Environment.GetCommandLineArgs()[0];
+            var directoryName = string.IsNullOrEmpty(executablePath) ? null : Path.GetDirectoryName(executablePath);
+            if (string.IsNullOrEmpty(directoryName))
+            {
+                s_logger.LogWarning("Unable to determine execution directory");
+                return null;
+            }
+            return directoryName;
+        }
     }
 }
