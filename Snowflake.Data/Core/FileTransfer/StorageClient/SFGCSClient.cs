@@ -10,6 +10,8 @@ using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using System.Net;
+using Google.Apis.Storage.v1;
+using Google.Cloud.Storage.V1;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -52,6 +54,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         private WebRequest _customWebRequest = null;
 
+        private static readonly string[] s_scopes = new[] { StorageService.Scope.DevstorageFullControl };
+
         /// <summary>
         /// GCS client with access token.
         /// </summary>
@@ -65,13 +69,30 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Debug("Constructing client using access token");
                 AccessToken = accessToken;
                 GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
-                StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
+                var storageClientBuilder = new StorageClientBuilder
+                {
+                    Credential = creds?.CreateScoped(s_scopes),
+                    EncryptionKey = null
+                };
+                StorageClient = BuildStorageClient(storageClientBuilder, stageInfo);
             }
             else
             {
                 Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
-                StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
+                var storageClientBuilder = new StorageClientBuilder
+                {
+                    UnauthenticatedAccess = true
+                };
+                StorageClient = BuildStorageClient(storageClientBuilder, stageInfo);
             }
+        }
+
+        private Google.Cloud.Storage.V1.StorageClient BuildStorageClient(StorageClientBuilder builder, PutGetStageInfo stageInfo)
+        {
+            var gcmCustomEndpoint = stageInfo.GcsCustomEndpoint();
+            if (!string.IsNullOrEmpty(gcmCustomEndpoint))
+                builder.BaseUri = gcmCustomEndpoint;
+            return builder.Build();
         }
 
         internal void SetCustomWebRequest(WebRequest mockWebRequest)
@@ -112,7 +133,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
         {
             string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-                generateFileURL(fileMetadata.stageInfo.location, fileMetadata.RemoteFileName()) :
+                generateFileURL(fileMetadata.stageInfo, fileMetadata.RemoteFileName()) :
                 fileMetadata.presignedUrl;
 
             WebRequest request = WebRequest.Create(url);
@@ -219,17 +240,24 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return null;
         }
 
-        /// <summary>
-        /// Generate the file URL.
-        /// </summary>
-        /// <param name="stageLocation">The GCS file metadata.</param>
-        /// <param name="fileName">The GCS file metadata.</param>
-        internal string generateFileURL(string stageLocation, string fileName)
+        internal string generateFileURL(PutGetStageInfo stageInfo, string fileName)
         {
-            var gcsLocation = ExtractBucketNameAndPath(stageLocation);
+            var storageHostPath = ExtractStorageHostPath(stageInfo);
+            var gcsLocation = ExtractBucketNameAndPath(stageInfo.location);
             var fullFilePath = gcsLocation.key + fileName;
-            var link = "https://storage.googleapis.com/" + gcsLocation.bucket + "/" + fullFilePath;
+            var link = storageHostPath + gcsLocation.bucket + "/" + fullFilePath;
             return link;
+        }
+
+        private string ExtractStorageHostPath(PutGetStageInfo stageInfo)
+        {
+            var gcsEndpoint = stageInfo.GcsCustomEndpoint();
+            var storageHostPath = string.IsNullOrEmpty(gcsEndpoint) ? "https://storage.googleapis.com/" : gcsEndpoint;
+            if (!storageHostPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                storageHostPath = "https://" + storageHostPath;
+            if (!storageHostPath.EndsWith("/"))
+                storageHostPath = storageHostPath + "/";
+            return storageHostPath;
         }
 
         /// <summary>
