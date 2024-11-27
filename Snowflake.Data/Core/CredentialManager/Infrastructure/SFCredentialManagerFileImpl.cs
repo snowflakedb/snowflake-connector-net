@@ -10,7 +10,9 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Threading;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
@@ -91,7 +93,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
                 else
                 {
-                    _fileOperations.Write(_jsonCacheFilePath, content, UnixOperations.ValidateFileWhenWriteIsAccessedOnlyByItsOwner);
+                    _fileOperations.Write(_jsonCacheFilePath, content, ValidateFilePermissions);
                 }
 
                 var jsonPermissions = _unixOperations.GetFilePermissions(_jsonCacheFilePath);
@@ -106,7 +108,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal KeyTokenDict ReadJsonFile()
         {
-            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _fileOperations.ReadAllText(_jsonCacheFilePath, UnixOperations.ValidateFileWhenReadIsAccessedOnlyByItsOwner);
+            var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? File.ReadAllText(_jsonCacheFilePath) : _fileOperations.ReadAllText(_jsonCacheFilePath, ValidateFilePermissions);
             return JsonConvert.DeserializeObject<KeyTokenDict>(contentFile);
         }
 
@@ -169,6 +171,20 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 _lock.ExitWriteLock();
             }
+        }
+
+        internal static void ValidateFilePermissions(UnixStream stream)
+        {
+            var allowedPermissions = new[]
+            {
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
+            };
+            if (stream.OwnerUser.UserId != Syscall.geteuid())
+                throw new SecurityException("Attempting to read or write a file not owned by the effective user of the current process");
+            if (stream.OwnerGroup.GroupId != Syscall.getegid())
+                throw new SecurityException("Attempting to read or write a file not owned by the effective group of the current process");
+            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
+                throw new SecurityException("Attempting to read or write a file with too broad permissions assigned");
         }
     }
 }

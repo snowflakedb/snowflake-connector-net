@@ -63,40 +63,14 @@ namespace Snowflake.Data.Core.Tools
         {
             var fileInfo = new UnixFileInfo(path: path);
 
-            using (var handle = fileInfo.OpenRead())
+            using (var handle = fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(content);
+                }
             }
-            File.WriteAllText(path, content);
-        }
-
-        internal static void ValidateFileWhenReadIsAccessedOnlyByItsOwner(UnixStream stream)
-        {
-            var allowedPermissions = new[]
-            {
-                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
-                FileAccessPermissions.UserRead
-            };
-            if (stream.OwnerUser.UserId != Syscall.geteuid())
-                throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
-            if (stream.OwnerGroup.GroupId != Syscall.getegid())
-                throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
-            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                throw new SecurityException("Attempting to read a file with too broad permissions assigned");
-        }
-
-        internal static void ValidateFileWhenWriteIsAccessedOnlyByItsOwner(UnixStream stream)
-        {
-            var allowedPermissions = new[]
-            {
-                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
-            };
-            if (stream.OwnerUser.UserId != Syscall.geteuid())
-                throw new SecurityException("Attempting to write a file not owned by the effective user of the current process");
-            if (stream.OwnerGroup.GroupId != Syscall.getegid())
-                throw new SecurityException("Attempting to write a file not owned by the effective group of the current process");
-            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                throw new SecurityException("Attempting to write a file with too broad permissions assigned");
         }
     }
 }

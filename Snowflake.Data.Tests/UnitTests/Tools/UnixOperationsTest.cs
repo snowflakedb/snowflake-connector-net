@@ -6,6 +6,7 @@ using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
@@ -96,14 +97,14 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, userAllowedPermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, UnixOperations.ValidateFileWhenReadIsAccessedOnlyByItsOwner);
+            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.AreEqual(content, result);
         }
 
         [Test]
-        public void TestWriteAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
+        public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FilePermissions userAllowedPermissions)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -115,11 +116,11 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, userAllowedPermissions);
 
             // act and assert
-            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", UnixOperations.ValidateFileWhenWriteIsAccessedOnlyByItsOwner));
+            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", SFCredentialManagerFileImpl.ValidateFilePermissions));
         }
 
         [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileReadingWithUnixValidations([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileReadingWithUnixValidationsUsingTomlConfig([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
         {
@@ -139,11 +140,11 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, UnixOperations.ValidateFileWhenReadIsAccessedOnlyByItsOwner), "Attempting to read a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
         [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidations([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
         {
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", UnixOperations.ValidateFileWhenReadIsAccessedOnlyByItsOwner), "Attempting to write a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
         }
 
         public static IEnumerable<FilePermissions> UserPermissions()
