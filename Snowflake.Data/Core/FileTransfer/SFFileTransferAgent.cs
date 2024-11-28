@@ -452,9 +452,7 @@ namespace Snowflake.Data.Core
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
                         string filePathToReplace = GetFilePathFromPutCommand(Query);
-                        string fileNameToReplaceWith = fileMeta.destFileName;
-                        string queryWithSingleFile = Query;
-                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+                        string queryWithSingleFile = Query.Replace(filePathToReplace, fileMeta.destFileName);
 
                         SFStatement sfStatement = new SFStatement(Session);
                         sfStatement.isPutGetQuery = true;
@@ -493,9 +491,7 @@ namespace Snowflake.Data.Core
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
                         string filePathToReplace = GetFilePathFromPutCommand(Query);
-                        string fileNameToReplaceWith = fileMeta.destFileName;
-                        string queryWithSingleFile = Query;
-                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+                        string queryWithSingleFile = Query.Replace(filePathToReplace, fileMeta.destFileName);
 
                         SFStatement sfStatement = new SFStatement(Session);
                         sfStatement.isPutGetQuery = true;
