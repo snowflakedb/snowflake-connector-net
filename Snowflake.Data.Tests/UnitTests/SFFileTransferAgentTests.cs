@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -68,6 +68,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
         // Mock file content
         const string FileContent = "FTAFileContent";
+
+        // Mock file paths
+        const string FilePathWithoutSpaces = "C:/Users/Test/folder_without_space/*.*";
+        const string FilePathWithSpaces = "C:/Users/Test/folder with space/*.*";
 
         [SetUp]
         public void BeforeEachTest()
@@ -633,6 +637,17 @@ namespace Snowflake.Data.Tests.UnitTests
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
             Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);
             Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
+        }
+
+        [Test]
+        [TestCase("PUT file://" + FilePathWithoutSpaces + " @TestStage", FilePathWithoutSpaces)]
+        [TestCase("PUT file://" + FilePathWithSpaces + " @TestStage", FilePathWithSpaces)]
+        [TestCase("PUT 'file://" + FilePathWithoutSpaces + "' @TestStage", FilePathWithoutSpaces)]
+        [TestCase("PUT 'file://" + FilePathWithSpaces + "' @TestStage", FilePathWithSpaces)]
+        public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
+        {
+            var actualFilePath = SFFileTransferAgent.GetFilePathFromPutCommand(query);
+            Assert.AreEqual(expectedFilePath, actualFilePath);
         }
     }
 }

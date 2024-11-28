@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -451,7 +451,7 @@ namespace Snowflake.Data.Core
                 {
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
-                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string filePathToReplace = GetFilePathFromPutCommand(Query);
                         string fileNameToReplaceWith = fileMeta.destFileName;
                         string queryWithSingleFile = Query;
                         queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
@@ -492,7 +492,7 @@ namespace Snowflake.Data.Core
                 {
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
-                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string filePathToReplace = GetFilePathFromPutCommand(Query);
                         string fileNameToReplaceWith = fileMeta.destFileName;
                         string queryWithSingleFile = Query;
                         queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
@@ -527,13 +527,19 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="query">The query containing the file path</param>
         /// <returns>The file path contained by the query</returns>
-        private string getFilePathFromPutCommand(string query)
+        internal static string GetFilePathFromPutCommand(string query)
         {
             // Extract file path from PUT command:
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
             int startIndex = query.IndexOf("file://") + "file://".Length;
             int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
             string filePath = query.Substring(startIndex, endIndex);
+
+            // Check if file path contains an enclosing (') char
+            if (filePath[filePath.Length - 1] == '\'')
+            {
+                filePath = filePath.Substring(0, filePath.Length - 1);
+            }
             return filePath;
         }
 
