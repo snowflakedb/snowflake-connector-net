@@ -89,9 +89,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private Google.Cloud.Storage.V1.StorageClient BuildStorageClient(StorageClientBuilder builder, PutGetStageInfo stageInfo)
         {
-            var gcmCustomEndpoint = stageInfo.GcsCustomEndpoint();
-            if (!string.IsNullOrEmpty(gcmCustomEndpoint))
-                builder.BaseUri = gcmCustomEndpoint;
+            var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
+            if (!string.IsNullOrEmpty(gcsCustomEndpoint))
+                builder.BaseUri = gcsCustomEndpoint;
             return builder.Build();
         }
 

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
+ */
+
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
@@ -10,16 +14,16 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         [Test]
         [TestCaseSource(nameof(TestCases))]
-        public void TestGcmRegionalUrl(string region, bool useRegionalUrl, string endPoint, string expectedGcmEndpoint)
+        public void TestGcsRegionalUrl(string region, bool useRegionalUrl, string endPoint, string expectedGcsEndpoint)
         {
             // arrange
-            var stageInfo = CreateGCSStageInfo(region, useRegionalUrl, endPoint);
+            var stageInfo = CreateGcsStageInfo(region, useRegionalUrl, endPoint);
 
             // act
             var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
 
             // assert
-            Assert.AreEqual(expectedGcmEndpoint, gcsCustomEndpoint);
+            Assert.AreEqual(expectedGcsEndpoint, gcsCustomEndpoint);
         }
 
         internal static IEnumerable<object[]> TestCases()
@@ -41,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             yield return new object[] { "US-CENTRAL1", true, "example.com", "example.com" };
         }
 
-        private PutGetStageInfo CreateGCSStageInfo(string region, bool useRegionalUrl, string endPoint) =>
+        private PutGetStageInfo CreateGcsStageInfo(string region, bool useRegionalUrl, string endPoint) =>
             new PutGetStageInfo
             {
                 locationType = SFRemoteStorageUtil.GCS_FS,
