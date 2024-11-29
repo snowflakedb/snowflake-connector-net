@@ -451,8 +451,10 @@ namespace Snowflake.Data.Core
                 {
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
-                        string filePathToReplace = GetFilePathFromPutCommand(Query);
-                        string queryWithSingleFile = Query.Replace(filePathToReplace, fileMeta.destFileName);
+                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string fileNameToReplaceWith = fileMeta.destFileName;
+                        string queryWithSingleFile = Query;
+                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
                         SFStatement sfStatement = new SFStatement(Session);
                         sfStatement.isPutGetQuery = true;
@@ -490,8 +492,10 @@ namespace Snowflake.Data.Core
                 {
                     foreach (SFFileMetadata fileMeta in FilesMetas)
                     {
-                        string filePathToReplace = GetFilePathFromPutCommand(Query);
-                        string queryWithSingleFile = Query.Replace(filePathToReplace, fileMeta.destFileName);
+                        string filePathToReplace = getFilePathFromPutCommand(Query);
+                        string fileNameToReplaceWith = fileMeta.destFileName;
+                        string queryWithSingleFile = Query;
+                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
                         SFStatement sfStatement = new SFStatement(Session);
                         sfStatement.isPutGetQuery = true;
@@ -523,7 +527,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="query">The query containing the file path</param>
         /// <returns>The file path contained by the query</returns>
-        internal static string GetFilePathFromPutCommand(string query)
+        internal static string getFilePathFromPutCommand(string query)
         {
             // Extract file path from PUT command:
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"

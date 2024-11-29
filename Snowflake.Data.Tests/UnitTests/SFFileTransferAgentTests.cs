@@ -646,7 +646,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("PUT 'file://" + FilePathWithSpaces + "' @TestStage", FilePathWithSpaces)]
         public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
         {
-            var actualFilePath = SFFileTransferAgent.GetFilePathFromPutCommand(query);
+            var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
             Assert.AreEqual(expectedFilePath, actualFilePath);
         }
     }
