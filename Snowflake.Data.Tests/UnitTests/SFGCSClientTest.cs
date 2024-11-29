@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Tests.Mock;
     using Moq;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFGCSClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -338,6 +338,37 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        [TestCase("us-central1", null, null, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "https://example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", null, true, "https://storage.us-central1.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("me-central2", null, null, "https://storage.me-central2.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        public void TestUseUriWithRegionsWhenNeeded(string region, string endPoint, bool useRegionalUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = Location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = region,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
