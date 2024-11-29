@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core.Tools
             catch (Exception exception)
             {
                 var errorMessage = $"Error caught while collecting diagnostic info: {exception.Message}";
-                s_logger.Error(errorMessage, exception);
+                s_logger.LogError(errorMessage, exception);
                 info.AppendLine(errorMessage);
             }
             return info.ToString();
