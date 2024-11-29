@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Snowflake.Data.Log
 {
@@ -29,11 +28,23 @@ namespace Snowflake.Data.Log
         void Error(string msg, Exception ex = null);
 
         void Fatal(string msg, Exception ex = null);
+
+        List<SFAppender> GetAppenders();
+
+        void AddAppender(SFAppender appender);
+
+        void RemoveAppender(SFAppender appender);
+
+        void SetLevel(LoggingEvent level);
     }
 
-    enum LoggingEvent
+    public enum LoggingEvent
     {
-        DEBUG, INFO, WARN, ERROR, FATAL
+        OFF, TRACE, DEBUG, INFO, WARN, ERROR, FATAL
     }
 
+    public interface SFAppender
+    {
+        void Append(string logLevel, string message, Type type, Exception ex = null);
+    }
 }

@@ -15,7 +15,7 @@ namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigParser
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetSimpleLogger<EasyLoggingConfigParser>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<EasyLoggingConfigParser>();
 
         public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser();
 

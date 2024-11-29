@@ -5,9 +5,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using log4net;
-using log4net.Appender;
-using log4net.Layout;
 using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Log
@@ -18,49 +15,44 @@ namespace Snowflake.Data.Log
 
         private readonly object _lockForExclusiveConfigure = new object();
 
-        private const string AppenderPrefix = "SFEasyLogging";
+        internal const string AppenderPrefix = "SFEasyLogging";
 
         private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
 
         public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath)
         {
-            var log4netLevel = _levelMapper.ToLog4NetLevel(easyLoggingLogLevel);
+            var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
             lock (_lockForExclusiveConfigure)
             {
-                var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
-                var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
-                rootLogger.Level = log4netLevel;
+                var rootLogger = SFLogRepository.GetRootLogger();
+                rootLogger.SetLevel(sfLoggerLevel);
                 var appender = string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase)
                     ? AddConsoleAppender(rootLogger)
                     : AddRollingFileAppender(rootLogger, logsPath);
                 RemoveOtherEasyLoggingAppenders(rootLogger, appender);
-                repository.RaiseConfigurationChanged(EventArgs.Empty);
             }
         }
 
         internal void ResetEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel)
         {
-            var log4netLevel = _levelMapper.ToLog4NetLevel(easyLoggingLogLevel);
+            var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
             lock (_lockForExclusiveConfigure)
             {
-                var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
-                var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
-                rootLogger.Level = log4netLevel;
+                var rootLogger = SFLogRepository.GetRootLogger();
+                rootLogger.SetLevel(sfLoggerLevel);
                 RemoveOtherEasyLoggingAppenders(rootLogger, null);
-                repository.RaiseConfigurationChanged(EventArgs.Empty);
             }
         }
 
         internal static bool HasEasyLoggingAppender()
         {
-            var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
-            var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
-            return rootLogger.Appenders.ToArray().Any(IsEasyLoggingAppender);
+            var rootLogger = SFLogRepository.GetRootLogger();
+            return rootLogger.GetAppenders().ToArray().Any(IsEasyLoggingAppender);
         }
 
-        private static void RemoveOtherEasyLoggingAppenders(log4net.Repository.Hierarchy.Logger logger, IAppender appender)
+        private static void RemoveOtherEasyLoggingAppenders(SFLogger logger, SFAppender appender)
         {
-            var existingAppenders = logger.Appenders.ToArray();
+            var existingAppenders = logger.GetAppenders().ToArray();
             foreach (var existingAppender in existingAppenders)
             {
                 if (IsEasyLoggingAppender(existingAppender) && existingAppender != appender)
@@ -70,67 +62,60 @@ namespace Snowflake.Data.Log
             }
         }
 
-        private static IAppender AddRollingFileAppender(log4net.Repository.Hierarchy.Logger logger,
+        private static SFAppender AddRollingFileAppender(SFLogger logger,
             string directoryPath)
         {
             var patternLayout = PatternLayout();
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
-            var appender = new RollingFileAppender
+            var appender = new SFRollingFileAppender
             {
-                Layout = patternLayout,
-                AppendToFile = true,
-                File = Path.Combine(directoryPath, logFileName),
-                Name = $"{AppenderPrefix}RollingFileAppender",
-                StaticLogFileName = true,
-                RollingStyle = RollingFileAppender.RollingMode.Size,
-                MaximumFileSize = "1GB",
-                MaxSizeRollBackups = 2,
-                PreserveLogFileNameExtension = true,
-                LockingModel = new FileAppender.MinimalLock()
+                _patternLayout = patternLayout,
+                _logFilePath = Path.Combine(directoryPath, logFileName),
+                _name = $"{AppenderPrefix}RollingFileAppender",
+                _maximumFileSize = 1000000000, // "1GB"
+                _maxSizeRollBackups = 2,
             };
             appender.ActivateOptions();
             logger.AddAppender(appender);
             return appender;
         }
 
-        private static bool IsEasyLoggingAppender(IAppender appender)
+        private static bool IsEasyLoggingAppender(SFAppender appender)
         {
-            if (appender.GetType() == typeof(ConsoleAppender))
+            if (appender.GetType() == typeof(SFConsoleAppender))
             {
-                var consoleAppender = (ConsoleAppender)appender;
-                return consoleAppender.Name != null && consoleAppender.Name.StartsWith(AppenderPrefix);
+                var consoleAppender = (SFConsoleAppender)appender;
+                return consoleAppender._name != null && consoleAppender._name.StartsWith(AppenderPrefix);
             }
 
-            if (appender.GetType() == typeof(RollingFileAppender))
+            if (appender.GetType() == typeof(SFRollingFileAppender))
             {
-                var rollingFileAppender = (RollingFileAppender)appender;
-                return rollingFileAppender.Name != null && rollingFileAppender.Name.StartsWith(AppenderPrefix);
+                var rollingFileAppender = (SFRollingFileAppender)appender;
+                return rollingFileAppender._name != null && rollingFileAppender._name.StartsWith(AppenderPrefix);
             }
 
             return false;
         }
 
-        private static IAppender AddConsoleAppender(log4net.Repository.Hierarchy.Logger logger)
+        private static SFAppender AddConsoleAppender(SFLogger logger)
         {
             var patternLayout = PatternLayout();
-            var appender = new ConsoleAppender()
+            var appender = new SFConsoleAppender()
             {
-                Layout = patternLayout,
-                Name = $"{AppenderPrefix}ConsoleAppender"
+                _patternLayout = patternLayout,
+                _name = $"{AppenderPrefix}ConsoleAppender"
             };
-            appender.ActivateOptions();
             logger.AddAppender(appender);
             return appender;
         }
 
-        private static PatternLayout PatternLayout()
+        internal static PatternLayout PatternLayout()
         {
             var patternLayout = new PatternLayout
             {
-                ConversionPattern = "[%date] [%t] [%-5level] [%logger] %message%newline"
+                _conversionPattern = "[%date] [%t] [%-5level] [%logger] %message%newline"
             };
-            patternLayout.ActivateOptions();
             return patternLayout;
         }
     }

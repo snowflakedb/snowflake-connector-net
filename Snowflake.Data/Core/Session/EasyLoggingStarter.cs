@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core
 {
     internal class EasyLoggingStarter
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetSimpleLogger<EasyLoggingStarter>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<EasyLoggingStarter>();
 
         private readonly EasyLoggingConfigProvider _easyLoggingConfigProvider;
 

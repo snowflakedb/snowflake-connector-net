@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestThatChangesLogLevel()
         {
             // arrange
-            var logger = SFLoggerFactory.GetSimpleLogger<SFBlockingChunkDownloaderV3>();
+            var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
 
             // assert
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestThatLogsToProperFileWithProperLogLevelOnly()
         {
             // arrange
-            var logger = SFLoggerFactory.GetSimpleLogger<SFBlockingChunkDownloaderV3>();
+            var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath);
 
             // act
