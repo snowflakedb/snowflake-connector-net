@@ -16,6 +16,7 @@ namespace Snowflake.Data.Log
             switch (level)
             {
                 case EasyLoggingLogLevel.Off: return LoggingEvent.OFF;
+                case EasyLoggingLogLevel.Fatal: return LoggingEvent.FATAL;
                 case EasyLoggingLogLevel.Error: return LoggingEvent.ERROR;
                 case EasyLoggingLogLevel.Warn: return LoggingEvent.WARN;
                 case EasyLoggingLogLevel.Info: return LoggingEvent.INFO;

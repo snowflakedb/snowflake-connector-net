@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string SerilogFileName = "test_serilog.log";
         private const string NlogFileName = "test_nlog.log";
 
-        public abstract class SFBaseLoggerTest
+        public abstract class ILoggerBaseTest
         {
             protected ILogger _logger;
             protected string _logFile;
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TestFixture]
-        public class Log4NetTest : SFBaseLoggerTest
+        public class Log4NetTest : ILoggerBaseTest
         {
             [OneTimeSetUp]
             public void SetUp()
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TestFixture]
-        public class SerilogTest : SFBaseLoggerTest
+        public class SerilogTest : ILoggerBaseTest
         {
             [OneTimeSetUp]
             public void SetUp()
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TestFixture]
-        public class NlogTest : SFBaseLoggerTest
+        public class NlogTest : ILoggerBaseTest
         {
             [OneTimeSetUp]
             public void SetUp()

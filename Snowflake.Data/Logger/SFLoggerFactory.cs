@@ -45,21 +45,33 @@ namespace Snowflake.Data.Log
             SFLoggerFactory.s_customLogger = customLogger;
         }
 
-        internal static SFLogger GetSFLogger<T>()
+        internal static SFLogger GetSFLogger<T>(bool useFileAppender = true)
         {
             // If true, return the default/specified logger
             if (s_isSFLoggerEnabled)
             {
                 var logger = new SFLoggerImpl(typeof(T));
-                var fileAppender = new SFRollingFileAppender()
+                if (useFileAppender)
                 {
-                    _name = "RollingFileAppender",
-                    _logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "test_snowflake_log.log"),
-                    _maximumFileSize = 1000000000, // "1GB"
-                    _maxSizeRollBackups = 0,
-                    _patternLayout = EasyLoggerManager.PatternLayout()
-                };
-                logger.AddAppender(fileAppender);
+                    var fileAppender = new SFRollingFileAppender()
+                    {
+                        _name = "RollingFileAppender",
+                        _logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "test_snowflake_log.log"),
+                        _maximumFileSize = 1000000000, // "1GB"
+                        _maxSizeRollBackups = 0,
+                        _patternLayout = EasyLoggerManager.PatternLayout()
+                    };
+                    logger.AddAppender(fileAppender);
+                }
+                else
+                {
+                    var consoleAppender = new SFConsoleAppender()
+                    {
+                        _name = "ConsoleAppender",
+                        _patternLayout = EasyLoggerManager.PatternLayout()
+                    };
+                    logger.AddAppender(consoleAppender);
+                }
                 return logger;
             }
             // Else, return the empty logger implementation which outputs nothing

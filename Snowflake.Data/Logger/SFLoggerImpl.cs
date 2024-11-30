@@ -11,8 +11,6 @@ using System.Threading;
 
 public static class SFLogRepository
 {
-    //internal static Dictionary<string, SFLogger> _logRepository = new Dictionary<string, SFLogger>();
-
     internal static SFLogger s_rootLogger = s_rootLogger = new SFLoggerImpl(typeof(SFLogRepository));
 
     internal static SFLogger GetRootLogger()
@@ -183,8 +181,6 @@ public class SFLoggerImpl : SFLogger
                     goto case LoggingEvent.INFO;
                 case LoggingEvent.INFO:
                     _isDebugEnabled = false;
-                    break;
-                default:
                     break;
             }
         }

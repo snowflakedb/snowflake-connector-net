@@ -5,6 +5,7 @@
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestUsingSimpleLogger()
+        public void TestUsingSFLogger()
         {
             SFLoggerFactory.EnableSFLogger();
             _logger = SFLoggerFactory.GetSFLogger<ILoggerTest>();
@@ -43,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestSettingCustomLogger()
+        public void TestUsingEmptyLogger()
         {
             SFLoggerFactory.DisableSFLogger();
             _logger = SFLoggerFactory.GetSFLogger<ILoggerTest>();
@@ -57,6 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
+            _logger.Debug("debug log message", new Exception("test exception"));
         }
 
         [Test]
@@ -66,6 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
+            _logger.Info("info log message", new Exception("test exception"));
         }
 
         [Test]
@@ -75,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
+            _logger.Warn("warn log message", new Exception("test exception"));
         }
 
         [Test]
@@ -84,6 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
+            _logger.Error("error log message", new Exception("test exception"));
         }
 
         [Test]
@@ -93,6 +98,75 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsFatalEnabled());
+            _logger.Fatal("fatal log message", new Exception("test exception"));
+        }
+
+        [Test]
+        public void TestGetAppenders(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.IsInstanceOf<SFConsoleAppender>(appenders[0]);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.GetAppenders());
+            }
+        }
+
+        [Test]
+        public void TestAddAppender(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.AreEqual(1, appenders.Count);
+                _logger.AddAppender(new SFConsoleAppender());
+                Assert.AreEqual(2, appenders.Count);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.AddAppender(new SFConsoleAppender()));
+            }
+        }
+
+        [Test]
+        public void TestRemoveAppender(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.AreEqual(1, appenders.Count);
+                _logger.RemoveAppender(appenders[0]);
+                Assert.AreEqual(0, appenders.Count);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.RemoveAppender(new SFConsoleAppender()));
+            }
+        }
+
+        [Test]
+        public void TestSetLevel(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                _logger.SetLevel(LoggingEvent.DEBUG);
+                Assert.AreEqual(LoggingEvent.DEBUG, ((SFLoggerImpl)_logger)._level);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.SetLevel(LoggingEvent.DEBUG));
+            }
         }
 
         private SFLogger GetLogger(bool isEnabled)
@@ -106,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerFactory.DisableSFLogger();
             }
 
-            return SFLoggerFactory.GetSFLogger<ILoggerTest>();
+            return SFLoggerFactory.GetSFLogger<ILoggerTest>(false);
         }
     }
 }
