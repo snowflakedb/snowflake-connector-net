@@ -18,41 +18,67 @@ namespace Snowflake.Data.Tests
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
         private static readonly string s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
+        private static readonly string s_localFolderWithSpaceName = Path.Combine(Path.GetTempPath(), "folder with space", s_uniqueId);
         private static readonly string s_remoteFolderName = $"files_to_test_put_get_{s_uniqueId}";
+        private static readonly string s_remoteFolderWithSpaceName = $"files_to_test_put_get_for_folder_with_space{s_uniqueId}";
         private static readonly string s_downloadFolderName = Path.Combine(s_localFolderName, "download");
+        private static readonly string s_downloadFolderWithSpaceName = Path.Combine(s_localFolderName, "download with space");
         private static readonly string s_fullFileName = Path.Combine(s_localFolderName, FileName);
+        private static readonly string s_fullFileWithSpaceName = Path.Combine(s_localFolderWithSpaceName, FileName);
         private static readonly string s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
+        private static readonly string s_fullDownloadedFileWithSpaceName = Path.Combine(s_downloadFolderWithSpaceName, FileName);
         private static readonly MD5 s_md5 = MD5.Create();
-        
+
         [OneTimeSetUp]
         public static void GenerateLargeFileForTests()
         {
             CreateLocalDirectory(s_localFolderName);
             GenerateLargeFile(s_fullFileName);
+            CreateLocalDirectory(s_localFolderWithSpaceName);
+            GenerateLargeFile(s_fullFileWithSpaceName);
         }
-        
+
         [OneTimeTearDown]
         public static void DeleteGeneratedLargeFile()
         {
             RemoveLocalFile(s_fullFileName);
             RemoveDirectory(s_localFolderName);
+            RemoveLocalFile(s_fullFileWithSpaceName);
+            RemoveDirectory(s_localFolderWithSpaceName);
         }
-        
+
         [Test]
         public void TestThatUploadsAndDownloadsTheSameFile()
         {
             // act
             UploadFile(s_fullFileName, s_remoteFolderName);
             DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
-            
+
             // assert
             Assert.AreEqual(
                 CalcualteMD5(s_fullFileName),
                 CalcualteMD5(s_fullDownloadedFileName));
-            
+
             // cleanup
             RemoveFilesFromServer(s_remoteFolderName);
             RemoveLocalFile(s_fullDownloadedFileName);
+        }
+
+        [Test]
+        public void TestThatUploadsAndDownloadsFilePathWithSpacesAndSingleQuotes()
+        {
+            // act
+            UploadFile(s_fullFileWithSpaceName, s_remoteFolderWithSpaceName, true);
+            DownloadFile(s_remoteFolderWithSpaceName, s_downloadFolderWithSpaceName, FileName, true);
+
+            // assert
+            Assert.AreEqual(
+                CalcualteMD5(s_fullFileWithSpaceName),
+                CalcualteMD5(s_fullDownloadedFileWithSpaceName));
+
+            // cleanup
+            RemoveFilesFromServer(s_remoteFolderWithSpaceName);
+            RemoveLocalFile(s_fullDownloadedFileWithSpaceName);
         }
 
         private static void GenerateLargeFile(string fullFileName)
@@ -61,19 +87,28 @@ namespace Snowflake.Data.Tests
             RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
-        private void UploadFile(string fullFileName, string remoteFolderName)
+        private void UploadFile(string fullFileName, string remoteFolderName, bool encloseFilePathInSingleQuotes = false)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
+                if (encloseFilePathInSingleQuotes)
+                {
+                    // Enclosing the file path in single quotes require forward slash
+                    fullFileName = fullFileName.Replace("\\", "/");
+                    command.CommandText = $"PUT 'file://{fullFileName}' @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
+                }
+                else
+                {
+                    command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
+                }
                 command.ExecuteNonQuery();
             }
         }
 
-        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName)
+        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName, bool encloseFilePathInSingleQuotes = false)
         {
             var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
@@ -81,11 +116,20 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
-                command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
+                if (encloseFilePathInSingleQuotes)
+                {
+                    // Enclosing the file path in single quotes require forward slash
+                    downloadFolderName = downloadFolderName.Replace("\\", "/");
+                    command.CommandText = $"GET @~/{remoteFolderName} 'file://{downloadFolderName}' PATTERN='{filePattern}'";
+                }
+                else
+                {
+                    command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
+                }
                 command.ExecuteNonQuery();
             }
         }
-        
+
         private void RemoveFilesFromServer(string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
@@ -108,7 +152,7 @@ namespace Snowflake.Data.Tests
         }
 
         private static void RemoveLocalFile(string fullFileName) => File.Delete(fullFileName);
-        
+
         private static void CreateLocalDirectory(string path) => Directory.CreateDirectory(path);
 
         private static void RemoveDirectory(string path) => Directory.Delete(path, true);
