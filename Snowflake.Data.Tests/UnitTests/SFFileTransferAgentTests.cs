@@ -70,8 +70,8 @@ namespace Snowflake.Data.Tests.UnitTests
         const string FileContent = "FTAFileContent";
 
         // Mock file paths
-        const string FilePathWithoutSpaces = "C:/Users/Test/folder_without_space/*.*";
-        const string FilePathWithSpaces = "C:/Users/Test/folder with space/*.*";
+        static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
+        static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
 
         [SetUp]
         public void BeforeEachTest()
@@ -640,10 +640,29 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("PUT file://" + FilePathWithoutSpaces + " @TestStage", FilePathWithoutSpaces)]
-        [TestCase("PUT file://" + FilePathWithSpaces + " @TestStage", FilePathWithSpaces)]
-        [TestCase("PUT 'file://" + FilePathWithoutSpaces + "' @TestStage", FilePathWithoutSpaces)]
-        [TestCase("PUT 'file://" + FilePathWithSpaces + "' @TestStage", FilePathWithSpaces)]
+        public void TestGetFilePathWithoutSpacesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithoutSpaces + " @TestStage", s_filePathWithoutSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithSpacesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + " @TestStage", s_filePathWithSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithoutSpacesAndWithSingleQuotesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithoutSpaces + "' @TestStage", s_filePathWithoutSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithSpacesAndWithSingleQuotesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "' @TestStage", s_filePathWithSpaces);
+        }
+
         public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
         {
             var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
