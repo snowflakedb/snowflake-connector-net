@@ -66,6 +66,57 @@ Example output:
 
 Please repeat the same for all the Snowflake-related endpoints from step 1.
 
+For Windows if you do not wish to download additional tools, you can also use the existing Powershell facility. Please find the below Powershell script as a simplistic example of a possible approach. In this example, you would put below contents into `checkCrl.ps1` script:
+```ps
+if ( $($args.Count) -ne 1 ) {
+	Write-Output "Please use the full name of your Snowflake account as an argument."
+	Write-Output "Example: powershell .\checkCrl.ps1 xy12345.eu-central-1.snowflakecomputing.com"
+	exit 1
+}
+$sfaccount = $args[0]  
+$Connection = [System.Net.HttpWebRequest]::Create('https://' + $sfaccount)  
+$Response = $Connection.GetResponse()  
+$Response.Dispose()  
+$Certificate = $Connection.ServicePoint.Certificate  
+$Chain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain  
+$Chain.build($Certificate)  
+$Chain.ChainElements.Certificate | % {set-content -value $($_.Export([Security.Cryptography.X509Certificates.X509ContentType]::Cert)) -encoding byte -path "$pwd\$($_.Thumbprint).sf.cer"}  
+Get-ChildItem *.sf.cer | ForEach-Object { certutil $_ | Select-String -Pattern "Subject:" -Context 1 ; certutil $_ | Select-String -Pattern "Distribution Point Name" -Context 2 }
+Remove-Item *.sf.cer
+```
+
+After saving it, you can run it with specifying your Snowflake account's full name. An example execution and output, for a Snowflake account located in GCP US Central region:
+```shell
+c:\temp>powershell .\checkCrl.ps1 xy12345.us-central1.gcp.snowflakecomputing.com
+True
+
+
+> Subject:
+      CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1
+      CRL Distribution Points
+          [1]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl3.digicert.com/DigiCertGlobalRootG2.crl
+
+> Subject:
+      CN=*.us-central1.gcp.snowflakecomputing.com
+      CRL Distribution Points
+          [1]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl3.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl
+          [2]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl4.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl
+
+> Subject:
+      CN=DigiCert Global Root G2
+```
+
+Look for values of `URL` fields under `Distribution Point Name` sections.
+
 3. **Ensure (or work with your systems / network / cloud team to ensure) the CRL endpoints from step 2 are reachable from the _same host/network, over port 80_, on which host/network your application is running, which application is using the Snowflake .NET driver**
 
 If your network includes any proxies through which the connection is sent, do make sure those proxies allow the connectivity to the CRL endpoints over port 80.
