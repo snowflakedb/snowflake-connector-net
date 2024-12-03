@@ -2,6 +2,7 @@
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
@@ -38,11 +39,19 @@ namespace Snowflake.Data.Client
 
         public static void UseFileCredentialManager()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new Exception("File credential manager implementation is not supported on Windows");
+            }
             SetCredentialManager(SFCredentialManagerFileImpl.Instance);
         }
 
         public static void UseWindowsCredentialManager()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new Exception("Windows native credential manager implementation can be used only on Windows");
+            }
             SetCredentialManager(SFCredentialManagerWindowsNativeImpl.Instance);
         }
 

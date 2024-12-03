@@ -25,32 +25,32 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public string GetCredentials(string key)
         {
-            try
-            {
-                _lock.EnterReadLock();
                 s_logger.Debug($"Getting credentials from memory for key: {key}");
-                if (s_credentials.TryGetValue(key, out var secureToken))
+                bool found;
+                SecureString secureToken;
+                _lock.EnterReadLock();
+                try
+                {
+                    found = s_credentials.TryGetValue(key, out secureToken);
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+                if (found)
                 {
                     return SecureStringHelper.Decode(secureToken);
                 }
-                else
-                {
-                    s_logger.Info("Unable to get credentials for the specified key");
-                    return "";
-                }
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
+                s_logger.Info("Unable to get credentials for the specified key");
+                return "";
         }
 
         public void RemoveCredentials(string key)
         {
+            s_logger.Debug($"Removing credentials from memory for key: {key}");
+            _lock.EnterWriteLock();
             try
             {
-                _lock.EnterWriteLock();
-                s_logger.Debug($"Removing credentials from memory for key: {key}");
                 s_credentials.Remove(key);
             }
             finally
@@ -61,11 +61,12 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public void SaveCredentials(string key, string token)
         {
+            s_logger.Debug($"Saving credentials into memory for key: {key}");
+            var secureToken = SecureStringHelper.Encode(token);
+            _lock.EnterWriteLock();
             try
             {
-                _lock.EnterWriteLock();
-                s_logger.Debug($"Saving credentials into memory for key: {key}");
-                s_credentials[key] = SecureStringHelper.Encode(token);
+                s_credentials[key] = secureToken;
             }
             finally
             {
