@@ -31,11 +31,12 @@ RUN apt-get install -y git
 RUN apt-get install -y zstd
 RUN apt-get install -y jq
 
-# Install .NET SDK 8.0
+# Install .NET SDK 9.0
 RUN apt-get update
 RUN apt-get install -y
 RUN apt-get install -y dotnet-sdk-6.0
 RUN apt-get install -y dotnet-sdk-8.0
+RUN apt-get install -y dotnet-sdk-9.0
 
 # gosu
 RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.14/gosu-$(dpkg --print-architecture)" && \
