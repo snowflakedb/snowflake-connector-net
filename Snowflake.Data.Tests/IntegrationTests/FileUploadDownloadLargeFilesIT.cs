@@ -13,12 +13,13 @@ namespace Snowflake.Data.Tests
 {
 
     [TestFixture]
+    [NonParallelizable]
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
         private static readonly string s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
-        private static readonly string s_localFolderWithSpaceName = Path.Combine(Path.GetTempPath(), "folder with space", s_uniqueId);
+        private static readonly string s_localFolderWithSpaceName = Path.Combine(Path.GetTempPath() + s_uniqueId, "folder with space");
         private static readonly string s_remoteFolderName = $"files_to_test_put_get_{s_uniqueId}";
         private static readonly string s_remoteFolderWithSpaceName = $"files_to_test_put_get_for_folder_with_space{s_uniqueId}";
         private static readonly string s_downloadFolderName = Path.Combine(s_localFolderName, "download");
