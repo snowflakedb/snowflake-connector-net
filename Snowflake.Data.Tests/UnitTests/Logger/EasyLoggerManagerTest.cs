@@ -125,13 +125,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
 
             // arrange
+            File.Delete(FindLogFilePath(t_directoryLogPath));
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
 
             // act
             logger.Debug(DebugMessage);
 
             // assert
-            logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath, 2));
+            logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(DebugMessage)));
         }
 
@@ -139,6 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
+            const int expecetedBackupLogCount = 2;
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath);
 
@@ -151,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 _name = "RollingFileAppender",
                 _logFilePath = Path.Combine(t_directoryLogPath, logFileName),
                 _maximumFileSize = 1,
-                _maxSizeRollBackups = 2,
+                _maxSizeRollBackups = expecetedBackupLogCount,
                 _patternLayout = EasyLoggerManager.PatternLayout()
             });
 
@@ -164,7 +166,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var backupLogs = Directory.GetFiles(t_directoryLogPath, $"{logFileName}.*.bak");
 
             // assert
-            Assert.AreEqual(2, backupLogs.Length);
+            Assert.AreEqual(expecetedBackupLogCount, backupLogs.Length);
         }
 
         [Test]
@@ -205,11 +207,11 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             return Path.Combine(s_logsDirectory, $"easy_logging_logs_{randomName}", "dotnet");
         }
 
-        private static string FindLogFilePath(string directoryLogPath, int expectedFileCount = 1)
+        private static string FindLogFilePath(string directoryLogPath)
         {
             Assert.IsTrue(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
-            Assert.AreEqual(expectedFileCount, files.Length);
+            Assert.AreEqual(1, files.Length);
             return files.First();
         }
 

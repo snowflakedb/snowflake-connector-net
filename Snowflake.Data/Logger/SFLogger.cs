@@ -42,9 +42,4 @@ namespace Snowflake.Data.Log
     {
         OFF, TRACE, DEBUG, INFO, WARN, ERROR, FATAL
     }
-
-    public interface SFAppender
-    {
-        void Append(string logLevel, string message, Type type, Exception ex = null);
-    }
 }
