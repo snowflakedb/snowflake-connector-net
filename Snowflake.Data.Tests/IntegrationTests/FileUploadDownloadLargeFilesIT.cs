@@ -13,21 +13,15 @@ namespace Snowflake.Data.Tests
 {
 
     [TestFixture]
-    [NonParallelizable]
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
         private static readonly string s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
-        private static readonly string s_localFolderWithSpaceName = Path.Combine(Path.GetTempPath() + s_uniqueId, "folder with space");
         private static readonly string s_remoteFolderName = $"files_to_test_put_get_{s_uniqueId}";
-        private static readonly string s_remoteFolderWithSpaceName = $"files_to_test_put_get_for_folder_with_space{s_uniqueId}";
         private static readonly string s_downloadFolderName = Path.Combine(s_localFolderName, "download");
-        private static readonly string s_downloadFolderWithSpaceName = Path.Combine(s_localFolderName, "download with space");
         private static readonly string s_fullFileName = Path.Combine(s_localFolderName, FileName);
-        private static readonly string s_fullFileWithSpaceName = Path.Combine(s_localFolderWithSpaceName, FileName);
         private static readonly string s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
-        private static readonly string s_fullDownloadedFileWithSpaceName = Path.Combine(s_downloadFolderWithSpaceName, FileName);
         private static readonly MD5 s_md5 = MD5.Create();
 
         [OneTimeSetUp]
@@ -35,8 +29,6 @@ namespace Snowflake.Data.Tests
         {
             CreateLocalDirectory(s_localFolderName);
             GenerateLargeFile(s_fullFileName);
-            CreateLocalDirectory(s_localFolderWithSpaceName);
-            GenerateLargeFile(s_fullFileWithSpaceName);
         }
 
         [OneTimeTearDown]
@@ -44,8 +36,6 @@ namespace Snowflake.Data.Tests
         {
             RemoveLocalFile(s_fullFileName);
             RemoveDirectory(s_localFolderName);
-            RemoveLocalFile(s_fullFileWithSpaceName);
-            RemoveDirectory(s_localFolderWithSpaceName);
         }
 
         [Test]
@@ -65,51 +55,25 @@ namespace Snowflake.Data.Tests
             RemoveLocalFile(s_fullDownloadedFileName);
         }
 
-        [Test]
-        public void TestThatUploadsAndDownloadsFilePathWithSpacesAndSingleQuotes()
-        {
-            // act
-            UploadFile(s_fullFileWithSpaceName, s_remoteFolderWithSpaceName, true);
-            DownloadFile(s_remoteFolderWithSpaceName, s_downloadFolderWithSpaceName, FileName, true);
-
-            // assert
-            Assert.AreEqual(
-                CalcualteMD5(s_fullFileWithSpaceName),
-                CalcualteMD5(s_fullDownloadedFileWithSpaceName));
-
-            // cleanup
-            RemoveFilesFromServer(s_remoteFolderWithSpaceName);
-            RemoveLocalFile(s_fullDownloadedFileWithSpaceName);
-        }
-
         private static void GenerateLargeFile(string fullFileName)
         {
             File.Delete(fullFileName);
             RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
-        private void UploadFile(string fullFileName, string remoteFolderName, bool encloseFilePathInSingleQuotes = false)
+        private void UploadFile(string fullFileName, string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
-                if (encloseFilePathInSingleQuotes)
-                {
-                    // Enclosing the file path in single quotes require forward slash
-                    fullFileName = fullFileName.Replace("\\", "/");
-                    command.CommandText = $"PUT 'file://{fullFileName}' @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
-                }
-                else
-                {
-                    command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
-                }
+                command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
                 command.ExecuteNonQuery();
             }
         }
 
-        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName, bool encloseFilePathInSingleQuotes = false)
+        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName)
         {
             var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
@@ -117,16 +81,7 @@ namespace Snowflake.Data.Tests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
-                if (encloseFilePathInSingleQuotes)
-                {
-                    // Enclosing the file path in single quotes require forward slash
-                    downloadFolderName = downloadFolderName.Replace("\\", "/");
-                    command.CommandText = $"GET @~/{remoteFolderName} 'file://{downloadFolderName}' PATTERN='{filePattern}'";
-                }
-                else
-                {
-                    command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
-                }
+                command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
                 command.ExecuteNonQuery();
             }
         }

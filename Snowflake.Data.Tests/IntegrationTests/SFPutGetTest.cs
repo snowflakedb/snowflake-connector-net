@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -560,6 +560,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestPutFileWithSpaceAndSingleQuote()
+        {
+            var absolutePathPrefix = Path.Combine($"{Path.GetTempPath()}{Guid.NewGuid()} file path with space");
+            var files = new List<string> {
+                $"{absolutePathPrefix}_one.csv",
+                $"{absolutePathPrefix}_two.csv",
+                $"{absolutePathPrefix}_three.csv"
+            };
+            PrepareFileData(files);
+
+            // Set the PUT query variables
+            t_inputFilePath = $"{absolutePathPrefix}*";
+            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                PutFile(conn, "", ResultStatus.UPLOADED, true);
+                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
+            }
+        }
+
         private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
             bool autoCompress, bool clientEncryption = true)
         {
@@ -610,16 +633,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
         string PutFile(
             SnowflakeDbConnection conn,
             String additionalAttribute = "",
-            ResultStatus expectedStatus = ResultStatus.UPLOADED)
+            ResultStatus expectedStatus = ResultStatus.UPLOADED,
+            bool encloseInSingleQuotes = false)
         {
             string queryId;
             using (var command = conn.CreateCommand())
             {
                 // Prepare PUT query
-                string putQuery =
-                    $"PUT file://{t_inputFilePath} {t_internalStagePath}" +
-                    $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" +
-                    $" {additionalAttribute}";
+                string putQuery;
+                if (encloseInSingleQuotes)
+                {
+                    // Enclosing the file path in single quotes require forward slash
+                    t_inputFilePath = t_inputFilePath.Replace("\\", "/");
+                    putQuery =
+                        $"PUT 'file://{t_inputFilePath}' {t_internalStagePath}" +
+                        $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}";
+                }
+                else
+                {
+                    putQuery =
+                        $"PUT file://{t_inputFilePath} {t_internalStagePath}" +
+                        $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" +
+                        $" {additionalAttribute}";
+                }
+
                 // Upload file
                 command.CommandText = putQuery;
                 var reader = command.ExecuteReader();
