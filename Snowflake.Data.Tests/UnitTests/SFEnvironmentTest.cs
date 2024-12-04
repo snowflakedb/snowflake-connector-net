@@ -22,6 +22,8 @@ namespace Snowflake.Data.Tests.UnitTests
             expectedVersion = "7.0";
 #elif NET8_0
             expectedVersion = "8.0";
+#elif NET9_0
+            expectedVersion = "9.0";
 #endif
 
             // Act
