@@ -9,6 +9,7 @@ using Amazon.S3.Model;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -267,24 +268,36 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="response">The Amazon S3 response.</param>
         /// <returns>The file header of the S3 file.</returns>
-        private FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectResponse response)
+        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectResponse response)
         {
             // Update the result status of the file metadata
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
             {
-                iv = response.Metadata[AMZ_IV],
-                key = response.Metadata[AMZ_KEY],
-                matDesc = response.Metadata[AMZ_MATDESC]
+                iv = GetMetadataCaseInsensitive(response.Metadata, AMZ_IV),
+                key = GetMetadataCaseInsensitive(response.Metadata, AMZ_KEY),
+                matDesc = GetMetadataCaseInsensitive(response.Metadata, AMZ_MATDESC)
             };
 
             return new FileHeader
             {
-                digest = response.Metadata[SFC_DIGEST],
+                digest = GetMetadataCaseInsensitive(response.Metadata, SFC_DIGEST),
                 contentLength = response.ContentLength,
                 encryptionMetadata = encryptionMetadata
             };
+        }
+
+        private string GetMetadataCaseInsensitive(MetadataCollection metadataCollection, string metadataKey)
+        {
+            var value = metadataCollection[metadataKey];
+            if (value != null)
+                return value;
+            if (string.IsNullOrEmpty(metadataKey))
+                return null;
+            var keysCaseInsensitive = metadataCollection.Keys
+                .Where(key => $"x-amz-meta-{metadataKey}".Equals(key, StringComparison.OrdinalIgnoreCase));
+            return keysCaseInsensitive.Any() ? metadataCollection[keysCaseInsensitive.First()] : null;
         }
 
         /// <summary>

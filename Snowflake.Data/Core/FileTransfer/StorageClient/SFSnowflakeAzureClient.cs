@@ -7,6 +7,7 @@ using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
@@ -155,28 +156,46 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="response">The Amazon S3 response.</param>
         /// <returns>The file header of the S3 file.</returns>
-        private FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
+        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
         {
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
             SFEncryptionMetadata encryptionMetadata = null;
-            if (response.Metadata.TryGetValue("encryptiondata", out var encryptionDataStr))
+            if (TryGetMetadataValueCaseInsensitive(response, "encryptiondata", out var encryptionDataStr))
             {
                 dynamic encryptionData = JsonConvert.DeserializeObject(encryptionDataStr);
                 encryptionMetadata = new SFEncryptionMetadata
                 {
                     iv = encryptionData["ContentEncryptionIV"],
                     key = encryptionData.WrappedContentKey["EncryptedKey"],
-                    matDesc = response.Metadata["matdesc"]
+                    matDesc = GetMetadataValueCaseInsensitive(response, "matdesc")
                 };
             }
 
             return new FileHeader
             {
-                digest = response.Metadata["sfcdigest"],
+                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest"),
                 contentLength = response.ContentLength,
                 encryptionMetadata = encryptionMetadata
             };
+        }
+
+        private bool TryGetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, out string metadataValue)
+        {
+            if (properties.Metadata.TryGetValue(metadataKey, out metadataValue))
+                return true;
+            if (string.IsNullOrEmpty(metadataKey))
+                return false;
+            var keysCaseInsensitive = properties.Metadata.Keys
+                .Where(key => metadataKey.Equals(key, StringComparison.OrdinalIgnoreCase));
+            return keysCaseInsensitive.Any() ? properties.Metadata.TryGetValue(keysCaseInsensitive.First(), out metadataValue) : false;
+        }
+
+        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey)
+        {
+            if (TryGetMetadataValueCaseInsensitive(properties, metadataKey, out var metadataValue))
+                return metadataValue;
+            throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
         }
 
         /// <summary>
