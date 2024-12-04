@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports the the following .NET framework and libraries versions:
+The Snowflake .NET connector supports the following .NET framework and libraries versions:
 
 - .NET Framework 4.6.2
 - .NET Framework 4.7.1
@@ -14,6 +14,7 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 - .NET 6.0
 - .NET 7.0
 - .NET 8.0
+- .NET 9.0
 
 Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
 
