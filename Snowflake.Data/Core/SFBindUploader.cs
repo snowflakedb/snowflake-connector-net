@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
 
         private string requestId;
 
-        private ILogger logger = SFLoggerFactory.GetLogger<SFBindUploader>();
+        private ILogger logger = SFLoggerFactory.GetCustomLogger<SFBindUploader>();
 
         private string stagePath;
 

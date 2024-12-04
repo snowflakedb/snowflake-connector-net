@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFSnowflakeAzureClient>();
 
         /// <summary>
         /// The cloud blob client to use to upload and download data on Azure.

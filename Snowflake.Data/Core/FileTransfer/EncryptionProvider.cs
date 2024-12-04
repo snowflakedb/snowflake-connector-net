@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<EncryptionProvider>();
 
         /// <summary>
         /// Encrypt data and write to the outStream.

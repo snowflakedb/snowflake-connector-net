@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFFileTransferAgent>();
 
         /// <summary>
         /// Auto-detect keyword for source compression type auto detection.

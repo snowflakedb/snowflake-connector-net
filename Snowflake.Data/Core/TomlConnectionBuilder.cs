@@ -28,7 +28,7 @@ namespace Snowflake.Data.Core
         internal const string SnowflakeDefaultConnectionName = "SNOWFLAKE_DEFAULT_CONNECTION_NAME";
         internal const string SnowflakeHome = "SNOWFLAKE_HOME";
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbConnection>();
 
         private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {

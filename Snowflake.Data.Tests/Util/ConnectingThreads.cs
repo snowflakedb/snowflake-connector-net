@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public void Enqueue(ThreadEvent threadEvent) => _events.Enqueue(threadEvent);
 
-        public static ILogger Logger() => SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
+        public static ILogger Logger() => SFLoggerFactory.GetCustomLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
     }
     
     class ConnectingThread

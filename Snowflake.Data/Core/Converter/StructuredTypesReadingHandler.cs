@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core.Converter
 {
     public class StructuredTypesReadingHandler
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<StructuredTypesReadingHandler>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<StructuredTypesReadingHandler>();
 
         public static SnowflakeDbException ToSnowflakeDbException(Exception exception, string context)
         {

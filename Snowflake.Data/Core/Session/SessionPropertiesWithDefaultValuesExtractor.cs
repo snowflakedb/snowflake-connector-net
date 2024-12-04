@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core.Session
 {
     internal class SessionPropertiesWithDefaultValuesExtractor
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SessionPropertiesWithDefaultValuesExtractor>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SessionPropertiesWithDefaultValuesExtractor>();
         private static readonly Regex s_timeoutFormatRegex = new Regex(@"^(-)?[0-9]{1,10}[mM]?[sS]?$");
         
         private readonly SFSessionProperties _propertiesDictionary;

@@ -47,7 +47,7 @@ namespace Snowflake.Data.Core.Authenticator
     {
         // The logger.
         private static readonly ILogger logger =
-            SFLoggerFactory.GetLogger<BaseAuthenticator>();
+            SFLoggerFactory.GetCustomLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
         private string authName;
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal class AuthenticatorFactory
     {
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<AuthenticatorFactory>();
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>

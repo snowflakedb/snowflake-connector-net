@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        private readonly ILogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFConnectionIT>();
 
         [SetUp]
         public new void BeforeTest()

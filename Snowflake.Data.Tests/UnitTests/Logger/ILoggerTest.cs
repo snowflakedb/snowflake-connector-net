@@ -54,9 +54,9 @@ namespace Snowflake.Data.Tests.UnitTests
             [Test]
             public void TestUsingDefaultLogger()
             {
-                var originalLogger = SFLoggerFactory.GetLogger<ILoggerTest>();
+                var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 SFLoggerFactory.UseDefaultLogger();
-                _logger = SFLoggerFactory.GetLogger<ILoggerTest>();
+                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<ILogger>(_logger);
                 SFLoggerFactory.SetCustomLogger(originalLogger);
             }
@@ -64,11 +64,23 @@ namespace Snowflake.Data.Tests.UnitTests
             [Test]
             public void TestSettingCustomLogger()
             {
-                var originalLogger = SFLoggerFactory.GetLogger<ILoggerTest>();
+                var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 SFLoggerFactory.SetCustomLogger(new ILoggerEmptyImpl());
-                _logger = SFLoggerFactory.GetLogger<ILoggerTest>();
+                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<ILoggerEmptyImpl>(_logger);
                 SFLoggerFactory.SetCustomLogger(originalLogger);
+            }
+
+            [Test]
+            public void TestBeginScope(
+                [Values(false, true)] bool isEnabled)
+            {
+                _logger = GetLogger(isEnabled);
+
+                if (_logger is ILoggerEmptyImpl)
+                {
+                    Assert.Throws<NotImplementedException>(() => _logger.BeginScope("Test"));
+                }
             }
 
             [Test]
@@ -122,13 +134,13 @@ namespace Snowflake.Data.Tests.UnitTests
                     SFLoggerFactory.DisableCustomLogger();
                 }
 
-                return SFLoggerFactory.GetLogger<ILoggerTest>();
+                return SFLoggerFactory.GetCustomLogger<ILoggerTest>();
             }
 
             [Test]
             public void TestThatLogsToProperFileWithProperLogLevelOnly()
             {
-                _logger = SFLoggerFactory.GetLogger<ILoggerTest>();
+                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
 
                 // act
                 _logger.LogDebug(DebugMessage);

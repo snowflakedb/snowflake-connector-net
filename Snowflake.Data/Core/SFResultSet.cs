@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFResultSet>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFResultSet>();
         
         private readonly int _totalChunkCount;
         

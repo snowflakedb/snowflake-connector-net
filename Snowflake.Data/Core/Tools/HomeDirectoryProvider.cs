@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Tools
 {
     internal class HomeDirectoryProvider
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<HomeDirectoryProvider>();
 
         public static string HomeDirectory(EnvironmentOperations _environmentOperations) {
             try

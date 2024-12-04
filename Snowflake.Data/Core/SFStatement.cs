@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core
 
     class SFStatement
     {
-        static private ILogger s_logger = SFLoggerFactory.GetLogger<SFStatement>();
+        static private ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFStatement>();
 
         internal SFSession SfSession { get; set; }
 

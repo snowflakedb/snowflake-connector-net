@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             {
                 _name = "RollingFileAppender",
                 _logFilePath = Path.Combine(t_directoryLogPath, logFileName),
-                _maximumFileSize = 1,
+                _maximumFileSizeInBytes = 1,
                 _maxSizeRollBackups = expecetedBackupLogCount,
                 _patternLayout = EasyLoggerManager.PatternLayout()
             });

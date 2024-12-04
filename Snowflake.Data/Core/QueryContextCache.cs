@@ -76,7 +76,7 @@ namespace Snowflake.Data.Core
         private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
         private Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
         private SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
-        private ILogger _logger = SFLoggerFactory.GetLogger<QueryContextCache>();
+        private ILogger _logger = SFLoggerFactory.GetCustomLogger<QueryContextCache>();
 
         public QueryContextCache(int capacity)
         {

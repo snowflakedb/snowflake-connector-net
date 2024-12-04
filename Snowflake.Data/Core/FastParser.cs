@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core
 {
     public class FastParser
     {
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<FastParser>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<FastParser>();
 
         public static Int64 FastParseInt64(byte[] s, int offset, int len)
         {

@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         // The logger.
         private static readonly ILogger logger =
-            SFLoggerFactory.GetLogger<OAuthAuthenticator>();
+            SFLoggerFactory.GetCustomLogger<OAuthAuthenticator>();
 
         /// <summary>
         /// Constructor for the oauth authenticator.

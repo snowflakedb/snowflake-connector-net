@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core
 
     internal class RestRequester : IRestRequester
     {
-        private static ILogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+        private static ILogger logger = SFLoggerFactory.GetCustomLogger<RestRequester>();
 
         protected HttpClient _HttpClient;
 

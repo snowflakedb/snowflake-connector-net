@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core
 {
     class SFResultSetMetaData
     {
-        static private readonly ILogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
+        static private readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFResultSetMetaData>();
 
         private int columnCount;
 

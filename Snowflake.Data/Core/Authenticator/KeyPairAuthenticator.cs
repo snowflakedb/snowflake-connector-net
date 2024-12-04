@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         // The logger.
         private static readonly ILogger logger =
-            SFLoggerFactory.GetLogger<KeyPairAuthenticator>();
+            SFLoggerFactory.GetCustomLogger<KeyPairAuthenticator>();
 
         // The RSA provider to use to sign the tokens
         private RSACryptoServiceProvider rsaProvider;

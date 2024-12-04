@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<ArrowResultSet>();
         
         private readonly int _totalChunkCount;
         private BaseResultChunk _currentChunk;

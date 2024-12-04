@@ -42,7 +42,7 @@ namespace Snowflake.Data.Log
 
         public static void SetCustomLogger(ILogger customLogger)
         {
-            SFLoggerFactory.s_customLogger = customLogger;
+            s_customLogger = customLogger;
         }
 
         internal static SFLogger GetSFLogger<T>(bool useFileAppender = true)
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Log
                     {
                         _name = "RollingFileAppender",
                         _logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "test_snowflake_log.log"),
-                        _maximumFileSize = 1000000000, // "1GB"
+                        _maximumFileSizeInBytes = 1000000000, // "1GB"
                         _maxSizeRollBackups = 0,
                         _patternLayout = EasyLoggerManager.PatternLayout()
                     };
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Log
             }
         }
 
-        internal static ILogger GetLogger<T>()
+        internal static ILogger GetCustomLogger<T>()
         {
             // If true, return the default/specified logger
             if (s_isCustomLoggerEnabled)

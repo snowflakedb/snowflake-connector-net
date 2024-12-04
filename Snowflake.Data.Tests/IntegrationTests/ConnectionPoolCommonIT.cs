@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class ConnectionPoolCommonIT : SFBaseTest
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<ConnectionPoolManager>();
         private readonly PoolConfig _previousPoolConfig;
 
         public ConnectionPoolCommonIT(ConnectionPoolType connectionPoolTypeUnderTest)

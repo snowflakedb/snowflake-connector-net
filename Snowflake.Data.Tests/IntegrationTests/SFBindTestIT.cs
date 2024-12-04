@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFBindTestIT>();
 
         [Test]
         public void TestArrayBind()

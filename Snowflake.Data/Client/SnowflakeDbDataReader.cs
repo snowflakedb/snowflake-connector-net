@@ -19,7 +19,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbDataReader : DbDataReader
     {
-        static private readonly ILogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+        static private readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbDataReader>();
 
         private SnowflakeDbCommand dbCommand;
 

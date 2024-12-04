@@ -127,7 +127,7 @@ namespace Snowflake.Data.Core
 
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
-        private static ILogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
+        private static ILogger logger = SFLoggerFactory.GetCustomLogger<SFSessionProperties>();
 
         internal string ConnectionStringWithoutSecrets { get; set; }
 

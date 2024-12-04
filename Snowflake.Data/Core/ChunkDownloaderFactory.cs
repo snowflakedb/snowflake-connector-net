@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
 {
     class ChunkDownloaderFactory
     {
-        private static ILogger s_logger = SFLoggerFactory.GetLogger<ChunkDownloaderFactory>();
+        private static ILogger s_logger = SFLoggerFactory.GetCustomLogger<ChunkDownloaderFactory>();
         public static IChunkDownloader GetDownloader(QueryExecResponseData responseData,
                                                      SFBaseResultSet resultSet,
                                                      CancellationToken cancellationToken)

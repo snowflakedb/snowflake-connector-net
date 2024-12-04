@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
     {
         public const int SF_SESSION_EXPIRED_CODE = 390112;
 
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<SFSession>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 

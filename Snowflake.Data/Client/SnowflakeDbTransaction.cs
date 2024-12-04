@@ -13,7 +13,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbTransaction : DbTransaction
     {
-        private ILogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+        private ILogger logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbTransaction>();
 
         private IsolationLevel isolationLevel;
 

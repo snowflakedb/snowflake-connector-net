@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Session
 {
     sealed class SessionPool : IDisposable
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
         private static ISessionFactory s_sessionFactory = new SessionFactory();
 

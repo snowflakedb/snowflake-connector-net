@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
 {
     class ChunkParserFactory : IChunkParserFactory
     {
-        private static ILogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
+        private static ILogger s_logger = SFLoggerFactory.GetCustomLogger<ChunkParserFactory>();
         public static IChunkParserFactory Instance = new ChunkParserFactory();
 
         public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)

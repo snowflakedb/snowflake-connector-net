@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core.FileTransfer
         private const int InitVectorSizeInBytes = 12;
         private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<GcmEncryptionProvider>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<GcmEncryptionProvider>();
 
         private static readonly SecureRandom s_random = SecureRandom.GetInstance("SHA1PRNG");
 

@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.Util
 {
     public static class DbConnectionExtensions
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<TestIcebergTable>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<TestIcebergTable>();
 
         internal static IDbCommand CreateCommand(this IDbConnection connection, string commandText)
         {

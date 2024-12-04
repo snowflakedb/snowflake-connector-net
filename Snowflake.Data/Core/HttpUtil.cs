@@ -78,7 +78,7 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
-        private static readonly Microsoft.Extensions.Logging.ILogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+        private static readonly Microsoft.Extensions.Logging.ILogger logger = SFLoggerFactory.GetCustomLogger<HttpUtil>();
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
@@ -334,7 +334,7 @@ namespace Snowflake.Data.Core
         }
         private class RetryHandler : DelegatingHandler
         {
-            static private ILogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
+            static private ILogger logger = SFLoggerFactory.GetCustomLogger<RetryHandler>();
 
             private bool disableRetry;
             private bool forceRetryOn404;

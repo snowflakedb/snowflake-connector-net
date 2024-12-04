@@ -43,7 +43,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFGCSClient>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFGCSClient>();
 
         /// <summary>
         /// The storage client.

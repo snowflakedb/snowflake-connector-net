@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core
 {
     class SFBlockingChunkDownloaderV3 : IChunkDownloader
     {
-        static private ILogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
+        static private ILogger logger = SFLoggerFactory.GetCustomLogger<SFBlockingChunkDownloaderV3>();
 
         private List<BaseResultChunk> chunkDatas = new List<BaseResultChunk>();
 

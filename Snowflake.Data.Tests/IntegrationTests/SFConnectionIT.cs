@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFConnectionIT>();
 
         [Test]
         public void TestBasicConnection()
@@ -1868,7 +1868,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFConnectionITAsync : SFBaseTestAsync
     {
-        private static ILogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
+        private static ILogger logger = SFLoggerFactory.GetCustomLogger<SFConnectionITAsync>();
 
 
         [Test]

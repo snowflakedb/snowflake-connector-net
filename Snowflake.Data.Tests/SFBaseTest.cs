@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests
     #endif
     public class SFBaseTestAsync
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFBaseTestAsync>();
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7}";

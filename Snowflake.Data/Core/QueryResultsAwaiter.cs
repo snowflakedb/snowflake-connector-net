@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core
 
     internal class QueryResultsAwaiter
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<QueryResultsAwaiter>();
 
         private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 

@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Tools
     internal class Diagnostics
     {
         private const int PadRight = -25;
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<Diagnostics>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<Diagnostics>();
 
         public static void LogDiagnostics() => s_logger.LogInformation(GetDiagnosticInfo());
 

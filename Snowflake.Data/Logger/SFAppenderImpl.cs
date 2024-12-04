@@ -50,7 +50,7 @@ internal class SFRollingFileAppender : SFAppender
 {
     internal string _name;
     internal string _logFilePath;
-    internal long _maximumFileSize;
+    internal long _maximumFileSizeInBytes;
     internal int _maxSizeRollBackups;
     internal PatternLayout _patternLayout;
 
@@ -60,9 +60,9 @@ internal class SFRollingFileAppender : SFAppender
     {
         try
         {
-            if (FileIsTooLarge())
+            if (LogFileIsTooLarge())
             {
-                RollFile();
+                RollLogFile();
             }
 
             var formattedMessage = _patternLayout.Format(logLevel, message, type);
@@ -95,13 +95,13 @@ internal class SFRollingFileAppender : SFAppender
         }
     }
 
-    private bool FileIsTooLarge()
+    private bool LogFileIsTooLarge()
     {
         FileInfo fileInfo = new FileInfo(_logFilePath);
-        return fileInfo.Exists && fileInfo.Length > _maximumFileSize;
+        return fileInfo.Exists && fileInfo.Length > _maximumFileSizeInBytes;
     }
 
-    private void RollFile()
+    private void RollLogFile()
     {
         string rollFilePath = $"{_logFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
         File.Move(_logFilePath, rollFilePath);

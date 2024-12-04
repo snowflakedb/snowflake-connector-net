@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core.Authenticator
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "externalbrowser";
-        private static readonly ILogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
+        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +

@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core.Tools
     internal class EnvironmentOperations
     {
         public static readonly EnvironmentOperations Instance = new EnvironmentOperations();
-        private static readonly ILogger s_logger = SFLoggerFactory.GetLogger<EnvironmentOperations>();
+        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<EnvironmentOperations>();
 
         public virtual string GetEnvironmentVariable(string variable)
         {

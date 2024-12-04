@@ -17,7 +17,7 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
-        private ILogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+        private ILogger logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbConnection>();
 
         internal SFSession SfSession { get; set; }
 
