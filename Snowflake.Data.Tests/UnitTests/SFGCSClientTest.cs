@@ -3,21 +3,22 @@
  */
 
 using System;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using System.Collections.Generic;
+using System.Net;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Threading;
+using Snowflake.Data.Tests.Mock;
+using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer.StorageClient;
-    using Snowflake.Data.Core.FileTransfer;
-    using System.Collections.Generic;
-    using System.Net;
-    using System.IO;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Snowflake.Data.Tests.Mock;
-    using Moq;
-
     [TestFixture, NonParallelizable]
     class SFGCSClientTest : SFBaseTest
     {
@@ -369,6 +370,44 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var responseMessage = new HttpResponseMessage( HttpStatusCode.OK ) {Content =  new StringContent( "Response content" ) };
+            responseMessage.Headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = responseMessage.Headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForWebHeaderCollection(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var headers = new WebHeaderCollection();
+            headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
