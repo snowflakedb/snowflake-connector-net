@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.IO;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -16,7 +15,7 @@ namespace Snowflake.Data.Core.FileTransfer
         private const int InitVectorSizeInBytes = 12;
         private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<GcmEncryptionProvider>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<GcmEncryptionProvider>();
 
         private static readonly SecureRandom s_random = SecureRandom.GetInstance("SHA1PRNG");
 
@@ -57,7 +56,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
-            s_logger.LogDebug($"Master key size : {masterKeySize}");
+            s_loggerPair.LogDebug($"Master key size : {masterKeySize}");
 
             var contentIV = new byte[InitVectorSizeInBytes];
             var keyIV = new byte[InitVectorSizeInBytes];

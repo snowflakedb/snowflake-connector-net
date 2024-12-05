@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -6,7 +6,6 @@ using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -23,7 +22,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<EncryptionProvider>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<EncryptionProvider>();
 
         /// <summary>
         /// Encrypt data and write to the outStream.
@@ -61,7 +60,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
-            logger.LogDebug($"Master key size : {masterKeySize}");
+            s_loggerPair.LogDebug($"Master key size : {masterKeySize}");
 
             // Generate file key
             byte[] ivData = new byte[blockSize];

@@ -13,7 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -73,7 +72,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFS3Client>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFS3Client>();
 
         /// <summary>
         /// The underlying S3 client.
@@ -90,7 +89,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             int parallel,
             ProxyCredentials proxyCredentials)
         {
-            logger.LogDebug("Setting up a new AWS client ");
+            s_loggerPair.LogDebug("Setting up a new AWS client ");
 
             // Get the key id and secret key from the response
             stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
@@ -538,7 +537,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            logger.LogError("Failed to get file header: " + ex.Message);
+            s_loggerPair.LogError("Failed to get file header: " + ex.Message);
 
             switch (ex)
             {
@@ -570,7 +569,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            logger.LogError("Failed to upload file: " + ex.Message);
+            s_loggerPair.LogError("Failed to upload file: " + ex.Message);
 
             switch (ex)
             {
@@ -600,7 +599,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            logger.LogError("Failed to download file: " + ex.Message);
+            s_loggerPair.LogError("Failed to download file: " + ex.Message);
 
             switch (ex)
             {

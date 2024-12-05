@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -16,7 +15,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => curResultSet.ResultFormat;
 
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFMultiStatementsResultSet>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFMultiStatementsResultSet>();
 
         private string[] resultIds;
 

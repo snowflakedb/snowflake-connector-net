@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Client
 {

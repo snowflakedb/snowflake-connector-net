@@ -13,13 +13,12 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Converter;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Client
 {
     public class SnowflakeDbDataReader : DbDataReader
     {
-        static private readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbDataReader>();
+        static private readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SnowflakeDbDataReader>();
 
         private SnowflakeDbCommand dbCommand;
 

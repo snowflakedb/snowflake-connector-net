@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -76,7 +75,7 @@ namespace Snowflake.Data.Core
         private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
         private Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
         private SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
-        private ILogger _logger = SFLoggerFactory.GetCustomLogger<QueryContextCache>();
+        private SFLoggerPair _loggerPair = SFLoggerPair.GetLoggerPair<QueryContextCache>();
 
         public QueryContextCache(int capacity)
         {
@@ -92,7 +91,7 @@ namespace Snowflake.Data.Core
         {
             if (_idMap.ContainsKey(id))
             {
-                _logger.LogDebug(
+                _loggerPair.LogDebug(
                     $"Merge with existing id in cache = {id}, priority = {priority}");
                 // ID found in the cache
                 QueryContextElement qce = _idMap[id];
@@ -125,7 +124,7 @@ namespace Snowflake.Data.Core
                 // new id
                 if (_priorityMap.ContainsKey(priority))
                 {
-                    _logger.LogDebug(
+                    _loggerPair.LogDebug(
                         $"Merge with existing priority in cache = {id}, priority = {priority}");
                     // Same priority with different id
                     QueryContextElement qce = _priorityMap[priority];
@@ -137,7 +136,7 @@ namespace Snowflake.Data.Core
                 {
                     // new priority
                     // Add new element in the cache
-                    _logger.LogDebug(
+                    _loggerPair.LogDebug(
                         $"Adding new QCC item with either id nor priority found in cache id = {id}, priority = {priority}");
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                     AddQCE(newQCE);
@@ -148,7 +147,7 @@ namespace Snowflake.Data.Core
         /** Sync the newPriorityMap with the priorityMap at the end of current round of merge */
         public void SyncPriorityMap()
         {
-            _logger.LogDebug(
+            _loggerPair.LogDebug(
                 $"syncPriorityMap called priorityMap size = {_priorityMap.Count}, newPrioirtyMap size = {_newPriorityMap.Count}");
             foreach (KeyValuePair<long, QueryContextElement> entry in _newPriorityMap)
             {
@@ -164,7 +163,7 @@ namespace Snowflake.Data.Core
          */
         public void CheckCacheCapacity()
         {
-            _logger.LogDebug(
+            _loggerPair.LogDebug(
                 $"checkCacheCapacity() called. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
             if (_cacheSet.Count > _capacity)
             {
@@ -176,18 +175,18 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            _logger.LogDebug(
+            _loggerPair.LogDebug(
                 $"checkCacheCapacity() returns. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
         }
 
         /** Clear the cache. */
         public void ClearCache()
         {
-            _logger.LogDebug("clearCache() called");
+            _loggerPair.LogDebug("clearCache() called");
             _idMap.Clear();
             _priorityMap.Clear();
             _cacheSet.Clear();
-            _logger.LogDebug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
+            _loggerPair.LogDebug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
         }
 
         public void SetCapacity(int cap)
@@ -200,7 +199,7 @@ namespace Snowflake.Data.Core
                 if (_capacity == cap)
                     return;
 
-                _logger.LogDebug($"set capacity from {_capacity} to {cap}");
+                _loggerPair.LogDebug($"set capacity from {_capacity} to {cap}");
                 _capacity = cap;
                 CheckCacheCapacity();
                 LogCacheEntries();
@@ -338,11 +337,11 @@ namespace Snowflake.Data.Core
         /** Debugging purpose, log the all entries in the cache. */
         private void LogCacheEntries()
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
+            if (_loggerPair.IsDebugEnabled())
             {
                 foreach (QueryContextElement elem in _cacheSet)
                 {
-                    _logger.LogDebug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                    _loggerPair.LogDebug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
                 }
             }
         }

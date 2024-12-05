@@ -3,13 +3,12 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Session
 {
     internal class SessionPropertiesWithDefaultValuesExtractor
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SessionPropertiesWithDefaultValuesExtractor>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SessionPropertiesWithDefaultValuesExtractor>();
         private static readonly Regex s_timeoutFormatRegex = new Regex(@"^(-)?[0-9]{1,10}[mM]?[sS]?$");
         
         private readonly SFSessionProperties _propertiesDictionary;
@@ -72,7 +71,7 @@ namespace Snowflake.Data.Core.Session
             var valueString = _propertiesDictionary[property];
             if (string.IsNullOrEmpty(valueString))
             {
-                s_logger.LogWarning($"Parameter {property} not defined. Using a default value: {defaultValue}");
+                s_loggerPair.LogWarning($"Parameter {property} not defined. Using a default value: {defaultValue}");
                 return defaultValue;
             }
             if (!preExtractValidation(valueString))
@@ -88,10 +87,10 @@ namespace Snowflake.Data.Core.Session
             {
                 if (_failOnWrongValue)
                 {
-                    s_logger.LogError($"Invalid value of parameter {property}. Error: {e}");
+                    s_loggerPair.LogError($"Invalid value of parameter {property}. Error: {e}");
                     throw new Exception($"Invalid value of parameter {property}", e);
                 }
-                s_logger.LogWarning($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
+                s_loggerPair.LogWarning($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
                 return defaultValue;
             }
             if (!postExtractValidation(value))
@@ -108,10 +107,10 @@ namespace Snowflake.Data.Core.Session
         {
             if (_failOnWrongValue)
             {
-                s_logger.LogError($"Invalid value of parameter {property}: {value}");
+                s_loggerPair.LogError($"Invalid value of parameter {property}: {value}");
                 throw new Exception($"Invalid value of parameter {property}");
             }
-            s_logger.LogWarning($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
+            s_loggerPair.LogWarning($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
             return defaultValue;            
         }
 

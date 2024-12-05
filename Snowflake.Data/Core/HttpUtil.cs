@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -15,7 +15,6 @@ using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
 using static Snowflake.Data.Core.SFRestRequest;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -78,7 +77,7 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
-        private static readonly Microsoft.Extensions.Logging.ILogger logger = SFLoggerFactory.GetCustomLogger<HttpUtil>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<HttpUtil>();
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
@@ -115,7 +114,7 @@ namespace Snowflake.Data.Core
             string name = config.ConfKey;
             if (!_HttpClients.ContainsKey(name))
             {
-                logger.LogDebug("Http client not registered. Adding.");
+                s_loggerPair.LogDebug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
                     new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
@@ -334,7 +333,7 @@ namespace Snowflake.Data.Core
         }
         private class RetryHandler : DelegatingHandler
         {
-            static private ILogger logger = SFLoggerFactory.GetCustomLogger<RetryHandler>();
+            static private SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<RetryHandler>();
 
             private bool disableRetry;
             private bool forceRetryOn404;
@@ -368,10 +367,10 @@ namespace Snowflake.Data.Core
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY];
 
-                if (logger.IsEnabled(LogLevel.Debug))
+                if (s_loggerPair.IsDebugEnabled())
                 {
-                    logger.LogDebug("Http request timeout : " + httpTimeout);
-                    logger.LogDebug("Rest request timeout : " + restTimeout);
+                    s_loggerPair.LogDebug("Http request timeout : " + httpTimeout);
+                    s_loggerPair.LogDebug("Rest request timeout : " + restTimeout);
                 }
 
                 CancellationTokenSource childCts = null;
@@ -402,12 +401,12 @@ namespace Snowflake.Data.Core
                         lastException = e;
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            logger.LogInformation("SF rest request timeout or explicit cancel called.");
+                            s_loggerPair.LogInformation("SF rest request timeout or explicit cancel called.");
                             cancellationToken.ThrowIfCancellationRequested();
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
-                            logger.LogWarning("Http request timeout. Retry the request");
+                            s_loggerPair.LogWarning("Http request timeout. Retry the request");
                             totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
                         else
@@ -416,13 +415,13 @@ namespace Snowflake.Data.Core
 
                             if (innermostException is AuthenticationException)
                             {
-                                logger.LogError("Non-retryable error encountered: ", e);
+                                s_loggerPair.LogError("Non-retryable error encountered: ", e);
                                 throw;
                             }
                             else
                             {
                                 //TODO: Should probably check to see if the error is recoverable or transient.
-                                logger.LogWarning("Error occurred during request, retrying...", e);
+                                s_loggerPair.LogWarning("Error occurred during request, retrying...", e);
                             }
                         }
                     }
@@ -446,12 +445,12 @@ namespace Snowflake.Data.Core
 
                         if (response.IsSuccessStatusCode)
                         {
-                            logger.LogDebug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            s_loggerPair.LogDebug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             return response;
                         }
                         else
                         {
-                            logger.LogDebug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            s_loggerPair.LogDebug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             bool isRetryable = isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
                             if (!isRetryable || disableRetry)
@@ -464,19 +463,19 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        logger.LogInformation("Response returned was null.");
+                        s_loggerPair.LogInformation("Response returned was null.");
                     }
 
                     if (restTimeout.TotalSeconds > 0 && totalRetryTime >= restTimeout.TotalSeconds)
                     {
-                        logger.LogDebug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
+                        s_loggerPair.LogDebug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
                         if (response != null)
                         {
                             return response;
                         }
                         var errorMessage = $"http request failed and connection_timeout {restTimeout.TotalSeconds} sec. reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
-                        logger.LogError(errorMessage);
+                        s_loggerPair.LogError(errorMessage);
                         throw new OperationCanceledException(errorMessage);
                     }
 
@@ -489,14 +488,14 @@ namespace Snowflake.Data.Core
                     retryCount++;
                     if ((maxRetryCount > 0) && (retryCount > maxRetryCount))
                     {
-                        logger.LogDebug($"stop retry as maxHttpRetries {maxRetryCount} reached");
+                        s_loggerPair.LogDebug($"stop retry as maxHttpRetries {maxRetryCount} reached");
                         if (response != null)
                         {
                             return response;
                         }
                         var errorMessage = $"http request failed and max retry {maxRetryCount} reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
-                        logger.LogError(errorMessage);
+                        s_loggerPair.LogError(errorMessage);
                         throw new OperationCanceledException(errorMessage);
                     }
 
@@ -505,7 +504,7 @@ namespace Snowflake.Data.Core
 
                     requestMessage.RequestUri = updater.Update(errorReason);
 
-                    logger.LogDebug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
+                    s_loggerPair.LogDebug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
 

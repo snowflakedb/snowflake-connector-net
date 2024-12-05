@@ -12,7 +12,6 @@ using Snowflake.Data.Log;
 using System.Net;
 using Google.Apis.Storage.v1;
 using Google.Cloud.Storage.V1;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -43,7 +42,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFGCSClient>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFGCSClient>();
 
         /// <summary>
         /// The storage client.
@@ -63,11 +62,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="stageInfo">The command stage info.</param>
         public SFGCSClient(PutGetStageInfo stageInfo)
         {
-            s_logger.LogDebug("Setting up a new GCS client ");
+            s_loggerPair.LogDebug("Setting up a new GCS client ");
 
             if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
             {
-                s_logger.LogDebug("Constructing client using access token");
+                s_loggerPair.LogDebug("Constructing client using access token");
                 AccessToken = accessToken;
                 GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
                 var storageClientBuilder = new StorageClientBuilder
@@ -79,7 +78,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
-                s_logger.LogInformation("No access token received from GS, constructing anonymous client with no encryption support");
+                s_loggerPair.LogInformation("No access token received from GS, constructing anonymous client with no encryption support");
                 var storageClientBuilder = new StorageClientBuilder
                 {
                     UnauthenticatedAccess = true
@@ -476,7 +475,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
-            s_logger.LogError("Failed to get file header for presigned url: " + ex.Message);
+            s_loggerPair.LogError("Failed to get file header for presigned url: " + ex.Message);
             
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized ||
@@ -502,7 +501,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
         {
-            s_logger.LogError("Failed to get file header for non-presigned url: " + ex.Message);
+            s_loggerPair.LogError("Failed to get file header for non-presigned url: " + ex.Message);
 
             HttpWebResponse response = (HttpWebResponse)ex.Response;
             if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -537,7 +536,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
-            s_logger.LogError("Failed to upload file: " + ex.Message);
+            s_loggerPair.LogError("Failed to upload file: " + ex.Message);
 
             fileMetadata.lastError = ex;
 
@@ -571,7 +570,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>File Metadata</returns>
         private SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
         {
-            s_logger.LogError("Failed to download file: " + ex.Message);
+            s_loggerPair.LogError("Failed to download file: " + ex.Message);
 
             fileMetadata.lastError = ex;
 

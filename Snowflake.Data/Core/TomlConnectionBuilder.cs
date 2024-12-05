@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Snowflake.Data.Client;
@@ -28,7 +27,7 @@ namespace Snowflake.Data.Core
         internal const string SnowflakeDefaultConnectionName = "SNOWFLAKE_DEFAULT_CONNECTION_NAME";
         internal const string SnowflakeHome = "SNOWFLAKE_HOME";
 
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SnowflakeDbConnection>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SnowflakeDbConnection>();
 
         private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
@@ -54,7 +53,7 @@ namespace Snowflake.Data.Core
         {
             var tomlPath = ResolveConnectionTomlFile();
             var connectionToml = GetTomlTableFromConfig(tomlPath, connectionName);
-            s_logger.LogInformation($"Reading connection parameters from file using key: {connectionName} and path: {tomlPath}");
+            s_loggerPair.LogInformation($"Reading connection parameters from file using key: {connectionName} and path: {tomlPath}");
             return connectionToml == null ? string.Empty : GetConnectionStringFromTomlTable(connectionToml);
         }
 
@@ -87,7 +86,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            s_logger.LogInformation($"Trying to load token from file {tokenFilePathValue}");
+            s_loggerPair.LogInformation($"Trying to load token from file {tokenFilePathValue}");
             var token = LoadTokenFromFile(tokenFilePathValue);
             if (!string.IsNullOrEmpty(token))
             {
@@ -95,7 +94,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                s_logger.LogWarning("The token has empty value");
+                s_loggerPair.LogWarning("The token has empty value");
             }
         }
 
@@ -110,13 +109,13 @@ namespace Snowflake.Data.Core
             {
                 if (!_fileOperations.Exists(tokenFilePathValue))
                 {
-                    s_logger.LogInformation($"Specified token file {tokenFilePathValue} does not exists.");
+                    s_loggerPair.LogInformation($"Specified token file {tokenFilePathValue} does not exists.");
                     throw new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, tokenFilePathValue, "token_file_path");
                 }
 
                 tokenFile = tokenFilePathValue;
             }
-            s_logger.LogInformation($"Read token from file path: {tokenFile}");
+            s_loggerPair.LogInformation($"Read token from file path: {tokenFile}");
             return _fileOperations.Exists(tokenFile) ? _fileOperations.ReadAllText(tokenFile, ValidateFilePermissions) : null;
         }
 

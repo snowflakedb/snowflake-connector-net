@@ -4,16 +4,15 @@ using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Tools
 {
     internal class Diagnostics
     {
         private const int PadRight = -25;
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<Diagnostics>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<Diagnostics>();
 
-        public static void LogDiagnostics() => s_logger.LogInformation(GetDiagnosticInfo());
+        public static void LogDiagnostics() => s_loggerPair.LogInformation(GetDiagnosticInfo());
 
         private static string GetDiagnosticInfo()
         {
@@ -40,7 +39,7 @@ namespace Snowflake.Data.Core.Tools
             catch (Exception exception)
             {
                 var errorMessage = $"Error caught while collecting diagnostic info: {exception.Message}";
-                s_logger.LogError(errorMessage, exception);
+                s_loggerPair.LogError(errorMessage, exception);
                 info.AppendLine(errorMessage);
             }
             return info.ToString();

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -18,8 +17,8 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AUTH_NAME = "oauth";
 
         // The logger.
-        private static readonly ILogger logger =
-            SFLoggerFactory.GetCustomLogger<OAuthAuthenticator>();
+        private static readonly SFLoggerPair s_loggerPair =
+            SFLoggerPair.GetLoggerPair<OAuthAuthenticator>();
 
         /// <summary>
         /// Constructor for the oauth authenticator.

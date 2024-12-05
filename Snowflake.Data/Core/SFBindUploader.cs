@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -36,7 +35,7 @@ namespace Snowflake.Data.Core
 
         private string requestId;
 
-        private ILogger logger = SFLoggerFactory.GetCustomLogger<SFBindUploader>();
+        private SFLoggerPair loggerPair = SFLoggerPair.GetLoggerPair<SFBindUploader>();
 
         private string stagePath;
 
@@ -310,7 +309,7 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         session.SetArrayBindStageThreshold(0);
-                        logger.LogError("Failed to create temporary stage for array binds.", e);
+                        loggerPair.LogError("Failed to create temporary stage for array binds.", e);
                         throw;
                     }
                 }
@@ -334,7 +333,7 @@ namespace Snowflake.Data.Core
                 catch (Exception e)
                 {
                     session.SetArrayBindStageThreshold(0);
-                    logger.LogError("Failed to create temporary stage for array binds.", e);
+                    loggerPair.LogError("Failed to create temporary stage for array binds.", e);
                     throw;
                 }
             }

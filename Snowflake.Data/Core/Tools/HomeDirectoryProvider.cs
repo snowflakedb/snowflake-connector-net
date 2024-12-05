@@ -4,13 +4,12 @@
 
 using Snowflake.Data.Log;
 using System;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Tools
 {
     internal class HomeDirectoryProvider
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<HomeDirectoryProvider>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<HomeDirectoryProvider>();
 
         public static string HomeDirectory(EnvironmentOperations _environmentOperations) {
             try
@@ -24,7 +23,7 @@ namespace Snowflake.Data.Core.Tools
             }
             catch (Exception e)
             {
-                s_logger.LogError($"Error while trying to retrieve the home directory: {e}");
+                s_loggerPair.LogError($"Error while trying to retrieve the home directory: {e}");
                 return null;
             }
         }

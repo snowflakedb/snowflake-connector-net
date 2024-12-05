@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -46,8 +45,8 @@ namespace Snowflake.Data.Core.Authenticator
     internal abstract class BaseAuthenticator
     {
         // The logger.
-        private static readonly ILogger logger =
-            SFLoggerFactory.GetCustomLogger<BaseAuthenticator>();
+        private static readonly SFLoggerPair s_loggerPair =
+            SFLoggerPair.GetLoggerPair<BaseAuthenticator>();
 
         // The name of the authenticator.
         private string authName;
@@ -135,7 +134,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal class AuthenticatorFactory
     {
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<AuthenticatorFactory>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<AuthenticatorFactory>();
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>
@@ -165,7 +164,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    logger.LogError(error.Message, error);
+                    s_loggerPair.LogError(error.Message, error);
                     throw error;
                 }
 
@@ -182,7 +181,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    logger.LogError(error.Message, error);
+                    s_loggerPair.LogError(error.Message, error);
                     throw error;
                 }
 
@@ -193,7 +192,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new OktaAuthenticator(session, type);
             }
-            logger.LogError($"Unknown authenticator {type}");
+            s_loggerPair.LogError($"Unknown authenticator {type}");
             throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
         }
     }

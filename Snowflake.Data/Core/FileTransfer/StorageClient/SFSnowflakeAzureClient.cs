@@ -14,7 +14,6 @@ using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -32,7 +31,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<SFSnowflakeAzureClient>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFSnowflakeAzureClient>();
 
         /// <summary>
         /// The cloud blob client to use to upload and download data on Azure.
@@ -45,7 +44,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="stageInfo">The command stage info.</param>
         public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
         {
-            logger.LogDebug("Setting up a new Azure client ");
+            s_loggerPair.LogDebug("Setting up a new Azure client ");
 
             // Get the Azure SAS token and create the client
             if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))

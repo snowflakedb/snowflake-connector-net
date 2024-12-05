@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -19,7 +19,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.X509;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -33,8 +32,8 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AUTH_NAME = "snowflake_jwt";
 
         // The logger.
-        private static readonly ILogger logger =
-            SFLoggerFactory.GetCustomLogger<KeyPairAuthenticator>();
+        private static readonly SFLoggerPair s_loggerPair =
+            SFLoggerPair.GetLoggerPair<KeyPairAuthenticator>();
 
         // The RSA provider to use to sign the tokens
         private RSACryptoServiceProvider rsaProvider;
@@ -58,7 +57,7 @@ namespace Snowflake.Data.Core.Authenticator
             jwtToken = GenerateJwtToken();
 
             // Send the http request with the generate token
-            logger.LogDebug("Send login request");
+            s_loggerPair.LogDebug("Send login request");
             await base.LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -68,7 +67,7 @@ namespace Snowflake.Data.Core.Authenticator
             jwtToken = GenerateJwtToken();
 
             // Send the http request with the generate token
-            logger.LogDebug("Send login request");
+            s_loggerPair.LogDebug("Send login request");
             base.Login();
         }
 
@@ -85,7 +84,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <returns>The generated JWT token.</returns>
         private string GenerateJwtToken()
         {
-            logger.LogInformation("Key-pair Authentication");
+            s_loggerPair.LogInformation("Key-pair Authentication");
 
             bool hasPkPath =
                 session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);

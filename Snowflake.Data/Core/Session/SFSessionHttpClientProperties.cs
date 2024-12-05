@@ -5,7 +5,6 @@ using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -22,7 +21,7 @@ namespace Snowflake.Data.Core
         public const bool DefaultPoolingEnabled = true;
         public const int DefaultMaxHttpRetries = 7;
         public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFSessionHttpClientProperties>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFSessionHttpClientProperties>();
 
         internal bool validateDefaultParameters;
         internal bool clientSessionKeepAlive;
@@ -69,11 +68,11 @@ namespace Snowflake.Data.Core
             if (!properties.IsPoolingEnabledValueProvided && _poolingEnabled)
             {
                 _poolingEnabled = false;
-                s_logger.LogInformation($"Disabling connection pooling for {authenticationDescription} authentication");
+                s_loggerPair.LogInformation($"Disabling connection pooling for {authenticationDescription} authentication");
             }
             else if (properties.IsPoolingEnabledValueProvided && _poolingEnabled)
             {
-                s_logger.LogWarning($"Connection pooling is enabled for {authenticationDescription} authentication which is not recommended");
+                s_loggerPair.LogWarning($"Connection pooling is enabled for {authenticationDescription} authentication which is not recommended");
             }
         }
 
@@ -102,16 +101,16 @@ namespace Snowflake.Data.Core
         {
             if (TimeoutHelper.IsZeroLength(connectionTimeout))
             {
-                s_logger.LogWarning("Connection timeout provided is 0. Timeout will be infinite");
+                s_loggerPair.LogWarning("Connection timeout provided is 0. Timeout will be infinite");
                 connectionTimeout = TimeoutHelper.Infinity();
             }
             else if (TimeoutHelper.IsInfinite(connectionTimeout))
             {
-                s_logger.LogWarning("Connection timeout provided is negative. Timeout will be infinite.");
+                s_loggerPair.LogWarning("Connection timeout provided is negative. Timeout will be infinite.");
             }
             if (!TimeoutHelper.IsInfinite(connectionTimeout) && connectionTimeout < DefaultRetryTimeout)
             {
-                s_logger.LogWarning($"Connection timeout provided is less than recommended minimum value of {DefaultRetryTimeout}");
+                s_loggerPair.LogWarning($"Connection timeout provided is less than recommended minimum value of {DefaultRetryTimeout}");
             }
         }
 
@@ -119,17 +118,17 @@ namespace Snowflake.Data.Core
         {
             if (retryTimeout.TotalMilliseconds > 0 && retryTimeout < DefaultRetryTimeout)
             {
-                s_logger.LogWarning($"Max retry timeout provided is less than the allowed minimum value of {DefaultRetryTimeout}");
+                s_loggerPair.LogWarning($"Max retry timeout provided is less than the allowed minimum value of {DefaultRetryTimeout}");
                 retryTimeout = DefaultRetryTimeout;
             }
             else if (TimeoutHelper.IsZeroLength(retryTimeout))
             {
-                s_logger.LogWarning($"Max retry timeout provided is 0. Timeout will be infinite");
+                s_loggerPair.LogWarning($"Max retry timeout provided is 0. Timeout will be infinite");
                 retryTimeout = TimeoutHelper.Infinity();
             }
             else if (TimeoutHelper.IsInfinite(retryTimeout))
             {
-                s_logger.LogWarning($"Max retry timeout provided is negative. Timeout will be infinite");
+                s_loggerPair.LogWarning($"Max retry timeout provided is negative. Timeout will be infinite");
             }
         }
 
@@ -137,7 +136,7 @@ namespace Snowflake.Data.Core
         {
             if (!TimeoutHelper.IsInfinite(retryTimeout) && retryTimeout < connectionTimeout)
             {
-                s_logger.LogWarning($"Connection timeout greater than retry timeout. Setting connection time same as retry timeout");
+                s_loggerPair.LogWarning($"Connection timeout greater than retry timeout. Setting connection time same as retry timeout");
                 connectionTimeout = retryTimeout;
             }
         }
@@ -146,13 +145,13 @@ namespace Snowflake.Data.Core
         {
             if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
             {
-                    s_logger.LogWarning($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
+                    s_loggerPair.LogWarning($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
                 maxHttpRetries = DefaultMaxHttpRetries;
             }
             else if (maxHttpRetries == 0)
             {
-                s_logger.LogWarning($"Max retry count provided is 0. Retry count will be infinite");
+                s_loggerPair.LogWarning($"Max retry count provided is 0. Retry count will be infinite");
             }
         }
 
@@ -172,7 +171,7 @@ namespace Snowflake.Data.Core
             }
             if (TimeoutHelper.IsZeroLength(_waitingForSessionIdleTimeout))
             {
-                s_logger.LogWarning("Waiting for idle session timeout is 0. There will be no waiting for idle session");
+                s_loggerPair.LogWarning("Waiting for idle session timeout is 0. There will be no waiting for idle session");
             }
         }
 

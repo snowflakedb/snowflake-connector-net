@@ -1,18 +1,17 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AUTH_NAME = "snowflake";
-        private static readonly ILogger logger = SFLoggerFactory.GetCustomLogger<BasicAuthenticator>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<BasicAuthenticator>();
 
         internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {

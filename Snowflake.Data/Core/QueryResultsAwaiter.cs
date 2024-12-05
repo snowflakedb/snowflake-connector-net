@@ -8,7 +8,6 @@ using System.Threading;
 using System;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Client;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core
 {
@@ -37,7 +36,7 @@ namespace Snowflake.Data.Core
 
     internal class QueryResultsAwaiter
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<QueryResultsAwaiter>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<QueryResultsAwaiter>();
 
         private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
@@ -65,7 +64,7 @@ namespace Snowflake.Data.Core
             else
             {
                 var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_logger.LogError(errorMessage);
+                s_loggerPair.LogError(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
@@ -80,7 +79,7 @@ namespace Snowflake.Data.Core
             else
             {
                 var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_logger.LogError(errorMessage);
+                s_loggerPair.LogError(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
@@ -102,7 +101,7 @@ namespace Snowflake.Data.Core
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    s_logger.LogDebug("Cancellation requested for getting results from query id");
+                    s_loggerPair.LogDebug("Cancellation requested for getting results from query id");
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
@@ -132,7 +131,7 @@ namespace Snowflake.Data.Core
                     if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
                     {
                         var errorMessage = "Max retry for no data is reached";
-                        s_logger.LogError(errorMessage);
+                        s_loggerPair.LogError(errorMessage);
                         throw new Exception(errorMessage);
                     }
                 }

@@ -5,14 +5,13 @@
 using System;
 using System.IO;
 using Snowflake.Data.Log;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Core.Tools
 {
     internal class EnvironmentOperations
     {
         public static readonly EnvironmentOperations Instance = new EnvironmentOperations();
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<EnvironmentOperations>();
+        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<EnvironmentOperations>();
 
         public virtual string GetEnvironmentVariable(string variable)
         {
@@ -30,7 +29,7 @@ namespace Snowflake.Data.Core.Tools
             var directoryName = string.IsNullOrEmpty(executablePath) ? null : Path.GetDirectoryName(executablePath);
             if (string.IsNullOrEmpty(directoryName))
             {
-                s_logger.LogWarning("Unable to determine execution directory");
+                s_loggerPair.LogWarning("Unable to determine execution directory");
                 return null;
             }
             return directoryName;

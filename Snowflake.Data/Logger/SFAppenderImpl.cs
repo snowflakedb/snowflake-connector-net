@@ -58,6 +58,7 @@ internal class SFRollingFileAppender : SFAppender
 
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
+        var formattedMessage = _patternLayout.Format(logLevel, message, type);
         try
         {
             if (LogFileIsTooLarge())
@@ -65,19 +66,22 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            var formattedMessage = _patternLayout.Format(logLevel, message, type);
-            using (var writer = new StreamWriter(_logFilePath, true))
+            using (FileStream fs = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
             {
-                writer.Write(formattedMessage);
-                if (ex != null)
+                using (var writer = new StreamWriter(fs))
                 {
-                    writer.WriteLine(ex.Message);
+                    writer.Write(formattedMessage);
+                    if (ex != null)
+                    {
+                        writer.WriteLine(ex.Message);
+                    }
                 }
             }
         }
         catch (Exception logEx)
         {
-            Console.WriteLine($"Failed to log message: {logEx.Message}");
+            Console.WriteLine($"Unable to log the following message:\n{formattedMessage}" +
+                $"Due to the error: {logEx.Message}\n");
         }
     }
 
@@ -90,8 +94,7 @@ internal class SFRollingFileAppender : SFAppender
         }
         if (!File.Exists(_logFilePath))
         {
-            var file = File.Create(_logFilePath);
-            file.Close();
+            File.Create(_logFilePath).Dispose();
         }
     }
 
