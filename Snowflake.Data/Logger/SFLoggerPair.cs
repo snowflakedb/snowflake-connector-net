@@ -4,6 +4,7 @@
 
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text;
 
 namespace Snowflake.Data.Log
 {
@@ -26,7 +27,7 @@ namespace Snowflake.Data.Log
         internal void LogDebug(string message, Exception ex = null)
         {
             s_snowflakeLogger.Debug(message, ex);
-            s_customLogger.LogDebug(message, ex);
+            s_customLogger.LogDebug(FormatBrackets(message), ex);
         }
 
         internal void LogInformation(string message, Exception ex = null)
@@ -51,6 +52,12 @@ namespace Snowflake.Data.Log
         {
             return s_snowflakeLogger.IsDebugEnabled() ||
                 s_customLogger.IsEnabled(LogLevel.Debug);
+        }
+
+        private string FormatBrackets(string message)
+        {
+            var sb = new StringBuilder(message).Replace("{", "{{").Replace("}", "}}");
+            return sb.ToString();
         }
     }
 }
