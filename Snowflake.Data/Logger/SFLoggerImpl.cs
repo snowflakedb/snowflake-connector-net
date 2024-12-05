@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 public static class SFLogRepository
 {
-    internal static SFLogger s_rootLogger = s_rootLogger = new SFLoggerImpl(typeof(SFLogRepository));
+    internal static SFLogger s_rootLogger = new SFLoggerImpl(typeof(SFLogRepository));
 
     internal static SFLogger GetRootLogger()
     {
@@ -95,18 +95,18 @@ public class SFLoggerImpl : SFLogger
             SFLogRepository.s_rootLogger.IsDebugEnabled();
     }
 
-    public bool IsInfoEnabled()
+    public bool IsInformationEnabled()
     {
         return SFLogRepository.s_rootLogger == this ?
             _isInfoEnabled :
-            SFLogRepository.s_rootLogger.IsInfoEnabled();
+            SFLogRepository.s_rootLogger.IsInformationEnabled();
     }
 
-    public bool IsWarnEnabled()
+    public bool IsWarningEnabled()
     {
         return SFLogRepository.s_rootLogger == this ?
             _isWarnEnabled :
-            SFLogRepository.s_rootLogger.IsWarnEnabled();
+            SFLogRepository.s_rootLogger.IsWarningEnabled();
     }
 
     public bool IsErrorEnabled()
@@ -132,18 +132,18 @@ public class SFLoggerImpl : SFLogger
         }
     }
 
-    public void Info(string msg, Exception ex = null)
+    public void Information(string msg, Exception ex = null)
     {
-        if (IsInfoEnabled())
+        if (IsInformationEnabled())
         {
             msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.INFO.ToString(), msg, ex);
         }
     }
 
-    public void Warn(string msg, Exception ex = null)
+    public void Warning(string msg, Exception ex = null)
     {
-        if (IsWarnEnabled())
+        if (IsWarningEnabled())
         {
             msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.WARN.ToString(), msg, ex);

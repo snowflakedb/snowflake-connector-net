@@ -11,9 +11,9 @@ namespace Snowflake.Data.Log
     {
         bool IsDebugEnabled();
 
-        bool IsInfoEnabled();
+        bool IsInformationEnabled();
 
-        bool IsWarnEnabled();
+        bool IsWarningEnabled();
 
         bool IsErrorEnabled();
 
@@ -21,9 +21,9 @@ namespace Snowflake.Data.Log
 
         void Debug(string msg, Exception ex = null);
 
-        void Info(string msg, Exception ex = null);
+        void Information(string msg, Exception ex = null);
 
-        void Warn(string msg, Exception ex = null);
+        void Warning(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
 

@@ -17,12 +17,12 @@ namespace Snowflake.Data.Log
             return false;
         }
 
-        public bool IsInfoEnabled()
+        public bool IsInformationEnabled()
         {
             return false;
         }
 
-        public bool IsWarnEnabled()
+        public bool IsWarningEnabled()
         {
             return false;
         }
@@ -42,12 +42,12 @@ namespace Snowflake.Data.Log
             return;
         }
 
-        public void Info(string msg, Exception ex)
+        public void Information(string msg, Exception ex)
         {
             return;
         }
 
-        public void Warn(string msg, Exception ex)
+        public void Warning(string msg, Exception ex)
         {
             return;
         }

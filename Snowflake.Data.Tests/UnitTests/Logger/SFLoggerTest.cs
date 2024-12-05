@@ -67,8 +67,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             _logger = GetLogger(isEnabled);
 
-            Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
-            _logger.Info("info log message", new Exception("test exception"));
+            Assert.AreEqual(isEnabled, _logger.IsInformationEnabled());
+            _logger.Information("info log message", new Exception("test exception"));
         }
 
         [Test]
@@ -77,8 +77,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             _logger = GetLogger(isEnabled);
 
-            Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
-            _logger.Warn("warn log message", new Exception("test exception"));
+            Assert.AreEqual(isEnabled, _logger.IsWarningEnabled());
+            _logger.Warning("warn log message", new Exception("test exception"));
         }
 
         [Test]

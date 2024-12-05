@@ -62,7 +62,7 @@ namespace Snowflake.Data.Configuration
             {
                 return null;
             }
-            s_logger.Info($"Using config file specified from {inputDescription}: {filePath}");
+            s_logger.Information($"Using config file specified from {inputDescription}: {filePath}");
             return filePath;
         }
 
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Configuration
                 var directory = directoryProvider.Invoke();
                 if (string.IsNullOrEmpty(directory))
                 {
-                    s_logger.Warn($"The {directoryDescription} directory could not be determined and will be skipped");
+                    s_logger.Warning($"The {directoryDescription} directory could not be determined and will be skipped");
                     return null;
                 }
 
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Configuration
         {
             if (_fileOperations.Exists(filePath))
             {
-                s_logger.Info($"Using config file specified from {directoryDescription} directory: {filePath}");
+                s_logger.Information($"Using config file specified from {directoryDescription} directory: {filePath}");
                 return filePath;
             }
             return null;

@@ -23,16 +23,13 @@ namespace Snowflake.Data.Client
 
         private SnowflakeDbParameterCollection parameterCollection;
 
-        private SFLogger _snowflakeLogger = SFLoggerFactory.GetSFLogger<SnowflakeDbCommand>();
-
-        private ILogger _customLogger = SFLoggerFactory.GetCustomLogger<SnowflakeDbCommand>();
+        private SFLoggerPair _loggerPair = SFLoggerPair.GetLoggerPair<SnowflakeDbCommand>();
 
         private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
 
         public SnowflakeDbCommand()
         {
-            _snowflakeLogger.Debug("Constructing SnowflakeDbCommand class");
-            _customLogger.LogDebug("Constructing SnowflakeDbCommand class");
+            _loggerPair.LogDebug("Constructing SnowflakeDbCommand class");
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
@@ -169,8 +166,7 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            _snowflakeLogger.Debug($"ExecuteNonQuery");
-            _customLogger.LogDebug($"ExecuteNonQuery");
+            _loggerPair.LogDebug($"ExecuteNonQuery");
             SFBaseResultSet resultSet = ExecuteInternal();
             long total = 0;
             do
@@ -195,8 +191,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"ExecuteNonQueryAsync");
-            _customLogger.LogDebug($"ExecuteNonQueryAsync");
+            _loggerPair.LogDebug($"ExecuteNonQueryAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -223,8 +218,7 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
-            _snowflakeLogger.Debug($"ExecuteScalar");
-            _customLogger.LogDebug($"ExecuteScalar");
+            _loggerPair.LogDebug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
             if(resultSet.Next())
@@ -235,8 +229,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"ExecuteScalarAsync");
-            _customLogger.LogDebug($"ExecuteScalarAsync");
+            _loggerPair.LogDebug($"ExecuteScalarAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -271,16 +264,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            _snowflakeLogger.Debug($"ExecuteDbDataReader");
-            _customLogger.LogDebug($"ExecuteDbDataReader");
+            _loggerPair.LogDebug($"ExecuteDbDataReader");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"ExecuteDbDataReaderAsync");
-            _customLogger.LogDebug($"ExecuteDbDataReaderAsync");
+            _loggerPair.LogDebug($"ExecuteDbDataReaderAsync");
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -288,8 +279,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception ex)
             {
-                _snowflakeLogger.Error("The command failed to execute.", ex);
-                _customLogger.LogError("The command failed to execute.", ex);
+                _loggerPair.LogError("The command failed to execute.", ex);
                 throw;
             }
         }
@@ -301,8 +291,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public string ExecuteInAsyncMode()
         {
-            _snowflakeLogger.Debug($"ExecuteInAsyncMode");
-            _customLogger.LogDebug($"ExecuteInAsyncMode");
+            _loggerPair.LogDebug($"ExecuteInAsyncMode");
             SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
             return resultSet.queryId;
         }
@@ -315,8 +304,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"ExecuteAsyncInAsyncMode");
-            _customLogger.LogDebug($"ExecuteAsyncInAsyncMode");
+            _loggerPair.LogDebug($"ExecuteAsyncInAsyncMode");
             var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
             return resultSet.queryId;
         }
@@ -328,8 +316,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public QueryStatus GetQueryStatus(string queryId)
         {
-            _snowflakeLogger.Debug($"GetQueryStatus");
-            _customLogger.LogDebug($"GetQueryStatus");
+            _loggerPair.LogDebug($"GetQueryStatus");
             return _queryResultsAwaiter.GetQueryStatus(connection, queryId);
         }
 
@@ -341,8 +328,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"GetQueryStatusAsync");
-            _customLogger.LogDebug($"GetQueryStatusAsync");
+            _loggerPair.LogDebug($"GetQueryStatusAsync");
             return await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
         }
 
@@ -353,8 +339,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public DbDataReader GetResultsFromQueryId(string queryId)
         {
-            _snowflakeLogger.Debug($"GetResultsFromQueryId");
-            _customLogger.LogDebug($"GetResultsFromQueryId");
+            _loggerPair.LogDebug($"GetResultsFromQueryId");
 
             Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
             task.Wait();
@@ -372,8 +357,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
         {
-            _snowflakeLogger.Debug($"GetResultsFromQueryIdAsync");
-            _customLogger.LogDebug($"GetResultsFromQueryIdAsync");
+            _loggerPair.LogDebug($"GetResultsFromQueryIdAsync");
 
             await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
 
@@ -481,8 +465,7 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(CommandText))
             {
                 var errorMessage = "Unable to execute command due to command text not being set";
-                _snowflakeLogger.Debug(errorMessage);
-                _customLogger.LogError(errorMessage);
+                _loggerPair.LogError(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
