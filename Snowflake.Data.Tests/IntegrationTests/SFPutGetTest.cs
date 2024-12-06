@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -560,16 +560,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestPutGetFileWithSpaceAndSingleQuote(
+            [Values] StageType stageType,
+            [Values("/STAGE PATH WITH SPACE")] string stagePath)
+        {
+            PrepareTest(null, stageType, stagePath, false, true, true);
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            {
+                conn.Open();
+                PutFile(conn, "", ResultStatus.UPLOADED, true);
+                CopyIntoTable(conn, true);
+                GetFile(conn, true);
+            }
+        }
+
         private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
-            bool autoCompress, bool clientEncryption = true)
+            bool autoCompress, bool clientEncryption = true, bool makeFilePathWithSpace = false)
         {
             t_stageType = stageType;
             t_sourceCompressionType = sourceFileCompressionType;
             t_autoCompress = autoCompress;
             // Prepare temp file name with specified file extension
             t_fileName = Guid.NewGuid() + ".csv" +
-                        (t_autoCompress? SFFileCompressionTypes.LookUpByName(t_sourceCompressionType).FileExtension: "");
-            t_inputFilePath = Path.GetTempPath() + t_fileName;
+                        (t_autoCompress ? SFFileCompressionTypes.LookUpByName(t_sourceCompressionType).FileExtension : "");
+            var sourceFolderWithSpace = $"{Guid.NewGuid()} source file path with space";
+            var inputPathBase = makeFilePathWithSpace ?
+                Path.Combine(s_outputDirectory, sourceFolderWithSpace) :
+                Path.GetTempPath();
+            t_inputFilePath = Path.Combine(inputPathBase, t_fileName);
+
             if (IsCompressedByTheDriver())
             {
                 t_destCompressionType = "gzip";
@@ -580,7 +600,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 t_destCompressionType = t_sourceCompressionType;
                 t_outputFileName = t_fileName;
             }
-            t_outputFilePath = $@"{s_outputDirectory}/{t_outputFileName}";
+            var destinationFolderWithSpace = $"{Guid.NewGuid()} destination file path with space";
+            var outputPathBase = makeFilePathWithSpace ?
+                Path.Combine(s_outputDirectory, destinationFolderWithSpace) :
+                s_outputDirectory;
+            t_outputFilePath = Path.Combine(outputPathBase, t_outputFileName);
+            if (makeFilePathWithSpace)
+            {
+                Directory.CreateDirectory(inputPathBase);
+                Directory.CreateDirectory(outputPathBase);
+            }
             t_filesToDelete.Add(t_outputFilePath);
             PrepareFileData(t_inputFilePath);
 
@@ -610,16 +639,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         string PutFile(
             SnowflakeDbConnection conn,
             String additionalAttribute = "",
-            ResultStatus expectedStatus = ResultStatus.UPLOADED)
+            ResultStatus expectedStatus = ResultStatus.UPLOADED,
+            bool encloseInSingleQuotes = false)
         {
             string queryId;
             using (var command = conn.CreateCommand())
             {
                 // Prepare PUT query
-                string putQuery =
-                    $"PUT file://{t_inputFilePath} {t_internalStagePath}" +
-                    $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" +
-                    $" {additionalAttribute}";
+                var putQuery = encloseInSingleQuotes ?
+                    $"PUT 'file://{t_inputFilePath.Replace("\\", "/")}' '{t_internalStagePath}'" :
+                    $"PUT file://{t_inputFilePath} {t_internalStagePath}";
+                putQuery += $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" + $" {additionalAttribute}";
                 // Upload file
                 command.CommandText = putQuery;
                 var reader = command.ExecuteReader();
@@ -661,7 +691,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         // COPY INTO - Copy data from the stage into temp table
-        private void CopyIntoTable(SnowflakeDbConnection conn)
+        private void CopyIntoTable(SnowflakeDbConnection conn, bool encloseInSingleQuotes = false)
         {
             using (var command = conn.CreateCommand())
             {
@@ -671,7 +701,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         command.CommandText = $"COPY INTO {t_schemaName}.{t_tableName}";
                         break;
                     default:
-                        command.CommandText =
+                        command.CommandText = encloseInSingleQuotes ?
+                            $"COPY INTO {t_schemaName}.{t_tableName} FROM '{t_internalStagePath}/{t_fileName}'" :
                             $"COPY INTO {t_schemaName}.{t_tableName} FROM {t_internalStagePath}/{t_fileName}";
                         break;
                 }
@@ -696,12 +727,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         // GET - Download from the stage into local directory
-        private void GetFile(DbConnection conn)
+        private void GetFile(DbConnection conn, bool encloseInSingleQuotes = false)
         {
             using (var command = conn.CreateCommand())
             {
                 // Prepare GET query
-                var getQuery = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
+                var getQuery = encloseInSingleQuotes ?
+                    $"GET '{t_internalStagePath}/{t_fileName}' 'file://{Path.GetDirectoryName(t_outputFilePath).Replace("\\", "/")}'" :
+                    $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
 
                 // Download file
                 command.CommandText = getQuery;
