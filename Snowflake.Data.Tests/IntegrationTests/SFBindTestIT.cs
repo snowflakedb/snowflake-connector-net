@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 #nullable enable
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFBindTestIT>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
         [Test]
         public void TestArrayBind()
@@ -906,7 +906,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
             var smallBatchRowCount = 2;
             var bigBatchRowCount = bindingThreshold / 2;
-            s_logger.LogInformation(testCase);
+            s_logger.Info(testCase);
 
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -945,7 +945,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var row = 0;
                 using (var select = conn.CreateCommand($"select {sql_columns} from {TableName} order by id"))
                 {
-                    s_logger.LogDebug(select.CommandText);
+                    s_logger.Debug(select.CommandText);
                     var reader = select.ExecuteReader();
                     while (reader.Read())
                     {
@@ -992,7 +992,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 // Act
-                s_logger.LogInformation(sqlInsert);
+                s_logger.Info(sqlInsert);
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
@@ -1031,7 +1031,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 // Act
-                s_logger.LogDebug(sqlInsert);
+                s_logger.Debug(sqlInsert);
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert

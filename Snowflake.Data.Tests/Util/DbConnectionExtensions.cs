@@ -9,21 +9,21 @@ namespace Snowflake.Data.Tests.Util
 {
     public static class DbConnectionExtensions
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<TestIcebergTable>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<TestIcebergTable>();
 
         internal static IDbCommand CreateCommand(this IDbConnection connection, string commandText)
         {
             var command = connection.CreateCommand();
             command.Connection = connection;
             command.CommandText = commandText;
-            s_logger.LogDebug(commandText);
+            s_logger.Debug(commandText);
             return command;
         }
         
         internal static int ExecuteNonQuery(this IDbConnection connection, string commandText)
         {
             var rowsAffected = connection.CreateCommand(commandText).ExecuteNonQuery();
-            s_logger.LogDebug($"Affected row(s): {rowsAffected}");
+            s_logger.Debug($"Affected row(s): {rowsAffected}");
             return rowsAffected;
         }
 

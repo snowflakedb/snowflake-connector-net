@@ -56,12 +56,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public void Enqueue(ThreadEvent threadEvent) => _events.Enqueue(threadEvent);
 
-        public static ILogger Logger() => SFLoggerFactory.GetCustomLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
+        public static SFLogger Logger() => SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
     }
     
     class ConnectingThread
     {
-        private static readonly ILogger s_logger = ConnectingThreads.Logger();
+        private static readonly SFLogger s_logger = ConnectingThreads.Logger();
 
         private string _name;
         
@@ -104,21 +104,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var connection = new SnowflakeDbConnection();
             connection.ConnectionString = _connectionString;
-            s_logger.LogDebug($"Execution started, will sleep for {_waitBeforeConnectMillis} ms");
+            s_logger.Debug($"Execution started, will sleep for {_waitBeforeConnectMillis} ms");
             Sleep(_waitBeforeConnectMillis);
             var watch = new StopWatch();
             watch.Start();
             var connected = false;
             try
             {
-                s_logger.LogDebug("Opening the connection");
+                s_logger.Debug("Opening the connection");
                 connection.Open();
                 connected = true;
             }
             catch (Exception exception)
             {
                 watch.Stop();
-                s_logger.LogError($"Execution failed because of the error: {exception}");
+                s_logger.Error($"Execution failed because of the error: {exception}");
                 _events.Enqueue(ThreadEvent.EventConnectingFailed(_name, exception, watch.ElapsedMilliseconds));
             }
             if (connected)
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Sleep(_waitAfterConnectMillis);
             if (_closeOnExit)
             {
-                s_logger.LogDebug($"Closing the connection");
+                s_logger.Debug($"Closing the connection");
                 connection.Close();
             }
         }
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SessionPoolThreadEventHandler: SessionPoolEventHandler
     {
-        private static readonly ILogger s_logger = ConnectingThreads.Logger();
+        private static readonly SFLogger s_logger = ConnectingThreads.Logger();
         private readonly ConnectingThreads _connectingThreads;
 
         public SessionPoolThreadEventHandler(ConnectingThreads connectingThreads)
@@ -198,24 +198,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var threadName = Thread.CurrentThread.Name;
             var realThreadName = threadName.StartsWith(ConnectingThread.NamePrefix)
                 ? threadName.Substring(ConnectingThread.NamePrefix.Length) : threadName;
-            s_logger.LogWarning($"Thread is going to wait for an available session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+            s_logger.Warn($"Thread is going to wait for an available session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
             var waitingStartedEvent = ThreadEvent.EventWaitingForSessionStarted(realThreadName);
             _connectingThreads.Enqueue(waitingStartedEvent);
         }
         
         public override void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft)
         {
-            s_logger.LogWarning($"Thread is going to wait with milliseconds timeout of {millisLeft}. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+            s_logger.Warn($"Thread is going to wait with milliseconds timeout of {millisLeft}. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
         }
 
         public override void OnWaitingForSessionSuccessful(SessionPool sessionPool)
         {
-            s_logger.LogWarning($"Thread has been woken with a session granted. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+            s_logger.Warn($"Thread has been woken with a session granted. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
         }
 
         public override void OnSessionProvided(SessionPool sessionPool)
         {
-            s_logger.LogWarning($"Thread has got a session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+            s_logger.Warn($"Thread has got a session. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
         }
     }
 }

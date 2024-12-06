@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -11,7 +11,6 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -21,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class ConnectionPoolCommonIT : SFBaseTest
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<ConnectionPoolManager>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private readonly PoolConfig _previousPoolConfig;
 
         public ConnectionPoolCommonIT(ConnectionPoolType connectionPoolTypeUnderTest)
@@ -39,8 +38,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 SnowflakeDbConnectionPool.SetPooling(true);
             }
-            s_logger.LogDebug($"---------------- BeforeTest ---------------------");
-            s_logger.LogDebug($"Testing Pool Type: {SnowflakeDbConnectionPool.GetConnectionPoolVersion()}");
+            s_logger.Debug($"---------------- BeforeTest ---------------------");
+            s_logger.Debug($"Testing Pool Type: {SnowflakeDbConnectionPool.GetConnectionPoolVersion()}");
         }
 
         [TearDown]

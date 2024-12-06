@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture, NonParallelizable]
     class SFConnectionWithTomlIT : SFBaseTest
     {
-        private static readonly ILogger s_logger = SFLoggerFactory.GetCustomLogger<SFConnectionIT>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         private static string s_workingDirectory;
 
