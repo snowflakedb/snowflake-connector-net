@@ -153,9 +153,10 @@ namespace Snowflake.Data.Core
             return tomlPath;
         }
 
+
         internal static void ValidateFilePermissions(UnixStream stream)
         {
-            var allowedPermissions = new FileAccessPermissions[]
+            var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
                 FileAccessPermissions.UserRead

@@ -11,7 +11,9 @@ namespace Snowflake.Data.Core.Tools
         public static readonly DirectoryOperations Instance = new DirectoryOperations();
 
         public virtual bool Exists(string path) => Directory.Exists(path);
-        
+
         public virtual DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);
+
+        public virtual void Delete(string path, bool recursive) => Directory.Delete(path, recursive);
     }
 }

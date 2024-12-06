@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Security;
 using System.Text;
 using Mono.Unix;
@@ -11,13 +12,25 @@ using Mono.Unix.Native;
 
 namespace Snowflake.Data.Core.Tools
 {
+
     internal class UnixOperations
     {
         public static readonly UnixOperations Instance = new UnixOperations();
 
+        public virtual int CreateFileWithPermissions(string path, FilePermissions permissions)
+        {
+            return Syscall.creat(path, permissions);
+        }
+
         public virtual int CreateDirectoryWithPermissions(string path, FilePermissions permissions)
         {
             return Syscall.mkdir(path, permissions);
+        }
+
+        public virtual FileAccessPermissions GetFilePermissions(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            return fileInfo.FileAccessPermissions;
         }
 
         public virtual FileAccessPermissions GetDirPermissions(string path)
@@ -32,7 +45,7 @@ namespace Snowflake.Data.Core.Tools
             return (permissions & fileInfo.FileAccessPermissions) != 0;
         }
 
-       public string ReadAllText(string path, Action<UnixStream> validator)
+        public string ReadAllText(string path, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
 
@@ -42,6 +55,20 @@ namespace Snowflake.Data.Core.Tools
                 using (var streamReader = new StreamReader(handle, Encoding.UTF8))
                 {
                     return streamReader.ReadToEnd();
+                }
+            }
+        }
+
+        public void WriteAllText(string path, string content, Action<UnixStream> validator)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+
+            using (var handle = fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+            {
+                validator?.Invoke(handle);
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(content);
                 }
             }
         }
