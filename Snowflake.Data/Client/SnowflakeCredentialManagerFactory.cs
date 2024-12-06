@@ -21,9 +21,9 @@ namespace Snowflake.Data.Client
 
         private static ISnowflakeCredentialManager s_credentialManager;
 
-        internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType, string authenticator = null)
+        internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{SFEnvironment.DriverName}:{tokenType.ToString().ToUpper()}:{authenticator?.ToUpper() ?? string.Empty}".ToSha256Hash();
+            return $"{host.ToUpper()}:{user.ToUpper()}:SNOWFLAKE:{tokenType.ToString().ToUpper()}".ToSha256Hash();
         }
 
 
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Client
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? (ISnowflakeCredentialManager)
                 SFCredentialManagerWindowsNativeImpl.Instance
-                : SFCredentialManagerInMemoryImpl.Instance;
+                : SFCredentialManagerFileImpl.Instance;
         }
     }
 }

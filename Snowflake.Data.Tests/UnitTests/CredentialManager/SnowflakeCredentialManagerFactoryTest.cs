@@ -4,7 +4,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
     [TestFixture, NonParallelizable]
     public class SnowflakeCredentialManagerFactoryTest
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             else
             {
-                Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
+                Assert.IsInstanceOf<SFCredentialManagerFileImpl>(credentialManager);
             }
         }
 
@@ -39,26 +39,26 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSettingCustomCredentialManager()
         {
             // arrange
-            SnowflakeCredentialManagerFactory.SetCredentialManager(SFCredentialManagerFileImpl.Instance);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance);
 
             // act
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerFileImpl>(credentialManager);
+            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
         [Test]
-        public void TestUseFileImplCredentialManager()
+        public void TestUseMemoryImplCredentialManager()
         {
             // arrange
-            SnowflakeCredentialManagerFactory.UseFileCredentialManager();
+            SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
 
             // act
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerFileImpl>(credentialManager);
+            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
         [Test]
@@ -66,8 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act and assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SnowflakeCredentialManagerFactory.SetCredentialManager(null));
-            Assert.IsTrue(exception.Message.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method."));
-
+            Assert.That(exception.Message, Does.Contain("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method."));
         }
 
         [Test]
