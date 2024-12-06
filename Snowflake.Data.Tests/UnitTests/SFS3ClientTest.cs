@@ -1,27 +1,25 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
-using Amazon.S3.Encryption;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using System.Collections.Generic;
+using Amazon.S3;
+using Snowflake.Data.Tests.Mock;
+using System.Threading.Tasks;
+using Amazon;
+using System.Threading;
+using System.IO;
+using Moq;
+using Amazon.S3.Model;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer.StorageClient;
-    using Snowflake.Data.Core.FileTransfer;
-    using System.Collections.Generic;
-    using Amazon.S3;
-    using Snowflake.Data.Tests.Mock;
-    using System.Threading.Tasks;
-    using Amazon;
-    using System.Threading;
-    using System.IO;
-    using Moq;
-    using Amazon.S3.Model;
-
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFS3ClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -318,6 +316,29 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        public void TestEncryptionMetadataReadingIsCaseInsensitive()
+        {
+            // arrange
+            var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
+            _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
+            var response = new GetObjectResponse();
+            response.Metadata.Add(SFS3Client.AMZ_IV.ToUpper(), "initVector");
+            response.Metadata.Add(SFS3Client.AMZ_KEY.ToUpper(), "key");
+            response.Metadata.Add(SFS3Client.AMZ_MATDESC.ToUpper(), "description");
+            response.Metadata.Add(SFS3Client.SFC_DIGEST.ToUpper(), "something");
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.AreEqual("something", fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
