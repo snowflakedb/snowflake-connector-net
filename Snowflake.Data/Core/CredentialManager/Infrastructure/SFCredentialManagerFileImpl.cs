@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
@@ -97,7 +98,17 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         internal KeyTokenDict ReadJsonFile()
         {
             var contentFile = _fileOperations.ReadAllText(_jsonCacheFilePath, ValidateFilePermissions);
-            return JsonConvert.DeserializeObject<KeyTokenDict>(contentFile);
+            try
+            {
+                JObject.Parse(contentFile);
+                var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
+                return fileContent == null ? new KeyTokenDict() : fileContent.Tokens;
+            }
+            catch (Exception)
+            {
+                s_logger.Error("Failed to parse the file with cached credentials");
+                return new KeyTokenDict();
+            }
         }
 
         public string GetCredentials(string key)

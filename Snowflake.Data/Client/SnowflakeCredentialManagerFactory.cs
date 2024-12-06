@@ -23,7 +23,7 @@ namespace Snowflake.Data.Client
 
         internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:SNOWFLAKE:{tokenType.ToString().ToUpper()}".ToSha256Hash();
+            return $"{host.ToUpper()}:{user.ToUpper()}:{tokenType.ToString().ToUpper()}".ToSha256Hash();
         }
 
 
