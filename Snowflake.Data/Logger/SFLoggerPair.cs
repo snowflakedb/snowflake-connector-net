@@ -13,9 +13,9 @@ namespace Snowflake.Data.Log
         private static SFLogger s_snowflakeLogger;
         private static ILogger s_customLogger;
 
-        SFLoggerPair(SFLogger snowflakLogger, ILogger customLogger)
+        SFLoggerPair(SFLogger snowflakeLogger, ILogger customLogger)
         {
-            s_snowflakeLogger = snowflakLogger;
+            s_snowflakeLogger = snowflakeLogger;
             s_customLogger = customLogger;
         }
 
