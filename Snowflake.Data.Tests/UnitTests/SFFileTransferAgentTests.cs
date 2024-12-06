@@ -648,7 +648,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestGetFilePathWithSpacesFromPutCommand()
         {
-            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + " @TestStage", s_filePathWithSpaces);
+            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + "  @TestStage", s_filePathWithSpaces);
         }
 
         [Test]
@@ -660,7 +660,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestGetFilePathWithSpacesAndWithSingleQuotesFromPutCommand()
         {
-            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "' @TestStage", s_filePathWithSpaces);
+            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);
         }
 
         public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
