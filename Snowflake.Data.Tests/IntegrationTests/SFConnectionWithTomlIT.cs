@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -6,7 +6,6 @@ using System;
 using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;

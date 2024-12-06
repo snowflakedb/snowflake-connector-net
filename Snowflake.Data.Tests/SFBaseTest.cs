@@ -14,7 +14,6 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
-using Microsoft.Extensions.Logging;
 
 [assembly:LevelOfParallelism(10)]
 

@@ -16,7 +16,6 @@ using System.Text;
 using System.Globalization;
 using System.Collections.Generic;
 using Snowflake.Data.Tests.Util;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
