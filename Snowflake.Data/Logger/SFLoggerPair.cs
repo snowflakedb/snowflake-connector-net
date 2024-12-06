@@ -26,24 +26,28 @@ namespace Snowflake.Data.Log
 
         internal void LogDebug(string message, Exception ex = null)
         {
+            message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Debug(message, ex);
             s_customLogger.LogDebug(FormatBrackets(message), ex);
         }
 
         internal void LogInformation(string message, Exception ex = null)
         {
+            message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Information(message, ex);
             s_customLogger.LogInformation(message, ex);
         }
 
         internal void LogWarning(string message, Exception ex = null)
         {
+            message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Warning(message, ex);
             s_customLogger.LogWarning(message, ex);
         }
 
         internal void LogError(string message, Exception ex = null)
         {
+            message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Error(message, ex);
             s_customLogger.LogError(message, ex);
         }

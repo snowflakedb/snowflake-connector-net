@@ -127,7 +127,6 @@ public class SFLoggerImpl : SFLogger
     {
         if (IsDebugEnabled())
         {
-            msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.DEBUG.ToString(), msg, ex);
         }
     }
@@ -136,7 +135,6 @@ public class SFLoggerImpl : SFLogger
     {
         if (IsInformationEnabled())
         {
-            msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.INFO.ToString(), msg, ex);
         }
     }
@@ -145,7 +143,6 @@ public class SFLoggerImpl : SFLogger
     {
         if (IsWarningEnabled())
         {
-            msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.WARN.ToString(), msg, ex);
         }
     }
@@ -155,7 +152,6 @@ public class SFLoggerImpl : SFLogger
     {
         if (IsErrorEnabled())
         {
-            msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.ERROR.ToString(), msg, ex);
         }
     }
@@ -164,7 +160,6 @@ public class SFLoggerImpl : SFLogger
     {
         if (IsFatalEnabled())
         {
-            msg = SecretDetector.MaskSecrets(msg).maskedText;
             Log(LoggingEvent.FATAL.ToString(), msg, ex);
         }
     }
