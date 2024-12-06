@@ -75,7 +75,7 @@ namespace Snowflake.Data.Core
         private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
         private Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
         private SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
-        private SFLoggerPair _loggerPair = SFLoggerPair.GetLoggerPair<QueryContextCache>();
+        private SFLogger _logger = SFLoggerFactory.GetLogger<QueryContextCache>();
 
         public QueryContextCache(int capacity)
         {
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Core
         {
             if (_idMap.ContainsKey(id))
             {
-                _loggerPair.LogDebug(
+                _logger.Debug(
                     $"Merge with existing id in cache = {id}, priority = {priority}");
                 // ID found in the cache
                 QueryContextElement qce = _idMap[id];
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Core
                 // new id
                 if (_priorityMap.ContainsKey(priority))
                 {
-                    _loggerPair.LogDebug(
+                    _logger.Debug(
                         $"Merge with existing priority in cache = {id}, priority = {priority}");
                     // Same priority with different id
                     QueryContextElement qce = _priorityMap[priority];
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Core
                 {
                     // new priority
                     // Add new element in the cache
-                    _loggerPair.LogDebug(
+                    _logger.Debug(
                         $"Adding new QCC item with either id nor priority found in cache id = {id}, priority = {priority}");
                     QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                     AddQCE(newQCE);
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Core
         /** Sync the newPriorityMap with the priorityMap at the end of current round of merge */
         public void SyncPriorityMap()
         {
-            _loggerPair.LogDebug(
+            _logger.Debug(
                 $"syncPriorityMap called priorityMap size = {_priorityMap.Count}, newPrioirtyMap size = {_newPriorityMap.Count}");
             foreach (KeyValuePair<long, QueryContextElement> entry in _newPriorityMap)
             {
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Core
          */
         public void CheckCacheCapacity()
         {
-            _loggerPair.LogDebug(
+            _logger.Debug(
                 $"checkCacheCapacity() called. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
             if (_cacheSet.Count > _capacity)
             {
@@ -175,18 +175,18 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            _loggerPair.LogDebug(
+            _logger.Debug(
                 $"checkCacheCapacity() returns. cacheSet size {_cacheSet.Count} cache capacity {_capacity}");
         }
 
         /** Clear the cache. */
         public void ClearCache()
         {
-            _loggerPair.LogDebug("clearCache() called");
+            _logger.Debug("clearCache() called");
             _idMap.Clear();
             _priorityMap.Clear();
             _cacheSet.Clear();
-            _loggerPair.LogDebug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
+            _logger.Debug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
         }
 
         public void SetCapacity(int cap)
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Core
                 if (_capacity == cap)
                     return;
 
-                _loggerPair.LogDebug($"set capacity from {_capacity} to {cap}");
+                _logger.Debug($"set capacity from {_capacity} to {cap}");
                 _capacity = cap;
                 CheckCacheCapacity();
                 LogCacheEntries();
@@ -337,11 +337,11 @@ namespace Snowflake.Data.Core
         /** Debugging purpose, log the all entries in the cache. */
         private void LogCacheEntries()
         {
-            if (_loggerPair.IsDebugEnabled())
+            if (_logger.IsDebugEnabled())
             {
                 foreach (QueryContextElement elem in _cacheSet)
                 {
-                    _loggerPair.LogDebug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
+                    _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
                 }
             }
         }

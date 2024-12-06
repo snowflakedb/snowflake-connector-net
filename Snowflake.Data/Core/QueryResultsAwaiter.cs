@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
 
     internal class QueryResultsAwaiter
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<QueryResultsAwaiter>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
 
         private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core
             else
             {
                 var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_loggerPair.LogError(errorMessage);
+                s_logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Core
             else
             {
                 var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_loggerPair.LogError(errorMessage);
+                s_logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    s_loggerPair.LogDebug("Cancellation requested for getting results from query id");
+                    s_logger.Debug("Cancellation requested for getting results from query id");
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Core
                     if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
                     {
                         var errorMessage = "Max retry for no data is reached";
-                        s_loggerPair.LogError(errorMessage);
+                        s_logger.Error(errorMessage);
                         throw new Exception(errorMessage);
                     }
                 }

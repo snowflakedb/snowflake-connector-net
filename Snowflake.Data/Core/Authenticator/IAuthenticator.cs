@@ -45,8 +45,8 @@ namespace Snowflake.Data.Core.Authenticator
     internal abstract class BaseAuthenticator
     {
         // The logger.
-        private static readonly SFLoggerPair s_loggerPair =
-            SFLoggerPair.GetLoggerPair<BaseAuthenticator>();
+        private static readonly SFLogger s_logger =
+            SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
         private string authName;
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal class AuthenticatorFactory
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<AuthenticatorFactory>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    s_loggerPair.LogError(error.Message, error);
+                    s_logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    s_loggerPair.LogError(error.Message, error);
+                    s_logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new OktaAuthenticator(session, type);
             }
-            s_loggerPair.LogError($"Unknown authenticator {type}");
+            s_logger.Error($"Unknown authenticator {type}");
             throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
         }
     }

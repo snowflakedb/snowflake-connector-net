@@ -95,18 +95,18 @@ public class SFLoggerImpl : SFLogger
             SFLogRepository.s_rootLogger.IsDebugEnabled();
     }
 
-    public bool IsInformationEnabled()
+    public bool IsInfoEnabled()
     {
         return SFLogRepository.s_rootLogger == this ?
             _isInfoEnabled :
-            SFLogRepository.s_rootLogger.IsInformationEnabled();
+            SFLogRepository.s_rootLogger.IsInfoEnabled();
     }
 
-    public bool IsWarningEnabled()
+    public bool IsWarnEnabled()
     {
         return SFLogRepository.s_rootLogger == this ?
             _isWarnEnabled :
-            SFLogRepository.s_rootLogger.IsWarningEnabled();
+            SFLogRepository.s_rootLogger.IsWarnEnabled();
     }
 
     public bool IsErrorEnabled()
@@ -131,17 +131,17 @@ public class SFLoggerImpl : SFLogger
         }
     }
 
-    public void Information(string msg, Exception ex = null)
+    public void Info(string msg, Exception ex = null)
     {
-        if (IsInformationEnabled())
+        if (IsInfoEnabled())
         {
             Log(LoggingEvent.INFO.ToString(), msg, ex);
         }
     }
 
-    public void Warning(string msg, Exception ex = null)
+    public void Warn(string msg, Exception ex = null)
     {
-        if (IsWarningEnabled())
+        if (IsWarnEnabled())
         {
             Log(LoggingEvent.WARN.ToString(), msg, ex);
         }

@@ -4,58 +4,105 @@
 
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Snowflake.Data.Log
 {
-    public class SFLoggerPair
+    public class SFLoggerPair : SFLogger
     {
         private static SFLogger s_snowflakeLogger;
         private static ILogger s_customLogger;
 
-        SFLoggerPair(SFLogger snowflakeLogger, ILogger customLogger)
+        public SFLoggerPair(SFLogger snowflakeLogger, ILogger customLogger)
         {
             s_snowflakeLogger = snowflakeLogger;
             s_customLogger = customLogger;
         }
 
-        internal static SFLoggerPair GetLoggerPair<T>()
-        {
-            return new SFLoggerPair(SFLoggerFactory.GetSFLogger<T>(), SFLoggerFactory.GetCustomLogger<T>());
-        }
-
-        internal void LogDebug(string message, Exception ex = null)
+        public void Debug(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Debug(message, ex);
             s_customLogger.LogDebug(FormatBrackets(message), ex);
         }
 
-        internal void LogInformation(string message, Exception ex = null)
+        public void Info(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Information(message, ex);
+            s_snowflakeLogger.Info(message, ex);
             s_customLogger.LogInformation(message, ex);
         }
 
-        internal void LogWarning(string message, Exception ex = null)
+        public void Warn(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Warning(message, ex);
+            s_snowflakeLogger.Warn(message, ex);
             s_customLogger.LogWarning(message, ex);
         }
 
-        internal void LogError(string message, Exception ex = null)
+        public void Error(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Error(message, ex);
             s_customLogger.LogError(message, ex);
         }
 
-        internal bool IsDebugEnabled()
+        public void Fatal(string message, Exception ex = null)
+        {
+            message = SecretDetector.MaskSecrets(message).maskedText;
+            s_snowflakeLogger.Fatal(message, ex);
+            s_customLogger.LogCritical(message, ex);
+        }
+
+        public bool IsDebugEnabled()
         {
             return s_snowflakeLogger.IsDebugEnabled() ||
                 s_customLogger.IsEnabled(LogLevel.Debug);
+        }
+
+        public bool IsInfoEnabled()
+        {
+            return s_snowflakeLogger.IsInfoEnabled() ||
+                s_customLogger.IsEnabled(LogLevel.Information);
+        }
+
+        public bool IsWarnEnabled()
+        {
+            return s_snowflakeLogger.IsWarnEnabled() ||
+                s_customLogger.IsEnabled(LogLevel.Warning);
+        }
+
+        public bool IsErrorEnabled()
+        {
+            return s_snowflakeLogger.IsErrorEnabled() ||
+                s_customLogger.IsEnabled(LogLevel.Error);
+        }
+
+        public bool IsFatalEnabled()
+        {
+            return s_snowflakeLogger.IsFatalEnabled() ||
+                s_customLogger.IsEnabled(LogLevel.Critical);
+        }
+
+        public List<SFAppender> GetAppenders()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddAppender(SFAppender appender)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveAppender(SFAppender appender)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetLevel(LoggingEvent level)
+        {
+            throw new NotImplementedException();
         }
 
         private string FormatBrackets(string message)

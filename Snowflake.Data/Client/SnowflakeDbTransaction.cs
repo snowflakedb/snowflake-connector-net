@@ -12,7 +12,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbTransaction : DbTransaction
     {
-        private SFLoggerPair _loggerPair = SFLoggerPair.GetLoggerPair<SnowflakeDbTransaction>();
+        private SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
 
         private IsolationLevel isolationLevel;
 
@@ -25,19 +25,19 @@ namespace Snowflake.Data.Client
         
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
-            _loggerPair.LogDebug("Begin transaction.");
+            _logger.Debug("Begin transaction.");
             if (isolationLevel != IsolationLevel.ReadCommitted)
             {
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
             if (connection == null)
             {
-                _loggerPair.LogError("Transaction cannot be started for an unknown connection");
+                _logger.Error("Transaction cannot be started for an unknown connection");
                 throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY);
             }
             if (!connection.IsOpen())
             {
-                _loggerPair.LogError("Transaction cannot be started for a closed connection");
+                _logger.Error("Transaction cannot be started for a closed connection");
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Client
 
         public override void Commit()
         {
-            _loggerPair.LogDebug("Commit transaction.");
+            _logger.Debug("Commit transaction.");
             if (!isCommittedOrRollbacked)
             {
                 using (IDbCommand command = connection.CreateCommand())
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Client
 
         public override void Rollback()
         {
-            _loggerPair.LogDebug("Rollback transaction.");
+            _logger.Debug("Rollback transaction.");
             if (!isCommittedOrRollbacked)
             {
                 using (IDbCommand command = connection.CreateCommand())

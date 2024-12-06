@@ -10,9 +10,9 @@ namespace Snowflake.Data.Core.Tools
     internal class Diagnostics
     {
         private const int PadRight = -25;
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<Diagnostics>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<Diagnostics>();
 
-        public static void LogDiagnostics() => s_loggerPair.LogInformation(GetDiagnosticInfo());
+        public static void LogDiagnostics() => s_logger.Info(GetDiagnosticInfo());
 
         private static string GetDiagnosticInfo()
         {
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Core.Tools
             catch (Exception exception)
             {
                 var errorMessage = $"Error caught while collecting diagnostic info: {exception.Message}";
-                s_loggerPair.LogError(errorMessage, exception);
+                s_logger.Error(errorMessage, exception);
                 info.AppendLine(errorMessage);
             }
             return info.ToString();

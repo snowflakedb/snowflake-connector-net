@@ -45,6 +45,11 @@ namespace Snowflake.Data.Log
             s_customLogger = customLogger;
         }
 
+        internal static SFLogger GetLogger<T>()
+        {
+            return new SFLoggerPair(GetSFLogger<T>(), GetCustomLogger<T>());
+        }
+
         internal static SFLogger GetSFLogger<T>(bool useFileAppender = true)
         {
             // If true, return the default/specified logger

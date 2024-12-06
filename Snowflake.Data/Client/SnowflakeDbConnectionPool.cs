@@ -15,7 +15,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbConnectionPool
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SnowflakeDbConnectionPool>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
         private static readonly Object s_connectionManagerInstanceLock = new Object();
         private static IConnectionManager s_connectionManager;
         internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
@@ -33,91 +33,91 @@ namespace Snowflake.Data.Client
 
         internal static SFSession GetSession(string connectionString, SecureString password)
         {
-            s_loggerPair.LogDebug($"SnowflakeDbConnectionPool::GetSession");
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetSession");
             return ConnectionManager.GetSession(connectionString, password);
         }
 
         internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
         {
-            s_loggerPair.LogDebug($"SnowflakeDbConnectionPool::GetSessionAsync");
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
             return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
         }
 
         public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)
         {
-            s_loggerPair.LogDebug($"SnowflakeDbConnectionPool::GetPool");
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
             return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, password));
         }
 
         public static SnowflakeDbSessionPool GetPool(string connectionString)
         {
-            s_loggerPair.LogDebug($"SnowflakeDbConnectionPool::GetPool");
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
             return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString));
         }
 
         internal static SessionPool GetPoolInternal(string connectionString)
         {
-            s_loggerPair.LogDebug($"SnowflakeDbConnectionPool::GetPoolInternal");
+            s_logger.Debug($"SnowflakeDbConnectionPool::GetPoolInternal");
             return ConnectionManager.GetPool(connectionString);
         }
 
         internal static bool AddSession(SFSession session)
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::AddSession");
+            s_logger.Debug("SnowflakeDbConnectionPool::AddSession");
             return ConnectionManager.AddSession(session);
         }
 
         internal static void ReleaseBusySession(SFSession session)
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::ReleaseBusySession");
+            s_logger.Debug("SnowflakeDbConnectionPool::ReleaseBusySession");
             ConnectionManager.ReleaseBusySession(session);
         }
 
         public static void ClearAllPools()
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::ClearAllPools");
+            s_logger.Debug("SnowflakeDbConnectionPool::ClearAllPools");
             ConnectionManager.ClearAllPools();
         }
 
         public static void SetMaxPoolSize(int maxPoolSize)
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::SetMaxPoolSize");
+            s_logger.Debug("SnowflakeDbConnectionPool::SetMaxPoolSize");
             ConnectionManager.SetMaxPoolSize(maxPoolSize);
         }
 
         public static int GetMaxPoolSize()
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::GetMaxPoolSize");
+            s_logger.Debug("SnowflakeDbConnectionPool::GetMaxPoolSize");
             return ConnectionManager.GetMaxPoolSize();
         }
 
         public static void SetTimeout(long connectionTimeout)
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::SetTimeout");
+            s_logger.Debug("SnowflakeDbConnectionPool::SetTimeout");
             ConnectionManager.SetTimeout(connectionTimeout);
         }
 
         public static long GetTimeout()
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::GetTimeout");
+            s_logger.Debug("SnowflakeDbConnectionPool::GetTimeout");
             return ConnectionManager.GetTimeout();
         }
 
         public static int GetCurrentPoolSize()
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::GetCurrentPoolSize");
+            s_logger.Debug("SnowflakeDbConnectionPool::GetCurrentPoolSize");
             return ConnectionManager.GetCurrentPoolSize();
         }
 
         public static bool SetPooling(bool isEnable)
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::SetPooling");
+            s_logger.Debug("SnowflakeDbConnectionPool::SetPooling");
             return ConnectionManager.SetPooling(isEnable);
         }
 
         public static bool GetPooling()
         {
-            s_loggerPair.LogDebug("SnowflakeDbConnectionPool::GetPooling");
+            s_logger.Debug("SnowflakeDbConnectionPool::GetPooling");
             return ConnectionManager.GetPooling();
         }
 
@@ -137,12 +137,12 @@ namespace Snowflake.Data.Client
                 if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
                 {
                     s_connectionManager = new ConnectionPoolManager();
-                    s_loggerPair.LogInformation("SnowflakeDbConnectionPool - multiple connection pools enabled");
+                    s_logger.Info("SnowflakeDbConnectionPool - multiple connection pools enabled");
                 }
                 if (requestedPoolType == ConnectionPoolType.SingleConnectionCache)
                 {
                     s_connectionManager = new ConnectionCacheManager();
-                    s_loggerPair.LogWarning("SnowflakeDbConnectionPool - connection cache enabled");
+                    s_logger.Warn("SnowflakeDbConnectionPool - connection cache enabled");
                 }
             }
         }

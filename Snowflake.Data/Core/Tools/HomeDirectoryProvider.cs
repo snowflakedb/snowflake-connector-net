@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core.Tools
 {
     internal class HomeDirectoryProvider
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<HomeDirectoryProvider>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
 
         public static string HomeDirectory(EnvironmentOperations _environmentOperations) {
             try
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Core.Tools
             }
             catch (Exception e)
             {
-                s_loggerPair.LogError($"Error while trying to retrieve the home directory: {e}");
+                s_logger.Error($"Error while trying to retrieve the home directory: {e}");
                 return null;
             }
         }

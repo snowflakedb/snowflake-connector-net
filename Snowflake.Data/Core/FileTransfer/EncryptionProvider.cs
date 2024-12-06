@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<EncryptionProvider>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
 
         /// <summary>
         /// Encrypt data and write to the outStream.
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Core.FileTransfer
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
-            s_loggerPair.LogDebug($"Master key size : {masterKeySize}");
+            s_logger.Debug($"Master key size : {masterKeySize}");
 
             // Generate file key
             byte[] ivData = new byte[blockSize];

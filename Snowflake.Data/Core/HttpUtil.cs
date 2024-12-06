@@ -77,7 +77,7 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<HttpUtil>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Core
             string name = config.ConfKey;
             if (!_HttpClients.ContainsKey(name))
             {
-                s_loggerPair.LogDebug("Http client not registered. Adding.");
+                s_logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
                     new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
@@ -333,7 +333,7 @@ namespace Snowflake.Data.Core
         }
         private class RetryHandler : DelegatingHandler
         {
-            static private SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<RetryHandler>();
+            static private SFLogger s_logger = SFLoggerFactory.GetLogger<RetryHandler>();
 
             private bool disableRetry;
             private bool forceRetryOn404;
@@ -367,10 +367,10 @@ namespace Snowflake.Data.Core
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY];
 
-                if (s_loggerPair.IsDebugEnabled())
+                if (s_logger.IsDebugEnabled())
                 {
-                    s_loggerPair.LogDebug("Http request timeout : " + httpTimeout);
-                    s_loggerPair.LogDebug("Rest request timeout : " + restTimeout);
+                    s_logger.Debug("Http request timeout : " + httpTimeout);
+                    s_logger.Debug("Rest request timeout : " + restTimeout);
                 }
 
                 CancellationTokenSource childCts = null;
@@ -401,12 +401,12 @@ namespace Snowflake.Data.Core
                         lastException = e;
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            s_loggerPair.LogInformation("SF rest request timeout or explicit cancel called.");
+                            s_logger.Info("SF rest request timeout or explicit cancel called.");
                             cancellationToken.ThrowIfCancellationRequested();
                         }
                         else if (childCts != null && childCts.Token.IsCancellationRequested)
                         {
-                            s_loggerPair.LogWarning("Http request timeout. Retry the request");
+                            s_logger.Warn("Http request timeout. Retry the request");
                             totalRetryTime += (int)httpTimeout.TotalSeconds;
                         }
                         else
@@ -415,13 +415,13 @@ namespace Snowflake.Data.Core
 
                             if (innermostException is AuthenticationException)
                             {
-                                s_loggerPair.LogError("Non-retryable error encountered: ", e);
+                                s_logger.Error("Non-retryable error encountered: ", e);
                                 throw;
                             }
                             else
                             {
                                 //TODO: Should probably check to see if the error is recoverable or transient.
-                                s_loggerPair.LogWarning("Error occurred during request, retrying...", e);
+                                s_logger.Warn("Error occurred during request, retrying...", e);
                             }
                         }
                     }
@@ -445,12 +445,12 @@ namespace Snowflake.Data.Core
 
                         if (response.IsSuccessStatusCode)
                         {
-                            s_loggerPair.LogDebug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            s_logger.Debug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             return response;
                         }
                         else
                         {
-                            s_loggerPair.LogDebug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            s_logger.Debug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             bool isRetryable = isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
                             if (!isRetryable || disableRetry)
@@ -463,19 +463,19 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        s_loggerPair.LogInformation("Response returned was null.");
+                        s_logger.Info("Response returned was null.");
                     }
 
                     if (restTimeout.TotalSeconds > 0 && totalRetryTime >= restTimeout.TotalSeconds)
                     {
-                        s_loggerPair.LogDebug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
+                        s_logger.Debug($"stop retry as connection_timeout {restTimeout.TotalSeconds} sec. reached");
                         if (response != null)
                         {
                             return response;
                         }
                         var errorMessage = $"http request failed and connection_timeout {restTimeout.TotalSeconds} sec. reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
-                        s_loggerPair.LogError(errorMessage);
+                        s_logger.Error(errorMessage);
                         throw new OperationCanceledException(errorMessage);
                     }
 
@@ -488,14 +488,14 @@ namespace Snowflake.Data.Core
                     retryCount++;
                     if ((maxRetryCount > 0) && (retryCount > maxRetryCount))
                     {
-                        s_loggerPair.LogDebug($"stop retry as maxHttpRetries {maxRetryCount} reached");
+                        s_logger.Debug($"stop retry as maxHttpRetries {maxRetryCount} reached");
                         if (response != null)
                         {
                             return response;
                         }
                         var errorMessage = $"http request failed and max retry {maxRetryCount} reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
-                        s_loggerPair.LogError(errorMessage);
+                        s_logger.Error(errorMessage);
                         throw new OperationCanceledException(errorMessage);
                     }
 
@@ -504,7 +504,7 @@ namespace Snowflake.Data.Core
 
                     requestMessage.RequestUri = updater.Update(errorReason);
 
-                    s_loggerPair.LogDebug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
+                    s_logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
 

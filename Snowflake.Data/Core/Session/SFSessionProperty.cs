@@ -126,7 +126,7 @@ namespace Snowflake.Data.Core
 
     class SFSessionProperties : Dictionary<SFSessionProperty, String>
     {
-        private static SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFSessionProperties>();
+        private static SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
         internal string ConnectionStringWithoutSecrets { get; set; }
 
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Core
             }
             catch (InvalidCastException)
             {
-                s_loggerPair.LogWarning("Invalid casting to SFSessionProperties");
+                s_logger.Warn("Invalid casting to SFSessionProperties");
                 return false;
             }
         }
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Core
 
         internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password)
         {
-            s_loggerPair.LogInformation("Start parsing connection string.");
+            s_logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
             try
             {
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Core
             }
             catch (ArgumentException e)
             {
-                s_loggerPair.LogWarning("Invalid connectionString", e);
+                s_logger.Warn("Invalid connectionString", e);
                 throw new SnowflakeDbException(e,
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
@@ -215,7 +215,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (ArgumentException)
                 {
-                    s_loggerPair.LogDebug($"Property {keys[i]} not found ignored.");
+                    s_logger.Debug($"Property {keys[i]} not found ignored.");
                 }
             }
 
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Core
                 catch (Exception e)
                 {
                     // The useProxy setting is not a valid boolean value
-                    s_loggerPair.LogError("Unable to connect", e);
+                    s_logger.Error("Unable to connect", e);
                     throw new SnowflakeDbException(e,
                                 SFError.INVALID_CONNECTION_STRING,
                                 e.Message);
@@ -273,15 +273,15 @@ namespace Snowflake.Data.Core
                 if (!allowUnderscoresInHost && compliantAccountName.Contains('_'))
                 {
                     compliantAccountName = compliantAccountName.Replace('_', '-');
-                    s_loggerPair.LogInformation($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
+                    s_logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
                 }
                 var hostName = $"{compliantAccountName}.snowflakecomputing.com";
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
-                s_loggerPair.LogInformation($"Compose host name: {hostName}");
+                s_logger.Info($"Compose host name: {hostName}");
             }
-            s_loggerPair.LogInformation(ResolveConnectionAreaMessage(properties[SFSessionProperty.HOST]));
+            s_logger.Info(ResolveConnectionAreaMessage(properties[SFSessionProperty.HOST]));
 
             // Trim the account name to remove the region and cloud platform if any were provided
             // because the login request data does not expect region and cloud information to be
@@ -312,7 +312,7 @@ namespace Snowflake.Data.Core
                 if (!knownAuthenticators.Contains(authenticator) && !(authenticator.Contains(OktaAuthenticator.AUTH_NAME) && authenticator.StartsWith("https://")))
                 {
                     var error = $"Unknown authenticator: {authenticator}";
-                    s_loggerPair.LogError(error);
+                    s_logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
                 }
             }
@@ -405,7 +405,7 @@ namespace Snowflake.Data.Core
                 return;
             if (IsAccountRegexMatched(account))
                 return;
-            s_loggerPair.LogError($"Invalid account {account}");
+            s_logger.Error($"Invalid account {account}");
             throw new SnowflakeDbException(
                 new Exception("Invalid account"),
                 SFError.INVALID_CONNECTION_PARAMETER_VALUE,
@@ -427,14 +427,14 @@ namespace Snowflake.Data.Core
                     !properties.ContainsKey(sessionProperty))
                 {
                     SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-                    s_loggerPair.LogError("Missing connection property", e);
+                    s_logger.Error("Missing connection property", e);
                     throw e;
                 }
 
                 if (IsRequired(sessionProperty, properties) && string.IsNullOrEmpty(properties[sessionProperty]))
                 {
                     SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-                    s_loggerPair.LogError("Empty connection property", e);
+                    s_logger.Error("Empty connection property", e);
                     throw e;
                 }
 
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Core
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
-                    s_loggerPair.LogDebug($"Session property {sessionProperty} set to default value: {defaultVal}");
+                    s_logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
             }
@@ -463,13 +463,13 @@ namespace Snowflake.Data.Core
             }
             catch (Exception e)
             {
-                s_loggerPair.LogError($"Value for parameter {propertyName} could not be parsed");
+                s_logger.Error($"Value for parameter {propertyName} could not be parsed");
                 throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
             }
 
             if (maxBytesInMemory <= 0)
             {
-                s_loggerPair.LogError($"Value for parameter {propertyName} should be greater than 0");
+                s_logger.Error($"Value for parameter {propertyName} should be greater than 0");
                 throw new SnowflakeDbException(
                     new Exception($"Value for parameter {propertyName} should be greater than 0"),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
@@ -529,7 +529,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception e)
             {
-                s_loggerPair.LogWarning("Unable to parse property 'allowUnderscoresInHost'", e);
+                s_logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
             }
 
             return allowUnderscoresInHost;

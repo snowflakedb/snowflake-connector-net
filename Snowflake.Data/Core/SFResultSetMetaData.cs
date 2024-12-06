@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core
 {
     class SFResultSetMetaData
     {
-        static private readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFResultSetMetaData>();
+        static private readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
 
         private int columnCount;
 
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Core
                 {
                     if (String.Compare(rowType.name, targetColumnName, false) == 0 )
                     {
-                        s_loggerPair.LogInformation($"Found column name {targetColumnName} under index {indexCounter}");
+                        s_logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }

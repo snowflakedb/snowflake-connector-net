@@ -56,8 +56,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInformationEnabled());
-            Assert.IsFalse(logger.IsWarningEnabled());
+            Assert.IsFalse(logger.IsInfoEnabled());
+            Assert.IsFalse(logger.IsWarnEnabled());
             Assert.IsFalse(logger.IsErrorEnabled());
             Assert.IsFalse(logger.IsFatalEnabled());
 
@@ -66,8 +66,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInformationEnabled());
-            Assert.IsFalse(logger.IsWarningEnabled());
+            Assert.IsFalse(logger.IsInfoEnabled());
+            Assert.IsFalse(logger.IsWarnEnabled());
             Assert.IsFalse(logger.IsErrorEnabled());
             Assert.IsTrue(logger.IsFatalEnabled());
 
@@ -76,8 +76,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInformationEnabled());
-            Assert.IsFalse(logger.IsWarningEnabled());
+            Assert.IsFalse(logger.IsInfoEnabled());
+            Assert.IsFalse(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
             Assert.IsTrue(logger.IsFatalEnabled());
 
@@ -86,8 +86,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInformationEnabled());
-            Assert.IsTrue(logger.IsWarningEnabled());
+            Assert.IsFalse(logger.IsInfoEnabled());
+            Assert.IsTrue(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
             Assert.IsTrue(logger.IsFatalEnabled());
 
@@ -96,8 +96,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             Assert.IsTrue(logger.IsDebugEnabled());
-            Assert.IsTrue(logger.IsInformationEnabled());
-            Assert.IsTrue(logger.IsWarningEnabled());
+            Assert.IsTrue(logger.IsInfoEnabled());
+            Assert.IsTrue(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
             Assert.IsTrue(logger.IsFatalEnabled());
         }
@@ -111,8 +111,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // act
             logger.Debug(DebugMessage);
-            logger.Information(InfoMessage);
-            logger.Warning(WarnMessage);
+            logger.Info(InfoMessage);
+            logger.Warn(WarnMessage);
             logger.Error(ErrorMessage);
             logger.Fatal(FatalMessage);
 

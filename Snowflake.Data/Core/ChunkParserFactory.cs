@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core
 {
     class ChunkParserFactory : IChunkParserFactory
     {
-        private static SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<ChunkParserFactory>();
+        private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
         public static IChunkParserFactory Instance = new ChunkParserFactory();
 
         public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
@@ -22,10 +22,10 @@ namespace Snowflake.Data.Core
             switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
                 case 1:
-                    s_loggerPair.LogWarning("V1 version of ChunkParser is deprecated. Using the V3 version.");
+                    s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
                     return new ReusableChunkParser(stream);
                 case 2:
-                    s_loggerPair.LogWarning("V2 version of ChunkParser is deprecated. Using the V3 version.");
+                    s_logger.Warn("V2 version of ChunkParser is deprecated. Using the V3 version.");
                     return new ReusableChunkParser(stream);
                 case 3:
                     return new ReusableChunkParser(stream);

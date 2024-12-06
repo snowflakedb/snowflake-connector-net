@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core
     {
         internal override ResultFormat ResultFormat => curResultSet.ResultFormat;
 
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SFMultiStatementsResultSet>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFMultiStatementsResultSet>();
 
         private string[] resultIds;
 

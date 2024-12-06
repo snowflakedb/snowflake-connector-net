@@ -7,13 +7,13 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Log
 {
-    interface SFLogger
+    public interface SFLogger
     {
         bool IsDebugEnabled();
 
-        bool IsInformationEnabled();
+        bool IsInfoEnabled();
 
-        bool IsWarningEnabled();
+        bool IsWarnEnabled();
 
         bool IsErrorEnabled();
 
@@ -21,9 +21,9 @@ namespace Snowflake.Data.Log
 
         void Debug(string msg, Exception ex = null);
 
-        void Information(string msg, Exception ex = null);
+        void Info(string msg, Exception ex = null);
 
-        void Warning(string msg, Exception ex = null);
+        void Warn(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
 

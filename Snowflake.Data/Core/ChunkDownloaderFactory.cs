@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core
 {
     class ChunkDownloaderFactory
     {
-        private static SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<ChunkDownloaderFactory>();
+        private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkDownloaderFactory>();
         public static IChunkDownloader GetDownloader(QueryExecResponseData responseData,
                                                      SFBaseResultSet resultSet,
                                                      CancellationToken cancellationToken)
@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core
             switch (SFConfiguration.Instance().GetChunkDownloaderVersion())
             {
                 case 1:
-                    s_loggerPair.LogWarning("V1 version of ChunkDownloader is deprecated. Using the V3 version.");
+                    s_logger.Warn("V1 version of ChunkDownloader is deprecated. Using the V3 version.");
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                         responseData.chunks,
                         responseData.qrmk,
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Core
                         resultSet,
                         responseData.queryResultFormat);
                 case 2:
-                    s_loggerPair.LogWarning("V2 version of ChunkDownloader is deprecated. Using the V3 version.");
+                    s_logger.Warn("V2 version of ChunkDownloader is deprecated. Using the V3 version.");
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                         responseData.chunks,
                         responseData.qrmk,

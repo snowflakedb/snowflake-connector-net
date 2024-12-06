@@ -8,7 +8,7 @@ namespace Snowflake.Data.Core.Session
 {
     internal class SessionPropertiesWithDefaultValuesExtractor
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<SessionPropertiesWithDefaultValuesExtractor>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPropertiesWithDefaultValuesExtractor>();
         private static readonly Regex s_timeoutFormatRegex = new Regex(@"^(-)?[0-9]{1,10}[mM]?[sS]?$");
         
         private readonly SFSessionProperties _propertiesDictionary;
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Core.Session
             var valueString = _propertiesDictionary[property];
             if (string.IsNullOrEmpty(valueString))
             {
-                s_loggerPair.LogWarning($"Parameter {property} not defined. Using a default value: {defaultValue}");
+                s_logger.Warn($"Parameter {property} not defined. Using a default value: {defaultValue}");
                 return defaultValue;
             }
             if (!preExtractValidation(valueString))
@@ -87,10 +87,10 @@ namespace Snowflake.Data.Core.Session
             {
                 if (_failOnWrongValue)
                 {
-                    s_loggerPair.LogError($"Invalid value of parameter {property}. Error: {e}");
+                    s_logger.Error($"Invalid value of parameter {property}. Error: {e}");
                     throw new Exception($"Invalid value of parameter {property}", e);
                 }
-                s_loggerPair.LogWarning($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
+                s_logger.Warn($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
                 return defaultValue;
             }
             if (!postExtractValidation(value))
@@ -107,10 +107,10 @@ namespace Snowflake.Data.Core.Session
         {
             if (_failOnWrongValue)
             {
-                s_loggerPair.LogError($"Invalid value of parameter {property}: {value}");
+                s_logger.Error($"Invalid value of parameter {property}: {value}");
                 throw new Exception($"Invalid value of parameter {property}");
             }
-            s_loggerPair.LogWarning($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
+            s_logger.Warn($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
             return defaultValue;            
         }
 

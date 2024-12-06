@@ -62,11 +62,11 @@ namespace Snowflake.Data.Core
                 }
                 if (string.IsNullOrEmpty(configFilePathFromConnectionString))
                 {
-                    s_logger.Information($"Attempting to enable easy logging without a config file specified from connection string");
+                    s_logger.Info($"Attempting to enable easy logging without a config file specified from connection string");
                 }
                 else
                 {
-                    s_logger.Information($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
+                    s_logger.Info($"Attempting to enable easy logging using config file specified from connection string: {configFilePathFromConnectionString}");
                 }
                 var config = _easyLoggingConfigProvider.ProvideConfig(configFilePathFromConnectionString);
                 if (config == null)
@@ -76,8 +76,8 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
-                s_logger.Information($"LogLevel set to {logLevel}");
-                s_logger.Information($"LogPath set to {logPath}");
+                s_logger.Info($"LogLevel set to {logLevel}");
+                s_logger.Info($"LogPath set to {logPath}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Core
             var isAllowedToInitialize = !everTriedToInitialize || (triedToInitializeWithoutConfigFile && isGivenConfigFilePath);
             if (!isAllowedToInitialize && _initTrialParameters.HasDifferentConfigPath(configFilePathFromConnectionString))
             {
-                s_logger.Warning($"Easy logging will not be configured for CLIENT_CONFIG_FILE={configFilePathFromConnectionString} because it was previously configured for a different client config");
+                s_logger.Warn($"Easy logging will not be configured for CLIENT_CONFIG_FILE={configFilePathFromConnectionString} because it was previously configured for a different client config");
             }
 
             return isAllowedToInitialize;
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Core
         {
             if (string.IsNullOrEmpty(logLevel))
             {
-                s_logger.Warning("LogLevel in client config not found. Using default value: OFF");
+                s_logger.Warn("LogLevel in client config not found. Using default value: OFF");
                 return EasyLoggingLogLevel.Off;
             }
             return EasyLoggingLogLevelExtensions.From(logLevel);
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Core
             var logPathOrDefault = logPath;
             if (string.IsNullOrEmpty(logPath))
             {
-                s_logger.Warning("LogPath in client config not found. Using home directory as a default value");
+                s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
                 logPathOrDefault = HomeDirectoryProvider.HomeDirectory(_environmentOperations);
                 if (string.IsNullOrEmpty(logPathOrDefault))
                 {
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Core
             var dirPermissions = _unixOperations.GetDirPermissions(dirPath);
             if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
             {
-                s_logger.Warning($"Access permission for the logs directory is currently " +
+                s_logger.Warn($"Access permission for the logs directory is currently " +
                     $"{UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(dirPermissions)} " +
                     $"and is potentially accessible to users other than the owner of the logs directory");
             }

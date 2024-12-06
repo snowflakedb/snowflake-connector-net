@@ -6,16 +6,16 @@ namespace Snowflake.Data.Core.Converter
 {
     public class StructuredTypesReadingHandler
     {
-        private static readonly SFLoggerPair s_loggerPair = SFLoggerPair.GetLoggerPair<StructuredTypesReadingHandler>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<StructuredTypesReadingHandler>();
 
         public static SnowflakeDbException ToSnowflakeDbException(Exception exception, string context)
         {
             if (exception is StructuredTypesReadingException)
             {
-                s_loggerPair.LogDebug("Exception caught when reading structured types", exception);
+                s_logger.Debug("Exception caught when reading structured types", exception);
                 return new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR, context, exception.Message);
             }
-            s_loggerPair.LogDebug("Exception caught when reading structured types");
+            s_logger.Debug("Exception caught when reading structured types");
             return new SnowflakeDbException(SFError.STRUCTURED_TYPE_READ_ERROR, context);
         }
     }
