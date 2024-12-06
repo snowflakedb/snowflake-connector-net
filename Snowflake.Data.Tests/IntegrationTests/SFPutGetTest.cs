@@ -563,7 +563,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutFileWithSpaceAndSingleQuote()
         {
-            var absolutePathPrefix = Path.Combine($"{Path.GetTempPath()}{Guid.NewGuid()} file path with space");
+            var absolutePathPrefix = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()} file path with space");
             var files = new List<string> {
                 $"{absolutePathPrefix}_one.csv",
                 $"{absolutePathPrefix}_two.csv",
