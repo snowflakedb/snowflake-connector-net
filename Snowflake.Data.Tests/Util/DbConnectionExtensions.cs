@@ -3,7 +3,6 @@ using System.Data.Common;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.IcebergTests;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.Util
 {

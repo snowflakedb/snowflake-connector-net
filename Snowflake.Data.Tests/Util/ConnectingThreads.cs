@@ -7,7 +7,6 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
-using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
