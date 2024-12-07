@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal class AuthenticatorFactory
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    s_logger.Error(error.Message, error);
+                    logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Core.Authenticator
                     var error = new SnowflakeDbException(
                         SFError.INVALID_CONNECTION_STRING,
                         new object[] { invalidStringDetail });
-                    s_logger.Error(error.Message, error);
+                    logger.Error(error.Message, error);
                     throw error;
                 }
 
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new OktaAuthenticator(session, type);
             }
-            s_logger.Error($"Unknown authenticator {type}");
+            logger.Error($"Unknown authenticator {type}");
             throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
         }
     }

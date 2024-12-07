@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core
 
         private string requestId;
 
-        private SFLogger loggerPair = SFLoggerFactory.GetLogger<SFBindUploader>();
+        private SFLogger logger = SFLoggerFactory.GetLogger<SFBindUploader>();
 
         private string stagePath;
 
@@ -309,7 +309,7 @@ namespace Snowflake.Data.Core
                     catch (Exception e)
                     {
                         session.SetArrayBindStageThreshold(0);
-                        loggerPair.Error("Failed to create temporary stage for array binds.", e);
+                        logger.Error("Failed to create temporary stage for array binds.", e);
                         throw;
                     }
                 }
@@ -333,7 +333,7 @@ namespace Snowflake.Data.Core
                 catch (Exception e)
                 {
                     session.SetArrayBindStageThreshold(0);
-                    loggerPair.Error("Failed to create temporary stage for array binds.", e);
+                    logger.Error("Failed to create temporary stage for array binds.", e);
                     throw;
                 }
             }

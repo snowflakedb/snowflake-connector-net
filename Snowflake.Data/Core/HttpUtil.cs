@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HttpUtil>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Core
             string name = config.ConfKey;
             if (!_HttpClients.ContainsKey(name))
             {
-                s_logger.Debug("Http client not registered. Adding.");
+                logger.Debug("Http client not registered. Adding.");
 
                 var httpClient = new HttpClient(
                     new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))

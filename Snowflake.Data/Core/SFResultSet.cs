@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Core
 
         internal void ResetChunkInfo(BaseResultChunk nextChunk)
         {
-            s_logger.Debug($"Received chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}");
+            s_logger.Debug($"Received chunk #{nextChunk.ChunkIndex + 1} of {_totalChunkCount}"); 
             _currentChunk.RowSet = null;
             _currentChunk = nextChunk;
         }

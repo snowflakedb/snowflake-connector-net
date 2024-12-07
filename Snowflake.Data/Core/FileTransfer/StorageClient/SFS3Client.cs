@@ -72,7 +72,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFS3Client>();
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
 
         /// <summary>
         /// The underlying S3 client.
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             int parallel,
             ProxyCredentials proxyCredentials)
         {
-            s_logger.Debug("Setting up a new AWS client ");
+            Logger.Debug("Setting up a new AWS client ");
 
             // Get the key id and secret key from the response
             stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
@@ -537,7 +537,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            s_logger.Error("Failed to get file header: " + ex.Message);
+            Logger.Error("Failed to get file header: " + ex.Message);
 
             switch (ex)
             {
@@ -569,7 +569,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            s_logger.Error("Failed to upload file: " + ex.Message);
+            Logger.Error("Failed to upload file: " + ex.Message);
 
             switch (ex)
             {
@@ -599,7 +599,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The file metadata.</param>
         private void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            s_logger.Error("Failed to download file: " + ex.Message);
+            Logger.Error("Failed to download file: " + ex.Message);
 
             switch (ex)
             {

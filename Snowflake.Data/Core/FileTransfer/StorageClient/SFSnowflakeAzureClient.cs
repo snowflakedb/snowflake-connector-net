@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The logger.
         /// </summary>
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
+        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
 
         /// <summary>
         /// The cloud blob client to use to upload and download data on Azure.
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="stageInfo">The command stage info.</param>
         public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
         {
-            s_logger.Debug("Setting up a new Azure client ");
+            Logger.Debug("Setting up a new Azure client ");
 
             // Get the Azure SAS token and create the client
             if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
