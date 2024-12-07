@@ -600,4 +600,3 @@ namespace Snowflake.Data.Core
     }
 }
 
-

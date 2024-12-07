@@ -1,4 +1,4 @@
-using Snowflake.Data.Log;
+﻿using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
 using System.Text;
