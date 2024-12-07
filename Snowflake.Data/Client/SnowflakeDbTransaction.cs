@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -12,7 +12,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbTransaction : DbTransaction
     {
-        private SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+        private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
 
         private IsolationLevel isolationLevel;
 
@@ -25,19 +25,19 @@ namespace Snowflake.Data.Client
         
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
-            _logger.Debug("Begin transaction.");
+            logger.Debug("Begin transaction.");
             if (isolationLevel != IsolationLevel.ReadCommitted)
             {
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
             if (connection == null)
             {
-                _logger.Error("Transaction cannot be started for an unknown connection");
+                logger.Error("Transaction cannot be started for an unknown connection");
                 throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY);
             }
             if (!connection.IsOpen())
             {
-                _logger.Error("Transaction cannot be started for a closed connection");
+                logger.Error("Transaction cannot be started for a closed connection");
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Client
 
         public override void Commit()
         {
-            _logger.Debug("Commit transaction.");
+            logger.Debug("Commit transaction.");
             if (!isCommittedOrRollbacked)
             {
                 using (IDbCommand command = connection.CreateCommand())
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Client
 
         public override void Rollback()
         {
-            _logger.Debug("Rollback transaction.");
+            logger.Debug("Rollback transaction.");
             if (!isCommittedOrRollbacked)
             {
                 using (IDbCommand command = connection.CreateCommand())

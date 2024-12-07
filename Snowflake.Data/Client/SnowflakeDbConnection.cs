@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -16,7 +16,7 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
-        private SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+        private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
         internal SFSession SfSession { get; set; }
 
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Client
                 throw new Exception("Session not yet created for this connection. Unable to prevent the session from pooling");
             }
             SfSession.SetPooling(false);
-            _logger.Debug($"Session {SfSession.sessionId} marked not to be pooled any more");
+            logger.Debug($"Session {SfSession.sessionId} marked not to be pooled any more");
         }
 
         internal bool HasActiveExplicitTransaction() => ExplicitTransaction != null && ExplicitTransaction.IsActive;
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Client
             var sessionReturnedToPool = SnowflakeDbConnectionPool.AddSession(SfSession);
             if (sessionReturnedToPool)
             {
-                _logger.Debug($"Session pooled: {SfSession.sessionId}");
+                logger.Debug($"Session pooled: {SfSession.sessionId}");
             }
             return sessionReturnedToPool;
         }
@@ -149,13 +149,13 @@ namespace Snowflake.Data.Client
                 return TransactionRollbackStatus.Success;
             try
             {
-                _logger.Debug("Closing dirty connection: an active transaction exists in session: " + SfSession.sessionId);
+                logger.Debug("Closing dirty connection: an active transaction exists in session: " + SfSession.sessionId);
                 using (IDbCommand command = CreateCommand())
                 {
                     command.CommandText = "ROLLBACK";
                     command.ExecuteNonQuery();
                     // error to indicate a problem within application code that a connection was closed while still having a pending transaction
-                    _logger.Error("Closing dirty connection: rollback transaction in session " + SfSession.sessionId + " succeeded.");
+                    logger.Error("Closing dirty connection: rollback transaction in session " + SfSession.sessionId + " succeeded.");
                     ExplicitTransaction = null;
                     return TransactionRollbackStatus.Success;
                 }
@@ -163,14 +163,14 @@ namespace Snowflake.Data.Client
             catch (Exception exception)
             {
                 // error to indicate a problem with rollback of an active transaction and inability to return dirty connection to the pool
-                _logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
+                logger.Error("Closing dirty connection: rollback transaction in session: " + SfSession.sessionId + " failed, exception: " + exception.Message);
                 return TransactionRollbackStatus.Failure; // connection won't be pooled
             }
         }
 
         public override void ChangeDatabase(string databaseName)
         {
-            _logger.Debug($"ChangeDatabase to:{databaseName}");
+            logger.Debug($"ChangeDatabase to:{databaseName}");
 
             string alterDbCommand = $"use database {databaseName}";
 
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Client
 
         public override void Close()
         {
-            _logger.Debug("Close Connection.");
+            logger.Debug("Close Connection.");
             if (IsNonClosedWithSession())
             {
                 var returnedToPool = TryToReturnSessionToPool();
@@ -207,7 +207,7 @@ namespace Snowflake.Data.Client
 
         public virtual async Task CloseAsync(CancellationToken cancellationToken)
         {
-            _logger.Debug("Close Connection.");
+            logger.Debug("Close Connection.");
             TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
             if (cancellationToken.IsCancellationRequested)
@@ -232,18 +232,18 @@ namespace Snowflake.Data.Client
                                 if (previousTask.IsFaulted)
                                 {
                                     // Exception from SfSession.CloseAsync
-                                    _logger.Error("Error closing the session", previousTask.Exception);
+                                    logger.Error("Error closing the session", previousTask.Exception);
                                     taskCompletionSource.SetException(previousTask.Exception);
                                 }
                                 else if (previousTask.IsCanceled)
                                 {
                                     _connectionState = ConnectionState.Closed;
-                                    _logger.Debug("Session close canceled");
+                                    logger.Debug("Session close canceled");
                                     taskCompletionSource.SetCanceled();
                                 }
                                 else
                                 {
-                                    _logger.Debug("Session closed successfully");
+                                    logger.Debug("Session closed successfully");
                                     _connectionState = ConnectionState.Closed;
                                     taskCompletionSource.SetResult(null);
                                 }
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    _logger.Debug("Session not opened. Nothing to do.");
+                    logger.Debug("Session not opened. Nothing to do.");
                     taskCompletionSource.SetResult(null);
                 }
             }
@@ -267,10 +267,10 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
-            _logger.Debug("Open Connection.");
+            logger.Debug("Open Connection.");
             if (_connectionState != ConnectionState.Closed)
             {
-                _logger.Debug($"Open with a connection already opened: {_connectionState}");
+                logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return;
             }
             try
@@ -280,14 +280,14 @@ namespace Snowflake.Data.Client
                 SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
-                _logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                 OnSessionEstablished();
             }
             catch (Exception e)
             {
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
-                _logger.Error("Unable to connect: ", e);
+                logger.Error("Unable to connect: ", e);
                 if (e is SnowflakeDbException)
                 {
                     throw;
@@ -310,10 +310,10 @@ namespace Snowflake.Data.Client
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            _logger.Debug("Open Connection Async.");
+            logger.Debug("Open Connection Async.");
             if (_connectionState != ConnectionState.Closed)
             {
-                _logger.Debug($"Open with a connection already opened: {_connectionState}");
+                logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
             registerConnectionCancellationCallback(cancellationToken);
@@ -328,7 +328,7 @@ namespace Snowflake.Data.Client
                         // Exception from SfSession.OpenAsync
                         Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
-                        _logger.Error("Unable to connect", sfSessionEx);
+                        logger.Error("Unable to connect", sfSessionEx);
                         throw new SnowflakeDbException(
                            sfSessionEx,
                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
@@ -338,14 +338,14 @@ namespace Snowflake.Data.Client
                     else if (previousTask.IsCanceled)
                     {
                         _connectionState = ConnectionState.Closed;
-                        _logger.Debug("Connection canceled");
+                        logger.Debug("Connection canceled");
                         throw new TaskCanceledException("Connecting was cancelled");
                     }
                     else
                     {
                         // Only continue if the session was opened successfully
                         SfSession = previousTask.Result;
-                        _logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                        logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
                     }
                 }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
@@ -409,7 +409,7 @@ namespace Snowflake.Data.Client
                     catch (Exception ex)
                     {
                         // Prevent an exception from being thrown when disposing of this object
-                        _logger.Error("Unable to close connection", ex);
+                        logger.Error("Unable to close connection", ex);
                     }
                 }
                 else

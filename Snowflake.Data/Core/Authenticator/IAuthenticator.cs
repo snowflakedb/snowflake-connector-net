@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core.Authenticator
     internal abstract class BaseAuthenticator
     {
         // The logger.
-        private static readonly SFLogger s_logger =
+        private static readonly SFLogger logger =
             SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.

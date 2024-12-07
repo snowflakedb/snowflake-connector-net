@@ -22,13 +22,13 @@ namespace Snowflake.Data.Client
 
         private SnowflakeDbParameterCollection parameterCollection;
 
-        private SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
+        private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
         private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
 
         public SnowflakeDbCommand()
         {
-            _logger.Debug("Constructing SnowflakeDbCommand class");
+            logger.Debug("Constructing SnowflakeDbCommand class");
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            _logger.Debug($"ExecuteNonQuery");
+            logger.Debug($"ExecuteNonQuery");
             SFBaseResultSet resultSet = ExecuteInternal();
             long total = 0;
             do
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            _logger.Debug($"ExecuteNonQueryAsync");
+            logger.Debug($"ExecuteNonQueryAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Client
 
         public override object ExecuteScalar()
         {
-            _logger.Debug($"ExecuteScalar");
+            logger.Debug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
             if(resultSet.Next())
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Client
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            _logger.Debug($"ExecuteScalarAsync");
+            logger.Debug($"ExecuteScalarAsync");
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -263,14 +263,14 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            _logger.Debug($"ExecuteDbDataReader");
+            logger.Debug($"ExecuteDbDataReader");
             SFBaseResultSet resultSet = ExecuteInternal();
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            _logger.Debug($"ExecuteDbDataReaderAsync");
+            logger.Debug($"ExecuteDbDataReaderAsync");
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
@@ -278,7 +278,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception ex)
             {
-                _logger.Error("The command failed to execute.", ex);
+                logger.Error("The command failed to execute.", ex);
                 throw;
             }
         }
@@ -290,7 +290,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public string ExecuteInAsyncMode()
         {
-            _logger.Debug($"ExecuteInAsyncMode");
+            logger.Debug($"ExecuteInAsyncMode");
             SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
             return resultSet.queryId;
         }
@@ -303,7 +303,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
         {
-            _logger.Debug($"ExecuteAsyncInAsyncMode");
+            logger.Debug($"ExecuteAsyncInAsyncMode");
             var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
             return resultSet.queryId;
         }
@@ -315,7 +315,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public QueryStatus GetQueryStatus(string queryId)
         {
-            _logger.Debug($"GetQueryStatus");
+            logger.Debug($"GetQueryStatus");
             return _queryResultsAwaiter.GetQueryStatus(connection, queryId);
         }
 
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
         {
-            _logger.Debug($"GetQueryStatusAsync");
+            logger.Debug($"GetQueryStatusAsync");
             return await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
         }
 
@@ -338,7 +338,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public DbDataReader GetResultsFromQueryId(string queryId)
         {
-            _logger.Debug($"GetResultsFromQueryId");
+            logger.Debug($"GetResultsFromQueryId");
 
             Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
             task.Wait();
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
         {
-            _logger.Debug($"GetResultsFromQueryIdAsync");
+            logger.Debug($"GetResultsFromQueryIdAsync");
 
             await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
 
@@ -464,7 +464,7 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(CommandText))
             {
                 var errorMessage = "Unable to execute command due to command text not being set";
-                _logger.Error(errorMessage);
+                logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
         }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Client
 {
     public class SnowflakeDbDataReader : DbDataReader
     {
-        static private readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+        static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
 
         private SnowflakeDbCommand dbCommand;
 

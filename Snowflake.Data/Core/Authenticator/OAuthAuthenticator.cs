@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AUTH_NAME = "oauth";
 
         // The logger.
-        private static readonly SFLogger s_logger =
+        private static readonly SFLogger logger =
             SFLoggerFactory.GetLogger<OAuthAuthenticator>();
 
         /// <summary>
