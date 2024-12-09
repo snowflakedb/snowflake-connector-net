@@ -17,8 +17,10 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
 
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
+
 
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
@@ -92,6 +94,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
         internal int masterValidityInSeconds { get; set; }
+
+        [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string mfaToken { get; set; }
     }
 
     internal class AuthenticatorResponseData
