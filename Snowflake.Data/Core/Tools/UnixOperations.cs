@@ -63,7 +63,7 @@ namespace Snowflake.Data.Core.Tools
         {
             var fileInfo = new UnixFileInfo(path: path);
 
-            using (var handle = fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
                 using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))

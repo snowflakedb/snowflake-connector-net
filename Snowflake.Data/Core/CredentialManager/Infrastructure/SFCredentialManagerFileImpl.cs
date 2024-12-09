@@ -13,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
@@ -36,7 +35,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private readonly string _jsonCacheDirectory;
 
-        private readonly string _jsonCacheFilePath;
+        internal readonly string _jsonCacheFilePath;
 
         private readonly string _jsonCacheLockPath;
 
@@ -79,18 +78,21 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 _directoryOperations.CreateDirectory(_jsonCacheDirectory);
             }
-            s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
             if (_fileOperations.Exists(_jsonCacheFilePath))
             {
                 s_logger.Info($"The existing json file for credential cache in {_jsonCacheFilePath} will be overwritten");
             }
-            var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
-                FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-            if (createFileResult == -1)
+            else
             {
-                var errorMessage = "Failed to create the JSON token cache file";
-                s_logger.Error(errorMessage);
-                throw new Exception(errorMessage);
+                s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
+                var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
+                if (createFileResult == -1)
+                {
+                    var errorMessage = "Failed to create the JSON token cache file";
+                    s_logger.Error(errorMessage);
+                    throw new Exception(errorMessage);
+                }
             }
             _fileOperations.Write(_jsonCacheFilePath, content, ValidateFilePermissions);
         }
@@ -100,9 +102,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             var contentFile = _fileOperations.ReadAllText(_jsonCacheFilePath, ValidateFilePermissions);
             try
             {
-                JObject.Parse(contentFile);
                 var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
-                return fileContent == null ? new KeyTokenDict() : fileContent.Tokens;
+                return (fileContent == null || fileContent.Tokens == null) ? new KeyTokenDict() : fileContent.Tokens;
             }
             catch (Exception)
             {
@@ -159,7 +160,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     {
                         var keyTokenPairs = ReadJsonFile();
                         keyTokenPairs.Remove(key);
-                        WriteToJsonFile(JsonConvert.SerializeObject(keyTokenPairs));
+                        var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
+                        WriteToJsonFile(JsonConvert.SerializeObject(credentials));
                     }
                 }
                 finally
@@ -184,8 +186,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 {
                     KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
                     keyTokenPairs[key] = token;
-
-                    string jsonString = JsonConvert.SerializeObject(keyTokenPairs);
+                    var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
+                    string jsonString = JsonConvert.SerializeObject(credentials);
                     WriteToJsonFile(jsonString);
                 }
                 finally

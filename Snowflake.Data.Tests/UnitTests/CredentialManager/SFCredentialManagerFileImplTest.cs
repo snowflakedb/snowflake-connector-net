@@ -46,6 +46,12 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager = SFCredentialManagerFileImpl.Instance;
         }
 
+        [TearDown]
+        public void CleanAll()
+        {
+            File.Delete(SFCredentialManagerFileImpl.Instance._jsonCacheFilePath);
+        }
+
         [Test]
         public void TestThatThrowsErrorWhenCacheFailToCreateCacheFile()
         {
