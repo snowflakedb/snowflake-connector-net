@@ -1,8 +1,9 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
- 
- using System;
+
+using System;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Log
 {
@@ -59,6 +60,26 @@ namespace Snowflake.Data.Log
         public void Fatal(string msg, Exception ex)
         {
             return;
+        }
+
+        List<SFAppender> SFLogger.GetAppenders()
+        {
+            throw new NotImplementedException();
+        }
+
+        void SFLogger.AddAppender(SFAppender appender)
+        {
+            throw new NotImplementedException();
+        }
+
+        void SFLogger.RemoveAppender(SFAppender appender)
+        {
+            throw new NotImplementedException();
+        }
+
+        void SFLogger.SetLevel(LoggingEvent level)
+        {
+            throw new NotImplementedException();
         }
     }
 

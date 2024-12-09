@@ -15,7 +15,7 @@ namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigParser
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<EasyLoggingConfigParser>();
 
         public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser();
 
@@ -45,7 +45,8 @@ namespace Snowflake.Data.Configuration
 
         private ClientConfig TryToParseFile(string fileContent)
         {
-            try {
+            try
+            {
                 var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
                 Validate(config);
                 CheckForUnknownFields(fileContent);
