@@ -27,6 +27,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal const string CredentialCacheLockName = "credential_cache.json.lck";
 
+        internal const int CredentialCacheLockDurationSeconds = 60;
+
         internal const FilePermissions CredentialCacheLockDirPermissions = FilePermissions.S_IRUSR;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
@@ -217,8 +219,16 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 _directoryOperations.CreateDirectory(_jsonCacheDirectory);
             }
-            if (_directoryOperations.Exists(_jsonCacheLockPath))
+            var lockDirectoryInfo = _directoryOperations.GetDirectoryInfo(_jsonCacheLockPath);
+            if (lockDirectoryInfo.IsCreatedEarlierThanSeconds(CredentialCacheLockDurationSeconds))
+            {
+                s_logger.Warn($"File cache lock directory {_jsonCacheLockPath} created more than {CredentialCacheLockDurationSeconds} seconds ago. Removing the lock directory.");
+                ReleaseLock();
+            }
+            else if (lockDirectoryInfo.Exists())
+            {
                 return false;
+            }
             var result = _unixOperations.CreateDirectoryWithPermissions(_jsonCacheLockPath, CredentialCacheLockDirPermissions);
             return result == 0;
         }

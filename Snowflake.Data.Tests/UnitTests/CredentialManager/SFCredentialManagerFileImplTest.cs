@@ -66,6 +66,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileImpl.CredentialCacheDirectoryEnvironmentName))
                 .Returns(CustomJsonDir);
+            t_directoryOperations
+                .Setup(d => d.GetDirectoryInfo(s_customLockPath))
+                .Returns(new DirectoryInformation(false, null));
             _credentialManager = new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
 
             // act
@@ -119,6 +122,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .SetupSequence(f => f.Exists(s_customJsonPath))
                 .Returns(false)
                 .Returns(true);
+            t_directoryOperations
+                .Setup(d => d.GetDirectoryInfo(s_customLockPath))
+                .Returns(new DirectoryInformation(false, null));
             _credentialManager = new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
 
             // act
@@ -142,9 +148,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .SetupSequence(f => f.Exists(s_customJsonPath))
                 .Returns(false)
                 .Returns(true);
-            t_fileOperations
-                .Setup(f => f.Exists(s_customLockPath))
-                .Returns(true);
+            t_directoryOperations
+                .Setup(d => d.GetDirectoryInfo(s_customLockPath))
+                .Returns(new DirectoryInformation(false, null));
             t_unixOperations
                 .Setup(u => u.CreateDirectoryWithPermissions(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
                 .Returns(-1);
@@ -171,12 +177,12 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .SetupSequence(f => f.Exists(s_customJsonPath))
                 .Returns(false)
                 .Returns(true);
-            t_fileOperations
-                .Setup(f => f.Exists(s_customLockPath))
-                .Returns(true);
             t_unixOperations
                 .Setup(u => u.CreateDirectoryWithPermissions(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
                 .Returns(-1);
+            t_directoryOperations
+                .Setup(d => d.GetDirectoryInfo(s_customLockPath))
+                .Returns(new DirectoryInformation(false, null));
             _credentialManager = new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
 
             // act

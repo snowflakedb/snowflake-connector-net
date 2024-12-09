@@ -15,5 +15,7 @@ namespace Snowflake.Data.Core.Tools
         public virtual DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);
 
         public virtual void Delete(string path, bool recursive) => Directory.Delete(path, recursive);
+
+        public virtual DirectoryInformation GetDirectoryInfo(string path) => new DirectoryInformation(new DirectoryInfo(path));
     }
 }
