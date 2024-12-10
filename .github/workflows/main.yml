@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
         target_framework: ['netstandard2.0', 'netstandard2.1']
     steps:
@@ -43,6 +43,7 @@ jobs:
           dotnet-version: |
             6.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -109,6 +110,7 @@ jobs:
           dotnet-version: |
             6.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -163,7 +165,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
         target_framework: ['netstandard2.0', 'netstandard2.1']
     steps:
@@ -174,6 +176,7 @@ jobs:
           dotnet-version: |
             6.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -226,7 +229,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
         target_framework: ['netstandard2.0', 'netstandard2.1']
     steps:
@@ -237,6 +240,7 @@ jobs:
           dotnet-version: |
             6.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5

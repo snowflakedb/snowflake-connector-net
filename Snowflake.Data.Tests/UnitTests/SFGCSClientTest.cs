@@ -1,24 +1,25 @@
 ﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using System.Collections.Generic;
+using System.Net;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Threading;
+using Snowflake.Data.Tests.Mock;
+using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer.StorageClient;
-    using Snowflake.Data.Core.FileTransfer;
-    using System.Collections.Generic;
-    using System.Net;
-    using System.IO;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Snowflake.Data.Tests.Mock;
-    using Moq;
-
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFGCSClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -338,6 +339,75 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        [TestCase("us-central1", null, null, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "https://example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", null, true, "https://storage.us-central1.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("me-central2", null, null, "https://storage.me-central2.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        public void TestUseUriWithRegionsWhenNeeded(string region, string endPoint, bool useRegionalUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = Location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = region,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var responseMessage = new HttpResponseMessage( HttpStatusCode.OK ) {Content =  new StringContent( "Response content" ) };
+            responseMessage.Headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = responseMessage.Headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForWebHeaderCollection(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var headers = new WebHeaderCollection();
+            headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
