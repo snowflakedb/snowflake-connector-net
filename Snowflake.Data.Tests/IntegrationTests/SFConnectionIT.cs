@@ -18,12 +18,9 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
-using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    
 
     [TestFixture]
     class SFConnectionIT : SFBaseTest
@@ -2276,13 +2273,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        // [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")] // to enroll to mfa authentication edit your user profile
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
             // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
-            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
-            // SnowflakeCredentialManagerFactory.UseFileCredentialManager();
+            // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
+            // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
@@ -2303,8 +2300,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // Use a connection with MFA enabled and Passcode property on connection instance.
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
-            // On Mac/Linux OS default credential manager is in memory so please uncomment following line to use file based credential manager
-            // SnowflakeCredentialManagerFactory.UseFileCredentialManager();
+            // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
+            // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
             // arrange
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
