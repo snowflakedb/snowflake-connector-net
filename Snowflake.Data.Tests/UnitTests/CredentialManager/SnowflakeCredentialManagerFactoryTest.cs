@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var thrown = Assert.Throws<Exception>(SnowflakeCredentialManagerFactory.UseFileCredentialManager);
 
             // assert
-            Assert.AreEqual("Windows native credential manager implementation can be used only on Windows", thrown.Message);
+            Assert.AreEqual("File credential manager implementation is not supported on Windows", thrown.Message);
         }
     }
 }
