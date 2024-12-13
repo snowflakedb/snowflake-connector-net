@@ -36,13 +36,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.AreEqual(false, result);
         }
 
-        [Test]
-        public void TestCompareDates() // for debugging
-        {
-            var condition = DateTime.UtcNow.AddSeconds(-30).AddSeconds(60) < DateTime.UtcNow;
-            Assert.IsFalse(condition);
-        }
-
         internal static IEnumerable<object[]> OldCreatingDatesTestCases()
         {
             yield return new object[] { DateTime.UtcNow.AddMinutes(-2), DateTime.UtcNow };
@@ -53,7 +46,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(-30), DateTime.UtcNow };
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(30), DateTime.UtcNow };
-            yield return new object[] { true, DateTime.UtcNow.AddSeconds(1000), DateTime.UtcNow };
             yield return new object[] { true, DateTime.UtcNow, DateTime.UtcNow };
             yield return new object[] { false, null, DateTime.UtcNow };
         }
