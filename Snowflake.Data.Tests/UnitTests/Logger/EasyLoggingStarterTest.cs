@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private const string ConfigPath = "/some-path/config.json";
         private const string AnotherConfigPath = "/another/path";
         private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
-        
+
         private static readonly ClientConfig s_configWithErrorLevel = new ClientConfig
         {
             CommonProps = new ClientConfigCommonProps
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 LogPath = LogPath
             }
         };
-        
+
         private static readonly ClientConfig s_configWithInfoLevel = new ClientConfig
         {
             CommonProps = new ClientConfigCommonProps
@@ -53,10 +53,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [ThreadStatic]
         private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
-        
+
         [ThreadStatic]
         private static Mock<EasyLoggerManager> t_easyLoggerManager;
-        
+
         [ThreadStatic]
         private static Mock<UnixOperations> t_unixOperations;
 
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
-        
+
         [SetUp]
         public void BeforeEach()
         {
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 Assert.Ignore("skip test on Windows");
             }
-            
+
             // arrange
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
-            
+
             // assert
             Assert.That(thrown.Message, Does.Contain("Failed to create logs directory"));
         }
@@ -187,10 +187,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(AnotherConfigPath))
                 .Returns(s_configWithInfoLevel);
-            
+
             // act
             t_easyLoggerStarter.Init(ConfigPath);
-            
+
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -202,16 +202,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
-            
+
             // act
             t_easyLoggerStarter.Init(null);
             t_easyLoggerStarter.Init(ConfigPath);
             t_easyLoggerStarter.Init(AnotherConfigPath);
-            
+
             // assert
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
-        
+
         [Test]
         public void TestThatConfiguresEasyLoggingOnlyOnceForInitializationsWithoutConfigPath()
         {
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(null))
                 .Returns(s_configWithErrorLevel);
-            
+
             // act
             t_easyLoggerStarter.Init(null);
             t_easyLoggerStarter.Init(null);
@@ -247,10 +247,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithInfoLevel);
-            
+
             // act
             t_easyLoggerStarter.Init(null);
-            
+
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             t_easyLoggerStarter.Init(ConfigPath);
-            
+
             // assert
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
             t_easyLoggerManager.VerifyNoOtherCalls();
