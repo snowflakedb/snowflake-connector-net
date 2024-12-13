@@ -23,33 +23,33 @@ namespace Snowflake.Data.Tests
         private static readonly string s_fullFileName = Path.Combine(s_localFolderName, FileName);
         private static readonly string s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
         private static readonly MD5 s_md5 = MD5.Create();
-        
+
         [OneTimeSetUp]
         public static void GenerateLargeFileForTests()
         {
             CreateLocalDirectory(s_localFolderName);
             GenerateLargeFile(s_fullFileName);
         }
-        
+
         [OneTimeTearDown]
         public static void DeleteGeneratedLargeFile()
         {
             RemoveLocalFile(s_fullFileName);
             RemoveDirectory(s_localFolderName);
         }
-        
+
         [Test]
         public void TestThatUploadsAndDownloadsTheSameFile()
         {
             // act
             UploadFile(s_fullFileName, s_remoteFolderName);
             DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
-            
+
             // assert
             Assert.AreEqual(
                 CalcualteMD5(s_fullFileName),
                 CalcualteMD5(s_fullDownloadedFileName));
-            
+
             // cleanup
             RemoveFilesFromServer(s_remoteFolderName);
             RemoveLocalFile(s_fullDownloadedFileName);
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests
                 command.ExecuteNonQuery();
             }
         }
-        
+
         private void RemoveFilesFromServer(string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests
         }
 
         private static void RemoveLocalFile(string fullFileName) => File.Delete(fullFileName);
-        
+
         private static void CreateLocalDirectory(string path) => Directory.CreateDirectory(path);
 
         private static void RemoveDirectory(string path) => Directory.Delete(path, true);
