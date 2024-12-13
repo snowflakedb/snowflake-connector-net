@@ -10,13 +10,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
     {
         [Test]
         [TestCaseSource(nameof(OldCreatingDatesTestCases))]
-        public void TestIsCreatedEarlierThanSeconds(DateTime? createdDate)
+        public void TestIsCreatedEarlierThanSeconds(DateTime? createdDate, DateTime utcNow)
         {
             // arrange
             var directoryInformation = new DirectoryInformation(true, createdDate);
 
             // act
-            var result = directoryInformation.IsCreatedEarlierThanSeconds(60);
+            var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
             Assert.AreEqual(true, result);
@@ -24,30 +24,38 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [Test]
         [TestCaseSource(nameof(NewCreatingDatesTestCases))]
-        public void TestIsNotCreatedEarlierThanSeconds(bool dirExists, DateTime? createdDate)
+        public void TestIsNotCreatedEarlierThanSeconds(bool dirExists, DateTime? createdDate, DateTime utcNow)
         {
             // arrange
             var directoryInformation = new DirectoryInformation(dirExists, createdDate);
 
             // act
-            var result = directoryInformation.IsCreatedEarlierThanSeconds(60);
+            var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
             Assert.AreEqual(false, result);
         }
 
+        [Test]
+        public void TestCompareDates() // for debugging
+        {
+            var condition = DateTime.UtcNow.AddSeconds(-30).AddSeconds(60) < DateTime.UtcNow;
+            Assert.IsFalse(condition);
+        }
+
         internal static IEnumerable<object[]> OldCreatingDatesTestCases()
         {
-            yield return new object[] { DateTime.UtcNow.AddMinutes(-2) };
-            yield return new object[] { DateTime.UtcNow.AddSeconds(-61) };
+            yield return new object[] { DateTime.UtcNow.AddMinutes(-2), DateTime.UtcNow };
+            yield return new object[] { DateTime.UtcNow.AddSeconds(-61), DateTime.UtcNow };
         }
 
         internal static IEnumerable<object[]> NewCreatingDatesTestCases()
         {
-            yield return new object[] { true, DateTime.UtcNow.AddSeconds(-30) };
-            yield return new object[] { true, DateTime.UtcNow.AddSeconds(30) };
-            yield return new object[] { true, DateTime.UtcNow };
-            yield return new object[] { false, null };
+            yield return new object[] { true, DateTime.UtcNow.AddSeconds(-30), DateTime.UtcNow };
+            yield return new object[] { true, DateTime.UtcNow.AddSeconds(30), DateTime.UtcNow };
+            yield return new object[] { true, DateTime.UtcNow.AddSeconds(1000), DateTime.UtcNow };
+            yield return new object[] { true, DateTime.UtcNow, DateTime.UtcNow };
+            yield return new object[] { false, null, DateTime.UtcNow };
         }
     }
 }

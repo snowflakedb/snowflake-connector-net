@@ -220,7 +220,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 _directoryOperations.CreateDirectory(_jsonCacheDirectory);
             }
             var lockDirectoryInfo = _directoryOperations.GetDirectoryInfo(_jsonCacheLockPath);
-            if (lockDirectoryInfo.IsCreatedEarlierThanSeconds(CredentialCacheLockDurationSeconds))
+            if (lockDirectoryInfo.IsCreatedEarlierThanSeconds(CredentialCacheLockDurationSeconds, DateTime.UtcNow))
             {
                 s_logger.Warn($"File cache lock directory {_jsonCacheLockPath} created more than {CredentialCacheLockDurationSeconds} seconds ago. Removing the lock directory.");
                 ReleaseLock();
