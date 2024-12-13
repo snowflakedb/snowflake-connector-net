@@ -136,6 +136,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                         }
                     }
                 }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to get credentials", exception);
+                    throw;
+                }
                 finally
                 {
                     ReleaseLock();
@@ -166,6 +171,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                         WriteToJsonFile(JsonConvert.SerializeObject(credentials));
                     }
                 }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to remove credentials", exception);
+                    throw;
+                }
                 finally
                 {
                     ReleaseLock();
@@ -191,6 +201,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
                     string jsonString = JsonConvert.SerializeObject(credentials);
                     WriteToJsonFile(jsonString);
+                }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to save credentials", exception);
+                    throw;
                 }
                 finally
                 {

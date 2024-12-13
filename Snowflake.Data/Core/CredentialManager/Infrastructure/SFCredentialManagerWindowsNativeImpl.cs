@@ -31,6 +31,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 success = CredRead(key, 1 /* Generic */, 0, out nCredPtr);
             }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to get credentials", exception);
+                throw;
+            }
             finally
             {
                 _lock.ExitReadLock();
@@ -57,6 +62,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             try
             {
                 success = CredDelete(key, 1 /* Generic */, 0);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to remove credentials", exception);
+                throw;
             }
             finally
             {
@@ -88,6 +98,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             try
             {
                 CredWrite(ref credential, 0);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to save credentials", exception);
+                throw;
             }
             finally
             {
