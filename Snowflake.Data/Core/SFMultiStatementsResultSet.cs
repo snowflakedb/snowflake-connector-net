@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Core
             }
 
             updateResultMetadata();
-            return await Task.FromResult(curResultSet != null);
+            return curResultSet != null;
         }
 
         internal override bool NextResult()
