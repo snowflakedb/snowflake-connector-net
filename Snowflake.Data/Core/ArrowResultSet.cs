@@ -121,9 +121,9 @@ namespace Snowflake.Data.Core
             return false;
         }
 
-        internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        internal override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            return await Task.FromResult(false);
+            return Task.FromResult(false);
         }
 
         internal override bool HasRows()
