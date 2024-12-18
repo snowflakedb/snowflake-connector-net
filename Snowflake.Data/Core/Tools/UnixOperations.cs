@@ -39,6 +39,16 @@ namespace Snowflake.Data.Core.Tools
             return dirInfo.FileAccessPermissions;
         }
 
+        public virtual DirectoryUnixInformation GetDirectoryInfo(string path)
+        {
+            var dirInfo = new UnixDirectoryInfo(path);
+            return new DirectoryUnixInformation(dirInfo);
+        }
+
+        public virtual long ChangeOwner(string path, int userId, int groupId) => Syscall.chown(path, userId, groupId);
+
+        public virtual long ChangePermissions(string path, FileAccessPermissions permissions) => Syscall.chmod(path, (FilePermissions) permissions);
+
         public virtual bool CheckFileHasAnyOfPermissions(string path, FileAccessPermissions permissions)
         {
             var fileInfo = new UnixFileInfo(path);
@@ -71,6 +81,16 @@ namespace Snowflake.Data.Core.Tools
                     streamWriter.Write(content);
                 }
             }
+        }
+
+        public virtual long GetCurrentUserId()
+        {
+            return Syscall.geteuid();
+        }
+
+        public virtual long GetCurrentGroupId()
+        {
+            return Syscall.getgid();
         }
     }
 }

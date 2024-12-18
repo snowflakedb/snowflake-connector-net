@@ -19,14 +19,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
-        internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
-
-        internal const string CredentialCacheDirName = ".snowflake";
-
-        internal const string CredentialCacheFileName = "credential_cache.json";
-
-        internal const string CredentialCacheLockName = "credential_cache.json.lck";
-
         internal const int CredentialCacheLockDurationSeconds = 60;
 
         internal const FilePermissions CredentialCacheLockDirPermissions = FilePermissions.S_IRUSR;
@@ -35,11 +27,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private static readonly object s_lock = new object();
 
-        private readonly string _jsonCacheDirectory;
-
-        internal readonly string _jsonCacheFilePath;
-
-        private readonly string _jsonCacheLockPath;
+        internal SFCredentialManagerFileStorage _fileStorage = null;
 
         private readonly FileOperations _fileOperations;
 
@@ -57,37 +45,23 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             _directoryOperations = directoryOperations;
             _unixOperations = unixOperations;
             _environmentOperations = environmentOperations;
-            SetCredentialCachePath(ref _jsonCacheDirectory, ref _jsonCacheFilePath, ref _jsonCacheLockPath);
-        }
-
-        private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath, ref string _jsonCacheLockPath)
-        {
-            var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
-            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), CredentialCacheDirName) : customDirectory;
-            if (!_directoryOperations.Exists(_jsonCacheDirectory))
-            {
-                _directoryOperations.CreateDirectory(_jsonCacheDirectory);
-            }
-            _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
-            _jsonCacheLockPath = Path.Combine(_jsonCacheDirectory, CredentialCacheLockName);
-            s_logger.Info($"Setting the json credential cache path to {_jsonCacheFilePath}");
         }
 
         internal void WriteToJsonFile(string content)
         {
-            s_logger.Debug($"Writing credentials to json file in {_jsonCacheFilePath}");
-            if (!_directoryOperations.Exists(_jsonCacheDirectory))
+            s_logger.Debug($"Writing credentials to json file in {_fileStorage.JsonCacheFilePath}");
+            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
             {
-                _directoryOperations.CreateDirectory(_jsonCacheDirectory);
+                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
             }
-            if (_fileOperations.Exists(_jsonCacheFilePath))
+            if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
             {
-                s_logger.Info($"The existing json file for credential cache in {_jsonCacheFilePath} will be overwritten");
+                s_logger.Info($"The existing json file for credential cache in {_fileStorage.JsonCacheFilePath} will be overwritten");
             }
             else
             {
-                s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
-                var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
+                s_logger.Info($"Creating the json file for credential cache in {_fileStorage.JsonCacheFilePath}");
+                var createFileResult = _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
                     FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
                 if (createFileResult == -1)
                 {
@@ -96,12 +70,12 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     throw new Exception(errorMessage);
                 }
             }
-            _fileOperations.Write(_jsonCacheFilePath, content, ValidateFilePermissions);
+            _fileOperations.Write(_fileStorage.JsonCacheFilePath, content, ValidateFilePermissions);
         }
 
         internal KeyTokenDict ReadJsonFile()
         {
-            var contentFile = _fileOperations.ReadAllText(_jsonCacheFilePath, ValidateFilePermissions);
+            var contentFile = _fileOperations.ReadAllText(_fileStorage.JsonCacheFilePath, ValidateFilePermissions);
             try
             {
                 var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
@@ -116,9 +90,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public string GetCredentials(string key)
         {
-            s_logger.Debug($"Getting credentials from json file in {_jsonCacheFilePath} for key: {key}");
+            s_logger.Debug($"Getting credentials for key: {key}");
             lock (s_lock)
             {
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Getting credentials from json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
                 var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
                 if (!lockAcquired)
                 {
@@ -127,7 +103,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
                 try
                 {
-                    if (_fileOperations.Exists(_jsonCacheFilePath))
+                    if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
                     {
                         var keyTokenPairs = ReadJsonFile();
                         if (keyTokenPairs.TryGetValue(key, out string token))
@@ -152,9 +128,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public void RemoveCredentials(string key)
         {
-            s_logger.Debug($"Removing credentials from json file in {_jsonCacheFilePath} for key: {key}");
+            s_logger.Debug($"Removing credentials for key: {key}");
             lock (s_lock)
             {
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Removing credentials from json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
                 var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
                 if (!lockAcquired)
                 {
@@ -163,7 +141,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
                 try
                 {
-                    if (_fileOperations.Exists(_jsonCacheFilePath))
+                    if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
                     {
                         var keyTokenPairs = ReadJsonFile();
                         keyTokenPairs.Remove(key);
@@ -185,9 +163,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public void SaveCredentials(string key, string token)
         {
-            s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
+            s_logger.Debug($"Saving credentials for key: {key}");
             lock (s_lock)
             {
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Saving credentials to json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
                 var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
                 if (!lockAcquired)
                 {
@@ -196,7 +176,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 }
                 try
                 {
-                    KeyTokenDict keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
+                    KeyTokenDict keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
                     keyTokenPairs[key] = token;
                     var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
                     string jsonString = JsonConvert.SerializeObject(credentials);
@@ -211,6 +191,61 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 {
                     ReleaseLock();
                 }
+            }
+        }
+
+        private void InitializeFileStorageIfNeeded()
+        {
+            if (_fileStorage != null)
+                return;
+            var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
+            PrepareParentDirectory(fileStorage.JsonCacheDirectory);
+            PrepareSecureDirectory(fileStorage.JsonCacheDirectory);
+            _fileStorage = fileStorage;
+        }
+
+        private void PrepareParentDirectory(string directory)
+        {
+            var parentDirectory = _directoryOperations.GetParentDirectoryInfo(directory);
+            if (!parentDirectory.Exists)
+            {
+                _directoryOperations.CreateDirectory(parentDirectory.FullName);
+            }
+        }
+
+        private void PrepareSecureDirectory(string directory)
+        {
+            var unixDirectoryInfo = _unixOperations.GetDirectoryInfo(directory);
+            if (unixDirectoryInfo.Exists)
+            {
+                var userId = _unixOperations.GetCurrentUserId();
+                if (!unixDirectoryInfo.IsSafeExactly(userId))
+                {
+                    SetSecureOwnershipAndPermissions(directory, userId);
+                }
+            }
+            else
+            {
+                var createResult = _unixOperations.CreateDirectoryWithPermissions(directory, FilePermissions.S_IRWXU);
+                if (createResult == -1)
+                {
+                    throw new SecurityException($"Could not create directory: {directory}");
+                }
+            }
+        }
+
+        private void SetSecureOwnershipAndPermissions(string directory, long userId)
+        {
+            var groupId = _unixOperations.GetCurrentGroupId();
+            var chownResult = _unixOperations.ChangeOwner(directory, (int) userId, (int) groupId);
+            if (chownResult == -1)
+            {
+                throw new SecurityException($"Could not set proper directory ownership for directory: {directory}");
+            }
+            var chmodResult = _unixOperations.ChangePermissions(directory, FileAccessPermissions.UserReadWriteExecute);
+            if (chmodResult == -1)
+            {
+                throw new SecurityException($"Could not set proper directory permissions for directory: {directory}");
             }
         }
 
@@ -230,27 +265,27 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private bool AcquireLock()
         {
-            if (!_directoryOperations.Exists(_jsonCacheDirectory))
+            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
             {
-                _directoryOperations.CreateDirectory(_jsonCacheDirectory);
+                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
             }
-            var lockDirectoryInfo = _directoryOperations.GetDirectoryInfo(_jsonCacheLockPath);
+            var lockDirectoryInfo = _directoryOperations.GetDirectoryInfo(_fileStorage.JsonCacheLockPath);
             if (lockDirectoryInfo.IsCreatedEarlierThanSeconds(CredentialCacheLockDurationSeconds, DateTime.UtcNow))
             {
-                s_logger.Warn($"File cache lock directory {_jsonCacheLockPath} created more than {CredentialCacheLockDurationSeconds} seconds ago. Removing the lock directory.");
+                s_logger.Warn($"File cache lock directory {_fileStorage.JsonCacheLockPath} created more than {CredentialCacheLockDurationSeconds} seconds ago. Removing the lock directory.");
                 ReleaseLock();
             }
-            else if (lockDirectoryInfo.Exists())
+            else if (lockDirectoryInfo.Exists)
             {
                 return false;
             }
-            var result = _unixOperations.CreateDirectoryWithPermissions(_jsonCacheLockPath, CredentialCacheLockDirPermissions);
+            var result = _unixOperations.CreateDirectoryWithPermissions(_fileStorage.JsonCacheLockPath, CredentialCacheLockDirPermissions);
             return result == 0;
         }
 
         private void ReleaseLock()
         {
-            _directoryOperations.Delete(_jsonCacheLockPath, false);
+            _directoryOperations.Delete(_fileStorage.JsonCacheLockPath, false);
         }
 
         internal static void ValidateFilePermissions(UnixStream stream)

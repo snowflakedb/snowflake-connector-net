@@ -1,29 +1,34 @@
+/*
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
+ */
+
 using System;
 using System.IO;
 
 namespace Snowflake.Data.Core.Tools
 {
-    public class DirectoryInformation
+    internal class DirectoryInformation
     {
-        private readonly bool _exists;
+        public bool Exists { get; private set; }
 
-        private readonly DateTime? _creationTimeUtc;
+        public DateTime? CreationTimeUtc { get; private set; }
+
+        public string FullName { get; private set; }
 
         public DirectoryInformation(DirectoryInfo directoryInfo)
         {
-            _exists = directoryInfo.Exists;
-            _creationTimeUtc = directoryInfo.CreationTimeUtc;
+            Exists = directoryInfo.Exists;
+            CreationTimeUtc = directoryInfo.CreationTimeUtc;
+            FullName = directoryInfo.FullName;
         }
 
         internal DirectoryInformation(bool exists, DateTime? creationTimeUtc)
         {
-            _exists = exists;
-            _creationTimeUtc = creationTimeUtc;
+            Exists = exists;
+            CreationTimeUtc = creationTimeUtc;
         }
 
         public bool IsCreatedEarlierThanSeconds(int seconds, DateTime utcNow) =>
-            _exists && _creationTimeUtc?.AddSeconds(seconds) < utcNow;
-
-        public bool Exists() => _exists;
+            Exists && CreationTimeUtc?.AddSeconds(seconds) < utcNow;
     }
 }
