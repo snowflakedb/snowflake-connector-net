@@ -288,6 +288,31 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
+        [Test]
+        public void TestCreateDirectoryWithSecurePermissions()
+        {
+            // arrange
+            var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            t_environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CredentialCacheDirectoryEnvironmentName))
+                .Returns(tempDirectory);
+            _credentialManager = CreateFileCredentialManagerWithMockedEnvironmentalVariables();
+            try
+            {
+                // act
+                _credentialManager.SaveCredentials("key", "token");
+                var result = _credentialManager.GetCredentials("key");
+
+                // assert
+                Assert.AreEqual("token", result);
+                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+            }
+            finally
+            {
+                DirectoryOperations.Instance.Delete(tempDirectory, true);
+            }
+        }
+
         private SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
             new (FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
     }
