@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -533,7 +533,7 @@ namespace Snowflake.Data.Core
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
             int startIndex = query.IndexOf("file://") + "file://".Length;
             int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
-            string filePath = query.Substring(startIndex, endIndex).Trim();
+            string filePath = query.Substring(startIndex, endIndex).TrimEnd();
 
             // Check if file path contains an enclosing (') char
             if (filePath[filePath.Length - 1] == '\'')
