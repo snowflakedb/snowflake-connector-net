@@ -47,47 +47,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             _environmentOperations = environmentOperations;
         }
 
-        internal void WriteToJsonFile(string content)
-        {
-            s_logger.Debug($"Writing credentials to json file in {_fileStorage.JsonCacheFilePath}");
-            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
-            {
-                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
-            }
-            if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
-            {
-                s_logger.Info($"The existing json file for credential cache in {_fileStorage.JsonCacheFilePath} will be overwritten");
-            }
-            else
-            {
-                s_logger.Info($"Creating the json file for credential cache in {_fileStorage.JsonCacheFilePath}");
-                var createFileResult = _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-                if (createFileResult == -1)
-                {
-                    var errorMessage = "Failed to create the JSON token cache file";
-                    s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-            }
-            _fileOperations.Write(_fileStorage.JsonCacheFilePath, content, ValidateFilePermissions);
-        }
-
-        internal KeyTokenDict ReadJsonFile()
-        {
-            var contentFile = _fileOperations.ReadAllText(_fileStorage.JsonCacheFilePath, ValidateFilePermissions);
-            try
-            {
-                var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
-                return (fileContent == null || fileContent.Tokens == null) ? new KeyTokenDict() : fileContent.Tokens;
-            }
-            catch (Exception)
-            {
-                s_logger.Error("Failed to parse the file with cached credentials");
-                return new KeyTokenDict();
-            }
-        }
-
         public string GetCredentials(string key)
         {
             s_logger.Debug($"Getting credentials for key: {key}");
@@ -145,8 +104,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     {
                         var keyTokenPairs = ReadJsonFile();
                         keyTokenPairs.Remove(key);
-                        var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
-                        WriteToJsonFile(JsonConvert.SerializeObject(credentials));
+                        WriteToJsonFile(keyTokenPairs);
                     }
                 }
                 catch (Exception exception)
@@ -178,9 +136,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 {
                     KeyTokenDict keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
                     keyTokenPairs[key] = token;
-                    var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
-                    string jsonString = JsonConvert.SerializeObject(credentials);
-                    WriteToJsonFile(jsonString);
+                    WriteToJsonFile(keyTokenPairs);
                 }
                 catch (Exception exception)
                 {
@@ -191,6 +147,63 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 {
                     ReleaseLock();
                 }
+            }
+        }
+
+        private void WriteToJsonFile(KeyTokenDict keyTokenPairs)
+        {
+            var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
+            var jsonString = JsonConvert.SerializeObject(credentials);
+            WriteContentToJsonFile(jsonString);
+        }
+
+        private void WriteContentToJsonFile(string content)
+        {
+            s_logger.Debug($"Writing credentials to json file in {_fileStorage.JsonCacheFilePath}");
+            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
+            {
+                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
+            }
+            if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
+            {
+                s_logger.Info($"The existing json file for credential cache in {_fileStorage.JsonCacheFilePath} will be overwritten");
+            }
+            else
+            {
+                s_logger.Info($"Creating the json file for credential cache in {_fileStorage.JsonCacheFilePath}");
+                var createFileResult = _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
+                if (createFileResult == -1)
+                {
+                    var errorMessage = "Failed to create the JSON token cache file";
+                    s_logger.Error(errorMessage);
+                    throw new Exception(errorMessage);
+                }
+            }
+            _fileOperations.Write(_fileStorage.JsonCacheFilePath, content, ValidateFilePermissions);
+        }
+
+        private KeyTokenDict ReadJsonFile()
+        {
+            string contentFile;
+            try
+            {
+                contentFile = _fileOperations.ReadAllText(_fileStorage.JsonCacheFilePath, ValidateFilePermissions);
+            }
+            catch (FileNotFoundException)
+            {
+                s_logger.Error("Failed to read the file with cached credentials because it does not exist");
+                return new KeyTokenDict();
+            }
+            try
+            {
+                var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
+                return (fileContent == null || fileContent.Tokens == null) ? new KeyTokenDict() : fileContent.Tokens;
+            }
+            catch (Exception)
+            {
+                s_logger.Error("Failed to parse the file with cached credentials");
+                return new KeyTokenDict();
             }
         }
 
