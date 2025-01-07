@@ -85,7 +85,7 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual long GetCurrentUserId()
         {
-            return Syscall.geteuid();
+            return Syscall.getuid();
         }
 
         public virtual long GetCurrentGroupId()

@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.Tools
     public class UnixOperationsTest
     {
         private static UnixOperations s_unixOperations;
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         [OneTimeSetUp]
         public static void BeforeAll()
@@ -39,16 +39,12 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersWritablePermissions(
             [ValueSource(nameof(GroupOrOthersWritablePermissions))] FilePermissions groupOrOthersWritablePermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FilePermissions groupNotWritablePermissions,
             [ValueSource(nameof(OtherNotWritablePermissions))] FilePermissions otherNotWritablePermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var readWriteUserPermissions = FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
@@ -63,16 +59,12 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             [ValueSource(nameof(UserPermissions))] FilePermissions userPermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FilePermissions groupNotWritablePermissions,
             [ValueSource(nameof(OtherNotWritablePermissions))] FilePermissions otherNotWritablePermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, filePermissions);
@@ -85,13 +77,10 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             [ValueSource(nameof(UserAllowedPermissions))] FilePermissions userAllowedPermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
             Syscall.chmod(filePath, userAllowedPermissions);
@@ -104,13 +93,10 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FilePermissions userAllowedPermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
             Syscall.chmod(filePath, userAllowedPermissions);
@@ -120,6 +106,7 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileReadingWithUnixValidationsUsingTomlConfig([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
@@ -129,10 +116,6 @@ namespace Snowflake.Data.Tests.Tools
                 Assert.Ignore("Skip test when group and others have no permissions");
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
@@ -144,6 +127,7 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
@@ -153,10 +137,6 @@ namespace Snowflake.Data.Tests.Tools
                 Assert.Ignore("Skip test when group and others have no permissions");
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 

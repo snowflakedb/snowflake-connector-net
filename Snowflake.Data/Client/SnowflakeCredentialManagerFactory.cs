@@ -19,7 +19,7 @@ namespace Snowflake.Data.Client
         private static readonly object s_credentialManagerLock = new object();
         private static readonly ISnowflakeCredentialManager s_defaultCredentialManager = GetDefaultCredentialManager();
 
-        private static ISnowflakeCredentialManager s_credentialManager;
+        private static ISnowflakeCredentialManager s_credentialManager = s_defaultCredentialManager;
 
         internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
         {
@@ -78,17 +78,6 @@ namespace Snowflake.Data.Client
 
         public static ISnowflakeCredentialManager GetCredentialManager()
         {
-            if (s_credentialManager == null)
-            {
-                lock (s_credentialManagerLock)
-                {
-                    if (s_credentialManager == null)
-                    {
-                        s_credentialManager = s_defaultCredentialManager;
-                    }
-                }
-            }
-
             var credentialManager = s_credentialManager;
             var typeCredentialText = credentialManager == s_defaultCredentialManager ? "default" : "custom";
             s_logger.Info($"Using {typeCredentialText} credential manager: {credentialManager?.GetType().Name}");

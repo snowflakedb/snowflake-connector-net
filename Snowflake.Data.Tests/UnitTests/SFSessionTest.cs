@@ -217,7 +217,6 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestPushWhenNoPasscodeAndPasscodeInPasswordIsFalse()
         {
             // arrange
-            var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
             SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", null, restRequester);
 

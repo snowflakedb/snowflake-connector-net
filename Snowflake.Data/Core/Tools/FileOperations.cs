@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual void Write(string path, string content, Action<UnixStream> validator = null)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || validator == null)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 File.WriteAllText(path, content);
             }
