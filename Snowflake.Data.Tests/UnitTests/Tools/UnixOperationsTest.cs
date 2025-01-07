@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, userAllowedPermissions);
 
             // act and assert
-            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", SFCredentialManagerFileImpl.ValidateFilePermissions));
+            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
         [Test]
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.Tools
             Syscall.chmod(filePath, filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
         }
 
         public static IEnumerable<FilePermissions> UserPermissions()

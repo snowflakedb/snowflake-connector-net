@@ -301,15 +301,15 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             _directoryOperations.Delete(_fileStorage.JsonCacheLockPath, false);
         }
 
-        internal static void ValidateFilePermissions(UnixStream stream)
+        internal void ValidateFilePermissions(UnixStream stream)
         {
             var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
             };
-            if (stream.OwnerUser.UserId != Syscall.geteuid())
+            if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
                 throw new SecurityException("Attempting to read or write a file not owned by the effective user of the current process");
-            if (stream.OwnerGroup.GroupId != Syscall.getegid())
+            if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
                 throw new SecurityException("Attempting to read or write a file not owned by the effective group of the current process");
             if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
                 throw new SecurityException("Attempting to read or write a file with too broad permissions assigned");
