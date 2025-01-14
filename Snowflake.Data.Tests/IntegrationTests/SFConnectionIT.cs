@@ -14,6 +14,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
@@ -2269,6 +2270,52 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")] // to enroll to mfa authentication edit your user profile
+        public void TestMFATokenCachingWithPasscodeFromConnectionString()
+        {
+            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
+            // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionString
+                      + ";authenticator=username_password_mfa;application=DuoTest;minPoolSize=0;passcode=(set proper passcode)";
+
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
+        public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
+        {
+            // Use a connection with MFA enabled and Passcode property on connection instance.
+            // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
+            // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
+            // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
+            // arrange
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.Passcode = SecureStringHelper.Encode("$(set proper passcode)");
+                // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
+                conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
+
+                // act
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+
+                // assert
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
         }
 
         [Test]

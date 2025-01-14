@@ -101,6 +101,24 @@ namespace Snowflake.Data.Core.Authenticator
         /// <param name="data">The login request data to update.</param>
         protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
 
+        protected void SetSecondaryAuthenticationData(ref LoginRequestData data)
+        {
+            if (session.properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordString)
+                && bool.TryParse(passcodeInPasswordString, out var passcodeInPassword)
+                && passcodeInPassword)
+            {
+                data.extAuthnDuoMethod = "passcode";
+            } else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            {
+                data.extAuthnDuoMethod = "passcode";
+                data.passcode = passcode;
+            }
+            else
+            {
+                data.extAuthnDuoMethod = "push";
+            }
+        }
+
         /// <summary>
         /// Builds a simple login request. Each authenticator will fill the Data part with their
         /// specialized information. The common Data attributes are already filled (clientAppId,
@@ -122,10 +140,11 @@ namespace Snowflake.Data.Core.Authenticator
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
-
             SetSpecializedAuthenticatorData(ref data);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
     }
 
@@ -186,6 +205,10 @@ namespace Snowflake.Data.Core.Authenticator
                 }
 
                 return new OAuthAuthenticator(session);
+            }
+            else if (type.Equals(MFACacheAuthenticator.AuthName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new MFACacheAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (type.Contains("okta") && type.StartsWith("https://"))
