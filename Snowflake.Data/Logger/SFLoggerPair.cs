@@ -31,28 +31,28 @@ namespace Snowflake.Data.Log
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Info(message, ex);
-            s_customLogger.LogInformation(message, ex);
+            s_customLogger.LogInformation(FormatBrackets(message), ex);
         }
 
         public void Warn(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Warn(message, ex);
-            s_customLogger.LogWarning(message, ex);
+            s_customLogger.LogWarning(FormatBrackets(message), ex);
         }
 
         public void Error(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Error(message, ex);
-            s_customLogger.LogError(message, ex);
+            s_customLogger.LogError(FormatBrackets(message), ex);
         }
 
         public void Fatal(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
             s_snowflakeLogger.Fatal(message, ex);
-            s_customLogger.LogCritical(message, ex);
+            s_customLogger.LogCritical(FormatBrackets(message), ex);
         }
 
         public bool IsDebugEnabled()
