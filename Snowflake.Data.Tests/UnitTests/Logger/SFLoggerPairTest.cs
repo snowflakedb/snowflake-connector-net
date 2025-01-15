@@ -38,13 +38,13 @@ namespace Snowflake.Data.Tests.UnitTests
         public void AfterTest()
         {
             // Return to default setting
-            SFLoggerFactory.EnableSFLogger();
+            SFLoggerFactory.UseDefaultSFLogger();
         }
 
         [Test]
         public void TestUsingSFLogger()
         {
-            SFLoggerFactory.EnableSFLogger();
+            SFLoggerFactory.UseDefaultSFLogger();
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             Assert.IsInstanceOf<SFLoggerPair>(_loggerPair);
         }
@@ -127,11 +127,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (isEnabled)
             {
-                SFLoggerFactory.EnableSFLogger();
+                SFLoggerFactory.UseDefaultSFLogger();
             }
             else
             {
-                SFLoggerFactory.DisableSFLogger();
+                SFLoggerFactory.UseEmptySFLogger();
             }
 
             return SFLoggerFactory.GetLogger<SFLoggerPairTest>();

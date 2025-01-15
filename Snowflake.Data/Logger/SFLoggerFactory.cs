@@ -11,18 +11,20 @@ namespace Snowflake.Data.Log
     {
         private static bool s_isCustomLoggerEnabled = false;
 
-        private static bool s_isSFLoggerEnabled = true;
+        private static bool s_isSFLoggerEnabled = false;
+
+        private static bool s_useDefaultSFLogger = true;
 
         private static ILogger s_customLogger = null;
 
-        public static void DisableSFLogger()
+        public static void UseEmptySFLogger()
         {
-            s_isSFLoggerEnabled = false;
+            s_useDefaultSFLogger = false;
         }
 
-        public static void EnableSFLogger()
+        public static void UseDefaultSFLogger()
         {
-            s_isSFLoggerEnabled = true;
+            s_useDefaultSFLogger = true;
         }
 
         public static void DisableCustomLogger()
@@ -53,9 +55,13 @@ namespace Snowflake.Data.Log
         internal static SFLogger GetSFLogger<T>(bool useFileAppender = true)
         {
             // If true, return the default/specified logger
-            if (s_isSFLoggerEnabled)
+            if (s_useDefaultSFLogger)
             {
                 var logger = new SFLoggerImpl(typeof(T));
+                if (!s_isSFLoggerEnabled)
+                {
+                    logger.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
+                }
                 if (useFileAppender)
                 {
                     var fileAppender = new SFRollingFileAppender()
