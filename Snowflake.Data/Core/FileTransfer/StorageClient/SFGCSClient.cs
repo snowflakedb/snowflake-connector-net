@@ -91,7 +91,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
             if (!string.IsNullOrEmpty(gcsCustomEndpoint))
-                builder.BaseUri = gcsCustomEndpoint;
+                builder.BaseUri = gcsCustomEndpoint.StartsWith("https://") ? gcsCustomEndpoint : "https://" + gcsCustomEndpoint;
             return builder.Build();
         }
 
