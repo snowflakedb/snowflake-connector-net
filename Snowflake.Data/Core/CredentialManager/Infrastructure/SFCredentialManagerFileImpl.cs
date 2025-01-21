@@ -10,25 +10,24 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Security;
-using KeyToken = System.Collections.Generic.Dictionary<string, string>;
+using System.Threading;
+using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
     internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
     {
-        internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
+        internal const int CredentialCacheLockDurationSeconds = 60;
 
-        internal const string CredentialCacheDirName = ".snowflake";
-
-        internal const string CredentialCacheFileName = "temporary_credential.json";
+        internal const FilePermissions CredentialCacheLockDirPermissions = FilePermissions.S_IRUSR;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
 
-        private readonly string _jsonCacheDirectory;
+        private static readonly object s_lock = new object();
 
-        private readonly string _jsonCacheFilePath;
+        internal SFCredentialManagerFileStorage _fileStorage = null;
 
         private readonly FileOperations _fileOperations;
 
@@ -46,130 +45,274 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             _directoryOperations = directoryOperations;
             _unixOperations = unixOperations;
             _environmentOperations = environmentOperations;
-            SetCredentialCachePath(ref _jsonCacheDirectory, ref _jsonCacheFilePath);
         }
 
-        private void SetCredentialCachePath(ref string _jsonCacheDirectory, ref string _jsonCacheFilePath)
+        public string GetCredentials(string key)
         {
-            var customDirectory = _environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
-            _jsonCacheDirectory = string.IsNullOrEmpty(customDirectory) ? Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), CredentialCacheDirName) : customDirectory;
-            if (!_directoryOperations.Exists(_jsonCacheDirectory))
+            s_logger.Debug($"Getting credentials for key: {key}");
+            lock (s_lock)
             {
-                _directoryOperations.CreateDirectory(_jsonCacheDirectory);
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Getting credentials from json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
+                var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
+                if (!lockAcquired)
+                {
+                    s_logger.Error("Failed to acquire lock for reading credentials");
+                    return string.Empty;
+                }
+                try
+                {
+                    if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
+                    {
+                        var keyTokenPairs = ReadJsonFile();
+                        if (keyTokenPairs.TryGetValue(key, out string token))
+                        {
+                            return token;
+                        }
+                    }
+                }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to get credentials", exception);
+                    throw;
+                }
+                finally
+                {
+                    ReleaseLock();
+                }
             }
-            _jsonCacheFilePath = Path.Combine(_jsonCacheDirectory, CredentialCacheFileName);
-            s_logger.Info($"Setting the json credential cache path to {_jsonCacheFilePath}");
+            s_logger.Info("Unable to get credentials for the specified key");
+            return string.Empty;
         }
 
-        internal void WriteToJsonFile(string content)
+        public void RemoveCredentials(string key)
         {
-            s_logger.Debug($"Writing credentials to json file in {_jsonCacheFilePath}");
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            s_logger.Debug($"Removing credentials for key: {key}");
+            lock (s_lock)
             {
-                _fileOperations.Write(_jsonCacheFilePath, content);
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Removing credentials from json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
+                var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
+                if (!lockAcquired)
+                {
+                    s_logger.Error("Failed to acquire lock for removing credentials");
+                    return;
+                }
+                try
+                {
+                    if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
+                    {
+                        var keyTokenPairs = ReadJsonFile();
+                        keyTokenPairs.Remove(key);
+                        WriteToJsonFile(keyTokenPairs);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to remove credentials", exception);
+                    throw;
+                }
+                finally
+                {
+                    ReleaseLock();
+                }
+            }
+        }
+
+        public void SaveCredentials(string key, string token)
+        {
+            s_logger.Debug($"Saving credentials for key: {key}");
+            lock (s_lock)
+            {
+                InitializeFileStorageIfNeeded();
+                s_logger.Debug($"Saving credentials to json file in {_fileStorage.JsonCacheFilePath} for key: {key}");
+                var lockAcquired = AcquireLockWithRetries(); // additional fs level locking is to synchronize file access across many applications
+                if (!lockAcquired)
+                {
+                    s_logger.Error("Failed to acquire lock for saving credentials");
+                    return;
+                }
+                try
+                {
+                    KeyTokenDict keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
+                    keyTokenPairs[key] = token;
+                    WriteToJsonFile(keyTokenPairs);
+                }
+                catch (Exception exception)
+                {
+                    s_logger.Error("Failed to save credentials", exception);
+                    throw;
+                }
+                finally
+                {
+                    ReleaseLock();
+                }
+            }
+        }
+
+        private void WriteToJsonFile(KeyTokenDict keyTokenPairs)
+        {
+            var credentials = new CredentialsFileContent { Tokens = keyTokenPairs };
+            var jsonString = JsonConvert.SerializeObject(credentials);
+            WriteContentToJsonFile(jsonString);
+        }
+
+        private void WriteContentToJsonFile(string content)
+        {
+            s_logger.Debug($"Writing credentials to json file in {_fileStorage.JsonCacheFilePath}");
+            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
+            {
+                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
+            }
+            if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
+            {
+                s_logger.Info($"The existing json file for credential cache in {_fileStorage.JsonCacheFilePath} will be overwritten");
             }
             else
             {
-                if (!_directoryOperations.Exists(_jsonCacheDirectory))
-                {
-                    _directoryOperations.CreateDirectory(_jsonCacheDirectory);
-                }
-                s_logger.Info($"Creating the json file for credential cache in {_jsonCacheFilePath}");
-                if (_fileOperations.Exists(_jsonCacheFilePath))
-                {
-                    s_logger.Info($"The existing json file for credential cache in {_jsonCacheFilePath} will be overwritten");
-                }
-                var createFileResult = _unixOperations.CreateFileWithPermissions(_jsonCacheFilePath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                s_logger.Info($"Creating the json file for credential cache in {_fileStorage.JsonCacheFilePath}");
+                var createFileResult = _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
+                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
                 if (createFileResult == -1)
                 {
                     var errorMessage = "Failed to create the JSON token cache file";
                     s_logger.Error(errorMessage);
                     throw new Exception(errorMessage);
                 }
-                else
-                {
-                    _fileOperations.Write(_jsonCacheFilePath, content);
-                }
+            }
+            _fileOperations.Write(_fileStorage.JsonCacheFilePath, content, ValidateFilePermissions);
+        }
 
-                var jsonPermissions = _unixOperations.GetFilePermissions(_jsonCacheFilePath);
-                if (jsonPermissions != FileAccessPermissions.UserReadWriteExecute)
-                {
-                    var errorMessage = "Permission for the JSON token cache file should contain only the owner access";
-                    s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage);
-                }
+        private KeyTokenDict ReadJsonFile()
+        {
+            string contentFile;
+            try
+            {
+                contentFile = _fileOperations.ReadAllText(_fileStorage.JsonCacheFilePath, ValidateFilePermissions);
+            }
+            catch (FileNotFoundException)
+            {
+                s_logger.Error("Failed to read the file with cached credentials because it does not exist");
+                return new KeyTokenDict();
+            }
+            try
+            {
+                var fileContent = JsonConvert.DeserializeObject<CredentialsFileContent>(contentFile);
+                return (fileContent == null || fileContent.Tokens == null) ? new KeyTokenDict() : fileContent.Tokens;
+            }
+            catch (Exception)
+            {
+                s_logger.Error("Failed to parse the file with cached credentials");
+                return new KeyTokenDict();
             }
         }
 
-        internal KeyToken ReadJsonFile()
+        private void InitializeFileStorageIfNeeded()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (_fileStorage != null)
+                return;
+            var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
+            PrepareParentDirectory(fileStorage.JsonCacheDirectory);
+            PrepareSecureDirectory(fileStorage.JsonCacheDirectory);
+            _fileStorage = fileStorage;
+        }
+
+        private void PrepareParentDirectory(string directory)
+        {
+            var parentDirectory = _directoryOperations.GetParentDirectoryInfo(directory);
+            if (!parentDirectory.Exists)
             {
-                return JsonConvert.DeserializeObject<KeyToken>(File.ReadAllText(_jsonCacheFilePath));
+                _directoryOperations.CreateDirectory(parentDirectory.FullName);
+            }
+        }
+
+        private void PrepareSecureDirectory(string directory)
+        {
+            var unixDirectoryInfo = _unixOperations.GetDirectoryInfo(directory);
+            if (unixDirectoryInfo.Exists)
+            {
+                var userId = _unixOperations.GetCurrentUserId();
+                if (!unixDirectoryInfo.IsSafeExactly(userId))
+                {
+                    SetSecureOwnershipAndPermissions(directory, userId);
+                }
             }
             else
             {
-                if (_unixOperations.CheckFileIsNotOwnedByCurrentUser(_jsonCacheFilePath))
+                var createResult = _unixOperations.CreateDirectoryWithPermissions(directory, FilePermissions.S_IRWXU);
+                if (createResult == -1)
                 {
-                    var errorMessage = "Attempting to read a file not owned by the effective user of the current process";
-                    s_logger.Error(errorMessage);
-                    throw new SecurityException(errorMessage);
+                    throw new SecurityException($"Could not create directory: {directory}");
                 }
-                if (_unixOperations.CheckFileIsNotOwnedByCurrentGroup(_jsonCacheFilePath))
-                {
-                    var errorMessage = "Attempting to read a file not owned by the effective group of the current process";
-                    s_logger.Error(errorMessage);
-                    throw new SecurityException(errorMessage);
-                }
-                if (_unixOperations.CheckFileHasAnyOfPermissions(_jsonCacheFilePath,
-                    FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute))
-                {
-                    var errorMessage = "Attempting to read a file with too broad permissions assigned";
-                    s_logger.Error(errorMessage);
-                    throw new SecurityException(errorMessage);
-                }
-
-                return JsonConvert.DeserializeObject<KeyToken>(_unixOperations.ReadFile(_jsonCacheFilePath));
             }
         }
 
-        public string GetCredentials(string key)
+        private void SetSecureOwnershipAndPermissions(string directory, long userId)
         {
-            s_logger.Debug($"Getting credentials from json file in {_jsonCacheFilePath} for key: {key}");
-            if (_fileOperations.Exists(_jsonCacheFilePath))
+            var groupId = _unixOperations.GetCurrentGroupId();
+            var chownResult = _unixOperations.ChangeOwner(directory, (int) userId, (int) groupId);
+            if (chownResult == -1)
             {
-                var keyTokenPairs = ReadJsonFile();
-
-                if (keyTokenPairs.TryGetValue(key, out string token))
-                {
-                    return token;
-                }
+                throw new SecurityException($"Could not set proper directory ownership for directory: {directory}");
             }
-
-            s_logger.Info("Unable to get credentials for the specified key");
-            return "";
-        }
-
-        public void RemoveCredentials(string key)
-        {
-            s_logger.Debug($"Removing credentials from json file in {_jsonCacheFilePath} for key: {key}");
-            if (_fileOperations.Exists(_jsonCacheFilePath))
+            var chmodResult = _unixOperations.ChangePermissions(directory, FileAccessPermissions.UserReadWriteExecute);
+            if (chmodResult == -1)
             {
-                var keyTokenPairs = ReadJsonFile();
-                keyTokenPairs.Remove(key);
-                WriteToJsonFile(JsonConvert.SerializeObject(keyTokenPairs));
+                throw new SecurityException($"Could not set proper directory permissions for directory: {directory}");
             }
         }
 
-        public void SaveCredentials(string key, string token)
-        {
-            s_logger.Debug($"Saving credentials to json file in {_jsonCacheFilePath} for key: {key}");
-            KeyToken keyTokenPairs = _fileOperations.Exists(_jsonCacheFilePath) ? ReadJsonFile() : new KeyToken();
-            keyTokenPairs[key] = token;
+        private bool AcquireLockWithRetries() => AcquireLock(5, TimeSpan.FromMilliseconds(50));
 
-            string jsonString = JsonConvert.SerializeObject(keyTokenPairs);
-            WriteToJsonFile(jsonString);
+        private bool AcquireLock(int numberOfAttempts, TimeSpan delayTime)
+        {
+            for (var i = 0; i < numberOfAttempts; i++)
+            {
+                if (AcquireLock())
+                    return true;
+                if (i + 1 < numberOfAttempts)
+                    Thread.Sleep(delayTime);
+            }
+            return false;
+        }
+
+        private bool AcquireLock()
+        {
+            if (!_directoryOperations.Exists(_fileStorage.JsonCacheDirectory))
+            {
+                _directoryOperations.CreateDirectory(_fileStorage.JsonCacheDirectory);
+            }
+            var lockDirectoryInfo = _directoryOperations.GetDirectoryInfo(_fileStorage.JsonCacheLockPath);
+            if (lockDirectoryInfo.IsCreatedEarlierThanSeconds(CredentialCacheLockDurationSeconds, DateTime.UtcNow))
+            {
+                s_logger.Warn($"File cache lock directory {_fileStorage.JsonCacheLockPath} created more than {CredentialCacheLockDurationSeconds} seconds ago. Removing the lock directory.");
+                ReleaseLock();
+            }
+            else if (lockDirectoryInfo.Exists)
+            {
+                return false;
+            }
+            var result = _unixOperations.CreateDirectoryWithPermissions(_fileStorage.JsonCacheLockPath, CredentialCacheLockDirPermissions);
+            return result == 0;
+        }
+
+        private void ReleaseLock()
+        {
+            _directoryOperations.Delete(_fileStorage.JsonCacheLockPath, false);
+        }
+
+        internal void ValidateFilePermissions(UnixStream stream)
+        {
+            var allowedPermissions = new[]
+            {
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
+            };
+            if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
+                throw new SecurityException("Attempting to read or write a file not owned by the effective user of the current process");
+            if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
+                throw new SecurityException("Attempting to read or write a file not owned by the effective group of the current process");
+            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
+                throw new SecurityException("Attempting to read or write a file with too broad permissions assigned");
         }
     }
 }

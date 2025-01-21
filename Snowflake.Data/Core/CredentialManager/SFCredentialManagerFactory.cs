@@ -9,12 +9,6 @@ using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core.CredentialManager
 {
-    internal enum TokenType
-    {
-        [StringAttr(value = "ID_TOKEN")]
-        IdToken
-    }
-
     internal class SFCredentialManagerFactory
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFactory>();

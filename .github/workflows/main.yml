@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net462', 'net471', 'net472', 'net48', 'net481']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - name: Checkout code
@@ -41,7 +41,9 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -93,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +104,9 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -152,7 +156,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
@@ -161,7 +165,9 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5

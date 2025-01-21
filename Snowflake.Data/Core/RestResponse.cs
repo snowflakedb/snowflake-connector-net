@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Core
 {
@@ -16,8 +17,10 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
 
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
+
 
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
@@ -94,6 +97,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "idToken", NullValueHandling = NullValueHandling.Ignore)]
         internal string idToken { get; set; }
+
+        [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string mfaToken { get; set; }
     }
 
     internal class AuthenticatorResponseData
@@ -442,6 +448,22 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
         internal string endPoint { get; set; }
+
+        [JsonProperty(PropertyName = "useRegionalUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool useRegionalUrl { get; set; }
+
+        private const string GcsRegionMeCentral2 = "me-central2";
+
+        internal string GcsCustomEndpoint()
+        {
+            if (!(locationType ?? string.Empty).Equals(SFRemoteStorageUtil.GCS_FS, StringComparison.OrdinalIgnoreCase))
+                return null;
+            if (!string.IsNullOrWhiteSpace(endPoint) && endPoint != "null")
+                return endPoint;
+            if (GcsRegionMeCentral2.Equals(region, StringComparison.OrdinalIgnoreCase) || useRegionalUrl)
+                return $"storage.{region.ToLower()}.rep.googleapis.com";
+            return null;
+        }
     }
 
     internal class PutGetEncryptionMaterial

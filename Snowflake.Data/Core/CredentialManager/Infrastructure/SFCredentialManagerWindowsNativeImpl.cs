@@ -3,11 +3,12 @@
  */
 
 using Microsoft.Win32.SafeHandles;
-using Snowflake.Data.Client;
-using Snowflake.Data.Log;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
@@ -15,29 +16,62 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
         public static readonly SFCredentialManagerWindowsNativeImpl Instance = new SFCredentialManagerWindowsNativeImpl();
 
         public string GetCredentials(string key)
         {
             s_logger.Debug($"Getting the credentials for key: {key}");
-
+            bool success;
             IntPtr nCredPtr;
-            if (!CredRead(key, 1 /* Generic */, 0, out nCredPtr))
+            _lock.EnterReadLock();
+            try
+            {
+                success = CredRead(key, 1 /* Generic */, 0, out nCredPtr);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to get credentials", exception);
+                throw;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            if (!success)
             {
                 s_logger.Info($"Unable to get credentials for key: {key}");
                 return "";
             }
 
-            var critCred = new CriticalCredentialHandle(nCredPtr);
-            Credential cred = critCred.GetCredential();
-            return cred.CredentialBlob;
+            using (var critCred = new CriticalCredentialHandle(nCredPtr))
+            {
+                var cred = critCred.GetCredential();
+                return cred.CredentialBlob;
+            }
         }
 
         public void RemoveCredentials(string key)
         {
             s_logger.Debug($"Removing the credentials for key: {key}");
-
-            if (!CredDelete(key, 1 /* Generic */, 0))
+            bool success;
+            _lock.EnterWriteLock();
+            try
+            {
+                success = CredDelete(key, 1 /* Generic */, 0);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to remove credentials", exception);
+                throw;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+            if (!success)
             {
                 s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
             }
@@ -46,7 +80,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         public void SaveCredentials(string key, string token)
         {
             s_logger.Debug($"Saving the credentials for key: {key}");
-
             byte[] byteArray = Encoding.Unicode.GetBytes(token);
             Credential credential = new Credential();
             credential.AttributeCount = 0;
@@ -60,7 +93,20 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             credential.CredentialBlob = token;
             credential.UserName = Environment.UserName;
 
-            CredWrite(ref credential, 0);
+            _lock.EnterWriteLock();
+            try
+            {
+                CredWrite(ref credential, 0);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Failed to save credentials", exception);
+                throw;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

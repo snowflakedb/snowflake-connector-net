@@ -50,8 +50,8 @@ namespace Snowflake.Data.Core.Authenticator
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("External Browser Authentication");
-
-            if (string.IsNullOrEmpty(session._idToken))
+            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
                 using (var httpListener = GetHttpListener(localPort))
@@ -75,8 +75,8 @@ namespace Snowflake.Data.Core.Authenticator
         void IAuthenticator.Authenticate()
         {
             logger.Info("External Browser Authentication");
-
-            if (string.IsNullOrEmpty(session._idToken))
+            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
                 using (var httpListener = GetHttpListener(localPort))
@@ -253,15 +253,17 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            if (string.IsNullOrEmpty(session._idToken))
+            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            if (string.IsNullOrEmpty(idToken))
             {
                 // Add the token and proof key to the Data
                 data.Token = _samlResponseToken;
                 data.ProofKey = _proofKey;
+                SetSpecializedAuthenticatorData(ref data);
             }
             else
             {
-                data.Token = session._idToken;
+                data.Token = idToken;
                 data.Authenticator = TokenType.IdToken.GetAttribute<StringAttr>().value;
             }
         }

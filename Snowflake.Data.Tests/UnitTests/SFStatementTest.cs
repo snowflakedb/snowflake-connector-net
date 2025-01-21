@@ -1,13 +1,15 @@
 ﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
+
+using System.Threading;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using NUnit.Framework;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using Snowflake.Data.Core;
-    using NUnit.Framework;
-    using System;
-
     /**
      * Mock rest request test
      */
@@ -190,6 +192,26 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
             Assert.AreEqual(expectedResult, QueryStatusExtensions.IsAnError(status));
+        }
+
+        [Test]
+        public void TestHandleNullDataForFailedResponse()
+        {
+            // arrange
+            var response = new QueryExecResponse
+            {
+                success = false,
+                code = 500,
+                message = "internal error"
+            };
+            var session = new SFSession("account=myAccount;password=myPassword;user=myUser;db=myDB", null);
+            var statement = new SFStatement(session);
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
+
+            // assert
+            Assert.AreEqual("Error: internal error SqlState: , VendorCode: 500, QueryId: ", thrown.Message);
         }
     }
 }

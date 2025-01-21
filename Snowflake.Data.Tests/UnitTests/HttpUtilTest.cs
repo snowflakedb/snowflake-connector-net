@@ -9,13 +9,55 @@ namespace Snowflake.Data.Tests.UnitTests
     using NUnit.Framework;
     using Snowflake.Data.Core;
     using RichardSzalay.MockHttp;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Net;
     using System;
+    using System.Security.Authentication;
+    using Moq;
+    using Moq.Protected;
 
     [TestFixture]
     class HttpUtilTest
     {
+        [Test]
+        public async Task TestNonRetryableHttpExceptionThrowsError()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, new Uri("https://authenticationexceptiontest.com/"));
+            // Disable warning as this is the way to be compliant with netstandard2.0
+            // API reference: https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage?view=netstandard-2.0
+#pragma warning disable CS0618 // Type or member is obsolete
+            request.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
+            request.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            var handler = new Mock<DelegatingHandler>();
+            handler.Protected()
+              .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("https://authenticationexceptiontest.com/")),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
+
+            var httpClient = HttpUtil.Instance.GetHttpClient(
+                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7),
+                handler.Object);
+
+            try
+            {
+                await httpClient.SendAsync(request, CancellationToken.None).ConfigureAwait(false);
+                Assert.Fail();
+            }
+            catch (HttpRequestException e)
+            {
+                Assert.IsInstanceOf<AuthenticationException>(e.InnerException);
+            }
+            catch (Exception unexpected)
+            {
+                Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
+            }
+        }
+
         [Test]
         // Parameters: status code, force retry on 404, expected retryable value
         [TestCase(HttpStatusCode.OK, false, false)]

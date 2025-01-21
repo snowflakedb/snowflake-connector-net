@@ -114,7 +114,11 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLE_SAML_URL_CHECK,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        ALLOW_SSO_TOKEN_CACHING
+        ALLOW_SSO_TOKEN_CACHING,
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
+        PASSCODE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        PASSCODEINPASSWORD
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -183,7 +187,7 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password, SecureString passcode = null)
         {
             logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
@@ -215,9 +219,9 @@ namespace Snowflake.Data.Core
                                 typeof(SFSessionProperty), keys[i].ToUpper());
                     properties.Add(p, values[i]);
                 }
-                catch (ArgumentException e)
+                catch (ArgumentException)
                 {
-                    logger.Warn($"Property {keys[i]} not found ignored.", e);
+                    logger.Debug($"Property {keys[i]} not found ignored.");
                 }
             }
 
@@ -259,7 +263,13 @@ namespace Snowflake.Data.Core
                 properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(password);
             }
 
+            if (passcode != null && passcode.Length > 0)
+            {
+                properties[SFSessionProperty.PASSCODE] = SecureStringHelper.Decode(passcode);
+            }
+
             ValidateAuthenticator(properties);
+            ValidatePasscodeInPassword(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
@@ -305,7 +315,8 @@ namespace Snowflake.Data.Core
                 OktaAuthenticator.AUTH_NAME,
                 OAuthAuthenticator.AUTH_NAME,
                 KeyPairAuthenticator.AUTH_NAME,
-                ExternalBrowserAuthenticator.AUTH_NAME
+                ExternalBrowserAuthenticator.AUTH_NAME,
+                MFACacheAuthenticator.AuthName
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -316,6 +327,23 @@ namespace Snowflake.Data.Core
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
+                }
+            }
+        }
+
+        private static void ValidatePasscodeInPassword(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passCodeInPassword))
+            {
+                if (!bool.TryParse(passCodeInPassword, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.PASSCODEINPASSWORD.ToString()} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        "",
+                        SFSessionProperty.PASSCODEINPASSWORD.ToString());
                 }
             }
         }
