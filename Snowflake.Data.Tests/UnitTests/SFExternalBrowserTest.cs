@@ -86,6 +86,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             try
             {
+                t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
                 var user = "test";
                 var host = $"{user}.okta.com";
                 var key = SFCredentialManagerFactory.BuildCredentialKey(host, user, TokenType.IdToken);
@@ -96,12 +101,11 @@ namespace Snowflake.Data.Tests.UnitTests
                 var restRequester = new Mock.MockExternalBrowserRestRequester()
                 {
                     ProofKey = "mockProofKey",
-                    SSOUrl = "https://www.mockSSOUrl.com",
                 };
                 var sfSession = new SFSession($"allow_sso_token_caching=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
                 sfSession.Open();
 
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never());
+                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once);
             }
             catch (SnowflakeDbException e)
             {
@@ -290,6 +294,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             try
             {
+                t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
                 var user = "test";
                 var host = $"{user}.okta.com";
                 var key = SFCredentialManagerFactory.BuildCredentialKey(host, user, TokenType.IdToken);
@@ -300,13 +309,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 var restRequester = new Mock.MockExternalBrowserRestRequester()
                 {
                     ProofKey = "mockProofKey",
-                    SSOUrl = "https://www.mockSSOUrl.com",
                 };
                 var sfSession = new SFSession($"allow_sso_token_caching=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
 
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never());
+                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
             }
             catch (SnowflakeDbException e)
             {
