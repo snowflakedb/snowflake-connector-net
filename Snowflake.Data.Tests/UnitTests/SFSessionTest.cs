@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
 using System;
+using System.Net;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -128,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests
             session.ProcessLoginResponse(authnResponse);
 
             // assert
-            Assert.AreEqual(expectedIdToken, session._idToken);
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty, session._idToken).Password);
         }
 
         [Test]
