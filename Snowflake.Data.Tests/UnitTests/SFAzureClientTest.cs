@@ -410,5 +410,37 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
             Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
         }
+
+        [Test]
+        public void TestEncryptionMetadataReadingSucceedsWithoutSfcDigest()
+        {
+            // arrange
+            var metadata = new Dictionary<string, string>
+            {
+                {
+                    "encryptiondata",
+                    @"{
+                        ""ContentEncryptionIV"": ""initVector"",
+                        ""WrappedContentKey"": {
+                            ""EncryptedKey"": ""key""
+                        }
+                    }"
+                },
+                { "matdesc", "description" }
+            };
+            var blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: 10);
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+        }
     }
 }

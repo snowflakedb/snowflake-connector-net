@@ -173,7 +173,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             return new FileHeader
             {
-                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest"),
+                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest", false),
                 contentLength = response.ContentLength,
                 encryptionMetadata = encryptionMetadata
             };
@@ -190,11 +190,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return keysCaseInsensitive.Any() ? properties.Metadata.TryGetValue(keysCaseInsensitive.First(), out metadataValue) : false;
         }
 
-        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey)
+        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, bool failIfNotFound = true)
         {
             if (TryGetMetadataValueCaseInsensitive(properties, metadataKey, out var metadataValue))
                 return metadataValue;
-            throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
+            if (failIfNotFound)
+            {
+                throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
+            }
+            return null;
         }
 
         /// <summary>
