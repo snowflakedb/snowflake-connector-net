@@ -14,6 +14,7 @@ namespace Snowflake.Data.Core
 {
     /// <summary>
     /// The RestRequester is responsible to send out a rest request and receive response
+    /// No retry needed here since retry is made in HttpClient.RetryHandler (HttpUtil.cs)
     /// </summary>
     internal interface IRestRequester
     {
@@ -28,6 +29,7 @@ namespace Snowflake.Data.Core
         Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken);
 
         HttpResponseMessage Get(IRestRequest request);
+
     }
 
     internal interface IMockRestRequester : IRestRequester
@@ -38,7 +40,7 @@ namespace Snowflake.Data.Core
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-        
+
         protected HttpClient _HttpClient;
 
         public RestRequester(HttpClient httpClient)
@@ -70,12 +72,12 @@ namespace Snowflake.Data.Core
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
-            { 
+            {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
             }
         }
-        
+
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             return SendAsync(HttpMethod.Get, request, cancellationToken);
@@ -91,13 +93,16 @@ namespace Snowflake.Data.Core
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
-            HttpRequestMessage message = request.ToRequestMessage(method);
-            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
+            using (HttpRequestMessage message = request.ToRequestMessage(method))
+            {
+                return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid()).ConfigureAwait(false);
+            }
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
-                                                              TimeSpan restTimeout, 
-                                                              CancellationToken externalCancellationToken)
+                                                              TimeSpan restTimeout,
+                                                              CancellationToken externalCancellationToken,
+                                                              string sid="")
         {
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
@@ -108,18 +113,26 @@ namespace Snowflake.Data.Core
                     HttpResponseMessage response = null;
                     try
                     {
-                        logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
+                        logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
 
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                        }
+                        else
+                        {
+                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
+                        }
                         response.EnsureSuccessStatusCode();
 
                         return response;
                     }
                     catch (Exception e)
                     {
-                        // Disposing of the response if not null now that we don't need it anymore 
+                        // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)
                         {

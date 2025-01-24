@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
@@ -85,7 +86,7 @@ namespace Snowflake.Data.Core
         /// The type of transfer either UPLOAD or DOWNLOAD.
         /// </summary>
         private readonly CommandTypes CommandType;
-        
+
         /// <summary>
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
@@ -184,45 +185,61 @@ namespace Snowflake.Data.Core
         /// </summary>
         public void execute()
         {
-            // Initialize the encryption metadata
-            initEncryptionMaterial();
-
-            if (CommandTypes.UPLOAD == CommandType)
+            try
             {
-                initFileMetadataForUpload();
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                initFileMetadata(TransferMetadata.src_locations);
+                // Initialize the encryption metadata
+                initEncryptionMaterial();
 
-                Directory.CreateDirectory(TransferMetadata.localLocation);
-            }
-
-            // Update the file metadata with GCS presigned URL
-            updatePresignedUrl();
-
-            foreach (SFFileMetadata fileMetadata in FilesMetas)
-            {
-                // If the file is larger than the threshold, add it to the large files list
-                // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                if (CommandTypes.UPLOAD == CommandType)
                 {
-                    LargeFilesMetas.Add(fileMetadata);
+                    initFileMetadataForUpload();
                 }
-                else
+                else if (CommandTypes.DOWNLOAD == CommandType)
                 {
-                    SmallFilesMetas.Add(fileMetadata);
+                    initFileMetadata(TransferMetadata.src_locations);
+
+                    Directory.CreateDirectory(TransferMetadata.localLocation);
+                }
+
+                // Update the file metadata with GCS presigned URL
+                updatePresignedUrl();
+
+                foreach (SFFileMetadata fileMetadata in FilesMetas)
+                {
+                    // If the file is larger than the threshold, add it to the large files list
+                    // Otherwise add it to the small files list
+                    if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                    {
+                        LargeFilesMetas.Add(fileMetadata);
+                    }
+                    else
+                    {
+                        SmallFilesMetas.Add(fileMetadata);
+                    }
+                }
+
+                // Check command type
+                if (CommandTypes.UPLOAD == CommandType)
+                {
+                    upload();
+                }
+                else if (CommandTypes.DOWNLOAD == CommandType)
+                {
+                    download();
                 }
             }
-
-            // Check command type
-            if (CommandTypes.UPLOAD == CommandType)
+            catch (Exception e)
             {
-                upload();
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                download();
+                Logger.Error("Error while transferring file(s): " + e.Message);
+                if (e is SnowflakeDbException snowflakeException)
+                {
+                    if (snowflakeException.QueryId == null)
+                    {
+                        snowflakeException.QueryId = TransferMetadata.queryId;
+                    }
+                    throw snowflakeException;
+                }
+                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
             }
         }
 
@@ -274,7 +291,7 @@ namespace Snowflake.Data.Core
         /// Generate the result set based on the file metadata.
         /// </summary>
         /// <returns>The result set containing file status and info</returns>
-        public SFBaseResultSet result()
+        public SFResultSet result()
         {
             // Set the row count using the number of metadata in the result metas
             TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
@@ -315,7 +332,7 @@ namespace Snowflake.Data.Core
                     TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
                 }
             }
-            
+
             return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
         }
 
@@ -451,7 +468,7 @@ namespace Snowflake.Data.Core
 
                         fileMeta.stageInfo = response.data.stageInfo;
                         fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }                    
+                    }
                 }
                 else if (CommandTypes.DOWNLOAD == CommandType)
                 {
@@ -460,7 +477,7 @@ namespace Snowflake.Data.Core
                         FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                     }
                 }
-            }            
+            }
         }
 
         /// <summary>
@@ -510,13 +527,19 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="query">The query containing the file path</param>
         /// <returns>The file path contained by the query</returns>
-        private string getFilePathFromPutCommand(string query)
+        internal static string getFilePathFromPutCommand(string query)
         {
             // Extract file path from PUT command:
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
             int startIndex = query.IndexOf("file://") + "file://".Length;
             int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
-            string filePath = query.Substring(startIndex, endIndex);
+            string filePath = query.Substring(startIndex, endIndex).TrimEnd();
+
+            // Check if file path contains an enclosing (') char
+            if (filePath[filePath.Length - 1] == '\'')
+            {
+                filePath = filePath.Substring(0, filePath.Length - 1);
+            }
             return filePath;
         }
 
@@ -527,7 +550,10 @@ namespace Snowflake.Data.Core
         {
             if (CommandTypes.UPLOAD == CommandType)
             {
-                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                if (TransferMetadata.stageInfo.isClientSideEncrypted)
+                {
+                    EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                }
             }
         }
 
@@ -588,11 +614,17 @@ namespace Snowflake.Data.Core
                         parallel = (memoryStream == null) && (fileInfo.Length > TransferMetadata.threshold) ?
                             TransferMetadata.parallel : 1,
                         memoryStream = memoryStream,
-                        proxyCredentials = null
+                        proxyCredentials = null,
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                        _operationType = CommandTypes.UPLOAD
                     };
 
                     /// The storage client used to upload data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    /// This is only needed for remote storage types
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                    {
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                    }
 
                     if (!fileMetadata.requireCompress)
                     {
@@ -641,23 +673,32 @@ namespace Snowflake.Data.Core
                     SFFileMetadata fileMetadata = new SFFileMetadata()
                     {
                         srcFileName = file,
-                        destFileName = file,
+                        destFileName = file.Split('/').Last(),
                         localLocation = TransferMetadata.localLocation,
                         stageInfo = TransferMetadata.stageInfo,
                         overwrite = TransferMetadata.overwrite,
                         presignedUrl = TransferMetadata.stageInfo.presignedUrl,
                         parallel = TransferMetadata.parallel,
-                        encryptionMaterial = TransferMetadata.encryptionMaterial[index]
+                        encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
+                            ? TransferMetadata.encryptionMaterial[index]
+                            : null,
+                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                        _operationType = CommandTypes.DOWNLOAD
                     };
 
                     /// The storage client used to download data from files or streams
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
-                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
-
-                    if (fileHeader != null)
+                    /// This is only needed for remote storage types
+                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
-                        fileMetadata.srcFileSize = fileHeader.contentLength;
-                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+
+                        FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                        if (fileHeader != null)
+                        {
+                            fileMetadata.srcFileSize = fileHeader.contentLength;
+                            fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                        }
                     }
 
                     FilesMetas.Add(fileMetadata);
@@ -665,10 +706,30 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private int GetFileTransferMaxBytesInMemory()
+        {
+            if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
+            {
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+            if (string.IsNullOrEmpty(maxBytesInMemoryString))
+            {
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+            try
+            {
+                return int.Parse(maxBytesInMemoryString);
+            }
+            catch (Exception)
+            {
+                Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
+                return FileTransferConfiguration.DefaultMaxBytesInMemory;
+            }
+        }
+
         /// <summary>
-        /// Expand the expand the wildcards if any to generate the list of paths for all files 
-        /// matched by the wildcards. Also replace 
-        /// Get the absolute path for the file.
+        /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
+        /// Also replace the relative paths to the absolute paths for the files if needed.
         /// </summary>
         /// <param name="location">The path to expand</param>
         /// <returns>The list of file matching the input location</returns>
@@ -676,145 +737,151 @@ namespace Snowflake.Data.Core
         /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
         private List<string> expandFileNames(string location)
         {
-            // Replace ~ with the user home directory path
-            if (location.Contains("~"))
+            location = ExpandHomeDirectoryIfNeeded(location);
+            var fileName = Path.GetFileName(location);
+            var directoryName = Path.GetDirectoryName(location);
+            var foundDirectories = ExpandDirectories(directoryName);
+            var filePaths = new List<string>();
+
+            if (ContainsWildcard(fileName))
             {
-                string homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
-                Environment.OSVersion.Platform == PlatformID.MacOSX)
-                ? Environment.GetEnvironmentVariable("HOME")
-                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
-
-                location = location.Replace("~", homePath);
-            }
-
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                location = Path.GetFullPath(location);
-            }
-
-            String fileName = Path.GetFileName(location);
-            string directoryName = Path.GetDirectoryName(location);
-
-            List<string> filePaths = new List<string>();
-            //filePaths.Add(""); //Start with an empty string to build upon
-            if (directoryName.Contains("?") ||
-                directoryName.Contains("*"))
-            {
-                // If there is a wildcard in at least one of the directory name in the file path
-                string[] pathParts = location.Split(Path.DirectorySeparatorChar);
-
-                string currPart;
-                for (int i = 0; i < pathParts.Length; i++)
+                foreach (var directory in foundDirectories)
                 {
-                    List<string> tempPaths = new List<string>();
-                    foreach (string filePath in filePaths)
-                    {
-                        currPart = pathParts[i];
-
-                        if (currPart.Contains("?") || currPart.Contains("*"))
-                        {
-                            if (i < pathParts.Length - 1)
-                            {
-                                // Expand the directories names
-                                tempPaths.AddRange(
-                                    Directory.GetDirectories(
-                                        filePath,
-                                        currPart,
-                                        SearchOption.TopDirectoryOnly));
-                            }
-                            else
-                            {
-                                // Expand the files names
-                                tempPaths.AddRange(
-                                    Directory.GetFiles(
-                                        filePath,
-                                        currPart,
-                                        SearchOption.TopDirectoryOnly));
-                            }
-                        }
-                        else
-                        {
-                            if (0 < i)
-                            {
-                                // Keep building the paths
-                                tempPaths.Add(filePath + Path.DirectorySeparatorChar + currPart);
-                            }
-                            else
-                            {
-                                // First part
-                                tempPaths.Add(currPart);
-                            }
-                        }
-                    }
-                    filePaths = tempPaths;
-                }
-            }
-            else if (fileName.Contains("?") || fileName.Contains("*"))
-            {
-                string ext = Path.GetExtension(fileName);
-                if ((4 == ext.Length) && (fileName.Contains("*")))
-                {
+                    var ext = Path.GetExtension(fileName);
                     /*
-                        * When you use the asterisk wildcard character in a searchPattern such as
-                        * "*.txt", the number of characters in the specified extension affects the
-                        * search as follows:
-                        * - If the specified extension is exactly three characters long, the method
-                        * returns files with extensions that begin with the specified extension. 
-                        * For example, "*.xls" returns both "book.xls" and "book.xlsx".
-                        * - In all other cases, the method returns files that exactly match the 
-                        * specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
-                        */
-                    string[] potentialMatches =
+                     * We have to check that the extension format is exactly 4 characters (e.g. .txt) as there is
+                     * an anomaly within .NET Framework usage of GetFiles method when using three-character
+                     * file extension (without a dot) which returns files with extensions that begin with the
+                     * specified pattern. For example searching for "*.xls" returns both "book.xls" and "book.xlsx".
+                     */
+                    if (4 == ext.Length && fileName.Contains('*'))
+                    {
+                        var potentialMatches =
                             Directory.GetFiles(
-                                directoryName,
+                                directory,
                                 fileName,
                                 SearchOption.TopDirectoryOnly);
-                    foreach (string potentialMatch in potentialMatches)
-                    {
-                        if (potentialMatch.EndsWith(ext))
-                        {
-                            filePaths.Add(potentialMatch);
-                        }
+                        filePaths.AddRange(potentialMatches.Where(potentialMatch => potentialMatch.EndsWith(ext)));
                     }
-                }
-                else
-                {
-                    // If there is a wildcard in the file name in the file path
-                    filePaths.AddRange(
-                        Directory.GetFiles(
-                            directoryName,
-                            fileName,
-                            SearchOption.TopDirectoryOnly));
+                    else
+                    {
+                        filePaths.AddRange(
+                            Directory.GetFiles(
+                                directory,
+                                fileName,
+                                SearchOption.TopDirectoryOnly));
+                    }
                 }
             }
             else
             {
-                // No wild card, just make sure it's a file
-                FileAttributes attr = File.GetAttributes(location);
-                if (!attr.HasFlag(FileAttributes.Directory))
+                // No wildcard in the filename
+                foreach (var directory in foundDirectories)
                 {
-                    filePaths.Add(location);
-                }
-                else
-                {
-                    throw new FileNotFoundException(
-                        "Directories not supported, you need to provide a file path", location);
+                    var fullPath = Path.GetFullPath(directory + fileName);
+                    if (IsDirectory(fullPath))
+                    {
+                        throw new FileNotFoundException(
+                            "Directories not supported, you need to provide a file path", fullPath);
+                    }
+                    filePaths.Add(fullPath);
                 }
             }
 
             if (Logger.IsDebugEnabled())
             {
-                Logger.Debug("Expand " + location + " into : \n");
-                foreach (string filepath in filePaths)
+                Logger.Debug("Expand " + location + " into: ");
+                foreach (var filepath in filePaths)
                 {
-                    Logger.Debug("\t" + filepath + "\n");
+                    Logger.Debug("\t" + filepath );
                 }
             }
 
             return filePaths;
         }
 
+        /// <summary>
+        /// Expand the wildcards in the directory path to generate the list of directories to be searched for the files.
+        /// </summary>
+        /// <param name="directoryPath">The path to expand</param>
+        private static IEnumerable<string> ExpandDirectories(string directoryPath)
+        {
+            if (string.IsNullOrEmpty(directoryPath))
+            {
+                return new List<string> {Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar};
+            }
+            if (!ContainsWildcard(directoryPath))
+            {
+                return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
+            }
+
+            var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
+            var resolvedPaths = new List<string>();
+
+            bool firstPass = true;
+
+            foreach (var part in pathParts)
+            {
+                if (ContainsWildcard(part))
+                {
+                    // Directory containing the wildcard is the first one in the path
+                    if (firstPass)
+                    {
+                        resolvedPaths.Add(Directory.GetCurrentDirectory());
+                    }
+
+                    var tempPaths = new List<string>();
+                    foreach (var location in resolvedPaths)
+                    {
+                        var foundDirectories = Directory.GetDirectories(location, part, SearchOption.TopDirectoryOnly);
+                        foundDirectories = foundDirectories.Select(s => s + Path.DirectorySeparatorChar).ToArray();
+                        tempPaths.AddRange(foundDirectories);
+                    }
+
+                    resolvedPaths = tempPaths;
+                }
+                else
+                {
+                    if (resolvedPaths.Count == 0)
+                    {
+                        var pathBeginning = "";
+                        if ((Environment.OSVersion.Platform == PlatformID.Unix ||
+                             Environment.OSVersion.Platform == PlatformID.MacOSX) &&
+                            directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString()))
+                        {
+                            pathBeginning = Path.DirectorySeparatorChar.ToString();
+                        }
+
+                        pathBeginning += $"{part}{Path.DirectorySeparatorChar.ToString()}";
+                        resolvedPaths.Add(pathBeginning);
+                    }
+                    else
+                    {
+                        resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
+                    }
+                }
+
+                firstPass = false;
+            }
+
+            return resolvedPaths;
+        }
+
+        /// <summary>
+        /// Expand the home directory if needed.
+        /// </summary>
+        /// <param name="directoryPath">The path to expand</param>
+        private static string ExpandHomeDirectoryIfNeeded(string directoryPath)
+        {
+            if (!directoryPath.Contains('~')) return directoryPath;
+
+            var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
+                            Environment.OSVersion.Platform == PlatformID.MacOSX)
+                ? Environment.GetEnvironmentVariable("HOME")
+                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+
+            return directoryPath.Replace("~", homePath);
+        }
 
         /// <summary>
         /// Compress a file using the given file metadata (file path, compression type, etc...) and
@@ -980,7 +1047,7 @@ namespace Snowflake.Data.Core
               {
                   await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
               }
-              
+
               // Break out of loop if file is successfully uploaded or already exists
               if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                   fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
@@ -1174,7 +1241,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Debug("Unhandled exception while uploading file.", ex);
+                throw;
             }
             finally
             {
@@ -1222,7 +1290,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1259,7 +1328,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1296,7 +1366,8 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                throw ex;
+                Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+                throw;
             }
             finally
             {
@@ -1368,6 +1439,17 @@ namespace Snowflake.Data.Core
             {
                 throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0].ToString());
             }
+        }
+
+        private static bool IsDirectory(string path)
+        {
+            var attr = File.GetAttributes(path);
+            return attr.HasFlag(FileAttributes.Directory);
+        }
+
+        private static bool ContainsWildcard(string str)
+        {
+            return str.Contains('*') || str.Contains('?');
         }
     }
 }

@@ -9,7 +9,6 @@ using System.Data;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -17,7 +16,7 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbCommand : DbCommand
     {
-        private DbConnection connection;
+        private SnowflakeDbConnection connection;
 
         private SFStatement sfStatement;
 
@@ -25,21 +24,24 @@ namespace Snowflake.Data.Client
 
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
+        private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
+
         public SnowflakeDbCommand()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
+            logger.Debug("Constructing SnowflakeDbCommand class");
             // by default, no query timeout
             this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
-        public SnowflakeDbCommand(SnowflakeDbConnection connection)
+        public SnowflakeDbCommand(SnowflakeDbConnection connection) : this()
         {
-            logger.Debug("Constucting SnowflakeDbCommand class");
             this.connection = connection;
-            // by default, no query timeout
-            this.CommandTimeout = 0;
-            parameterCollection = new SnowflakeDbParameterCollection();
+        }
+
+        public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
+        {
+            this.CommandText = cmdText;
         }
 
         public override string CommandText
@@ -48,6 +50,11 @@ namespace Snowflake.Data.Client
         }
 
         public override int CommandTimeout
+        {
+            get; set;
+        }
+
+        public string QueryTag
         {
             get; set;
         }
@@ -128,7 +135,10 @@ namespace Snowflake.Data.Client
                 }
 
                 connection = sfc;
-                sfStatement = new SFStatement(sfc.SfSession);
+                if (sfc.SfSession != null)
+                {
+                    sfStatement = new SFStatement(sfc.SfSession, QueryTag);
+                }
             }
         }
 
@@ -138,7 +148,7 @@ namespace Snowflake.Data.Client
             {
                 return this.parameterCollection;
             }
-        } 
+        }
 
         protected override DbTransaction DbTransaction
         {
@@ -229,9 +239,21 @@ namespace Snowflake.Data.Client
                 return DBNull.Value;
         }
 
+        /// <summary>
+        /// Prepares the command for execution.
+        /// This method is currently not implemented and acts as a no-operation (Noop).
+        /// </summary>
         public override void Prepare()
         {
-            throw new NotImplementedException();
+        }
+
+        public string GetQueryId()
+        {
+            if (sfStatement != null)
+            {
+                return sfStatement.GetQueryId();
+            }
+            return null;
         }
 
         protected override DbParameter CreateDbParameter()
@@ -261,6 +283,88 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Execute a query in async mode.
+        /// Async mode means the server will respond immediately with the query ID and execute the query asynchronously
+        /// </summary>
+        /// <returns>The query id.</returns>
+        public string ExecuteInAsyncMode()
+        {
+            logger.Debug($"ExecuteInAsyncMode");
+            SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
+            return resultSet.queryId;
+        }
+
+        /// <summary>
+        /// Executes an asynchronous query in async mode.
+        /// Async mode means the server will respond immediately with the query ID and execute the query asynchronously
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query id.</returns>
+        public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
+        {
+            logger.Debug($"ExecuteAsyncInAsyncMode");
+            var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+            return resultSet.queryId;
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query status.</returns>
+        public QueryStatus GetQueryStatus(string queryId)
+        {
+            logger.Debug($"GetQueryStatus");
+            return _queryResultsAwaiter.GetQueryStatus(connection, queryId);
+        }
+
+        /// <summary>
+        /// Gets the query status based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query status.</returns>
+        public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
+        {
+            logger.Debug($"GetQueryStatusAsync");
+            return await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Gets the query results based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <returns>The query results.</returns>
+        public DbDataReader GetResultsFromQueryId(string queryId)
+        {
+            logger.Debug($"GetResultsFromQueryId");
+
+            Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
+            task.Wait();
+
+            SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
+
+            return new SnowflakeDbDataReader(this, resultSet);
+        }
+
+        /// <summary>
+        /// Gets the query results based on query ID.
+        /// </summary>
+        /// <param name="queryId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The query results.</returns>
+        public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
+        {
+            logger.Debug($"GetResultsFromQueryIdAsync");
+
+            await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
+
+            SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
+
+            return new SnowflakeDbDataReader(this, resultSet);
+        }
+
         private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
         {
             if (parameters == null || parameters.Count == 0)
@@ -277,27 +381,27 @@ namespace Snowflake.Data.Client
 
                     if (parameter.Value.GetType().IsArray &&
                         // byte array and char array will not be treated as array binding
-                        parameter.Value.GetType().GetElementType() != typeof(char) && 
+                        parameter.Value.GetType().GetElementType() != typeof(char) &&
                         parameter.Value.GetType().GetElementType() != typeof(byte))
                     {
                         List<object> vals = new List<object>();
                         foreach(object val in (Array)parameter.Value)
                         {
-                            // if the user is using interface, SFDataType will be None and there will 
+                            // if the user is using interface, SFDataType will be None and there will
                             // a conversion from DbType to SFDataType
-                            // if the user is using concrete class, they should specify SFDataType. 
+                            // if the user is using concrete class, they should specify SFDataType.
                             if (parameter.SFDataType == SFDataType.None)
                             {
                                 Tuple<string, string> typeAndVal = SFDataConverter
-                                    .csharpTypeValToSfTypeVal(parameter.DbType, val);
+                                    .CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
                                 bindingType = typeAndVal.Item1;
                                 vals.Add(typeAndVal.Item2);
                             }
                             else
                             {
-                                bindingType = parameter.SFDataType.ToString(); 
-                                vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
+                                bindingType = parameter.SFDataType.ToString();
+                                vals.Add(SFDataConverter.CSharpValToSfVal(parameter.SFDataType, val));
                             }
                         }
                         bindingVal = vals;
@@ -307,14 +411,14 @@ namespace Snowflake.Data.Client
                         if (parameter.SFDataType == SFDataType.None)
                         {
                             Tuple<string, string> typeAndVal = SFDataConverter
-                                .csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                                .CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
                             bindingType = typeAndVal.Item1;
                             bindingVal = typeAndVal.Item2;
                         }
                         else
                         {
                             bindingType = parameter.SFDataType.ToString();
-                            bindingVal = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
+                            bindingVal = SFDataConverter.CSharpValToSfVal(parameter.SFDataType, parameter.Value);
                         }
                     }
 
@@ -324,28 +428,47 @@ namespace Snowflake.Data.Client
             }
         }
 
-        private void SetStatement() 
+        private void SetStatement()
         {
+            if (connection == null)
+            {
+                throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
+            }
+
             var session = (connection as SnowflakeDbConnection).SfSession;
 
             // SetStatement is called when executing a command. If SfSession is null
             // the connection has never been opened. Exception might be a bit vague.
             if (session == null)
-                throw new Exception("Can't execute command when connection has never been opened");
+                throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
 
-            this.sfStatement = new SFStatement(session);
+            this.sfStatement = new SFStatement(session, QueryTag);
         }
 
-        private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
+        private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
         {
+            CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
+            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec);
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false, bool asyncExec = false)
         {
+            CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
         }
+
+        private void CheckIfCommandTextIsSet()
+        {
+            if (string.IsNullOrEmpty(CommandText))
+            {
+                var errorMessage = "Unable to execute command due to command text not being set";
+                logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
+        }
+
+        internal string GetBindStage() => sfStatement?.GetBindStage();
     }
 }

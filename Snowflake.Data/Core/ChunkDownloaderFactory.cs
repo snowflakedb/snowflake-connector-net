@@ -2,44 +2,50 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.Threading;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     class ChunkDownloaderFactory
     {
+        private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkDownloaderFactory>();
         public static IChunkDownloader GetDownloader(QueryExecResponseData responseData,
                                                      SFBaseResultSet resultSet,
                                                      CancellationToken cancellationToken)
         {
-            int ChunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            if (SFConfiguration.Instance().UseV2ChunkDownloader)
-                ChunkDownloaderVersion = 2;
-
-            switch (ChunkDownloaderVersion)
+            switch (SFConfiguration.Instance().GetChunkDownloaderVersion())
             {
                 case 1:
-                    return new SFBlockingChunkDownloader(responseData.rowType.Count,
-                    responseData.chunks,
-                    responseData.qrmk,
-                    responseData.chunkHeaders,
-                    cancellationToken,
-                    resultSet);
-                case 2:
-                    return new SFChunkDownloaderV2(responseData.rowType.Count,
+                    s_logger.Warn("V1 version of ChunkDownloader is deprecated. Using the V3 version.");
+                    return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                         responseData.chunks,
                         responseData.qrmk,
                         responseData.chunkHeaders,
                         cancellationToken,
-                        resultSet.sfStatement.SfSession.restRequester);
-                default:
+                        resultSet,
+                        responseData.queryResultFormat);
+                case 2:
+                    s_logger.Warn("V2 version of ChunkDownloader is deprecated. Using the V3 version.");
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
-                    responseData.chunks,
-                    responseData.qrmk,
-                    responseData.chunkHeaders,
-                    cancellationToken,
-                    resultSet);
+                        responseData.chunks,
+                        responseData.qrmk,
+                        responseData.chunkHeaders,
+                        cancellationToken,
+                        resultSet,
+                        responseData.queryResultFormat);
+                case 3:
+                    return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
+                        responseData.chunks,
+                        responseData.qrmk,
+                        responseData.chunkHeaders,
+                        cancellationToken,
+                        resultSet,
+                        responseData.queryResultFormat);
+                default:
+                    throw new Exception("Unsupported Chunk Downloader version specified in the SFConfiguration");
             }
         }
     }

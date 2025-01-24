@@ -19,8 +19,8 @@ namespace Snowflake.Data.Core
             ContractResolver = new DefaultContractResolver()
             {
                 NamingStrategy = new DefaultNamingStrategy()
-            }
+            },
+            TypeNameHandling = TypeNameHandling.None
         };
-  
     }
 }

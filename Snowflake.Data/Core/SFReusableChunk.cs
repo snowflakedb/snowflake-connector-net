@@ -8,46 +8,49 @@ using System.Text;
 
 namespace Snowflake.Data.Core
 {
-    class SFReusableChunk : IResultChunk
+    class SFReusableChunk : BaseResultChunk
     {
-       
-        public int RowCount { get; set; }
+        internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
-        public int ColCount { get; set; }
+        internal readonly BlockResultData data;
 
-        public string Url { get; set; }
+        private int _currentRowIndex = -1;
 
-        public int chunkIndexToDownload { get; set; }
-
-        private readonly BlockResultData data;
-
-        internal SFReusableChunk(int colCount)
+        internal SFReusableChunk(int columnCount)
         {
-            ColCount = colCount;
+            ColumnCount = columnCount;
             data = new BlockResultData();
         }
 
-        internal void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
+        internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
-            this.RowCount = chunkInfo.rowCount;
-            this.Url = chunkInfo.url;
-            this.chunkIndexToDownload = chunkIndex;
-            data.Reset(this.RowCount, this.ColCount, chunkInfo.uncompressedSize);
+            base.Reset(chunkInfo, chunkIndex);
+            _currentRowIndex = -1;
+            data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
-        public int GetRowCount()
+        internal override void Clear()
         {
-            return RowCount;
+            base.Clear();
+            _currentRowIndex = -1;
+            data.Clear();
         }
 
-        public int GetChunkIndex()
+        internal override void ResetForRetry()
         {
-            return chunkIndexToDownload;
+            data.ResetForRetry();
         }
 
-        public UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
+        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
+        public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
-            return data.get(rowIndex * ColCount + columnIndex);
+            _currentRowIndex = rowIndex;
+            return ExtractCell(columnIndex);
+        }
+
+        public override UTF8Buffer ExtractCell(int columnIndex)
+        {
+            return data.get(_currentRowIndex * ColumnCount + columnIndex);
         }
 
         public void AddCell(string val)
@@ -61,14 +64,27 @@ namespace Snowflake.Data.Core
             data.add(bytes, length);
         }
 
-        private class BlockResultData
+        internal override bool Next()
+        {
+            _currentRowIndex += 1;
+            return _currentRowIndex < RowCount;
+        }
+
+        internal override bool Rewind()
+        {
+            _currentRowIndex -= 1;
+            return _currentRowIndex >= 0;
+        }
+
+        internal class BlockResultData
         {
             private static readonly int NULL_VALUE = -100;
-            private int blockCount;
 
-            private static int blockLengthBits = 24;
+            internal int blockCount;
+            private static int blockLengthBits = 23;
             private static int blockLength = 1 << blockLengthBits;
-            int metaBlockCount;
+
+            internal int metaBlockCount;
             private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
@@ -90,9 +106,28 @@ namespace Snowflake.Data.Core
                 savedColCount = colCount;
                 currentDatOffset = 0;
                 nextIndex = 0;
-                int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-                this.blockCount = getBlock(bytesNeeded - 1) + 1;
+                this.blockCount = 1; // init with 1 block only
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+            }
+
+            internal void Clear()
+            {
+                savedRowCount = 0;
+                savedColCount = 0;
+                currentDatOffset = 0;
+                nextIndex = 0;
+                blockCount = 0;
+                metaBlockCount = 0;
+
+                data.Clear();
+                offsets.Clear();
+                lengths.Clear();
+            }
+
+            internal void ResetForRetry()
+            {
+                currentDatOffset = 0;
+                nextIndex = 0;
             }
 
             public UTF8Buffer get(int index)
@@ -143,6 +178,16 @@ namespace Snowflake.Data.Core
 
             public void add(byte[] bytes, int length)
             {
+                // check if a new block for data is needed
+                if (getBlock(currentDatOffset) == blockCount - 1)
+                {
+                    var neededSize = length - spaceLeftOnBlock(currentDatOffset);
+                    while (neededSize >= 0)
+                    {
+                        blockCount++;
+                        neededSize -= blockLength;
+                    }
+                }
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
                     allocateArrays();
@@ -218,12 +263,12 @@ namespace Snowflake.Data.Core
             {
                 while (data.Count < blockCount)
                 {
-                    data.Add(new byte[1 << blockLengthBits]);
+                    data.Add(new byte[blockLength]);
                 }
                 while (offsets.Count < metaBlockCount)
                 {
-                    offsets.Add(new int[1 << metaBlockLengthBits]);
-                    lengths.Add(new int[1 << metaBlockLengthBits]);
+                    offsets.Add(new int[metaBlockLength]);
+                    lengths.Add(new int[metaBlockLength]);
                 }
             }
         }

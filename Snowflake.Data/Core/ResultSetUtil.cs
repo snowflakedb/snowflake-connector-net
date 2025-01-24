@@ -28,25 +28,27 @@ namespace Snowflake.Data.Core
                     resultSet.Next();
                     for (int i = 0; i < resultSet.columnCount; i++)
                     {
-                        updateCount += resultSet.GetValue<long>(i);
+                        updateCount += resultSet.GetInt64(i);
                     }
 
                     break;
                 case SFStatementType.COPY:
-                    var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
+                    var index = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_loaded");
                     if (index >= 0)
                     {
-                        resultSet.Next();
-                        updateCount = resultSet.GetValue<long>(index);
-                        resultSet.Rewind();
+                        while (resultSet.Next())
+                        {
+                            updateCount += resultSet.GetInt64(index);
+                        }
+                        while (resultSet.Rewind()) {}
                     }
                     break;
                 case SFStatementType.COPY_UNLOAD:
-                    var rowIndex = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_unloaded");
+                    var rowIndex = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_unloaded");
                     if (rowIndex >= 0)
                     {
                         resultSet.Next();
-                        updateCount = resultSet.GetValue<long>(rowIndex);
+                        updateCount = resultSet.GetInt64(rowIndex);
                         resultSet.Rewind();
                     }
                     break;
@@ -66,6 +68,8 @@ namespace Snowflake.Data.Core
 
         internal static bool HasResultSet(this SFBaseResultSet resultSet)
         {
+            if (resultSet.isClosed) return false;
+
             SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
             SFStatementType statementType = metaData.statementType;
 

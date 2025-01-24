@@ -3,6 +3,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -16,7 +18,7 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270003)]
         INVALID_DATA_CONVERSION,
-        
+
         [SFErrorAttr(errorCode = 270004)]
         STATEMENT_ALREADY_RUNNING_QUERY,
 
@@ -75,13 +77,63 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270056)]
         INVALID_BROWSER_URL,
+
+        [SFErrorAttr(errorCode = 270057)]
+        BROWSER_RESPONSE_TIMEOUT,
+
+        [SFErrorAttr(errorCode = 270058)]
+        IO_ERROR_ON_GETPUT_COMMAND,
+
+        [SFErrorAttr(errorCode = 270059)]
+        EXECUTE_COMMAND_ON_CLOSED_CONNECTION,
+
+        [SFErrorAttr(errorCode = 270060)]
+        INCONSISTENT_RESULT_ERROR,
+
+        [SFErrorAttr(errorCode = 270061)]
+        STRUCTURED_TYPE_READ_ERROR,
+
+        [SFErrorAttr(errorCode = 270062)]
+        STRUCTURED_TYPE_READ_DETAILED_ERROR,
+
+        [SFErrorAttr(errorCode = 390120)]
+        EXT_AUTHN_DENIED,
+
+        [SFErrorAttr(errorCode = 390123)]
+        EXT_AUTHN_LOCKED,
+
+        [SFErrorAttr(errorCode = 390126)]
+        EXT_AUTHN_TIMEOUT,
+
+        [SFErrorAttr(errorCode = 390127)]
+        EXT_AUTHN_INVALID,
+
+        [SFErrorAttr(errorCode = 390129)]
+        EXT_AUTHN_EXCEPTION,
+    }
+
+    class SFMFATokenErrors
+    {
+        private static List<SFError> InvalidMFATokenErrors = new List<SFError>
+        {
+            SFError.EXT_AUTHN_DENIED,
+            SFError.EXT_AUTHN_LOCKED,
+            SFError.EXT_AUTHN_TIMEOUT,
+            SFError.EXT_AUTHN_INVALID,
+            SFError.EXT_AUTHN_EXCEPTION
+        };
+
+        public static bool IsInvalidMFATokenContinueError(int error)
+        {
+            return InvalidMFATokenErrors.Any(e => e.GetAttribute<SFErrorAttr>().errorCode == error);
+        }
     }
 
     class SFErrorAttr : Attribute
     {
         public int errorCode { get; set; }
     }
-    
+
     public class SqlState
     {
         public const string WARNING = "01000";

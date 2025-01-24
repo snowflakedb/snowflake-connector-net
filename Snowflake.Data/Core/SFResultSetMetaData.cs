@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -31,30 +31,26 @@ namespace Snowflake.Data.Core
         internal readonly SFStatementType statementType;
 
         internal readonly List<Tuple<SFDataType, Type>> columnTypes;
-        
+
         /// <summary>
         ///     This map is used to cache column name to column index. Index is 0-based.
         /// </summary>
         private Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
 
-        internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
+        internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData, SFSession session)
         {
             rowTypes = queryExecResponseData.rowType;
             columnCount = rowTypes.Count;
-            statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
+            statementType = FindStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
-            
-            foreach (NameValueParameter parameter in queryExecResponseData.parameters)
+
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.DATE_OUTPUT_FORMAT))
             {
-                switch(parameter.name)
-                {
-                    case "DATE_OUTPUT_FORMAT":
-                        dateOutputFormat = parameter.value;
-                        break;
-                    case "TIME_OUTPUT_FORMAT":
-                        timeOutputFormat = parameter.value;
-                        break;
-                }
+                dateOutputFormat = session.ParameterMap[SFSessionParameter.DATE_OUTPUT_FORMAT].ToString();
+            }
+            if (session.ParameterMap.ContainsKey(SFSessionParameter.TIME_OUTPUT_FORMAT))
+            {
+                timeOutputFormat = session.ParameterMap[SFSessionParameter.TIME_OUTPUT_FORMAT].ToString();
             }
         }
 
@@ -62,7 +58,7 @@ namespace Snowflake.Data.Core
         {
             rowTypes = putGetResponseData.rowType;
             columnCount = rowTypes.Count;
-            statementType = findStatementTypeById(putGetResponseData.statementTypeId);
+            statementType = FindStatementTypeById(putGetResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
         }
 
@@ -83,10 +79,9 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// </summary>
         /// <returns>index of column given a name, -1 if no column names are found</returns>
-        internal int getColumnIndexByName(string targetColumnName)
+        internal int GetColumnIndexByName(string targetColumnName)
         {
-            int resultIndex;
-            if (columnNameToIndexCache.TryGetValue(targetColumnName, out resultIndex))
+            if (columnNameToIndexCache.TryGetValue(targetColumnName, out var resultIndex))
             {
                 return resultIndex;
             }
@@ -95,36 +90,37 @@ namespace Snowflake.Data.Core
                 int indexCounter = 0;
                 foreach (ExecResponseRowType rowType in rowTypes)
                 {
-                    if (String.Compare(rowType.name, targetColumnName, false ) == 0 )
+                    if (String.Compare(rowType.name, targetColumnName, false) == 0 )
                     {
-                        logger.Info($"Found colun name {targetColumnName} under index {indexCounter}");
+                        logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
-                    indexCounter++; 
+                    indexCounter++;
                 }
             }
             return -1;
         }
-        
-        internal SFDataType getColumnTypeByIndex(int targetIndex)
-        {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
 
+        internal SFDataType GetColumnTypeByIndex(int targetIndex)
+        {
             return columnTypes[targetIndex].Item1;
         }
 
         internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
             return columnTypes[targetIndex];
+        }
+
+        internal long GetScaleByIndex(int targetIndex)
+        {
+            return rowTypes[targetIndex].scale;
+        }
+
+        internal bool IsStructuredType(int targetIndex)
+        {
+            var fields = rowTypes[targetIndex].fields;
+            return fields != null && fields.Count > 0;
         }
 
         private SFDataType GetSFDataType(string type)
@@ -134,7 +130,7 @@ namespace Snowflake.Data.Core
                 return rslt;
 
             throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                $"Unknow column type: {type}"); 
+                $"Unknown column type: {type}");
         }
 
         private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
@@ -148,7 +144,9 @@ namespace Snowflake.Data.Core
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                case SFDataType.ARRAY:    
+                case SFDataType.ARRAY:
+                case SFDataType.VECTOR:
+                case SFDataType.MAP:
                     return typeof(string);
                 case SFDataType.DATE:
                 case SFDataType.TIME:
@@ -163,37 +161,21 @@ namespace Snowflake.Data.Core
                     return typeof(bool);
                 default:
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                        $"Unknow column type: {sfType}");
+                        $"Unknown column type: {sfType}");
             }
         }
-        
-        internal Type getCSharpTypeByIndex(int targetIndex)
-        {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
 
-            SFDataType sfType = getColumnTypeByIndex(targetIndex);
-            return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);  
+        internal Type GetCSharpTypeByIndex(int targetIndex)
+        {
+            return columnTypes[targetIndex].Item2;
         }
 
-        internal string getColumnNameByIndex(int targetIndex)
+        internal string GetColumnNameByIndex(int targetIndex)
         {
-            if (targetIndex < 0 || targetIndex >= columnCount)
-            {
-                throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-            }
-
             return rowTypes[targetIndex].name;
         }
 
-        internal DataTable toDataTable()
-        {
-            return null;
-        }
-
-        private SFStatementType findStatementTypeById(long id)
+        private SFStatementType FindStatementTypeById(long id)
         {
             foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))
             {
@@ -229,7 +211,7 @@ namespace Snowflake.Data.Core
     internal enum SFStatementType
     {
         [SFStatementTypeAttr(typeId = 0x0000)]
-        UNKNOWN, 
+        UNKNOWN,
 
         [SFStatementTypeAttr(typeId = 0x1000)]
         SELECT,
@@ -238,7 +220,7 @@ namespace Snowflake.Data.Core
         EXPLAIN,
 
         /// <remark>
-        ///     Data Manipulation Language 
+        ///     Data Manipulation Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x3000)]
         DML,
@@ -283,7 +265,7 @@ namespace Snowflake.Data.Core
         ///     Transaction Command Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x5000)]
-        TCL, 
+        TCL,
 
         /// <remark>
         ///     Data Definition Language

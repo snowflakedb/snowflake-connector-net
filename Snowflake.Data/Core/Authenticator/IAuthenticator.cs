@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Authenticator
     internal interface IAuthenticator
     {
         /// <summary>
-        /// Process the authentication asynchronouly
+        /// Process the authentication asynchronously
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -49,19 +49,19 @@ namespace Snowflake.Data.Core.Authenticator
             SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
-        protected string authName;
+        private string authName;
 
         // The session which created this authenticator.
         protected SFSession session;
 
         // The client environment properties
-        protected LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
 
         /// <summary>
         /// The abstract base for all authenticators.
         /// </summary>
         /// <param name="session">The session which created the authenticator.</param>
-        public BaseAuthenticator(SFSession session, string authName)
+        protected BaseAuthenticator(SFSession session, string authName)
         {
             this.session = session;
             this.authName = authName;
@@ -101,10 +101,28 @@ namespace Snowflake.Data.Core.Authenticator
         /// <param name="data">The login request data to update.</param>
         protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
 
+        protected void SetSecondaryAuthenticationData(ref LoginRequestData data)
+        {
+            if (session.properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordString)
+                && bool.TryParse(passcodeInPasswordString, out var passcodeInPassword)
+                && passcodeInPassword)
+            {
+                data.extAuthnDuoMethod = "passcode";
+            } else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            {
+                data.extAuthnDuoMethod = "passcode";
+                data.passcode = passcode;
+            }
+            else
+            {
+                data.extAuthnDuoMethod = "push";
+            }
+        }
+
         /// <summary>
         /// Builds a simple login request. Each authenticator will fill the Data part with their
         /// specialized information. The common Data attributes are already filled (clientAppId,
-        /// ClienAppVersion...).
+        /// ClientAppVersion...).
         /// </summary>
         /// <returns>A login request to send to the server.</returns>
         private SFRestRequest BuildLoginRequest()
@@ -122,17 +140,18 @@ namespace Snowflake.Data.Core.Authenticator
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
-
             SetSpecializedAuthenticatorData(ref data);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
     }
 
-        /// <summary>
-        /// Authenticator Factory to build authenticators
-        /// </summary>
-        internal class AuthenticatorFactory
+    /// <summary>
+    /// Authenticator Factory to build authenticators
+    /// </summary>
+    internal class AuthenticatorFactory
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
         /// <summary>
@@ -155,8 +174,8 @@ namespace Snowflake.Data.Core.Authenticator
             else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
             {
                 // Get private key path or private key from connection settings
-                if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) &&
-                    !session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
+                if ((!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) || string.IsNullOrEmpty(pkPath)) &&
+                    (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent) || string.IsNullOrEmpty(pkContent)))
                 {
                     // There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
                     string invalidStringDetail =
@@ -187,17 +206,17 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
+            else if (type.Equals(MFACacheAuthenticator.AuthName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new MFACacheAuthenticator(session);
+            }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (type.Contains("okta") && type.StartsWith("https://"))
             {
                 return new OktaAuthenticator(session, type);
             }
-
-            var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
-
-            logger.Error("Unknown authenticator", e);
-
-            throw e;
+            logger.Error($"Unknown authenticator {type}");
+            throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
         }
     }
 }

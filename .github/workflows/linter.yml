@@ -1,0 +1,39 @@
+name: Code standards check
+
+# Triggers the workflow on pull request events but only for the master branch
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        default: warning
+        description: "Log level"
+        required: true
+      tags:
+        description: "Linter"
+        required: false
+
+concurrency:
+  # older builds for the same pull request number or branch should be cancelled
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-linter:
+    name: Run linter
+    runs-on: windows-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          dotnet-quality: 'ga'
+      - name: Run linters
+        uses: wearerequired/lint-action@v2
+        with:
+          dotnet_format: true
+          continue_on_error: true
+          check_name: ${linter} run

@@ -2,25 +2,36 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System;
 using System.IO;
-using System.Collections.Specialized;
-using System.Configuration;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class ChunkParserFactory
+    class ChunkParserFactory : IChunkParserFactory
     {
-        public static IChunkParser GetParser(Stream stream)
+        private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
+        public static IChunkParserFactory Instance = new ChunkParserFactory();
+
+        public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
         {
-            if (!SFConfiguration.Instance().UseV2JsonParser)
+            if (resultFormat == ResultFormat.ARROW)
+                return new ArrowChunkParser(stream);
+            
+            switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
-                return new ChunkDeserializer(stream);
+                case 1:
+                    s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
+                    return new ReusableChunkParser(stream);
+                case 2:
+                    s_logger.Warn("V2 version of ChunkParser is deprecated. Using the V3 version.");
+                    return new ReusableChunkParser(stream);
+                case 3:
+                    return new ReusableChunkParser(stream);
+                default:
+                    throw new Exception("Unsupported Chunk Parser version specified in the SFConfiguration");
             }
-            else
-            {
-                return new ChunkStreamingParser(stream);
-            }  
         }
     }
 }

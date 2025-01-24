@@ -7,6 +7,7 @@ using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
@@ -48,10 +49,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Get the Azure SAS token and create the client
             if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
             {
-                string blobEndpoint = string.Format("https://{0}.blob.core.windows.net", stageInfo.storageAccount);
+                string blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
                 blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
                     new AzureSasCredential(sasToken));
             }
+        }
+
+        internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient blobServiceClientMock) : this(stageInfo)
+        {
+            // Inject the mock BlobServiceClient
+            blobServiceClient = blobServiceClientMock;
         }
 
         /// <summary>
@@ -96,7 +103,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
             BlobProperties response;
             try
@@ -125,7 +132,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
             BlobProperties response;
             try
@@ -148,43 +155,66 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="response">The Amazon S3 response.</param>
         /// <returns>The file header of the S3 file.</returns>
-        private FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
+        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
         {
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-            dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
-            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+            SFEncryptionMetadata encryptionMetadata = null;
+            if (TryGetMetadataValueCaseInsensitive(response, "encryptiondata", out var encryptionDataStr))
             {
-                iv = encryptionData["ContentEncryptionIV"],
-                key = encryptionData.WrappedContentKey["EncryptedKey"],
-                matDesc = response.Metadata["matdesc"]
-            };
+                dynamic encryptionData = JsonConvert.DeserializeObject(encryptionDataStr);
+                encryptionMetadata = new SFEncryptionMetadata
+                {
+                    iv = encryptionData["ContentEncryptionIV"],
+                    key = encryptionData.WrappedContentKey["EncryptedKey"],
+                    matDesc = GetMetadataValueCaseInsensitive(response, "matdesc")
+                };
+            }
 
             return new FileHeader
             {
-                digest = response.Metadata["sfcdigest"],
+                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest"),
                 contentLength = response.ContentLength,
                 encryptionMetadata = encryptionMetadata
             };
+        }
+
+        private bool TryGetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, out string metadataValue)
+        {
+            if (properties.Metadata.TryGetValue(metadataKey, out metadataValue))
+                return true;
+            if (string.IsNullOrEmpty(metadataKey))
+                return false;
+            var keysCaseInsensitive = properties.Metadata.Keys
+                .Where(key => metadataKey.Equals(key, StringComparison.OrdinalIgnoreCase));
+            return keysCaseInsensitive.Any() ? properties.Metadata.TryGetValue(keysCaseInsensitive.First(), out metadataValue) : false;
+        }
+
+        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey)
+        {
+            if (TryGetMetadataValueCaseInsensitive(properties, metadataKey, out var metadataValue))
+                return metadataValue;
+            throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
         }
 
         /// <summary>
         /// Upload the file to the Azure location.
         /// </summary>
         /// <param name="fileMetadata">The Azure file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+        public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
-               new Dictionary<string, string>();
+                new Dictionary<string, string>();
 
             BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
-                blobClient.Upload(new MemoryStream(fileBytes));
+                fileBytesStream.Position = 0;
+                blobClient.Upload(fileBytesStream, overwrite: true);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -201,19 +231,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Upload the file to the Azure location.
         /// </summary>
         /// <param name="fileMetadata">The Azure file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
+        /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Create the metadata to use for the header
             IDictionary<string, string> metadata =
-               new Dictionary<string, string>();
+                new Dictionary<string, string>();
 
             BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
             try
             {
                 // Issue the POST/PUT request
-                await blobClient.UploadAsync(new MemoryStream(fileBytes), cancellationToken);
+                fileBytesStream.Position = 0;
+                await blobClient.UploadAsync(fileBytesStream, true, cancellationToken).ConfigureAwait(false);
                 blobClient.SetMetadata(metadata);
             }
             catch (RequestFailedException ex)
@@ -234,31 +265,35 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string>metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
-            // Create the JSON for the encryption data header
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            if (fileMetadata.stageInfo.isClientSideEncrypted)
             {
-                EncryptionMode = "FullBlob",
-                WrappedContentKey = new WrappedContentInfo
+                // Create the JSON for the encryption data header
+                string encryptionData = JsonConvert.SerializeObject(new EncryptionData
                 {
-                    KeyId = "symmKey1",
-                    EncryptedKey = encryptionMetadata.key,
-                    Algorithm = "AES_CBC_256"
-                },
-                EncryptionAgent = new EncryptionAgentInfo
-                {
-                    Protocol = "1.0",
-                    EncryptionAlgorithm = "AES_CBC_256"
-                },
-                ContentEncryptionIV = encryptionMetadata.iv,
-                KeyWrappingMetadata = new KeyWrappingMetadataInfo
-                {
-                    EncryptionLibrary = "Java 5.3.0"
-                }
-            });
+                    EncryptionMode = "FullBlob",
+                    WrappedContentKey = new WrappedContentInfo
+                    {
+                        KeyId = "symmKey1",
+                        EncryptedKey = encryptionMetadata.key,
+                        Algorithm = "AES_CBC_256"
+                    },
+                    EncryptionAgent = new EncryptionAgentInfo
+                    {
+                        Protocol = "1.0",
+                        EncryptionAlgorithm = "AES_CBC_256"
+                    },
+                    ContentEncryptionIV = encryptionMetadata.iv,
+                    KeyWrappingMetadata = new KeyWrappingMetadataInfo
+                    {
+                        EncryptionLibrary = "Java 5.3.0"
+                    }
+                });
 
-            // Create the metadata to use for the header
-            metadata.Add("encryptiondata", encryptionData);
-            metadata.Add("matdesc", encryptionMetadata.matDesc);
+                // Create the metadata to use for the header
+                metadata.Add("encryptiondata", encryptionData);
+                metadata.Add("matdesc", encryptionMetadata.matDesc);
+            }
+
             metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
             PutGetStageInfo stageInfo = fileMetadata.stageInfo;
@@ -282,13 +317,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             try
             {
                 // Issue the GET request
-                var task = blobClient.DownloadToAsync(fullDstPath);
-                task.Wait();
+                blobClient.DownloadTo(fullDstPath);
             }
             catch (RequestFailedException ex)
             {
@@ -312,7 +346,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             // Get the Azure client
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+            BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
             try
             {
@@ -344,7 +378,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             return fileMetadata;
         }
-        
+
         private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
             if (ex.Status == (int)HttpStatusCode.BadRequest)

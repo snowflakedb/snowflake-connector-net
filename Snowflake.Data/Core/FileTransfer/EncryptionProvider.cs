@@ -1,4 +1,8 @@
-﻿using System.IO;
+﻿/*
+ * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
@@ -6,19 +10,8 @@ using System.Security.Cryptography;
 namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
-    /// The encryption materials. 
-    /// </summary>
-    internal class MaterialDescriptor
-    {
-        public string smkId { get; set; }
-
-        public string queryId { get; set; }
-
-        public string keySize { get; set; }
-    }
-
-    /// <summary>
-    /// The encryptor/decryptor for PUT/GET files. 
+    /// The encryptor/decryptor for PUT/GET files.
+    /// Handles encryption and decryption using AES CBC (for files) and ECB (for keys).
     /// </summary>
     class EncryptionProvider
     {
@@ -37,31 +30,33 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public byte[] EncryptFile(
+        public static StreamPair EncryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            FileTransferConfiguration transferConfiguration)
         {
-            using (FileStream fileStream = File.OpenRead(inFile))
+            using (var fileStream = File.OpenRead(inFile))
             {
-                MemoryStream ms = new MemoryStream();
-                fileStream.CopyTo(ms);
-                return EncryptStream(ms, encryptionMaterial, encryptionMetadata);
+                return EncryptStream(fileStream, encryptionMaterial, encryptionMetadata, transferConfiguration);
             }
         }
 
         /// <summary>
         /// Encrypt data and write to the outStream.
         /// </summary>
-        /// <param name="memoryStream">The data to write onto the stream.</param>
+        /// <param name="inputStream">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public byte[] EncryptStream(
-            MemoryStream memoryStream,
+        public static StreamPair EncryptStream(
+            Stream inputStream,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            FileTransferConfiguration transferConfiguration)
         {
             byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
             int masterKeySize = decodedMasterKey.Length;
@@ -75,15 +70,15 @@ namespace Snowflake.Data.Core.FileTransfer
             random.NextBytes(ivData);
             random.NextBytes(keyData);
 
-            // Byte[] to encrypt data into
-            byte[] encryptedBytes = CreateEncryptedBytes(
-                memoryStream,
+            var encryptedBytesStream = CreateEncryptedBytesStream(
+                inputStream,
                 keyData,
-                ivData);
+                ivData,
+                transferConfiguration);
 
             // Encrypt file key
             byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
-            
+
             // Store encryption metadata information
             MaterialDescriptor matDesc = new MaterialDescriptor
             {
@@ -99,7 +94,7 @@ namespace Snowflake.Data.Core.FileTransfer
             encryptionMetadata.key = keyBase64;
             encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
 
-            return encryptedBytes;
+            return encryptedBytesStream;
         }
 
         /// <summary>
@@ -108,51 +103,66 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="masterKey">The key to use for encryption.</param>
         /// <param name="unencryptedFileKey">The file key to encrypt.</param>
         /// <returns>The encrypted key.</returns>
-        static private byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+        private static byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
-            Aes aes = Aes.Create();            
-            aes.Key = masterKey;
-            aes.Mode = CipherMode.ECB;
-            aes.Padding = PaddingMode.PKCS7;
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = masterKey;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
 
-            MemoryStream cipherStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);            
-            cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-            cryptoStream.FlushFinalBlock();
-
-            return cipherStream.ToArray();
+                MemoryStream cipherStream = new MemoryStream();
+                using (var encryptor = aes.CreateEncryptor())
+                using (CryptoStream cryptoStream = new CryptoStream(cipherStream, encryptor, CryptoStreamMode.Write))
+                {
+                    cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+                    cryptoStream.FlushFinalBlock();
+                    return cipherStream.ToArray();
+                }
+            }
         }
 
         /// <summary>
         /// Creates a new byte array containing the encrypted/decrypted data.
         /// </summary>
-        /// <param name="memoryStream">The path of the file to write onto the stream.</param>
+        /// <param name="inputStream">The input stream to encrypt</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
+        /// <param name="transferConfiguration">Contains parameters used during encryption process</param>
         /// <returns>The encrypted bytes.</returns>
-        static private byte[] CreateEncryptedBytes(
-            MemoryStream memoryStream,
+        private static StreamPair CreateEncryptedBytesStream(
+            Stream inputStream,
             byte[] key,
-            byte[] iv)
+            byte[] iv,
+            FileTransferConfiguration transferConfiguration)
         {
-            Aes aes = Aes.Create();            
-            aes.Key = key;
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.IV = iv;
-            memoryStream.Position = 0;
-
-            MemoryStream targetStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-            byte[] buffer = new byte[1024000];
-            int bytesRead;
-            while ((bytesRead = memoryStream.Read(buffer, 0, buffer.Length)) > 0)
+            using (Aes aes = Aes.Create())
             {
-                cryptoStream.Write(buffer, 0, bytesRead);
-            }
-            cryptoStream.FlushFinalBlock();
+                aes.Key = key;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+                aes.IV = iv;
+                inputStream.Position = 0;
 
-            return targetStream.ToArray();
+                var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+                using (var encryptor = aes.CreateEncryptor())
+                {
+                    CryptoStream cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write);
+                    byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        cryptoStream.Write(buffer, 0, bytesRead);
+                    }
+                    cryptoStream.FlushFinalBlock();
+
+                    return new StreamPair
+                    {
+                        MainStream = targetStream,
+                        HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
+                    };
+                }
+            }
         }
 
         /// <summary>
@@ -161,11 +171,13 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The data to write onto the stream.</param>
         /// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
         /// <param name="encryptionMetadata">Store the encryption metadata into</param>
-        /// <returns>The encrypted bytes of the file to upload.</returns>
-        static public string DecryptFile(
+        /// <param name="transferConfiguration">Contains parameters used during decryption process</param>
+        /// <returns>The name of the file containing decrypted file bytes</returns>
+        public static string DecryptFile(
             string inFile,
             PutGetEncryptionMaterial encryptionMaterial,
-            SFEncryptionMetadata encryptionMetadata)
+            SFEncryptionMetadata encryptionMetadata,
+            FileTransferConfiguration transferConfiguration)
         {
             // Get key and iv from metadata
             string keyBase64 = encryptionMetadata.key;
@@ -185,13 +197,19 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
 
             // Create key decipher with decoded key and AES ECB
-            byte[] decryptedBytes = CreateDecryptedBytes(
-                inFile,
-                decryptedFileKey,
-                ivBytes);
-
-            File.WriteAllBytes(tempFileName, decryptedBytes);
-
+            using (var decryptedBytesStreamPair = CreateDecryptedBytesStream(
+                       inFile,
+                       decryptedFileKey,
+                       ivBytes,
+                       transferConfiguration))
+            {
+                using (var decryptedFileStream = File.Create(tempFileName))
+                {
+                    var decryptedBytesStream = decryptedBytesStreamPair.MainStream;
+                    decryptedBytesStream.Position = 0;
+                    decryptedBytesStream.CopyTo(decryptedFileStream);
+                }
+            }
             return tempFileName;
         }
 
@@ -201,19 +219,24 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="masterKey">The key to use for encryption.</param>
         /// <param name="unencryptedFileKey">The file key to encrypt.</param>
         /// <returns>The encrypted key.</returns>
-        static private byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+        private static byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
-            Aes aes = Aes.Create();
-            aes.Key = masterKey;
-            aes.Mode = CipherMode.ECB;
-            aes.Padding = PaddingMode.PKCS7;
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = masterKey;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
 
-            MemoryStream cipherStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-            cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-            cryptoStream.FlushFinalBlock();
+                MemoryStream cipherStream = new MemoryStream();
+                using (var decryptor = aes.CreateDecryptor())
+                using (CryptoStream cryptoStream = new CryptoStream(cipherStream, decryptor, CryptoStreamMode.Write))
+                {
+                    cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+                    cryptoStream.FlushFinalBlock();
 
-            return cipherStream.ToArray();
+                    return cipherStream.ToArray();
+                }
+            }
         }
 
         /// <summary>
@@ -222,28 +245,37 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="inFile">The path of the file to write onto the stream.</param>
         /// <param name="key">The encryption key.</param>
         /// <param name="iv">The encryption IV or null if it needs to be generated.</param>
-        /// <returns>The encrypted bytes.</returns>
-        static private byte[] CreateDecryptedBytes(
+        /// <returns>The decrypted bytes stream</returns>
+        private static StreamPair CreateDecryptedBytesStream(
             string inFile,
             byte[] key,
-            byte[] iv)
+            byte[] iv,
+            FileTransferConfiguration transferConfiguration)
         {
-            Aes aes = Aes.Create();
-            aes.Key = key;
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.IV = iv;
-
-            MemoryStream targetStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-
-            using(Stream inStream = File.OpenRead(inFile))
+            using (Aes aes = Aes.Create())
             {
-                inStream.CopyTo(cryptoStream);
-            }
-            cryptoStream.FlushFinalBlock();
+                aes.Key = key;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+                aes.IV = iv;
 
-            return targetStream.ToArray();
+                var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+                using (var decryptor = aes.CreateDecryptor())
+                {
+                    CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
+                    using (Stream inStream = File.OpenRead(inFile))
+                    {
+                        inStream.CopyTo(cryptoStream);
+                    }
+                    cryptoStream.FlushFinalBlock();
+
+                    return new StreamPair
+                    {
+                        MainStream = targetStream,
+                        HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
+                    };
+                }
+            }
         }
     }
 }

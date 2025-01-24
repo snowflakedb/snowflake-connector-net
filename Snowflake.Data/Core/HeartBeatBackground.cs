@@ -30,6 +30,23 @@ namespace Snowflake.Data.Core
             isHeartBeatEnd = true;
         }
 
+        internal static int getQueueLength()
+        {
+            lock (heartBeatLock)
+            {
+                if (heartBeatConns == null)
+                {
+                    return 0;
+                }
+                return heartBeatConns.Count();
+            }
+        }
+
+        internal static void setValidity(long validity)
+        {
+            masterTokenValidationTimeInSec = validity;
+        }
+
         public static HeartBeatBackground Instance
         {
             get
@@ -60,19 +77,17 @@ namespace Snowflake.Data.Core
                 }
 
                 heartBeatConns.Add(conn);
-                if(heartBeatThread == null)
+                // for test purpose that Validity can be set to non-zero value
+                if ((masterTokenValidationTimeInSec == 0) ||
+                    (masterTokenValidityInSecs < masterTokenValidationTimeInSec))
                 {
+                    //update validation time
                     masterTokenValidationTimeInSec = masterTokenValidityInSecs;
-                    heartBeatThread = new Thread(heartBeatAll);
-                    heartBeatThread.Start();
                 }
-                else
+                if (heartBeatThread == null)
                 {
-                    if(masterTokenValidityInSecs < masterTokenValidationTimeInSec)
-                    {
-                        //update validation time
-                        masterTokenValidationTimeInSec = masterTokenValidityInSecs;
-                    }
+                    heartBeatThread = new Thread(heartBeatAll) { IsBackground = true };
+                    heartBeatThread.Start();
                 }
             }
         }

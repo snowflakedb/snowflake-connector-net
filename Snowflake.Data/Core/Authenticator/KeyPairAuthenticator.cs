@@ -28,7 +28,7 @@ namespace Snowflake.Data.Core.Authenticator
     class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     {
         // The authenticator setting value to use to authenticate using key pair authentication.
-        public static readonly string AUTH_NAME = "snowflake_jwt";
+        public const string AUTH_NAME = "snowflake_jwt";
 
         // The logger.
         private static readonly SFLogger logger =
@@ -75,6 +75,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Add the token to the Data attribute
             data.Token = jwtToken;
+            SetSpecializedAuthenticatorData(ref data);
         }
 
         /// <summary>
@@ -85,9 +86,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             logger.Info("Key-pair Authentication");
 
-            bool hasPkPath = 
+            bool hasPkPath =
                 session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
-            bool hasPkContent = 
+            bool hasPkContent =
                 session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
             session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
@@ -100,36 +101,29 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 try
                 {
-                    PemReader pr = null;
-                    if (null != pkPwd)
+                    using (PemReader pr = CreatePemReader(tr, pkPwd))
                     {
-                        IPasswordFinder ipwdf = new PasswordFinder(pkPwd);
-                        pr = new PemReader(tr, ipwdf);
-                    }
-                    else
-                    {
-                        pr = new PemReader(tr);
-                    }
+                        object key = pr.ReadObject();
+                        // Infer what the pem reader is sending back based on the object properties
+                        if (key.GetType().GetProperty("Private") != null)
+                        {
+                            // PKCS1 key
+                            keypair = (AsymmetricCipherKeyPair)key;
+                            rsaParams = DotNetUtilities.ToRSAParameters(
+                                keypair.Private as RsaPrivateCrtKeyParameters);
+                        }
+                        else
+                        {
+                            // PKCS8 key
+                            RsaPrivateCrtKeyParameters pk = (RsaPrivateCrtKeyParameters)key;
+                            rsaParams = DotNetUtilities.ToRSAParameters(pk);
+                            keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
+                        }
 
-                    object key = pr.ReadObject();
-                    // Infer what the pem reader is sending back based on the object properties
-                    if (key.GetType().GetProperty("Private") != null)
-                    {
-                        // PKCS1 key
-                        keypair = (AsymmetricCipherKeyPair)key;
-                        rsaParams = DotNetUtilities.ToRSAParameters(
-                        keypair.Private as RsaPrivateCrtKeyParameters);
-                    }
-                    else
-                    {
-                        // PKCS8 key
-                        RsaPrivateCrtKeyParameters pk = (RsaPrivateCrtKeyParameters)key;
-                        rsaParams = DotNetUtilities.ToRSAParameters(pk);
-                        keypair = DotNetUtilities.GetRsaKeyPair(rsaParams);
-                    }
-                    if (keypair == null)
-                    {
-                        throw new Exception("Unknown error.");
+                        if (keypair == null)
+                        {
+                            throw new Exception("Unknown error.");
+                        }
                     }
                 }
                 catch (Exception e)
@@ -152,31 +146,31 @@ namespace Snowflake.Data.Core.Authenticator
                 byte[] sha256Hash = SHA256Encoder.ComputeHash(publicKeyEncoded);
                 publicKeyFingerPrint = "SHA256:" + Convert.ToBase64String(sha256Hash);
             }
-            
-            // Generating the token 
+
+            // Generating the token
             var now = DateTime.UtcNow;
             System.DateTime dtDateTime =
                 new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             long secondsSinceEpoch = (long)((now - dtDateTime).TotalSeconds);
 
-            /* 
+            /*
              * Payload content
-             *      iss : $accountName.$userName.$pulicKeyFingerprint
+             *      iss : $accountName.$userName.$publicKeyFingerprint
              *      sub : $accountName.$userName
              *      iat : $now
              *      exp : $now + LIFETIME
-             * 
+             *
              * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
             */
-            String accountUser = 
-                session.properties[SFSessionProperty.ACCOUNT].ToUpper() + 
-                "." + 
+            String accountUser =
+                session.properties[SFSessionProperty.ACCOUNT].ToUpper() +
+                "." +
                 session.properties[SFSessionProperty.USER].ToUpper();
             String issuer = accountUser + "." + publicKeyFingerPrint;
             var claims = new[] {
                         new Claim(
-                            JwtRegisteredClaimNames.Iat, 
-                            secondsSinceEpoch.ToString(), 
+                            JwtRegisteredClaimNames.Iat,
+                            secondsSinceEpoch.ToString(),
                             System.Security.Claims.ClaimValueTypes.Integer64),
                         new Claim(JwtRegisteredClaimNames.Sub, accountUser),
                     };
@@ -205,6 +199,19 @@ namespace Snowflake.Data.Core.Authenticator
             string jwtToken = handler.WriteToken(token);
 
             return jwtToken;
+        }
+
+        private PemReader CreatePemReader(TextReader textReader, string privateKeyPassword)
+        {
+            if (null != privateKeyPassword)
+            {
+                IPasswordFinder ipwdf = new PasswordFinder(privateKeyPassword);
+                return new PemReader(textReader, ipwdf);
+            }
+            else
+            {
+                return new PemReader(textReader);
+            }
         }
 
         /// <summary>

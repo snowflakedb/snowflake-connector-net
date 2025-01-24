@@ -13,6 +13,8 @@ namespace Snowflake.Data.Core
 {
     class SFMultiStatementsResultSet : SFBaseResultSet
     {
+        internal override ResultFormat ResultFormat => curResultSet.ResultFormat;
+
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFMultiStatementsResultSet>();
 
         private string[] resultIds;
@@ -88,6 +90,16 @@ namespace Snowflake.Data.Core
             return (curResultSet != null);
         }
 
+        internal override bool HasRows()
+        {
+            if (curResultSet == null)
+            {
+                return false;
+            }
+            
+            return curResultSet.HasRows();
+        }
+        
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
@@ -97,18 +109,12 @@ namespace Snowflake.Data.Core
             return curResultSet.Rewind();
         }
 
-        internal override UTF8Buffer getObjectInternal(int columnIndex)
-        {
-            return curResultSet.getObjectInternal(columnIndex);
-        }
-
         private void updateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
-            session.database = responseData.finalDatabaseName;
-            session.schema = responseData.finalSchemaName;
-
+            session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
+            session.UpdateQueryContextCache(responseData.QueryContext);
         }
 
         private void updateResultMetadata()
@@ -125,6 +131,91 @@ namespace Snowflake.Data.Core
                 columnCount = 0;
                 sfResultSetMetaData = null;
             }
+        }
+        
+        internal override bool IsDBNull(int ordinal)
+        {
+            return curResultSet.IsDBNull(ordinal);
+        }
+        
+        internal override object GetValue(int ordinal)
+        {
+            return curResultSet.GetValue(ordinal);
+        }
+
+        internal override bool GetBoolean(int ordinal)
+        {
+            return curResultSet.GetBoolean(ordinal);
+        }
+        
+        internal override byte GetByte(int ordinal)
+        {
+            return curResultSet.GetByte(ordinal);
+        }
+
+        internal override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
+        {
+            return curResultSet.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override char GetChar(int ordinal)
+        {
+            return curResultSet.GetChar(ordinal);
+        }
+        
+        internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
+        {
+            return curResultSet.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
+        }
+
+        internal override DateTime GetDateTime(int ordinal)
+        {
+            return curResultSet.GetDateTime(ordinal);
+        }
+
+        internal override TimeSpan GetTimeSpan(int ordinal)
+        {
+            return curResultSet.GetTimeSpan(ordinal);
+        }
+
+        internal override decimal GetDecimal(int ordinal)
+        {
+            return curResultSet.GetDecimal(ordinal);
+        }
+
+        internal override double GetDouble(int ordinal)
+        {
+            return curResultSet.GetDouble(ordinal);
+        }
+
+        internal override float GetFloat(int ordinal)
+        {
+            return curResultSet.GetFloat(ordinal);
+        }
+
+        internal override Guid GetGuid(int ordinal)
+        {
+            return curResultSet.GetGuid(ordinal);
+        }
+
+        internal override short GetInt16(int ordinal)
+        {
+            return curResultSet.GetInt16(ordinal);
+        }
+
+        internal override int GetInt32(int ordinal)
+        {
+            return curResultSet.GetInt32(ordinal);
+        }
+
+        internal override long GetInt64(int ordinal)
+        {
+            return curResultSet.GetInt64(ordinal);
+        }
+        
+        internal override string GetString(int ordinal)
+        {
+            return curResultSet.GetString(ordinal);
         }
     }
 }

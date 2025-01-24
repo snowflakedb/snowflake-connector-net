@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Jira login
-        uses: atlassian/gajira-login@master
+        uses: atlassian/gajira-login@v3
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
@@ -23,7 +23,7 @@ jobs:
           echo ::set-output name=jira::$jira
       - name: Comment on issue
         uses: atlassian/gajira-comment@master
-        if: startsWith(steps.extract.outputs.jira, 'SNOW-')
+        if: startsWith(steps.extract.outputs.jira, 'SNOW-') && github.event.comment.user.login != 'codecov[bot]'
         with:
           issue: "${{ steps.extract.outputs.jira }}"
           comment: "${{ github.event.comment.user.login }} commented:\n\n${{ github.event.comment.body }}\n\n${{ github.event.comment.html_url }}"

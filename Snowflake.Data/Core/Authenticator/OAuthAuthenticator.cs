@@ -1,7 +1,4 @@
 ﻿using Snowflake.Data.Log;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,7 +11,7 @@ namespace Snowflake.Data.Core.Authenticator
     class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     {
         // The authenticator setting value to use to authenticate using key pair authentication.
-        public static readonly string AUTH_NAME = "oauth";
+        public const string AUTH_NAME = "oauth";
 
         // The logger.
         private static readonly SFLogger logger =
@@ -48,6 +45,7 @@ namespace Snowflake.Data.Core.Authenticator
             data.Token = session.properties[SFSessionProperty.TOKEN];
             // Remove the login name for an OAuth session
             data.loginName = "";
+            SetSecondaryAuthenticationData(ref data);
         }
     }
 }

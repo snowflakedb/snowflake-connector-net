@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.Mock
 
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, _restRequester);
+            SfSession = new SFSession(ConnectionString, Password, Passcode, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
@@ -91,6 +91,11 @@ namespace Snowflake.Data.Tests.Mock
         private void OnSessionEstablished()
         {
             _connectionState = ConnectionState.Open;
+        }
+
+        protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+        {
+            return false;
         }
     }
 }

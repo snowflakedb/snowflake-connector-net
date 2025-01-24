@@ -1,7 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net472</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
@@ -11,37 +10,33 @@
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
-    <Authors>howryu, tchen</Authors>
-    <Copyright>Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.</Copyright>
-    <Version>2.0.19</Version>
+    <Authors>Snowflake</Authors>
+    <Version>4.2.0</Version>
     <DebugType>Full</DebugType>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(TargetFramework)', '^net\d'))">
-	<DefineConstants>NETFRAMEWORK</DefineConstants>
-  </PropertyGroup>
-	
+
   <ItemGroup>
+    <PackageReference Include="Apache.Arrow" Version="14.0.2" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
-    <PackageReference Include="Google.Cloud.Storage.V1" Version="2.5.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
-    <PackageReference Include="Azure.Storage.Common" Version="12.9.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
+    <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
+    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="log4net" Version="2.0.12" />
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.10.2" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.1" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <Reference Include="System.Net.Http" />
+    <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
+  <ItemGroup Condition="'$(Configuration)' != 'Release'">
+    <InternalsVisibleTo Include="Snowflake.Data.Tests" />
+    <!--needed by Moq to be able to mock internal interfaces-->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
@@ -51,13 +46,17 @@
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AssemblyVersion>$(Version)</AssemblyVersion>
   </PropertyGroup>
-  
+
+  <PropertyGroup>
+    <DefineConstants Condition="'$(DefineAdditionalConstants)' != ''">$(DefineConstants);$(DefineAdditionalConstants)</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>

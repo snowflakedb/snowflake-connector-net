@@ -4,14 +4,19 @@ on:
   schedule:
     - cron: '* */12 * * *'
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 concurrency: snyk-issue
 
 jobs:
-  whitesource:
+  snyk:
     runs-on: ubuntu-latest
     steps:
     - name: checkout action
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: snowflakedb/whitesource-actions
         token: ${{ secrets.WHITESOURCE_ACTION_TOKEN }}

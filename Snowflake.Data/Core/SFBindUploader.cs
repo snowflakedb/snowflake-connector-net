@@ -75,26 +75,29 @@ namespace Snowflake.Data.Core
 
                 StringBuilder sBuffer = new StringBuilder();
                 MemoryStream ms = new MemoryStream();
-                StreamWriter tw = new StreamWriter(ms);
+                using (StreamWriter tw = new StreamWriter(ms))
+                {
 
-                for (int i = startIndex; i < rowNum; i++)
-                {
-                    sBuffer.Append(dataRows[i]);
-                }
-                tw.Write(sBuffer.ToString());
-                tw.Flush();
+                    for (int i = startIndex; i < rowNum; i++)
+                    {
+                        sBuffer.Append(dataRows[i]);
+                    }
 
-                try
-                {
-                    string fileName = (++fileCount).ToString();
-                    UploadStream(ref ms, fileName);
-                    startIndex = rowNum;
-                    curBytes = 0;
-                }
-                catch (IOException e)
-                {
-                    // failure using stream put
-                    throw new Exception("file stream upload error." + e.ToString());
+                    tw.Write(sBuffer.ToString());
+                    tw.Flush();
+
+                    try
+                    {
+                        string fileName = (++fileCount).ToString();
+                        UploadStream(ref ms, fileName);
+                        startIndex = rowNum;
+                        curBytes = 0;
+                    }
+                    catch (IOException e)
+                    {
+                        // failure using stream put
+                        throw new Exception("file stream upload error." + e.ToString());
+                    }
                 }
             }
         }
@@ -123,26 +126,28 @@ namespace Snowflake.Data.Core
 
                 StringBuilder sBuffer = new StringBuilder();
                 MemoryStream ms = new MemoryStream();
-                StreamWriter tw = new StreamWriter(ms);
+                using (StreamWriter tw = new StreamWriter(ms))
+                {
+                    for (int i = startIndex; i < rowNum; i++)
+                    {
+                        sBuffer.Append(dataRows[i]);
+                    }
 
-                for (int i = startIndex; i < rowNum; i++)
-                {
-                    sBuffer.Append(dataRows[i]);
-                }
-                tw.Write(sBuffer.ToString());
-                tw.Flush();
+                    tw.Write(sBuffer.ToString());
+                    tw.Flush();
 
-                try
-                {
-                    string fileName = (++fileCount).ToString();
-                    await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
-                    startIndex = rowNum;
-                    curBytes = 0;
-                }
-                catch (IOException e)
-                {
-                    // failure using stream put
-                    throw new Exception("file stream upload error." + e.ToString());
+                    try
+                    {
+                        string fileName = (++fileCount).ToString();
+                        await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
+                        startIndex = rowNum;
+                        curBytes = 0;
+                    }
+                    catch (IOException e)
+                    {
+                        // failure using stream put
+                        throw new Exception("file stream upload error." + e.ToString());
+                    }
                 }
             }
         }
@@ -152,7 +157,7 @@ namespace Snowflake.Data.Core
             List<BindingDTO> arrbinds = bindings.Values.ToList();
             List<List<object>> bindList = new List<List<object>>();
             List<string> types = new List<string>(); // for the binding types
-            dataRows = new List<string>(); // for the converted data string 
+            dataRows = new List<string>(); // for the converted data string
             int rowSize = ((List<object>)arrbinds[0].value).Count;
             int paramSize = arrbinds.Count;
 
@@ -202,7 +207,7 @@ namespace Snowflake.Data.Core
             SFStatement statement = new SFStatement(session);
             statement.SetUploadStream(stream, destFileName, stagePath);
             statement.ExecuteTransfer(putStmt);
-            
+
         }
 
         internal async Task UploadStreamAsync(MemoryStream stream, string destFileName, CancellationToken cancellationToken)
@@ -224,13 +229,13 @@ namespace Snowflake.Data.Core
             statement.SetUploadStream(stream, destFileName, stagePath);
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
-        private string GetCSVData(string sType, string sValue)
+
+        internal string GetCSVData(string sType, string sValue)
         {
             if (sValue == null)
                 return sValue;
 
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
-            DateTimeOffset dateTimeOffset = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTime epoch = SFDataConverter.UnixEpoch;
             switch (sType)
             {
                 case "TEXT":
@@ -246,33 +251,41 @@ namespace Snowflake.Data.Core
                         return '"' + sValue.Replace("\"", "\"\"") + '"';
                     return sValue;
                 case "DATE":
-                    long dateLong = long.Parse(sValue);
-                    DateTime date = dateTime.AddMilliseconds(dateLong).ToUniversalTime();
+                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ms] from Epoch
+                    DateTime date = epoch.AddMilliseconds(msFromEpoch);
                     return date.ToShortDateString();
                 case "TIME":
-                    long timeLong = long.Parse(sValue);
-                    DateTime time = dateTime.AddMilliseconds(timeLong).ToUniversalTime();
-                    return time.ToLongTimeString();
+                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
+                    DateTime time = epoch.AddTicks(nsSinceMidnight/100);
+                    return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
-                    long ltzLong = long.Parse(sValue);
-                    TimeSpan ltzts = new TimeSpan(ltzLong / 100);
-                    DateTime ltzdt = dateTime + ltzts;
-                    return ltzdt.ToString();
+                    long ticksFromEpochLtz =
+                        long.TryParse(sValue, out var nsLtz)
+                            ? nsLtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
+
+                    DateTime ltz = epoch.AddTicks(ticksFromEpochLtz);
+                    return ltz.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
-                    long ntzLong = long.Parse(sValue);
-                    TimeSpan ts = new TimeSpan(ntzLong/100);
-                    DateTime dt = dateTime + ts;
-                    return dt.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
+                    long ticksFromEpochNtz =
+                        long.TryParse(sValue, out var nsNtz)
+                            ? nsNtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
+
+                    DateTime ntz = epoch.AddTicks(ticksFromEpochNtz);
+                    return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
-                    long tzLong = long.Parse(tstzString[0]);
-                    int tzInt = (int.Parse(tstzString[1]) - 1440) / 60;
-                    TimeSpan tzts = new TimeSpan(tzLong/100);
-                    DateTime tzdt = dateTime + tzts;
-                    TimeSpan tz = new TimeSpan(tzInt, 0, 0);
-                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(tzdt, tz);
+                    long ticksFromEpochTz =
+                        long.TryParse(tstzString[0], out var nsTz)
+                            ? nsTz / 100
+                            : (long)(decimal.Parse(tstzString[0]) / 100);
+
+                    int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
+                    DateTime timestamp = epoch.AddTicks(ticksFromEpochTz).AddMinutes(timeZoneOffset);
+                    TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
+                    DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
-                    
             }
             return sValue;
         }
@@ -290,14 +303,14 @@ namespace Snowflake.Data.Core
                     try
                     {
                         SFStatement statement = new SFStatement(session);
-                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false);
+                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false, false);
                         session.SetArrayBindStage(STAGE_NAME);
                     }
                     catch (Exception e)
                     {
                         session.SetArrayBindStageThreshold(0);
                         logger.Error("Failed to create temporary stage for array binds.", e);
-                        throw e;
+                        throw;
                     }
                 }
             }
@@ -314,14 +327,14 @@ namespace Snowflake.Data.Core
                 try
                 {
                     SFStatement statement = new SFStatement(session);
-                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, cancellationToken).ConfigureAwait(false);
+                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, false, cancellationToken).ConfigureAwait(false);
                     session.SetArrayBindStage(STAGE_NAME);
                 }
                 catch (Exception e)
                 {
                     session.SetArrayBindStageThreshold(0);
                     logger.Error("Failed to create temporary stage for array binds.", e);
-                    throw e;
+                    throw;
                 }
             }
         }

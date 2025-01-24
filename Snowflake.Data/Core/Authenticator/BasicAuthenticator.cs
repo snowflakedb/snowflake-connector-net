@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Authenticator
 {
     class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "snowflake";
+        public const string AUTH_NAME = "snowflake";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
 
         internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
@@ -34,6 +34,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Only need to add the password to Data for basic authentication
             data.password = session.properties[SFSessionProperty.PASSWORD];
+            SetSecondaryAuthenticationData(ref data);
         }
     }
 

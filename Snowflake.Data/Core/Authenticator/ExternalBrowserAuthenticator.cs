@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public static readonly string AUTH_NAME = "externalbrowser";
+        public const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
@@ -30,9 +31,11 @@ namespace Snowflake.Data.Core.Authenticator
             "</body></html>;"
             );
         // The saml token to send in the login request.
-        private string samlResponseToken;
+        private string _samlResponseToken;
         // The proof key to send in the login request.
-        private string proofKey;
+        private string _proofKey;
+        // Event for successful authentication.
+        private ManualResetEvent _successEvent;
 
         /// <summary>
         /// Constructor of the External authenticator
@@ -52,36 +55,37 @@ namespace Snowflake.Data.Core.Authenticator
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
-                var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse =
-                    await session.restRequester.PostAsync<AuthenticatorResponse>(
-                        authenticatorRestRequest,
-                        cancellationToken
-                    ).ConfigureAwait(false);
-                authenticatorRestResponse.FilterFailedResponse();
+                string loginUrl;
+                if (session._disableConsoleLogin)
+                {
+                    var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
+                    var authenticatorRestResponse =
+                        await session.restRequester.PostAsync<AuthenticatorResponse>(
+                            authenticatorRestRequest,
+                            cancellationToken
+                        ).ConfigureAwait(false);
+                    authenticatorRestResponse.FilterFailedResponse();
 
-                var idpUrl = authenticatorRestResponse.data.ssoUrl;
-                proofKey = authenticatorRestResponse.data.proofKey;
+                    loginUrl = authenticatorRestResponse.data.ssoUrl;
+                    _proofKey = authenticatorRestResponse.data.proofKey;
+                }
+                else
+                {
+                    _proofKey = GenerateProofKey();
+                    loginUrl = GetLoginUrl(_proofKey, localPort);
+                }
 
                 logger.Debug("Open browser");
-                StartBrowser(idpUrl);
+                StartBrowser(loginUrl);
 
                 logger.Debug("Get the redirect SAML request");
-                var context = await httpListener.GetContextAsync().ConfigureAwait(false);
-                var request = context.Request;
-                samlResponseToken = ValidateAndExtractToken(request);
-                HttpListenerResponse response = context.Response;
-                try
+                _successEvent = new ManualResetEvent(false);
+                httpListener.BeginGetContext(GetContextCallback, httpListener);
+                var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+                if (!_successEvent.WaitOne(timeoutInSec * 1000))
                 {
-                    using (var output = response.OutputStream)
-                    {
-                        await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
-                    }
-                }
-                catch
-                {
-                    // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("External browser response not sent out");
+                    logger.Warn("Browser response timeout");
+                    throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
                 }
 
                 httpListener.Stop();
@@ -99,24 +103,55 @@ namespace Snowflake.Data.Core.Authenticator
             int localPort = GetRandomUnusedPort();
             using (var httpListener = GetHttpListener(localPort))
             {
-                httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
                 httpListener.Start();
 
                 logger.Debug("Get IdpUrl and ProofKey");
-                var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
-                authenticatorRestResponse.FilterFailedResponse();
+                string loginUrl;
+                if (session._disableConsoleLogin)
+                {
+                    var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
+                    var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+                    authenticatorRestResponse.FilterFailedResponse();
 
-                var idpUrl = authenticatorRestResponse.data.ssoUrl;
-                proofKey = authenticatorRestResponse.data.proofKey;
+                    loginUrl = authenticatorRestResponse.data.ssoUrl;
+                    _proofKey = authenticatorRestResponse.data.proofKey;
+                }
+                else
+                {
+                    _proofKey = GenerateProofKey();
+                    loginUrl = GetLoginUrl(_proofKey, localPort);
+                }
 
                 logger.Debug("Open browser");
-                StartBrowser(idpUrl);
+                StartBrowser(loginUrl);
 
                 logger.Debug("Get the redirect SAML request");
-                var context = httpListener.GetContext();
-                var request = context.Request;
-                samlResponseToken = ValidateAndExtractToken(request);
+                _successEvent = new ManualResetEvent(false);
+                httpListener.BeginGetContext(GetContextCallback, httpListener);
+                var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+                if (!_successEvent.WaitOne(timeoutInSec * 1000))
+                {
+                    logger.Warn("Browser response timeout");
+                    throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
+                }
+
+                httpListener.Stop();
+            }
+
+            logger.Debug("Send login request");
+            base.Login();
+        }
+
+        private void GetContextCallback(IAsyncResult result)
+        {
+            HttpListener httpListener = (HttpListener) result.AsyncState;
+
+            if (httpListener.IsListening)
+            {
+                HttpListenerContext context = httpListener.EndGetContext(result);
+                HttpListenerRequest request = context.Request;
+
+                _samlResponseToken = ValidateAndExtractToken(request);
                 HttpListenerResponse response = context.Response;
                 try
                 {
@@ -130,12 +165,9 @@ namespace Snowflake.Data.Core.Authenticator
                     // Ignore the exception as it does not affect the overall authentication flow
                     logger.Warn("External browser response not sent out");
                 }
-
-                httpListener.Stop();
             }
 
-            logger.Debug("Send login request");
-            base.Login();
+            _successEvent.Set();
         }
 
         private static int GetRandomUnusedPort()
@@ -149,9 +181,9 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static HttpListener GetHttpListener(int port)
         {
-            string redirectURI = string.Format("http://{0}:{1}/", IPAddress.Loopback, port);
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add(redirectURI);
+            listener.Prefixes.Add($"http://{IPAddress.Loopback}:{port}/");
+            listener.Prefixes.Add($"http://localhost:{port}/");
             return listener;
         }
 
@@ -172,10 +204,6 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
-#if NETFRAMEWORK
-            // .net standard would pass here
-            Process.Start(url);
-#else
             // hack because of this: https://github.com/dotnet/corefx/issues/10361
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -194,7 +222,6 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
             }
-#endif
         }
 
         private static string ValidateAndExtractToken(HttpListenerRequest request)
@@ -231,8 +258,29 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             // Add the token and proof key to the Data
-            data.Token = samlResponseToken;
-            data.ProofKey = proofKey;
+            data.Token = _samlResponseToken;
+            data.ProofKey = _proofKey;
+            SetSpecializedAuthenticatorData(ref data);
+        }
+
+        private string GetLoginUrl(string proofKey, int localPort)
+        {
+            Dictionary<string, string> parameters = new Dictionary<string, string>()
+            {
+                { "login_name", session.properties[SFSessionProperty.USER]},
+                { "proof_key", proofKey },
+                { "browser_mode_redirect_port", localPort.ToString() }
+            };
+            Uri loginUrl = session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
+            return loginUrl.ToString();
+        }
+
+        private string GenerateProofKey()
+        {
+            Random rnd = new Random();
+            Byte[] randomness = new Byte[32];
+            rnd.NextBytes(randomness);
+            return Convert.ToBase64String(randomness);
         }
     }
 }
