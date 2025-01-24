@@ -45,6 +45,7 @@ namespace Snowflake.Data.Log
         public static void SetCustomLogger(ILogger customLogger)
         {
             s_customLogger = customLogger;
+            SFLoggerPair.s_customLogger = s_customLogger;
         }
 
         internal static SFLogger GetLogger<T>()

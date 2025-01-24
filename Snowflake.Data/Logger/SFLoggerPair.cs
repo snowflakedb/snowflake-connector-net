@@ -12,7 +12,7 @@ namespace Snowflake.Data.Log
     public class SFLoggerPair : SFLogger
     {
         private static SFLogger s_snowflakeLogger;
-        private static ILogger s_customLogger;
+        internal static ILogger s_customLogger;
 
         public SFLoggerPair(SFLogger snowflakeLogger, ILogger customLogger)
         {
