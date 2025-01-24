@@ -444,7 +444,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestEncryptionMetadataReadingFailsWhenNoMandatoryProperty()
+        public void TestEncryptionMetadataReadingFailsWhenMandatoryPropertyIsMissing()
         {
             // arrange
             var metadataWithoutMatDesc = new Dictionary<string, string>
