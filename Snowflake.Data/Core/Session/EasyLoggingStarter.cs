@@ -118,6 +118,12 @@ namespace Snowflake.Data.Core
 
         private string GetLogPath(string logPath)
         {
+            if (EasyLoggerManager.UseSTDOUT(logPath))
+            {
+                // when requested to use STDOUT, do not want to alter the logPath, or else ReconfigureEasyLogging
+                // will not recognize that the path is not actually a path.
+                return logPath;
+            }
             var logPathOrDefault = logPath;
             if (string.IsNullOrEmpty(logPath))
             {
