@@ -3,79 +3,92 @@
  */
 
 using NUnit.Framework;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.AuthenticationTests
 {
+
     [NonParallelizable]
-    public class OktaConnection : SFBaseTest
+    public class OktaConnectionTest : SFBaseTest
     {
         private string _connectionString = "";
-        AuthTestHelper authTestHelper = new AuthTestHelper();
 
         [SetUp]
         public void SetUp()
         {
-            var parameters = AuthConnectionParameters.GetOktaConnectionParameters();
-            _connectionString = AuthConnectionParameters.SetOktaConnectionParameters(parameters);
-            authTestHelper.cleanBrowserProcess();
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            var parameters = AuthConnectionString.GetOktaConnectionString();
+            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            authTestHelper.CleanBrowserProcess();
 
         }
 
-        [Test, Order(1)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaSuccessful()
         {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsNotThrown();
+            authTestHelper.VerifyExceptionIsNotThrown();
 
         }
 
-        [Test, Order(2)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongUsernameParam()
         {
-            var parameters = AuthConnectionParameters.GetOktaConnectionParameters();
-            parameters["user"] = "differentUser";
-            _connectionString = AuthConnectionParameters.SetOktaConnectionParameters(parameters);
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            var parameters = AuthConnectionString.GetOktaConnectionString();
+            parameters[SFSessionProperty.USER] = "differentUser";
+            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("401 (Unauthorized)");
+            authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test, Order(3)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongCredentials()
         {
-            var parameters = AuthConnectionParameters.GetOktaConnectionParameters();
-            parameters["user"] = "differentUser";
-            parameters["password"] = "fakepassword";
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            _connectionString = AuthConnectionParameters.SetOktaConnectionParameters(parameters);
+            var parameters = AuthConnectionString.GetOktaConnectionString();
+            parameters[SFSessionProperty.USER] = "differentUser";
+            parameters[SFSessionProperty.PASSWORD] = "fakepassword";
+
+            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("401 (Unauthorized)");
+            authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test, Order(4)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongUrl()
         {
-            var parameters = AuthConnectionParameters.GetOktaConnectionParameters();
-            parameters["authenticator"] = "https://invalid.okta.com/";
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            _connectionString = AuthConnectionParameters.SetOktaConnectionParameters(parameters);
+            var parameters = AuthConnectionString.GetOktaConnectionString();
+            parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.okta.com/";
+
+            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("The specified authenticator is not accepted by your Snowflake account configuration");
+            authTestHelper.VerifyExceptionIsThrown("The specified authenticator is not accepted by your Snowflake account configuration");
         }
 
 
-        [Test, Order(5)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingUrlWithoutOkta()
         {
-            var parameters = AuthConnectionParameters.GetOktaConnectionParameters();
-            parameters["authenticator"] = "https://invalid.abc.com/";
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            _connectionString = AuthConnectionParameters.SetOktaConnectionParameters(parameters);
+            var parameters = AuthConnectionString.GetOktaConnectionString();
+            parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.abc.com/";
+
+            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("Unknown authenticator");
+            authTestHelper.VerifyExceptionIsThrown("Unknown authenticator");
         }
     }
 }

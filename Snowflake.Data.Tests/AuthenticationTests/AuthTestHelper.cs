@@ -4,24 +4,29 @@ using System.Diagnostics;
 using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
+
 
 namespace Snowflake.Data.Tests.AuthenticationTests
 {
+
     public class AuthTestHelper
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthTestHelper>();
+
         private Exception _exception;
-        private readonly bool runAuthTestsManually;
+        private readonly bool _runAuthTestsManually;
         public AuthTestHelper()
         {
             string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
-            runAuthTestsManually = string.IsNullOrEmpty(envVar) ? true : bool.Parse(envVar);
+            _runAuthTestsManually = bool.Parse(envVar ?? "true");
         }
 
-        public void ProvideCredentials(string scenario, string login, string password)
+        private void ProvideCredentials(string scenario, string login, string password)
         {
             try
             {
-                String provideBrowserCredentialsPath = "/externalbrowser/provideBrowserCredentials.js";
+                string provideBrowserCredentialsPath = "/externalbrowser/provideBrowserCredentials.js";
 
                 var startInfo = new ProcessStartInfo
                 {
@@ -44,8 +49,8 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                     string output = process.StandardOutput.ReadToEnd();
                     string error = process.StandardError.ReadToEnd();
 
-                    Console.WriteLine("Output: " + output);
-                    Console.WriteLine("Error: " + error);
+                    s_logger.Info("Output: " + output);
+                    s_logger.Info("Error: " + error);
                 }
             }
             catch (Exception e)
@@ -54,9 +59,10 @@ namespace Snowflake.Data.Tests.AuthenticationTests
             }
         }
 
-        public void cleanBrowserProcess()
+        public void CleanBrowserProcess()
         {
-            if (!runAuthTestsManually)
+            if (_runAuthTestsManually)
+                return;
             {
                 try {
                     string cleanBrowserProcessesPath = "/externalbrowser/cleanBrowserProcesses.js";
@@ -72,7 +78,7 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                     using (var process = new Process { StartInfo = startInfo })
                     {
                         process.Start();
-                        if (!process.WaitForExit(20000)) // Wait for 15 seconds
+                        if (!process.WaitForExit(20000)) // Wait for 20 seconds
                         {
                             process.Kill();
                             throw new TimeoutException("The process did not complete in the allotted time.");
@@ -80,8 +86,8 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                         string output = process.StandardOutput.ReadToEnd();
                         string error = process.StandardError.ReadToEnd();
 
-                        Console.WriteLine("Output: " + output);
-                        Console.WriteLine("Error: " + error);
+                        s_logger.Info("Output: " + output);
+                        s_logger.Info("Error: " + error);
                     }
                 }
                 catch (Exception e)
@@ -107,8 +113,8 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                     {
                         command.CommandText = "SELECT 1";
                         var result = command.ExecuteScalar();
-                        Console.WriteLine(result.ToString());
                         Assert.AreEqual("1", result.ToString());
+                        s_logger.Info(result.ToString());
                     }
                 }
             }
@@ -118,29 +124,29 @@ namespace Snowflake.Data.Tests.AuthenticationTests
             }
         }
 
-        public Thread getConnectAndExecuteSimpleQueryThread(string parameters)
+        public Thread GetConnectAndExecuteSimpleQueryThread(string parameters)
         {
             return new Thread(() => ConnectAndExecuteSimpleQuery(parameters));
         }
 
-        public Thread getProvideCredentialsThread(string scenario, string login, string password)
+        public Thread GetProvideCredentialsThread(string scenario, string login, string password)
         {
             return new Thread(() => ProvideCredentials(scenario, login, password));
         }
 
-        public void verifyExceptionIsNotThrown() {
+        public void VerifyExceptionIsNotThrown() {
             Assert.That(_exception, Is.Null, "Unexpected exception thrown");
         }
 
-        public void verifyExceptionIsThrown(string error) {
+        public void VerifyExceptionIsThrown(string error) {
             Assert.That(_exception, Is.Not.Null, "Expected exception was not thrown");
             Assert.That(_exception.Message, Does.Contain(error), "Unexpected exception message.");
 
         }
 
-        public void connectAndProvideCredentials(Thread provideCredentialsThread, Thread connectThread)
+        public void ConnectAndProvideCredentials(Thread provideCredentialsThread, Thread connectThread)
         {
-            if (runAuthTestsManually)
+            if (_runAuthTestsManually)
             {
                 connectThread.Start();
                 connectThread.Join();
@@ -152,7 +158,6 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                 provideCredentialsThread.Join();
                 connectThread.Join();
             }
-
         }
     }
 }

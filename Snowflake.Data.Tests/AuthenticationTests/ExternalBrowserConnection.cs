@@ -4,87 +4,96 @@
 
 using System.Threading;
 using NUnit.Framework;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.AuthenticationTests
 {
+
     [NonParallelizable]
-    public class ExternalBrowserConnection : SFBaseTest
+    public class ExternalBrowserConnectionTest : SFBaseTest
     {
         private string _connectionString = "";
-        string _login = AuthConnectionParameters.SsoUser;
-        string _password = AuthConnectionParameters.SsoPassword;
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        private string _login = AuthConnectionString.SsoUser;
+        private string _password = AuthConnectionString.SsoPassword;
 
         [SetUp]
         public void SetUp()
         {
-            _login = AuthConnectionParameters.SsoUser;
-            _password = AuthConnectionParameters.SsoPassword;
-            authTestHelper.cleanBrowserProcess();
-            var parameters = AuthConnectionParameters.GetExternalBrowserConnectionParameters();
-            _connectionString = AuthConnectionParameters.SetExternalBrowserConnectionParameters(parameters);
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+            _login = AuthConnectionString.SsoUser;
+            _password = AuthConnectionString.SsoPassword;
+            authTestHelper.CleanBrowserProcess();
+            var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+            _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         }
 
-        [Test, Order(1)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingExternalBrowserSuccessful()
         {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            Thread connectThread = authTestHelper.getConnectAndExecuteSimpleQueryThread(_connectionString);
-            Thread provideCredentialsThread = authTestHelper.getProvideCredentialsThread("success", _login, _password);
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
-            authTestHelper.connectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.verifyExceptionIsNotThrown();
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsNotThrown();
 
         }
 
-        [Test, Order(2)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
-            var parameters = AuthConnectionParameters.GetExternalBrowserConnectionParameters();
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            parameters["user"] = "differentUser";
-            _connectionString = AuthConnectionParameters.SetExternalBrowserConnectionParameters(parameters);
+            var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+            parameters[SFSessionProperty.USER] = "differentUser";
 
-            Thread connectThread = authTestHelper.getConnectAndExecuteSimpleQueryThread(_connectionString);
-            Thread provideCredentialsThread = authTestHelper.getProvideCredentialsThread("success", _login, _password);
+            _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
 
-            authTestHelper.connectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.verifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
 
         }
 
-    [Test, Order(3)]
+    [Test, IgnoreOnCI]
     public void TestAuthenticateUsingExternalBrowserWrongCredentials()
     {
-        var parameters = AuthConnectionParameters.GetExternalBrowserConnectionParameters();
+        AuthTestHelper authTestHelper = new AuthTestHelper();
 
-        _connectionString = AuthConnectionParameters.SetExternalBrowserConnectionParameters(parameters);
+        var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+
+        _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         _connectionString += "BROWSER_RESPONSE_TIMEOUT=15;";
 
         _login = "itsnotanaccount.com";
         _password = "fakepassword";
 
-        Thread connectThread = authTestHelper.getConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.getProvideCredentialsThread("fail", _login, _password);
+        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
 
-        authTestHelper.connectAndProvideCredentials(provideCredentialsThread, connectThread);
-        authTestHelper.verifyExceptionIsThrown("Browser response timed out after 15 seconds");
+        authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+        authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
 
     }
 
-    [Test, Order(4)]
+    [Test, IgnoreOnCI]
     public void TestAuthenticateUsingExternalBrowserTimeout()
     {
-        var parameters = AuthConnectionParameters.GetExternalBrowserConnectionParameters();
+        AuthTestHelper authTestHelper = new AuthTestHelper();
 
-        _connectionString = AuthConnectionParameters.SetExternalBrowserConnectionParameters(parameters);
+        var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+
+        _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         _connectionString += "BROWSER_RESPONSE_TIMEOUT=1;";
 
-        Thread connectThread = authTestHelper.getConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.getProvideCredentialsThread("timeout", _login, _password);
+        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("timeout", _login, _password);
 
-        authTestHelper.connectAndProvideCredentials(provideCredentialsThread, connectThread);
-        authTestHelper.verifyExceptionIsThrown("Browser response timed out after 1 seconds");
+        authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+        authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
     }
      }
 }

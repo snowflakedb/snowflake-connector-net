@@ -3,53 +3,59 @@
  */
 
 using NUnit.Framework;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.AuthenticationTests
 {
+
     [NonParallelizable]
-    public class OauthConnection : SFBaseTest
+    public class OauthConnectionTest : SFBaseTest
     {
         private string _connectionString = "";
-
-        AuthTestHelper authTestHelper = new AuthTestHelper();
 
         [SetUp]
         public void SetUp()
         {
-            string token = AuthConnectionParameters.GetOauthToken();
-            var parameters = AuthConnectionParameters.GetOauthConnectionParameters(token);
-            _connectionString = AuthConnectionParameters.SetOauthConnectionParameters(parameters);
+            string token = AuthConnectionString.GetOauthToken();
+            var parameters = AuthConnectionString.GetOauthConnectionString(token);
+            _connectionString = AuthConnectionString.SetOauthConnectionString(parameters);
 
         }
 
-        [Test, Order(1)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOauthSuccessful()
         {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsNotThrown();
+            authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, Order(2)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOauthInvalidToken()
         {
-            string token = "invalidToken";
-            var parameters = AuthConnectionParameters.GetOauthConnectionParameters(token);
-            _connectionString = AuthConnectionParameters.SetOauthConnectionParameters(parameters);
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
+            string token = "invalidToken";
+            var parameters = AuthConnectionString.GetOauthConnectionString(token);
+            _connectionString = AuthConnectionString.SetOauthConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("Invalid OAuth access token");
+            authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Test, Order(3), Ignore("Skipped, waits for SNOW-1893041")]
+        [Test, Ignore("Skipped, waits for SNOW-1893041"), IgnoreOnCI]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
-            string token = AuthConnectionParameters.GetOauthToken();
-            var parameters = AuthConnectionParameters.GetOauthConnectionParameters(token);
-            parameters["user"] = "fakeAccount";
-            _connectionString = AuthConnectionParameters.SetOauthConnectionParameters(parameters) + ";poolingEnabled=false;minPoolSize=0;";
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            string token = AuthConnectionString.GetOauthToken();
+            var parameters = AuthConnectionString.GetOauthConnectionString(token);
+            parameters[SFSessionProperty.USER] = "fakeAccount";
+            _connectionString = AuthConnectionString.SetOauthConnectionString(parameters) + ";poolingEnabled=false;minPoolSize=0;";
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
+            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
 
         }
     }

@@ -2,76 +2,69 @@
  * Copyright (c) 2012-2025 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-
 using NUnit.Framework;
 
 
 
 namespace Snowflake.Data.Tests.AuthenticationTests
 {
+
     [NonParallelizable]
-    public class KeyPairConnection : SFBaseTest
+    public class KeyPairConnectionTest : SFBaseTest
     {
         private string _connectionString = "";
 
-        AuthTestHelper authTestHelper = new AuthTestHelper();
 
-        [SetUp]
-        public void SetUp()
-         {
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingKeyPairFilcContentSuccessful()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
+            var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
+            _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
 
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        //TO BE UNCOMMENTED
-        // [Test, Order(1)]
-        // public void TestAuthenticateUsingKeyPairFilcContentSuccessful()
-        // {
-        //     var privateKey = AuthConnectionParameters.GetPriavteKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
-        //     var parameters = AuthConnectionParameters.GetKeyPairFromFileContentParameters(privateKey);
-        //     _connectionString = AuthConnectionParameters.SetPrivateKeyFromFileContentParameters(parameters);
-        //
-        //     Console.WriteLine(_connectionString);
-        //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-        //     authTestHelper.verifyExceptionIsNotThrown();
-        // }
-
-        [Test, Order(2)]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
         {
-            var privateKey = AuthConnectionParameters.GetPriavteKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
-            var parameters = AuthConnectionParameters.GetKeyPairFromFileContentParameters(privateKey);
-            _connectionString = AuthConnectionParameters.SetPrivateKeyFromFileContentParameters(parameters);
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            Console.WriteLine(_connectionString);
+            var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
+            _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("Error: JWT token is invalid");
+            authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
         }
 
-        //TO BE UNCOMMENTED
-        // [Test, Order(3)]
-        // public void TestAuthenticateUsingKeyPairFilePathSuccessful()
-        // {
-        //     var privateKeyPath = AuthConnectionParameters.GetPriavteKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
-        //     var parameters = AuthConnectionParameters.GetKeyPairFromFilePathParameters(privateKeyPath);
-        //     _connectionString = AuthConnectionParameters.SetPrivateKeyFromFilePathParameters(parameters);
-        //
-        //     Console.WriteLine(_connectionString);
-        //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-        //     authTestHelper.verifyExceptionIsNotThrown();
-        // }
+         [Test, IgnoreOnCI]
+         public void TestAuthenticateUsingKeyPairFilePathSuccessful()
+         {
+             AuthTestHelper authTestHelper = new AuthTestHelper();
 
-        [Test, Order(4)]
+             var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
+             var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
+             _connectionString = AuthConnectionString.SetPrivateKeyFromFilePathConnectionString(parameters);
+
+             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+             authTestHelper.VerifyExceptionIsNotThrown();
+         }
+
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingKeyPairFilePathInvalidKey()
         {
-            var privateKeyPath = AuthConnectionParameters.GetPriavteKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
-            var parameters = AuthConnectionParameters.GetKeyPairFromFilePathParameters(privateKeyPath);
-            _connectionString = AuthConnectionParameters.SetPrivateKeyFromFilePathParameters(parameters);
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-            Console.WriteLine(_connectionString);
+            var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
+            _connectionString = AuthConnectionString.SetPrivateKeyFromFilePathConnectionString(parameters);
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.verifyExceptionIsThrown("Error: JWT token is invalid");
+            authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
         }
     }
 }
