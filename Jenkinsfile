@@ -32,28 +32,31 @@ timestamps {
       string(name: 'parent_job', value: env.JOB_NAME),
       string(name: 'parent_build_number', value: env.BUILD_NUMBER)
     ]
-    parallel(
-      'Test': {
-        stage('Test') {
-          build job: 'RT-LanguageGo-PC', parameters: params
-        }
-      },
-      'Test Authentication': {
-        stage('Test Authentication') {
-          withCredentials([
-            string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
-            string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')
-          ]) {
-            sh '''\
-            |#!/bin/bash -e
-            |$WORKSPACE/ci/test_authentication.sh
-            '''.stripMargin()
+    stage('Test') {
+      parallel(
+        'Test': {
+          stage('Test') {
+            build job: 'RT-LanguageGo-PC', parameters: params
+          }
+        },
+        'Test Authentication': {
+          stage('Test Authentication') {
+            withCredentials([
+              string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
+              string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')
+            ]) {
+              sh '''\
+              |#!/bin/bash -e
+              |$WORKSPACE/ci/test_authentication.sh
+              '''.stripMargin()
+            }
           }
         }
-      }
-    )
+      )
+    }
   }
 }
+
 
 pipeline {
   agent { label 'regular-memory-node' }
