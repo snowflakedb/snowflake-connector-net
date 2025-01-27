@@ -42,6 +42,12 @@ timestamps {
         },
         'Test Authentication': {
           stage('Test Authentication') {
+            agent {
+              docker {
+                image 'dotnet-centos7-net6'
+                args '-u root:root'
+              }
+            }
             withCredentials([
               string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
               string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')

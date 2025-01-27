@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Test, Ignore("Skipped, waits for SNOW-1893041"), IgnoreOnCI]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
