@@ -75,7 +75,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // Add the token to the Data attribute
             data.Token = jwtToken;
-            SetSpecializedAuthenticatorData(ref data);
+            SetSecondaryAuthenticationData(ref data);
         }
 
         /// <summary>
