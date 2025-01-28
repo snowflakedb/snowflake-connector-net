@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core
     internal class EasyLoggingStarter
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingStarter>();
-        
+
         private readonly EasyLoggingConfigProvider _easyLoggingConfigProvider;
 
         private readonly EasyLoggerManager _easyLoggerManager;
@@ -28,12 +28,12 @@ namespace Snowflake.Data.Core
         private readonly EnvironmentOperations _environmentOperations;
 
         private readonly object _lockForExclusiveInit = new object();
-        
+
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
-        
+
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Core
                 _easyLoggerManager.ResetEasyLogging(logLevel);
             }
         }
-        
+
         private bool AllowedToInitialize(string configFilePathFromConnectionString)
         {
             var everTriedToInitialize = _initTrialParameters != null;
@@ -118,12 +118,6 @@ namespace Snowflake.Data.Core
 
         private string GetLogPath(string logPath)
         {
-            if (EasyLoggerManager.UseSTDOUT(logPath))
-            {
-                // when requested to use STDOUT, do not want to alter the logPath, or else ReconfigureEasyLogging
-                // will not recognize that the path is not actually a path.
-                return logPath;
-            }
             var logPathOrDefault = logPath;
             if (string.IsNullOrEmpty(logPath))
             {
@@ -133,6 +127,10 @@ namespace Snowflake.Data.Core
                 {
                     throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
                 }
+            }
+            if (EasyLoggerManager.IsStdout(logPath))
+            {
+                return logPath;
             }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
@@ -190,7 +188,7 @@ namespace Snowflake.Data.Core
         {
             return _configFilePathFromConnectionString != null;
         }
-        
+
         public bool HasDifferentConfigPath(string configFilePath)
         {
             return IsConfigFilePathGiven()
