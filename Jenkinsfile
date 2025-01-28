@@ -35,22 +35,18 @@ timestamps {
 
     stage('Test') {
       parallel(
-        'Test': {
-          stage('Test') {
-            build job: 'RT-LanguageDotnet-PC', parameters: params
-          }
-        },
         'Test Authentication': {
           stage('Test Authentication') {
-            agent {
-              docker {
-                image 'dotnet-centos7-net6'
-                args '-u root:root'
-              }
-            }
             withCredentials([
               string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
-              string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')
+              string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET'),
+              string(name: 'svn_revision', value: 'bptp-built'),
+                    string(name: 'branch', value: 'main'),
+                    string(name: 'client_git_commit', value: scmInfo.GIT_COMMIT),
+                    string(name: 'client_git_branch', value: scmInfo.GIT_BRANCH),
+                    string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu204-net9'),
+                    string(name: 'parent_job', value: env.JOB_NAME),
+                    string(name: 'parent_build_number', value: env.BUILD_NUMBER)
             ]) {
               sh '''\
               |#!/bin/bash -e
