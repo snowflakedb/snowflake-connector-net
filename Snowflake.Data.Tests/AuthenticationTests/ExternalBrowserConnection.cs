@@ -27,18 +27,18 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         }
 
-        // [Test, IgnoreOnCI]
-        // public void TestAuthenticateUsingExternalBrowserSuccessful()
-        // {
-        //     AuthTestHelper authTestHelper = new AuthTestHelper();
-        //
-        //     Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        //     Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
-        //
-        //     authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-        //     authTestHelper.VerifyExceptionIsNotThrown();
-        //
-        // }
+        [Test]
+        public void TestAuthenticateUsingExternalBrowserSuccessful()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsNotThrown();
+
+        }
     //
     //     [Test, IgnoreOnCI]
     //     public void TestAuthenticateUsingExternalBrowserMismatchedUser()
