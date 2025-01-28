@@ -22,14 +22,14 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-         // [Test, IgnoreOnCI]
-         // public void TestAuthenticateUsingOauthSuccessful()
-         // {
-         //     AuthTestHelper authTestHelper = new AuthTestHelper();
-         //
-         //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-         //     authTestHelper.VerifyExceptionIsNotThrown();
-         // }
+         [Test]
+         public void TestAuthenticateUsingOauthSuccessful()
+         {
+             AuthTestHelper authTestHelper = new AuthTestHelper();
+
+             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+             authTestHelper.VerifyExceptionIsNotThrown();
+         }
 
 //         // [Test, IgnoreOnCI]
 //         // public void TestAuthenticateUsingOauthInvalidToken()

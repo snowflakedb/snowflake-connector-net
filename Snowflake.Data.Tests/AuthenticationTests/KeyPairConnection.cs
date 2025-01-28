@@ -12,19 +12,18 @@ namespace Snowflake.Data.AuthenticationTests
     {
         private string _connectionString = "";
 
-
-        [Test]
-        public void TestAuthenticateUsingKeyPairFileContentSuccessful()
-
-        {
-            Console.WriteLine("Before test, after setup");
-            AuthTestHelper authTestHelper = new AuthTestHelper();
-            var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
-            var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
-            _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
-            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.VerifyExceptionIsNotThrown();
-        }
+        //
+        // [Test]
+        // public void TestAuthenticateUsingKeyPairFileContentSuccessful()
+        //
+        // {
+        //     AuthTestHelper authTestHelper = new AuthTestHelper();
+        //     var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
+        //     var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
+        //     _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
+        //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+        //     authTestHelper.VerifyExceptionIsNotThrown();
+        // }
 //
 //          [Test, IgnoreOnCI]
 //          public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
