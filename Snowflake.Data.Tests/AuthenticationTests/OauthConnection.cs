@@ -5,11 +5,11 @@
 using NUnit.Framework;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 {
 
     [NonParallelizable]
-    public class OauthConnectionTest : SFBaseTest
+    public class OauthConnectionTest
     {
         private string _connectionString = "";
 

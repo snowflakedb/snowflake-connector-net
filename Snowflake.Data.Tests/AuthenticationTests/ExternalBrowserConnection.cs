@@ -6,11 +6,11 @@ using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 {
 
     [NonParallelizable]
-    public class ExternalBrowserConnectionTest : SFBaseTest
+    public class ExternalBrowserConnectionTest
     {
         private string _connectionString = "";
         private string _login = AuthConnectionString.SsoUser;
@@ -27,18 +27,18 @@ namespace Snowflake.Data.Tests.AuthenticationTests
             _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
-        public void TestAuthenticateUsingExternalBrowserSuccessful()
-        {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
-
-            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
-
-            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsNotThrown();
-
-        }
+        // [Test, IgnoreOnCI]
+        // public void TestAuthenticateUsingExternalBrowserSuccessful()
+        // {
+        //     AuthTestHelper authTestHelper = new AuthTestHelper();
+        //
+        //     Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        //     Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+        //
+        //     authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+        //     authTestHelper.VerifyExceptionIsNotThrown();
+        //
+        // }
     //
     //     [Test, IgnoreOnCI]
     //     public void TestAuthenticateUsingExternalBrowserMismatchedUser()

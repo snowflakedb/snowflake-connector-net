@@ -70,24 +70,24 @@ namespace Snowflake.Data.Tests
         private Stopwatch _stopwatch;
 
         private List<string> _tablesToRemove;
-        //
-        // [SetUp]
-        // public void BeforeTest()
-        // {
-        //     _stopwatch = new Stopwatch();
-        //     _stopwatch.Start();
-        //     _tablesToRemove = new List<string>();
-        // }
-        //
-        // [TearDown]
-        // public void AfterTest()
-        // {
-        //     _stopwatch.Stop();
-        //     var testName = $"{TestContext.CurrentContext.Test.FullName}";
-        //
-        //     TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
-        //     RemoveTables();
-        // }
+
+        [SetUp]
+        public void BeforeTest()
+        {
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+            _tablesToRemove = new List<string>();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            _stopwatch.Stop();
+            var testName = $"{TestContext.CurrentContext.Test.FullName}";
+
+            TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            RemoveTables();
+        }
 
         private void RemoveTables()
         {
@@ -182,77 +182,77 @@ namespace Snowflake.Data.Tests
             }
         }
 
-//         [OneTimeSetUp]
-//         public void Setup()
-//         {
-// #if NETFRAMEWORK
-//             log4net.GlobalContext.Properties["framework"] = "net471";
-//             log4net.Config.XmlConfigurator.Configure();
-//
-// #else
-//             log4net.GlobalContext.Properties["framework"] = "net6.0";
-//             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
-//             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
-// #endif
-//         var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-//         Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
-//
-//         var reader = new StreamReader("parameters.json");
-//
-//         var testConfigString = reader.ReadToEnd();
-//
-//         // Local JSON settings to avoid using system wide settings which could be different
-//         // than the default ones
-//         var jsonSettings = new JsonSerializerSettings
-//         {
-//             ContractResolver = new DefaultContractResolver
-//             {
-//                 NamingStrategy = new DefaultNamingStrategy()
-//             }
-//         };
-//         var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-//
-//         if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-//         {
-//             TestConfig = testConnectionConfig;
-//             TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
-//         }
-//         else
-//         {
-//             Assert.Fail("Failed to load test configuration");
-//         }
-//
-//         ModifySchema(TestConfig.schema, SchemaAction.CREATE);
-//         }
-//
-//         [OneTimeTearDown]
-//         public void Cleanup()
-//         {
-//             ModifySchema(TestConfig.schema, SchemaAction.DROP);
-//         }
-//
-//         [OneTimeSetUp]
-//         public void SetupTestPerformance()
-//         {
-//             s_testPerformance = new Dictionary<string, TimeSpan>();
-//         }
-//
-//         [OneTimeTearDown]
-//         public void CreateTestTimeArtifact()
-//         {
-//             var resultText = "test;time_in_ms\n";
-//             resultText += string.Join("\n",
-//                 s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
-//
-//             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
-//             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-//
-//             var separator = Path.DirectorySeparatorChar;
-//
-//             // We have to go up 3 times as the working directory path looks as follows:
-//             // Snowflake.Data.Tests/bin/debug/{.net_version}/
-//             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
-//         }
+        [OneTimeSetUp]
+        public void Setup()
+        {
+#if NETFRAMEWORK
+            log4net.GlobalContext.Properties["framework"] = "net471";
+            log4net.Config.XmlConfigurator.Configure();
+
+#else
+            log4net.GlobalContext.Properties["framework"] = "net6.0";
+            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
+#endif
+        var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+        Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+
+        var reader = new StreamReader("parameters.json");
+
+        var testConfigString = reader.ReadToEnd();
+
+        // Local JSON settings to avoid using system wide settings which could be different
+        // than the default ones
+        var jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new DefaultNamingStrategy()
+            }
+        };
+        var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+
+        if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+        {
+            TestConfig = testConnectionConfig;
+            TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+        }
+        else
+        {
+            Assert.Fail("Failed to load test configuration");
+        }
+
+        ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            ModifySchema(TestConfig.schema, SchemaAction.DROP);
+        }
+
+        [OneTimeSetUp]
+        public void SetupTestPerformance()
+        {
+            s_testPerformance = new Dictionary<string, TimeSpan>();
+        }
+
+        [OneTimeTearDown]
+        public void CreateTestTimeArtifact()
+        {
+            var resultText = "test;time_in_ms\n";
+            resultText += string.Join("\n",
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+
+            var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
+            var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+
+            var separator = Path.DirectorySeparatorChar;
+
+            // We have to go up 3 times as the working directory path looks as follows:
+            // Snowflake.Data.Tests/bin/debug/{.net_version}/
+            File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+        }
 
         private static string s_connectionString => string.Format(ConnectionStringFmt,
             TestConfig.protocol,

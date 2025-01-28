@@ -4,7 +4,7 @@
 
 using System;
 using NUnit.Framework;
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 {
 
     [NonParallelizable]
@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.AuthenticationTests
         private string _connectionString = "";
 
 
-        [Test, IgnoreOnCI]
+        [Test]
         public void TestAuthenticateUsingKeyPairFileContentSuccessful()
 
         {
