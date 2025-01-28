@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.AuthenticationTests
 {
 
     [NonParallelizable]
-    public class KeyPairConnectionTest : SFBaseTest
+    public class KeyPairConnectionTest
     {
         private string _connectionString = "";
 
@@ -23,7 +23,6 @@ namespace Snowflake.Data.Tests.AuthenticationTests
         public void TestAuthenticateUsingKeyPairFileContentSuccessful()
 
         {
-            s_logger.Debug("Before test, after setup");
             Console.WriteLine("Before test, after setup");
             AuthTestHelper authTestHelper = new AuthTestHelper();
             var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
