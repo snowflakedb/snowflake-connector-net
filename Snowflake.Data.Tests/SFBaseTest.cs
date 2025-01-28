@@ -32,10 +32,13 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTest>();
+
         [SetUp]
         public static void SetUpContext()
         {
-            Console.WriteLine("Setup context");
+            s_logger.Debug("Setup context");
+            s_logger.Debug("Setup context");
 
             MockSynchronizationContext.SetupContext();
         }
@@ -76,7 +79,7 @@ namespace Snowflake.Data.Tests
         [SetUp]
         public void BeforeTest()
         {
-            Console.WriteLine("BEFORE TEST METHOD");
+            s_logger.Debug("BEFORE TEST METHOD");
 
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
@@ -86,7 +89,7 @@ namespace Snowflake.Data.Tests
         [TearDown]
         public void AfterTest()
         {
-            Console.WriteLine("AFTER TEST METHOD");
+            s_logger.Debug("AFTER TEST METHOD");
 
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
@@ -97,7 +100,7 @@ namespace Snowflake.Data.Tests
 
         private void RemoveTables()
         {
-            Console.WriteLine("REMOVE TABLE TEST METHOD");
+            s_logger.Debug("REMOVE TABLE TEST METHOD");
 
             if (_tablesToRemove.Count == 0)
                 return;
@@ -118,7 +121,7 @@ namespace Snowflake.Data.Tests
 
         protected void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
-            Console.WriteLine("CREATE OR REPLACE");
+            s_logger.Debug("CREATE OR REPLACE");
 
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
@@ -141,7 +144,7 @@ namespace Snowflake.Data.Tests
 
         public SFBaseTestAsync()
         {
-            Console.WriteLine("TEST CONFIG SETUP");
+            s_logger.Debug("TEST CONFIG SETUP");
 
             testConfig = TestEnvironment.TestConfig;
         }
@@ -177,6 +180,8 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class TestEnvironment
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<TestEnvironment>();
+
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" +
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
@@ -197,7 +202,7 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            Console.WriteLine("one time setup");
+            s_logger.Debug("one time setup");
 
 #if NETFRAMEWORK
             log4net.GlobalContext.Properties["framework"] = "net471";
@@ -254,7 +259,7 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            Console.WriteLine("CREATE TIME");
+            s_logger.Debug("CREATE TIME");
 
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
@@ -291,7 +296,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                Console.WriteLine("MODIFY SCHEMA");
+                s_logger.Debug("MODIFY SCHEMA");
 
                 conn.ConnectionString = s_connectionString;
                 conn.Open();
@@ -323,19 +328,19 @@ namespace Snowflake.Data.Tests
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Console.WriteLine("WIN");
+                s_logger.Debug("WIN");
 
                 return "windows";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                Console.WriteLine("LIN");
+                s_logger.Debug("LIN");
 
                 return "linux";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Console.WriteLine("MACOS");
+                s_logger.Debug("MACOS");
 
                 return "macos";
             }

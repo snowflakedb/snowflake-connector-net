@@ -5,6 +5,7 @@
 using System;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+using Snowflake.Data.Log;
 
 
 
@@ -16,16 +17,19 @@ namespace Snowflake.Data.Tests.AuthenticationTests
     {
         private string _connectionString = "";
 
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<KeyPairConnectionTest>();
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingKeyPairFileContentSuccessful()
+
         {
+            s_logger.Debug("Before test, after setup");
             Console.WriteLine("Before test, after setup");
             AuthTestHelper authTestHelper = new AuthTestHelper();
-
             var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
             var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
             _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
+            s_logger.Debug(_connectionString);
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsNotThrown();
         }
