@@ -32,13 +32,9 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
     {
-
         [SetUp]
         public static void SetUpContext()
         {
-
-            Console.WriteLine("Setup context");
-
             MockSynchronizationContext.SetupContext();
         }
 
@@ -78,8 +74,6 @@ namespace Snowflake.Data.Tests
         [SetUp]
         public void BeforeTest()
         {
-            Console.WriteLine("BEFORE TEST METHOD");
-
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
@@ -88,8 +82,6 @@ namespace Snowflake.Data.Tests
         [TearDown]
         public void AfterTest()
         {
-            Console.WriteLine("AFTER TEST METHOD");
-
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
 
@@ -99,8 +91,6 @@ namespace Snowflake.Data.Tests
 
         private void RemoveTables()
         {
-            Console.WriteLine("REMOVE TABLE TEST METHOD");
-
             if (_tablesToRemove.Count == 0)
                 return;
 
@@ -120,8 +110,6 @@ namespace Snowflake.Data.Tests
 
         protected void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
-            Console.WriteLine("CREATE OR REPLACE");
-
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
 
@@ -143,8 +131,6 @@ namespace Snowflake.Data.Tests
 
         public SFBaseTestAsync()
         {
-            Console.WriteLine("TEST CONFIG SETUP");
-
             testConfig = TestEnvironment.TestConfig;
         }
 
@@ -208,12 +194,8 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-            var skipFixtures = Environment.GetEnvironmentVariable("SKIP_ONETIME_FIXTURES");
-            if (string.IsNullOrEmpty(skipFixtures) || skipFixtures.ToLower() == "false")
-            {
                 var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-                Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP",
-                    "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+                Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
                 var reader = new StreamReader("parameters.json");
 
@@ -241,17 +223,12 @@ namespace Snowflake.Data.Tests
                 }
 
                 ModifySchema(TestConfig.schema, SchemaAction.CREATE);
-            }
         }
 
         [OneTimeTearDown]
         public void Cleanup()
         {
-            var skipFixtures = Environment.GetEnvironmentVariable("SKIP_ONETIME_FIXTURES");
-            if (string.IsNullOrEmpty(skipFixtures) || skipFixtures.ToLower() == "false")
-            {
-                ModifySchema(TestConfig.schema, SchemaAction.DROP);
-            }
+            ModifySchema(TestConfig.schema, SchemaAction.DROP);
         }
 
         [OneTimeSetUp]
@@ -263,8 +240,6 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            Console.WriteLine("CREATE TIME");
-
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
                 s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
@@ -300,8 +275,6 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                Console.WriteLine("MODIFY SCHEMA");
-
                 conn.ConnectionString = s_connectionString;
                 conn.Open();
                 var dbCommand = conn.CreateCommand();
@@ -332,20 +305,14 @@ namespace Snowflake.Data.Tests
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Console.WriteLine("WIN");
-
                 return "windows";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                Console.WriteLine("LIN");
-
                 return "linux";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Console.WriteLine("MACOS");
-
                 return "macos";
             }
 
