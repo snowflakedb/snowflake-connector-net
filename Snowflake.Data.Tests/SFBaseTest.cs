@@ -32,13 +32,12 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTest>();
 
         [SetUp]
         public static void SetUpContext()
         {
-            s_logger.Debug("Setup context");
-            s_logger.Debug("Setup context");
+
+            Console.WriteLine("Setup context");
 
             MockSynchronizationContext.SetupContext();
         }
@@ -79,7 +78,7 @@ namespace Snowflake.Data.Tests
         [SetUp]
         public void BeforeTest()
         {
-            s_logger.Debug("BEFORE TEST METHOD");
+            Console.WriteLine("BEFORE TEST METHOD");
 
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
@@ -89,7 +88,7 @@ namespace Snowflake.Data.Tests
         [TearDown]
         public void AfterTest()
         {
-            s_logger.Debug("AFTER TEST METHOD");
+            Console.WriteLine("AFTER TEST METHOD");
 
             _stopwatch.Stop();
             var testName = $"{TestContext.CurrentContext.Test.FullName}";
@@ -100,7 +99,7 @@ namespace Snowflake.Data.Tests
 
         private void RemoveTables()
         {
-            s_logger.Debug("REMOVE TABLE TEST METHOD");
+            Console.WriteLine("REMOVE TABLE TEST METHOD");
 
             if (_tablesToRemove.Count == 0)
                 return;
@@ -121,7 +120,7 @@ namespace Snowflake.Data.Tests
 
         protected void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
-            s_logger.Debug("CREATE OR REPLACE");
+            Console.WriteLine("CREATE OR REPLACE");
 
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
@@ -144,7 +143,7 @@ namespace Snowflake.Data.Tests
 
         public SFBaseTestAsync()
         {
-            s_logger.Debug("TEST CONFIG SETUP");
+            Console.WriteLine("TEST CONFIG SETUP");
 
             testConfig = TestEnvironment.TestConfig;
         }
@@ -180,8 +179,6 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class TestEnvironment
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<TestEnvironment>();
-
         private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" +
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
@@ -202,8 +199,6 @@ namespace Snowflake.Data.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            s_logger.Debug("one time setup");
-
 #if NETFRAMEWORK
             log4net.GlobalContext.Properties["framework"] = "net471";
             log4net.Config.XmlConfigurator.Configure();
@@ -213,41 +208,50 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
-
-            var reader = new StreamReader("parameters.json");
-
-            var testConfigString = reader.ReadToEnd();
-
-            // Local JSON settings to avoid using system wide settings which could be different
-            // than the default ones
-            var jsonSettings = new JsonSerializerSettings
+            var skipFixtures = Environment.GetEnvironmentVariable("SKIP_ONETIME_FIXTURES");
+            if (string.IsNullOrEmpty(skipFixtures) || skipFixtures.ToLower() == "false")
             {
-                ContractResolver = new DefaultContractResolver
+                var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+                Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP",
+                    "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+
+                var reader = new StreamReader("parameters.json");
+
+                var testConfigString = reader.ReadToEnd();
+
+                // Local JSON settings to avoid using system wide settings which could be different
+                // than the default ones
+                var jsonSettings = new JsonSerializerSettings
                 {
-                    NamingStrategy = new DefaultNamingStrategy()
+                    ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new DefaultNamingStrategy()
+                    }
+                };
+                var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+
+                if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+                {
+                    TestConfig = testConnectionConfig;
+                    TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
                 }
-            };
-            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+                else
+                {
+                    Assert.Fail("Failed to load test configuration");
+                }
 
-            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-            {
-                TestConfig = testConnectionConfig;
-                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                ModifySchema(TestConfig.schema, SchemaAction.CREATE);
             }
-            else
-            {
-                Assert.Fail("Failed to load test configuration");
-            }
-
-            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
 
         [OneTimeTearDown]
         public void Cleanup()
         {
-            ModifySchema(TestConfig.schema, SchemaAction.DROP);
+            var skipFixtures = Environment.GetEnvironmentVariable("SKIP_ONETIME_FIXTURES");
+            if (string.IsNullOrEmpty(skipFixtures) || skipFixtures.ToLower() == "false")
+            {
+                ModifySchema(TestConfig.schema, SchemaAction.DROP);
+            }
         }
 
         [OneTimeSetUp]
@@ -259,7 +263,7 @@ namespace Snowflake.Data.Tests
         [OneTimeTearDown]
         public void CreateTestTimeArtifact()
         {
-            s_logger.Debug("CREATE TIME");
+            Console.WriteLine("CREATE TIME");
 
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
@@ -296,7 +300,7 @@ namespace Snowflake.Data.Tests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                s_logger.Debug("MODIFY SCHEMA");
+                Console.WriteLine("MODIFY SCHEMA");
 
                 conn.ConnectionString = s_connectionString;
                 conn.Open();
@@ -328,19 +332,19 @@ namespace Snowflake.Data.Tests
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                s_logger.Debug("WIN");
+                Console.WriteLine("WIN");
 
                 return "windows";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                s_logger.Debug("LIN");
+                Console.WriteLine("LIN");
 
                 return "linux";
             }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                s_logger.Debug("MACOS");
+                Console.WriteLine("MACOS");
 
                 return "macos";
             }
