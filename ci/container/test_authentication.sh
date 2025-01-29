@@ -22,4 +22,4 @@ echo '{ "testconnection": { } }' > $PARAMETERS_JSON
 #awk '{if (NR>1) print prev; prev=$0} END {sub(/,$/, "", prev); print prev}' $PARAMETERS_JSON > tmp && mv tmp $PARAMETERS_JSON
 #echo '}}' >> $PARAMETERS_JSON
 
-dotnet test -l "console;verbosity=diagnostic" --filter FullyQualifiedName~AuthenticationTests
+dotnet test --framework net9.0 -l "console;verbosity=diagnostic" --filter FullyQualifiedName~AuthenticationTests
