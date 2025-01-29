@@ -6,7 +6,7 @@ using NUnit.Framework;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
 
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 {
 
     [NonParallelizable]

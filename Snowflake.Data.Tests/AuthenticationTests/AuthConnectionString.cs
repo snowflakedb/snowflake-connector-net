@@ -7,7 +7,7 @@ using System.IO;
 using Snowflake.Data.Core;
 using System.Net.Http;
 
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 
 {
     static class AuthConnectionString

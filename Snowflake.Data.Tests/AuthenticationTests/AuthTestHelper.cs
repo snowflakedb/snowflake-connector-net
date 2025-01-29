@@ -8,7 +8,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Tests;
 
 
-namespace Snowflake.Data.Tests.AuthenticationTests
+namespace Snowflake.Data.AuthenticationTests
 {
 
     public class AuthTestHelper
@@ -158,13 +158,6 @@ namespace Snowflake.Data.Tests.AuthenticationTests
                 connectThread.Start();
                 provideCredentialsThread.Join();
                 connectThread.Join();
-            }
-        }
-
-        public class IgnoreOnCI : IgnoreOnEnvIsAttribute
-        {
-            public IgnoreOnCI(string reason = null) : base("CI", new[] { "true" }, reason)
-            {
             }
         }
     }
