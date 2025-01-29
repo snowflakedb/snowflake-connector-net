@@ -44,20 +44,19 @@ namespace Snowflake.Data.AuthenticationTests
              authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
              authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
          }
-
-         [Test, Ignore("Skipped, waits for SNOW-1893041")]
-         public void TestAuthenticateUsingOauthMismatchedUser()
-         {
-             AuthTestHelper authTestHelper = new AuthTestHelper();
-
-             string token = AuthConnectionString.GetOauthToken();
-             var parameters = AuthConnectionString.GetOauthConnectionString(token);
-             parameters[SFSessionProperty.USER] = "fakeAccount";
-             _connectionString = AuthConnectionString.SetOauthConnectionString(parameters) + ";poolingEnabled=false;minPoolSize=0;";
-
-             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
-
-         }
+        //"Skipped, waits for SNOW-1893041"
+         // [Test, IgnoreOnCI]
+         // public void TestAuthenticateUsingOauthMismatchedUser()
+         // {
+         //     AuthTestHelper authTestHelper = new AuthTestHelper();
+         //
+         //     string token = AuthConnectionString.GetOauthToken();
+         //     var parameters = AuthConnectionString.GetOauthConnectionString(token);
+         //     parameters[SFSessionProperty.USER] = "fakeAccount";
+         //     _connectionString = AuthConnectionString.SetOauthConnectionString(parameters) + ";poolingEnabled=false;minPoolSize=0;";
+         //
+         //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+         //     authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
+         // }
     }
 }
