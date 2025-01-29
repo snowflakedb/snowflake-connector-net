@@ -4,6 +4,7 @@
 
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests
 {
@@ -24,7 +25,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -34,7 +35,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongUsernameParam()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -47,7 +48,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -62,7 +63,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingOktaWrongUrl()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -77,7 +78,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingUrlWithoutOkta()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

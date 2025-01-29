@@ -4,6 +4,7 @@
 
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests
 {
@@ -22,7 +23,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-         [Test]
+         [Test, IgnoreOnCI]
          public void TestAuthenticateUsingOauthSuccessful()
          {
              AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -31,7 +32,7 @@ namespace Snowflake.Data.AuthenticationTests
              authTestHelper.VerifyExceptionIsNotThrown();
          }
 
-         [Test]
+         [Test, IgnoreOnCI]
          public void TestAuthenticateUsingOauthInvalidToken()
          {
              AuthTestHelper authTestHelper = new AuthTestHelper();

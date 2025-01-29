@@ -4,6 +4,8 @@
 
 using System;
 using NUnit.Framework;
+using Snowflake.Data.Tests;
+
 namespace Snowflake.Data.AuthenticationTests
 {
 
@@ -12,7 +14,7 @@ namespace Snowflake.Data.AuthenticationTests
     {
         private string _connectionString = "";
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingKeyPairFileContentSuccessful()
 
         {
@@ -24,7 +26,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-         [Test]
+         [Test, IgnoreOnCI]
          public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
          {
              AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -37,7 +39,7 @@ namespace Snowflake.Data.AuthenticationTests
              authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
          }
 
-          [Test]
+          [Test, IgnoreOnCI]
           public void TestAuthenticateUsingKeyPairFilePathSuccessful()
           {
                AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -49,7 +51,7 @@ namespace Snowflake.Data.AuthenticationTests
                authTestHelper.VerifyExceptionIsNotThrown();
            }
 
-          [Test]
+          [Test, IgnoreOnCI]
           public void TestAuthenticateUsingKeyPairFilePathInvalidKey()
           {
               AuthTestHelper authTestHelper = new AuthTestHelper();

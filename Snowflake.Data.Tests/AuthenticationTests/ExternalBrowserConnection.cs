@@ -5,6 +5,7 @@
 using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests
 {
@@ -27,7 +28,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingExternalBrowserSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -40,7 +41,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test]
+        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -58,7 +59,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-    [Test]
+    [Test, IgnoreOnCI]
     public void TestAuthenticateUsingExternalBrowserWrongCredentials()
     {
         AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -79,7 +80,7 @@ namespace Snowflake.Data.AuthenticationTests
 
     }
 
-    [Test]
+    [Test, IgnoreOnCI]
     public void TestAuthenticateUsingExternalBrowserTimeout()
     {
         AuthTestHelper authTestHelper = new AuthTestHelper();

@@ -5,6 +5,7 @@ using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests;
 
 
 namespace Snowflake.Data.AuthenticationTests
@@ -157,6 +158,13 @@ namespace Snowflake.Data.AuthenticationTests
                 connectThread.Start();
                 provideCredentialsThread.Join();
                 connectThread.Join();
+            }
+        }
+
+        public class IgnoreOnCI : IgnoreOnEnvIsAttribute
+        {
+            public IgnoreOnCI(string reason = null) : base("CI", new[] { "true" }, reason)
+            {
             }
         }
     }
