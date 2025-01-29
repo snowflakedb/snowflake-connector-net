@@ -31,18 +31,18 @@ namespace Snowflake.Data.AuthenticationTests
              authTestHelper.VerifyExceptionIsNotThrown();
          }
 
-//         // [Test, IgnoreOnCI]
-//         // public void TestAuthenticateUsingOauthInvalidToken()
-//         // {
-//         //     AuthTestHelper authTestHelper = new AuthTestHelper();
-//         //
-//         //     string token = "invalidToken";
-//         //     var parameters = AuthConnectionString.GetOauthConnectionString(token);
-//         //     _connectionString = AuthConnectionString.SetOauthConnectionString(parameters);
-//         //
-//         //     authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-//         //     authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
-//         // }
+         [Test]
+         public void TestAuthenticateUsingOauthInvalidToken()
+         {
+             AuthTestHelper authTestHelper = new AuthTestHelper();
+
+             string token = "invalidToken";
+             var parameters = AuthConnectionString.GetOauthConnectionString(token);
+             _connectionString = AuthConnectionString.SetOauthConnectionString(parameters);
+
+             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
+         }
 //
 //         // [Test, Ignore("Skipped, waits for SNOW-1893041")]
 //         // public void TestAuthenticateUsingOauthMismatchedUser()
