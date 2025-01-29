@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -898,7 +899,7 @@ namespace Snowflake.Data.Core
                 if ((File.GetAttributes(fileToCompress.FullName) &
                    FileAttributes.Hidden) != FileAttributes.Hidden)
                 {
-                    using (FileStream compressedFileStream = File.Create(fileMetadata.realSrcFilePath))
+                    using (var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath))
                     {
                         using (GZipStream compressionStream =
                             new GZipStream(compressedFileStream, CompressionMode.Compress))

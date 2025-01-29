@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -325,11 +326,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                // Issue the GET request
-                blobClient.DownloadTo(fullDstPath);
+                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
+                {
+                    // Issue the GET request
+                    blobClient.DownloadTo(fileStream);
+                }
             }
             catch (RequestFailedException ex)
             {
+                File.Delete(fullDstPath);
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
@@ -354,11 +359,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                // Issue the GET request
-                await blobClient.DownloadToAsync(fullDstPath, cancellationToken).ConfigureAwait(false);
+                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
+                {
+                    // Issue the GET request
+                    await blobClient.DownloadToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (RequestFailedException ex)
             {
+                File.Delete(fullDstPath);
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }

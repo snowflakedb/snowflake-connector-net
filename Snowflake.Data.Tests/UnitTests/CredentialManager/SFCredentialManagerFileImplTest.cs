@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.Security;
 using Mono.Unix;
-using Mono.Unix.Native;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
@@ -66,8 +65,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Returns(false);
             t_unixOperations
                 .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR))
-                .Returns(-1);
+                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite))
+                .Throws<IOException>();
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CredentialCacheDirectoryEnvironmentName))
                 .Returns(CustomJsonDir);
@@ -83,6 +82,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_directoryOperations
                 .Setup(d => d.GetDirectoryInfo(s_customLockPath))
                 .Returns(new DirectoryInformation(false, null));
+            t_unixOperations
+                .Setup(u => u.CreateDirectoryWithPermissionsMkdir(s_customLockPath, FileAccessPermissions.UserRead))
+                .Returns(0);
             _credentialManager = new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
 
             // act
@@ -104,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             try
             {
                 DirectoryOperations.Instance.CreateDirectory(tempDirectory);
-                UnixOperations.Instance.CreateFileWithPermissions(Path.Combine(tempDirectory, SFCredentialManagerFileStorage.CredentialCacheFileName), FilePermissions.ALLPERMS);
+                UnixOperations.Instance.CreateFileWithPermissions(Path.Combine(tempDirectory, SFCredentialManagerFileStorage.CredentialCacheFileName), FileAccessPermissions.AllPermissions);
 
                 // act
                 var thrown = Assert.Throws<SecurityException>(() => _credentialManager.SaveCredentials("key", "token"));
@@ -124,8 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // arrange
             t_unixOperations
                 .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR))
-                .Returns(0);
+                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
             t_unixOperations
                 .Setup(u => u.GetFilePermissions(s_customJsonPath))
                 .Returns(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Setup(u => u.GetCurrentUserId())
                 .Returns(UserId);
             t_unixOperations
-                .Setup(u => u.CreateDirectoryWithPermissions(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
+                .Setup(u => u.CreateDirectoryWithPermissionsMkdir(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
                 .Returns(-1);
             _credentialManager = new SFCredentialManagerFileImpl(t_fileOperations.Object, t_directoryOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
 
@@ -210,7 +211,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Returns(false)
                 .Returns(true);
             t_unixOperations
-                .Setup(u => u.CreateDirectoryWithPermissions(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
+                .Setup(u => u.CreateDirectoryWithPermissionsMkdir(s_customLockPath, SFCredentialManagerFileImpl.CredentialCacheLockDirPermissions))
                 .Returns(-1);
             t_directoryOperations
                 .Setup(d => d.GetParentDirectoryInfo(CustomJsonDir))

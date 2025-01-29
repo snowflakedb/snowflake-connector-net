@@ -9,6 +9,7 @@ using Snowflake.Data.Core;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
+    [SetCulture("en-US")]
     class SFBindUploaderTest
     {
         private readonly SFBindUploader _bindUploader = new SFBindUploader(null, "test");
