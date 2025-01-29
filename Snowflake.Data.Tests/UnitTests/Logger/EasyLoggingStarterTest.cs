@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
-using Mono.Unix.Native;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -48,6 +47,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             CommonProps = new ClientConfigCommonProps
             {
                 LogLevel = "Info"
+            }
+        };
+
+        private static readonly ClientConfig s_configWithStdoutAsLogPath = new ClientConfig
+        {
+            CommonProps = new ClientConfigCommonProps
+            {
+                LogLevel = "Info",
+                LogPath = "STDOUT"
             }
         };
 
@@ -148,7 +156,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Never);
+                FileAccessPermissions.UserReadWriteExecute), Times.Never);
         }
 
         [Test]
@@ -163,9 +171,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithErrorLevel);
+            t_directoryOperations
+                .Setup(d => d.CreateDirectory(s_expectedLogPath))
+                .Throws(() => new Exception("Unable to create directory"));
             t_unixOperations
-                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR))
-                .Returns((int)Errno.EPERM);
+                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FileAccessPermissions.UserReadWriteExecute))
+                .Throws(() => new Exception("Unable to create directory"));
 
             // act
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
@@ -199,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
@@ -232,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
@@ -259,7 +270,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
@@ -269,6 +280,21 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
             t_easyLoggerManager.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public void TestConfigureStdout()
+        {
+            // arrange
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(null))
+                .Returns(s_configWithStdoutAsLogPath);
+
+            // act
+            t_easyLoggerStarter.Init(null);
+
+            // assert
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
         }
     }
 }

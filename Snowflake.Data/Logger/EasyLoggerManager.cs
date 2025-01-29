@@ -26,11 +26,16 @@ namespace Snowflake.Data.Log
             {
                 var rootLogger = SFLogRepository.GetRootLogger();
                 rootLogger.SetLevel(sfLoggerLevel);
-                var appender = string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase)
+                var appender = IsStdout(logsPath)
                     ? AddConsoleAppender(rootLogger)
                     : AddRollingFileAppender(rootLogger, logsPath);
                 RemoveOtherEasyLoggingAppenders(rootLogger, appender);
             }
+        }
+
+        internal static bool IsStdout(string logsPath)
+        {
+            return string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase);
         }
 
         internal void ResetEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel)

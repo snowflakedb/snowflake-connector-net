@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -312,7 +313,6 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <summary>
         /// Download one file.
         /// </summary>
-        /// <summary>
         /// <param name="fileMetadata">The file metadata of the file to download</param>
         internal static void DownloadOneFile(SFFileMetadata fileMetadata)
         {
@@ -322,7 +322,7 @@ namespace Snowflake.Data.Core.FileTransfer
             // Check local location exists
             if (!Directory.Exists(fileMetadata.localLocation))
             {
-                Directory.CreateDirectory(fileMetadata.localLocation);
+                DirectoryOperations.Instance.CreateDirectory(fileMetadata.localLocation);
             }
 
             ISFRemoteStorageClient client = fileMetadata.client;
@@ -364,12 +364,7 @@ namespace Snowflake.Data.Core.FileTransfer
                           encryptionMetadata,
                           FileTransferConfiguration.FromFileMetadata(fileMetadata));
 
-                        File.Delete(fullDstPath);
-
-                        // Copy decrypted tmp file to target destination path
-                        File.Copy(tmpDstName, fullDstPath);
-
-                        // Delete tmp file
+                        FileOperations.Instance.CopyFile(tmpDstName, fullDstPath);
                         File.Delete(tmpDstName);
                     }
 
@@ -411,7 +406,7 @@ namespace Snowflake.Data.Core.FileTransfer
             // Check local location exists
             if (!Directory.Exists(fileMetadata.localLocation))
             {
-                Directory.CreateDirectory(fileMetadata.localLocation);
+                DirectoryOperations.Instance.CreateDirectory(fileMetadata.localLocation);
             }
 
             ISFRemoteStorageClient client = fileMetadata.client;
@@ -453,12 +448,7 @@ namespace Snowflake.Data.Core.FileTransfer
                           encryptionMetadata,
                           FileTransferConfiguration.FromFileMetadata(fileMetadata));
 
-                        File.Delete(fullDstPath);
-
-                        // Copy decrypted tmp file to target destination path
-                        File.Copy(tmpDstName, fullDstPath);
-
-                        // Delete tmp file
+                        FileOperations.Instance.CopyFile(tmpDstName, fullDstPath);
                         File.Delete(tmpDstName);
                     }
 

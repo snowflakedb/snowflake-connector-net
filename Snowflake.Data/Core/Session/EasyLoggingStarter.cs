@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
-using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -128,6 +127,10 @@ namespace Snowflake.Data.Core
                     throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
                 }
             }
+            if (EasyLoggerManager.IsStdout(logPath))
+            {
+                return logPath;
+            }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
             {
@@ -141,9 +144,13 @@ namespace Snowflake.Data.Core
                     {
                         Directory.CreateDirectory(logPathOrDefault);
                     }
-                    var createDirResult = _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
-                        FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
-                    if (createDirResult != 0)
+
+                    try
+                    {
+                        _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
+                            FileAccessPermissions.UserReadWriteExecute);
+                    }
+                    catch (Exception)
                     {
                         s_logger.Error($"Failed to create logs directory: {pathWithDotnetSubdirectory}");
                         throw new Exception("Failed to create logs directory");

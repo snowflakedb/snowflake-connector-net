@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -301,7 +302,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_inputFilePath = Path.GetTempPath() + t_fileName;
 
             var data = $"{t_colData[0]},{t_colData[1]},{t_colData[2]}";
-            File.WriteAllText(t_inputFilePath, data);
+            using (var stream = FileOperations.Instance.Create(t_inputFilePath))
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.Write(data);
+            }
 
             t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
             t_filesToDelete.Add(t_inputFilePath);

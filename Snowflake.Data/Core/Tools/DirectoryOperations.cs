@@ -4,6 +4,7 @@
 
 using System.IO;
 using System.Runtime.InteropServices;
+using Mono.Unix;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -23,7 +24,19 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual bool Exists(string path) => Directory.Exists(path);
 
-        public virtual DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);
+        public virtual string CreateDirectory(string path)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Directory.CreateDirectory(path);
+            }
+            else
+            {
+                _unixOperations.CreateDirectoryWithPermissions(path, FileAccessPermissions.UserReadWriteExecute);
+            }
+
+            return path;
+        }
 
         public virtual void Delete(string path, bool recursive) => Directory.Delete(path, recursive);
 
@@ -39,6 +52,12 @@ namespace Snowflake.Data.Core.Tools
             }
             var unixInfo = _unixOperations.GetDirectoryInfo(path);
             return unixInfo.IsSafe(_unixOperations.GetCurrentUserId());
+        }
+
+        public virtual bool IsDirectoryOwnedByCurrentUser(string path)
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                   _unixOperations.GetOwnerIdOfDirectory(path) == _unixOperations.GetCurrentUserId();
         }
     }
 }
