@@ -3,7 +3,6 @@
  */
 
 using Mono.Unix;
-using Mono.Unix.Native;
 using Newtonsoft.Json;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
@@ -21,7 +20,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         internal const int CredentialCacheLockDurationSeconds = 60;
 
-        internal const FilePermissions CredentialCacheLockDirPermissions = FilePermissions.S_IRUSR;
+        internal const FileAccessPermissions CredentialCacheLockDirPermissions = FileAccessPermissions.UserRead;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
 
@@ -171,13 +170,16 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             else
             {
                 s_logger.Info($"Creating the json file for credential cache in {_fileStorage.JsonCacheFilePath}");
-                var createFileResult = _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
-                    FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-                if (createFileResult == -1)
+                try
+                {
+                    _unixOperations.CreateFileWithPermissions(_fileStorage.JsonCacheFilePath,
+                        FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+                }
+                catch (Exception e)
                 {
                     var errorMessage = "Failed to create the JSON token cache file";
                     s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage);
+                    throw new Exception(errorMessage, e);
                 }
             }
             _fileOperations.Write(_fileStorage.JsonCacheFilePath, content, ValidateFilePermissions);
@@ -212,38 +214,20 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (_fileStorage != null)
                 return;
             var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
-            PrepareParentDirectory(fileStorage.JsonCacheDirectory);
-            PrepareSecureDirectory(fileStorage.JsonCacheDirectory);
+            _directoryOperations.CreateDirectory(fileStorage.JsonCacheDirectory);
+            SetSecureDirectory(fileStorage.JsonCacheDirectory);
             _fileStorage = fileStorage;
         }
 
-        private void PrepareParentDirectory(string directory)
-        {
-            var parentDirectory = _directoryOperations.GetParentDirectoryInfo(directory);
-            if (!parentDirectory.Exists)
-            {
-                _directoryOperations.CreateDirectory(parentDirectory.FullName);
-            }
-        }
-
-        private void PrepareSecureDirectory(string directory)
+        private void SetSecureDirectory(string directory)
         {
             var unixDirectoryInfo = _unixOperations.GetDirectoryInfo(directory);
-            if (unixDirectoryInfo.Exists)
+            if (!unixDirectoryInfo.Exists) return;
+
+            var userId = _unixOperations.GetCurrentUserId();
+            if (!unixDirectoryInfo.IsSafeExactly(userId))
             {
-                var userId = _unixOperations.GetCurrentUserId();
-                if (!unixDirectoryInfo.IsSafeExactly(userId))
-                {
-                    SetSecureOwnershipAndPermissions(directory, userId);
-                }
-            }
-            else
-            {
-                var createResult = _unixOperations.CreateDirectoryWithPermissions(directory, FilePermissions.S_IRWXU);
-                if (createResult == -1)
-                {
-                    throw new SecurityException($"Could not create directory: {directory}");
-                }
+                SetSecureOwnershipAndPermissions(directory, userId);
             }
         }
 
@@ -292,7 +276,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 return false;
             }
-            var result = _unixOperations.CreateDirectoryWithPermissions(_fileStorage.JsonCacheLockPath, CredentialCacheLockDirPermissions);
+
+            var result = _unixOperations.CreateDirectoryWithPermissionsMkdir(_fileStorage.JsonCacheLockPath, CredentialCacheLockDirPermissions);
             return result == 0;
         }
 

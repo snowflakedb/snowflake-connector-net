@@ -303,7 +303,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.DownloadTo(It.IsAny<string>()))
+                        mockBlobClient.Setup(client => client.DownloadTo(It.IsAny<Stream>()))
                         .Returns(() =>
                         {
                             if (key == HttpStatusCode.OK.ToString())
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.DownloadToAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.DownloadToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                         .Returns(async () =>
                         {
                             if (key == HttpStatusCode.OK.ToString())

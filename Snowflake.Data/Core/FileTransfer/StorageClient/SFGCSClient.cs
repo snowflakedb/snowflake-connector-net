@@ -12,6 +12,7 @@ using Snowflake.Data.Log;
 using System.Net;
 using Google.Apis.Storage.v1;
 using Google.Cloud.Storage.V1;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -378,7 +379,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
-                    using (var fileStream = File.Create(fullDstPath))
+                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                     {
                         using (var responseStream = response.GetResponseStream())
                         {
@@ -412,7 +413,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     // Write to file
-                    using (var fileStream = File.Create(fullDstPath))
+                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                     {
                         using (var responseStream = response.GetResponseStream())
                         {
