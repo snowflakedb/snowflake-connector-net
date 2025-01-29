@@ -8,7 +8,7 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Tests;
 
 
-namespace Snowflake.Data.AuthenticationTests
+namespace Snowflake.Data.Tests.AuthenticationTests
 {
 
     public class AuthTestHelper
