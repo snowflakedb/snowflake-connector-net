@@ -29,16 +29,16 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        public SFSession GetSession(string connectionString, SecureString password)
+        public SFSession GetSession(string connectionString, SecureString password, SecureString passcode)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSession");
-            return GetPool(connectionString, password).GetSession();
+            return GetPool(connectionString, password).GetSession(passcode);
         }
 
-        public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSessionAsync");
-            return GetPool(connectionString, password).GetSessionAsync(cancellationToken);
+            return GetPool(connectionString, password).GetSessionAsync(passcode, cancellationToken);
         }
 
         public bool AddSession(SFSession session)

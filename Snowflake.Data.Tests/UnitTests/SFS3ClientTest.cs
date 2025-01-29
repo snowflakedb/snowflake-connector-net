@@ -341,6 +341,28 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
         }
 
+        [Test]
+        public void TestReadingMetadataSucceedsWithoutSfcDigest()
+        {
+            // arrange
+            var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
+            _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
+            var response = new GetObjectResponse();
+            response.Metadata.Add(SFS3Client.AMZ_IV, "initVector");
+            response.Metadata.Add(SFS3Client.AMZ_KEY, "key");
+            response.Metadata.Add(SFS3Client.AMZ_MATDESC, "description");
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+        }
+
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
         {
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
