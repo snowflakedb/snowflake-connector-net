@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO.Compression;
 using System.Text;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -807,7 +808,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var rawDataRow = string.Join(",", s_colData) + "\n";
             var rawData = string.Concat(Enumerable.Repeat(rawDataRow, NumberOfRows));
 
-            File.WriteAllText(file, rawData);
+
+            using (var stream = FileOperations.Instance.Create(file))
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.Write(rawData);
+            }
             t_filesToDelete.Add(file);
         }
 
