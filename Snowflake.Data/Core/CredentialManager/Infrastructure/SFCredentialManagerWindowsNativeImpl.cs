@@ -110,6 +110,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             }
         }
 
+        // note: the code below of dealing with Advapi32.dll library was inspired by: https://github.com/AdysTech/CredentialManager
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct Credential
         {
