@@ -9,7 +9,7 @@ using Snowflake.Data.Tests;
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable]
+    [NonParallelizable, IgnoreOnCI]
     public class KeyPairConnectionTest
     {
         private string _connectionString = "";

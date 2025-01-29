@@ -9,12 +9,12 @@ using Snowflake.Data.Tests;
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable]
+    [NonParallelizable, IgnoreOnCI]
     public class OauthConnectionTest
     {
         private string _connectionString = "";
 
-        [SetUp]
+        [SetUp, IgnoreOnCI]
         public void SetUp()
         {
             string token = AuthConnectionString.GetOauthToken();

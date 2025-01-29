@@ -10,14 +10,14 @@ using Snowflake.Data.Tests;
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable]
+    [NonParallelizable, IgnoreOnCI]
     public class ExternalBrowserConnectionTest
     {
         private string _connectionString = "";
         private string _login = AuthConnectionString.SsoUser;
         private string _password = AuthConnectionString.SsoPassword;
 
-        [SetUp]
+        [SetUp, IgnoreOnCI]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

@@ -9,12 +9,12 @@ using Snowflake.Data.Tests;
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable]
+    [NonParallelizable, IgnoreOnCI]
     public class OktaConnectionTest
     {
         private string _connectionString = "";
 
-        [SetUp]
+        [SetUp, IgnoreOnCI]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
