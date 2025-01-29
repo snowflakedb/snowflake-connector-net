@@ -20,7 +20,7 @@ namespace Snowflake.Data.AuthenticationTests
             AuthTestHelper authTestHelper = new AuthTestHelper();
 
             var parameters = AuthConnectionString.GetOktaConnectionString();
-            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
             authTestHelper.CleanBrowserProcess();
 
         }
@@ -42,7 +42,7 @@ namespace Snowflake.Data.AuthenticationTests
 
             var parameters = AuthConnectionString.GetOktaConnectionString();
             parameters[SFSessionProperty.USER] = "differentUser";
-            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
@@ -57,7 +57,7 @@ namespace Snowflake.Data.AuthenticationTests
             parameters[SFSessionProperty.USER] = "differentUser";
             parameters[SFSessionProperty.PASSWORD] = "fakepassword";
 
-            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
@@ -71,7 +71,7 @@ namespace Snowflake.Data.AuthenticationTests
             var parameters = AuthConnectionString.GetOktaConnectionString();
             parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.okta.com/";
 
-            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsThrown("The specified authenticator is not accepted by your Snowflake account configuration");
@@ -86,7 +86,7 @@ namespace Snowflake.Data.AuthenticationTests
             var parameters = AuthConnectionString.GetOktaConnectionString();
             parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.abc.com/";
 
-            _connectionString = AuthConnectionString.SetOktaConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsThrown("Unknown authenticator");

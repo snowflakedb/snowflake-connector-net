@@ -25,7 +25,7 @@ namespace Snowflake.Data.AuthenticationTests
             _password = AuthConnectionString.SsoPassword;
             authTestHelper.CleanBrowserProcess();
             var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
-            _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
         [Test, IgnoreOnCI]
@@ -49,7 +49,7 @@ namespace Snowflake.Data.AuthenticationTests
             var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
             parameters[SFSessionProperty.USER] = "differentUser";
 
-            _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
@@ -66,7 +66,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
 
-        _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
+        _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         _connectionString += "BROWSER_RESPONSE_TIMEOUT=15;";
 
         _login = "itsnotanaccount.com";
@@ -87,7 +87,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
 
-        _connectionString = AuthConnectionString.SetExternalBrowserConnectionString(parameters);
+        _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         _connectionString += "BROWSER_RESPONSE_TIMEOUT=1;";
 
         Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);

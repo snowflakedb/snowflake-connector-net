@@ -21,7 +21,7 @@ namespace Snowflake.Data.AuthenticationTests
             AuthTestHelper authTestHelper = new AuthTestHelper();
             var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
             var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
-            _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsNotThrown();
         }
@@ -33,7 +33,7 @@ namespace Snowflake.Data.AuthenticationTests
 
              var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
              var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
-             _connectionString = AuthConnectionString.SetPrivateKeyFromFileContentConnectionString(parameters);
+             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
              authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
              authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
@@ -45,7 +45,7 @@ namespace Snowflake.Data.AuthenticationTests
                AuthTestHelper authTestHelper = new AuthTestHelper();
                var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
                var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
-               _connectionString = AuthConnectionString.SetPrivateKeyFromFilePathConnectionString(parameters);
+               _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
                authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
                authTestHelper.VerifyExceptionIsNotThrown();
@@ -58,7 +58,7 @@ namespace Snowflake.Data.AuthenticationTests
 
               var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
               var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
-              _connectionString = AuthConnectionString.SetPrivateKeyFromFilePathConnectionString(parameters);
+              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
               authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
               authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
