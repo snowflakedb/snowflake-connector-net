@@ -4,8 +4,10 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System.IO;
+using System.Net;
 using Snowflake.Data.Core;
 using System.Net.Http;
+using System.Security.Authentication;
 
 namespace Snowflake.Data.AuthenticationTests
 
@@ -114,6 +116,10 @@ namespace Snowflake.Data.AuthenticationTests
             {
                 using (var client = new HttpClient(new HttpClientHandler
                        {
+                           CheckCertificateRevocationList = true,
+                           SslProtocols = SslProtocols.Tls12,
+                           AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                           UseProxy = false,
                            UseCookies = false
                        }))
                 {
