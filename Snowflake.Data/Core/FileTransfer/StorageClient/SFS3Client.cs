@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -469,7 +470,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (GetObjectResponse response = task.Result)
                 {
                     // Write to file
-                    using (var fileStream = File.Create(fullDstPath))
+                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                     {
                         response.ResponseStream.CopyTo(fileStream);
                     }
@@ -503,7 +504,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (GetObjectResponse response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false))
 
                 // Write to file
-                using (var fileStream = File.Create(fullDstPath))
+                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                 {
                     response.ResponseStream.CopyTo(fileStream);
                 }

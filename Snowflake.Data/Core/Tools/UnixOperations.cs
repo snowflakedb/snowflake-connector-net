@@ -4,11 +4,11 @@
 
 using System;
 using System.IO;
-using System.Linq;
-using System.Security;
+
 using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -16,15 +16,55 @@ namespace Snowflake.Data.Core.Tools
     internal class UnixOperations
     {
         public static readonly UnixOperations Instance = new UnixOperations();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<UnixOperations>();
 
-        public virtual int CreateFileWithPermissions(string path, FilePermissions permissions)
+        public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions)
         {
-            return Syscall.creat(path, permissions);
+            var fullPath = Path.GetFullPath(path);
+            var splitDirectories = fullPath.Split(Path.DirectorySeparatorChar);
+
+            var dirPath = Path.DirectorySeparatorChar.ToString();
+            foreach (var dir in splitDirectories)
+            {
+                dirPath = Path.Combine(dirPath, dir);
+
+                if (Directory.Exists(dirPath) || dirPath == Path.PathSeparator.ToString())
+                {
+                    continue;
+                }
+
+                CreateSingleDirectory(dirPath, permissions);
+            }
         }
 
-        public virtual int CreateDirectoryWithPermissions(string path, FilePermissions permissions)
+        public virtual int CreateDirectoryWithPermissionsMkdir(string path, FileAccessPermissions permissions)
         {
-            return Syscall.mkdir(path, permissions);
+            return Syscall.mkdir(path, (FilePermissions)permissions);
+        }
+
+        private static void CreateSingleDirectory(string path, FileAccessPermissions permissions)
+        {
+            s_logger.Debug($"Creating a directory {path} with permissions: {permissions}");
+            try
+            {
+                new UnixDirectoryInfo(path).Create(permissions);
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Unable to create directory", e);
+            }
+        }
+
+        public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions)
+        {
+            var dirPath = Path.GetDirectoryName(path);
+            if (dirPath != null)
+            {
+                CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+            }
+
+            s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
+            return new UnixFileInfo(path).Create(permissions);
         }
 
         public virtual FileAccessPermissions GetFilePermissions(string path)
@@ -53,6 +93,12 @@ namespace Snowflake.Data.Core.Tools
         {
             var fileInfo = new UnixFileInfo(path);
             return (permissions & fileInfo.FileAccessPermissions) != 0;
+        }
+
+        public virtual bool CheckDirectoryHasAnyOfPermissions(string path, FileAccessPermissions permissions)
+        {
+            var directoryInfo = new UnixDirectoryInfo(path);
+            return (permissions & directoryInfo.FileAccessPermissions) != 0;
         }
 
         public string ReadAllText(string path, Action<UnixStream> validator)
@@ -91,6 +137,18 @@ namespace Snowflake.Data.Core.Tools
         public virtual long GetCurrentGroupId()
         {
             return Syscall.getgid();
+        }
+
+        public virtual long GetOwnerIdOfDirectory(string path)
+        {
+            var dirInfo = new UnixDirectoryInfo(path);
+            return dirInfo.OwnerUser.UserId;
+        }
+
+        public virtual long GetOwnerIdOfFile(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            return fileInfo.OwnerUser.UserId;
         }
     }
 }
