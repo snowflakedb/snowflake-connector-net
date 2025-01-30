@@ -146,7 +146,6 @@ namespace Snowflake.Data.AuthenticationTests
             {
                 throw new Exception($"Failed to get OAuth token: {e.Message}");
             }
-
         }
     }
 }

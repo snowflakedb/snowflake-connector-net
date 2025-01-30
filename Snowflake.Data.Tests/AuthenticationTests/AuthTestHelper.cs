@@ -6,61 +6,11 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 
-
 namespace Snowflake.Data.AuthenticationTests
 {
 
     public class AuthTestHelper
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthTestHelper>();
-
-        private Exception _exception;
-        private readonly bool _runAuthTestsManually;
-        public AuthTestHelper()
-        {
-            string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
-            _runAuthTestsManually = bool.Parse(envVar ?? "true");
-        }
-
-        private void StartNodeProcess(string path, TimeSpan timeout)
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "node",
-                Arguments = path,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using (var process = new Process { StartInfo = startInfo })
-            {
-                process.Start();
-                if (!process.WaitForExit((int) timeout.TotalMilliseconds))
-                {
-                    process.Kill();
-                    throw new TimeoutException("The process did not complete in the allotted time.");
-                }
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-
-                s_logger.Info("Output: " + output);
-                s_logger.Info("Error: " + error);
-            }
-        }
-
-        private void ProvideCredentials(string scenario, string login, string password)
-        {
-            try
-            {
-                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
-            }
-            catch (Exception e)
-            {
-                _exception = e;
-            }
-        }
-
         public void CleanBrowserProcess()
         {
             if (_runAuthTestsManually)
@@ -134,6 +84,55 @@ namespace Snowflake.Data.AuthenticationTests
                 connectThread.Start();
                 provideCredentialsThread.Join();
                 connectThread.Join();
+            }
+        }
+
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthTestHelper>();
+
+        private Exception _exception;
+        private readonly bool _runAuthTestsManually;
+        public AuthTestHelper()
+        {
+            string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
+            _runAuthTestsManually = bool.Parse(envVar ?? "true");
+        }
+
+        private void StartNodeProcess(string path, TimeSpan timeout)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "node",
+                Arguments = path,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using (var process = new Process { StartInfo = startInfo })
+            {
+                process.Start();
+                if (!process.WaitForExit((int) timeout.TotalMilliseconds))
+                {
+                    process.Kill();
+                    throw new TimeoutException("The process did not complete in the allotted time.");
+                }
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+
+                s_logger.Info("Output: " + output);
+                s_logger.Info("Error: " + error);
+            }
+        }
+
+        private void ProvideCredentials(string scenario, string login, string password)
+        {
+            try
+            {
+                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
+            }
+            catch (Exception e)
+            {
+                _exception = e;
             }
         }
     }
