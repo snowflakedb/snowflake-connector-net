@@ -1,4 +1,3 @@
-using Amazon.Runtime.Internal.Transform;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
