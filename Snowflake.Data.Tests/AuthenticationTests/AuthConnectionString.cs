@@ -101,9 +101,9 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        public static string GetPrivateKeyPathForKeypairAuth(string fileLocation)
+        public static string GetPrivateKeyPathForKeypairAuth(string relativeFileLocationEnvVariable)
         {
-            string filePath = Environment.GetEnvironmentVariable(fileLocation);
+            string filePath = Environment.GetEnvironmentVariable(relativeFileLocationEnvVariable);
             Assert.IsNotNull(filePath);
             return Path.Combine("..", "..", "..", "..", filePath);
         }
@@ -112,13 +112,15 @@ namespace Snowflake.Data.AuthenticationTests
         {
             try
             {
-
-                using (var client = new HttpClient())
+                using (var client = new HttpClient(new HttpClientHandler
+                       {
+                           UseCookies = false
+                       }))
                 {
                     var authUrl = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_URL");
                     var clientId = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_CLIENT_ID");
                     var clientSecret = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_CLIENT_SECRET");
-                    var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientId}:{clientSecret}"));
+                    var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
 
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
 
@@ -142,8 +144,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
             catch (Exception e)
             {
-                Assert.Fail($"Failed to get OAuth token: {e.Message}");
-                return null;
+                throw new Exception($"Failed to get OAuth token: {e.Message}");
             }
 
         }

@@ -22,6 +22,7 @@ namespace Snowflake.Data.AuthenticationTests
             var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
             var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsNotThrown();
         }

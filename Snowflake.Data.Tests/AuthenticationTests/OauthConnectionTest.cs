@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2025 Snowflake Computing Inc. All rights reserved.
  */
 
+using Amazon.Runtime.Internal.Transform;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
@@ -20,7 +21,6 @@ namespace Snowflake.Data.AuthenticationTests
             string token = AuthConnectionString.GetOauthToken();
             var parameters = AuthConnectionString.GetOauthConnectionString(token);
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-
         }
 
          [Test, IgnoreOnCI]
@@ -52,8 +52,9 @@ namespace Snowflake.Data.AuthenticationTests
 
               string token = AuthConnectionString.GetOauthToken();
               var parameters = AuthConnectionString.GetOauthConnectionString(token);
-              parameters[SFSessionProperty.USER] = "fakeAccount";
-              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters) + ";poolingEnabled=false;minPoolSize=0;";
+              parameters.Add(SFSessionProperty.USER, "fakeAccount");
+              parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
+              parameters.Add(SFSessionProperty.MINPOOLSIZE, "0");
 
               authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
               authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");

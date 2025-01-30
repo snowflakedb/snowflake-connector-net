@@ -38,7 +38,6 @@ namespace Snowflake.Data.AuthenticationTests
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
             authTestHelper.VerifyExceptionIsNotThrown();
-
         }
 
         [Test, IgnoreOnCI]
@@ -56,45 +55,41 @@ namespace Snowflake.Data.AuthenticationTests
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
-
         }
 
-    [Test, IgnoreOnCI]
-    public void TestAuthenticateUsingExternalBrowserWrongCredentials()
-    {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingExternalBrowserWrongCredentials()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-        var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+            var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "15");
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-        _connectionString += "BROWSER_RESPONSE_TIMEOUT=15;";
+            _login = "itsnotanaccount.com";
+            _password = "fakepassword";
 
-        _login = "itsnotanaccount.com";
-        _password = "fakepassword";
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
+            }
 
-        authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-        authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingExternalBrowserTimeout()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-    }
+            var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "1");
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-    [Test, IgnoreOnCI]
-    public void TestAuthenticateUsingExternalBrowserTimeout()
-    {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("timeout", _login, _password);
 
-        var parameters = AuthConnectionString.GetExternalBrowserConnectionString();
-
-        _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-        _connectionString += "BROWSER_RESPONSE_TIMEOUT=1;";
-
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("timeout", _login, _password);
-
-        authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-        authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
-    }
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
+        }
       }
 }

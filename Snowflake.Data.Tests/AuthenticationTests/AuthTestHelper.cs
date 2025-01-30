@@ -5,7 +5,6 @@ using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
-using Snowflake.Data.Tests;
 
 
 namespace Snowflake.Data.AuthenticationTests
@@ -23,36 +22,38 @@ namespace Snowflake.Data.AuthenticationTests
             _runAuthTestsManually = bool.Parse(envVar ?? "true");
         }
 
+        private void StartNodeProcess(string path, TimeSpan timeout)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "node",
+                Arguments = path,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using (var process = new Process { StartInfo = startInfo })
+            {
+                process.Start();
+                if (!process.WaitForExit((int) timeout.TotalMilliseconds))
+                {
+                    process.Kill();
+                    throw new TimeoutException("The process did not complete in the allotted time.");
+                }
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+
+                s_logger.Info("Output: " + output);
+                s_logger.Info("Error: " + error);
+            }
+        }
+
         private void ProvideCredentials(string scenario, string login, string password)
         {
             try
             {
-                string provideBrowserCredentialsPath = "/externalbrowser/provideBrowserCredentials.js";
-
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "node",
-                    Arguments = provideBrowserCredentialsPath + " " + scenario + " " + login + " " + password,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using (var process = new Process { StartInfo = startInfo })
-                {
-                    process.Start();
-                    if (!process.WaitForExit(15000)) // Wait for 15 seconds
-                    {
-                        process.Kill();
-                        throw new TimeoutException("The process did not complete in the allotted time.");
-                    }
-
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-
-                    s_logger.Info("Output: " + output);
-                    s_logger.Info("Error: " + error);
-                }
+                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
             }
             catch (Exception e)
             {
@@ -64,37 +65,13 @@ namespace Snowflake.Data.AuthenticationTests
         {
             if (_runAuthTestsManually)
                 return;
+            try
             {
-                try {
-                    string cleanBrowserProcessesPath = "/externalbrowser/cleanBrowserProcesses.js";
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = "node",
-                        Arguments = cleanBrowserProcessesPath,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    using (var process = new Process { StartInfo = startInfo })
-                    {
-                        process.Start();
-                        if (!process.WaitForExit(20000)) // Wait for 20 seconds
-                        {
-                            process.Kill();
-                            throw new TimeoutException("The process did not complete in the allotted time.");
-                        }
-                        string output = process.StandardOutput.ReadToEnd();
-                        string error = process.StandardError.ReadToEnd();
-
-                        s_logger.Info("Output: " + output);
-                        s_logger.Info("Error: " + error);
-                    }
-                }
-                catch (Exception e)
-                {
-                    throw new Exception(e.ToString());
-                }
+                StartNodeProcess("/externalbrowser/cleanBrowserProcesses.js", TimeSpan.FromSeconds(20));
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.ToString());
             }
         }
 
@@ -108,7 +85,6 @@ namespace Snowflake.Data.AuthenticationTests
 
                     conn.Open();
                     Assert.AreEqual(ConnectionState.Open, conn.State);
-
 
                     using (IDbCommand command = conn.CreateCommand())
                     {
