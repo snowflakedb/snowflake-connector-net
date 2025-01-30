@@ -11,6 +11,16 @@ namespace Snowflake.Data.AuthenticationTests
 
     public class AuthTestHelper
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthTestHelper>();
+        private Exception _exception;
+        private readonly bool _runAuthTestsManually;
+
+        public AuthTestHelper()
+        {
+            string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
+            _runAuthTestsManually = bool.Parse(envVar ?? "true");
+        }
+
         public void CleanBrowserProcess()
         {
             if (_runAuthTestsManually)
@@ -85,16 +95,6 @@ namespace Snowflake.Data.AuthenticationTests
                 provideCredentialsThread.Join();
                 connectThread.Join();
             }
-        }
-
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<AuthTestHelper>();
-
-        private Exception _exception;
-        private readonly bool _runAuthTestsManually;
-        public AuthTestHelper()
-        {
-            string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
-            _runAuthTestsManually = bool.Parse(envVar ?? "true");
         }
 
         private void StartNodeProcess(string path, TimeSpan timeout)
