@@ -93,10 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests
                 });
                 var user = "test";
                 var host = $"{user}.okta.com";
-                var key = SFCredentialManagerFactory.BuildCredentialKey(host, user, TokenType.IdToken);
+                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
                 var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "mockIdToken");
-                SFCredentialManagerFactory.SetCredentialManager(credentialManager);
+                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
                 var restRequester = new Mock.MockExternalBrowserRestRequester()
                 {
@@ -301,10 +301,10 @@ namespace Snowflake.Data.Tests.UnitTests
                 });
                 var user = "test";
                 var host = $"{user}.okta.com";
-                var key = SFCredentialManagerFactory.BuildCredentialKey(host, user, TokenType.IdToken);
+                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
                 var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "mockIdToken");
-                SFCredentialManagerFactory.SetCredentialManager(credentialManager);
+                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
                 var restRequester = new Mock.MockExternalBrowserRestRequester()
                 {

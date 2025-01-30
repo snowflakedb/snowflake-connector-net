@@ -130,7 +130,7 @@ namespace Snowflake.Data.Core
                 if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     _idToken = SecureStringHelper.Encode(authnResponse.data.idToken);
-                    var key = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(key, authnResponse.data.idToken);
                 }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Core
 
                 if (_allowSSOTokenCaching)
                 {
-                    var idKey = SFCredentialManagerFactory.BuildCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    var idKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _idToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(idKey));
                 }
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")

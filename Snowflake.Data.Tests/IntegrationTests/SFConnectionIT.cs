@@ -1096,19 +1096,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
 
                 // Create a credential manager and save a wrong token for the test user
-                var key = SFCredentialManagerFactory.BuildCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
+                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
                 var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "wrongToken");
 
                 // Use the credential manager with the wrong token
-                SFCredentialManagerFactory.SetCredentialManager(credentialManager);
+                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
                 // Open a connection which should switch to external browser after trying to connect using the wrong token
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
                 // Switch back to the default credential manager
-                SFCredentialManagerFactory.UseDefaultCredentialManager();
+                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
             }
         }
 
