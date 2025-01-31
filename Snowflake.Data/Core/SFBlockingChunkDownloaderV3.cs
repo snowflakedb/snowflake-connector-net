@@ -129,7 +129,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
-                return await Task.FromResult<BaseResultChunk>(null);
+                return null;
             }
         }
 
