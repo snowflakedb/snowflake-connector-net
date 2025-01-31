@@ -194,35 +194,35 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+        var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+        Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            var reader = new StreamReader("parameters.json");
+        var reader = new StreamReader("parameters.json");
 
-            var testConfigString = reader.ReadToEnd();
+        var testConfigString = reader.ReadToEnd();
 
-            // Local JSON settings to avoid using system wide settings which could be different
-            // than the default ones
-            var jsonSettings = new JsonSerializerSettings
+        // Local JSON settings to avoid using system wide settings which could be different
+        // than the default ones
+        var jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
             {
-                ContractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new DefaultNamingStrategy()
-                }
-            };
-            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-
-            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-            {
-                TestConfig = testConnectionConfig;
-                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                NamingStrategy = new DefaultNamingStrategy()
             }
-            else
-            {
-                Assert.Fail("Failed to load test configuration");
-            }
+        };
+        var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
 
-            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+        {
+            TestConfig = testConnectionConfig;
+            TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+        }
+        else
+        {
+            Assert.Fail("Failed to load test configuration");
+        }
+
+        ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
 
         [OneTimeTearDown]
