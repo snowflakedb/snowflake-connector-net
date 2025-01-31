@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
@@ -25,10 +25,17 @@
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="log4net" Version="2.0.12" />
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" Aliases="BouncyCastle"/>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="bc-fips-1.0.2">
+      <HintPath>..\dependencies\bc-fips-1.0.2.dll</HintPath>
+      <Aliases>BouncyCastleFips</Aliases>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">

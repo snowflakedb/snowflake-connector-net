@@ -1,10 +1,8 @@
 ﻿/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
-
+extern alias BouncyCastle;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
@@ -12,13 +10,14 @@ using System.IdentityModel.Tokens.Jwt;
 using Snowflake.Data.Client;
 using System.Security.Cryptography;
 using System.IO;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.X509;
+using BouncyCastle::Org.BouncyCastle.OpenSsl;
+using BouncyCastle::Org.BouncyCastle.Security;
+using BouncyCastle::Org.BouncyCastle.Crypto;
+using BouncyCastle::Org.BouncyCastle.Crypto.Parameters;
+using BouncyCastle::Org.BouncyCastle.X509;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+
 namespace Snowflake.Data.Core.Authenticator
 {
     /// <summary>
