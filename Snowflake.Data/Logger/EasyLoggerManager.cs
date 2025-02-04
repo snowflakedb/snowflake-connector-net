@@ -90,8 +90,8 @@ namespace Snowflake.Data.Log
         {
             switch (appender)
             {
-                case SFAppender sfAppender:
-                    return sfAppender.Name != null && sfAppender.Name.StartsWith(AppenderPrefix);
+                case SFAppender _:
+                    return appender.Name != null && appender.Name.StartsWith(AppenderPrefix);
                 default:
                     return false;
             }
