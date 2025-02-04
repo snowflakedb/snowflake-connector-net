@@ -35,6 +35,8 @@ internal class SFConsoleAppender : SFAppender
 
     public SFConsoleAppender() { }
 
+    public string Name => _name;
+
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
         var formattedMessage = _patternLayout.Format(logLevel, message, type);
@@ -55,6 +57,8 @@ internal class SFRollingFileAppender : SFAppender
     internal PatternLayout _patternLayout;
 
     public SFRollingFileAppender() { }
+
+    public string Name => _name;
 
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {

@@ -8,6 +8,8 @@ namespace Snowflake.Data.Log
 {
     public interface SFAppender
     {
+        string Name { get; }
+
         void Append(string logLevel, string message, Type type, Exception ex = null);
     }
 }

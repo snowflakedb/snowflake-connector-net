@@ -88,19 +88,13 @@ namespace Snowflake.Data.Log
 
         private static bool IsEasyLoggingAppender(SFAppender appender)
         {
-            if (appender.GetType() == typeof(SFConsoleAppender))
+            switch (appender)
             {
-                var consoleAppender = (SFConsoleAppender)appender;
-                return consoleAppender._name != null && consoleAppender._name.StartsWith(AppenderPrefix);
+                case SFAppender sfAppender:
+                    return sfAppender.Name != null && sfAppender.Name.StartsWith(AppenderPrefix);
+                default:
+                    return false;
             }
-
-            if (appender.GetType() == typeof(SFRollingFileAppender))
-            {
-                var rollingFileAppender = (SFRollingFileAppender)appender;
-                return rollingFileAppender._name != null && rollingFileAppender._name.StartsWith(AppenderPrefix);
-            }
-
-            return false;
         }
 
         private static SFAppender AddConsoleAppender(SFLogger logger)
