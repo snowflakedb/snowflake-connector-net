@@ -12,6 +12,7 @@ using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -50,7 +51,7 @@ namespace Snowflake.Data.Core.Authenticator
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("External Browser Authentication");
-            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            var idToken = SecureStringHelper.Decode(session._idToken);
             if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Core.Authenticator
         void IAuthenticator.Authenticate()
         {
             logger.Info("External Browser Authentication");
-            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            var idToken = SecureStringHelper.Decode(session._idToken);
             if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
@@ -253,7 +254,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            var idToken = new NetworkCredential(string.Empty, session._idToken).Password;
+            var idToken = SecureStringHelper.Decode(session._idToken);
             if (string.IsNullOrEmpty(idToken))
             {
                 // Add the token and proof key to the Data
