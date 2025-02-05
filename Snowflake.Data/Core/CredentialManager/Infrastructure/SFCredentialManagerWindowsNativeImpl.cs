@@ -12,6 +12,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
+
     internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
