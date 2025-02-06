@@ -3,7 +3,6 @@
  */
 
 using Microsoft.Extensions.Logging;
-using System.IO;
 
 namespace Snowflake.Data.Log
 {
@@ -53,7 +52,7 @@ namespace Snowflake.Data.Log
             return new SFLoggerPair(GetSFLogger<T>(), GetCustomLogger<T>());
         }
 
-        internal static SFLogger GetSFLogger<T>(bool useFileAppender = true)
+        internal static SFLogger GetSFLogger<T>(bool useConsoleAppender = false)
         {
             // If true, return the default/specified logger
             if (s_useDefaultSFLogger)
@@ -63,19 +62,7 @@ namespace Snowflake.Data.Log
                 {
                     logger.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
                 }
-                if (useFileAppender)
-                {
-                    var fileAppender = new SFRollingFileAppender()
-                    {
-                        _name = "RollingFileAppender",
-                        _logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "test_snowflake_log.log"),
-                        _maximumFileSizeInBytes = 1000000000, // "1GB"
-                        _maxSizeRollBackups = 0,
-                        _patternLayout = EasyLoggerManager.PatternLayout()
-                    };
-                    logger.AddAppender(fileAppender);
-                }
-                else
+                if(useConsoleAppender)
                 {
                     var consoleAppender = new SFConsoleAppender()
                     {

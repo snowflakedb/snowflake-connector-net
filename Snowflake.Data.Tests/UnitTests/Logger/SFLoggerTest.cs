@@ -180,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerFactory.UseEmptySFLogger();
             }
 
-            return SFLoggerFactory.GetSFLogger<SFLoggerTest>(false);
+            return SFLoggerFactory.GetSFLogger<SFLoggerTest>(true);
         }
     }
 }
