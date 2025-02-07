@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -279,7 +280,12 @@ namespace Snowflake.Data.Client
             {
                 FillConnectionStringFromTomlConfigIfNotSet();
                 OnSessionConnecting();
-                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password, Passcode);
+                var sessionContext = new SessionPropertiesContext
+                {
+                    Password = Password,
+                    Passcode = Passcode
+                };
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, sessionContext);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
@@ -321,8 +327,13 @@ namespace Snowflake.Data.Client
             registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
             FillConnectionStringFromTomlConfigIfNotSet();
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode
+            };
             return SnowflakeDbConnectionPool
-                .GetSessionAsync(ConnectionString, Password, Passcode, cancellationToken)
+                .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
                 .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)

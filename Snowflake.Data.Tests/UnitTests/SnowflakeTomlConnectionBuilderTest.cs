@@ -4,6 +4,7 @@
 
 using Mono.Unix;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -504,7 +505,7 @@ password = ""{passwordValueWithSpecialCharacter}""
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // Assert
             Assert.AreEqual(expectedValue, properties[SFSessionProperty.PASSWORD]);

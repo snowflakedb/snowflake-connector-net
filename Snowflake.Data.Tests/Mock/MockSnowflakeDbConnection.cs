@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Snowflake Computing Inc. All rights reserved.
  */
 
 using Snowflake.Data.Client;
@@ -9,6 +9,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock
 {
@@ -81,7 +82,12 @@ namespace Snowflake.Data.Tests.Mock
 
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, Passcode, EasyLoggingStarter.Instance, _restRequester);
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode
+            };
+            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 

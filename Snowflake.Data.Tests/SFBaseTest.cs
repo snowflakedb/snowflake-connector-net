@@ -194,35 +194,38 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-        var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-        Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-        var reader = new StreamReader("parameters.json");
+            TestConfig = ReadTestConfig("parameters.json");
+            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        }
 
-        var testConfigString = reader.ReadToEnd();
-
-        // Local JSON settings to avoid using system wide settings which could be different
-        // than the default ones
-        var jsonSettings = new JsonSerializerSettings
+        internal static TestConfig ReadTestConfig(string fileName)
         {
-            ContractResolver = new DefaultContractResolver
+            var reader = new StreamReader(fileName);
+            var testConfigString = reader.ReadToEnd();
+            // Local JSON settings to avoid using system wide settings which could be different
+            // than the default ones
+            var jsonSettings = new JsonSerializerSettings
             {
-                NamingStrategy = new DefaultNamingStrategy()
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new DefaultNamingStrategy()
+                }
+            };
+            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+            {
+                var testConfig = testConnectionConfig;
+                testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                return testConfig;
             }
-        };
-        var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-
-        if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-        {
-            TestConfig = testConnectionConfig;
-            TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
-        }
-        else
-        {
-            Assert.Fail("Failed to load test configuration");
-        }
-
-        ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+            else
+            {
+                Assert.Fail("Failed to load test configuration");
+                throw new Exception("Failed to load test configuration");
+            }
         }
 
         [OneTimeTearDown]
@@ -408,6 +411,24 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
         internal string nonProxyHosts { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_CLIENT_ID", NullValueHandling = NullValueHandling.Ignore)]
+        internal string clientId { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_CLIENT_SECRET", NullValueHandling = NullValueHandling.Ignore)]
+        internal string clientSecret { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_AUTHORIZATION_SCOPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authorizationScope { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_REDIRECT_URI", NullValueHandling = NullValueHandling.Ignore)]
+        internal string redirectUri { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXTERNAL_AUTHORIZATION_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string externalAuthorizationUrl { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXTERNAL_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string externalTokenRequestUrl { get; set; }
 
         public TestConfig()
         {
