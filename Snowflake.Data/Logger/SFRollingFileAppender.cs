@@ -1,52 +1,11 @@
 /*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2025 Snowflake Computing Inc. All rights reserved.
  */
 
 using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
-
-internal class PatternLayout
-{
-    internal string _conversionPattern;
-
-    public PatternLayout() { }
-
-    public string Format(string logLevel, string message, Type type)
-    {
-        var formattedMessage = _conversionPattern
-            .Replace("%date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
-            .Replace("%t", Thread.CurrentThread.ManagedThreadId.ToString())
-            .Replace("%-5level", logLevel)
-            .Replace("%logger", type.ToString())
-            .Replace("%message", message)
-            .Replace("%newline", "\n");
-
-        return formattedMessage;
-    }
-}
-
-internal class SFConsoleAppender : SFAppender
-{
-    internal string _name;
-    internal PatternLayout _patternLayout;
-
-    public SFConsoleAppender() { }
-
-    public string Name => _name;
-
-    public void Append(string logLevel, string message, Type type, Exception ex = null)
-    {
-        var formattedMessage = _patternLayout.Format(logLevel, message, type);
-        Console.Write(formattedMessage);
-        if (ex != null)
-        {
-            Console.WriteLine(ex.Message);
-        }
-    }
-}
 
 internal class SFRollingFileAppender : SFAppender
 {
