@@ -13,7 +13,7 @@ namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigFinder
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<EasyLoggingConfigFinder>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigFinder>();
 
         internal const string ClientConfigFileName = "sf_client_config.json";
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
