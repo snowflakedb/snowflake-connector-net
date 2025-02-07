@@ -45,7 +45,8 @@ namespace Snowflake.Data.Configuration
 
         private ClientConfig TryToParseFile(string fileContent)
         {
-            try {
+            try
+            {
                 var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
                 Validate(config);
                 CheckForUnknownFields(fileContent);

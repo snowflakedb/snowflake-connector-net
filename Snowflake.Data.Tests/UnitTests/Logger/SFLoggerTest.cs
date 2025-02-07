@@ -1,14 +1,14 @@
-﻿/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
+/*
+ * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
  */
 
+using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Log;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Log;
-    
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {
@@ -27,27 +27,27 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
         }
-        
-        [TearDown] public void AfterTest()
+
+        [TearDown]
+        public void AfterTest()
         {
             // Return to default setting
-            SFLoggerFactory.useDefaultLogger();
-            SFLoggerFactory.enableLogger();
+            SFLoggerFactory.UseDefaultSFLogger();
         }
 
         [Test]
-        public void TestUsingDefaultLogger()
+        public void TestUsingSFLogger()
         {
-            SFLoggerFactory.useDefaultLogger();
-            _logger = SFLoggerFactory.GetLogger<SFLoggerTest>();
-            Assert.IsInstanceOf<Log4NetImpl>(_logger);
+            SFLoggerFactory.UseDefaultSFLogger();
+            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
+            Assert.IsInstanceOf<SFLoggerImpl>(_logger);
         }
 
         [Test]
-        public void TestSettingCustomLogger()
+        public void TestUsingEmptyLogger()
         {
-            SFLoggerFactory.Instance(new SFLoggerEmptyImpl());
-            _logger = SFLoggerFactory.GetLogger<SFLoggerTest>();
+            SFLoggerFactory.UseEmptySFLogger();
+            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
             Assert.IsInstanceOf<SFLoggerEmptyImpl>(_logger);
         }
 
@@ -58,6 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
+            _logger.Debug("debug log message", new Exception("test exception"));
         }
 
         [Test]
@@ -67,6 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
+            _logger.Info("info log message", new Exception("test exception"));
         }
 
         [Test]
@@ -76,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
+            _logger.Warn("warn log message", new Exception("test exception"));
         }
 
         [Test]
@@ -85,6 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
+            _logger.Error("error log message", new Exception("test exception"));
         }
 
         [Test]
@@ -94,20 +98,89 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
 
             Assert.AreEqual(isEnabled, _logger.IsFatalEnabled());
+            _logger.Fatal("fatal log message", new Exception("test exception"));
+        }
+
+        [Test]
+        public void TestGetAppenders(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.IsInstanceOf<SFConsoleAppender>(appenders[0]);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.GetAppenders());
+            }
+        }
+
+        [Test]
+        public void TestAddAppender(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.AreEqual(1, appenders.Count);
+                _logger.AddAppender(new SFConsoleAppender());
+                Assert.AreEqual(2, appenders.Count);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.AddAppender(new SFConsoleAppender()));
+            }
+        }
+
+        [Test]
+        public void TestRemoveAppender(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                var appenders = _logger.GetAppenders();
+                Assert.AreEqual(1, appenders.Count);
+                _logger.RemoveAppender(appenders[0]);
+                Assert.AreEqual(0, appenders.Count);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.RemoveAppender(new SFConsoleAppender()));
+            }
+        }
+
+        [Test]
+        public void TestSetLevel(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                _logger.SetLevel(LoggingEvent.DEBUG);
+                Assert.AreEqual(LoggingEvent.DEBUG, ((SFLoggerImpl)_logger)._level);
+            }
+            else
+            {
+                Assert.Throws<NotImplementedException>(() => _logger.SetLevel(LoggingEvent.DEBUG));
+            }
         }
 
         private SFLogger GetLogger(bool isEnabled)
         {
             if (isEnabled)
             {
-                SFLoggerFactory.enableLogger();
+                SFLoggerFactory.UseDefaultSFLogger();
             }
             else
             {
-                SFLoggerFactory.disableLogger();
+                SFLoggerFactory.UseEmptySFLogger();
             }
 
-            return SFLoggerFactory.GetLogger<SFLoggerTest>();
+            return SFLoggerFactory.GetSFLogger<SFLoggerTest>(true);
         }
     }
 }
