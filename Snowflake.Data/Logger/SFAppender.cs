@@ -6,7 +6,7 @@ using System;
 
 namespace Snowflake.Data.Log
 {
-    public interface SFAppender
+    internal interface SFAppender
     {
         string Name { get; }
 

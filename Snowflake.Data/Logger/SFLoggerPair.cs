@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Snowflake.Data.Log
 {
-    public class SFLoggerPair : SFLogger
+    internal class SFLoggerPair : SFLogger
     {
         private static SFLogger s_snowflakeLogger;
         internal static ILogger s_customLogger;

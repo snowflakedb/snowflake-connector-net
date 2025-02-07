@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log
 {
-    public class SFLoggerFactory
+    internal class SFLoggerFactory
     {
         private static bool s_isCustomLoggerEnabled = false;
 

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Log
 {
-    public interface SFLogger
+    internal interface SFLogger
     {
         bool IsDebugEnabled();
 

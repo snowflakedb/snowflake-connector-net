@@ -6,7 +6,7 @@ using Snowflake.Data.Log;
 using System;
 using System.Collections.Generic;
 
-public static class SFLogRepository
+internal static class SFLogRepository
 {
     internal static SFLogger s_rootLogger = new SFLoggerImpl(typeof(SFLogRepository));
 
@@ -16,7 +16,7 @@ public static class SFLogRepository
     }
 }
 
-public class SFLoggerImpl : SFLogger
+internal class SFLoggerImpl : SFLogger
 {
     private readonly Type _type;
     internal readonly List<SFAppender> _appenders;
