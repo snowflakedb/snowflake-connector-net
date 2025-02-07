@@ -6,7 +6,7 @@ using System;
 
 namespace Snowflake.Data.Configuration
 {
-    public enum EasyLoggingLogLevel
+    internal enum EasyLoggingLogLevel
     {
         Off,
         Fatal,
