@@ -187,11 +187,7 @@ namespace Snowflake.Data.Tests.Util
                 s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
                 Directory.CreateDirectory(s_wiremockPath);
                 var response = s_httpClient.GetAsync($"{s_wiremockUrl}");
-                using (var fileStream = new FileStream(s_wiremockJarPath, FileMode.CreateNew))
-                {
-                    response.Result.Content.ReadAsStream();
-                    response.Result.Content.CopyTo(fileStream, null, CancellationToken.None);
-                }
+                Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew))).Wait();
                 s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
             }
             catch (Exception)
