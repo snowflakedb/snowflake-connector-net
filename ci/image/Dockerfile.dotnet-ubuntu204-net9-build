@@ -4,7 +4,7 @@ FROM ubuntu:20.04
 USER root
 WORKDIR /
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # create dir for workspace
 RUN mkdir -p /home/user
@@ -30,6 +30,9 @@ RUN dpkg -i packages-microsoft-prod.deb
 RUN apt-get install -y git
 RUN apt-get install -y zstd
 RUN apt-get install -y jq
+
+# Install Java 17
+RUN apt-get install -y openjdk-17-jre
 
 # Install .NET SDK 9.0
 RUN apt-get update
