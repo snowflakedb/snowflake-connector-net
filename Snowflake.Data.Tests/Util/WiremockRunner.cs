@@ -39,10 +39,10 @@ namespace Snowflake.Data.Tests.Util
         private static string Host => "127.0.0.1";
         private int Port { get; }
         private int AdminPort { get; }
+        public bool IsAvailable { get; set; }
 
         public string WiremockBaseUrl => $"https://{Host}:{Port}";
         public string WiremockBaseAdminUrl => $"http://{Host}:{AdminPort}";
-        public bool IsAvailable;
         private Process _process;
 
         private WiremockRunner(int port, int adminPort)
@@ -121,7 +121,8 @@ namespace Snowflake.Data.Tests.Util
                         FileName = "java",
                         Arguments = javaArgs,
                         RedirectStandardOutput = true,
-                        RedirectStandardError = true
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
                     }
                 };
                 _process.Start();
