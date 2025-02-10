@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.Util
         private static string Host => "127.0.0.1";
         private int Port { get; }
         private int AdminPort { get; }
-        public bool IsAvailable { get; set; }
+        public bool IsAvailable { get; private set; }
 
         public string WiremockBaseUrl => $"https://{Host}:{Port}";
         public string WiremockBaseAdminUrl => $"http://{Host}:{AdminPort}";
