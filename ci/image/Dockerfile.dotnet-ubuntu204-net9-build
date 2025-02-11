@@ -31,7 +31,7 @@ RUN apt-get install -y git
 RUN apt-get install -y zstd
 RUN apt-get install -y jq
 
-# Install Java 17
+# Install Java 17 for Wiremock Standalone
 RUN apt-get install -y openjdk-17-jre
 
 # Install .NET SDK 9.0
