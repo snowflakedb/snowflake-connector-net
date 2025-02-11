@@ -24,10 +24,8 @@ namespace Snowflake.Data.Tests.Util
                                                            "--proxy-pass-through false " +
                                                            "--https-keystore ./wiremock/ca-cert.jks " +
                                                            "--ca-keystore ./wiremock/ca-cert.jks";
-
         private static readonly string s_wiremockUrl =
             $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
-
         private static readonly HttpClient s_httpClient = new(
                 new HttpClientHandler
                 {
@@ -35,6 +33,7 @@ namespace Snowflake.Data.Tests.Util
                     ServerCertificateCustomValidationCallback = (_, _, _, _) => true
                 }
             );
+        private static readonly object s_lock = new ();
 
         private static string Host => "127.0.0.1";
         private int Port { get; }
@@ -177,27 +176,31 @@ namespace Snowflake.Data.Tests.Util
 
         private static void DownloadWiremockIfRequired()
         {
-            if (File.Exists(s_wiremockJarPath))
-            {
-                s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
-                return;
-            }
-
-            try
-            {
-                s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
-                Directory.CreateDirectory(s_wiremockPath);
-                var response = s_httpClient.GetAsync($"{s_wiremockUrl}");
-                Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew))).Wait();
-                s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
-            }
-            catch (Exception)
+            lock (s_lock)
             {
                 if (File.Exists(s_wiremockJarPath))
                 {
-                    File.Delete(s_wiremockJarPath);
+                    s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
+                    return;
                 }
-                throw;
+
+                try
+                {
+                    s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
+                    Directory.CreateDirectory(s_wiremockPath);
+                    var response = s_httpClient.GetAsync($"{s_wiremockUrl}");
+                    Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew))).Wait();
+                    s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
+                }
+                catch (Exception)
+                {
+                    if (File.Exists(s_wiremockJarPath))
+                    {
+                        File.Delete(s_wiremockJarPath);
+                    }
+
+                    throw;
+                }
             }
         }
     }
