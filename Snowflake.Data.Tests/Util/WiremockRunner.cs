@@ -52,6 +52,11 @@ namespace Snowflake.Data.Tests.Util
             IsAvailable = false;
         }
 
+        ~WiremockRunner()
+        {
+            Stop();
+        }
+
         public static WiremockRunner NewWiremock(string[] mappingFiles = null, int port = 1443, int adminPort = 1080)
         {
             DownloadWiremockIfRequired();
