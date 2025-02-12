@@ -40,7 +40,7 @@ namespace Snowflake.Data.Core
         private TimeSpan _waitingForSessionIdleTimeout;
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
-        internal bool _allowSSOTokenCaching;
+        internal bool _clientStoreTemporaryCredential;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Core
             var parameterMap = new Dictionary<SFSessionParameter, object>();
             parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = validateDefaultParameters;
             parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = clientSessionKeepAlive;
-            parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = _allowSSOTokenCaching;
+            parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = _clientStoreTemporaryCredential;
             return parameterMap;
         }
 
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Core
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _allowSSOTokenCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOW_SSO_TOKEN_CACHING]),
+                    _clientStoreTemporaryCredential = extractor.ExtractBooleanWithDefaultWindowsValueAndNonWindowsValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL),
                 };
             }
 

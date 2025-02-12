@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
-        internal bool _allowSSOTokenCaching;
+        internal bool _clientStoreTemporaryCredential;
 
         internal SecureString _idToken;
 
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_allowSSOTokenCaching && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     _idToken = SecureStringHelper.Encode(authnResponse.data.idToken);
                     var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
@@ -234,9 +234,9 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
-                _allowSSOTokenCaching = extractedProperties._allowSSOTokenCaching;
+                _clientStoreTemporaryCredential = extractedProperties._clientStoreTemporaryCredential;
 
-                if (_allowSSOTokenCaching)
+                if (_clientStoreTemporaryCredential)
                 {
                     var idKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _idToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(idKey));

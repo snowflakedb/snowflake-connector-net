@@ -1053,17 +1053,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             /*
              * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
-             * 1. Login normally using external browser with allow_sso_token_caching enabled
+             * 1. Login normally using external browser with CLIENT_STORE_TEMPORARY_CREDENTIAL enabled
              * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
             */
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                // Set the allow_sso_token_caching property to true to enable token caching
+                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
                 // The specified user should be configured for SSO
                 conn.ConnectionString
                     = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 conn.Open();
@@ -1090,10 +1090,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                // Set the allow_sso_token_caching property to true to enable token caching
+                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
                 conn.ConnectionString
                     = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
 
                 // Create a credential manager and save a wrong token for the test user
                 var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
@@ -2429,17 +2429,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             /*
              * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
-             * 1. Login normally using external browser with allow_sso_token_caching enabled
+             * 1. Login normally using external browser with CLIENT_STORE_TEMPORARY_CREDENTIAL enabled
              * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
             */
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                // Set the allow_sso_token_caching property to true to enable token caching
+                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
                 // The specified user should be configured for SSO
                 conn.ConnectionString
                     = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};allow_sso_token_caching=true;";
+                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);

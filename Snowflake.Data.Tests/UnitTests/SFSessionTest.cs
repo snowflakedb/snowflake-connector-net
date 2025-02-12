@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var expectedIdToken = "mockIdToken";
-            var connectionString = $"account=account;user=user;password=test;allow_sso_token_caching=true";
+            var connectionString = $"account=account;user=user;password=test;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, null);
             LoginResponse authnResponse = new LoginResponse
             {
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestThatRetriesAuthenticationForInvalidIdToken()
         {
             // arrange
-            var connectionString = "account=test;user=test;password=test;allow_sso_token_caching=true";
+            var connectionString = "account=test;user=test;password=test;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, null);
             LoginResponse authnResponse = new LoginResponse
             {
