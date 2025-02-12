@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -94,6 +94,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
         internal int masterValidityInSeconds { get; set; }
+
+        [JsonProperty(PropertyName = "idToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string idToken { get; set; }
 
         [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
         internal string mfaToken { get; set; }
