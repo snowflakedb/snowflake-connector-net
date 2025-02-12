@@ -6,7 +6,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     public class WiremockRunnerTest
     {
         private WiremockRunner _runner;
