@@ -9,10 +9,11 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.Util
 {
-    internal class WiremockRunner
+    internal class WiremockRunner : IDisposable
     {
         private const int MaxRetries = 50;
         private const int RetryInterval = 200;
+        private const int WarmupTime = 1000;
         private const string WiremockVersion = "3.11.0";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
         private static readonly string s_userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -85,9 +86,9 @@ namespace Snowflake.Data.Tests.Util
             throw new Exception("Unable to start Wiremock. Response check retries exceeded.");
         }
 
-        ~WiremockRunner()
+        public void Dispose()
         {
-            _process?.Kill();
+            Stop();
         }
 
         private bool CheckIfResponds()
@@ -127,7 +128,7 @@ namespace Snowflake.Data.Tests.Util
                 _process.Start();
 
                 // Let it warmup for a moment to catch any exception during startup
-                Thread.Sleep(1000);
+                Thread.Sleep(WarmupTime);
                 if (_process is { HasExited: true })
                 {
                     throw new Exception($"Process is not running. Output: {_process.StandardError.ReadToEnd()}");
