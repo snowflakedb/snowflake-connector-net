@@ -248,7 +248,7 @@ namespace Snowflake.Data.Core
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _clientStoreTemporaryCredential = extractor.ExtractBooleanWithDefaultWindowsValueAndNonWindowsValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL),
+                    _clientStoreTemporaryCredential = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL),
                 };
             }
 

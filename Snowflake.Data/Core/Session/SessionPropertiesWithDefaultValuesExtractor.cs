@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -27,15 +26,6 @@ namespace Snowflake.Data.Core.Session
                 Boolean.Parse,
                 s => true,
                 b => true
-            );
-
-        public bool ExtractBooleanWithDefaultWindowsValueAndNonWindowsValue(SFSessionProperty property) =>
-            ExtractPropertyWithDefaultValue(
-                property,
-                Boolean.Parse,
-                s => true,
-                b => true,
-                true
             );
 
         public int ExtractPositiveIntegerWithDefaultValue(
@@ -69,15 +59,10 @@ namespace Snowflake.Data.Core.Session
             SFSessionProperty property,
             Func<string, T> extractor,
             Func<string, bool> preExtractValidation,
-            Func<T, bool> postExtractValidation,
-            bool containsDefaultNonWindowsValue = false)
+            Func<T, bool> postExtractValidation)
         {
             var propertyAttribute = property.GetAttribute<SFSessionPropertyAttr>();
             var defaultValueString = propertyAttribute.defaultValue;
-            if (containsDefaultNonWindowsValue && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                defaultValueString = propertyAttribute.defaultNonWindowsValue;
-            }
             var defaultValue = extractor(defaultValueString);
             if (!postExtractValidation(defaultValue))
             {

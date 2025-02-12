@@ -769,11 +769,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private static string DefaultWindowsAndNonWindowsValue(SFSessionProperty property)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
-            }
-            return property.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
+                property.GetAttribute<SFSessionPropertyAttr>().defaultValue :
+                property.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
         }
 
         internal class TestCase
