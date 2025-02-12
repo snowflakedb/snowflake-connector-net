@@ -36,6 +36,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
@@ -99,6 +105,12 @@ jobs:
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
@@ -160,6 +172,12 @@ jobs:
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
