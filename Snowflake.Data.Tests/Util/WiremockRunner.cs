@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.Util
 
         public void Stop()
         {
-            _process.Kill();
+            _process?.Kill();
             IsAvailable = false;
         }
 
