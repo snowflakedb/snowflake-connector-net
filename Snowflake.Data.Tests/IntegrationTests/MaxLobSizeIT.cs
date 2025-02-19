@@ -415,7 +415,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             row = dataTable.Rows[2];
             Assert.AreEqual(s_colName[2], row[SchemaTableColumn.ColumnName]);
             Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.AreEqual(0, row[SchemaTableColumn.ColumnSize]);
+            Assert.AreEqual(-1, row[SchemaTableColumn.ColumnSize]);
             Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
         }
 

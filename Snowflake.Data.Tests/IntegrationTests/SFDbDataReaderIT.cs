@@ -1637,6 +1637,47 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestDataTableLoadOnVariantColumn()
+        {
+            using (var conn = CreateAndOpenConnection())
+            {
+                var colName = "c1";
+                var expectedVal = "{\"id\":1}"; // "{\n  \"id\": 1\n}"
+
+                CreateOrReplaceTable(conn, TableName, new[] { $"{colName} variant" });
+
+                IDbCommand cmd = conn.CreateCommand();
+
+                string insertCommand = $"insert into {TableName} select parse_json('{expectedVal}')";
+                cmd.CommandText = insertCommand;
+
+                var count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = $"select {colName} from {TableName}";
+                IDataReader reader = cmd.ExecuteReader();
+
+                ValidateResultFormat(reader);
+
+                var dt = new DataTable();
+                try
+                {
+                    dt.Load(reader);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail("Should not get a ConstraintException: " + ex.Message);
+                }
+                Assert.AreEqual(expectedVal, dt.Rows[0][colName].ToString()
+                    .Replace(" ", String.Empty)
+                    .Replace("\n", String.Empty));
+
+                CloseConnection(conn);
+            }
+
+        }
+
         private DbConnection CreateAndOpenConnection()
         {
             var conn = new SnowflakeDbConnection(ConnectionString);
