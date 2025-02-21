@@ -9,7 +9,6 @@ namespace Snowflake.Data.Configuration
     internal enum EasyLoggingLogLevel
     {
         Off,
-        Fatal,
         Error,
         Warn,
         Info,

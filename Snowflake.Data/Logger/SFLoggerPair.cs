@@ -48,13 +48,6 @@ namespace Snowflake.Data.Log
             s_customLogger.LogError(FormatBrackets(message), ex);
         }
 
-        public void Fatal(string message, Exception ex = null)
-        {
-            message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Fatal(message, ex);
-            s_customLogger.LogCritical(FormatBrackets(message), ex);
-        }
-
         public bool IsDebugEnabled()
         {
             return s_snowflakeLogger.IsDebugEnabled() ||
@@ -77,12 +70,6 @@ namespace Snowflake.Data.Log
         {
             return s_snowflakeLogger.IsErrorEnabled() ||
                 s_customLogger.IsEnabled(LogLevel.Error);
-        }
-
-        public bool IsFatalEnabled()
-        {
-            return s_snowflakeLogger.IsFatalEnabled() ||
-                s_customLogger.IsEnabled(LogLevel.Critical);
         }
 
         public List<SFAppender> GetAppenders()

@@ -17,8 +17,6 @@ namespace Snowflake.Data.Log
 
         bool IsErrorEnabled();
 
-        bool IsFatalEnabled();
-
         void Debug(string msg, Exception ex = null);
 
         void Info(string msg, Exception ex = null);
@@ -26,8 +24,6 @@ namespace Snowflake.Data.Log
         void Warn(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
-
-        void Fatal(string msg, Exception ex = null);
 
         List<SFAppender> GetAppenders();
 
@@ -40,6 +36,6 @@ namespace Snowflake.Data.Log
 
     public enum LoggingEvent
     {
-        OFF, TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+        OFF, TRACE, DEBUG, INFO, WARN, ERROR
     }
 }

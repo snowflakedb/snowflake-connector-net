@@ -92,16 +92,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestIsFatalEnabled(
-            [Values(false, true)] bool isEnabled)
-        {
-            _logger = GetLogger(isEnabled);
-
-            Assert.AreEqual(isEnabled, _logger.IsFatalEnabled());
-            _logger.Fatal("fatal log message", new Exception("test exception"));
-        }
-
-        [Test]
         public void TestGetAppenders(
             [Values(false, true)] bool isEnabled)
         {

@@ -59,17 +59,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsFalse(logger.IsInfoEnabled());
             Assert.IsFalse(logger.IsWarnEnabled());
             Assert.IsFalse(logger.IsErrorEnabled());
-            Assert.IsFalse(logger.IsFatalEnabled());
-
-            // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Fatal, t_directoryLogPath);
-
-            // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsFalse(logger.IsWarnEnabled());
-            Assert.IsFalse(logger.IsErrorEnabled());
-            Assert.IsTrue(logger.IsFatalEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, t_directoryLogPath);
@@ -79,7 +68,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsFalse(logger.IsInfoEnabled());
             Assert.IsFalse(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
-            Assert.IsTrue(logger.IsFatalEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
@@ -89,7 +77,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsFalse(logger.IsInfoEnabled());
             Assert.IsTrue(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
-            Assert.IsTrue(logger.IsFatalEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
@@ -99,7 +86,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsTrue(logger.IsInfoEnabled());
             Assert.IsTrue(logger.IsWarnEnabled());
             Assert.IsTrue(logger.IsErrorEnabled());
-            Assert.IsTrue(logger.IsFatalEnabled());
         }
 
         [Test]
@@ -114,7 +100,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             logger.Info(InfoMessage);
             logger.Warn(WarnMessage);
             logger.Error(ErrorMessage);
-            logger.Fatal(FatalMessage);
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));

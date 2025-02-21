@@ -47,9 +47,6 @@ internal class SFLoggerImpl : SFLogger
                 case LoggingEvent.TRACE:
                 case LoggingEvent.DEBUG:
                     break;
-                case LoggingEvent.FATAL:
-                    _isErrorEnabled = false;
-                    goto case LoggingEvent.ERROR;
                 case LoggingEvent.ERROR:
                     _isWarnEnabled = false;
                     goto case LoggingEvent.WARN;
@@ -106,13 +103,6 @@ internal class SFLoggerImpl : SFLogger
             SFLogRepository.s_rootLogger.IsErrorEnabled();
     }
 
-    public bool IsFatalEnabled()
-    {
-        return SFLogRepository.s_rootLogger == this ?
-            _isFatalEnabled :
-            SFLogRepository.s_rootLogger.IsFatalEnabled();
-    }
-
     public void Debug(string msg, Exception ex = null)
     {
         if (IsDebugEnabled())
@@ -143,14 +133,6 @@ internal class SFLoggerImpl : SFLogger
         if (IsErrorEnabled())
         {
             Log(LoggingEvent.ERROR.ToString(), msg, ex);
-        }
-    }
-
-    public void Fatal(string msg, Exception ex = null)
-    {
-        if (IsFatalEnabled())
-        {
-            Log(LoggingEvent.FATAL.ToString(), msg, ex);
         }
     }
 
