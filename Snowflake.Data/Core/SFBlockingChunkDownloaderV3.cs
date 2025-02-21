@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -173,26 +173,23 @@ namespace Snowflake.Data.Core
                         {
                             if (String.Compare(encoding.First(), "gzip", true) == 0)
                             {
-                                using (Stream streamGzip = new GZipStream(stream, CompressionMode.Decompress))
-                                {
-                                    await ParseStreamIntoChunk(streamGzip, chunk).ConfigureAwait(false);
-                                }
+                                Stream stream_gzip = new GZipStream(stream, CompressionMode.Decompress);
+                                await ParseStreamIntoChunk(stream_gzip, chunk);
                             }
                             else
                             {
-                                await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
+                                await ParseStreamIntoChunk(stream, chunk);
                             }
                         }
                         else
                         {
-                            await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
+                            await ParseStreamIntoChunk(stream, chunk);
                         }
                     }
                     catch (Exception e)
                     {
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
-                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
@@ -209,8 +206,7 @@ namespace Snowflake.Data.Core
                         else
                         {
                             //parse error
-                            logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
-                            throw new Exception("Parse stream to chunk error: " + e.Message);
+                            throw new Exception("parse stream to Chunk error. " + e);
                         }
                     }
                 }

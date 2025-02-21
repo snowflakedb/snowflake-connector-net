@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
+ * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
@@ -196,10 +196,6 @@ namespace Snowflake.Data.Core
                         break;
                     case bool ret: obj = ret;
                         break;
-                    case DateTime ret: obj = ret;
-                        break;
-                    case DateTimeOffset ret: obj = ret;
-                        break;
                     default:
                     {
                         var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
@@ -392,7 +388,7 @@ namespace Snowflake.Data.Core
                     return ret;
                 case DateTime ret:
                     if (type == SFDataType.DATE)
-                        return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);
+                        return SFDataConverter.toDateString(ret, sfResultSetMetaData.dateOutputFormat);
                     break;
             }
 
@@ -402,7 +398,7 @@ namespace Snowflake.Data.Core
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
-            session.UpdateSessionProperties(responseData);
+            session.UpdateDatabaseAndSchema(responseData.finalDatabaseName, responseData.finalSchemaName);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
         
