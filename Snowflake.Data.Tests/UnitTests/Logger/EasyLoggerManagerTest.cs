@@ -21,7 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private const string DebugMessage = "Easy logging Debug message";
         private const string WarnMessage = "Easy logging Warn message";
         private const string ErrorMessage = "Easy logging Error message";
-        private const string FatalMessage = "Easy logging Fatal message";
         private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         [ThreadStatic]
@@ -107,7 +106,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(InfoMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(WarnMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(ErrorMessage)));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
 
             // arrange
             File.Delete(FindLogFilePath(t_directoryLogPath));

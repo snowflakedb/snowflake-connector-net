@@ -16,7 +16,6 @@ internal class SFLoggerImpl : SFLogger
     private bool _isInfoEnabled;
     private bool _isWarnEnabled;
     private bool _isErrorEnabled;
-    private bool _isFatalEnabled;
 
     internal SFLoggerImpl(Type type, LoggingEvent level = LoggingEvent.DEBUG)
     {
@@ -38,7 +37,6 @@ internal class SFLoggerImpl : SFLogger
         _isInfoEnabled = enabled;
         _isWarnEnabled = enabled;
         _isErrorEnabled = enabled;
-        _isFatalEnabled = enabled;
 
         if (enabled)
         {
