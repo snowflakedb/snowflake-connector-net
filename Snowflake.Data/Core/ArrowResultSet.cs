@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
-
+        
         private readonly int _totalChunkCount;
         private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Core
                 isClosed = false;
 
                 queryId = responseData.queryId;
-
+                
                 ReadChunk(responseData);
             }
             catch(Exception ex)
@@ -95,21 +95,21 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-
+        
         internal override bool Next()
         {
             ThrowIfClosed();
 
             if (_currentChunk.Next())
                 return true;
-
+            
             if (_totalChunkCount > 0)
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                                $" size uncompressed: {_currentChunk.UncompressedSize}");
                 _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
-
+                
                 return _currentChunk?.Next() ?? false;
             }
 
@@ -154,21 +154,21 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-
+        
         private object GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
             ThrowIfOutOfBounds(ordinal);
-
+            
             var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
-
+            
             var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
 
             return value ?? DBNull.Value;
-
+   
         }
-
+        
         internal override object GetValue(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Core
             {
                 return value;
             }
-
+            
             object obj;
             checked
             {
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Core
         {
             return (bool)GetObjectInternal(ordinal);
         }
-
+        
         internal override byte GetByte(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Core
         {
             return ((string)GetObjectInternal(ordinal))[0];
         }
-
+        
         internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
             return ReadSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
@@ -307,7 +307,7 @@ namespace Snowflake.Data.Core
                 case int     ret: return ret;
                 case short   ret: return ret;
                 case sbyte   ret: return ret;
-                default: return (double)value;
+                default: return (double)value; 
             }
         }
 
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Core
                 }
             }
         }
-
+        
         internal override string GetString(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -398,14 +398,14 @@ namespace Snowflake.Data.Core
 
             return Convert.ToString(value);
         }
-
+        
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
             session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
-
+        
         private long ReadSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length) where T : struct
         {
             if (dataOffset < 0)
@@ -421,7 +421,7 @@ namespace Snowflake.Data.Core
             if (buffer != null && bufferOffset > buffer.Length)
             {
                 throw new System.ArgumentException(
-                    "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.",
+                    "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.", 
                     nameof(buffer));
             }
 
@@ -450,14 +450,14 @@ namespace Snowflake.Data.Core
                     "Source data is not long enough. Check the data offset, length, and the data's lower bounds.",
                     nameof(dataOffset));
             }
-
+            
             long dataLength = data.Length - dataOffset;
             long elementsRead = Math.Min(length, dataLength);
             Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
             return elementsRead;
-
+            
         }
-
+        
     }
 }
