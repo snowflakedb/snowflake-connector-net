@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             public void AfterTest()
             {
                 // Return to default setting
-                SFLoggerFactory.UseDefaultLogger();
+                SFLoggerFactory.ResetCustomLogger();
                 SFLoggerFactory.DisableCustomLogger();
                 if (_logFile != null)
                 {
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             public void TestUsingDefaultLogger()
             {
                 var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
-                SFLoggerFactory.UseDefaultLogger();
+                SFLoggerFactory.ResetCustomLogger();
                 _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<ILogger>(_logger);
                 SFLoggerFactory.SetCustomLogger(originalLogger);
@@ -207,6 +207,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [OneTimeSetUp]
             public void SetUp()
             {
+                var l = SFLoggerFactory.GetLogger<ILoggerTest>();
                 Environment.SetEnvironmentVariable("TEST_NLOG_FILE_NAME", NlogFileName);
                 var factory = LoggerFactory.Create(
                     builder => builder
