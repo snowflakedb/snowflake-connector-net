@@ -10,7 +10,7 @@ namespace Snowflake.Data.Log
     // Empty implementation of SFLogger
     // Used when SFLoggerFactory.disableLogger() is called.
 
-    class ILoggerEmptyImpl : ILogger
+    class LoggerEmptyImpl : ILogger
     {
         IDisposable ILogger.BeginScope<TState>(TState state)
         {

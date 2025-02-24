@@ -65,9 +65,9 @@ namespace Snowflake.Data.Tests.UnitTests
             public void TestSettingCustomLogger()
             {
                 var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
-                SFLoggerFactory.SetCustomLogger(new ILoggerEmptyImpl());
+                SFLoggerFactory.SetCustomLogger(new LoggerEmptyImpl());
                 _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
-                Assert.IsInstanceOf<ILoggerEmptyImpl>(_logger);
+                Assert.IsInstanceOf<LoggerEmptyImpl>(_logger);
                 SFLoggerFactory.SetCustomLogger(originalLogger);
             }
 
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 _logger = GetLogger(isEnabled);
 
-                if (_logger is ILoggerEmptyImpl)
+                if (_logger is LoggerEmptyImpl)
                 {
                     Assert.Throws<NotImplementedException>(() => _logger.BeginScope("Test"));
                 }

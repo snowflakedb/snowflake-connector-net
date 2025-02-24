@@ -14,7 +14,7 @@ namespace Snowflake.Data.Log
 
         private static bool s_useDefaultSFLogger = true;
 
-        internal static ILogger s_customLogger = new ILoggerEmptyImpl();
+        internal static ILogger s_customLogger = new LoggerEmptyImpl();
 
         public static void UseEmptySFLogger()
         {
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Log
 
         public static void ResetCustomLogger()
         {
-            s_customLogger = new ILoggerEmptyImpl();
+            s_customLogger = new LoggerEmptyImpl();
         }
 
         public static void SetCustomLogger(ILogger customLogger)
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Log
             // Else, return the empty logger implementation which outputs nothing
             else
             {
-                return new ILoggerEmptyImpl();
+                return new LoggerEmptyImpl();
             }
         }
     }
