@@ -8,42 +8,22 @@ namespace Snowflake.Data.Log
 {
     internal class SFLoggerFactory
     {
-        private static bool s_isCustomLoggerEnabled = false;
+        internal static bool s_isCustomLoggerEnabled = false;
 
-        private static bool s_isSFLoggerEnabled = false;
+        internal static bool s_isSFLoggerEnabled = false;
 
-        private static bool s_useDefaultSFLogger = true;
+        internal static bool s_useDefaultSFLogger = true;
 
         internal static ILogger s_customLogger = new LoggerEmptyImpl();
 
-        public static void UseEmptySFLogger()
+        internal static void UseEmptySFLogger()
         {
             s_useDefaultSFLogger = false;
         }
 
-        public static void UseDefaultSFLogger()
+        internal static void UseDefaultSFLogger()
         {
             s_useDefaultSFLogger = true;
-        }
-
-        public static void DisableCustomLogger()
-        {
-            s_isCustomLoggerEnabled = false;
-        }
-
-        public static void EnableCustomLogger()
-        {
-            s_isCustomLoggerEnabled = true;
-        }
-
-        public static void ResetCustomLogger()
-        {
-            s_customLogger = new LoggerEmptyImpl();
-        }
-
-        public static void SetCustomLogger(ILogger customLogger)
-        {
-            s_customLogger = customLogger;
         }
 
         internal static SFLogger GetLogger<T>()

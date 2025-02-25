@@ -3,6 +3,7 @@
  */
 
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 using System;
@@ -38,13 +39,13 @@ namespace Snowflake.Data.Tests.UnitTests
         public void AfterTest()
         {
             // Return to default setting
-            SFLoggerFactory.UseDefaultSFLogger();
+            SnowflakeDbLoggerFactory.UseDefaultSFLogger();
         }
 
         [Test]
         public void TestUsingSFLogger()
         {
-            SFLoggerFactory.UseDefaultSFLogger();
+            SnowflakeDbLoggerFactory.UseDefaultSFLogger();
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             Assert.IsInstanceOf<SFLoggerPair>(_loggerPair);
         }
@@ -117,11 +118,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (isEnabled)
             {
-                SFLoggerFactory.UseDefaultSFLogger();
+                SnowflakeDbLoggerFactory.UseDefaultSFLogger();
             }
             else
             {
-                SFLoggerFactory.UseEmptySFLogger();
+                SnowflakeDbLoggerFactory.UseEmptySFLogger();
             }
 
             return SFLoggerFactory.GetLogger<SFLoggerPairTest>();

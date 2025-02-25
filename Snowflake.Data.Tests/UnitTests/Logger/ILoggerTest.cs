@@ -11,6 +11,7 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using System.IO;
 using System;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -35,15 +36,15 @@ namespace Snowflake.Data.Tests.UnitTests
             [OneTimeSetUp]
             public void BeforeTest()
             {
-                SFLoggerFactory.EnableCustomLogger();
+                SnowflakeDbLoggerFactory.EnableCustomLogger();
             }
 
             [OneTimeTearDown]
             public void AfterTest()
             {
                 // Return to default setting
-                SFLoggerFactory.ResetCustomLogger();
-                SFLoggerFactory.DisableCustomLogger();
+                SnowflakeDbLoggerFactory.ResetCustomLogger();
+                SnowflakeDbLoggerFactory.DisableCustomLogger();
                 if (_logFile != null)
                 {
                     File.Delete(_logFile);
@@ -55,20 +56,20 @@ namespace Snowflake.Data.Tests.UnitTests
             public void TestUsingDefaultLogger()
             {
                 var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
-                SFLoggerFactory.ResetCustomLogger();
+                SnowflakeDbLoggerFactory.ResetCustomLogger();
                 _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<ILogger>(_logger);
-                SFLoggerFactory.SetCustomLogger(originalLogger);
+                SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
             }
 
             [Test]
             public void TestSettingCustomLogger()
             {
                 var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
-                SFLoggerFactory.SetCustomLogger(new LoggerEmptyImpl());
+                SnowflakeDbLoggerFactory.SetCustomLogger(new LoggerEmptyImpl());
                 _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<LoggerEmptyImpl>(_logger);
-                SFLoggerFactory.SetCustomLogger(originalLogger);
+                SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
             }
 
             [Test]
@@ -127,11 +128,11 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 if (isEnabled)
                 {
-                    SFLoggerFactory.EnableCustomLogger();
+                    SnowflakeDbLoggerFactory.EnableCustomLogger();
                 }
                 else
                 {
-                    SFLoggerFactory.DisableCustomLogger();
+                    SnowflakeDbLoggerFactory.DisableCustomLogger();
                 }
 
                 return SFLoggerFactory.GetCustomLogger<ILoggerTest>();
@@ -178,7 +179,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .SetMinimumLevel(LogLevel.Trace));
 
                 var log4netLogger = factory.CreateLogger("Log4NetTest");
-                SFLoggerFactory.SetCustomLogger(log4netLogger);
+                SnowflakeDbLoggerFactory.SetCustomLogger(log4netLogger);
                 _logFile = Log4NetFileName;
             }
         }
@@ -196,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .CreateLogger();
 
                 var serilogLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
-                SFLoggerFactory.SetCustomLogger(serilogLogger);
+                SnowflakeDbLoggerFactory.SetCustomLogger(serilogLogger);
                 _logFile = SerilogFileName;
             }
         }
@@ -215,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .SetMinimumLevel(LogLevel.Trace));
 
                 var nlogLogger = factory.CreateLogger("NlogTest");
-                SFLoggerFactory.SetCustomLogger(nlogLogger);
+                SnowflakeDbLoggerFactory.SetCustomLogger(nlogLogger);
                 _logFile = NlogFileName;
             }
         }
