@@ -24,12 +24,11 @@ namespace Snowflake.Data.Log
             var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
             lock (_lockForExclusiveConfigure)
             {
-                var rootLogger = SFLogRepository.GetRootLogger();
-                rootLogger.SetLevel(sfLoggerLevel);
+                SFLoggerImpl.SetLevel(sfLoggerLevel);
                 var appender = IsStdout(logsPath)
-                    ? AddConsoleAppender(rootLogger)
-                    : AddRollingFileAppender(rootLogger, logsPath);
-                RemoveOtherEasyLoggingAppenders(rootLogger, appender);
+                    ? AddConsoleAppender()
+                    : AddRollingFileAppender(logsPath);
+                RemoveOtherEasyLoggingAppenders(appender);
             }
         }
 
@@ -43,32 +42,28 @@ namespace Snowflake.Data.Log
             var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
             lock (_lockForExclusiveConfigure)
             {
-                var rootLogger = SFLogRepository.GetRootLogger();
-                rootLogger.SetLevel(sfLoggerLevel);
-                RemoveOtherEasyLoggingAppenders(rootLogger, null);
+                SFLoggerImpl.SetLevel(sfLoggerLevel);
+                RemoveOtherEasyLoggingAppenders(null);
             }
         }
 
         internal static bool HasEasyLoggingAppender()
         {
-            var rootLogger = SFLogRepository.GetRootLogger();
-            return rootLogger.GetAppenders().ToArray().Any(IsEasyLoggingAppender);
+            return SFLoggerImpl.s_appenders.ToArray().Any(IsEasyLoggingAppender);
         }
 
-        private static void RemoveOtherEasyLoggingAppenders(SFLogger logger, SFAppender appender)
+        private static void RemoveOtherEasyLoggingAppenders(SFAppender appender)
         {
-            var existingAppenders = logger.GetAppenders().ToArray();
-            foreach (var existingAppender in existingAppenders)
+            foreach (var existingAppender in SFLoggerImpl.s_appenders.ToArray())
             {
                 if (IsEasyLoggingAppender(existingAppender) && existingAppender != appender)
                 {
-                    logger.RemoveAppender(existingAppender);
+                    SFLoggerImpl.s_appenders.Remove(existingAppender);
                 }
             }
         }
 
-        private static SFAppender AddRollingFileAppender(SFLogger logger,
-            string directoryPath)
+        private static SFAppender AddRollingFileAppender(string directoryPath)
         {
             var patternLayout = PatternLayout();
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
@@ -82,7 +77,7 @@ namespace Snowflake.Data.Log
                 _maxSizeRollBackups = 2,
             };
             appender.ActivateOptions();
-            logger.AddAppender(appender);
+            SFLoggerImpl.s_appenders.Add(appender);
             return appender;
         }
 
@@ -97,7 +92,7 @@ namespace Snowflake.Data.Log
             }
         }
 
-        private static SFAppender AddConsoleAppender(SFLogger logger)
+        internal static SFAppender AddConsoleAppender()
         {
             var patternLayout = PatternLayout();
             var appender = new SFConsoleAppender()
@@ -105,7 +100,7 @@ namespace Snowflake.Data.Log
                 _patternLayout = patternLayout,
                 _name = $"{AppenderPrefix}ConsoleAppender"
             };
-            logger.AddAppender(appender);
+            SFLoggerImpl.s_appenders.Add(appender);
             return appender;
         }
 

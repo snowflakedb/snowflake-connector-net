@@ -39,16 +39,11 @@ namespace Snowflake.Data.Log
                 var logger = new SFLoggerImpl(typeof(T));
                 if (!s_isSFLoggerEnabled)
                 {
-                    logger.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
+                    SFLoggerImpl.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
                 }
                 if(useConsoleAppender)
                 {
-                    var consoleAppender = new SFConsoleAppender()
-                    {
-                        _name = "ConsoleAppender",
-                        _patternLayout = EasyLoggerManager.PatternLayout()
-                    };
-                    logger.AddAppender(consoleAppender);
+                    EasyLoggerManager.AddConsoleAppender();
                 }
                 return logger;
             }

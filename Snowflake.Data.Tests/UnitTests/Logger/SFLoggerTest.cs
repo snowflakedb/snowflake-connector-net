@@ -56,6 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
             _logger.Debug("debug log message", new Exception("test exception"));
@@ -66,6 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.INFO);
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
             _logger.Info("info log message", new Exception("test exception"));
@@ -76,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.WARN);
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
             _logger.Warn("warn log message", new Exception("test exception"));
@@ -86,61 +89,10 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
             _logger.Error("error log message", new Exception("test exception"));
-        }
-
-        [Test]
-        public void TestGetAppenders(
-            [Values(false, true)] bool isEnabled)
-        {
-            _logger = GetLogger(isEnabled);
-            if (isEnabled)
-            {
-                var appenders = _logger.GetAppenders();
-                Assert.IsInstanceOf<SFConsoleAppender>(appenders[0]);
-            }
-            else
-            {
-                Assert.Throws<NotImplementedException>(() => _logger.GetAppenders());
-            }
-        }
-
-        [Test]
-        public void TestAddAppender(
-            [Values(false, true)] bool isEnabled)
-        {
-            _logger = GetLogger(isEnabled);
-            if (isEnabled)
-            {
-                var appenders = _logger.GetAppenders();
-                Assert.AreEqual(1, appenders.Count);
-                _logger.AddAppender(new SFConsoleAppender());
-                Assert.AreEqual(2, appenders.Count);
-            }
-            else
-            {
-                Assert.Throws<NotImplementedException>(() => _logger.AddAppender(new SFConsoleAppender()));
-            }
-        }
-
-        [Test]
-        public void TestRemoveAppender(
-            [Values(false, true)] bool isEnabled)
-        {
-            _logger = GetLogger(isEnabled);
-            if (isEnabled)
-            {
-                var appenders = _logger.GetAppenders();
-                Assert.AreEqual(1, appenders.Count);
-                _logger.RemoveAppender(appenders[0]);
-                Assert.AreEqual(0, appenders.Count);
-            }
-            else
-            {
-                Assert.Throws<NotImplementedException>(() => _logger.RemoveAppender(new SFConsoleAppender()));
-            }
         }
 
         [Test]
@@ -151,9 +103,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = GetLogger(isEnabled);
             if (isEnabled)
             {
-                _logger.SetLevel(logLevel);
-                SFLogRepository.GetRootLogger().SetLevel(logLevel);
-                Assert.AreEqual(logLevel, ((SFLoggerImpl)_logger)._level);
+                SFLoggerImpl.SetLevel(logLevel);
+                Assert.AreEqual(logLevel, SFLoggerImpl.s_level);
 
                 if (logLevel == LoggingEvent.OFF)
                 {
@@ -197,10 +148,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     Assert.IsFalse(_logger.IsWarnEnabled());
                     Assert.IsTrue(_logger.IsErrorEnabled());
                 }
-            }
-            else
-            {
-                Assert.Throws<NotImplementedException>(() => _logger.SetLevel(logLevel));
             }
         }
 

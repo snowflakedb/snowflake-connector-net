@@ -24,14 +24,6 @@ namespace Snowflake.Data.Log
         void Warn(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
-
-        List<SFAppender> GetAppenders();
-
-        void AddAppender(SFAppender appender);
-
-        void RemoveAppender(SFAppender appender);
-
-        void SetLevel(LoggingEvent level);
     }
 
     public enum LoggingEvent

@@ -61,26 +61,6 @@ namespace Snowflake.Data.Log
         {
             return;
         }
-
-        List<SFAppender> SFLogger.GetAppenders()
-        {
-            throw new NotImplementedException();
-        }
-
-        void SFLogger.AddAppender(SFAppender appender)
-        {
-            throw new NotImplementedException();
-        }
-
-        void SFLogger.RemoveAppender(SFAppender appender)
-        {
-            throw new NotImplementedException();
-        }
-
-        void SFLogger.SetLevel(LoggingEvent level)
-        {
-            throw new NotImplementedException();
-        }
     }
 
 }

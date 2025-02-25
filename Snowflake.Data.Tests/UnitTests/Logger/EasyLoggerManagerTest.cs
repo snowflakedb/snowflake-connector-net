@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath);
 
-            var appenders = SFLogRepository.s_rootLogger.GetAppenders();
+            var appenders = SFLoggerImpl.s_appenders;
             appenders.Remove(appenders[0]);
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";

@@ -55,6 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _loggerPair = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
 
             Assert.AreEqual(isEnabled, _loggerPair.IsDebugEnabled());
             _loggerPair.Debug("debug log message", new Exception("test exception"));
@@ -65,6 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _loggerPair = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.INFO);
 
             Assert.AreEqual(isEnabled, _loggerPair.IsInfoEnabled());
             _loggerPair.Info("info log message", new Exception("test exception"));
@@ -75,6 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _loggerPair = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.WARN);
 
             Assert.AreEqual(isEnabled, _loggerPair.IsWarnEnabled());
             _loggerPair.Warn("warn log message", new Exception("test exception"));
@@ -85,33 +88,10 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _loggerPair = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
 
             Assert.AreEqual(isEnabled, _loggerPair.IsErrorEnabled());
             _loggerPair.Error("error log message", new Exception("test exception"));
-        }
-
-        [Test]
-        public void TestGetAppenders()
-        {
-            Assert.Throws<NotImplementedException>(() => _loggerPair.GetAppenders());
-        }
-
-        [Test]
-        public void TestAddAppender()
-        {
-            Assert.Throws<NotImplementedException>(() => _loggerPair.AddAppender(new SFConsoleAppender()));
-        }
-
-        [Test]
-        public void TestRemoveAppender()
-        {
-            Assert.Throws<NotImplementedException>(() => _loggerPair.RemoveAppender(new SFConsoleAppender()));
-        }
-
-        [Test]
-        public void TestSetLevel()
-        {
-            Assert.Throws<NotImplementedException>(() => _loggerPair.SetLevel(LoggingEvent.DEBUG));
         }
 
         private SFLogger GetLogger(bool isEnabled)

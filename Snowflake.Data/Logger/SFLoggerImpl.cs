@@ -9,30 +9,28 @@ using System.Collections.Generic;
 internal class SFLoggerImpl : SFLogger
 {
     private readonly Type _type;
-    internal readonly List<SFAppender> _appenders;
-    internal LoggingEvent _level;
+    internal static List<SFAppender> s_appenders = new List<SFAppender>();
+    internal static LoggingEvent s_level = LoggingEvent.OFF;
 
-    private bool _isDebugEnabled;
-    private bool _isInfoEnabled;
-    private bool _isWarnEnabled;
-    private bool _isErrorEnabled;
+    private static bool _isDebugEnabled = false;
+    private static bool _isInfoEnabled = false;
+    private static bool _isWarnEnabled = false;
+    private static bool _isErrorEnabled = false;
 
-    internal SFLoggerImpl(Type type, LoggingEvent level = LoggingEvent.DEBUG)
+    internal SFLoggerImpl(Type type)
     {
-        _appenders = new List<SFAppender>();
         _type = type;
-        SetLevel(level);
     }
 
-    public void SetLevel(LoggingEvent level)
+    internal static void SetLevel(LoggingEvent level)
     {
-        _level = level;
+        s_level = level;
         SetEnableValues();
     }
 
-    private void SetEnableValues()
+    private static void SetEnableValues()
     {
-        var enabled = _level != LoggingEvent.OFF;
+        var enabled = s_level != LoggingEvent.OFF;
         _isDebugEnabled = enabled;
         _isInfoEnabled = enabled;
         _isWarnEnabled = enabled;
@@ -40,7 +38,7 @@ internal class SFLoggerImpl : SFLogger
 
         if (enabled)
         {
-            switch (_level)
+            switch (s_level)
             {
                 case LoggingEvent.TRACE:
                 case LoggingEvent.DEBUG:
@@ -61,47 +59,24 @@ internal class SFLoggerImpl : SFLogger
         }
     }
 
-    public List<SFAppender> GetAppenders()
-    {
-        return _appenders;
-    }
-
-    public void AddAppender(SFAppender appender)
-    {
-        _appenders.Add(appender);
-    }
-
-    public void RemoveAppender(SFAppender appender)
-    {
-        _appenders.Remove(appender);
-    }
-
     public bool IsDebugEnabled()
     {
-        return SFLogRepository.s_rootLogger == this ?
-            _isDebugEnabled :
-            SFLogRepository.s_rootLogger.IsDebugEnabled();
+        return _isDebugEnabled;
     }
 
     public bool IsInfoEnabled()
     {
-        return SFLogRepository.s_rootLogger == this ?
-            _isInfoEnabled :
-            SFLogRepository.s_rootLogger.IsInfoEnabled();
+        return _isInfoEnabled;
     }
 
     public bool IsWarnEnabled()
     {
-        return SFLogRepository.s_rootLogger == this ?
-            _isWarnEnabled :
-            SFLogRepository.s_rootLogger.IsWarnEnabled();
+        return _isWarnEnabled;
     }
 
     public bool IsErrorEnabled()
     {
-        return SFLogRepository.s_rootLogger == this ?
-            _isErrorEnabled :
-            SFLogRepository.s_rootLogger.IsErrorEnabled();
+        return _isErrorEnabled;
     }
 
     public void Debug(string msg, Exception ex = null)
@@ -139,11 +114,12 @@ internal class SFLoggerImpl : SFLogger
 
     private void Log(string logLevel, string logMessage, Exception ex = null)
     {
-        var rootAppenders = SFLogRepository.s_rootLogger.GetAppenders();
-        var appenders = rootAppenders.Count > 0 ? rootAppenders : _appenders;
-        foreach (var appender in appenders)
+        if (s_appenders.Count > 0)
         {
-            appender.Append(logLevel, logMessage, _type, ex);
+            foreach (var appender in s_appenders)
+            {
+                appender.Append(logLevel, logMessage, _type, ex);
+            }
         }
     }
 }
