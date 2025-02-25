@@ -145,17 +145,62 @@ namespace Snowflake.Data.Tests.UnitTests
 
         [Test]
         public void TestSetLevel(
-            [Values(false, true)] bool isEnabled)
+            [Values(false, true)] bool isEnabled,
+            [Values] LoggingEvent logLevel)
         {
             _logger = GetLogger(isEnabled);
             if (isEnabled)
             {
-                _logger.SetLevel(LoggingEvent.DEBUG);
-                Assert.AreEqual(LoggingEvent.DEBUG, ((SFLoggerImpl)_logger)._level);
+                _logger.SetLevel(logLevel);
+                SFLogRepository.GetRootLogger().SetLevel(logLevel);
+                Assert.AreEqual(logLevel, ((SFLoggerImpl)_logger)._level);
+
+                if (logLevel == LoggingEvent.OFF)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsFalse(_logger.IsWarnEnabled());
+                    Assert.IsFalse(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.TRACE)
+                {
+                    Assert.IsTrue(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.DEBUG)
+                {
+                    Assert.IsTrue(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.INFO)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.WARN)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.ERROR)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsFalse(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
             }
             else
             {
-                Assert.Throws<NotImplementedException>(() => _logger.SetLevel(LoggingEvent.DEBUG));
+                Assert.Throws<NotImplementedException>(() => _logger.SetLevel(logLevel));
             }
         }
 
