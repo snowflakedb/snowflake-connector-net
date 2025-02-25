@@ -47,10 +47,13 @@ internal class SFLoggerImpl : SFLogger
                     break;
                 case LoggingEvent.ERROR:
                     _isWarnEnabled = false;
-                    goto case LoggingEvent.WARN;
+                    _isInfoEnabled = false;
+                    _isDebugEnabled = false;
+                    break;
                 case LoggingEvent.WARN:
                     _isInfoEnabled = false;
-                    goto case LoggingEvent.INFO;
+                    _isDebugEnabled = false;
+                    break;
                 case LoggingEvent.INFO:
                     _isDebugEnabled = false;
                     break;
