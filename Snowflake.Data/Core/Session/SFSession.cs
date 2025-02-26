@@ -127,7 +127,7 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     _idToken = SecureStringHelper.Encode(authnResponse.data.idToken);
                     var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
@@ -236,7 +236,7 @@ namespace Snowflake.Data.Core
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
                 _clientStoreTemporaryCredential = extractedProperties._clientStoreTemporaryCredential;
 
-                if (_clientStoreTemporaryCredential)
+                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user))
                 {
                     var idKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     _idToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(idKey));

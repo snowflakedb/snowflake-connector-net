@@ -133,6 +133,31 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
+        {
+            // arrange
+            var expectedIdToken = "";
+            var mockIdToken = "mockIdToken";
+            var connectionString = $"account=account;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = mockIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty, session._idToken).Password);
+        }
+
+        [Test]
         public void TestThatRetriesAuthenticationForInvalidIdToken()
         {
             // arrange
