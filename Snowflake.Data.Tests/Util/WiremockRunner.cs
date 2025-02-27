@@ -27,28 +27,22 @@ namespace Snowflake.Data.Tests.Util
                                                            "--ca-keystore ./wiremock/ca-cert.jks";
         private static readonly string s_wiremockUrl =
             $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
-        private static readonly HttpClient s_httpClient = new(
-                new HttpClientHandler
-                {
-                    ClientCertificateOptions = ClientCertificateOption.Manual,
-                    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-                }
-            );
+        private static readonly HttpClient s_httpClient = new();
         private static readonly object s_lock = new ();
 
         private static string Host => "127.0.0.1";
-        private int Port { get; }
-        private int AdminPort { get; }
+        private int HttpsPort { get; }
+        private int HttpPort { get; }
         public bool IsAvailable { get; private set; }
 
-        public string WiremockBaseUrl => $"https://{Host}:{Port}";
-        public string WiremockBaseAdminUrl => $"http://{Host}:{AdminPort}";
+        public string WiremockBaseHttpsUrl => $"https://{Host}:{HttpsPort}";
+        public string WiremockBaseHttpUrl => $"http://{Host}:{HttpPort}";
         private Process _process;
 
-        private WiremockRunner(int port, int adminPort)
+        private WiremockRunner(int httpsPort, int httpPort)
         {
-            Port = port;
-            AdminPort = adminPort;
+            HttpsPort = httpsPort;
+            HttpPort = httpPort;
             IsAvailable = false;
         }
 
@@ -57,11 +51,11 @@ namespace Snowflake.Data.Tests.Util
             Stop();
         }
 
-        public static WiremockRunner NewWiremock(string[] mappingFiles = null, int port = 1443, int adminPort = 1080)
+        public static WiremockRunner NewWiremock(string[] mappingFiles = null, int httpsPort = 1443, int httpPort = 1080)
         {
             DownloadWiremockIfRequired();
-            s_logger.Debug($"Starting Wiremock on host: {Host}, port: {port}, admin port: {adminPort}");
-            var runner = new WiremockRunner(port, adminPort);
+            s_logger.Debug($"Starting Wiremock on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
+            var runner = new WiremockRunner(httpsPort, httpPort);
             runner.Start();
 
             s_logger.Debug("Waiting for Wiremock startup...");
@@ -71,7 +65,7 @@ namespace Snowflake.Data.Tests.Util
                 if (runner.CheckIfResponds())
                 {
                     runner.IsAvailable = true;
-                    s_logger.Debug($"Wiremock started on host: {Host}, port: {port}, admin port: {adminPort}");
+                    s_logger.Debug($"Wiremock started on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
 
                     if (mappingFiles != null)
                     {
@@ -98,7 +92,7 @@ namespace Snowflake.Data.Tests.Util
 
         private bool CheckIfResponds()
         {
-            var wiremockUri = new Uri(WiremockBaseAdminUrl + "/__admin/mappings");
+            var wiremockUri = new Uri(WiremockBaseHttpUrl + "/__admin/mappings");
             s_logger.Debug($"Checking if Wiremock responds on: {wiremockUri}");
             try
             {
@@ -115,7 +109,7 @@ namespace Snowflake.Data.Tests.Util
 
         private void Start()
         {
-            var javaArgs = $"-jar {Path.Combine(s_wiremockPath, s_wiremockJar)} --port {AdminPort} --https-port {Port} {s_wiremockOptions}";
+            var javaArgs = $"-jar {Path.Combine(s_wiremockPath, s_wiremockJar)} --port {HttpPort} --https-port {HttpsPort} {s_wiremockOptions}";
             s_logger.Debug($"Running command: java {javaArgs}");
             try
             {
@@ -154,7 +148,7 @@ namespace Snowflake.Data.Tests.Util
 
         public void ResetMapping()
         {
-            var response = Task.Run(async () => await s_httpClient.PostAsync(WiremockBaseUrl + "/__admin/reset", null)).Result;
+            var response = Task.Run(async () => await s_httpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null)).Result;
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Unable to reset Wiremock mappings. Response status code: {response.StatusCode}");
@@ -168,7 +162,7 @@ namespace Snowflake.Data.Tests.Util
 
             var payload = new StringContent(fileContent.Replace("'", "\'"), Encoding.UTF8, "application/json");
             var response = Task.Run(async () => await s_httpClient.PostAsync(
-                WiremockBaseAdminUrl + "/__admin/mappings/import",
+                WiremockBaseHttpUrl + "/__admin/mappings/import",
                 payload)
             ).Result;
 
