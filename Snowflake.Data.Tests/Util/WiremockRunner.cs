@@ -27,13 +27,7 @@ namespace Snowflake.Data.Tests.Util
                                                            "--ca-keystore ./wiremock/ca-cert.jks";
         private static readonly string s_wiremockUrl =
             $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
-        private static readonly HttpClient s_httpClient = new(
-                new HttpClientHandler
-                {
-                    ClientCertificateOptions = ClientCertificateOption.Manual,
-                    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-                }
-            );
+        private static readonly HttpClient s_httpClient = new();
         private static readonly object s_lock = new ();
 
         private static string Host => "127.0.0.1";
