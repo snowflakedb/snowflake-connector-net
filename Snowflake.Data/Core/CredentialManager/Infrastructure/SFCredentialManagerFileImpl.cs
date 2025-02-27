@@ -225,10 +225,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (!unixDirectoryInfo.Exists) return;
 
             var userId = _unixOperations.GetCurrentUserId();
-            if (!unixDirectoryInfo.IsSafeExactly(userId))
-            {
-                SetSecureOwnershipAndPermissions(directory, userId);
-            }
+            unixDirectoryInfo.LogWarningIfPermissionsAreNotSecure(userId);
         }
 
         private void SetSecureOwnershipAndPermissions(string directory, long userId)
