@@ -1,51 +1,49 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log
 {
-    class SFLoggerFactory
+    internal class SFLoggerFactory
     {
-        private static bool isLoggerEnabled = true;
+        internal static bool s_isCustomLoggerEnabled = false;
 
-        private static SFLogger logger = null;
+        internal static bool s_isSFLoggerEnabled = false;
 
-        private SFLoggerFactory()
+        internal static bool s_useDefaultSFLogger = true;
+
+        internal static ILogger s_customLogger = new LoggerEmptyImpl();
+
+        internal static void UseEmptySFLogger()
         {
+            s_useDefaultSFLogger = false;
         }
 
-        public static void disableLogger()
+        internal static void UseDefaultSFLogger()
         {
-            isLoggerEnabled = false;
+            s_useDefaultSFLogger = true;
         }
 
-        public static void enableLogger()
+        internal static SFLogger GetLogger<T>()
         {
-            isLoggerEnabled = true;
+            return new SFLoggerPair(GetSFLogger<T>(), GetCustomLogger<T>());
         }
 
-        public static void useDefaultLogger()
-        {
-            logger = null;
-        }
-
-        public static void Instance(SFLogger customLogger)
-        {            
-            logger = customLogger;
-        }
-
-        public static SFLogger GetLogger<T>()
+        internal static SFLogger GetSFLogger<T>(bool useConsoleAppender = false)
         {
             // If true, return the default/specified logger
-            if (isLoggerEnabled)
+            if (s_useDefaultSFLogger)
             {
-                // If no logger specified, use the default logger: log4net
-                if (logger == null)
+                var logger = new SFLoggerImpl(typeof(T));
+                if (!s_isSFLoggerEnabled)
                 {
-                    ILog loggerL = LogManager.GetLogger(typeof(T));
-                    return new Log4NetImpl(loggerL);
+                    SFLoggerImpl.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
+                }
+                if(useConsoleAppender)
+                {
+                    EasyLoggerManager.AddConsoleAppender();
                 }
                 return logger;
             }
@@ -55,6 +53,30 @@ namespace Snowflake.Data.Log
                 return new SFLoggerEmptyImpl();
             }
         }
-    }
 
+        internal static ILogger GetCustomLogger<T>()
+        {
+            // If true, return the default/specified logger
+            if (s_isCustomLoggerEnabled)
+            {
+                // If no logger specified, use the default logger: Microsoft's console logger
+                if (s_customLogger == null)
+                {
+                    ILoggerFactory factory = LoggerFactory.Create(
+                        builder => builder
+                        .AddConsole()
+                        .SetMinimumLevel(LogLevel.Trace)
+                    );
+
+                    return factory.CreateLogger<T>();
+                }
+                return s_customLogger;
+            }
+            // Else, return the empty logger implementation which outputs nothing
+            else
+            {
+                return new LoggerEmptyImpl();
+            }
+        }
+    }
 }

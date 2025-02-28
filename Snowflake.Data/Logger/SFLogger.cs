@@ -1,14 +1,13 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Snowflake.Data.Log
 {
-    interface SFLogger
+    internal interface SFLogger
     {
         bool IsDebugEnabled();
 
@@ -18,8 +17,6 @@ namespace Snowflake.Data.Log
 
         bool IsErrorEnabled();
 
-        bool IsFatalEnabled();
-
         void Debug(string msg, Exception ex = null);
 
         void Info(string msg, Exception ex = null);
@@ -27,13 +24,10 @@ namespace Snowflake.Data.Log
         void Warn(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
-
-        void Fatal(string msg, Exception ex = null);
     }
 
-    enum LoggingEvent
+    public enum LoggingEvent
     {
-        DEBUG, INFO, WARN, ERROR, FATAL
+        OFF, TRACE, DEBUG, INFO, WARN, ERROR
     }
-
 }
