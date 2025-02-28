@@ -3,6 +3,7 @@
  */
 
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -121,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
 
-            _session = new SFSession(ConnectionStringMock, null);
+            _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
 
         [TearDown]

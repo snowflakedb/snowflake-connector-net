@@ -6,13 +6,16 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -2386,7 +2389,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var restRequester = new MockCloseHangingRestRequester();
-            var session = new SFSession("account=test;user=test;password=test", null, restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             session.Open();
             var watchClose = new Stopwatch();
             var watchClosedFinished = new Stopwatch();
@@ -2403,6 +2406,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, restRequester.CloseRequests.Count);
             Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
             Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+        }
+
+        [Test]
+        [IgnoreOnCI("Manual test only")]
+        public void TestOAuthAuthorizationCodeFlow()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode()))
+            {
+                connection.Open();
+            }
+        }
+
+        private string ConnectionStringForOAuthAuthorizationCode()
+        {
+            TestConfig testConfig = TestEnvironment.ReadTestConfig(Path.Combine("..", "..", "..", "..", "..", ".parameters_oauth_authorization_code_okta.json"));
+            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
+            return new StringBuilder()
+                .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"client_id={testConfig.clientId};client_secret={testConfig.clientSecret};authorization_scope={testConfig.authorizationScope};")
+                .Append($"client_id={testConfig.clientId};client_secret={testConfig.clientSecret};authorization_scope={testConfig.authorizationScope};")
+                .Append($"redirect_uri={testConfig.redirectUri};")
+                .Append($"external_authorization_url={testConfig.externalAuthorizationUrl};external_token_request_url={testConfig.externalTokenRequestUrl};")
+                .Append("poolingEnabled=false;minPoolSize=0;")
+                .ToString();
         }
     }
 }

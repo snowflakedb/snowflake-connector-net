@@ -8,6 +8,7 @@ using System.Security;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -19,10 +20,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test, TestCaseSource(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
+            // arrange
+            var propertiesContext = new SessionPropertiesContext { Password = testcase.SecurePassword };
+
             // act
-            var properties = SFSessionProperties.ParseConnectionString(
-                testcase.ConnectionString,
-                testcase.SecurePassword);
+            var properties = SFSessionProperties.ParseConnectionString(testcase.ConnectionString, propertiesContext);
 
             // assert
             CollectionAssert.IsSubsetOf(testcase.ExpectedProperties, properties);
@@ -42,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
@@ -62,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext())
             );
 
             // assert
@@ -77,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext())
             );
 
             // assert
@@ -93,10 +95,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var securePassword = password == null ? null : SecureStringHelper.Encode(password);
+            var propertiesContext = new SessionPropertiesContext { Password = securePassword };
 
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, securePassword)
+                () => SFSessionProperties.ParseConnectionString(connectionString, propertiesContext)
             );
 
             // assert
@@ -112,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;PASSCODE={expectedPasscode}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -125,9 +128,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedPasscode = "abc";
             var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword";
             var securePasscode = SecureStringHelper.Encode(expectedPasscode);
+            var propertiesContext = new SessionPropertiesContext { Passcode = securePasscode };
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, securePasscode);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, propertiesContext);
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -139,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDoNotParsePasscodeWhenNotProvided(string connectionString)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.False(properties.TryGetValue(SFSessionProperty.PASSCODE, out _));
@@ -155,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestParsePasscodeInPassword(string connectionString, string expectedPasscodeInPassword)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.IsTrue(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
@@ -169,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;passcodeInPassword=abc";
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext()));
 
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
         }
@@ -185,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(value, properties[sessionProperty]);
@@ -203,7 +207,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
@@ -218,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;DISABLE_SAML_URL_CHECK={expectedDisableSamlUrlCheck}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
@@ -234,6 +238,165 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedMessage, message);
+        }
+
+        [Test]
+        public void TestParseClientId()
+        {
+            // arrange
+            var clientId = "abc";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_ID={clientId}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
+        }
+
+        [Test]
+        public void TestParseClientSecret()
+        {
+            // arrange
+            var clientSecret = "abc";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_SECRET={clientSecret}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
+        }
+
+        [Test]
+        public void TestParseAuthorizationScope()
+        {
+            // arrange
+            var authorizationScope = "abc";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;AUTHORIZATION_SCOPE={authorizationScope}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(authorizationScope, properties[SFSessionProperty.AUTHORIZATION_SCOPE]);
+        }
+
+        [Test]
+        public void TestParseRedirectUri()
+        {
+            // arrange
+            var redirectUri = "http://localhost:8080";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;REDIRECT_URI={redirectUri}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(redirectUri, properties[SFSessionProperty.REDIRECT_URI]);
+        }
+
+        [Test]
+        public void TestParseExternalAuthorizationUrl()
+        {
+            // arrange
+            var externalAuthorizationUrl = "https://okta.com/authorize";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;EXTERNAL_AUTHORIZATION_URL={externalAuthorizationUrl}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(externalAuthorizationUrl, properties[SFSessionProperty.EXTERNAL_AUTHORIZATION_URL]);
+        }
+
+        [Test]
+        public void TestParseExternalTokenRequestUrl()
+        {
+            // arrange
+            var externalTokenRequestUrl = "https://okta.com/token";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;EXTERNAL_TOKEN_REQUEST_URL={externalTokenRequestUrl}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(externalTokenRequestUrl, properties[SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL]);
+        }
+
+        [Test]
+        public void TestNoOAuthPropertiesFound()
+        {
+            // arrange
+            var connectionString = "ACCOUNT=test;USER=test;PASSWORD=test";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.CLIENT_ID, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.CLIENT_SECRET, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.AUTHORIZATION_SCOPE, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.REDIRECT_URI, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.EXTERNAL_AUTHORIZATION_URL, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL, out var _));
+        }
+
+        [Test]
+        public void TestOAuthAuthorizationCodeAllParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var scope = "ghi";
+            var redirectUri = "http://localhost";
+            var authorizationUrl = "https://okta.com/authorize";
+            var tokenUrl = "https://okta.com/token-request";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID={clientId};CLIENT_SECRET={clientSecret};AUTHORIZATION_SCOPE={scope};REDIRECT_URI={redirectUri};EXTERNAL_AUTHORIZATION_URL={authorizationUrl};EXTERNAL_TOKEN_REQUEST_URL={tokenUrl};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
+            Assert.AreEqual(scope, properties[SFSessionProperty.AUTHORIZATION_SCOPE]);
+            Assert.AreEqual(redirectUri, properties[SFSessionProperty.REDIRECT_URI]);
+            Assert.AreEqual(authorizationUrl, properties[SFSessionProperty.EXTERNAL_AUTHORIZATION_URL]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL]);
+        }
+
+        [Test]
+        public void TestOAuthAuthorizationCodeMinimalParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_ID={clientId};CLIENT_SECRET={clientSecret};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_SECRET=def;", "Required property CLIENT_ID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_ID=abc;", "Required property CLIENT_SECRET is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;", "Required property AUTHORIZATION_SCOPE or ROLE is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=https://okta.com/authorize", "Required property EXTERNAL_TOKEN_REQUEST_URL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_TOKEN_REQUEST_URL=https://okta.com/token-request", "Required property EXTERNAL_AUTHORIZATION_URL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=http://okta.com/authorize;EXTERNAL_TOKEN_REQUEST_URL=https://okta.com/token-request", "Invalid parameter value  for EXTERNAL_AUTHORIZATION_URL")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=https://okta.com/authorize;EXTERNAL_TOKEN_REQUEST_URL=http://okta.com/token-request", "Invalid parameter value  for EXTERNAL_TOKEN_REQUEST_URL")]
+        public void TestOAuthAuthorizationCodeMissingOrInvalidParameters(string connectionString, string errorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(errorMessage));
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()

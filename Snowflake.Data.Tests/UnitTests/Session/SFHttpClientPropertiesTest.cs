@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
@@ -113,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, new SessionPropertiesContext());
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // act
