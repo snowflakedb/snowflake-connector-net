@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Amazon.S3;
 using Amazon.S3.Model;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
