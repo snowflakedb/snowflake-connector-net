@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             challengeProvider.Setup(c => c.GenerateState())
                 .Returns("abc123");
             var webBrowserMock = new WebBrowserStarter(new MockBrowser());
-            var authenticator = new OAuthAuthorizationCodeAuthenticator(session, challengeProvider.Object, webBrowserMock);
+            var authenticator = new OAuthAuthorizationCodeAuthenticator(session, challengeProvider.Object, webBrowserMock, WebListenerStarter.Instance);
             session.ReplaceAuthenticator(authenticator);
             return session;
         }
