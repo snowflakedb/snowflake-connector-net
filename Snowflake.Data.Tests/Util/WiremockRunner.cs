@@ -11,6 +11,8 @@ namespace Snowflake.Data.Tests.Util
 {
     internal class WiremockRunner : IDisposable
     {
+        internal const int DefaultHttpsPort = 1443;
+        internal const int DefaultHttpPort = 1080;
         private const int MaxRetries = 50;
         private const int RetryInterval = 200;
         private const int WarmupTime = 1000;
@@ -30,7 +32,7 @@ namespace Snowflake.Data.Tests.Util
         private static readonly HttpClient s_httpClient = new();
         private static readonly object s_lock = new ();
 
-        private static string Host => "127.0.0.1";
+        internal const string Host = "127.0.0.1";
         private int HttpsPort { get; }
         private int HttpPort { get; }
         public bool IsAvailable { get; private set; }
@@ -51,7 +53,7 @@ namespace Snowflake.Data.Tests.Util
             Stop();
         }
 
-        public static WiremockRunner NewWiremock(string[] mappingFiles = null, int httpsPort = 1443, int httpPort = 1080)
+        public static WiremockRunner NewWiremock(string[] mappingFiles = null, int httpsPort = DefaultHttpsPort, int httpPort = DefaultHttpPort)
         {
             DownloadWiremockIfRequired();
             s_logger.Debug($"Starting Wiremock on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
