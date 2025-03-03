@@ -25,22 +25,27 @@ You can close this window now and go back where you started from.
 <body><h4>Your identity was not confirmed because of errors</h4>
 {error}
 </body></html>";
+        private const string DefaultRedirectUriHost = "127.0.0.1";
+        private const int MaxRandomPortAcquisitionAttempts = 3;
 
         private static readonly TimeSpan s_idpRestTimeout = TimeSpan.FromSeconds(120);
 
         private readonly ChallengeProvider _challengeProvider;
         private readonly WebBrowserStarter _browserStarter;
+        private readonly WebListenerStarter _listenerStarter;
 
         public OAuthAuthorizationCodeAuthenticator(SFSession session) : base(session, OAuthAuthenticator.AUTH_NAME)
         {
             _challengeProvider = new ChallengeProvider();
             _browserStarter = WebBrowserStarter.Instance;
+            _listenerStarter = WebListenerStarter.Instance;
         }
 
-        internal OAuthAuthorizationCodeAuthenticator(SFSession session, ChallengeProvider challengeProvider, WebBrowserStarter browserStarter) : this(session)
+        internal OAuthAuthorizationCodeAuthenticator(SFSession session, ChallengeProvider challengeProvider, WebBrowserStarter browserStarter, WebListenerStarter listenerStarter) : this(session)
         {
             _challengeProvider = challengeProvider;
             _browserStarter = browserStarter;
+            _listenerStarter = listenerStarter;
         }
 
         public static bool IsOAuthAuthorizationCodeAuthenticator(string authenticator) =>
@@ -86,6 +91,23 @@ You can close this window now and go back where you started from.
 
         private OAuthAccessTokenRequest RunFlowToAccessTokenRequest()
         {
+            var authorizationData = PrepareAuthorizationData();
+            var authorizationCodeRequest = authorizationData.Request;
+            var authorizationCodeResult = ExecuteAuthorizationCodeRequest(authorizationCodeRequest);
+            return new OAuthAccessTokenRequest
+            {
+                TokenEndpoint = GetTokenEndpoint(),
+                AuthorizationCode = authorizationCodeResult.AuthorizationCode,
+                AuthorizationScope = authorizationCodeRequest.AuthorizationScope,
+                ClientId = authorizationCodeRequest.ClientId,
+                ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
+                CodeVerifier = authorizationData.Verifier.Value,
+                RedirectUri = authorizationCodeRequest.RedirectUri
+            };
+        }
+
+        internal AuthorizationRequestWithVerifier PrepareAuthorizationData()
+        {
             var state = _challengeProvider.GenerateState();
             var codeVerifier = _challengeProvider.GenerateCodeVerifier();
             var codeChallenge = codeVerifier.ComputeCodeChallenge();
@@ -98,16 +120,10 @@ You can close this window now and go back where you started from.
                 CodeChallenge = codeChallenge,
                 State = state
             };
-            var authorizationCodeResult = ExecuteAuthorizationCodeRequest(authorizationCodeRequest);
-            return new OAuthAccessTokenRequest
+            return new AuthorizationRequestWithVerifier
             {
-                TokenEndpoint = GetTokenEndpoint(),
-                AuthorizationCode = authorizationCodeResult.AuthorizationCode,
-                AuthorizationScope = authorizationCodeRequest.AuthorizationScope,
-                ClientId = authorizationCodeRequest.ClientId,
-                ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
-                CodeVerifier = codeVerifier.Value,
-                RedirectUri = authorizationCodeRequest.RedirectUri
+                Request = authorizationCodeRequest,
+                Verifier = codeVerifier
             };
         }
 
@@ -125,8 +141,7 @@ You can close this window now and go back where you started from.
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
             var extractor = new Func<HttpListenerRequest, Result<OAuthAuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
-            var redirectUri = request.RedirectUri.EndsWith("/") ? request.RedirectUri : request.RedirectUri + "/"; // TODO: handling of default redirect_uri will be added later
-            using (var httpListener = StartHttpListener(redirectUri))
+            using (var httpListener = StartListenerUpdatingRedirectUri(request))
             using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
             {
                 var authorizationCodeUrlString = request.GetUrl();
@@ -214,12 +229,49 @@ You can close this window now and go back where you started from.
             SetSecondaryAuthenticationData(ref data);
         }
 
-        private HttpListener StartHttpListener(string url)
+
+        internal HttpListener StartListenerUpdatingRedirectUri(OAuthAuthorizationCodeRequest request)
         {
-            var listener = new HttpListener();
-            listener.Prefixes.Add(url);
-            listener.Start();
-            return listener;
+            if (!string.IsNullOrEmpty(request.RedirectUri))
+                return _listenerStarter.StartHttpListener(AddSlashToNonEmptyUrl(request.RedirectUri));
+            var listenerForDefaultRedirectUri = StartHttpListenerForDefaultRedirectUri();
+            request.RedirectUri = listenerForDefaultRedirectUri.Uri;
+            return listenerForDefaultRedirectUri.Listener;
+        }
+
+        private string AddSlashToNonEmptyUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return url;
+            return url.EndsWith("/") ? url : url + "/";
+        }
+
+        private ListenerWithUri StartHttpListenerForDefaultRedirectUri()
+        {
+            HttpListener listener = null;
+            string redirectUri = null;
+            var numberOfAttemptsLeft = MaxRandomPortAcquisitionAttempts;
+            while (listener == null && numberOfAttemptsLeft > 0)
+            {
+                numberOfAttemptsLeft--;
+                var port = _listenerStarter.GetRandomUnusedPort();
+                redirectUri = $"http://{DefaultRedirectUriHost}:{port}";
+                var redirectUriWithSlash = $"{redirectUri}/";
+                try
+                {
+                    listener = _listenerStarter.StartHttpListener(redirectUriWithSlash);
+                }
+                catch (HttpListenerException exception)
+                {
+                    if (numberOfAttemptsLeft <= 0)
+                        throw;
+                }
+            }
+            return new ListenerWithUri
+            {
+                Listener = listener,
+                Uri = redirectUri
+            };
         }
 
         private string GetAuthorizationEndpoint()
@@ -277,6 +329,18 @@ You can close this window now and go back where you started from.
             if (session.properties.TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
                 return value;
             return defaultValue;
+        }
+
+        private class ListenerWithUri
+        {
+            public HttpListener Listener { get; set; }
+            public string Uri { get; set; }
+        }
+
+        internal class AuthorizationRequestWithVerifier
+        {
+            public OAuthAuthorizationCodeRequest Request { get; set; }
+            public CodeVerifier Verifier { get; set; }
         }
     }
 }
