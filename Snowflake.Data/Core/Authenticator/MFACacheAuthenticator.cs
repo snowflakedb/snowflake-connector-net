@@ -18,10 +18,8 @@ namespace Snowflake.Data.Core.Authenticator
         {
         }
 
-        public static bool IsMfaCacheAuthenticator(string authenticator)
-        {
-            return AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
-        }
+        public static bool IsMfaCacheAuthenticator(string authenticator) =>
+            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
