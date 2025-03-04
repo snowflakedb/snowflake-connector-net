@@ -50,6 +50,9 @@ namespace Snowflake.Data.Core.Authenticator
             this.rsaProvider = new RSACryptoServiceProvider();
         }
 
+        public static bool IsKeyPairAuthenticator(string authenticator) =>
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async public Task AuthenticateAsync(CancellationToken cancellationToken)
         {
