@@ -98,8 +98,6 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
-        internal Token _accessToken;
-
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -167,8 +165,6 @@ namespace Snowflake.Data.Core
             var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
             return loginUrl;
         }
-
-        internal string GetAccessToken(DateTime utcNow) => _accessToken.ExtractToken(utcNow);
 
         /// <summary>
         ///     Constructor
@@ -693,5 +689,7 @@ namespace Snowflake.Data.Core
         {
             this.authenticator = authenticator;
         }
+
+        internal IAuthenticator GetAuthenticator() => authenticator;
     }
 }

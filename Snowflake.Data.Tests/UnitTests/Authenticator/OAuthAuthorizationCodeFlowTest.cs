@@ -1,11 +1,15 @@
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.Browser;
+using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
@@ -22,7 +26,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_invalidScopeErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_scope_error.json");
         private static readonly string s_invalidStateErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_state_error.json");
         private static readonly string s_badTokenRequestErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "token_request_error.json");
+        private static readonly string s_refreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token.json");
         private static readonly string s_oauthSnowflakeLoginSuccessMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_successful_login.json");
+        private static readonly string s_oauthSnowflakeLoginInvalidTokenMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_invalid_token_login.json");
+        private const string MasterToken = "masterToken123";
+        private const string SessionToken = "sessionToken123";
+        private const string AccessToken = "access-token-123";
+        private const string RefreshToken = "refresh-token-123";
+        private const string NewAccessToken = "new-access-token-123";
+        private const string NewRefreshToken = "new-refresh-token-123";
+        private const string SessionId = "1234567890";
+        private const string User = "testUser";
+        private const string AuthorizationScope = "session:role:ANALYST";
+        private const string TokenHost = "localhost";
+        private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
+        private static readonly string s_externalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
 
         private WiremockRunner _runner;
 
@@ -35,32 +53,182 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         [SetUp]
         public void BeforeEach()
         {
+            SnowflakeCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerInMemoryImpl());
             _runner.ResetMapping();
         }
 
         [OneTimeTearDown]
         public void AfterAll()
         {
+            SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
             _runner.Stop();
         }
 
         [Test]
-        public void TestSuccessfulAuthorizationCedeFlow()
+        public void TestSuccessfulAuthorizationCodeFlow()
         {
             // arrange
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
 
             // act
             session.Open();
 
             // assert
-            Assert.NotNull(session._accessToken);
-            Assert.AreEqual("access-token-123", SecureStringHelper.Decode(session._accessToken.Value));
-            Assert.AreEqual("1234567890", session.sessionId);
-            Assert.AreEqual("masterToken123", session.masterToken);
-            Assert.AreEqual("sessionToken123", session.sessionToken);
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public async Task TestSuccessfulAuthorizationCodeFlowAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public void TestSuccessfulAuthorizationCodeFlowWithDefaultCache()
+        {
+            // arrange
+            try
+            {
+                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+                _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+                _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+                var session = PrepareSession();
+                var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+                // act
+                session.Open();
+
+                // assert
+                Assert.NotNull(authenticator.AccessToken);
+                Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+                Assert.AreEqual(SessionId, session.sessionId);
+                Assert.AreEqual(MasterToken, session.masterToken);
+                Assert.AreEqual(SessionToken, session.sessionToken);
+                Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+                Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            }
+            finally
+            {
+                RemoveTokenFromCache(TokenType.OAuthAccessToken);
+                RemoveTokenFromCache(TokenType.OAuthRefreshToken);
+            }
+        }
+
+        [Test]
+        public void TestUseCachedAccessToken()
+        {
+            // arrange
+            SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            session.Open();
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public async Task TestUseCachedAccessTokenAsync()
+        {
+            // arrange
+            SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public void TestRefreshToken()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+            _runner.AddMappings(s_refreshTokenMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
+            var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            session.Open();
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public async Task TestRefreshTokenAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+            _runner.AddMappings(s_refreshTokenMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
+            var session = PrepareSession();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -76,6 +244,25 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public void TestInvalidScopeAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_invalidScopeErrorMappingPath);
+            var session = PrepareSession();
+
+            // act
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+
+            // assert
+            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
+            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -91,6 +278,25 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public void TestInvalidStateAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_invalidStateErrorMappingPath);
+            var session = PrepareSession();
+
+            // act
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+
+            // assert
+            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
+            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -106,6 +312,25 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        }
+
+        [Test]
+        public void TestTokenRequestErrorAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_badTokenRequestErrorMappingPath);
+            var session = PrepareSession();
+
+            // act
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+
+            // assert
+            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
+            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         private SFSession PrepareSession()
@@ -125,7 +350,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private string GetAuthorizationCodeConnectionString()
         {
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
-            var user = "testUser";
             var account = "testAccount";
             var db = "testDb";
             var role = "ANALYST";
@@ -135,18 +359,32 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var scheme = "http";
             var clientId = "123";
             var clientSecret = "123";
-            var authorizationScope = "session:role:ANALYST";
             var redirectUri = "http://localhost:8009/snowflake/oauth-redirect";
-            var externalAuthorizationUrl = $"http://localhost:{port}/oauth/authorize";
-            var externalTokenRequestUrl = $"http://localhost:{port}/oauth/token-request";
             return new StringBuilder()
-                .Append($"authenticator={authenticator};user={user};account={account};")
+                .Append($"authenticator={authenticator};user={User};account={account};")
                 .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
-                .Append($"oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={authorizationScope};")
+                .Append($"oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={AuthorizationScope};")
                 .Append($"oauthRedirectUri={redirectUri};")
-                .Append($"oauthAuthorizationUrl={externalAuthorizationUrl};oauthTokenRequestUrl={externalTokenRequestUrl};")
-                .Append("poolingEnabled=false;minPoolSize=0;")
+                .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={s_externalTokenRequestUrl};")
                 .ToString();
+        }
+
+        private string ExtractTokenFromCache(TokenType tokenType)
+        {
+            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            return SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKey);
+        }
+
+        private void SaveTokenToCache(TokenType tokenType, string token)
+        {
+            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(cacheKey, token);
+        }
+
+        private void RemoveTokenFromCache(TokenType tokenType)
+        {
+            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
         }
     }
 }
