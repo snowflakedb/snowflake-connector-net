@@ -12,6 +12,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -2409,15 +2410,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestOAuthAuthorizationCodeFlow()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode()))
+            var testConfig = ReadOauthTestConfig();
+            try
             {
-                connection.Open();
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(testConfig)))
+                {
+                    connection.Open();
+                }
+            }
+            finally
+            {
+                RemoveOAuthCache(testConfig);
             }
         }
 
-        private string ConnectionStringForOAuthAuthorizationCode()
+        private void RemoveOAuthCache(TestConfig testConfig)
         {
-            TestConfig testConfig = TestEnvironment.ReadTestConfig(Path.Combine("..", "..", "..", "..", "..", ".parameters_oauth_authorization_code_okta.json"));
+            var host = new Uri(testConfig.externalTokenRequestUrl).Host;
+            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
+            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
+            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+            credentialManager.RemoveCredentials(accessCacheKey);
+            credentialManager.RemoveCredentials(refreshCacheKey);
+        }
+
+        private string ConnectionStringForOAuthAuthorizationCode(TestConfig testConfig)
+        {
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
             return new StringBuilder()
                 .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
@@ -2428,6 +2446,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 .Append("poolingEnabled=false;minPoolSize=0;")
                 .ToString();
         }
+
+        private TestConfig ReadOauthTestConfig() =>
+            TestEnvironment.ReadTestConfig(Path.Combine("..", "..", "..", "..", "..", ".parameters_oauth_authorization_code_okta.json"));
     }
 }
 

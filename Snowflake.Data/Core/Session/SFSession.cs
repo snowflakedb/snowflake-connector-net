@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
-        internal Token _accessToken;
+        internal SecureString _accessToken;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Core
             return loginUrl;
         }
 
-        internal string GetAccessToken(DateTime utcNow) => _accessToken.ExtractToken(utcNow);
+        internal string GetAccessToken() => SecureStringHelper.Decode(_accessToken);
 
         /// <summary>
         ///     Constructor
