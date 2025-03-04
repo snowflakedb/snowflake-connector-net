@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.Tools;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -113,6 +114,8 @@ namespace Snowflake.Data.Core
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLE_SAML_URL_CHECK,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
+        CLIENT_STORE_TEMPORARY_CREDENTIAL,
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PASSCODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
@@ -124,6 +127,8 @@ namespace Snowflake.Data.Core
         public bool required { get; set; }
 
         public string defaultValue { get; set; }
+
+        public string defaultNonWindowsValue { get; set; }
 
         public bool IsSecret { get; set; } = false;
     }
@@ -468,10 +473,18 @@ namespace Snowflake.Data.Core
 
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+                string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
                     logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
-                    properties.Add(sessionProperty, defaultVal);
+                    if (defaultNonWindowsVal != null && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        properties.Add(sessionProperty, defaultNonWindowsVal);
+                    }
+                    else
+                    {
+                        properties.Add(sessionProperty, defaultVal);
+                    }
                 }
             }
         }
