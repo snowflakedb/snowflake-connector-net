@@ -19,7 +19,6 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("authenticator=SNOWFLAKE_JWT;user=test;private_key=key", null)]
         [TestCase("authenticator=Snowflake_jwt;user=test;private_key=key;private_key_pwd=test", null)]
         [TestCase("authenticator=oauth;token=value", null)]
-        [TestCase("AUTHENTICATOR=HTTPS://SOMETHING.OKTA.COM;USER=TEST;PASSWORD=TEST", null)]
         [TestCase("authenticator=https://something.oktapreview.com;user=test;password=test", null)]
         [TestCase("authenticator=https://vanity.url/snowflake/okta;USER=TEST;PASSWORD=TEST", null)]
         public void TestAuthPropertiesValid(string connectionString, string password)
@@ -47,6 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("authenticator=https://okta.com;", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided")]
         [TestCase("authenticator=unknown;", null, SFError.UNKNOWN_AUTHENTICATOR, "Unknown authenticator")]
         [TestCase("authenticator=http://unknown.okta.com;", null, SFError.UNKNOWN_AUTHENTICATOR, "Unknown authenticator")]
+        [TestCase("AUTHENTICATOR=HTTPS://SOMETHING.OKTA.COM;USER=TEST;PASSWORD=TEST", null, SFError.UNKNOWN_AUTHENTICATOR, "Unknown authenticator")]
         [TestCase("authenticator=https://unknown;", null, SFError.UNKNOWN_AUTHENTICATOR, "Unknown authenticator")]
         public void TestAuthPropertiesInvalid(string connectionString, string password, SFError expectedError, string expectedErrorMessage)
         {
