@@ -141,7 +141,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             _successEvent = new ManualResetEvent(false);
             _tokenExtractionException = null;
-            httpListener.BeginGetContext(new AsyncCallback(GetContextCallback), httpListener);
+            httpListener.BeginGetContext(GetContextCallback, httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
