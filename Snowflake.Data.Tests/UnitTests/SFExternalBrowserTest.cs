@@ -101,120 +101,85 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
-            try
-            {
-                t_browserOperations
-                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
-                    .Callback(async (string url) => {
-                        await Task.Delay(1000).ContinueWith(_ =>
-                        {
-                            s_httpClient.GetAsync(url);
-                        });
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback(async (string url) => {
+                    await Task.Delay(1000).ContinueWith(_ =>
+                    {
+                        s_httpClient.GetAsync(url);
                     });
+                });
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                };
-                var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=false;browser_response_timeout=0;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-                Assert.Fail("Should fail");
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.AreEqual(SFError.BROWSER_RESPONSE_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
-            }
+                ProofKey = "mockProofKey",
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=false;browser_response_timeout=0;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+            Assert.AreEqual(SFError.BROWSER_RESPONSE_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
         public void TestThatThrowsErrorWhenUrlDoesNotMatchRegex()
         {
-            try
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                    SSOUrl = "non-matching-regex.com"
-                };
-                var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-                Assert.Fail("Should fail");
-            }
-            catch (SnowflakeDbException e)
-            {
-                Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
-            }
+                ProofKey = "mockProofKey",
+                SSOUrl = "non-matching-regex.com"
+            };
+            var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+            Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
         public void TestThatThrowsErrorWhenUrlIsNotWellFormedUriString()
         {
-            try
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                    SSOUrl = "http://localhost:123/?token=mockToken\\\\"
-                };
-                var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-                Assert.Fail("Should fail");
-            }
-            catch (SnowflakeDbException e)
-            {
-                Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
-            }
+                ProofKey = "mockProofKey",
+                SSOUrl = "http://localhost:123/?token=mockToken\\\\"
+            };
+            var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+            Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
         public void TestThatThrowsErrorWhenBrowserRequestMethodIsNotGet()
         {
-            try
-            {
-                t_browserOperations
-                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
-                    .Callback((string url) => {
-                        s_httpClient.PostAsync(url, new StringContent(""));
-                    });
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.PostAsync(url, new StringContent(""));
+                });
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                };
-                var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-                Assert.Fail("Should fail");
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.AreEqual(SFError.BROWSER_RESPONSE_WRONG_METHOD.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
-            }
+                ProofKey = "mockProofKey",
+            };
+            var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+            Assert.AreEqual(SFError.BROWSER_RESPONSE_WRONG_METHOD.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
         public void TestThatThrowsErrorWhenBrowserRequestHasInvalidQuery()
         {
-            try
-            {
-                t_browserOperations
-                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
-                    .Callback((string url) => {
-                        var urlWithoutQuery = url.Substring(0, url.IndexOf("?token="));
-                        s_httpClient.GetAsync(urlWithoutQuery);
-                    });
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    var urlWithoutQuery = url.Substring(0, url.IndexOf("?token="));
+                    s_httpClient.GetAsync(urlWithoutQuery);
+                });
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                };
-                var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-                Assert.Fail("Should fail");
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.AreEqual(SFError.BROWSER_RESPONSE_INVALID_PREFIX.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
-            }
+                ProofKey = "mockProofKey",
+            };
+            var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+            Assert.AreEqual(SFError.BROWSER_RESPONSE_INVALID_PREFIX.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
