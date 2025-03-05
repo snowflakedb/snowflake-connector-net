@@ -30,55 +30,42 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestDefaultAuthentication()
         {
-            try
-            {
-                t_browserOperations
-                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
-                    .Callback((string url) => {
-                        s_httpClient.GetAsync(url);
-                    });
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
-            } catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.Fail("Should pass without exception", e);
-            }
+                ProofKey = "mockProofKey",
+            };
+            var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            sfSession.Open();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
         }
 
         [Test]
         public void TestConsoleLogin()
         {
-            try
-            {
-                t_browserOperations
-                    .Setup(b => b.OpenUrl(It.IsAny<string>()))
-                    .Callback((string url) => {
-                        Uri uri = new Uri(url);
-                        var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
-                        var browserUrl = $"http://localhost:{port}/?token=mockToken";
-                        s_httpClient.GetAsync(browserUrl);
-                    });
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    Uri uri = new Uri(url);
+                    var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
+                    var browserUrl = $"http://localhost:{port}/?token=mockToken";
+                    s_httpClient.GetAsync(browserUrl);
+                });
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                };
-                var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.Fail("Should pass without exception", e);
-            }
+                ProofKey = "mockProofKey",
+            };
+            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            sfSession.Open();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
         }
 
         [Test]
