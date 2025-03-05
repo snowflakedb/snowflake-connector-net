@@ -43,6 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
             sfSession.Open();
 
+            Assert.IsFalse(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
         }
 
@@ -65,6 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
             sfSession.Open();
 
+            Assert.IsTrue(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
         }
 
