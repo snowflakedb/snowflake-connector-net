@@ -1057,24 +1057,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
              * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
             */
 
+            // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
+            // The specified user should be configured for SSO
+            var externalBrowserConnectionString
+                = ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
-                // The specified user should be configured for SSO
-                conn.ConnectionString
-                    = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
+                conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
                 conn.Open();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
-
-                conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -2433,28 +2437,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
              * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
             */
 
+            // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
+            // The specified user should be configured for SSO
+            var externalBrowserConnectionString
+                = ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
-                // The specified user should be configured for SSO
-                conn.ConnectionString
-                    = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
+                conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
-                connectTask = conn.OpenAsync(CancellationToken.None);
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
                 Assert.AreEqual(ConnectionState.Open, conn.State);
-
-                connectTask = conn.CloseAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
             }
+
         }
 
         [Test]
