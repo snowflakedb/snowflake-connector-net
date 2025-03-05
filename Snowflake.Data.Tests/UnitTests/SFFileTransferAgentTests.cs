@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;

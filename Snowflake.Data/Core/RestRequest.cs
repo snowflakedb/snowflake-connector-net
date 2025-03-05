@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System;

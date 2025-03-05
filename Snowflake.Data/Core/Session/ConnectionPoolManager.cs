@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2025 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;

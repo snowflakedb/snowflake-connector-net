@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
