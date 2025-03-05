@@ -9,6 +9,7 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
 using System;
 using System.Net;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -129,7 +130,8 @@ namespace Snowflake.Data.Tests.UnitTests
             session.ProcessLoginResponse(authnResponse);
 
             // assert
-            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty, session._idToken).Password);
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey)).Password);
         }
 
         [Test]
@@ -154,7 +156,8 @@ namespace Snowflake.Data.Tests.UnitTests
             session.ProcessLoginResponse(authnResponse);
 
             // assert
-            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty, session._idToken).Password);
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey)).Password);
         }
 
         [Test]

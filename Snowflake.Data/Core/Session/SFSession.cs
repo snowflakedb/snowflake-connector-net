@@ -105,7 +105,7 @@ namespace Snowflake.Data.Core
 
         internal bool _clientStoreTemporaryCredential;
 
-        internal SecureString _idToken;
+        internal string _idTokenKey;
 
         internal SecureString _mfaToken;
 
@@ -129,9 +129,8 @@ namespace Snowflake.Data.Core
                 }
                 if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
-                    _idToken = SecureStringHelper.Encode(authnResponse.data.idToken);
-                    var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(key, authnResponse.data.idToken);
+                    _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(_idTokenKey, authnResponse.data.idToken);
                 }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
@@ -155,7 +154,7 @@ namespace Snowflake.Data.Core
                 if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
                 {
                     logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
-                    _idToken = null;
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(_idTokenKey);
                     authenticator.Authenticate();
                 }
                 else
@@ -238,8 +237,7 @@ namespace Snowflake.Data.Core
 
                 if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user))
                 {
-                    var idKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                    _idToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(idKey));
+                    _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                 }
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&  _authenticatorType == "username_password_mfa")
                 {
