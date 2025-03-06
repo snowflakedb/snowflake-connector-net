@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,6 +7,9 @@ namespace Snowflake.Data.Core.Authenticator
     internal class OAuthClientCredentialsAuthenticator: OAuthFlowAuthenticator, IAuthenticator
     {
         public const string AuthName = "oauth_client_credentials";
+
+        public static bool IsOAuthClientCredentialsAuthenticator(string authenticator) =>
+            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         public OAuthClientCredentialsAuthenticator(SFSession session) : base(session, AuthName)
         {

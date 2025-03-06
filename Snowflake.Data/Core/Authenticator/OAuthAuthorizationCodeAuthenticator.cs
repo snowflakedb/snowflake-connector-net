@@ -42,6 +42,9 @@ You can close this window now and go back where you started from.
             _browserStarter = browserStarter;
         }
 
+        public static bool IsOAuthAuthorizationCodeAuthenticator(string authenticator) =>
+            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
             var accessTokenRequest = RunFlowToAccessTokenRequest();
