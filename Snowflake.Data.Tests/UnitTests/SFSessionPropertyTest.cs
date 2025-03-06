@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Security;

@@ -1,8 +1,4 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
-using System;
+﻿using System;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
