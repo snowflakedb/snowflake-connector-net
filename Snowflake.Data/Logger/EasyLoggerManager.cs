@@ -49,14 +49,14 @@ namespace Snowflake.Data.Log
 
         internal static bool HasEasyLoggingAppender()
         {
-            return SFLoggerImpl.s_appenders.ToArray().Any(IsEasyLoggingAppender);
+            return SFLoggerImpl.s_appenders.ToArray().Any();
         }
 
         private static void RemoveOtherEasyLoggingAppenders(SFAppender appender)
         {
             foreach (var existingAppender in SFLoggerImpl.s_appenders.ToArray())
             {
-                if (IsEasyLoggingAppender(existingAppender) && existingAppender != appender)
+                if (existingAppender != appender)
                 {
                     SFLoggerImpl.s_appenders.Remove(existingAppender);
                 }
@@ -79,17 +79,6 @@ namespace Snowflake.Data.Log
             appender.ActivateOptions();
             SFLoggerImpl.s_appenders.Add(appender);
             return appender;
-        }
-
-        private static bool IsEasyLoggingAppender(SFAppender appender)
-        {
-            switch (appender)
-            {
-                case SFAppender _:
-                    return appender.Name != null && appender.Name.StartsWith(AppenderPrefix);
-                default:
-                    return false;
-            }
         }
 
         internal static SFAppender AddConsoleAppender()
