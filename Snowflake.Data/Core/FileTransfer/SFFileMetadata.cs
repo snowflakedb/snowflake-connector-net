@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
