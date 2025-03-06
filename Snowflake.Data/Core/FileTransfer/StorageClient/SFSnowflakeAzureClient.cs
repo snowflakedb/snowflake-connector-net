@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Azure.Storage.Blobs;
 using Snowflake.Data.Log;
 using System;

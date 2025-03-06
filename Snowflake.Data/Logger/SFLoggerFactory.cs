@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log

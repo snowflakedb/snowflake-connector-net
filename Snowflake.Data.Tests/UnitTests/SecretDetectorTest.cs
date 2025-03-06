@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using NUnit.Framework;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
