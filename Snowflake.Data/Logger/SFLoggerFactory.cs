@@ -28,7 +28,7 @@ namespace Snowflake.Data.Log
 
         internal static SFLogger GetLogger<T>()
         {
-            return new SFLoggerPair(GetSFLogger<T>(), GetCustomLogger<T>());
+            return new SFLoggerPair(GetSFLogger<T>());
         }
 
         internal static SFLogger GetSFLogger<T>(bool useConsoleAppender = false)
