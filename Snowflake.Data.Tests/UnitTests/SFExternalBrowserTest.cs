@@ -73,29 +73,22 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSSOToken()
         {
-            try
-            {
-                var user = "test";
-                var host = $"{user}.okta.com";
-                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
-                var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-                credentialManager.SaveCredentials(key, "mockIdToken");
-                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "mockIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                    SSOUrl = "https://www.mockSSOUrl.com"
-                };
-                var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
-                sfSession.Open();
-
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never);
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.Fail("Should pass without exception", e);
-            }
+                ProofKey = "mockProofKey",
+                SSOUrl = "https://www.mockSSOUrl.com"
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            sfSession.Open();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never);
         }
 
         [Test]
@@ -230,30 +223,23 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSSOTokenAsync()
         {
-            try
-            {
-                var user = "test";
-                var host = $"{user}.okta.com";
-                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
-                var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-                credentialManager.SaveCredentials(key, "mockIdToken");
-                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "mockIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
-                var restRequester = new Mock.MockExternalBrowserRestRequester()
-                {
-                    ProofKey = "mockProofKey",
-                    SSOUrl = "https://www.mockSSOUrl.com"
-                };
-                var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
-                Task connectTask = sfSession.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
-
-                t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never());
-            }
-            catch (SnowflakeDbException e)
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                Assert.Fail("Should pass without exception", e);
-            }
+                ProofKey = "mockProofKey",
+                SSOUrl = "https://www.mockSSOUrl.com"
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            connectTask.Wait();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never());
         }
     }
 }
