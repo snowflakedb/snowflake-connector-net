@@ -42,6 +42,9 @@ namespace Snowflake.Data.Core.Authenticator
             _oktaUrl = new Uri(oktaUriString);
         }
 
+        public static bool IsOktaAuthenticator(string authenticator) =>
+            authenticator.Contains("okta") && authenticator.StartsWith("https://");
+
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {

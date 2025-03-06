@@ -83,8 +83,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
         [TestCase("ACCOUNT=testaccount;USER=testuser;", "")]
-        [TestCase("authenticator=okta;ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
-        [TestCase("authenticator=okta;ACCOUNT=testaccount;USER=testuser;", "")]
+        [TestCase("authenticator=https://okta.com;ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
+        [TestCase("authenticator=https://okta.com;ACCOUNT=testaccount;USER=testuser;", "")]
         public void TestFailWhenNoPasswordProvided(string connectionString, string password)
         {
             // arrange
