@@ -8,7 +8,7 @@ namespace Snowflake.Data.Core.Session
 
         public SecureString Passcode { get; set; } = null;
 
-        public SecureString ClientId { get; set; } = null;
+        public SecureString ClientSecret { get; set; } = null;
 
         public bool AllowHttpForIdp { get; set; } = false;
     }

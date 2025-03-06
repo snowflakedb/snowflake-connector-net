@@ -120,7 +120,6 @@ You can close this window now and go back where you started from.
         {
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            AuthorizationCodeResponse result = null;
             var extractor = new Func<HttpListenerRequest, Result<AuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
             var redirectUri = request.RedirectUri.EndsWith("/") ? request.RedirectUri : request.RedirectUri + "/";
             using (var httpListener = StartHttpListener(redirectUri))
@@ -199,15 +198,6 @@ You can close this window now and go back where you started from.
         }
 
         private string BadRequestError(string error) => BrowserErrorResponseTemplate.Replace("{error}", error);
-
-        private static int GetRandomUnusedPort()
-        {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
-        }
 
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
