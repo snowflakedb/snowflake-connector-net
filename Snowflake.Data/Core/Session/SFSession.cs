@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core
 
         internal bool _clientStoreTemporaryCredential;
 
-        internal string _idTokenKey;
+        internal string _idTokenKey = "";
 
         internal SecureString _mfaToken;
 
