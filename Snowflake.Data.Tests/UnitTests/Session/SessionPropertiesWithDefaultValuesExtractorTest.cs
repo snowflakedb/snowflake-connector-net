@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestReturnExtractedValue()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
 
             // act
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             [Values] bool failOnWrongValue)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString($"account=test;user=test;password=test", null);
+            var properties = SFSessionProperties.ParseConnectionString($"account=test;user=test;password=test", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestReturnDefaultValueWhenPreValidationFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestFailForPropertyWithInvalidDefaultValue()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
 
             // act
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestReturnDefaultValueForNullProperty()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;", new SessionPropertiesContext());
             properties[SFSessionProperty.CONNECTION_TIMEOUT] = null;
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestReturnDefaultValueWhenPostValidationFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestReturnDefaultValueWhenExtractFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15X", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15X", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, false);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestFailWhenPreValidationFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
 
             // act
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestFailWhenPostValidationFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestFailWhenExtractFails()
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15X", null);
+            var properties = SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;connection_timeout=15X", new SessionPropertiesContext());
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
 
             // act

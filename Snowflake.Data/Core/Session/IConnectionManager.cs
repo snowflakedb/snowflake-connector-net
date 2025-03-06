@@ -6,8 +6,8 @@ namespace Snowflake.Data.Core.Session
 {
     internal interface IConnectionManager
     {
-        SFSession GetSession(string connectionString, SecureString password, SecureString passcode = null);
-        Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken);
+        SFSession GetSession(string connectionString, SessionPropertiesContext sessionContext);
+        Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken);
         bool AddSession(SFSession session);
         void ReleaseBusySession(SFSession session);
         void ClearAllPools();
@@ -19,6 +19,6 @@ namespace Snowflake.Data.Core.Session
         bool SetPooling(bool poolingEnabled);
         bool GetPooling();
         SessionPool GetPool(string connectionString);
-        SessionPool GetPool(string connectionString, SecureString password);
+        SessionPool GetPool(string connectionString, SessionPropertiesContext sessionContext);
     }
 }
