@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -45,6 +41,9 @@ namespace Snowflake.Data.Core.Authenticator
         internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
         }
+
+        public static bool IsExternalBrowserAuthenticator(string authenticator) =>
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)

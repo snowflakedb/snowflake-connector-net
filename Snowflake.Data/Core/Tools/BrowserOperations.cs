@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
