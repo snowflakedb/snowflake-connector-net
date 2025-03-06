@@ -11,62 +11,62 @@ namespace Snowflake.Data.Log
 {
     internal class SFLoggerPair : SFLogger
     {
-        private readonly SFLogger s_snowflakeLogger;
+        private readonly SFLogger _snowflakeLogger;
 
         public SFLoggerPair(SFLogger snowflakeLogger)
         {
-            s_snowflakeLogger = snowflakeLogger;
+            _snowflakeLogger = snowflakeLogger;
         }
 
         public void Debug(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Debug(message, ex);
+            _snowflakeLogger.Debug(message, ex);
             SFLoggerFactory.s_customLogger.LogDebug(FormatBrackets(message), ex);
         }
 
         public void Info(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Info(message, ex);
+            _snowflakeLogger.Info(message, ex);
             SFLoggerFactory.s_customLogger.LogInformation(FormatBrackets(message), ex);
         }
 
         public void Warn(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Warn(message, ex);
+            _snowflakeLogger.Warn(message, ex);
             SFLoggerFactory.s_customLogger.LogWarning(FormatBrackets(message), ex);
         }
 
         public void Error(string message, Exception ex = null)
         {
             message = SecretDetector.MaskSecrets(message).maskedText;
-            s_snowflakeLogger.Error(message, ex);
+            _snowflakeLogger.Error(message, ex);
             SFLoggerFactory.s_customLogger.LogError(FormatBrackets(message), ex);
         }
 
         public bool IsDebugEnabled()
         {
-            return s_snowflakeLogger.IsDebugEnabled() ||
+            return _snowflakeLogger.IsDebugEnabled() ||
                 SFLoggerFactory.s_customLogger.IsEnabled(LogLevel.Debug);
         }
 
         public bool IsInfoEnabled()
         {
-            return s_snowflakeLogger.IsInfoEnabled() ||
+            return _snowflakeLogger.IsInfoEnabled() ||
                 SFLoggerFactory.s_customLogger.IsEnabled(LogLevel.Information);
         }
 
         public bool IsWarnEnabled()
         {
-            return s_snowflakeLogger.IsWarnEnabled() ||
+            return _snowflakeLogger.IsWarnEnabled() ||
                 SFLoggerFactory.s_customLogger.IsEnabled(LogLevel.Warning);
         }
 
         public bool IsErrorEnabled()
         {
-            return s_snowflakeLogger.IsErrorEnabled() ||
+            return _snowflakeLogger.IsErrorEnabled() ||
                 SFLoggerFactory.s_customLogger.IsEnabled(LogLevel.Error);
         }
 
