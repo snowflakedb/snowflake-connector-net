@@ -13,7 +13,7 @@ namespace Snowflake.Data.Log
     {
         private readonly SFLogger s_snowflakeLogger;
 
-        public SFLoggerPair(SFLogger snowflakeLogger, ILogger customLogger)
+        public SFLoggerPair(SFLogger snowflakeLogger)
         {
             s_snowflakeLogger = snowflakeLogger;
         }
