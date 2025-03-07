@@ -8,6 +8,8 @@ using Snowflake.Data.Client;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Snowflake.Data.Core.CredentialManager;
+using System.Security;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -36,6 +38,8 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal string _idTokenKey;
 
+        private SecureString _idToken;
+
         /// <summary>
         /// Constructor of the External authenticator
         /// </summary>
@@ -60,7 +64,8 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Info("External Browser Authentication");
             var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
-            if (string.IsNullOrEmpty(idToken))
+            _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
+            if (_idToken == null)
             {
                 int localPort = GetRandomUnusedPort();
                 using (var httpListener = GetHttpListener(localPort))
@@ -100,7 +105,8 @@ namespace Snowflake.Data.Core.Authenticator
             logger.Info("External Browser Authentication");
             var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
-            if (string.IsNullOrEmpty(idToken))
+            _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
+            if (_idToken == null)
             {
                 int localPort = GetRandomUnusedPort();
                 using (var httpListener = GetHttpListener(localPort))
@@ -291,9 +297,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
-            if (string.IsNullOrEmpty(idToken))
+            if (_idToken == null)
             {
                 // Add the token and proof key to the Data
                 data.Token = _samlResponseToken;
@@ -302,7 +306,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
             else
             {
-                data.Token = idToken;
+                data.Token = SecureStringHelper.Decode(_idToken);
                 data.Authenticator = TokenType.IdToken.GetAttribute<StringAttr>().value;
             }
         }
