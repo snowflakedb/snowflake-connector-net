@@ -77,7 +77,21 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             logger.Debug("Send login request");
-            await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (SnowflakeDbException e)
+            {
+                if (CheckIfTokenHasExpired(e))
+                {
+                    await AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    throw e;
+                }
+            }
         }
 
         /// <see cref="IAuthenticator"/>
@@ -103,7 +117,21 @@ namespace Snowflake.Data.Core.Authenticator
             }
 
             logger.Debug("Send login request");
-            base.Login();
+            try
+            {
+                base.Login();
+            }
+            catch (SnowflakeDbException e)
+            {
+                if (CheckIfTokenHasExpired(e))
+                {
+                    Authenticate();
+                }
+                else
+                {
+                    throw e;
+                }
+            }
         }
 
         private string GetIdpUrlAndProofKey(int localPort)
@@ -297,6 +325,17 @@ namespace Snowflake.Data.Core.Authenticator
             Byte[] randomness = new Byte[32];
             rnd.NextBytes(randomness);
             return Convert.ToBase64String(randomness);
+        }
+
+        private bool CheckIfTokenHasExpired(SnowflakeDbException e)
+        {
+            if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
+            {
+                logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
+                SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(_idTokenKey);
+                return true;
+            }
+            return false;
         }
     }
 }
