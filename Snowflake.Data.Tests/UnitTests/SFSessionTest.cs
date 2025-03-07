@@ -6,6 +6,7 @@ using Snowflake.Data.Tests.Mock;
 using System;
 using System.Net;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -110,8 +111,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var expectedIdToken = "mockIdToken";
-            var connectionString = $"account=account;user=user;password=test;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, null);
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
             LoginResponse authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
@@ -127,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey)).Password);
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
         [Test]
@@ -138,6 +141,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var mockIdToken = "mockIdToken";
             var connectionString = $"account=account;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, null);
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
             LoginResponse authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
@@ -153,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey)).Password);
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
         [Test]

@@ -99,10 +99,6 @@ namespace Snowflake.Data.Core
 
         internal String _queryTag;
 
-        internal bool _clientStoreTemporaryCredential;
-
-        internal string _idTokenKey = "";
-
         internal SecureString _mfaToken;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
@@ -123,10 +119,11 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
-                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
+
+                if (!string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
-                    _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(_idTokenKey, authnResponse.data.idToken);
+                    var idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(idTokenKey, authnResponse.data.idToken);
                 }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
@@ -225,12 +222,7 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
-                _clientStoreTemporaryCredential = extractedProperties._clientStoreTemporaryCredential;
 
-                if (_clientStoreTemporaryCredential && !string.IsNullOrEmpty(_user))
-                {
-                    _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                }
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
                 {

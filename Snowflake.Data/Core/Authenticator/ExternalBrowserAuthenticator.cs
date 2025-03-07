@@ -34,23 +34,32 @@ namespace Snowflake.Data.Core.Authenticator
         // Placeholder in case an exception occurs while extracting the token from the browser response.
         private Exception _tokenExtractionException;
 
+        internal string _idTokenKey;
+
         /// <summary>
         /// Constructor of the External authenticator
         /// </summary>
         /// <param name="session"></param>
         internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
+            var user = session.properties[SFSessionProperty.USER];
+            if (!string.IsNullOrEmpty(user))
+            {
+                _idTokenKey = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) ?
+                SnowflakeCredentialManagerFactory.GetSecureCredentialKey(session.properties[SFSessionProperty.HOST], user, TokenType.IdToken) :
+                "";
+            }
         }
 
         public static bool IsExternalBrowserAuthenticator(string authenticator) =>
             AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator"/>
-        async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
+        public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
             logger.Info("External Browser Authentication");
-            var idToken = string.IsNullOrEmpty(session._idTokenKey) ? "" :
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey);
+            var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
             if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
@@ -72,11 +81,11 @@ namespace Snowflake.Data.Core.Authenticator
         }
 
         /// <see cref="IAuthenticator"/>
-        void IAuthenticator.Authenticate()
+        public void Authenticate()
         {
             logger.Info("External Browser Authentication");
-            var idToken = string.IsNullOrEmpty(session._idTokenKey) ? "" :
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey);
+            var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
             if (string.IsNullOrEmpty(idToken))
             {
                 int localPort = GetRandomUnusedPort();
@@ -254,8 +263,8 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            var idToken = string.IsNullOrEmpty(session._idTokenKey) ? "" :
-                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(session._idTokenKey);
+            var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
             if (string.IsNullOrEmpty(idToken))
             {
                 // Add the token and proof key to the Data
