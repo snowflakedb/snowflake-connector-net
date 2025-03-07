@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core.Authenticator
         // Placeholder in case an exception occurs while extracting the token from the browser response.
         private Exception _tokenExtractionException;
 
-        internal string _idTokenKey;
+        internal string _idTokenKey = "";
 
         private SecureString _idToken;
 
@@ -47,11 +47,13 @@ namespace Snowflake.Data.Core.Authenticator
         internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
             var user = session.properties[SFSessionProperty.USER];
-            if (!string.IsNullOrEmpty(user))
+            var clientStoreTemporaryCredential = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            if (!string.IsNullOrEmpty(user) && clientStoreTemporaryCredential)
             {
-                _idTokenKey = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) ?
-                SnowflakeCredentialManagerFactory.GetSecureCredentialKey(session.properties[SFSessionProperty.HOST], user, TokenType.IdToken) :
-                "";
+                _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(
+                    session.properties[SFSessionProperty.HOST],
+                    user,
+                    TokenType.IdToken);
             }
         }
 
