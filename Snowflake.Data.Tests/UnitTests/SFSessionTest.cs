@@ -162,6 +162,23 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatRetriesAuthenticationForInvalidIdToken()
+        {
+            // arrange
+            var connectionString = "account=test;user=test;password=test;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, null);
+            LoginResponse authnResponse = new LoginResponse
+            {
+                code = SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode,
+                message = "",
+                success = false
+            };
+
+            // assert
+            Assert.Throws<NullReferenceException>(() => session.ProcessLoginResponse(authnResponse));
+        }
+
+        [Test]
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]
