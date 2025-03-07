@@ -153,10 +153,6 @@ namespace Snowflake.Data.Core
                     SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(_idTokenKey);
                     authenticator.Authenticate();
                 }
-                else
-                {
-                    throw e;
-                }
                 if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
                 {
                     logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
