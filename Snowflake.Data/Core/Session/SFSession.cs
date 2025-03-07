@@ -147,7 +147,8 @@ namespace Snowflake.Data.Core
                 if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
                 {
                     logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(_idTokenKey);
+                    var idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(idTokenKey);
                     authenticator.Authenticate();
                 }
                 if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
