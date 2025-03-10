@@ -120,7 +120,8 @@ namespace Snowflake.Data.Core
                     logger.Debug("Query context cache disabled.");
                 }
 
-                if (!string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
+                    !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     var idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
                     SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(idTokenKey, authnResponse.data.idToken);
