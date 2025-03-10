@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestPoolParametersAreNotOverriden()
         {
             // act
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, null);
 
             // assert
             Assert.IsFalse(pool.IsConfigOverridden());
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestOverrideMaxPoolSize()
         {
             // arrange
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, null);
             var newMaxPoolSize = 15;
 
             // act
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestOverrideExpirationTimeout()
         {
             // arrange
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, null);
             var newExpirationTimeoutSeconds = 15;
 
             // act
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestOverrideSetPooling()
         {
             // arrange
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, null);
 
             // act
             pool.SetPooling(false);
@@ -70,19 +70,20 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [TestCase("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string expectedPoolIdentification)
+        [TestCase("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string clientSecret, string expectedPoolIdentification)
         {
             // arrange
             var securePassword = password == null ? null : SecureStringHelper.Encode(password);
-            var pool = SessionPool.CreateSessionPool(connectionString, securePassword);
+            var secureClientSecret = clientSecret == null ? null : SecureStringHelper.Encode(clientSecret);
+            var pool = SessionPool.CreateSessionPool(connectionString, securePassword, secureClientSecret);
 
             // act
             var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var invalidConnectionString = "account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443"; // invalid because password is not provided
 
             // act
-            var exception = Assert.Throws<SnowflakeDbException>(() => SessionPool.CreateSessionPool(invalidConnectionString, null));
+            var exception = Assert.Throws<SnowflakeDbException>(() => SessionPool.CreateSessionPool(invalidConnectionString, null, null));
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
@@ -110,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var connectionString = "account=someAccount;db=someDb;host=someHost;password=somePassword;user=SomeUser;port=443";
-            var pool = SessionPool.CreateSessionPool(connectionString, null);
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null);
             var poolIdRegex = new Regex(@"^ \[pool: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\]$");
 
             // act
@@ -141,10 +142,24 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var securePassword = password == null ? null : SecureStringHelper.Encode(password);
-            var pool = SessionPool.CreateSessionPool(ConnectionString, securePassword);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, securePassword, null);
 
             // act
             Assert.DoesNotThrow(() => pool.ValidateSecurePassword(securePassword));
+        }
+
+        [Test]
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("anySecret")]
+        public void TestValidateValidSecureClientCredentials(string clientSecret)
+        {
+            // arrange
+            var secureClientSecret = clientSecret == null ? null : SecureStringHelper.Encode(clientSecret);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, secureClientSecret);
+
+            // act
+            Assert.DoesNotThrow(() => pool.ValidateSecureClientSecret(secureClientSecret));
         }
 
         [Test]
@@ -158,13 +173,33 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var poolSecurePassword = poolPassword == null ? null : SecureStringHelper.Encode(poolPassword);
             var notMatchingSecurePassword = notMatchingPassword == null ? null : SecureStringHelper.Encode(notMatchingPassword);
-            var pool = SessionPool.CreateSessionPool(ConnectionString, poolSecurePassword);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, poolSecurePassword, null);
 
             // act
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecurePassword(notMatchingSecurePassword));
 
             // assert
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
+        }
+
+        [Test]
+        [TestCase("someSecret", null)]
+        [TestCase("someSecret", "")]
+        [TestCase("someSecret", "anotherSecret")]
+        [TestCase("", "anotherSecret")]
+        [TestCase(null, "anotherSecret")]
+        public void TestFailToValidateNotMatchingSecureClientCredentials(string poolClientSecret, string notMatchingClientSecret)
+        {
+            // arrange
+            var poolSecureClientSecret = poolClientSecret == null ? null : SecureStringHelper.Encode(poolClientSecret);
+            var notMatchingSecureClientSecret = notMatchingClientSecret == null ? null : SecureStringHelper.Encode(notMatchingClientSecret);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, poolSecureClientSecret);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureClientSecret(notMatchingSecureClientSecret));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of client secret mismatch"));
         }
     }
 }

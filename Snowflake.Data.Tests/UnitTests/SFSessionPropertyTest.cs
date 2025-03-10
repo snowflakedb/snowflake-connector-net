@@ -1,17 +1,20 @@
 using System.Collections.Generic;
 using Snowflake.Data.Core;
 using System.Security;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
 
     class SFSessionPropertyTest
     {
+        private const string DifferentHostsWarning = "Properties OAUTHAUTHORIZATIONURL and OAUTHTOKENREQUESTURL are configured for a different host";
 
         [Test, TestCaseSource(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
@@ -237,6 +240,22 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;")]
+        [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;OAUTHCLIENTSECRET=ignored_value;")]
+        public void TestParseClientSecretProvidedExternally(string connectionString)
+        {
+            // arrange
+            var clientSecret = "abc";
+            var secureClientSecret = SecureStringHelper.Encode(clientSecret);
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { ClientSecret = secureClientSecret });
+
+            // assert
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+        }
+
+        [Test]
         public void TestNoOAuthPropertiesFound()
         {
             // arrange
@@ -309,6 +328,52 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.That(thrown.Message, Does.Contain(errorMessage));
+        }
+
+        [Test, NonParallelizable]
+        [TestCase("https://okta.com/authorize", "https://other.okta.com/token-request")]
+        public void TestWarningOnDifferentOAuthHosts(string authorizationUrl, string tokenUrl)
+        {
+            // arrange
+            var logger = new Mock<SFLogger>();
+            var oldLogger = SFSessionProperties.ReplaceLogger(logger.Object);
+            try
+            {
+                var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};";
+
+                // act
+                SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                logger.Verify(l => l.Warn(It.Is<string>(s => s.Contains(DifferentHostsWarning)), null), Times.Once);
+            }
+            finally
+            {
+                SFSessionProperties.ReplaceLogger(oldLogger);
+            }
+        }
+
+        [Test, NonParallelizable]
+        [TestCase("https://okta.com/authorize", "https://okta.com/token-request")]
+        public void TestNoWarningOnTheSameOAuthHosts(string authorizationUrl, string tokenUrl)
+        {
+            // arrange
+            var logger = new Mock<SFLogger>();
+            var oldLogger = SFSessionProperties.ReplaceLogger(logger.Object);
+            try
+            {
+                var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};";
+
+                // act
+                SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                logger.Verify(l => l.Warn(It.Is<string>(s => s.Contains(DifferentHostsWarning)), null), Times.Never);
+            }
+            finally
+            {
+                SFSessionProperties.ReplaceLogger(oldLogger);
+            }
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()

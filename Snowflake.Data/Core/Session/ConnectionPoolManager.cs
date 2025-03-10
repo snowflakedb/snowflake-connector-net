@@ -120,11 +120,13 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string and secure password");
             var password = sessionContext.Password;
-            var poolKey = GetPoolKey(connectionString, password);
+            var clientSecret = sessionContext.ClientSecret;
+            var poolKey = GetPoolKey(connectionString, password, clientSecret);
 
             if (_pools.TryGetValue(poolKey, out var item))
             {
                 item.ValidateSecurePassword(password);
+                item.ValidateSecureClientSecret(clientSecret);
                 return item;
             }
 
@@ -133,10 +135,11 @@ namespace Snowflake.Data.Core.Session
                 if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock))
                 {
                     poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
+                    poolCreatedWhileWaitingOnLock.ValidateSecureClientSecret(clientSecret);
                     return poolCreatedWhileWaitingOnLock;
                 }
                 s_logger.Info($"Creating new pool");
-                var pool = SessionPool.CreateSessionPool(connectionString, password);
+                var pool = SessionPool.CreateSessionPool(connectionString, password, clientSecret);
                 _pools.Add(poolKey, pool);
                 return pool;
             }
@@ -148,9 +151,16 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, new SessionPropertiesContext());
         }
 
-        private string GetPoolKey(string connectionString, SecureString password) =>
-            password != null && password.Length > 0
-                ? connectionString + ";password=" + SecureStringHelper.Decode(password) + ";"
-                : connectionString + ";password=;";
+        private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret)
+        {
+            var passwordPart = password != null && password.Length > 0
+                ? ";password=" + SecureStringHelper.Decode(password) + ";"
+                : ";password=;";
+            var clientSecretPart = clientSecret != null && clientSecret.Length > 0
+                ? ";client_secret=" + SecureStringHelper.Decode(clientSecret) + ";"
+                : ";client_secret=;";
+            return connectionString + passwordPart + clientSecretPart;
+        }
+
     }
 }
