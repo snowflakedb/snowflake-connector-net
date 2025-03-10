@@ -59,7 +59,7 @@ namespace Snowflake.Data.Core.Session
             SFSessionProperty property,
             Func<string, T> extractor,
             Func<string, bool> preExtractValidation,
-            Func<T, bool> postExtractValidation) 
+            Func<T, bool> postExtractValidation)
         {
             var propertyAttribute = property.GetAttribute<SFSessionPropertyAttr>();
             var defaultValueString = propertyAttribute.defaultValue;
