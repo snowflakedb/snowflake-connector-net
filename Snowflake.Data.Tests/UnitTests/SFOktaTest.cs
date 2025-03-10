@@ -1,9 +1,9 @@
 ﻿using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", null, restRequester);
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
             } catch (SnowflakeDbException e)
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryTimeout = MaxRetryTimeout
                 };
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;" +
-                    $"host=test;MAXHTTPRETRIES={MaxRetryCount};RETRY_TIMEOUT={MaxRetryTimeout};", null, restRequester);
+                    $"host=test;MAXHTTPRETRIES={MaxRetryCount};RETRY_TIMEOUT={MaxRetryTimeout};", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
             } catch (SnowflakeDbException e)
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
             } catch (SnowflakeDbException e)
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", null, restRequester);
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
             } catch (SnowflakeDbException e)
             {
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", null, restRequester);
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
             } catch (SnowflakeDbException e)
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
             }
             catch (SnowflakeDbException e)
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     MaxRetryCount = MaxRetryCount,
                     MaxRetryTimeout = MaxRetryTimeout
                 };
-                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester);
+                var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
             }

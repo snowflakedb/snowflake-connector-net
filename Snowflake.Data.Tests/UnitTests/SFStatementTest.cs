@@ -3,6 +3,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using NUnit.Framework;
 using System;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenew()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
@@ -33,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenewDuringQueryExec()
         {
             Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestServiceName()
         {
             var restRequester = new Mock.MockServiceName();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             string expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
             Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
@@ -200,7 +201,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 code = 500,
                 message = "internal error"
             };
-            var session = new SFSession("account=myAccount;password=myPassword;user=myUser;db=myDB", null);
+            var session = new SFSession("account=myAccount;password=myPassword;user=myUser;db=myDB", new SessionPropertiesContext());
             var statement = new SFStatement(session);
 
             // act

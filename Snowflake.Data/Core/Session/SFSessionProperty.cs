@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Security;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
@@ -9,6 +7,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
@@ -112,7 +111,19 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PASSCODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        PASSCODEINPASSWORD
+        PASSCODEINPASSWORD,
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
+        CLIENT_ID,
+        [SFSessionPropertyAttr(required = false, IsSecret = true)]
+        CLIENT_SECRET,
+        [SFSessionPropertyAttr(required = false)]
+        AUTHORIZATION_SCOPE,
+        [SFSessionPropertyAttr(required = false)]
+        REDIRECT_URI,
+        [SFSessionPropertyAttr(required = false)]
+        EXTERNAL_AUTHORIZATION_URL,
+        [SFSessionPropertyAttr(required = false)]
+        EXTERNAL_TOKEN_REQUEST_URL
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -181,7 +192,7 @@ namespace Snowflake.Data.Core
             return base.GetHashCode();
         }
 
-        internal static SFSessionProperties ParseConnectionString(string connectionString, SecureString password, SecureString passcode = null)
+        internal static SFSessionProperties ParseConnectionString(string connectionString, SessionPropertiesContext propertiesContext)
         {
             logger.Info("Start parsing connection string.");
             var builder = new DbConnectionStringBuilder();
@@ -252,14 +263,14 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (password != null && password.Length > 0)
+            if (propertiesContext.Password != null && propertiesContext.Password.Length > 0)
             {
-                properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(password);
+                properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(propertiesContext.Password);
             }
 
-            if (passcode != null && passcode.Length > 0)
+            if (propertiesContext.Passcode != null && propertiesContext.Passcode.Length > 0)
             {
-                properties[SFSessionProperty.PASSCODE] = SecureStringHelper.Decode(passcode);
+                properties[SFSessionProperty.PASSCODE] = SecureStringHelper.Decode(propertiesContext.Passcode);
             }
 
             ValidateAuthenticator(properties);
@@ -268,6 +279,7 @@ namespace Snowflake.Data.Core
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
+            ValidateOAuthAuthorizationCodeProperties(properties, propertiesContext.AllowHttpForIdp);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -297,6 +309,96 @@ namespace Snowflake.Data.Core
             return properties;
         }
 
+        private static void ValidateOAuthAuthorizationCodeProperties(SFSessionProperties properties, bool allowHttpForIdp)
+        {
+            if (!IsOAuthAuthorizationCode(properties))
+                return;
+            CheckRequiredProperty(SFSessionProperty.CLIENT_ID, properties);
+            CheckRequiredProperty(SFSessionProperty.CLIENT_SECRET, properties);
+            ValidateEitherScopeOrRoleDefined(properties);
+            ValidateOAuthUrls(properties, allowHttpForIdp);
+        }
+
+        private static bool IsOAuthAuthorizationCode(SFSessionProperties properties)
+        {
+            if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
+                return false;
+            return OAuthAuthorizationCodeAuthenticator.AuthName.Equals(authenticator, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ValidateEitherScopeOrRoleDefined(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.AUTHORIZATION_SCOPE, out var scope) && !string.IsNullOrEmpty(scope))
+                return;
+            if (properties.TryGetValue(SFSessionProperty.ROLE, out var role) && !string.IsNullOrEmpty(role))
+                return;
+            var errorMessage = $"Either property {SFSessionProperty.AUTHORIZATION_SCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()} should be specified";
+            logger.Error(errorMessage);
+            throw new SnowflakeDbException(
+                new Exception(errorMessage),
+                SFError.MISSING_CONNECTION_PROPERTY,
+                $"{SFSessionProperty.AUTHORIZATION_SCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()}");
+        }
+
+        private static void ValidateOAuthUrls(SFSessionProperties properties, bool allowHttpForIdp)
+        {
+            var externalAuthorizationUrl = properties.ExtractPropertyOrEmptyString(SFSessionProperty.EXTERNAL_AUTHORIZATION_URL);
+            if (!string.IsNullOrEmpty(externalAuthorizationUrl) && !allowHttpForIdp && !externalAuthorizationUrl.StartsWith("https://"))
+            {
+                var errorMessage = $"Invalid {SFSessionProperty.EXTERNAL_AUTHORIZATION_URL.ToString()} property. It must start with 'https://'";
+                logger.Error(errorMessage);
+                throw new SnowflakeDbException(
+                    new Exception(errorMessage),
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                    "",
+                    SFSessionProperty.EXTERNAL_AUTHORIZATION_URL.ToString());
+            }
+            var externalTokenRequestUrl = properties.ExtractPropertyOrEmptyString(SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL);
+            if (!string.IsNullOrEmpty(externalTokenRequestUrl) && !allowHttpForIdp && !externalTokenRequestUrl.StartsWith("https://"))
+            {
+                var errorMessage = $"Invalid {SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL.ToString()} property. It must start with 'https://'";
+                logger.Error(errorMessage);
+                throw new SnowflakeDbException(
+                    new Exception(errorMessage),
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                    "",
+                    SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL.ToString());
+            }
+            var bothEmpty = string.IsNullOrEmpty(externalAuthorizationUrl) && string.IsNullOrEmpty(externalTokenRequestUrl);
+            var bothSet = !string.IsNullOrEmpty(externalAuthorizationUrl) && !string.IsNullOrEmpty(externalTokenRequestUrl);
+            if (!bothEmpty && !bothSet)
+            {
+                var parameterNames = $"{SFSessionProperty.EXTERNAL_AUTHORIZATION_URL.ToString()}, {SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL.ToString()}";
+                var errorMessage = $"You should provide either both of parameters: {parameterNames} or none of them";
+                var missingParameter = string.IsNullOrEmpty(externalAuthorizationUrl)
+                    ? SFSessionProperty.EXTERNAL_AUTHORIZATION_URL
+                    : SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL;
+                logger.Error(errorMessage);
+                throw new SnowflakeDbException(
+                    new Exception(errorMessage),
+                    SFError.MISSING_CONNECTION_PROPERTY,
+                    missingParameter);
+            }
+            if (bothSet && !GetHost(externalAuthorizationUrl).Equals(GetHost(externalTokenRequestUrl)))
+            {
+                logger.Warn($"Properties {SFSessionProperty.EXTERNAL_AUTHORIZATION_URL.ToString()} and {SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL.ToString()} are configured for a different host");
+            }
+        }
+
+        private static string GetHost(string url)
+        {
+            return ""; // TODO: implement it !!!
+        }
+
+        internal string ExtractPropertyOrEmptyString(SFSessionProperty property) => ExtractPropertyOrDefault(property, string.Empty);
+
+        internal string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
+        {
+            if (TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
+                return value;
+            return defaultValue;
+        }
+
         internal static string ResolveConnectionAreaMessage(string host) =>
             host.EndsWith(".cn", StringComparison.InvariantCultureIgnoreCase)
                 ? "Connecting to CHINA Snowflake domain"
@@ -304,20 +406,23 @@ namespace Snowflake.Data.Core
 
         private static void ValidateAuthenticator(SFSessionProperties properties)
         {
-            var knownAuthenticators = new[] {
-                BasicAuthenticator.AUTH_NAME,
-                OktaAuthenticator.AUTH_NAME,
-                OAuthAuthenticator.AUTH_NAME,
-                KeyPairAuthenticator.AUTH_NAME,
-                ExternalBrowserAuthenticator.AUTH_NAME,
-                MFACacheAuthenticator.AuthName
+            var knownAuthenticators = new Func<string, bool>[]
+            {
+                BasicAuthenticator.IsBasicAuthenticator,
+                OktaAuthenticator.IsOktaAuthenticator,
+                OAuthAuthenticator.IsOAuthAuthenticator,
+                KeyPairAuthenticator.IsKeyPairAuthenticator,
+                ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
+                MFACacheAuthenticator.IsMfaCacheAuthenticator,
+                OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
+                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
             {
-                authenticator = authenticator.ToLower();
-                if (!knownAuthenticators.Contains(authenticator) && !(authenticator.Contains(OktaAuthenticator.AUTH_NAME) && authenticator.StartsWith("https://")))
+                if (!knownAuthenticators.Any(func => func(authenticator)))
                 {
+                    authenticator = authenticator.ToLower();
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
@@ -447,19 +552,9 @@ namespace Snowflake.Data.Core
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 // if required property, check if exists in the dictionary
-                if (IsRequired(sessionProperty, properties) &&
-                    !properties.ContainsKey(sessionProperty))
+                if (IsRequired(sessionProperty, properties))
                 {
-                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-                    logger.Error("Missing connection property", e);
-                    throw e;
-                }
-
-                if (IsRequired(sessionProperty, properties) && string.IsNullOrEmpty(properties[sessionProperty]))
-                {
-                    SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-                    logger.Error("Empty connection property", e);
-                    throw e;
+                    CheckRequiredProperty(sessionProperty, properties);
                 }
 
                 // add default value to the map
@@ -469,6 +564,22 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
+            }
+        }
+
+        private static void CheckRequiredProperty(SFSessionProperty sessionProperty, SFSessionProperties properties)
+        {
+            if (!properties.ContainsKey(sessionProperty))
+            {
+                SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+                logger.Error("Missing connection property", e);
+                throw e;
+            }
+            if (string.IsNullOrEmpty(properties[sessionProperty]))
+            {
+                SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+                logger.Error("Empty connection property", e);
+                throw e;
             }
         }
 
@@ -507,34 +618,36 @@ namespace Snowflake.Data.Core
                 var authenticatorDefined =
                     properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                var authenticatorsWithoutPassword = new List<string>()
+                var authenticatorsWithoutPassword = new Func<string, bool>[]
                 {
-                    ExternalBrowserAuthenticator.AUTH_NAME,
-                    KeyPairAuthenticator.AUTH_NAME,
-                    OAuthAuthenticator.AUTH_NAME
+                    ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
+                    KeyPairAuthenticator.IsKeyPairAuthenticator,
+                    OAuthAuthenticator.IsOAuthAuthenticator,
+                    OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
-                return !authenticatorDefined || !authenticatorsWithoutPassword
-                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
+                return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));
             }
             else if (sessionProperty.Equals(SFSessionProperty.USER))
             {
                 var authenticatorDefined =
                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                var authenticatorsWithoutUsername = new List<string>()
+                var authenticatorsWithoutUsername = new Func<string, bool>[]
                 {
-                    OAuthAuthenticator.AUTH_NAME,
-                    ExternalBrowserAuthenticator.AUTH_NAME
+                    OAuthAuthenticator.IsOAuthAuthenticator,
+                    ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
+                    OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
                 };
-                return !authenticatorDefined || !authenticatorsWithoutUsername
-                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
+                return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }
             else if (sessionProperty.Equals(SFSessionProperty.TOKEN))
             {
                 var authenticatorDefined = properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                return !authenticatorDefined || authenticator.Equals(OAuthAuthenticator.AUTH_NAME);
+                return !authenticatorDefined || OAuthAuthenticator.IsOAuthAuthenticator(authenticator);
             }
             else
             {
