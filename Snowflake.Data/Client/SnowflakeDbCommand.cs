@@ -375,7 +375,6 @@ namespace Snowflake.Data.Client
                     string bindingType = "";
                     object bindingVal;
 
-                    //Prevent null value from throwing NullReferenceException on parameter.Value.GetType()
                     if (parameter.Value == null)
                     {
                         parameter.Value = DBNull.Value;
