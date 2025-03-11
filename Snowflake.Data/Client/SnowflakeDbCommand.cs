@@ -1,8 +1,3 @@
-
-/*
- * Copyright (c) 2012-2025 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using Snowflake.Data.Core;
 using System.Data.Common;
@@ -366,11 +361,6 @@ namespace Snowflake.Data.Client
             return new SnowflakeDbDataReader(this, resultSet);
         }
 
-        /// <summary>
-        /// Converts the list of parameters to a dictionary of binding DTOs.
-        /// </summary>
-        /// <param name="parameters">The parameters.</param>
-        /// <returns>A dictionary with a key of type string and a value of type bindingdtos.</returns>
         private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
         {
             if (parameters == null || parameters.Count == 0)
