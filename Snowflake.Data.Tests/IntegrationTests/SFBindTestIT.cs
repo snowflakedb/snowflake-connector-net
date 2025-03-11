@@ -203,6 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static IEnumerable<object> NullTestCases() =>
             new object[] { DBNull.Value, null };
 
+        [Test]
         public void TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
