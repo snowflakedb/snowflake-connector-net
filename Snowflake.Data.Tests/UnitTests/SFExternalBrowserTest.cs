@@ -92,6 +92,62 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatTokenIsStoredWhenCacheIsEnabled()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "testUser";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken
+            };
+            var sfSession = new SFSession($"client_store_temporary_credential=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
+            sfSession.Open();
+
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
+        public void TestThatTokenIsNotStoredWhenCacheIsDisabled()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "testUser";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken
+            };
+            var sfSession = new SFSession($"client_store_temporary_credential=false;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
+            sfSession.Open();
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
             t_browserOperations
@@ -240,6 +296,64 @@ namespace Snowflake.Data.Tests.UnitTests
             connectTask.Wait();
 
             t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void TestThatTokenIsStoredWhenCacheIsEnabledAsync()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "testUser";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken
+            };
+            var sfSession = new SFSession($"client_store_temporary_credential=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
+            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            connectTask.Wait();
+
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
+        public void TestThatTokenIsNotStoredWhenCacheIsDisabledAsync()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "testUser";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken
+            };
+            var sfSession = new SFSession($"client_store_temporary_credential=false;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
+            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            connectTask.Wait();
+
+            Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
     }
 }

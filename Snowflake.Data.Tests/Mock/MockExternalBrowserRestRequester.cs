@@ -9,7 +9,10 @@ namespace Snowflake.Data.Tests.Mock
     class MockExternalBrowserRestRequester : IMockRestRequester
     {
         public string ProofKey { get; set; }
+
         public string SSOUrl { get; set; }
+
+        public string IdToken { get; set; }
 
         public T Get<T>(IRestRequest request)
         {
@@ -59,6 +62,7 @@ namespace Snowflake.Data.Tests.Mock
                     success = true,
                     data = new LoginResponseData
                     {
+                        idToken = IdToken,
                         sessionId = "",
                         token = "",
                         masterToken = "",
