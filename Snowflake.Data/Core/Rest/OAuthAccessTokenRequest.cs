@@ -4,6 +4,8 @@ namespace Snowflake.Data.Core.Rest
 {
     internal class OAuthAccessTokenRequest: BaseOAuthAccessTokenRequest
     {
+        public string GrantType { get; set; }
+
         public string AuthorizationCode { get; set; }
 
         public string CodeVerifier { get; set; }
@@ -13,7 +15,7 @@ namespace Snowflake.Data.Core.Rest
         protected override Dictionary<string, string> GetRequestValues() =>
             new Dictionary<string, string>
             {
-                { "grant_type",  "authorization_code" },
+                { "grant_type",  GrantType },
                 { "code", AuthorizationCode },
                 { "code_verifier", CodeVerifier },
                 { "scope",  AuthorizationScope },

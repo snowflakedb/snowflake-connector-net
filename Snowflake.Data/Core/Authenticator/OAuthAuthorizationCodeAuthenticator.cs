@@ -1,20 +1,18 @@
 using System;
 using System.Net;
-using System.Security;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator.Browser;
-using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator
 {
     internal class OAuthAuthorizationCodeAuthenticator: OAuthFlowAuthenticator, IAuthenticator
     {
         public const string AuthName = "oauth_authorization_code";
+        private const string TokenRequestGrantType = "authorization_code";
         private const string BrowserSuccessResponse = @"<!DOCTYPE html><html><head><meta charset=""UTF-8""/>
 <title>Authorization Code Granted for Snowflake</title></head>
 <body><h4>Your identity was confirmed</h4>
@@ -30,13 +28,12 @@ You can close this window now and go back where you started from.
         private const string DefaultRedirectUriHost = "127.0.0.1";
         private const int MaxRandomPortAcquisitionAttempts = 3;
 
-        private static readonly TimeSpan s_idpRestTimeout = TimeSpan.FromSeconds(120);
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthAuthorizationCodeAuthenticator>();
 
         private readonly ChallengeProvider _challengeProvider;
         private readonly WebBrowserStarter _browserStarter;
         private readonly WebListenerStarter _listenerStarter;
 
-        internal SecureString AccessToken { get; private set; } = null;
 
         public OAuthAuthorizationCodeAuthenticator(SFSession session) : base(session, OAuthAuthenticator.AUTH_NAME)
         {
@@ -55,142 +52,9 @@ You can close this window now and go back where you started from.
         public static bool IsOAuthAuthorizationCodeAuthenticator(string authenticator) =>
             AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
-        public async Task AuthenticateAsync(CancellationToken cancellationToken)
-        {
-            var cacheKeys = GetOAuthCacheKeys();
-            var accessToken = cacheKeys.GetAccessToken();
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                var accessTokenRequest = RunFlowToAccessTokenRequest();
-                await GetAccessTokenAsync(accessTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                AccessToken = SecureStringHelper.Encode(accessToken);
-            }
+        protected override string GetAuthenticatorName() => AuthName;
 
-            try
-            {
-                await LoginAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (SnowflakeDbException exception)
-            {
-                if (ShouldRefreshToken(exception, cacheKeys))
-                {
-                    var refreshTokenRequest = PrepareRefreshTokenRequest(cacheKeys);
-                    await GetAccessTokenAsync(refreshTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
-                    await LoginAsync(cancellationToken).ConfigureAwait(false);
-                    return;
-                }
-                throw;
-            }
-        }
-
-        public void Authenticate()
-        {
-            var cacheKeys = GetOAuthCacheKeys();
-            var accessToken = cacheKeys.GetAccessToken();
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                var accessTokenRequest = RunFlowToAccessTokenRequest();
-                GetAccessToken(accessTokenRequest, cacheKeys);
-            }
-            else
-            {
-                AccessToken = SecureStringHelper.Encode(accessToken);
-            }
-
-            try
-            {
-                Login();
-            }
-            catch (SnowflakeDbException exception)
-            {
-                if (ShouldRefreshToken(exception, cacheKeys))
-                {
-                    var refreshTokenRequest = PrepareRefreshTokenRequest(cacheKeys);
-                    GetAccessToken(refreshTokenRequest, cacheKeys);
-                    Login();
-                    return;
-                }
-                throw;
-            }
-        }
-
-        private void GetAccessToken(
-            BaseOAuthAccessTokenRequest accessTokenRequest,
-            OAuthCacheKeys cacheKeys)
-        {
-            var restRequester = (RestRequester) session.restRequester;
-            using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
-            {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
-                OAuthAccessTokenResponse accessTokenResponse = null;
-                try
-                {
-                    accessTokenResponse = restRequester.Post<OAuthAccessTokenResponse>(restRequest);
-                }
-                catch (Exception exception)
-                {
-                    var realException = UnpackAggregateException(exception);
-                    throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
-                }
-                HandleAccessTokenResponse(accessTokenResponse, cacheKeys);
-            }
-        }
-
-        private async Task GetAccessTokenAsync(
-            BaseOAuthAccessTokenRequest accessTokenRequest,
-            OAuthCacheKeys cacheKeys,
-            CancellationToken cancellationToken)
-        {
-            var restRequester = (RestRequester) session.restRequester;
-            using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
-            {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
-                OAuthAccessTokenResponse accessTokenResponse = null;
-                try
-                {
-                    accessTokenResponse = await restRequester.PostAsync<OAuthAccessTokenResponse>(restRequest, cancellationToken).ConfigureAwait(false);
-                }
-                catch (Exception exception)
-                {
-                    var realException = UnpackAggregateException(exception);
-                    throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
-                }
-                HandleAccessTokenResponse(accessTokenResponse, cacheKeys);
-            }
-        }
-
-        private bool ShouldRefreshToken(SnowflakeDbException exception, OAuthCacheKeys cacheKeys) =>
-            cacheKeys.IsAvailable() &&
-            (OAuthTokenErrors.IsAccessTokenExpired(exception.ErrorCode) || OAuthTokenErrors.IsAccessTokenInvalid(exception.ErrorCode));
-
-        private OAuthRefreshAccessTokenRequest PrepareRefreshTokenRequest(OAuthCacheKeys cacheKeys)
-        {
-            var refreshToken = cacheKeys.GetRefreshToken();
-            cacheKeys.RemoveAccessToken();
-            return new OAuthRefreshAccessTokenRequest
-            {
-                TokenEndpoint = GetTokenEndpoint(),
-                ClientId = RequiredProperty(SFSessionProperty.OAUTHCLIENTID),
-                ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
-                AuthorizationScope = GetAuthorizationScope(),
-                RefreshToken = refreshToken
-            };
-        }
-
-        private OAuthCacheKeys GetOAuthCacheKeys()
-        {
-            var host = new Uri(GetTokenEndpoint()).Host;
-            var user = session.properties[SFSessionProperty.USER];
-            return new OAuthCacheKeys(host, user, SnowflakeCredentialManagerFactory.GetCredentialManager);
-        }
-
-        private Exception UnpackAggregateException(Exception exception) =>
-            exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
-
-        private OAuthAccessTokenRequest RunFlowToAccessTokenRequest()
+        protected override OAuthAccessTokenRequest RunFlowToAccessTokenRequest()
         {
             var authorizationData = PrepareAuthorizationData();
             var authorizationCodeRequest = authorizationData.Request;
@@ -198,6 +62,7 @@ You can close this window now and go back where you started from.
             return new OAuthAccessTokenRequest
             {
                 TokenEndpoint = GetTokenEndpoint(),
+                GrantType = TokenRequestGrantType,
                 AuthorizationCode = authorizationCodeResult.AuthorizationCode,
                 AuthorizationScope = authorizationCodeRequest.AuthorizationScope,
                 ClientId = authorizationCodeRequest.ClientId,
@@ -205,6 +70,26 @@ You can close this window now and go back where you started from.
                 CodeVerifier = authorizationData.Verifier.Value,
                 RedirectUri = authorizationCodeRequest.RedirectUri
             };
+        }
+
+        protected override BaseOAuthAccessTokenRequest GetRenewAccessTokenRequest(SnowflakeDbException exception, OAuthCacheKeys cacheKeys)
+        {
+            if (!IsAccessTokenExpiredOrInvalid(exception))
+            {
+                s_logger.Debug($"Exception code returned for {AuthName} authentication does not indicate expired or invalid token so the the authentication flow is failing");
+                return null;
+            }
+            if (!cacheKeys.IsAvailable())
+            {
+                s_logger.Debug($"Cache in this {AuthName} authentication is disabled so there won't be any attempts to use a refresh token");
+                return null;
+            }
+            var refreshTokenRequest = BuildRefreshTokenRequest(cacheKeys);
+            if (refreshTokenRequest != null)
+            {
+                s_logger.Debug("Refresh token is going to be used to refresh the access token");
+            }
+            return refreshTokenRequest;
         }
 
         internal AuthorizationRequestWithVerifier PrepareAuthorizationData()
@@ -226,23 +111,6 @@ You can close this window now and go back where you started from.
                 Request = authorizationCodeRequest,
                 Verifier = codeVerifier
             };
-        }
-
-        private void HandleAccessTokenResponse(OAuthAccessTokenResponse accessTokenResponse, OAuthCacheKeys cacheKeys)
-        {
-            accessTokenResponse.Validate();
-            var accessToken = accessTokenResponse.AccessToken;
-            var refreshToken = accessTokenResponse.RefreshToken;
-            cacheKeys.SaveAccessToken(accessToken);
-            if (string.IsNullOrEmpty(refreshToken))
-            {
-                cacheKeys.RemoveRefreshToken();
-            }
-            else
-            {
-                cacheKeys.SaveRefreshToken(refreshToken);
-            }
-            AccessToken = SecureStringHelper.Encode(accessToken);
         }
 
         private OAuthAuthorizationCodeResponse ExecuteAuthorizationCodeRequest(OAuthAuthorizationCodeRequest request)
@@ -327,18 +195,6 @@ You can close this window now and go back where you started from.
 
         private string BadRequestError(string error) => BrowserErrorResponseTemplate.Replace("{error}", error);
 
-        protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
-        {
-            data.OAuthType = AuthName;
-            var secureAccessToken = AccessToken;
-            data.Token = (secureAccessToken == null ? null : SecureStringHelper.Decode(secureAccessToken));
-            if (string.IsNullOrEmpty(data.Token))
-            {
-                throw new Exception("No valid access token to use");
-            }
-            SetSecondaryAuthenticationData(ref data);
-        }
-
 
         internal HttpListener StartListenerUpdatingRedirectUri(OAuthAuthorizationCodeRequest request)
         {
@@ -390,55 +246,6 @@ You can close this window now and go back where you started from.
             if (!string.IsNullOrEmpty(externalAuthUrl))
                 return externalAuthUrl;
             return DefaultSnowflakeEndpoint(OAuthFlowConfig.SnowflakeAuthorizeUrl);
-        }
-
-        private string GetTokenEndpoint()
-        {
-            var externalTokenUrl = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHTOKENREQUESTURL);
-            if (!string.IsNullOrEmpty(externalTokenUrl))
-                return externalTokenUrl;
-            return DefaultSnowflakeEndpoint(OAuthFlowConfig.SnowflakeTokenUrl);
-        }
-
-        private string GetAuthorizationScope()
-        {
-            var scope = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHSCOPE);
-            if (!string.IsNullOrEmpty(scope))
-                return scope;
-            var role = RequiredProperty(SFSessionProperty.ROLE);
-            return OAuthFlowConfig.DefaultScopePrefixBeforeRole + role;
-        }
-
-        private string DefaultSnowflakeEndpoint(string relativeUrl)
-        {
-            var host = RequiredProperty(SFSessionProperty.HOST);
-            var scheme = RequiredProperty(SFSessionProperty.SCHEME);
-            if (!scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.SCHEME.ToString()} was expected to be https");
-            }
-            var hostWithProtocol = host.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? host : "https://" + host;
-            var port = RequiredProperty(SFSessionProperty.PORT);
-            return $"{hostWithProtocol}:{port}{relativeUrl}";
-        }
-
-        private string RequiredProperty(SFSessionProperty property)
-        {
-            var value = ExtractPropertyOrEmptyString(property);
-            if (string.IsNullOrEmpty(value))
-            {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {property.ToString()} is required for OAuth authorization code flow");
-            }
-            return value;
-        }
-
-        private string ExtractPropertyOrEmptyString(SFSessionProperty property) => ExtractPropertyOrDefault(property, string.Empty);
-
-        private string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
-        {
-            if (session.properties.TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
-                return value;
-            return defaultValue;
         }
 
         private class ListenerWithUri
