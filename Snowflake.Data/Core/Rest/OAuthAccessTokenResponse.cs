@@ -5,7 +5,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Rest
 {
-    internal class OAuthAccessTokenRestResponse
+    internal class OAuthAccessTokenResponse
     {
         [JsonProperty(PropertyName = "token_type", NullValueHandling = NullValueHandling.Ignore)]
         public string TokenType { get; set; }

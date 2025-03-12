@@ -204,8 +204,8 @@
   <data name="BROWSER_RESPONSE_ERROR" xml:space="preserve">
     <value>Invalid response from browser: {0}.</value>
   </data>
-  <data name="TOKEN_REQUEST_ERROR" xml:space="preserve">
-    <value>Error on getting a token from IDP: {0}.</value>
+  <data name="OAUTH_TOKEN_REQUEST_ERROR" xml:space="preserve">
+    <value>Error on getting an OAuth token from IDP: {0}.</value>
   </data>
 
 </root>

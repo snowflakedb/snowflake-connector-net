@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core
         BROWSER_RESPONSE_ERROR,
 
         [SFErrorAttr(errorCode = 270064)]
-        TOKEN_REQUEST_ERROR,
+        OAUTH_TOKEN_REQUEST_ERROR,
 
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,

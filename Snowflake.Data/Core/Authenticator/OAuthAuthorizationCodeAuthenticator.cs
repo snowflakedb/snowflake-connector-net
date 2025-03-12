@@ -1,6 +1,5 @@
 using System;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -27,6 +26,8 @@ You can close this window now and go back where you started from.
 {error}
 </body></html>";
 
+        private static readonly TimeSpan s_idpRestTimeout = TimeSpan.FromSeconds(120);
+
         private readonly ChallengeProvider _challengeProvider;
         private readonly WebBrowserStarter _browserStarter;
 
@@ -51,8 +52,8 @@ You can close this window now and go back where you started from.
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, TimeSpan.FromSeconds(120));
-                var accessTokenResponse = await restRequester.PostAsync<OAuthAccessTokenRestResponse>(restRequest, cancellationToken).ConfigureAwait(false);
+                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
+                var accessTokenResponse = await restRequester.PostAsync<OAuthAccessTokenResponse>(restRequest, cancellationToken).ConfigureAwait(false);
                 HandleAccessTokenResponse(accessTokenResponse);
             }
             await base.LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -64,16 +65,16 @@ You can close this window now and go back where you started from.
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, TimeSpan.FromSeconds(120));
-                OAuthAccessTokenRestResponse accessTokenResponse = null;
+                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
+                OAuthAccessTokenResponse accessTokenResponse = null;
                 try
                 {
-                    accessTokenResponse = restRequester.Post<OAuthAccessTokenRestResponse>(restRequest);
+                    accessTokenResponse = restRequester.Post<OAuthAccessTokenResponse>(restRequest);
                 }
                 catch (Exception exception)
                 {
                     var realException = UnpackAggregateException(exception);
-                    throw new SnowflakeDbException(SFError.TOKEN_REQUEST_ERROR, realException.Message);
+                    throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
                 }
                 HandleAccessTokenResponse(accessTokenResponse);
             }
@@ -110,7 +111,7 @@ You can close this window now and go back where you started from.
             };
         }
 
-        private void HandleAccessTokenResponse(OAuthAccessTokenRestResponse accessTokenResponse)
+        private void HandleAccessTokenResponse(OAuthAccessTokenResponse accessTokenResponse)
         {
             var utcNow = DateTime.UtcNow;
             accessTokenResponse.Validate();
@@ -124,7 +125,7 @@ You can close this window now and go back where you started from.
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
             var extractor = new Func<HttpListenerRequest, Result<OauthAuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
-            var redirectUri = request.RedirectUri.EndsWith("/") ? request.RedirectUri : request.RedirectUri + "/";
+            var redirectUri = request.RedirectUri.EndsWith("/") ? request.RedirectUri : request.RedirectUri + "/"; // TODO: handling of default redirect_uri will be added later
             using (var httpListener = StartHttpListener(redirectUri))
             using (var browserListener = new WebBrowserListener<OauthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
             {

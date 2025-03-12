@@ -2409,15 +2409,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestOAuthAuthorizationCodeFlow()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode()))
+            var driverRootPath = Path.Combine("..", "..", "..", "..");
+            var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(configFilePath)))
             {
+                // act
                 connection.Open();
             }
         }
 
-        private string ConnectionStringForOAuthAuthorizationCode()
+        private string ConnectionStringForOAuthAuthorizationCode(string configFilePath)
         {
-            TestConfig testConfig = TestEnvironment.ReadTestConfig(Path.Combine("..", "..", "..", "..", "..", ".parameters_oauth_authorization_code_okta.json"));
+            TestConfig testConfig = TestEnvironment.ReadTestConfig(configFilePath);
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
             return new StringBuilder()
                 .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
@@ -2425,7 +2428,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
                 .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
                 .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl};oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
-                .Append("poolingEnabled=false;minPoolSize=0;")
+                .Append("poolingEnabled=false;")
                 .ToString();
         }
     }
