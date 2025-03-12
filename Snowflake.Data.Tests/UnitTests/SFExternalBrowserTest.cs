@@ -355,5 +355,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
+
+        [Test]
+        public void TestGetSystemDefaultBrowserReturnsAnExecutableApplication()
+        {
+            var browser = BrowserOperations.Instance.GetSystemDefaultBrowser();
+            Assert.IsTrue(browser.Contains(".exe"));
+        }
     }
 }

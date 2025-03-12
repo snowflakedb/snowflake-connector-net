@@ -1,6 +1,7 @@
 using Snowflake.Data.Client;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace Snowflake.Data.Core.Tools
 {
@@ -14,7 +15,11 @@ namespace Snowflake.Data.Core.Tools
             // hack because of this: https://github.com/dotnet/corefx/issues/10361
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.FileName = GetSystemDefaultBrowser(); // default browser extracted from registry
+                startInfo.Arguments = url;
+                startInfo.UseShellExecute = false;
+                Process.Start(startInfo);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -28,6 +33,24 @@ namespace Snowflake.Data.Core.Tools
             {
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
             }
+        }
+
+        // The following function is based on: https://stackoverflow.com/a/62006560
+        internal string GetSystemDefaultBrowser()
+        {
+            RegistryKey regKey = Registry.ClassesRoot.OpenSubKey("HTTP\\shell\\open\\command", false);
+
+            // get rid of the enclosing quotes
+            string name = regKey.GetValue(null).ToString().ToLower().Replace("" + (char)34, "");
+
+            if (!name.EndsWith("exe"))
+                //get rid of all command line arguments
+                name = name.Substring(0, name.LastIndexOf(".exe") + 4);
+
+            if (regKey != null)
+                regKey.Close();
+
+            return name;
         }
     }
 }
