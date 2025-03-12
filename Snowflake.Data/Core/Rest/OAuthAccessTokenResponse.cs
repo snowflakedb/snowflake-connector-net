@@ -2,6 +2,7 @@ using System;
 using Newtonsoft.Json;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Rest
 {
@@ -24,6 +25,10 @@ namespace Snowflake.Data.Core.Rest
 
         [JsonProperty(PropertyName = "scope", NullValueHandling = NullValueHandling.Ignore)]
         public string Scope { get; set; }
+
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthAccessTokenResponse>();
+        private const int MaxAccessTokenExpirationInSeconds = 60 * 24; // 1 day
+        private const int MaxRefreshTokenExpirationInSeconds = 60 * 24 * 30; // 1 month
 
         public Token GetAccessToken(DateTime now)
         {
@@ -50,23 +55,26 @@ namespace Snowflake.Data.Core.Rest
 
         public void Validate()
         {
-            if (TokenType != "Bearer")
-                throw new Exception("Expected Bearer token type");
             if (string.IsNullOrEmpty(AccessToken))
                 throw new Exception("Expected access token");
-            if (!IsPositiveInteger(ExpiresIn))
-                throw new Exception("Expected expiration time of access token to be a positive integer");
-            if (!string.IsNullOrEmpty(RefreshToken) && !string.IsNullOrEmpty(RefreshTokenExpiresIn) && !IsPositiveInteger(RefreshTokenExpiresIn))
-                throw new Exception("Expected expiration time of refresh token to be a positive integer");
-            if (string.IsNullOrEmpty(Scope))
-                throw new Exception("Expected scope to be not empty");
+            ValidateExpirationTime(ExpiresIn, "access token", MaxAccessTokenExpirationInSeconds);
+            if (!string.IsNullOrEmpty(RefreshToken))
+            {
+                ValidateExpirationTime(RefreshTokenExpiresIn, "refresh token", MaxRefreshTokenExpirationInSeconds);
+            }
         }
 
-        private bool IsPositiveInteger(string value)
+        private void ValidateExpirationTime(string expiresIn, string tokenName, int maxExpiresIn)
         {
-            if (string.IsNullOrEmpty(value))
-                return false;
-            return int.TryParse(value, out var intValue) && intValue > 0;
+            if (string.IsNullOrEmpty(expiresIn) || !(int.TryParse(expiresIn, out var expiresInIntValue) && expiresInIntValue > 0))
+            {
+                s_logger.Warn($"OAuth {tokenName} returned by IDP has expiration time which is not a positive integer value");
+                return;
+            }
+            if (expiresInIntValue > maxExpiresIn)
+            {
+                s_logger.Warn($"OAuth {tokenName} returned by IDP will expire after: {expiresInIntValue} seconds which is a very long time");
+            }
         }
     }
 }
