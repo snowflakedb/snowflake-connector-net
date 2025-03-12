@@ -157,12 +157,13 @@ namespace Snowflake.Data.Tests.UnitTests
                     s_httpClient.GetAsync(url);
                 });
 
+            var invalidIdToken = "invalidIdToken";
             var expectedIdToken = "mockIdToken";
             var user = "test";
             var host = $"{user}.okta.com";
             var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-            credentialManager.SaveCredentials(key, "invalidIdToken");
+            credentialManager.SaveCredentials(key, invalidIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
             var restRequester = new Mock.MockExternalBrowserRestRequester()
@@ -172,6 +173,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 ThrowInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(invalidIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
             sfSession.Open();
 
             t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once);
@@ -418,12 +422,13 @@ namespace Snowflake.Data.Tests.UnitTests
                     s_httpClient.GetAsync(url);
                 });
 
+            var invalidIdToken = "invalidIdToken";
             var expectedIdToken = "mockIdToken";
             var user = "test";
             var host = $"{user}.okta.com";
             var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-            credentialManager.SaveCredentials(key, "invalidIdToken");
+            credentialManager.SaveCredentials(key, invalidIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
             var restRequester = new Mock.MockExternalBrowserRestRequester()
@@ -433,6 +438,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 ThrowInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+
+            Assert.AreEqual(invalidIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
