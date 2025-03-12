@@ -3,7 +3,7 @@ using System.Web;
 
 namespace Snowflake.Data.Core.Rest
 {
-    internal class AuthorizationCodeRequest
+    internal class OAuthAuthorizationCodeRequest
     {
         public string AuthorizationEndpoint { get; set; }
         public string AuthorizationScope { get; set; }
