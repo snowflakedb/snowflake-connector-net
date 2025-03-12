@@ -181,24 +181,23 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenException()
         {
-            var expectedIdToken = "mockIdToken";
+            var expectedIdToken = "validIdToken";
             var user = "test";
             var host = $"{user}.okta.com";
             var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-            credentialManager.SaveCredentials(key, "invalidIdToken");
+            credentialManager.SaveCredentials(key, expectedIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                ProofKey = "mockProofKey",
-                IdToken = expectedIdToken,
                 ThrowNonInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
             var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
 
             Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
         [Test]
@@ -444,18 +443,16 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenExceptionAsync()
         {
-            var expectedIdToken = "mockIdToken";
+            var expectedIdToken = "validIdToken";
             var user = "test";
             var host = $"{user}.okta.com";
             var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
-            credentialManager.SaveCredentials(key, "invalidIdToken");
+            credentialManager.SaveCredentials(key, expectedIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
-                ProofKey = "mockProofKey",
-                IdToken = expectedIdToken,
                 ThrowNonInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
@@ -463,6 +460,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<AggregateException>(() => connectTask.Wait());
 
             Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)thrown.InnerException).ErrorCode);
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
         [Test]
