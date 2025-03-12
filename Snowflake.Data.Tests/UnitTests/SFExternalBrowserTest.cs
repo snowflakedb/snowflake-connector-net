@@ -357,6 +357,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [Platform("Win")]
         public void TestGetSystemDefaultBrowserReturnsAnExecutableApplication()
         {
             var browser = BrowserOperations.Instance.GetSystemDefaultBrowser();
