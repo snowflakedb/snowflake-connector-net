@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Core.Rest
 {
-    internal class OauthAuthorizationCodeResponse
+    internal class OAuthAuthorizationCodeResponse
     {
         public string AuthorizationCode { get; set; }
 

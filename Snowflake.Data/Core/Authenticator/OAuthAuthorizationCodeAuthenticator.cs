@@ -120,14 +120,14 @@ You can close this window now and go back where you started from.
             session._accessToken = accessToken;
         }
 
-        private OauthAuthorizationCodeResponse ExecuteAuthorizationCodeRequest(OAuthAuthorizationCodeRequest request)
+        private OAuthAuthorizationCodeResponse ExecuteAuthorizationCodeRequest(OAuthAuthorizationCodeRequest request)
         {
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            var extractor = new Func<HttpListenerRequest, Result<OauthAuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
+            var extractor = new Func<HttpListenerRequest, Result<OAuthAuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
             var redirectUri = request.RedirectUri.EndsWith("/") ? request.RedirectUri : request.RedirectUri + "/"; // TODO: handling of default redirect_uri will be added later
             using (var httpListener = StartHttpListener(redirectUri))
-            using (var browserListener = new WebBrowserListener<OauthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
+            using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
             {
                 var authorizationCodeUrlString = request.GetUrl();
                 _browserStarter.StartBrowser(authorizationCodeUrlString);
@@ -135,11 +135,11 @@ You can close this window now and go back where you started from.
             }
         }
 
-        private Result<OauthAuthorizationCodeResponse, IBrowserError> ValidateAndExtractAuthorizationCodeResult(HttpListenerRequest request, string expectedState)
+        private Result<OAuthAuthorizationCodeResponse, IBrowserError> ValidateAndExtractAuthorizationCodeResult(HttpListenerRequest request, string expectedState)
         {
             if (request.HttpMethod != "GET")
             {
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = BadRequestError("<br><b>Error</b>: Expected GET http method.</br>"),
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.HttpMethod)
@@ -148,7 +148,7 @@ You can close this window now and go back where you started from.
 
             if (string.IsNullOrEmpty(request.Url.Query))
             {
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = BadRequestError("<br><b>Error</b>: No query parameters</br>"),
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "No query parameters")
@@ -162,7 +162,7 @@ You can close this window now and go back where you started from.
                 var errorMessage = "<br>Identity Provider failed with error: </br>"
                                    + $"<br><b>Error</b>: {HttpUtility.HtmlEncode(error)}</br>"
                                    + $"<br><b>Error Description</b>: {HttpUtility.HtmlEncode(errorDescription)}</br>";
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = BadRequestError(errorMessage),
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, $"Authorization code response has error '{error}' and description '{errorDescription}'")
@@ -172,7 +172,7 @@ You can close this window now and go back where you started from.
             var state = parameters.Get("state");
             if (string.IsNullOrEmpty(authorizationCode))
             {
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = BadRequestError("<br><b>Error</b>: Authorization code is required in the authorization code response</br>"),
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "Authorization code is required in the authorization code response")
@@ -180,7 +180,7 @@ You can close this window now and go back where you started from.
             }
             if (string.IsNullOrEmpty(state))
             {
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = BadRequestError("<br><b>Error</b>: State is required in the authorization code response</br>"),
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "State is required in the authorization code response")
@@ -188,13 +188,13 @@ You can close this window now and go back where you started from.
             }
             if (state != expectedState)
             {
-                return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
+                return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateError(new AuthorizationCodeError
                 {
                     BrowserMessage = "<br><b>Error</b>: Identity Provider did not provide expected state parameter! It might indicate an XSS attack.</br>",
                     Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "State mismatch for authorization code request and response")
                 });
             }
-            return Result<OauthAuthorizationCodeResponse, IBrowserError>.CreateResult(new OauthAuthorizationCodeResponse
+            return Result<OAuthAuthorizationCodeResponse, IBrowserError>.CreateResult(new OAuthAuthorizationCodeResponse
             {
                 AuthorizationCode = authorizationCode,
                 State = state

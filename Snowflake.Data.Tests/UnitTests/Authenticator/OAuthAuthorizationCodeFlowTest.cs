@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Error on getting a token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
+            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
         }
 
         private SFSession PrepareSession()
