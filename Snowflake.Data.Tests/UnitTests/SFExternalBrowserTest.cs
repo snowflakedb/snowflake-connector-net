@@ -149,6 +149,59 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatRetriesAuthenticationForInvalidIdToken()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "invalidIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken,
+                ThrowInvalidIdToken = true
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            sfSession.Open();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once);
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
+        public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenException()
+        {
+            var expectedIdToken = "mockIdToken";
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "invalidIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken,
+                ThrowNonInvalidIdToken = true
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
+
+            Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        }
+
+        [Test]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
             t_browserOperations
@@ -355,6 +408,61 @@ namespace Snowflake.Data.Tests.UnitTests
             connectTask.Wait();
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
+        public void TestThatRetriesAuthenticationForInvalidIdTokenAsync()
+        {
+            t_browserOperations
+                .Setup(b => b.OpenUrl(It.IsAny<string>()))
+                .Callback((string url) => {
+                    s_httpClient.GetAsync(url);
+                });
+
+            var expectedIdToken = "mockIdToken";
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "invalidIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken,
+                ThrowInvalidIdToken = true
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            connectTask.Wait();
+
+            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once);
+            Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
+        }
+
+        [Test]
+        public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenExceptionAsync()
+        {
+            var expectedIdToken = "mockIdToken";
+            var user = "test";
+            var host = $"{user}.okta.com";
+            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+            credentialManager.SaveCredentials(key, "invalidIdToken");
+            SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+            var restRequester = new Mock.MockExternalBrowserRestRequester()
+            {
+                ProofKey = "mockProofKey",
+                IdToken = expectedIdToken,
+                ThrowNonInvalidIdToken = true
+            };
+            var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", null, restRequester, t_browserOperations.Object);
+            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            var thrown = Assert.Throws<AggregateException>(() => connectTask.Wait());
+
+            Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)thrown.InnerException).ErrorCode);
         }
 
         [Test]

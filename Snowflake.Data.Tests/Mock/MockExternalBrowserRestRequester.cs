@@ -14,6 +14,10 @@ namespace Snowflake.Data.Tests.Mock
 
         public string IdToken { get; set; }
 
+        public bool ThrowInvalidIdToken { get; set; } = false;
+
+        public bool ThrowNonInvalidIdToken { get; set; } = false;
+
         public T Get<T>(IRestRequest request)
         {
             throw new System.NotImplementedException();
@@ -57,25 +61,49 @@ namespace Snowflake.Data.Tests.Mock
             else
             {
                 // login
-                var loginResponse = new LoginResponse
+                LoginResponse loginResponse;
+                if (ThrowInvalidIdToken)
                 {
-                    success = true,
-                    data = new LoginResponseData
+                    ThrowInvalidIdToken = false;
+                    loginResponse = new LoginResponse
                     {
-                        idToken = IdToken,
-                        sessionId = "",
-                        token = "",
-                        masterToken = "",
-                        masterValidityInSeconds = 0,
-                        authResponseSessionInfo = new SessionInfo
+                        success = false,
+                        code = SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode,
+                        message = "",
+                    };
+                }
+                else if (ThrowNonInvalidIdToken)
+                {
+                    ThrowInvalidIdToken = false;
+                    loginResponse = new LoginResponse
+                    {
+                        success = false,
+                        code = SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
+                        message = "",
+                    };
+                }
+                else
+                {
+                    loginResponse = new LoginResponse
+                    {
+                        success = true,
+                        data = new LoginResponseData
                         {
-                            databaseName = "",
-                            schemaName = "",
-                            roleName = "",
-                            warehouseName = "",
+                            idToken = IdToken,
+                            sessionId = "",
+                            token = "",
+                            masterToken = "",
+                            masterValidityInSeconds = 0,
+                            authResponseSessionInfo = new SessionInfo
+                            {
+                                databaseName = "",
+                                schemaName = "",
+                                roleName = "",
+                                warehouseName = "",
+                            }
                         }
-                    }
-                };
+                    };
+                }
 
                 return Task.FromResult<T>((T)(object)loginResponse);
             }
