@@ -408,23 +408,23 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
         internal string nonProxyHosts { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_CLIENT_ID", NullValueHandling = NullValueHandling.Ignore)]
-        internal string clientId { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_ID", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientId { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_CLIENT_SECRET", NullValueHandling = NullValueHandling.Ignore)]
-        internal string clientSecret { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientSecret { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_AUTHORIZATION_SCOPE", NullValueHandling = NullValueHandling.Ignore)]
-        internal string authorizationScope { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_SCOPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthScope { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_REDIRECT_URI", NullValueHandling = NullValueHandling.Ignore)]
-        internal string redirectUri { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthRedirectUri { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXTERNAL_AUTHORIZATION_URL", NullValueHandling = NullValueHandling.Ignore)]
-        internal string externalAuthorizationUrl { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthAuthorizationUrl { get; set; }
 
-        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXTERNAL_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
-        internal string externalTokenRequestUrl { get; set; }
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthTokenRequestUrl { get; set; }
 
         public TestConfig()
         {

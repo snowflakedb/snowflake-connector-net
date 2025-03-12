@@ -92,8 +92,8 @@ You can close this window now and go back where you started from.
             {
                 AuthorizationEndpoint = GetAuthorizationEndpoint(),
                 AuthorizationScope = GetAuthorizationScope(),
-                ClientId = RequiredProperty(SFSessionProperty.CLIENT_ID),
-                RedirectUri = ExtractPropertyOrEmptyString(SFSessionProperty.REDIRECT_URI),
+                ClientId = RequiredProperty(SFSessionProperty.OAUTHCLIENTID),
+                RedirectUri = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHREDIRECTURI),
                 CodeChallenge = codeChallenge,
                 State = state
             };
@@ -104,7 +104,7 @@ You can close this window now and go back where you started from.
                 AuthorizationCode = authorizationCodeResult.AuthorizationCode,
                 AuthorizationScope = authorizationCodeRequest.AuthorizationScope,
                 ClientId = authorizationCodeRequest.ClientId,
-                ClientSecret = RequiredProperty(SFSessionProperty.CLIENT_SECRET),
+                ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
                 CodeVerifier = codeVerifier.Value,
                 RedirectUri = authorizationCodeRequest.RedirectUri
             };
@@ -223,7 +223,7 @@ You can close this window now and go back where you started from.
 
         private string GetAuthorizationEndpoint()
         {
-            var externalAuthUrl = ExtractPropertyOrEmptyString(SFSessionProperty.EXTERNAL_AUTHORIZATION_URL);
+            var externalAuthUrl = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHAUTHORIZATIONURL);
             if (!string.IsNullOrEmpty(externalAuthUrl))
                 return externalAuthUrl;
             return DefaultSnowflakeEndpoint(OAuthFlowConfig.SnowflakeAuthorizeUrl);
@@ -231,7 +231,7 @@ You can close this window now and go back where you started from.
 
         private string GetTokenEndpoint()
         {
-            var externalTokenUrl = ExtractPropertyOrEmptyString(SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL);
+            var externalTokenUrl = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHTOKENREQUESTURL);
             if (!string.IsNullOrEmpty(externalTokenUrl))
                 return externalTokenUrl;
             return DefaultSnowflakeEndpoint(OAuthFlowConfig.SnowflakeTokenUrl);
@@ -239,7 +239,7 @@ You can close this window now and go back where you started from.
 
         private string GetAuthorizationScope()
         {
-            var scope = ExtractPropertyOrEmptyString(SFSessionProperty.AUTHORIZATION_SCOPE);
+            var scope = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHSCOPE);
             if (!string.IsNullOrEmpty(scope))
                 return scope;
             var role = RequiredProperty(SFSessionProperty.ROLE);

@@ -2422,9 +2422,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return new StringBuilder()
                 .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
                 .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
-                .Append($"client_id={testConfig.clientId};client_secret={testConfig.clientSecret};authorization_scope={testConfig.authorizationScope};")
-                .Append($"redirect_uri={testConfig.redirectUri};")
-                .Append($"external_authorization_url={testConfig.externalAuthorizationUrl};external_token_request_url={testConfig.externalTokenRequestUrl};")
+                .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
+                .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
+                .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl};oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
                 .Append("poolingEnabled=false;minPoolSize=0;")
                 .ToString();
         }

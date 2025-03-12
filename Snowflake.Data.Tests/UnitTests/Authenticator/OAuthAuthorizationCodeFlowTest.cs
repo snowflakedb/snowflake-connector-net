@@ -142,9 +142,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return new StringBuilder()
                 .Append($"authenticator={authenticator};user={user};account={account};")
                 .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
-                .Append($"client_id={clientId};client_secret={clientSecret};authorization_scope={authorizationScope};")
-                .Append($"redirect_uri={redirectUri};")
-                .Append($"external_authorization_url={externalAuthorizationUrl};external_token_request_url={externalTokenRequestUrl};")
+                .Append($"oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={authorizationScope};")
+                .Append($"oauthRedirectUri={redirectUri};")
+                .Append($"oauthAuthorizationUrl={externalAuthorizationUrl};oauthTokenRequestUrl={externalTokenRequestUrl};")
                 .Append("poolingEnabled=false;minPoolSize=0;")
                 .ToString();
         }

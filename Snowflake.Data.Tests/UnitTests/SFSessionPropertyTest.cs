@@ -241,13 +241,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var clientId = "abc";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_ID={clientId}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthClientId={clientId}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
         }
 
         [Test]
@@ -255,13 +255,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var clientSecret = "abc";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;CLIENT_SECRET={clientSecret}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthClientSecret={clientSecret}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]
@@ -269,13 +269,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var authorizationScope = "abc";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;AUTHORIZATION_SCOPE={authorizationScope}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthScope={authorizationScope}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(authorizationScope, properties[SFSessionProperty.AUTHORIZATION_SCOPE]);
+            Assert.AreEqual(authorizationScope, properties[SFSessionProperty.OAUTHSCOPE]);
         }
 
         [Test]
@@ -283,13 +283,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var redirectUri = "http://localhost:8080";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;REDIRECT_URI={redirectUri}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthRedirectUri={redirectUri}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(redirectUri, properties[SFSessionProperty.REDIRECT_URI]);
+            Assert.AreEqual(redirectUri, properties[SFSessionProperty.OAUTHREDIRECTURI]);
         }
 
         [Test]
@@ -297,13 +297,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var externalAuthorizationUrl = "https://okta.com/authorize";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;EXTERNAL_AUTHORIZATION_URL={externalAuthorizationUrl}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthAuthorizationUrl={externalAuthorizationUrl}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(externalAuthorizationUrl, properties[SFSessionProperty.EXTERNAL_AUTHORIZATION_URL]);
+            Assert.AreEqual(externalAuthorizationUrl, properties[SFSessionProperty.OAUTHAUTHORIZATIONURL]);
         }
 
         [Test]
@@ -311,13 +311,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var externalTokenRequestUrl = "https://okta.com/token";
-            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;EXTERNAL_TOKEN_REQUEST_URL={externalTokenRequestUrl}";
+            var connectionString = $"ACCOUNT=test;USER=test;PASSWORD=test;oauthTokenRequestUrl={externalTokenRequestUrl}";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(externalTokenRequestUrl, properties[SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL]);
+            Assert.AreEqual(externalTokenRequestUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
         }
 
         [Test]
@@ -330,12 +330,12 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.CLIENT_ID, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.CLIENT_SECRET, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.AUTHORIZATION_SCOPE, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.REDIRECT_URI, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.EXTERNAL_AUTHORIZATION_URL, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTID, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTSECRET, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHSCOPE, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHREDIRECTURI, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHAUTHORIZATIONURL, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHTOKENREQUESTURL, out var _));
         }
 
         [Test]
@@ -348,18 +348,18 @@ namespace Snowflake.Data.Tests.UnitTests
             var redirectUri = "http://localhost";
             var authorizationUrl = "https://okta.com/authorize";
             var tokenUrl = "https://okta.com/token-request";
-            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID={clientId};CLIENT_SECRET={clientSecret};AUTHORIZATION_SCOPE={scope};REDIRECT_URI={redirectUri};EXTERNAL_AUTHORIZATION_URL={authorizationUrl};EXTERNAL_TOKEN_REQUEST_URL={tokenUrl};";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={scope};oauthRedirectUri={redirectUri};oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
-            Assert.AreEqual(scope, properties[SFSessionProperty.AUTHORIZATION_SCOPE]);
-            Assert.AreEqual(redirectUri, properties[SFSessionProperty.REDIRECT_URI]);
-            Assert.AreEqual(authorizationUrl, properties[SFSessionProperty.EXTERNAL_AUTHORIZATION_URL]);
-            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.EXTERNAL_TOKEN_REQUEST_URL]);
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.AreEqual(redirectUri, properties[SFSessionProperty.OAUTHREDIRECTURI]);
+            Assert.AreEqual(authorizationUrl, properties[SFSessionProperty.OAUTHAUTHORIZATIONURL]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
         }
 
         [Test]
@@ -368,24 +368,24 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var clientId = "abc";
             var clientSecret = "def";
-            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_ID={clientId};CLIENT_SECRET={clientSecret};";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId={clientId};oauthClientSecret={clientSecret};";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.CLIENT_ID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.CLIENT_SECRET]);
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_SECRET=def;", "Required property CLIENT_ID is not provided")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;CLIENT_ID=abc;", "Required property CLIENT_SECRET is not provided")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;", "Required property AUTHORIZATION_SCOPE or ROLE is not provided")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=https://okta.com/authorize", "Required property EXTERNAL_TOKEN_REQUEST_URL is not provided")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_TOKEN_REQUEST_URL=https://okta.com/token-request", "Required property EXTERNAL_AUTHORIZATION_URL is not provided")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=http://okta.com/authorize;EXTERNAL_TOKEN_REQUEST_URL=https://okta.com/token-request", "Invalid parameter value  for EXTERNAL_AUTHORIZATION_URL")]
-        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;CLIENT_ID=abc;CLIENT_SECRET=def;AUTHORIZATION_SCOPE=ghi;EXTERNAL_AUTHORIZATION_URL=https://okta.com/authorize;EXTERNAL_TOKEN_REQUEST_URL=http://okta.com/token-request", "Invalid parameter value  for EXTERNAL_TOKEN_REQUEST_URL")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;", "Required property OAUTHCLIENTID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;", "Required property OAUTHCLIENTSECRET is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize", "Required property OAUTHTOKENREQUESTURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=https://okta.com/token-request", "Required property OAUTHAUTHORIZATIONURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=http://okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Invalid parameter value  for OAUTHAUTHORIZATIONURL")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=http://okta.com/token-request", "Invalid parameter value  for OAUTHTOKENREQUESTURL")]
         public void TestOAuthAuthorizationCodeMissingOrInvalidParameters(string connectionString, string errorMessage)
         {
             // act
