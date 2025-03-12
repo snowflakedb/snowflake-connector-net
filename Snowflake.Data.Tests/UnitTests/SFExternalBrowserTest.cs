@@ -7,6 +7,7 @@ using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using System;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Callback((string url) => {
                     s_httpClient.GetAsync(url);
                 });
-
+            var localhostRegex = new Regex("http:\\/\\/localhost:(.*)\\/?token=mockToken");
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
                 ProofKey = "mockProofKey",
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => localhostRegex.IsMatch(s))), Times.Once());
         }
 
         [Test]
@@ -53,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserOperations
                 .Setup(b => b.OpenUrl(It.IsAny<string>()))
                 .Callback((string url) => {
-                    Uri uri = new Uri(url);
+                    Uri uri = new(url);
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
                     s_httpClient.GetAsync(browserUrl);
@@ -67,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
         }
 
         [Test]
@@ -239,7 +240,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Callback((string url) => {
                     s_httpClient.GetAsync(url);
                 });
-
+            var localhostRegex = new Regex("http:\\/\\/localhost:(.*)\\/?token=mockToken");
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
                 ProofKey = "mockProofKey",
@@ -249,7 +250,7 @@ namespace Snowflake.Data.Tests.UnitTests
             connectTask.Wait();
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => localhostRegex.IsMatch(s))), Times.Once());
         }
 
         [Test]
@@ -258,7 +259,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserOperations
                 .Setup(b => b.OpenUrl(It.IsAny<string>()))
                 .Callback((string url) => {
-                    Uri uri = new Uri(url);
+                    Uri uri = new(url);
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
                     s_httpClient.GetAsync(browserUrl);
@@ -273,7 +274,7 @@ namespace Snowflake.Data.Tests.UnitTests
             connectTask.Wait();
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<string>()), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
         }
 
         [Test]
