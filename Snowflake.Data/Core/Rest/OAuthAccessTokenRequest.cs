@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Snowflake.Data.Core.Rest
 {
-    public class OAuthAccessTokenRequest
+    internal class OAuthAccessTokenRequest
     {
         public string TokenEndpoint { get; set; }
 
