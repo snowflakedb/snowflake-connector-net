@@ -32,8 +32,7 @@ namespace Snowflake.Data.Core.Rest
 
         public Token GetAccessToken(DateTime now)
         {
-            var expiresIn = int.Parse(ExpiresIn);
-            var expirationTime = now.AddSeconds(expiresIn);
+            var expirationTime = string.IsNullOrEmpty(ExpiresIn) ? (DateTime?) null : now.AddSeconds(int.Parse(ExpiresIn));
             return new Token
             {
                 Value = SecureStringHelper.Encode(AccessToken),
