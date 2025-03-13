@@ -115,6 +115,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             try
             {
                 SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+                RemoveTokenFromCache(TokenType.OAuthAccessToken);
+                RemoveTokenFromCache(TokenType.OAuthRefreshToken);
                 _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
                 _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
                 var session = PrepareSession();
