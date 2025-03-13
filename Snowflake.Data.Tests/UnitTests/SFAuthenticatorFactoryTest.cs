@@ -1,3 +1,5 @@
+using Snowflake.Data.Core.Session;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
@@ -13,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
         {
             string connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";
-            SFSession session = new SFSession(connectionString, null);
+            SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
 
             return AuthenticatorFactory.GetAuthenticator(session);
         }

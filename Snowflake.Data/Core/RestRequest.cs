@@ -243,6 +243,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
         internal String Authenticator { get; set; }
 
+        [JsonProperty(PropertyName = "OAUTH_TYPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal String OAuthType { get; set; }
+
         [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
         internal LoginRequestClientEnv clientEnv { get; set; }
 

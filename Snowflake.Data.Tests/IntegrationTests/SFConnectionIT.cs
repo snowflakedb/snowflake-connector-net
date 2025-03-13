@@ -2,13 +2,16 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -2382,7 +2385,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var restRequester = new MockCloseHangingRestRequester();
-            var session = new SFSession("account=test;user=test;password=test", null, restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             session.Open();
             var watchClose = new Stopwatch();
             var watchClosedFinished = new Stopwatch();
@@ -2399,6 +2402,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, restRequester.CloseRequests.Count);
             Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
             Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+        }
+
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestOAuthAuthorizationCodeFlow()
+        {
+            // arrange
+            var driverRootPath = Path.Combine("..", "..", "..", "..");
+            var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(configFilePath)))
+            {
+                // act
+                connection.Open();
+            }
+        }
+
+        private string ConnectionStringForOAuthAuthorizationCode(string configFilePath)
+        {
+            TestConfig testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
+            return new StringBuilder()
+                .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
+                .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
+                .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl};oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
+                .Append("poolingEnabled=false;")
+                .ToString();
         }
     }
 }

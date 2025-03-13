@@ -62,7 +62,8 @@ namespace Snowflake.Data.Core.Session
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
         {
             s_logger.Debug("Creating a connection pool");
-            var extracted = ExtractConfig(connectionString, password);
+            var propertiesContext = new SessionPropertiesContext { Password = password };
+            var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
             return new SessionPool(connectionString, password, extracted.Item1, extracted.Item2);
         }
@@ -102,11 +103,11 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal static Tuple<ConnectionPoolConfig, string> ExtractConfig(string connectionString, SecureString password)
+        internal static Tuple<ConnectionPoolConfig, string> ExtractConfig(string connectionString, SessionPropertiesContext propertiesContext)
         {
             try
             {
-                var properties = SFSessionProperties.ParseConnectionString(connectionString, password);
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, propertiesContext);
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 extractedProperties.DisablePoolingDefaultIfSecretsProvidedExternally(properties);
                 return Tuple.Create(extractedProperties.BuildConnectionPoolConfig(), properties.ConnectionStringWithoutSecrets);
@@ -131,13 +132,13 @@ namespace Snowflake.Data.Core.Session
         private string ExtractPassword(SecureString password) =>
             password == null ? string.Empty : SecureStringHelper.Decode(password);
 
-        internal SFSession GetSession(string connStr, SecureString password, SecureString passcode)
+        internal SFSession GetSession(string connStr, SessionPropertiesContext sessionContext)
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
-            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, sessionContext);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, sessionContext.Passcode);
             if (!GetPooling())
-                return NewNonPoolingSession(connStr, password, passcode);
+                return NewNonPoolingSession(connStr, sessionContext);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
                                       MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
             var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
@@ -145,12 +146,12 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
+            ScheduleNewIdleSessions(connStr, sessionContext, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            var session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            var session = sessionOrCreateTokens.Session ?? NewSession(connStr, sessionContext, sessionOrCreateTokens.SessionCreationToken());
             if (isMfaAuthentication)
             {
-                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+                ScheduleNewIdleSessions(connStr, sessionContext, RegisterSessionCreationsToEnsureMinPoolSize());
             }
             return session;
         }
@@ -171,13 +172,13 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, SecureString passcode, CancellationToken cancellationToken)
+        internal async Task<SFSession> GetSessionAsync(string connStr, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
-            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
-            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, sessionContext);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, sessionContext.Passcode);
             if (!GetPooling())
-                return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
+                return await NewNonPoolingSessionAsync(connStr, sessionContext, cancellationToken).ConfigureAwait(false);
             var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
                                       MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
             var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
@@ -187,29 +188,29 @@ namespace Snowflake.Data.Core.Session
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
-            ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
+            ScheduleNewIdleSessions(connStr, sessionContext, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
             var session = sessionOrCreateTokens.Session ??
-                          await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
+                          await NewSessionAsync(connStr, sessionContext, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
                               .ConfigureAwait(false);
             if (isMfaAuthentication)
             {
-                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+                ScheduleNewIdleSessions(connStr, sessionContext, RegisterSessionCreationsToEnsureMinPoolSize());
             }
             return session;
 
         }
 
-        private void ScheduleNewIdleSessions(string connStr, SecureString password, List<SessionCreationToken> tokens)
+        private void ScheduleNewIdleSessions(string connStr, SessionPropertiesContext sessionContext, List<SessionCreationToken> tokens)
         {
-            tokens.ForEach(token => ScheduleNewIdleSession(connStr, password, token));
+            tokens.ForEach(token => ScheduleNewIdleSession(connStr, sessionContext, token));
         }
 
-        private void ScheduleNewIdleSession(string connStr, SecureString password, SessionCreationToken token)
+        private void ScheduleNewIdleSession(string connStr, SessionPropertiesContext sessionContext, SessionCreationToken token)
         {
             Task.Run(() =>
             {
-                var session = NewSession(connStr, password, null, token);
+                var session = NewSession(connStr, sessionContext, token);
                 AddSession(session, false); // we don't want to ensure min pool size here because we could get into infinite recursion if expirationTimeout would be very low
             });
         }
@@ -223,11 +224,6 @@ namespace Snowflake.Data.Core.Session
         }
 
         internal bool IsConfigOverridden() => _configOverriden;
-
-        internal SFSession GetSession(SecureString passcode) => GetSession(ConnectionString, Password, passcode);
-
-        internal Task<SFSession> GetSessionAsync(SecureString passcode, CancellationToken cancellationToken) =>
-            GetSessionAsync(ConnectionString, Password, passcode, cancellationToken);
 
         internal void SetSessionPoolEventHandler(ISessionPoolEventHandler sessionPoolEventHandler)
         {
@@ -363,15 +359,15 @@ namespace Snowflake.Data.Core.Session
             return null;
         }
 
-        private SFSession NewNonPoolingSession(String connectionString, SecureString password, SecureString passcode) =>
-            NewSession(connectionString, password, passcode, _noPoolingSessionCreationTokenCounter.NewToken());
+        private SFSession NewNonPoolingSession(String connectionString, SessionPropertiesContext sessionContext) =>
+            NewSession(connectionString, sessionContext, _noPoolingSessionCreationTokenCounter.NewToken());
 
-        private SFSession NewSession(String connectionString, SecureString password, SecureString passcode, SessionCreationToken sessionCreationToken)
+        private SFSession NewSession(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken)
         {
             s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
             try
             {
-                var session = s_sessionFactory.NewSession(connectionString, password, passcode);
+                var session = s_sessionFactory.NewSession(connectionString, sessionContext);
                 session.Open();
                 s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
                 if (GetPooling() && !_underDestruction)
@@ -410,15 +406,14 @@ namespace Snowflake.Data.Core.Session
 
         private Task<SFSession> NewNonPoolingSessionAsync(
             String connectionString,
-            SecureString password,
-            SecureString passcode,
+            SessionPropertiesContext sessionContext,
             CancellationToken cancellationToken) =>
-            NewSessionAsync(connectionString, password, passcode, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
+            NewSessionAsync(connectionString, sessionContext, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
 
-        private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SecureString passcode, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
+        private Task<SFSession> NewSessionAsync(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
-            var session = s_sessionFactory.NewSession(connectionString, password, passcode);
+            var session = s_sessionFactory.NewSession(connectionString, sessionContext);
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
@@ -490,12 +485,13 @@ namespace Snowflake.Data.Core.Session
                 session.SetPooling(false);
             }
 
+            var sessionContext = new SessionPropertiesContext { Password = Password };
             if (!session.GetPooling())
             {
                 ReleaseBusySession(session);
                 if (ensureMinPoolSize)
                 {
-                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsToEnsureMinPoolSize());
+                    ScheduleNewIdleSessions(ConnectionString, sessionContext, RegisterSessionCreationsToEnsureMinPoolSize());
                 }
                 return false;
             }
@@ -503,7 +499,7 @@ namespace Snowflake.Data.Core.Session
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
-            ScheduleNewIdleSessions(ConnectionString, Password, sessionCreationTokens);
+            ScheduleNewIdleSessions(ConnectionString, sessionContext, sessionCreationTokens);
             return wasSessionReturnedToPool;
         }
 

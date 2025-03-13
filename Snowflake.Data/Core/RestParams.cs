@@ -46,6 +46,13 @@ namespace Snowflake.Data.Core
         internal const string SF_CONSOLE_LOGIN = "/console/login";
     }
 
+    internal static class OAuthFlowConfig
+    {
+        internal const string SnowflakeAuthorizeUrl = "/oauth/authorize";
+        internal const string SnowflakeTokenUrl = "/oauth/token-request";
+        internal const string DefaultScopePrefixBeforeRole = "session:scope:";
+    }
+
     internal static class OktaUrl
     {
         internal const string DOMAIN = "okta.com";

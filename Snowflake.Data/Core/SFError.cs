@@ -92,6 +92,12 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270062)]
         STRUCTURED_TYPE_READ_DETAILED_ERROR,
 
+        [SFErrorAttr(errorCode = 270063)]
+        BROWSER_RESPONSE_ERROR,
+
+        [SFErrorAttr(errorCode = 270064)]
+        OAUTH_TOKEN_REQUEST_ERROR,
+
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,
 

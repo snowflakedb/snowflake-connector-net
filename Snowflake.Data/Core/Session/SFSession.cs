@@ -68,9 +68,8 @@ namespace Snowflake.Data.Core
 
         private long _startTime = 0;
         internal string ConnectionString { get; }
-        internal SecureString Password { get; }
 
-        internal SecureString Passcode { get; }
+        internal SessionPropertiesContext PropertiesContext { get; }
 
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
@@ -98,6 +97,8 @@ namespace Snowflake.Data.Core
         internal String _queryTag;
 
         internal SecureString _mfaToken;
+
+        internal Token _accessToken;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -167,28 +168,27 @@ namespace Snowflake.Data.Core
             return loginUrl;
         }
 
+        internal string GetAccessToken(DateTime utcNow) => _accessToken.ExtractToken(utcNow);
+
         /// <summary>
         ///     Constructor
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(
             String connectionString,
-            SecureString password,
-            SecureString passcode = null) : this(connectionString, password, passcode, EasyLoggingStarter.Instance)
+            SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
         {
         }
 
         internal SFSession(
             String connectionString,
-            SecureString password,
-            SecureString passcode,
+            SessionPropertiesContext sessionContext,
             EasyLoggingStarter easyLoggingStarter)
         {
             _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
-            Password = password;
-            Passcode = passcode;
-            properties = SFSessionProperties.ParseConnectionString(ConnectionString, Password, Passcode);
+            PropertiesContext = sessionContext;
+            properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
@@ -231,6 +231,18 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
+        {
+        }
+
+        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, sessionContext, easyLoggingStarter)
+        {
+            // Inject the HttpClient to use with the Mock requester
+            restRequester.setHttpClient(_HttpClient);
+            // Override the Rest requester with the mock for testing
+            this.restRequester = restRequester;
+        }
+
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern
@@ -244,18 +256,6 @@ namespace Snowflake.Data.Core
                     SFSessionProperty.APPLICATION.ToString()
                 );
             }
-        }
-
-        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password, null, EasyLoggingStarter.Instance, restRequester)
-        {
-        }
-
-        internal SFSession(String connectionString, SecureString password, SecureString passcode, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, password, passcode, easyLoggingStarter)
-        {
-            // Inject the HttpClient to use with the Mock requester
-            restRequester.setHttpClient(_HttpClient);
-            // Override the Rest requester with the mock for testing
-            this.restRequester = restRequester;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
@@ -688,5 +688,10 @@ namespace Snowflake.Data.Core
         }
 
         internal long GetStartTime() => _startTime;
+
+        internal void ReplaceAuthenticator(IAuthenticator authenticator)
+        {
+            this.authenticator = authenticator;
+        }
     }
 }
