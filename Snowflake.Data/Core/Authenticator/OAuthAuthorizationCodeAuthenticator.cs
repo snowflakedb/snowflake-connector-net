@@ -261,7 +261,7 @@ You can close this window now and go back where you started from.
                 {
                     listener = _listenerStarter.StartHttpListener(redirectUriWithSlash);
                 }
-                catch (HttpListenerException exception)
+                catch (HttpListenerException)
                 {
                     if (numberOfAttemptsLeft <= 0)
                         throw;
