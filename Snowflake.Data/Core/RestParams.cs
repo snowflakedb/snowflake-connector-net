@@ -50,7 +50,7 @@ namespace Snowflake.Data.Core
     {
         internal const string SnowflakeAuthorizeUrl = "/oauth/authorize";
         internal const string SnowflakeTokenUrl = "/oauth/token-request";
-        internal const string DefaultScopePrefixBeforeRole = "session:scope:";
+        internal const string DefaultScopePrefixBeforeRole = "session:role:";
     }
 
     internal static class OktaUrl
