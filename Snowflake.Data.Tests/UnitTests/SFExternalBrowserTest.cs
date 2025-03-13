@@ -46,6 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => localhostRegex.IsMatch(s))), Times.Once());
+            t_browserOperations.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -69,6 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
+            t_browserOperations.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -307,6 +309,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => localhostRegex.IsMatch(s))), Times.Once());
+            t_browserOperations.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -331,6 +334,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
             t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
+            t_browserOperations.VerifyNoOtherCalls();
         }
 
         [Test]
