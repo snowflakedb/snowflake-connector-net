@@ -220,7 +220,7 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetContextCallback(IAsyncResult result)
         {
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            if (httpListener.IsListening)
+            if (httpListener.IsListening && !_successEvent.WaitOne(0))
             {
                 HttpListenerContext context = httpListener.EndGetContext(result);
                 HttpListenerRequest request = context.Request;
