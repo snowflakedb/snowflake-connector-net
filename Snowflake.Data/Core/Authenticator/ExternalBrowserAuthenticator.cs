@@ -27,6 +27,12 @@ namespace Snowflake.Data.Core.Authenticator
             "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
             "</body></html>;"
             );
+        private static readonly byte[] ERROR_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
+            "<title> SAML Response for Snowflake </title></head>" +
+            "<body>Authentication failed due to an error and was unable to extract a SAML response token." +
+            "</body></html>;"
+            );
         // The saml token to send in the login request.
         private string _samlResponseToken;
         // The proof key to send in the login request.
@@ -234,6 +240,14 @@ namespace Snowflake.Data.Core.Authenticator
                     {
                         // Ignore the exception as it does not affect the overall authentication flow
                         logger.Warn("External browser response not sent out");
+                    }
+                }
+                else
+                {
+                    HttpListenerResponse response = context.Response;
+                    using (var output = response.OutputStream)
+                    {
+                        output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
                     }
                 }
             }
