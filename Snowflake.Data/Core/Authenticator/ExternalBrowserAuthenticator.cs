@@ -315,13 +315,13 @@ namespace Snowflake.Data.Core.Authenticator
                 // Add the token and proof key to the Data
                 data.Token = _samlResponseToken;
                 data.ProofKey = _proofKey;
-                SetSecondaryAuthenticationData(ref data);
             }
             else
             {
                 data.Token = SecureStringHelper.Decode(_idToken);
                 data.Authenticator = TokenType.IdToken.GetAttribute<StringAttr>().value;
             }
+            SetSecondaryAuthenticationData(ref data);
         }
 
         private string GetLoginUrl(string proofKey, int localPort)
