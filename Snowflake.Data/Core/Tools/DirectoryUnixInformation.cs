@@ -48,18 +48,6 @@ namespace Snowflake.Data.Core.Tools
             return true;
         }
 
-        public void LogWarningIfPermissionsAreNotSecure(long userId)
-        {
-            if (SafePermissions != Permissions)
-            {
-                s_logger.Warn($"Directory '{FullName}' permissions are different than 700.");
-            }
-            if (!IsOwnedBy(userId))
-            {
-                s_logger.Warn($"Directory '{FullName}' is not owned by the current user.");
-            }
-        }
-
         public bool IsSafeExactly(long userId)
         {
             if (SafePermissions != Permissions)
