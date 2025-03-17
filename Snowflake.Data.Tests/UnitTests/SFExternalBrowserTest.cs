@@ -65,11 +65,10 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", null, restRequester, t_browserOperations.Object);
             sfSession.Open();
-
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
             t_browserOperations.VerifyNoOtherCalls();
         }
 
@@ -328,12 +327,12 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.okta.com", null, restRequester, t_browserOperations.Object);
+            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", null, restRequester, t_browserOperations.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.okta.com/console/login?"))), Times.Once());
+            t_browserOperations.Verify(b => b.OpenUrl(It.Is<string>(s => s.Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
             t_browserOperations.VerifyNoOtherCalls();
         }
 
