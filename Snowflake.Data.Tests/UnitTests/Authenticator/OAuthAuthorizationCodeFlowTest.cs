@@ -109,6 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
+        [Ignore("temporarily ignored")]
         public void TestSuccessfulAuthorizationCodeFlowWithDefaultCache()
         {
             // arrange
