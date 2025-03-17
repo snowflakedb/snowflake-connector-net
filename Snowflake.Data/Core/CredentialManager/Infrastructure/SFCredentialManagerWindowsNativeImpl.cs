@@ -46,6 +46,10 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             using (var critCred = new CriticalCredentialHandle(nCredPtr))
             {
                 var cred = critCred.GetCredential();
+                if (cred.CredentialBlob.Length > cred.CredentialBlobSize / 2)
+                {
+                    return cred.CredentialBlob.Substring(0, (int)(cred.CredentialBlobSize / 2));
+                }
                 return cred.CredentialBlob;
             }
         }
