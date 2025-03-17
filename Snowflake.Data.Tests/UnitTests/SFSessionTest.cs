@@ -3,7 +3,6 @@ using Snowflake.Data.Core;
 using NUnit.Framework;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
-using System;
 using System.Net;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
