@@ -58,7 +58,7 @@ You can close this window now and go back where you started from.
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
             var cacheKeys = GetOAuthCacheKeys();
-            var accessToken = SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKeys.AccessTokenKey);
+            var accessToken = cacheKeys.GetAccessToken();
             if (string.IsNullOrEmpty(accessToken))
             {
                 var accessTokenRequest = RunFlowToAccessTokenRequest();
@@ -75,7 +75,7 @@ You can close this window now and go back where you started from.
             }
             catch (SnowflakeDbException exception)
             {
-                if (ShouldRefreshToken(exception))
+                if (ShouldRefreshToken(exception, cacheKeys))
                 {
                     var refreshTokenRequest = PrepareRefreshTokenRequest(cacheKeys);
                     await GetAccessTokenAsync(refreshTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
@@ -89,7 +89,7 @@ You can close this window now and go back where you started from.
         public void Authenticate()
         {
             var cacheKeys = GetOAuthCacheKeys();
-            var accessToken = SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKeys.AccessTokenKey);
+            var accessToken = cacheKeys.GetAccessToken();
             if (string.IsNullOrEmpty(accessToken))
             {
                 var accessTokenRequest = RunFlowToAccessTokenRequest();
@@ -106,7 +106,7 @@ You can close this window now and go back where you started from.
             }
             catch (SnowflakeDbException exception)
             {
-                if (ShouldRefreshToken(exception))
+                if (ShouldRefreshToken(exception, cacheKeys))
                 {
                     var refreshTokenRequest = PrepareRefreshTokenRequest(cacheKeys);
                     GetAccessToken(refreshTokenRequest, cacheKeys);
@@ -147,7 +147,7 @@ You can close this window now and go back where you started from.
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, TimeSpan.FromSeconds(120));
+                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
                 OAuthAccessTokenResponse accessTokenResponse = null;
                 try
                 {
@@ -162,13 +162,14 @@ You can close this window now and go back where you started from.
             }
         }
 
-        private bool ShouldRefreshToken(SnowflakeDbException exception) =>
-            OAuthTokenErrors.IsAccessTokenExpired(exception.ErrorCode) || OAuthTokenErrors.IsAccessTokenInvalid(exception.ErrorCode);
+        private bool ShouldRefreshToken(SnowflakeDbException exception, OAuthCacheKeys cacheKeys) =>
+            cacheKeys.IsAvailable() &&
+            (OAuthTokenErrors.IsAccessTokenExpired(exception.ErrorCode) || OAuthTokenErrors.IsAccessTokenInvalid(exception.ErrorCode));
 
         private OAuthRefreshAccessTokenRequest PrepareRefreshTokenRequest(OAuthCacheKeys cacheKeys)
         {
-            var refreshToken = SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKeys.RefreshTokenKey);
-            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKeys.AccessTokenKey);
+            var refreshToken = cacheKeys.GetRefreshToken();
+            cacheKeys.RemoveAccessToken();
             return new OAuthRefreshAccessTokenRequest
             {
                 TokenEndpoint = GetTokenEndpoint(),
@@ -183,13 +184,7 @@ You can close this window now and go back where you started from.
         {
             var host = new Uri(GetTokenEndpoint()).Host;
             var user = session.properties[SFSessionProperty.USER];
-            var accessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
-            var refreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
-            return new OAuthCacheKeys
-            {
-                AccessTokenKey = accessTokenKey,
-                RefreshTokenKey = refreshTokenKey
-            };
+            return new OAuthCacheKeys(host, user);
         }
 
         private Exception UnpackAggregateException(Exception exception) =>
@@ -238,14 +233,14 @@ You can close this window now and go back where you started from.
             accessTokenResponse.Validate();
             var accessToken = accessTokenResponse.AccessToken;
             var refreshToken = accessTokenResponse.RefreshToken;
-            SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(cacheKeys.AccessTokenKey, accessToken);
+            cacheKeys.SaveAccessToken(accessToken);
             if (string.IsNullOrEmpty(refreshToken))
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKeys.RefreshTokenKey);
+                cacheKeys.RemoveRefreshToken();
             }
             else
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(cacheKeys.RefreshTokenKey, refreshToken);
+                cacheKeys.SaveRefreshToken(refreshToken);
             }
             AccessToken = SecureStringHelper.Encode(accessToken);
         }

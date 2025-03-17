@@ -193,11 +193,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.NotNull(authenticator.AccessToken);
             Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(SessionId, session.sessionId);
-            Assert.AreEqual(MasterToken, session.masterToken);
-            Assert.AreEqual(SessionToken, session.sessionToken);
             Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
             Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            AssertSessionSuccessfullyCreated(session);
         }
 
         [Test]
