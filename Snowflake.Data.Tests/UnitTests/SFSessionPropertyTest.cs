@@ -248,6 +248,19 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
+        [Test]
+        public void TestFailWhenClientStoreTemporaryCredentialContainsInvalidValue()
+        {
+            // arrange
+            var invalidValue = "invalidValue";
+            var invalidConnectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;CLIENT_STORE_TEMPORARY_CREDENTIAL={invalidValue}";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
+
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value {invalidValue} for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";

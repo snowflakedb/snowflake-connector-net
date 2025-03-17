@@ -269,6 +269,7 @@ namespace Snowflake.Data.Core
 
             ValidateAuthenticator(properties);
             ValidatePasscodeInPassword(properties);
+            ValidateClientStoreTemporaryCredential(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
@@ -344,6 +345,23 @@ namespace Snowflake.Data.Core
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
                         "",
                         SFSessionProperty.PASSCODEINPASSWORD.ToString());
+                }
+            }
+        }
+
+        private static void ValidateClientStoreTemporaryCredential(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, out var clientStoreTemporaryCredential))
+            {
+                if (!bool.TryParse(clientStoreTemporaryCredential, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        clientStoreTemporaryCredential,
+                        SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL.ToString());
                 }
             }
         }
