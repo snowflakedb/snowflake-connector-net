@@ -80,7 +80,7 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     httpListener.Start();
                     logger.Debug("Get IdpUrl and ProofKey");
-                    var loginUrl = await GetIdpUrlAndProofKeyAsync(localPort, cancellationToken);
+                    var loginUrl = await GetIdpUrlAndProofKeyAsync(localPort, cancellationToken).ConfigureAwait(false);
                     logger.Debug("Open browser");
                     StartBrowser(loginUrl);
                     logger.Debug("Get the redirect SAML request");
