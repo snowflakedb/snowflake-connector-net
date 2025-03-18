@@ -105,5 +105,19 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
+
+        [Test]
+        public void TestGetCredentialsForCredentialsThatDoesNotExist()
+        {
+            // arrange
+            var key = "fakeKey";
+
+            // act
+            _credentialManager.RemoveCredentials(key);
+            var token = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(token));
+        }
     }
 }
