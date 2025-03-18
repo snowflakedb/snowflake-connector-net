@@ -184,7 +184,7 @@ You can close this window now and go back where you started from.
         {
             var host = new Uri(GetTokenEndpoint()).Host;
             var user = session.properties[SFSessionProperty.USER];
-            return new OAuthCacheKeys(host, user);
+            return new OAuthCacheKeys(host, user, SnowflakeCredentialManagerFactory.GetCredentialManager);
         }
 
         private Exception UnpackAggregateException(Exception exception) =>

@@ -1,3 +1,4 @@
+using System;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager;
 
@@ -5,32 +6,34 @@ namespace Snowflake.Data.Core.Authenticator
 {
     internal class OAuthCacheKeys
     {
-        public string AccessTokenKey { get; }
-        public string RefreshTokenKey { get; }
+        private readonly string _accessTokenKey;
+        private readonly string _refreshTokenKey;
+        private readonly Func<ISnowflakeCredentialManager> _credentialManagerProvider;
 
-        public OAuthCacheKeys(string host, string user)
+        public OAuthCacheKeys(string host, string user, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
+            _credentialManagerProvider = credentialManagerProvider;
             if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(host))
             {
-                AccessTokenKey = string.Empty;
-                RefreshTokenKey = string.Empty;
+                _accessTokenKey = string.Empty;
+                _refreshTokenKey = string.Empty;
                 return;
             }
-            AccessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
-            RefreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
+            _accessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
+            _refreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
         }
 
-        public bool IsAvailable() => !string.IsNullOrEmpty(AccessTokenKey);
+        public bool IsAvailable() => !string.IsNullOrEmpty(_accessTokenKey);
 
-        public string GetAccessToken() => GetToken(AccessTokenKey);
+        public string GetAccessToken() => GetToken(_accessTokenKey);
 
-        public string GetRefreshToken() => GetToken(RefreshTokenKey);
+        public string GetRefreshToken() => GetToken(_refreshTokenKey);
 
         public void SaveAccessToken(string accessToken)
         {
             if (IsAvailable())
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(AccessTokenKey, accessToken);
+                _credentialManagerProvider.Invoke().SaveCredentials(_accessTokenKey, accessToken);
             }
         }
 
@@ -38,7 +41,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             if (IsAvailable())
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(RefreshTokenKey, refreshToken);
+                _credentialManagerProvider.Invoke().SaveCredentials(_refreshTokenKey, refreshToken);
             }
         }
 
@@ -46,7 +49,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             if (IsAvailable())
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(AccessTokenKey);
+                _credentialManagerProvider.Invoke().RemoveCredentials(_accessTokenKey);
             }
         }
 
@@ -54,11 +57,11 @@ namespace Snowflake.Data.Core.Authenticator
         {
             if (IsAvailable())
             {
-                SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(RefreshTokenKey);
+                _credentialManagerProvider.Invoke().RemoveCredentials(_refreshTokenKey);
             }
         }
 
         private string GetToken(string key) =>
-            string.IsNullOrEmpty(key) ? string.Empty : SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key);
+            string.IsNullOrEmpty(key) ? string.Empty : _credentialManagerProvider.Invoke().GetCredentials(key);
     }
 }
