@@ -375,6 +375,11 @@ namespace Snowflake.Data.Client
                     string bindingType = "";
                     object bindingVal;
 
+                    if (parameter.Value == null)
+                    {
+                        parameter.Value = DBNull.Value;
+                    }
+
                     if (parameter.Value.GetType().IsArray &&
                         // byte array and char array will not be treated as array binding
                         parameter.Value.GetType().GetElementType() != typeof(char) &&
