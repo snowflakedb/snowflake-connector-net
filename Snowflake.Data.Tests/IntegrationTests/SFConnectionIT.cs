@@ -12,6 +12,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -2411,16 +2412,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var driverRootPath = Path.Combine("..", "..", "..", "..");
             var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
-            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(configFilePath)))
+            var testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            try
             {
-                // act
-                connection.Open();
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(testConfig)))
+                {
+                    // act
+                    connection.Open();
+                }
+            }
+            finally
+            {
+                RemoveOAuthCache(testConfig);
             }
         }
 
-        private string ConnectionStringForOAuthAuthorizationCode(string configFilePath)
+        private void RemoveOAuthCache(TestConfig testConfig)
         {
-            TestConfig testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
+            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
+            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
+            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+            credentialManager.RemoveCredentials(accessCacheKey);
+            credentialManager.RemoveCredentials(refreshCacheKey);
+        }
+
+        private string ConnectionStringForOAuthAuthorizationCode(TestConfig testConfig)
+        {
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
             return new StringBuilder()
                 .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
