@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core.Tools
                 // get rid of the enclosing quotes
                 string name = regKey.GetValue(null).ToString().ToLower().Replace("" + (char)34, "");
 
-                if (!name.EndsWith("exe"))
+                if (!name.EndsWith(".exe"))
                     //get rid of all command line arguments
                     name = name.Substring(0, name.LastIndexOf(".exe") + 4);
                 return name;
