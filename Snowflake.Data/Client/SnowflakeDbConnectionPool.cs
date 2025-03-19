@@ -39,10 +39,14 @@ namespace Snowflake.Data.Client
             return ConnectionManager.GetSessionAsync(connectionString, sessionContext, cancellationToken);
         }
 
-        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)
+        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password, SecureString oauthClientSecret = null)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
-            var sessionContext = new SessionPropertiesContext { Password = password };
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = password,
+                OAuthClientSecret = oauthClientSecret
+            };
             return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, sessionContext));
         }
 
@@ -160,6 +164,13 @@ namespace Snowflake.Data.Client
                 }
             }
             return DefaultConnectionPoolType;
+        }
+
+        internal static IConnectionManager ReplaceConnectionManager(IConnectionManager connectionManager)
+        {
+            var oldConnectionManager = s_connectionManager;
+            s_connectionManager = connectionManager;
+            return oldConnectionManager;
         }
     }
 }

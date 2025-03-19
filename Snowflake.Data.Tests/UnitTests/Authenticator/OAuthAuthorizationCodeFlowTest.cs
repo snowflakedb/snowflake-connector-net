@@ -39,6 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string User = "testUser";
         private const string AuthorizationScope = "session:role:ANALYST";
         private const string TokenHost = "localhost";
+        private const string ClientSecret = "123";
         private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
         private static readonly string s_externalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
 
@@ -134,6 +135,26 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 RemoveTokenFromCache(TokenType.OAuthAccessToken);
                 RemoveTokenFromCache(TokenType.OAuthRefreshToken);
             }
+        }
+
+        [Test]
+        public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession(false);
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            session.Open();
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            AssertSessionSuccessfullyCreated(session);
         }
 
         [Test]
@@ -329,10 +350,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(SessionToken, session.sessionToken);
         }
 
-        private SFSession PrepareSession()
+        private SFSession PrepareSession(bool clientSecretInConnectionString = true)
         {
-            var connectionString = GetAuthorizationCodeConnectionString();
-            var sessionContext = new SessionPropertiesContext { AllowHttpForIdp = true };
+            var connectionString = GetAuthorizationCodeConnectionString(clientSecretInConnectionString);
+            var sessionContext = new SessionPropertiesContext
+            {
+                AllowHttpForIdp = true,
+                OAuthClientSecret = clientSecretInConnectionString ? null : SecureStringHelper.Encode(ClientSecret)
+            };
             var session = new SFSession(connectionString, sessionContext);
             var challengeProvider = new Mock<ChallengeProvider>();
             challengeProvider.Setup(c => c.GenerateState())
@@ -343,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return session;
         }
 
-        private string GetAuthorizationCodeConnectionString()
+        private string GetAuthorizationCodeConnectionString(bool addOAuthClientSecret)
         {
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
             var account = "testAccount";
@@ -354,15 +379,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var port = WiremockRunner.DefaultHttpPort;
             var scheme = "http";
             var clientId = "123";
-            var clientSecret = "123";
             var redirectUri = "http://localhost:8009/snowflake/oauth-redirect";
-            return new StringBuilder()
+            var connectionStringBuilder = new StringBuilder()
                 .Append($"authenticator={authenticator};user={User};account={account};")
                 .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
-                .Append($"oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={AuthorizationScope};")
+                .Append($"oauthClientId={clientId};oauthScope={AuthorizationScope};")
                 .Append($"oauthRedirectUri={redirectUri};")
-                .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={s_externalTokenRequestUrl};")
-                .ToString();
+                .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={s_externalTokenRequestUrl};");
+            if (addOAuthClientSecret)
+                connectionStringBuilder.Append($"oauthClientSecret={ClientSecret};");
+            return connectionStringBuilder.ToString();
         }
 
         private string ExtractTokenFromCache(TokenType tokenType)

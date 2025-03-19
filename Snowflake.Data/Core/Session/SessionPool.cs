@@ -25,6 +25,7 @@ namespace Snowflake.Data.Core.Session
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
+        internal SecureString OAuthClientSecret { get; }
         private readonly string _connectionStringWithoutSecrets;
         private readonly ICounter _busySessionsCounter;
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
@@ -44,13 +45,14 @@ namespace Snowflake.Data.Core.Session
             _poolConfig = new ConnectionPoolConfig();
         }
 
-        private SessionPool(string connectionString, SecureString password, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
+        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
             Password = password;
+            OAuthClientSecret = oauthClientSecret;
             _connectionStringWithoutSecrets = connectionStringWithoutSecrets;
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
@@ -59,13 +61,13 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
 
-        internal static SessionPool CreateSessionPool(string connectionString, SecureString password)
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret)
         {
             s_logger.Debug("Creating a connection pool");
-            var propertiesContext = new SessionPropertiesContext { Password = password };
+            var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret };
             var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
-            return new SessionPool(connectionString, password, extracted.Item1, extracted.Item2);
+            return new SessionPool(connectionString, password, oauthClientSecret, extracted.Item1, extracted.Item2);
         }
 
         ~SessionPool()
@@ -121,7 +123,7 @@ namespace Snowflake.Data.Core.Session
 
         internal void ValidateSecurePassword(SecureString password)
         {
-            if (!ExtractPassword(Password).Equals(ExtractPassword(password)))
+            if (!ExtractSecureString(Password).Equals(ExtractSecureString(password)))
             {
                 var errorMessage = "Could not get a pool because of password mismatch";
                 s_logger.Error(errorMessage + PoolIdentification());
@@ -129,7 +131,17 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private string ExtractPassword(SecureString password) =>
+        internal void ValidateSecureOAuthClientSecret(SecureString oauthClientSecret)
+        {
+            if (!ExtractSecureString(OAuthClientSecret).Equals(ExtractSecureString(oauthClientSecret)))
+            {
+                var errorMessage = "Could not get a pool because of oauth client secret mismatch";
+                s_logger.Error(errorMessage + PoolIdentification());
+                throw new Exception(errorMessage);
+            }
+        }
+
+        private string ExtractSecureString(SecureString password) =>
             password == null ? string.Empty : SecureStringHelper.Decode(password);
 
         internal SFSession GetSession(string connStr, SessionPropertiesContext sessionContext)

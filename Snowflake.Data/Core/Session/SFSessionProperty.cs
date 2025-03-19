@@ -263,16 +263,7 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            if (propertiesContext.Password != null && propertiesContext.Password.Length > 0)
-            {
-                properties[SFSessionProperty.PASSWORD] = SecureStringHelper.Decode(propertiesContext.Password);
-            }
-
-            if (propertiesContext.Passcode != null && propertiesContext.Passcode.Length > 0)
-            {
-                properties[SFSessionProperty.PASSCODE] = SecureStringHelper.Decode(propertiesContext.Passcode);
-            }
-
+            propertiesContext.FillSecrets(properties);
             ValidateAuthenticator(properties);
             ValidatePasscodeInPassword(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
@@ -387,7 +378,7 @@ namespace Snowflake.Data.Core
 
         private static string GetHost(string url)
         {
-            return ""; // TODO: implement it !!!
+            return new Uri(url).Host;
         }
 
         internal string ExtractPropertyOrEmptyString(SFSessionProperty property) => ExtractPropertyOrDefault(property, string.Empty);
@@ -670,6 +661,13 @@ namespace Snowflake.Data.Core
             }
 
             return allowUnderscoresInHost;
+        }
+
+        internal static SFLogger ReplaceLogger(SFLogger newLogger)
+        {
+            var oldLogger = logger;
+            logger = newLogger;
+            return oldLogger;
         }
     }
 
