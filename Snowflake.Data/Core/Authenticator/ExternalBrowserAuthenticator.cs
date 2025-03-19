@@ -231,10 +231,14 @@ namespace Snowflake.Data.Core.Authenticator
                 HttpListenerContext context = null;
                 try
                 {
+                    Console.WriteLine("Start EndGetContext()");
                     context = httpListener.EndGetContext(result);
+                    Console.WriteLine("Finish EndGetContext()");
                 }
-                catch (HttpListenerException ex)
+                catch (Exception ex)
                 {
+                    Console.WriteLine("EndGetContext() exception: " + ex);
+                    Console.WriteLine("EndGetContext() exception message: " + ex.Message);
                     logger.Error("Error while trying to get context from HttpListener", ex);
                 }
                 if (context != null)
