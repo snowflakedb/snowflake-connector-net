@@ -233,29 +233,25 @@ namespace Snowflake.Data.Core.Authenticator
                 HttpListenerRequest request = context.Request;
 
                 _samlResponseToken = ValidateAndExtractToken(request);
-                if (!string.IsNullOrEmpty(_samlResponseToken))
+                HttpListenerResponse response = context.Response;
+                try
                 {
-                    HttpListenerResponse response = context.Response;
-                    try
+                    using (var output = response.OutputStream)
                     {
-                        using (var output = response.OutputStream)
+                        if (!string.IsNullOrEmpty(_samlResponseToken))
                         {
                             output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
                         }
-                    }
-                    catch
-                    {
-                        // Ignore the exception as it does not affect the overall authentication flow
-                        logger.Warn("External browser response not sent out");
+                        else
+                        {
+                            output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
+                        }
                     }
                 }
-                else
+                catch
                 {
-                    HttpListenerResponse response = context.Response;
-                    using (var output = response.OutputStream)
-                    {
-                        output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
-                    }
+                    // Ignore the exception as it does not affect the overall authentication flow
+                    logger.Warn("External browser response not sent out");
                 }
             }
 
