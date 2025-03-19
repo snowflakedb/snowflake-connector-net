@@ -233,7 +233,9 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"passcode:aaaaaaaa", @"passcode:****");
 
             // client_secret
+            BasicMasking(@"clientSecret:aaaaaaaa", @"clientSecret:****");
             BasicMasking(@"client_secret:aaaaaaaa", @"client_secret:****");
+            BasicMasking(@"oauthClientSecret:aaaaaaaa", @"oauthClientSecret:****");
 
             // Delimiters before start of value to mask
             BasicMasking(@"password""aaaaaaaa", @"password""****"); // "
@@ -281,13 +283,13 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"somethingBefore=cccc;passcode     =aa;somethingNext=bbbb", @"somethingBefore=cccc;passcode     =****");
             BasicMasking(@"somethingBefore=cccc;passcode="" 'aa", @"somethingBefore=cccc;passcode=****");
 
-            BasicMasking(@"somethingBefore=cccc;client_secret=aa", @"somethingBefore=cccc;client_secret=****");
-            BasicMasking(@"somethingBefore=cccc;client_secret=aa;somethingNext=bbbb", @"somethingBefore=cccc;client_secret=****");
-            BasicMasking(@"somethingBefore=cccc;client_secret=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;client_secret=****");
-            BasicMasking(@"somethingBefore=cccc;client_secret=;somethingNext=bbbb", @"somethingBefore=cccc;client_secret=****");
-            BasicMasking(@"somethingBefore=cccc;client_secret=", @"somethingBefore=cccc;client_secret=****");
-            BasicMasking(@"somethingBefore=cccc;client_secret     =aa;somethingNext=bbbb", @"somethingBefore=cccc;client_secret     =****");
-            BasicMasking(@"somethingBefore=cccc;client_secret="" 'aa", @"somethingBefore=cccc;client_secret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret=aa", @"somethingBefore=cccc;oauthClientSecret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret=aa;somethingNext=bbbb", @"somethingBefore=cccc;oauthClientSecret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;oauthClientSecret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret=;somethingNext=bbbb", @"somethingBefore=cccc;oauthClientSecret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret=", @"somethingBefore=cccc;oauthClientSecret=****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret     =aa;somethingNext=bbbb", @"somethingBefore=cccc;oauthClientSecret     =****");
+            BasicMasking(@"somethingBefore=cccc;oauthClientSecret="" 'aa", @"somethingBefore=cccc;oauthClientSecret=****");
         }
 
         [Test]
@@ -404,6 +406,12 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(randomClientSecretUppercaseWithPrefix);
             Assert.IsTrue(mask.isMasked);
             Assert.AreEqual(@"CLIENT_SECRET:****", mask.maskedText);
+            Assert.IsNull(mask.errStr);
+
+            string randomOAuthClientSecretUppercaseWithPrefix = "OAUTHCLIENTSECRET:" + randomPassword;
+            mask = SecretDetector.MaskSecrets(randomOAuthClientSecretUppercaseWithPrefix);
+            Assert.IsTrue(mask.isMasked);
+            Assert.AreEqual(@"OAUTHCLIENTSECRET:****", mask.maskedText);
             Assert.IsNull(mask.errStr);
         }
 
