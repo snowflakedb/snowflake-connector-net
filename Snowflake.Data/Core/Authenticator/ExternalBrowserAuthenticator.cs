@@ -227,31 +227,42 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetContextCallback(IAsyncResult result)
         {
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            if (httpListener.IsListening && !_successEvent.WaitOne(0))
+            if (httpListener.IsListening)
             {
-                HttpListenerContext context = httpListener.EndGetContext(result);
-                HttpListenerRequest request = context.Request;
-
-                _samlResponseToken = ValidateAndExtractToken(request);
-                HttpListenerResponse response = context.Response;
+                HttpListenerContext context = null;
                 try
                 {
-                    using (var output = response.OutputStream)
+                    context = httpListener.EndGetContext(result);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Error while trying to get context from HttpListener", ex);
+                }
+                if (context != null)
+                {
+                    HttpListenerRequest request = context.Request;
+
+                    _samlResponseToken = ValidateAndExtractToken(request);
+                    HttpListenerResponse response = context.Response;
+                    try
                     {
-                        if (!string.IsNullOrEmpty(_samlResponseToken))
+                        using (var output = response.OutputStream)
                         {
-                            output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
-                        }
-                        else
-                        {
-                            output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
+                            if (!string.IsNullOrEmpty(_samlResponseToken))
+                            {
+                                output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+                            }
+                            else
+                            {
+                                output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
+                            }
                         }
                     }
-                }
-                catch
-                {
-                    // Ignore the exception as it does not affect the overall authentication flow
-                    logger.Warn("External browser response not sent out");
+                    catch
+                    {
+                        // Ignore the exception as it does not affect the overall authentication flow
+                        logger.Warn("External browser response not sent out");
+                    }
                 }
             }
 
