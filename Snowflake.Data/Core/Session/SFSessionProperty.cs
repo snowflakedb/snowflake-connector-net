@@ -360,7 +360,7 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(
                         new Exception(errorMessage),
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                        clientStoreTemporaryCredential,
+                        "",
                         SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL.ToString());
                 }
             }

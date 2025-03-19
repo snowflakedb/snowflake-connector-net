@@ -258,7 +258,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
 
-            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value {invalidValue} for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()
