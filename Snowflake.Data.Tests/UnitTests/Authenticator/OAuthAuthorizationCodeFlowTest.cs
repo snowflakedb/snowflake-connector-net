@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var sessionContext = new SessionPropertiesContext
             {
                 AllowHttpForIdp = true,
-                ClientSecret = clientSecretInConnectionString ? null : SecureStringHelper.Encode(ClientSecret)
+                OAuthClientSecret = clientSecretInConnectionString ? null : SecureStringHelper.Encode(ClientSecret)
             };
             var session = new SFSession(connectionString, sessionContext);
             var challengeProvider = new Mock<ChallengeProvider>();
@@ -368,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return session;
         }
 
-        private string GetAuthorizationCodeConnectionString(bool addClientSecret)
+        private string GetAuthorizationCodeConnectionString(bool addOAuthClientSecret)
         {
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
             var account = "testAccount";
@@ -386,7 +386,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Append($"oauthClientId={clientId};oauthScope={AuthorizationScope};")
                 .Append($"oauthRedirectUri={redirectUri};")
                 .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={s_externalTokenRequestUrl};");
-            if (addClientSecret)
+            if (addOAuthClientSecret)
                 connectionStringBuilder.Append($"oauthClientSecret={ClientSecret};");
             return connectionStringBuilder.ToString();
         }

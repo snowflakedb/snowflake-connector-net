@@ -25,7 +25,7 @@ namespace Snowflake.Data.Core.Session
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
-        internal SecureString ClientSecret { get; }
+        internal SecureString OAuthClientSecret { get; }
         private readonly string _connectionStringWithoutSecrets;
         private readonly ICounter _busySessionsCounter;
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
@@ -45,14 +45,14 @@ namespace Snowflake.Data.Core.Session
             _poolConfig = new ConnectionPoolConfig();
         }
 
-        private SessionPool(string connectionString, SecureString password, SecureString clientSecret, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
+        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
             _busySessionsCounter = new NonNegativeCounter();
             ConnectionString = connectionString;
             Password = password;
-            ClientSecret = clientSecret;
+            OAuthClientSecret = oauthClientSecret;
             _connectionStringWithoutSecrets = connectionStringWithoutSecrets;
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
@@ -61,13 +61,13 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
 
-        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString clientSecret)
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret)
         {
             s_logger.Debug("Creating a connection pool");
-            var propertiesContext = new SessionPropertiesContext { Password = password, ClientSecret = clientSecret };
+            var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret };
             var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
-            return new SessionPool(connectionString, password, clientSecret, extracted.Item1, extracted.Item2);
+            return new SessionPool(connectionString, password, oauthClientSecret, extracted.Item1, extracted.Item2);
         }
 
         ~SessionPool()
@@ -131,11 +131,11 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        internal void ValidateSecureClientSecret(SecureString clientSecret)
+        internal void ValidateSecureOAuthClientSecret(SecureString oauthClientSecret)
         {
-            if (!ExtractSecureString(ClientSecret).Equals(ExtractSecureString(clientSecret)))
+            if (!ExtractSecureString(OAuthClientSecret).Equals(ExtractSecureString(oauthClientSecret)))
             {
-                var errorMessage = "Could not get a pool because of client secret mismatch";
+                var errorMessage = "Could not get a pool because of oauth client secret mismatch";
                 s_logger.Error(errorMessage + PoolIdentification());
                 throw new Exception(errorMessage);
             }

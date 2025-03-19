@@ -152,14 +152,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase(null)]
         [TestCase("")]
         [TestCase("anySecret")]
-        public void TestValidateValidSecureClientCredentials(string clientSecret)
+        public void TestValidateValidSecureClientCredentials(string oauthClientSecret)
         {
             // arrange
-            var secureClientSecret = clientSecret == null ? null : SecureStringHelper.Encode(clientSecret);
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null, secureClientSecret);
+            var secureOAuthClientSecret = oauthClientSecret == null ? null : SecureStringHelper.Encode(oauthClientSecret);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, secureOAuthClientSecret);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecureClientSecret(secureClientSecret));
+            Assert.DoesNotThrow(() => pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret));
         }
 
         [Test]
@@ -188,18 +188,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("someSecret", "anotherSecret")]
         [TestCase("", "anotherSecret")]
         [TestCase(null, "anotherSecret")]
-        public void TestFailToValidateNotMatchingSecureClientCredentials(string poolClientSecret, string notMatchingClientSecret)
+        public void TestFailToValidateNotMatchingSecureClientCredentials(string poolOAuthClientSecret, string notMatchingOAuthClientSecret)
         {
             // arrange
-            var poolSecureClientSecret = poolClientSecret == null ? null : SecureStringHelper.Encode(poolClientSecret);
-            var notMatchingSecureClientSecret = notMatchingClientSecret == null ? null : SecureStringHelper.Encode(notMatchingClientSecret);
-            var pool = SessionPool.CreateSessionPool(ConnectionString, null, poolSecureClientSecret);
+            var poolSecureOAuthClientSecret = poolOAuthClientSecret == null ? null : SecureStringHelper.Encode(poolOAuthClientSecret);
+            var notMatchingSecureOAuthClientSecret = notMatchingOAuthClientSecret == null ? null : SecureStringHelper.Encode(notMatchingOAuthClientSecret);
+            var pool = SessionPool.CreateSessionPool(ConnectionString, null, poolSecureOAuthClientSecret);
 
             // act
-            var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureClientSecret(notMatchingSecureClientSecret));
+            var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureOAuthClientSecret(notMatchingSecureOAuthClientSecret));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of client secret mismatch"));
+            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of oauth client secret mismatch"));
         }
     }
 }

@@ -242,17 +242,17 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;")]
         [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;OAUTHCLIENTSECRET=ignored_value;")]
-        public void TestParseClientSecretProvidedExternally(string connectionString)
+        public void TestParseOAuthClientSecretProvidedExternally(string connectionString)
         {
             // arrange
-            var clientSecret = "abc";
-            var secureClientSecret = SecureStringHelper.Encode(clientSecret);
+            var oauthClientSecret = "abc";
+            var secureOAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { ClientSecret = secureClientSecret });
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { OAuthClientSecret = secureOAuthClientSecret });
 
             // assert
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(oauthClientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]

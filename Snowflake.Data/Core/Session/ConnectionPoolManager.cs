@@ -120,13 +120,13 @@ namespace Snowflake.Data.Core.Session
         {
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string and secure password");
             var password = sessionContext.Password;
-            var clientSecret = sessionContext.ClientSecret;
-            var poolKey = GetPoolKey(connectionString, password, clientSecret);
+            var oauthClientSecret = sessionContext.OAuthClientSecret;
+            var poolKey = GetPoolKey(connectionString, password, oauthClientSecret);
 
             if (_pools.TryGetValue(poolKey, out var item))
             {
                 item.ValidateSecurePassword(password);
-                item.ValidateSecureClientSecret(clientSecret);
+                item.ValidateSecureOAuthClientSecret(oauthClientSecret);
                 return item;
             }
 
@@ -135,11 +135,11 @@ namespace Snowflake.Data.Core.Session
                 if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock))
                 {
                     poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
-                    poolCreatedWhileWaitingOnLock.ValidateSecureClientSecret(clientSecret);
+                    poolCreatedWhileWaitingOnLock.ValidateSecureOAuthClientSecret(oauthClientSecret);
                     return poolCreatedWhileWaitingOnLock;
                 }
                 s_logger.Info($"Creating new pool");
-                var pool = SessionPool.CreateSessionPool(connectionString, password, clientSecret);
+                var pool = SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret);
                 _pools.Add(poolKey, pool);
                 return pool;
             }

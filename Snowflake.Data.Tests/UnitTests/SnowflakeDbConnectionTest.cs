@@ -71,12 +71,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 var connectionString = "account=user1account;user=user1;";
                 var password = "testpassword";
                 var passcode = "testpasscode";
-                var clientSecret = "testclientsecret";
+                var oauthClientSecret = "testoauthclientsecret";
                 var sessionProperties = new SessionPropertiesContext
                 {
                     Password = SecureStringHelper.Encode(password),
                     Passcode = SecureStringHelper.Encode(passcode),
-                    ClientSecret = SecureStringHelper.Encode(clientSecret)
+                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret)
                 };
                 connectionManager
                     .Setup(m => m.GetSession(connectionString, It.IsAny<SessionPropertiesContext>()))
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     connection.Password = SecureStringHelper.Encode(password);
                     connection.Passcode = SecureStringHelper.Encode(passcode);
-                    connection.ClientSecret = SecureStringHelper.Encode(clientSecret);
+                    connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
 
                     // act
                     connection.Open();
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
                         It.Is<SessionPropertiesContext>(context =>
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
-                            SecureStringHelper.Decode(context.ClientSecret) == clientSecret)));
+                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret)));
                 }
             }
             finally
@@ -116,12 +116,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 var connectionString = "account=user1account;user=user1;";
                 var password = "testpassword";
                 var passcode = "testpasscode";
-                var clientSecret = "testclientsecret";
+                var oauthClientSecret = "testoauthclientsecret";
                 var sessionProperties = new SessionPropertiesContext
                 {
                     Password = SecureStringHelper.Encode(password),
                     Passcode = SecureStringHelper.Encode(passcode),
-                    ClientSecret = SecureStringHelper.Encode(clientSecret)
+                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret)
                 };
                 connectionManager
                     .Setup(m => m.GetSessionAsync(connectionString, It.IsAny<SessionPropertiesContext>(), It.IsAny<CancellationToken>()))
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     connection.Password = SecureStringHelper.Encode(password);
                     connection.Passcode = SecureStringHelper.Encode(passcode);
-                    connection.ClientSecret = SecureStringHelper.Encode(clientSecret);
+                    connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
 
                     // act
                     connection.OpenAsync(CancellationToken.None).Wait();
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests
                         It.Is<SessionPropertiesContext>(context =>
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
-                            SecureStringHelper.Decode(context.ClientSecret) == clientSecret),
+                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret),
                         It.IsAny<CancellationToken>()));
                 }
             }
