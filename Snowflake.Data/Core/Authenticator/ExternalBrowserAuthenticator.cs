@@ -233,7 +233,7 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     context = httpListener.EndGetContext(result);
                 }
-                catch (Exception ex)
+                catch (HttpListenerException ex)
                 {
                     logger.Error("Error while trying to get context from HttpListener", ex);
                 }
