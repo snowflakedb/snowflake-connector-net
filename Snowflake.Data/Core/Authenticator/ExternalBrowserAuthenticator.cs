@@ -46,6 +46,8 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SecureString _idToken;
 
+        internal BrowserOperations _browserOperations = BrowserOperations.Instance;
+
         /// <summary>
         /// Constructor of the External authenticator
         /// </summary>
@@ -61,6 +63,11 @@ namespace Snowflake.Data.Core.Authenticator
                     user,
                     TokenType.IdToken);
             }
+        }
+
+        internal ExternalBrowserAuthenticator(SFSession session, BrowserOperations browserOperations) : this(session)
+        {
+            _browserOperations = browserOperations;
         }
 
         public static bool IsExternalBrowserAuthenticator(string authenticator) =>
@@ -282,7 +289,7 @@ namespace Snowflake.Data.Core.Authenticator
                 throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
             }
 
-            session._browserOperations.OpenUrl(url);
+            _browserOperations.OpenUrl(url);
         }
 
         private string ValidateAndExtractToken(HttpListenerRequest request)

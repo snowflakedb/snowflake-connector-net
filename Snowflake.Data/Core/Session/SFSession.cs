@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
 
         internal IRestRequester restRequester { get; private set; }
 
-        private IAuthenticator authenticator;
+        internal IAuthenticator authenticator;
 
         internal SFSessionProperties properties;
 
@@ -65,8 +65,6 @@ namespace Snowflake.Data.Core
         internal int masterValidityInSeconds = 0;
 
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
-
-        internal readonly BrowserOperations _browserOperations = BrowserOperations.Instance;
 
         private long _startTime = 0;
         internal string ConnectionString { get; }
@@ -265,11 +263,6 @@ namespace Snowflake.Data.Core
             restRequester.setHttpClient(_HttpClient);
             // Override the Rest requester with the mock for testing
             this.restRequester = restRequester;
-        }
-
-        internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, BrowserOperations browserOperations) : this(connectionString, password, restRequester)
-        {
-            _browserOperations = browserOperations;
         }
 
         internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
