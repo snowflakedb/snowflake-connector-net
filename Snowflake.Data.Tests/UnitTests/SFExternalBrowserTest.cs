@@ -488,14 +488,6 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
-        [Platform("Win")]
-        public void TestGetSystemDefaultBrowserReturnsAnExecutableApplication()
-        {
-            var browser = BrowserOperations.Instance.GetSystemDefaultBrowser();
-            Assert.IsTrue(browser.Contains(".exe"));
-        }
-
         private static void SetAuthenticatorWithMockBrowser(SFSession session, BrowserOperations browserOperations)
         {
             var authenticator = new ExternalBrowserAuthenticator(session, browserOperations);
