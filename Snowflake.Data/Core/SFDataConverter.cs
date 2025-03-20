@@ -51,7 +51,17 @@ namespace Snowflake.Data.Core
                 // The most common conversions are checked first for maximum performance
                 if (destType == typeof(Int64))
                 {
-                    return FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    if (srcVal.length > 8) //may overflow `Int64` (SNOW-944787, GitHub Issue#797)
+                    {
+                        if(FastParser.TryFastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length, out long result))
+                        {
+                            return result;
+                        }
+                        //in the future this method should probably support `System.Numerics.BigInteger` instead
+                        return UTF8Buffer.UTF8.GetString(srcVal.Buffer, srcVal.offset, srcVal.length);
+                    }
+                    else
+                        return FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
                 }
                 else if (destType == typeof(Int32))
                 {

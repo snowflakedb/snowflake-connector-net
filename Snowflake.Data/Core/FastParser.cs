@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 
@@ -8,7 +9,8 @@ namespace Snowflake.Data.Core
     {
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<FastParser>();
 
-        public static Int64 FastParseInt64(byte[] s, int offset, int len)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFastParseInt64(byte[] s, int offset, int len, out Int64 result)
         {
             if (s == null)
             {
@@ -17,7 +19,7 @@ namespace Snowflake.Data.Core
                 throw ex;
             }
 
-            Int64 result = 0;
+            result = 0;
             int i = offset;
             bool isMinus = false;
             if (len > 0 && s[i] == '-')
@@ -29,7 +31,7 @@ namespace Snowflake.Data.Core
             for (; i < end; i++)
             {
                 if ((UInt64)result > (0x7fffffffffffffff / 10))
-                    throw new OverflowException();
+                    return false;
                 int c = s[i] - '0';
                 if (c < 0 || c > 9)
                     throw new FormatException();
@@ -39,14 +41,24 @@ namespace Snowflake.Data.Core
             {
                 result = -result;
                 if (result > 0)
-                    throw new OverflowException();
+                    return false;
             }
             else
             {
                 if (result < 0)
-                    throw new OverflowException();
+                    return false;
             }
-            return result;
+            return true;
+        }
+
+        public static Int64 FastParseInt64(byte[] s, int offset, int len)
+        {
+            if(TryFastParseInt64(s, offset, len, out Int64 result))
+            {
+                return result;
+            }
+
+            throw new OverflowException();
         }
 
         public static Int32 FastParseInt32(byte[] s, int offset, int len)
@@ -108,7 +120,7 @@ namespace Snowflake.Data.Core
             if (decimalPos < 0)
             {
                 // If len > 19 (the number of digits in int64.MaxValue), the value is likely bigger
-                // than max int64. Potentially, if it is a negative number it could be ok, but it 
+                // than max int64. Potentially, if it is a negative number it could be ok, but it
                 // is better to not to find out during the call to FastParseInt64.
                 // Fallback to regular decimal constructor from string instead.
                 if (len > 19)
