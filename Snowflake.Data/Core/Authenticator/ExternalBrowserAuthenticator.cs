@@ -214,6 +214,8 @@ namespace Snowflake.Data.Core.Authenticator
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
+                Console.WriteLine("GetRedirectSamlRequest() Abort HttpListener");
+                httpListener.Abort();
                 Console.WriteLine("GetRedirectSamlRequest() timeout reached");
                 logger.Error("Browser response timeout has been reached");
                 Console.WriteLine("GetRedirectSamlRequest() throw exception");
