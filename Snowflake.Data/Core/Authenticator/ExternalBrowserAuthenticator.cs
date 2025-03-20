@@ -214,11 +214,7 @@ namespace Snowflake.Data.Core.Authenticator
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
-                Console.WriteLine("GetRedirectSamlRequest() Abort HttpListener");
-                httpListener.Abort();
-                Console.WriteLine("GetRedirectSamlRequest() timeout reached");
                 logger.Error("Browser response timeout has been reached");
-                Console.WriteLine("GetRedirectSamlRequest() throw exception");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
             if (_tokenExtractionException != null)
@@ -230,24 +226,16 @@ namespace Snowflake.Data.Core.Authenticator
         private void GetContextCallback(IAsyncResult result)
         {
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            Console.WriteLine("GetContextCallback() 1 httpListener.IsListening(): " + httpListener.IsListening);
             if (httpListener.IsListening)
             {
-                Console.WriteLine("GetContextCallback() 2 httpListener.IsListening(): " + httpListener.IsListening);
                 HttpListenerContext context = null;
                 try
                 {
-                    Console.WriteLine("Start EndGetContext()");
-                    Console.WriteLine("GetContextCallback() 3 httpListener.IsListening(): " + httpListener.IsListening);
                     context = httpListener.EndGetContext(result);
-                    Console.WriteLine("Finish EndGetContext()");
                 }
-                catch (Exception ex)
+                catch (HttpListenerException ex)
                 {
-                    Console.WriteLine("EndGetContext() exception: " + ex);
-                    Console.WriteLine("EndGetContext() exception message: " + ex.Message);
                     logger.Error("Error while trying to get context from HttpListener", ex);
-                    Console.WriteLine("GetContextCallback() 4 httpListener.IsListening(): " + httpListener.IsListening);
                 }
                 if (context != null)
                 {
