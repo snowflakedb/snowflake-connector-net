@@ -124,23 +124,16 @@ namespace Snowflake.Data.Core.Authenticator
             if (_idToken == null)
             {
                 int localPort = GetRandomUnusedPort();
-                try
+                using (var httpListener = GetHttpListener(localPort))
                 {
-                    using (var httpListener = GetHttpListener(localPort))
-                    {
-                        httpListener.Start();
-                        logger.Debug("Get IdpUrl and ProofKey");
-                        var loginUrl = GetIdpUrlAndProofKey(localPort);
-                        logger.Debug("Open browser");
-                        StartBrowser(loginUrl);
-                        logger.Debug("Get the redirect SAML request");
-                        GetRedirectSamlRequest(httpListener);
-                        httpListener.Stop();
-                    }
-                }
-                finally
-                {
-                    Console.WriteLine("Authenticate() HttpListener dispose");
+                    httpListener.Start();
+                    logger.Debug("Get IdpUrl and ProofKey");
+                    var loginUrl = GetIdpUrlAndProofKey(localPort);
+                    logger.Debug("Open browser");
+                    StartBrowser(loginUrl);
+                    logger.Debug("Get the redirect SAML request");
+                    GetRedirectSamlRequest(httpListener);
+                    httpListener.Stop();
                 }
             }
 
@@ -215,14 +208,12 @@ namespace Snowflake.Data.Core.Authenticator
 
         private void GetRedirectSamlRequest(HttpListener httpListener)
         {
-            Console.WriteLine("GetRedirectSamlRequest() start");
             _successEvent = new ManualResetEvent(false);
             _tokenExtractionException = null;
             httpListener.BeginGetContext(GetContextCallback, httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             if (!_successEvent.WaitOne(timeoutInSec * 1000))
             {
-                Console.WriteLine("GetRedirectSamlRequest() timeout reached");
                 logger.Error("Browser response timeout has been reached");
                 throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
             }
@@ -230,29 +221,20 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 throw _tokenExtractionException;
             }
-            Console.WriteLine("GetRedirectSamlRequest() finish");
-
         }
 
         private void GetContextCallback(IAsyncResult result)
         {
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            Console.WriteLine("GetContextCallback() 1 httpListener.IsListening: " + httpListener.IsListening);
             if (httpListener.IsListening)
             {
-                Console.WriteLine("GetContextCallback() 2 httpListener.IsListening: " + httpListener.IsListening);
                 HttpListenerContext context = null;
                 try
                 {
-                    Console.WriteLine("GetContextCallback() Start EndGetContext()");
                     context = httpListener.EndGetContext(result);
-                    Console.WriteLine("GetContextCallback() End EndGetContext()");
-
                 }
                 catch (HttpListenerException ex)
                 {
-                    Console.WriteLine("GetContextCallback() EndGetContext exception: " + ex);
-                    Console.WriteLine("GetContextCallback() 3 httpListener.IsListening: " + httpListener.IsListening);
                     logger.Error("Error while trying to get context from HttpListener", ex);
                 }
                 if (context != null)
