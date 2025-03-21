@@ -299,6 +299,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [Platform("Win")]
         public void TestThatOpenUrlThrowsExceptionWhenItDoesNotContainExactlyTwoElements()
         {
             var thrown = Assert.Throws<Exception>(() => BrowserOperations.Instance.OpenUrl("urlOne urlTwo"));
