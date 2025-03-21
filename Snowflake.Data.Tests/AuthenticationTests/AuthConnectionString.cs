@@ -41,6 +41,31 @@ namespace Snowflake.Data.AuthenticationTests
             return properties;
         }
 
+        public static SFSessionProperties GetOAuthExternalAuthorizationCodeConnectionString()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_AUTHORIZATION_CODE");
+
+            return properties;
+        }
+
+        public static SFSessionProperties GetOAuthSnowflakeAuthorizationCodeConnectionParameters()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_AUTHORIZATION_CODE");
+
+            return properties;
+        }
+
+
+
+        public static SFSessionProperties GetOAuthExternalClientCredentialParameters()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_CLIENT_CREDENTIALS");
+            return properties;
+        }
+
         public static SFSessionProperties GetOauthConnectionString(string token)
         {
             var properties = GetBaseConnectionParameters();
