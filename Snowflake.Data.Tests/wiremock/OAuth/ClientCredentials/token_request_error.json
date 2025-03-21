@@ -1,0 +1,33 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "OAuth client credentials token request error",
+            "request": {
+                "urlPathPattern": "/oauth/token-request.*",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    },
+                    "Content-Type": {
+                        "contains": "application/x-www-form-urlencoded"
+                    },
+                    "Content-Encoding": {
+                        "contains": "utf-8"
+                    }
+                },
+                "bodyPatterns": [
+                    {
+                        "contains": "grant_type=client_credentials"
+                    },
+                    {
+                        "contains": "scope=session%3Arole%3AANALYST"
+                    }
+                ]
+            },
+            "response": {
+                "status": 400
+            }
+        }
+    ]
+}

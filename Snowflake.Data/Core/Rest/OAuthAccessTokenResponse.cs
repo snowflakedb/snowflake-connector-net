@@ -30,32 +30,13 @@ namespace Snowflake.Data.Core.Rest
         private const int MaxAccessTokenExpirationInSeconds = 60 * 24; // 1 day
         private const int MaxRefreshTokenExpirationInSeconds = 60 * 24 * 30; // 1 month
 
-        public Token GetAccessToken(DateTime now)
-        {
-            var expirationTime = string.IsNullOrEmpty(ExpiresIn) ? (DateTime?) null : now.AddSeconds(int.Parse(ExpiresIn));
-            return new Token
-            {
-                Value = SecureStringHelper.Encode(AccessToken),
-                UtcExpirationTime = expirationTime
-            };
-        }
-
-        public Token GetRefreshToken(DateTime now)
-        {
-            if (string.IsNullOrEmpty(RefreshToken))
-                return null;
-            var expirationTime = string.IsNullOrEmpty(RefreshTokenExpiresIn) ? (DateTime?) null : now.AddSeconds(int.Parse(RefreshTokenExpiresIn));
-            return new Token
-            {
-                Value = SecureStringHelper.Encode(RefreshToken),
-                UtcExpirationTime = expirationTime
-            };
-        }
-
         public void Validate()
         {
             if (string.IsNullOrEmpty(AccessToken))
+            {
+                s_logger.Error("Access token was not returned by Identity Provider");
                 throw new Exception("Expected access token");
+            }
             ValidateExpirationTime(ExpiresIn, "access token", MaxAccessTokenExpirationInSeconds);
             if (!string.IsNullOrEmpty(RefreshToken))
             {
