@@ -299,6 +299,13 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestThatOpenUrlThrowsExceptionWhenItDoesNotContainExactlyTwoElements()
+        {
+            var thrown = Assert.Throws<Exception>(() => BrowserOperations.Instance.OpenUrl("urlOne urlTwo"));
+            Assert.IsTrue(thrown.Message.Contains("Process arguments must contain exactly 2 elements"));
+        }
+
+        [Test]
         public void TestDefaultAuthenticationAsync()
         {
             t_browserOperations
