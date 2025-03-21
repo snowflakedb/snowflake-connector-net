@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
 
         internal IRestRequester restRequester { get; private set; }
 
-        private IAuthenticator authenticator;
+        internal IAuthenticator authenticator;
 
         internal SFSessionProperties properties;
 
@@ -117,6 +117,13 @@ namespace Snowflake.Data.Core
                 {
                     logger.Debug("Query context cache disabled.");
                 }
+
+                if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
+                    !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
+                {
+                    var idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(idTokenKey, authnResponse.data.idToken);
+                }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
@@ -135,6 +142,7 @@ namespace Snowflake.Data.Core
                     "");
 
                 logger.Error("Authentication failed", e);
+
                 if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
                 {
                     logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
@@ -142,7 +150,6 @@ namespace Snowflake.Data.Core
                     var mfaKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
                     SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(mfaKey);
                 }
-
                 throw e;
             }
         }

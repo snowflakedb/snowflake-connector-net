@@ -3,6 +3,9 @@ using Snowflake.Data.Core;
 using NUnit.Framework;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using System.Net;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -102,6 +105,62 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
+        [Test]
+        public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
+        {
+            // arrange
+            var expectedIdToken = "mockIdToken";
+            var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, null);
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = expectedIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
+        }
+
+        [Test]
+        public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
+        {
+            // arrange
+            var expectedIdToken = "";
+            var mockIdToken = "mockIdToken";
+            var connectionString = $"account=account;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, null);
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = mockIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
+        }
+
+        [Test]
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]
