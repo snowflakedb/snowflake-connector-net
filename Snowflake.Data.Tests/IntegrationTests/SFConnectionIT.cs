@@ -2407,15 +2407,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Ignore("Manual test only")]
-        public void TestOAuthAuthorizationCodeFlow()
+        public void TestOAuthFlow()
         {
             // arrange
             var driverRootPath = Path.Combine("..", "..", "..", "..");
             var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
+            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
             var testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            RemoveOAuthCache(testConfig);
             try
             {
-                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthAuthorizationCode(testConfig)))
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(testConfig, authenticator)))
                 {
                     // act
                     connection.Open();
@@ -2437,17 +2439,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
             credentialManager.RemoveCredentials(refreshCacheKey);
         }
 
-        private string ConnectionStringForOAuthAuthorizationCode(TestConfig testConfig)
+        private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
         {
-            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
-            return new StringBuilder()
+            var builder = new StringBuilder()
                 .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
                 .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
                 .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
-                .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
-                .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl};oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
-                .Append("poolingEnabled=false;")
-                .ToString();
+                .Append($"oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
+                .Append("poolingEnabled=false;");
+            switch (authenticator)
+            {
+                case OAuthAuthorizationCodeAuthenticator.AuthName:
+                    return builder
+                        .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
+                        .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl}")
+                        .ToString();
+                case OAuthClientCredentialsAuthenticator.AuthName:
+                    return builder.ToString();
+                default:
+                    throw new Exception("Unknown authenticator");
+            }
         }
     }
 }
