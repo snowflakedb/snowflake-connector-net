@@ -72,11 +72,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 var password = "testpassword";
                 var passcode = "testpasscode";
                 var oauthClientSecret = "testoauthclientsecret";
+                var token = "testtoken";
                 var sessionProperties = new SessionPropertiesContext
                 {
                     Password = SecureStringHelper.Encode(password),
                     Passcode = SecureStringHelper.Encode(passcode),
-                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret)
+                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret),
+                    Token = SecureStringHelper.Encode(token)
                 };
                 connectionManager
                     .Setup(m => m.GetSession(connectionString, It.IsAny<SessionPropertiesContext>()))
@@ -87,6 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     connection.Password = SecureStringHelper.Encode(password);
                     connection.Passcode = SecureStringHelper.Encode(passcode);
                     connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
+                    connection.Token = SecureStringHelper.Encode(token);
 
                     // act
                     connection.Open();
@@ -96,7 +99,8 @@ namespace Snowflake.Data.Tests.UnitTests
                         It.Is<SessionPropertiesContext>(context =>
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
-                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret)));
+                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret &&
+                            SecureStringHelper.Decode(context.Token) == token)));
                 }
             }
             finally
@@ -117,11 +121,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 var password = "testpassword";
                 var passcode = "testpasscode";
                 var oauthClientSecret = "testoauthclientsecret";
+                var token = "testtoken";
                 var sessionProperties = new SessionPropertiesContext
                 {
                     Password = SecureStringHelper.Encode(password),
                     Passcode = SecureStringHelper.Encode(passcode),
-                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret)
+                    OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret),
+                    Token = SecureStringHelper.Encode(token)
                 };
                 connectionManager
                     .Setup(m => m.GetSessionAsync(connectionString, It.IsAny<SessionPropertiesContext>(), It.IsAny<CancellationToken>()))
@@ -132,6 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     connection.Password = SecureStringHelper.Encode(password);
                     connection.Passcode = SecureStringHelper.Encode(passcode);
                     connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
+                    connection.Token = SecureStringHelper.Encode(token);
 
                     // act
                     connection.OpenAsync(CancellationToken.None).Wait();
@@ -141,7 +148,8 @@ namespace Snowflake.Data.Tests.UnitTests
                         It.Is<SessionPropertiesContext>(context =>
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
-                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret),
+                            SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret &&
+                            SecureStringHelper.Decode(context.Token) == token),
                         It.IsAny<CancellationToken>()));
                 }
             }

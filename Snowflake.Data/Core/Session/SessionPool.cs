@@ -26,6 +26,7 @@ namespace Snowflake.Data.Core.Session
         internal string ConnectionString { get; }
         internal SecureString Password { get; }
         internal SecureString OAuthClientSecret { get; }
+        internal SecureString Token { get; }
         private readonly string _connectionStringWithoutSecrets;
         private readonly ICounter _busySessionsCounter;
         private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
@@ -45,7 +46,7 @@ namespace Snowflake.Data.Core.Session
             _poolConfig = new ConnectionPoolConfig();
         }
 
-        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
+        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
@@ -53,6 +54,7 @@ namespace Snowflake.Data.Core.Session
             ConnectionString = connectionString;
             Password = password;
             OAuthClientSecret = oauthClientSecret;
+            Token = token;
             _connectionStringWithoutSecrets = connectionStringWithoutSecrets;
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
@@ -61,13 +63,13 @@ namespace Snowflake.Data.Core.Session
 
         internal static SessionPool CreateSessionCache() => new SessionPool();
 
-        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret)
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token)
         {
             s_logger.Debug("Creating a connection pool");
-            var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret };
+            var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret, Token = token };
             var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
-            return new SessionPool(connectionString, password, oauthClientSecret, extracted.Item1, extracted.Item2);
+            return new SessionPool(connectionString, password, oauthClientSecret, token, extracted.Item1, extracted.Item2);
         }
 
         ~SessionPool()
@@ -141,8 +143,18 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        private string ExtractSecureString(SecureString password) =>
-            password == null ? string.Empty : SecureStringHelper.Decode(password);
+        internal void ValidateSecureToken(SecureString token)
+        {
+            if (!ExtractSecureString(Token).Equals(ExtractSecureString(token)))
+            {
+                var errorMessage = "Could not get a pool because of token mismatch";
+                s_logger.Error(errorMessage + PoolIdentification());
+                throw new Exception(errorMessage);
+            }
+        }
+
+        private string ExtractSecureString(SecureString secret) =>
+            secret == null ? string.Empty : SecureStringHelper.Decode(secret);
 
         internal SFSession GetSession(string connStr, SessionPropertiesContext sessionContext)
         {
@@ -497,7 +509,7 @@ namespace Snowflake.Data.Core.Session
                 session.SetPooling(false);
             }
 
-            var sessionContext = new SessionPropertiesContext { Password = Password };
+            var sessionContext = new SessionPropertiesContext { Password = Password, Token = Token };
             if (!session.GetPooling())
             {
                 ReleaseBusySession(session);

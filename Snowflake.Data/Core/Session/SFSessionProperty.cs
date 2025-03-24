@@ -275,7 +275,7 @@ namespace Snowflake.Data.Core
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
-            ValidateOAuthFlowProperties(properties, propertiesContext.AllowHttpForIdp);
+            ValidateAuthenticatorFlowsProperties(properties, propertiesContext.AllowHttpForIdp);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -322,7 +322,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void ValidateOAuthFlowProperties(SFSessionProperties properties, bool allowHttpForIdp)
+        private static void ValidateAuthenticatorFlowsProperties(SFSessionProperties properties, bool allowHttpForIdp)
         {
             if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
                 return;
@@ -340,6 +340,28 @@ namespace Snowflake.Data.Core
                 CheckRequiredProperty(SFSessionProperty.OAUTHTOKENREQUESTURL, properties);
                 ValidateEitherScopeOrRoleDefined(properties);
                 ValidateOAuthExternalTokenUrl(properties, allowHttpForIdp);
+            }
+            else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(authenticator))
+            {
+                ValidatePatProperties(properties);
+            }
+        }
+
+        private static void ValidatePatProperties(SFSessionProperties properties)
+        {
+            properties.TryGetValue(SFSessionProperty.PASSWORD, out var user);
+            properties.TryGetValue(SFSessionProperty.TOKEN, out var token);
+            if (string.IsNullOrEmpty(user) && string.IsNullOrEmpty(token))
+            {
+                SnowflakeDbException exception = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN}");
+                logger.Error("Missing connection property", exception);
+                throw exception;
+            }
+            if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(token) && user != token)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN} have different values for programmatic access token authentication");
+                logger.Error("Inconsistent connection properties", exception);
+                throw exception;
             }
         }
 
@@ -434,7 +456,8 @@ namespace Snowflake.Data.Core
                 ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                 MFACacheAuthenticator.IsMfaCacheAuthenticator,
                 OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -653,7 +676,8 @@ namespace Snowflake.Data.Core
                     KeyPairAuthenticator.IsKeyPairAuthenticator,
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
                 return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));

@@ -77,6 +77,8 @@ namespace Snowflake.Data.Client
 
         public SecureString OAuthClientSecret { get; set; }
 
+        public SecureString Token { get; set; }
+
         public bool IsOpen()
         {
             return _connectionState == ConnectionState.Open && SfSession != null;
@@ -282,7 +284,8 @@ namespace Snowflake.Data.Client
                 {
                     Password = Password,
                     Passcode = Passcode,
-                    OAuthClientSecret = OAuthClientSecret
+                    OAuthClientSecret = OAuthClientSecret,
+                    Token = Token
                 };
                 SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, sessionContext);
                 if (SfSession == null)
@@ -330,7 +333,8 @@ namespace Snowflake.Data.Client
             {
                 Password = Password,
                 Passcode = Passcode,
-                OAuthClientSecret = OAuthClientSecret
+                OAuthClientSecret = OAuthClientSecret,
+                Token = Token
             };
             return SnowflakeDbConnectionPool
                 .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)

@@ -2429,6 +2429,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestProgrammaticAccessTokenAuthentication()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(testConfig)))
+            {
+                // act
+                connection.Open();
+            }
+        }
+
         private void RemoveOAuthCache(TestConfig testConfig)
         {
             var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
@@ -2459,6 +2471,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 default:
                     throw new Exception("Unknown authenticator");
             }
+        }
+
+        private string ConnectionStringForPat(TestConfig testConfig)
+        {
+            var role = "ANALYST";
+            return new StringBuilder()
+                .Append($"authenticator=programmatic_access_token;user={testConfig.user};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"token={testConfig.programmaticAccessToken};")
+                .Append("poolingEnabled=false;")
+                .ToString();
         }
     }
 }

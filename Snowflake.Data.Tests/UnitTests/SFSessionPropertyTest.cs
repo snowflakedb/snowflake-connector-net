@@ -459,6 +459,69 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
         }
 
+        [Test]
+        public void TestProgrammaticAccessTokenParameters()
+        {
+            // arrange
+            var user = "testUser";
+            var token = "testToken";
+            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER={user};TOKEN={token};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(user, properties[SFSessionProperty.USER]);
+            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+        }
+
+        [Test]
+        public void TestProgrammaticAccessTokenProvidedExternallyByToken()
+        {
+            // arrange
+            var user = "testUser";
+            var token = "testToken";
+            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER={user};";
+            var secureToken = SecureStringHelper.Encode(token);
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { Token = secureToken });
+
+            // assert
+            Assert.AreEqual(user, properties[SFSessionProperty.USER]);
+            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+        }
+
+        [Test]
+        public void TestProgrammaticAccessTokenProvidedExternallyByPassword()
+        {
+            // arrange
+            var user = "testUser";
+            var password = "testPassword";
+            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER={user};";
+            var securePassword = SecureStringHelper.Encode(password);
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { Password = securePassword });
+
+            // assert
+            Assert.AreEqual(user, properties[SFSessionProperty.USER]);
+            Assert.AreEqual(password, properties[SFSessionProperty.PASSWORD]);
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property PASSWORD or TOKEN is not provided.")]
+        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;PASSWORD=testPassword;TOKEN=testToken", "Connection string is invalid: PASSWORD or TOKEN have different values for programmatic access token authentication")]
+        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;TOKEN=testToken;", "Required property USER is not provided.")]
+        public void TestInvalidProgrammaticAccessTokenParameters(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
