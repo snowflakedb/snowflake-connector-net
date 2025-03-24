@@ -101,8 +101,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             data.OAuthType = GetAuthenticatorName();
-            var secureAccessToken = AccessToken;
-            data.Token = (secureAccessToken == null ? null : SecureStringHelper.Decode(secureAccessToken));
+            data.Token = (AccessToken == null ? null : SecureStringHelper.Decode(AccessToken));
             if (string.IsNullOrEmpty(data.Token))
             {
                 var errorMessage = $"No valid access token is available to use for {GetAuthenticatorName()} authentication";
@@ -178,12 +177,12 @@ namespace Snowflake.Data.Core.Authenticator
             cacheKeys.SaveAccessToken(accessToken);
             if (string.IsNullOrEmpty(refreshToken))
             {
-                s_logger.Debug("Access token without refresh token got from Identity Provider");
+                s_logger.Debug("Access token without refresh token received from Identity Provider");
                 cacheKeys.RemoveRefreshToken();
             }
             else
             {
-                s_logger.Debug("Access token and refresh token got from Identity Provider");
+                s_logger.Debug("Access token and refresh token received from Identity Provider");
                 cacheKeys.SaveRefreshToken(refreshToken);
             }
             AccessToken = SecureStringHelper.Encode(accessToken);
