@@ -12,7 +12,12 @@ namespace Snowflake.Data.AuthenticationTests
         public void TestAuthenticateOktaClientCredentialsSuccessful()
 
         {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var parameters = AuthConnectionString.GetOAuthExternalClientCredentialParameters();
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsNotThrown();
         }
 
 

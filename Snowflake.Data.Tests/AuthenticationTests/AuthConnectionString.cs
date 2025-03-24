@@ -29,7 +29,19 @@ namespace Snowflake.Data.AuthenticationTests
                 {SFSessionProperty.DB, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_DATABASE") },
                 {SFSessionProperty.SCHEMA, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SCHEMA") },
                 {SFSessionProperty.WAREHOUSE, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_WAREHOUSE") },
+                { SFSessionProperty.MINPOOLSIZE, "0"}
             };
+            return properties;
+        }
+
+        public static SFSessionProperties GetSnowflakeLoginCredentials()
+        {
+            var properties = new SFSessionProperties()
+            {
+                { SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID") },
+                { SFSessionProperty.PASSWORD, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_USER_PASSWORD") }
+            };
+
             return properties;
         }
 
@@ -45,6 +57,12 @@ namespace Snowflake.Data.AuthenticationTests
         {
             var properties = GetBaseConnectionParameters();
             properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_AUTHORIZATION_CODE");
+            properties.Add(SFSessionProperty.OAUTHCLIENTID, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID"));
+            properties.Add(SFSessionProperty.OAUTHCLIENTSECRET, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_SECRET"));
+            properties.Add(SFSessionProperty.OAUTHREDIRECTURI, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_REDIRECT_URI"));
+            properties.Add(SFSessionProperty.OAUTHAUTHORIZATIONURL, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_AUTH_URL"));
+            properties.Add(SFSessionProperty.OAUTHTOKENREQUESTURL, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_TOKEN"));
+            properties.Add(SFSessionProperty.USER, SsoUser);
 
             return properties;
         }
@@ -53,16 +71,36 @@ namespace Snowflake.Data.AuthenticationTests
         {
             var properties = GetBaseConnectionParameters();
             properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_AUTHORIZATION_CODE");
+            properties.Add(SFSessionProperty.OAUTHCLIENTID, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_CLIENT_ID"));
+            properties.Add(SFSessionProperty.OAUTHCLIENTSECRET, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_CLIENT_SECRET"));
+            properties.Add(SFSessionProperty.OAUTHREDIRECTURI, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_REDIRECT_URI"));
+            properties[SFSessionProperty.ROLE] = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID"));
 
             return properties;
         }
 
+        public static SFSessionProperties GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_AUTHORIZATION_CODE");
+            properties.Add(SFSessionProperty.OAUTHCLIENTID, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_WILDCARDS_CLIENT_ID"));
+            properties.Add(SFSessionProperty.OAUTHCLIENTSECRET, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_WILDCARDS_CLIENT_SECRET"));
+            properties[SFSessionProperty.ROLE] = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID"));
 
+            return properties;
+        }
 
         public static SFSessionProperties GetOAuthExternalClientCredentialParameters()
         {
             var properties = GetBaseConnectionParameters();
             properties.Add(SFSessionProperty.AUTHENTICATOR, "OAUTH_CLIENT_CREDENTIALS");
+            properties.Add(SFSessionProperty.OAUTHCLIENTID, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID"));
+            properties.Add(SFSessionProperty.OAUTHCLIENTSECRET, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_SECRET"));
+            properties.Add(SFSessionProperty.OAUTHTOKENREQUESTURL, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_TOKEN"));
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_EXTERNAL_OAUTH_OKTA_CLIENT_ID"));
+
             return properties;
         }
 
