@@ -25,13 +25,13 @@ namespace Snowflake.Data.Core.Authenticator
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
             "<title> SAML Response for Snowflake </title></head>" +
             "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
-            "</body></html>;"
+            "</body></html>"
             );
         private static readonly byte[] ERROR_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
             "<title> SAML Response for Snowflake </title></head>" +
             "<body>Authentication failed due to an error and was unable to extract a SAML response token." +
-            "</body></html>;"
+            "</body></html>"
             );
         // The saml token to send in the login request.
         private string _samlResponseToken;
