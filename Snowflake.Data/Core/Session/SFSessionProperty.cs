@@ -360,36 +360,26 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static string ValidateOAuthExternalAuthorizeUrl(SFSessionProperties properties, bool allowHttpForIdp)
-        {
-            var externalAuthorizationUrl = properties.ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHAUTHORIZATIONURL);
-            if (!string.IsNullOrEmpty(externalAuthorizationUrl) && !allowHttpForIdp && !externalAuthorizationUrl.StartsWith("https://"))
-            {
-                var errorMessage = $"Invalid {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} property. It must start with 'https://'";
-                logger.Error(errorMessage);
-                throw new SnowflakeDbException(
-                    new Exception(errorMessage),
-                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                    "",
-                    SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString());
-            }
-            return externalAuthorizationUrl;
-        }
+        private static string ValidateOAuthExternalAuthorizeUrl(SFSessionProperties properties, bool allowHttpForIdp) =>
+            ValidateOAuthUrl(properties, SFSessionProperty.OAUTHAUTHORIZATIONURL, allowHttpForIdp);
 
-        private static string ValidateOAuthExternalTokenUrl(SFSessionProperties properties, bool allowHttpForIdp)
+        private static string ValidateOAuthExternalTokenUrl(SFSessionProperties properties, bool allowHttpForIdp) =>
+            ValidateOAuthUrl(properties, SFSessionProperty.OAUTHTOKENREQUESTURL, allowHttpForIdp);
+
+        private static string ValidateOAuthUrl(SFSessionProperties properties, SFSessionProperty oauthUrlProperty, bool allowHttpForIdp)
         {
-            var externalTokenRequestUrl = properties.ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHTOKENREQUESTURL);
-            if (!string.IsNullOrEmpty(externalTokenRequestUrl) && !allowHttpForIdp && !externalTokenRequestUrl.StartsWith("https://"))
+            var url = properties.ExtractPropertyOrEmptyString(oauthUrlProperty);
+            if (!string.IsNullOrEmpty(url) && !allowHttpForIdp && !url.StartsWith("https://"))
             {
-                var errorMessage = $"Invalid {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} property. It must start with 'https://'";
+                var errorMessage = $"Invalid {oauthUrlProperty.ToString()} property. It must start with 'https://'";
                 logger.Error(errorMessage);
                 throw new SnowflakeDbException(
                     new Exception(errorMessage),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE,
                     "",
-                    SFSessionProperty.OAUTHTOKENREQUESTURL.ToString());
+                    oauthUrlProperty.ToString());
             }
-            return externalTokenRequestUrl;
+            return url;
         }
 
         private static string GetHost(string url)

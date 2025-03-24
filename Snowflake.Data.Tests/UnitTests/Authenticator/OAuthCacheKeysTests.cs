@@ -12,14 +12,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Token = "abc";
 
         [Test]
-        [TestCase("snowflakecomputing.com", "testUser", true)]
-        [TestCase("", "testUser", false)]
-        [TestCase(null, "testUser", false)]
-        [TestCase("snowflakecomputing.com", "", false)]
-        [TestCase("snowflakecomputing.com", null, false)]
-        public void TestCacheAvailable(string host, string user, bool expectedIsAvailable)
+        [TestCase( "testUser", true)]
+        [TestCase("", false)]
+        [TestCase( null, false)]
+        public void TestCacheAvailable(string user, bool expectedIsAvailable)
         {
             // arrange
+            var host = "snowflakecomputing.com";
             var cacheKeys = new OAuthCacheKeys(host, user, SnowflakeCredentialManagerFactory.GetCredentialManager);
 
             // act

@@ -16,9 +16,9 @@ namespace Snowflake.Data.Core.Authenticator
         public OAuthCacheKeys(string host, string user, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
             _credentialManagerProvider = credentialManagerProvider;
-            if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(host))
+            if (string.IsNullOrEmpty(user))
             {
-                s_logger.Debug("Cache in OAuth flow is not used because either host or user is not defined");
+                s_logger.Debug("Cache in OAuth flow is not used because user is not defined");
                 _accessTokenKey = string.Empty;
                 _refreshTokenKey = string.Empty;
                 return;
