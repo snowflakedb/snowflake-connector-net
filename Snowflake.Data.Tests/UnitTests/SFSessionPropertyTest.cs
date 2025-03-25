@@ -298,7 +298,27 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestOAuthAuthorizationCodeMinimalParameters()
+        public void TestOAuthClientCredentialsAllParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var scope = "ghi";
+            var tokenUrl = "https://okta.com/token-request";
+            var connectionString = $"AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={scope};oauthTokenRequestUrl={tokenUrl};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+        }
+
+        [Test]
+        public void TestOAuthAuthorizationCodeFlowWithMinimalParameters()
         {
             // arrange
             var clientId = "abc";
@@ -314,6 +334,25 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestOAuthClientCredentialsWithMinimalParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var tokenUrl = "https://okta.com/token_request";
+            var connectionString = $"AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthTokenRequestUrl={tokenUrl}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+        }
+
+
+        [Test]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;", "Required property OAUTHCLIENTID is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;", "Required property OAUTHCLIENTSECRET is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
@@ -322,6 +361,21 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=http://okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Invalid parameter value  for OAUTHAUTHORIZATIONURL")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=http://okta.com/token-request", "Invalid parameter value  for OAUTHTOKENREQUESTURL")]
         public void TestOAuthAuthorizationCodeMissingOrInvalidParameters(string connectionString, string errorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(errorMessage));
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTSECRET is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHSCOPE or ROLE is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;", "Required property OAUTHTOKENREQUESTURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=http://okta.com/token-request;", "Invalid parameter value  for OAUTHTOKENREQUESTURL")]
+        public void TestOAuthClientCredentialsMissingOrInvalidParameters(string connectionString, string errorMessage)
         {
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));

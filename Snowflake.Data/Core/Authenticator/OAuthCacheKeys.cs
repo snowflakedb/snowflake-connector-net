@@ -1,6 +1,7 @@
 using System;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -10,11 +11,14 @@ namespace Snowflake.Data.Core.Authenticator
         private readonly string _refreshTokenKey;
         private readonly Func<ISnowflakeCredentialManager> _credentialManagerProvider;
 
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthCacheKeys>();
+
         public OAuthCacheKeys(string host, string user, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
             _credentialManagerProvider = credentialManagerProvider;
-            if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(host))
+            if (string.IsNullOrEmpty(user))
             {
+                s_logger.Debug("Cache in OAuth flow is not used because user is not defined");
                 _accessTokenKey = string.Empty;
                 _refreshTokenKey = string.Empty;
                 return;
