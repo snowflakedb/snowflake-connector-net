@@ -468,6 +468,7 @@ namespace Snowflake.Data.Core
 
         private static void CheckSessionProperties(SFSessionProperties properties)
         {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 // if required property, check if exists in the dictionary
@@ -492,7 +493,7 @@ namespace Snowflake.Data.Core
                 if (defaultVal != null && !properties.ContainsKey(sessionProperty))
                 {
                     logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
-                    if (defaultNonWindowsVal != null && !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    if (defaultNonWindowsVal != null && isWindows)
                     {
                         properties.Add(sessionProperty, defaultNonWindowsVal);
                     }
