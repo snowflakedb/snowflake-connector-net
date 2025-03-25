@@ -494,7 +494,7 @@ namespace Snowflake.Data.Core
                 {
                     if (defaultNonWindowsVal != null && !isWindows)
                     {
-                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
+                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultNonWindowsVal}");
                         properties.Add(sessionProperty, defaultNonWindowsVal);
                     }
                     else if (defaultVal != null)
