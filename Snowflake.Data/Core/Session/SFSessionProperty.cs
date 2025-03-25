@@ -492,13 +492,14 @@ namespace Snowflake.Data.Core
                 string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
                 if (!properties.ContainsKey(sessionProperty))
                 {
-                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     if (defaultNonWindowsVal != null && !isWindows)
                     {
+                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                         properties.Add(sessionProperty, defaultNonWindowsVal);
                     }
                     else if (defaultVal != null)
                     {
+                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                         properties.Add(sessionProperty, defaultVal);
                     }
                 }
