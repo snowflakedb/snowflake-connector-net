@@ -12,14 +12,17 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Token = "abc";
 
         [Test]
-        [TestCase( "testUser", true)]
-        [TestCase("", false)]
-        [TestCase( null, false)]
-        public void TestCacheAvailable(string user, bool expectedIsAvailable)
+        [TestCase( "testUser", true, true)]
+        [TestCase("", true, false)]
+        [TestCase( null, true, false)]
+        [TestCase( "testUser", false, false)]
+        [TestCase("", false, false)]
+        [TestCase( null, false, false)]
+        public void TestCacheAvailable(string user, bool clientStoreTemporaryCredentials, bool expectedIsAvailable)
         {
             // arrange
             var host = "snowflakecomputing.com";
-            var cacheKeys = new OAuthCacheKeys(host, user, SnowflakeCredentialManagerFactory.GetCredentialManager);
+            var cacheKeys = new OAuthCacheKeys(host, user, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
 
             // act
             var isAvailable = cacheKeys.IsAvailable();
@@ -33,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new Mock<ISnowflakeCredentialManager>();
-            var cacheKeys = new OAuthCacheKeys(null, null, () => credentialManager.Object);
+            var cacheKeys = new OAuthCacheKeys(null, null, false, () => credentialManager.Object);
 
             // act
             cacheKeys.GetAccessToken();
@@ -53,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new SFCredentialManagerInMemoryImpl();
-            var cacheKeys = new OAuthCacheKeys("snowflakecomputing.com", "testUser", () => credentialManager);
+            var cacheKeys = new OAuthCacheKeys("snowflakecomputing.com", "testUser", true, () => credentialManager);
 
             // act/assert
             Assert.IsTrue(cacheKeys.IsAvailable());
@@ -69,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new SFCredentialManagerInMemoryImpl();
-            var cacheKeys = new OAuthCacheKeys("snowflakecomputing.com", "testUser", () => credentialManager);
+            var cacheKeys = new OAuthCacheKeys("snowflakecomputing.com", "testUser", true, () => credentialManager);
 
             // act/assert
             Assert.IsTrue(cacheKeys.IsAvailable());

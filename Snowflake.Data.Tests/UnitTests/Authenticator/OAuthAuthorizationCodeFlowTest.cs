@@ -220,6 +220,44 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
+        public void TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOff()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            session.Open();
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(0, InMemoryCacheCount());
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
+        public async Task TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOffAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
+            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+
+            // act
+            await session.OpenAsync(CancellationToken.None);
+
+            // assert
+            Assert.NotNull(authenticator.AccessToken);
+            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.AreEqual(0, InMemoryCacheCount());
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
         public void TestUseCachedAccessToken()
         {
             // arrange
@@ -405,9 +443,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true)
+        private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
         {
-            var connectionString = GetAuthorizationCodeConnectionString(clientSecretInConnectionString, userInConnectionString);
+            var connectionString = GetAuthorizationCodeConnectionString(clientSecretInConnectionString, userInConnectionString) + connectionStringSuffix;
             var sessionContext = new SessionPropertiesContext
             {
                 AllowHttpForIdp = true,
