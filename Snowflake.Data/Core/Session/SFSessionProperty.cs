@@ -490,14 +490,14 @@ namespace Snowflake.Data.Core
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
                 string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
-                if (defaultVal != null && !properties.ContainsKey(sessionProperty))
+                if (!properties.ContainsKey(sessionProperty))
                 {
                     logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
-                    if (defaultNonWindowsVal != null && isWindows)
+                    if (defaultNonWindowsVal != null && !isWindows)
                     {
                         properties.Add(sessionProperty, defaultNonWindowsVal);
                     }
-                    else
+                    else if (defaultVal != null)
                     {
                         properties.Add(sessionProperty, defaultVal);
                     }
