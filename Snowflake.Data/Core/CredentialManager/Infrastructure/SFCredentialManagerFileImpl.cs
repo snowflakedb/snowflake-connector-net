@@ -132,6 +132,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     KeyTokenDict keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
                     keyTokenPairs[key] = token;
                     WriteToJsonFile(keyTokenPairs);
+                    s_logger.Warn($"The credentials are stored without an expiration time");
                 }
                 catch (Exception exception)
                 {
