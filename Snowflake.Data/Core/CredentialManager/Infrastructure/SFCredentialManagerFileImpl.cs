@@ -290,11 +290,17 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
             };
             if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
-                throw new SecurityException("Attempting to read or write a file not owned by the effective user of the current process");
+                ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
             if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
-                throw new SecurityException("Attempting to read or write a file not owned by the effective group of the current process");
+                ThrowSecurityException("Attempting to read or write a file not owned by the effective group of the current process");
             if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                throw new SecurityException("Attempting to read or write a file with too broad permissions assigned");
+                ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
+        }
+
+        private void ThrowSecurityException(string errorMessage)
+        {
+            s_logger.Error(errorMessage);
+            throw new SecurityException(errorMessage);
         }
     }
 }
