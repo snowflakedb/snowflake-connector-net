@@ -13,12 +13,20 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthCacheKeys>();
 
-        public OAuthCacheKeys(string host, string user, Func<ISnowflakeCredentialManager> credentialManagerProvider)
+        public OAuthCacheKeys(string host, string user, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
             _credentialManagerProvider = credentialManagerProvider;
             if (string.IsNullOrEmpty(user))
             {
                 s_logger.Debug("Cache in OAuth flow is not used because user is not defined");
+                _accessTokenKey = string.Empty;
+                _refreshTokenKey = string.Empty;
+                return;
+            }
+
+            if (!clientStoreTemporaryCredentials)
+            {
+                s_logger.Debug("Cache in OAuth flow is not used because clientStoreTemporaryCredentials is false");
                 _accessTokenKey = string.Empty;
                 _refreshTokenKey = string.Empty;
                 return;

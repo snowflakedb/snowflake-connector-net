@@ -199,6 +199,40 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
+        public void TestDontUseCacheWhenClientStoreTemporaryCredentialFlagIsOff()
+        {
+            // arrange
+            _runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
+
+            // act
+            session.Open();
+
+            // assert
+            AssertAccessTokenSetInAuthenticator(session);
+            Assert.AreEqual(0, InMemoryCacheCount());
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
+        public async Task TestDontUseCacheWhenClientStoreTemporaryCredentialFlagIsOffAsync()
+        {
+            // arrange
+            _runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
+
+            // act
+            await session.OpenAsync(CancellationToken.None);
+
+            // assert
+            AssertAccessTokenSetInAuthenticator(session);
+            Assert.AreEqual(0, InMemoryCacheCount());
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
         public void TestUseCachedAccessToken()
         {
             // arrange
@@ -355,9 +389,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
         }
 
-        private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true)
+        private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
         {
-            var connectionString = GetClientCredentialsConnectionString(clientSecretInConnectionString, userInConnectionString);
+            var connectionString = GetClientCredentialsConnectionString(clientSecretInConnectionString, userInConnectionString) + connectionStringSuffix;
             var sessionContext = new SessionPropertiesContext
             {
                 AllowHttpForIdp = true,

@@ -192,7 +192,8 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var host = new Uri(GetTokenEndpoint()).Host;
             var user = session.properties[SFSessionProperty.USER];
-            return new OAuthCacheKeys(host, user, SnowflakeCredentialManagerFactory.GetCredentialManager);
+            var clientStoreTemporaryCredentials = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            return new OAuthCacheKeys(host, user, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
         }
 
         protected OAuthRefreshAccessTokenRequest BuildRefreshTokenRequest(OAuthCacheKeys cacheKeys)
