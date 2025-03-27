@@ -61,7 +61,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             try
             {
                 s_credentials[key] = secureToken;
-                s_logger.Warn($"The credentials are stored without an expiration time");
             }
             finally
             {

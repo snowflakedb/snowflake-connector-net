@@ -94,7 +94,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             try
             {
                 CredWrite(ref credential, 0);
-                s_logger.Warn($"The credentials are stored without an expiration time");
             }
             catch (Exception exception)
             {
