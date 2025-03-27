@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Data.Common;
 using System.Data;
@@ -1048,7 +1048,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     byte[] col1ToBytes = Encoding.UTF8.GetBytes(testChars);
                     byte[] buf = new byte[col1ToBytes.Length];
-                    stream.Read(buf, 0, col1ToBytes.Length);
+                    var readBytes = stream.Read(buf, 0, col1ToBytes.Length);
+                    Assert.AreEqual(col1ToBytes.Length, readBytes);
                     Assert.IsTrue(-1 == stream.ReadByte()); // No more data
                     Assert.IsTrue(col1ToBytes.SequenceEqual(buf));
                 }
@@ -1056,7 +1057,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var stream = reader.GetStream(1))
                 {
                     byte[] buf = new byte[testBytes.Length];
-                    stream.Read(buf, 0, testBytes.Length);
+                    var readBytes = stream.Read(buf, 0, testBytes.Length);
+                    Assert.AreEqual(testBytes.Length, readBytes);
                     Assert.IsTrue(-1 == stream.ReadByte()); // No more data
                     Assert.IsTrue(testBytes.SequenceEqual(buf));
                 }
@@ -1065,7 +1067,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
                     byte[] buf = new byte[col3ToBytes.Length];
-                    stream.Read(buf, 0, col3ToBytes.Length);
+                    var readBytes = stream.Read(buf, 0, col3ToBytes.Length);
+                    Assert.AreEqual(col3ToBytes.Length, readBytes);
                     Assert.IsTrue(-1 == stream.ReadByte()); // No more data
                     Assert.IsTrue(col3ToBytes.SequenceEqual(buf));
                 }

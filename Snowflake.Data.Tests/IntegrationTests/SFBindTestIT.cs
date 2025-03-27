@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System;
 using System.Data;
@@ -200,8 +200,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private static IEnumerable<object> NullTestCases() =>
-            new object[] { DBNull.Value, null };
+        private static IEnumerable<object?> NullTestCases() =>
+            new object?[] { DBNull.Value, null };
 
         [Test]
         public void TestBindValue()
