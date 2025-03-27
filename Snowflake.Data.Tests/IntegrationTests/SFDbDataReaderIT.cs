@@ -1638,14 +1638,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestDataTableLoadOnVariantColumn()
+        [TestCase("array")]
+        [TestCase("object")]
+        [TestCase("variant")]
+        public void TestDataTableLoadOnVariantColumn(string type)
         {
             using (var conn = CreateAndOpenConnection())
             {
                 var colName = "c1";
                 var expectedVal = "{\"id\":1}"; // "{\n  \"id\": 1\n}"
 
-                CreateOrReplaceTable(conn, TableName, new[] { $"{colName} variant" });
+                CreateOrReplaceTable(conn, TableName, new[] { $"{colName} {type}" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -1671,6 +1674,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 Assert.AreEqual(expectedVal, dt.Rows[0][colName].ToString()
                     .Replace(" ", String.Empty)
+                    .Replace("[", String.Empty)
+                    .Replace("]", String.Empty)
                     .Replace("\n", String.Empty));
 
                 CloseConnection(conn);
