@@ -50,12 +50,12 @@ namespace Snowflake.Data.Core
 
         public void DisablePoolingDefaultIfSecretsProvidedExternally(SFSessionProperties properties)
         {
-            var authenticator = properties[SFSessionProperty.AUTHENTICATOR].ToLower();
-            if (ExternalBrowserAuthenticator.AUTH_NAME.Equals(authenticator))
+            var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
+            if (ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator(authenticator))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
 
-            } else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator)
+            } else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
                        && properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_FILE)
                        && !properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_PWD))
             {

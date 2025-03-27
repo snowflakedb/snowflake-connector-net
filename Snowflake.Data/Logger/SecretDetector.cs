@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

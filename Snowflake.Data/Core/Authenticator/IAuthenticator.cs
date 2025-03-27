@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -163,15 +159,15 @@ namespace Snowflake.Data.Core.Authenticator
         internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
-            if (type.Equals(BasicAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            if (BasicAuthenticator.IsBasicAuthenticator(type))
             {
                 return new BasicAuthenticator(session);
             }
-            else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator(type))
             {
                 return new ExternalBrowserAuthenticator(session);
             }
-            else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (KeyPairAuthenticator.IsKeyPairAuthenticator(type))
             {
                 // Get private key path or private key from connection settings
                 if ((!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) || string.IsNullOrEmpty(pkPath)) &&
@@ -189,7 +185,7 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new KeyPairAuthenticator(session);
             }
-            else if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (OAuthAuthenticator.IsOAuthAuthenticator(type))
             {
                 // Get private key path or private key from connection settings
                 if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
@@ -206,12 +202,12 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
-            else if (type.Equals(MFACacheAuthenticator.AuthName, StringComparison.InvariantCultureIgnoreCase))
+            else if (MFACacheAuthenticator.IsMfaCacheAuthenticator(type))
             {
                 return new MFACacheAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
-            else if (type.Contains("okta") && type.StartsWith("https://"))
+            else if (OktaAuthenticator.IsOktaAuthenticator(type))
             {
                 return new OktaAuthenticator(session, type);
             }
