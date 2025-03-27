@@ -368,9 +368,8 @@ namespace Snowflake.Data.Client
 
         private bool IsSemiStructuredType(string type)
         {
-            return type.ToLower() == "array" ||
-                    type.ToLower() == "object" ||
-                    type.ToLower() == "variant";
+            type = type.ToLower();
+            return type == "array" || type == "object" || type == "variant";
         }
     }
 }
