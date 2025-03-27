@@ -10,7 +10,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";
 
         [Test]
-        [Ignore("TODO: Enable when Max LOB size is available on the automated tests environment")]
         public void TestIncreaseMaxLobSizeParameterSwitchSelect()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
