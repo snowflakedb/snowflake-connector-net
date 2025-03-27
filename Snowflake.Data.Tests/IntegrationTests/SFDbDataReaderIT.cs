@@ -1641,7 +1641,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("array")]
         [TestCase("object")]
         [TestCase("variant")]
-        public void TestDataTableLoadOnVariantColumn(string type)
+        public void TestDataTableLoadOnSemiStructuredColumn(string type)
         {
             using (var conn = CreateAndOpenConnection())
             {
