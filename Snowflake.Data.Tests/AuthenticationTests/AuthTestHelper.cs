@@ -137,4 +137,3 @@ namespace Snowflake.Data.AuthenticationTests
         }
     }
 }
-
