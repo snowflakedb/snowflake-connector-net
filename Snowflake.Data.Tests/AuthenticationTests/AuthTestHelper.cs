@@ -128,7 +128,7 @@ namespace Snowflake.Data.AuthenticationTests
         {
             try
             {
-                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
+                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(25));
             }
             catch (Exception e)
             {
@@ -137,4 +137,3 @@ namespace Snowflake.Data.AuthenticationTests
         }
     }
 }
-
