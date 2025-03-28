@@ -52,7 +52,7 @@ namespace Snowflake.Data.AuthenticationTests
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
+            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
         [Test, IgnoreOnCI]
@@ -83,34 +83,54 @@ namespace Snowflake.Data.AuthenticationTests
             parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "1");
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("timeout", _login, _password);
-
-            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        // [Test, IgnoreOnCI]
-        // public void TestAuthenticateSnowflakeAuthorizationCodeTokenCache()
-        // {
-        //     AuthTestHelper authTestHelper = new AuthTestHelper();
-        //
-        //     var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
-        //     parameters.Add(SFSessionProperty.CACHEEE, "");   //TODO: TO BE ADDED
-        //     _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-        //
-        //     Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        //     Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
-        //     authTestHelper.VerifyExceptionIsNotThrown();
-        //
-        //     parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
-        //
-        //     authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-        //
-        //     authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        //
-        //     authTestHelper.VerifyExceptionIsNotThrown();
-        // }
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "25");
+            parameters.Add(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "true");
+            parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsNotThrown();
+
+            authTestHelper.CleanBrowserProcess();
+
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsNotThrown();
+        }
+
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+
+            var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
+            parameters.Add(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false");
+            parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+
+            Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+            Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+
+            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+            authTestHelper.VerifyExceptionIsNotThrown();
+
+            authTestHelper.CleanBrowserProcess();
+
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 10 seconds");
+        }
     }
 }
-
