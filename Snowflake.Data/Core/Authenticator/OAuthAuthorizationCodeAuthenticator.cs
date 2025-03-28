@@ -221,11 +221,10 @@ You can close this window now and go back where you started from.
             {
                 numberOfAttemptsLeft--;
                 var port = _listenerStarter.GetRandomUnusedPort();
-                redirectUri = $"http://{DefaultRedirectUriHost}:{port}";
-                var redirectUriWithSlash = $"{redirectUri}/";
+                redirectUri = $"http://{DefaultRedirectUriHost}:{port}/";
                 try
                 {
-                    listener = _listenerStarter.StartHttpListener(redirectUriWithSlash);
+                    listener = _listenerStarter.StartHttpListener(redirectUri);
                 }
                 catch (HttpListenerException)
                 {
