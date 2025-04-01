@@ -34,7 +34,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (var reader = command.ExecuteReader())
                     {
                         var dt = new DataTable();
-                        dt.Load(reader);
+                        using (DataSet ds = new DataSet() { EnforceConstraints = false })
+                        {
+                            ds.Tables.Add(dt);
+                            dt.Load(reader, LoadOption.OverwriteChanges);
+                            ds.Tables.Remove(dt);
+                        }
 
                         // assert
                         Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", dt.Rows[0][colName].ToString()
