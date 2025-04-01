@@ -39,7 +39,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         // assert
                         Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", dt.Rows[0][colName].ToString()
-                            .Replace("\"", String.Empty));
+                            .Replace("\"", String.Empty)
+                            .Replace(" ", String.Empty)
+                            .Replace("[", String.Empty)
+                            .Replace("]", String.Empty)
+                            .Replace("\n", String.Empty));
                     }
                 }
             }

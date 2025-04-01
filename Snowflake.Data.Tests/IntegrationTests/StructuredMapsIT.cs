@@ -22,7 +22,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
+                    var key = "city";
+                    var value = "San Mateo";
+                    var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::MAP(VARCHAR, VARCHAR)";
                     var colName = "colA";
                     command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
 
@@ -30,12 +32,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (var reader = command.ExecuteReader())
                     {
                         var dt = new DataTable();
-                        dt.Load(reader);
+                        using (DataSet ds = new DataSet() { EnforceConstraints = false })
+                        {
+                            ds.Tables.Add(dt);
+                            dt.Load(reader, LoadOption.OverwriteChanges);
+                            ds.Tables.Remove(dt);
+                        }
+
                         Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
 
                         // assert
-                        Assert.AreEqual($"", dt.Rows[0][colName].ToString()
-                            .Replace("\"", String.Empty));
+                        Assert.AreEqual($"{key}: {value}", dt.Rows[0][colName].ToString()
+                            .Replace("\"", String.Empty)
+                            .Replace(" ", String.Empty)
+                            .Replace("{", String.Empty)
+                            .Replace("}", String.Empty)
+                            .Replace("\n", String.Empty));
                     }
                 }
             }

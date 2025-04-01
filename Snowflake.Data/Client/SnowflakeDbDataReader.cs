@@ -118,8 +118,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                //row[SchemaTableColumn.ColumnSize] = IsSemiStructuredType(rowType.type) && rowType.length == 0 ? -1 : (int)rowType.length;
-                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsSemiStructuredType(rowType.type) && rowType.length == 0 ? -1 : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
