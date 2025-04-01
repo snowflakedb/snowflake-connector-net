@@ -20,28 +20,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
                 connection.Open();
-
-                var colName = "c1";
-                CreateOrReplaceTable(connection, TableName, new[] { $"{colName} ARRAY" });
-
-                using (var cmd = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
                     var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
-                    string insertCommand = $"insert into {TableName} select {arraySFString})";
-                    cmd.CommandText = insertCommand;
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {arraySFString} AS {colName}";
 
-                    var count = cmd.ExecuteNonQuery();
-                    Console.WriteLine("TestCount: " + count);
-                    //Assert.AreEqual(3, count);
-
-                    cmd.CommandText = $"select {colName} from {TableName}";
-                    using (var reader = cmd.ExecuteReader())
+                    // act
+                    using (var reader = command.ExecuteReader())
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
                         Console.WriteLine("TestRowCount: " + dt.Rows.Count.ToString());
                         Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
+
+                        // assert
                         Assert.AreEqual("a", dt.Rows[0][colName].ToString()
                             .Replace(" ", String.Empty)
                             .Replace("[", String.Empty)
