@@ -19,6 +19,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
+                connection.Open();
+
                 var colName = "c1";
                 CreateOrReplaceTable(connection, TableName, new[] { $"{colName} ARRAY" });
 
