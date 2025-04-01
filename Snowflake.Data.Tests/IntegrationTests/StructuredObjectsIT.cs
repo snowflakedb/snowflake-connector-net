@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     var key = "city";
-                    var value = "San Mateo";
+                    var value = "SanMateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::OBJECT(city VARCHAR)";
                     var colName = "colA";
                     command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
@@ -33,10 +33,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
-                        Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
 
                         // assert
-                        Assert.AreEqual($"{key}: {value}", dt.Rows[0][colName].ToString()
+                        Assert.AreEqual($"{key}:{value}", dt.Rows[0][colName].ToString()
                             .Replace("\"", String.Empty)
                             .Replace(" ", String.Empty)
                             .Replace("{", String.Empty)

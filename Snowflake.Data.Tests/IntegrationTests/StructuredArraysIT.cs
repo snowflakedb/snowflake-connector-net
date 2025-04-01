@@ -35,7 +35,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
-                        Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
 
                         // assert
                         Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", dt.Rows[0][colName].ToString()
