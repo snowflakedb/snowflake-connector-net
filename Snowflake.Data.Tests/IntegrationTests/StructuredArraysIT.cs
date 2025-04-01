@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -12,6 +13,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class StructuredArraysIT: StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnSemiStructuredColumn()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                var colName = "c1";
+                CreateOrReplaceTable(connection, TableName, new[] { $"{colName} ARRAY" });
+
+                using (var cmd = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
+                    string insertCommand = $"insert into {TableName} select {arraySFString})";
+                    cmd.CommandText = insertCommand;
+
+                    var count = cmd.ExecuteNonQuery();
+                    Console.WriteLine("TestCount: " + count);
+                    //Assert.AreEqual(3, count);
+
+                    cmd.CommandText = $"select {colName} from {TableName}";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        Console.WriteLine("TestRowCount: " + dt.Rows.Count.ToString());
+                        Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
+                        Assert.AreEqual("a", dt.Rows[0][colName].ToString()
+                            .Replace(" ", String.Empty)
+                            .Replace("[", String.Empty)
+                            .Replace("]", String.Empty)
+                            .Replace("\n", String.Empty));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectArray()
         {
