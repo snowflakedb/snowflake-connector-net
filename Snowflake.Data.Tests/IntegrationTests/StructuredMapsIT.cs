@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -11,6 +12,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class StructuredMapsIT: StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnStructuredMap()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
+
+                    // act
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
+
+                        // assert
+                        Assert.AreEqual($"", dt.Rows[0][colName].ToString()
+                            .Replace("\"", String.Empty));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectMap()
         {

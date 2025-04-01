@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class StructuredArraysIT: StructuredTypesIT
     {
         [Test]
-        public void TestDataTableLoadOnSemiStructuredColumn()
+        public void TestDataTableLoadOnStructuredArray()
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
@@ -23,7 +23,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection);
-                    var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
+                    var expectedValueA = 'a';
+                    var expectedValueB = 'b';
+                    var expectedValueC = 'c';
+                    var arraySFString = $"ARRAY_CONSTRUCT('{expectedValueA}','{expectedValueB}','{expectedValueC}')::ARRAY(TEXT)";
                     var colName = "colA";
                     command.CommandText = $"SELECT {arraySFString} AS {colName}";
 
@@ -32,15 +35,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
-                        Console.WriteLine("TestRowCount: " + dt.Rows.Count.ToString());
                         Console.WriteLine("TestRow 0: " + dt.Rows[0][colName].ToString());
 
                         // assert
-                        Assert.AreEqual("a", dt.Rows[0][colName].ToString()
-                            .Replace(" ", String.Empty)
-                            .Replace("[", String.Empty)
-                            .Replace("]", String.Empty)
-                            .Replace("\n", String.Empty));
+                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", dt.Rows[0][colName].ToString()
+                            .Replace("\"", String.Empty));
                     }
                 }
             }
