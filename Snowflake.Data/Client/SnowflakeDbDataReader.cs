@@ -365,11 +365,5 @@ namespace Snowflake.Data.Client
             resultSet.close();
             isClosed = true;
         }
-
-        private bool IsSemiStructuredType(string type)
-        {
-            type = type.ToLower();
-            return type == "array" || type == "object" || type == "variant";
-        }
     }
 }
