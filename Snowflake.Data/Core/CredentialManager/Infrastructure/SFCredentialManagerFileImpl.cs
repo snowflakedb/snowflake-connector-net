@@ -76,7 +76,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     ReleaseLock();
                 }
             }
-            s_logger.Info("Unable to get credentials for the specified key");
+            s_logger.Debug("Unable to get credentials for the specified key");
             return string.Empty;
         }
 

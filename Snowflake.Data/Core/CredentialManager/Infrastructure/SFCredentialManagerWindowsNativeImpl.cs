@@ -39,7 +39,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
             if (!success)
             {
-                s_logger.Info($"Unable to get credentials for key: {key}");
+                s_logger.Error($"Unable to get credentials for key: {key}");
                 return "";
             }
 
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             }
             if (!success)
             {
-                s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
+                s_logger.Debug($"Unable to remove credentials because the specified key did not exist: {key}");
             }
         }
 

@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             {
                 return SecureStringHelper.Decode(secureToken);
             }
-            s_logger.Info("Unable to get credentials for the specified key");
+            s_logger.Debug("Unable to get credentials for the specified key");
             return "";
         }
 
