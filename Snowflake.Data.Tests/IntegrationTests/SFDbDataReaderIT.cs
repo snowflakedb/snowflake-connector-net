@@ -1658,12 +1658,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
                         var dt = new DataTable();
-                        using (DataSet ds = new DataSet() { EnforceConstraints = false })
-                        {
-                            ds.Tables.Add(dt);
-                            dt.Load(reader, LoadOption.OverwriteChanges);
-                            ds.Tables.Remove(dt);
-                        }
+                        dt.Load(reader);
                         Assert.AreEqual(expectedVal, dt.Rows[0][colName].ToString()
                             .Replace(" ", String.Empty)
                             .Replace("[", String.Empty)
