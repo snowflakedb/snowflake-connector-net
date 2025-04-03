@@ -294,8 +294,13 @@ namespace Snowflake.Data.Core.Authenticator
                 logger.Error("Failed to start browser. Invalid url.");
                 throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
             }
-
-            _browserOperations.OpenUrl(url);
+            var uri = new Uri(url);
+            if (url != uri.ToString())
+            {
+                logger.Error("Failed to start browser. Invalid uri.");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
+            }
+            _browserOperations.OpenUrl(uri);
         }
 
         private string ValidateAndExtractToken(HttpListenerRequest request)
