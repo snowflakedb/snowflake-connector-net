@@ -28,6 +28,8 @@ namespace Snowflake.Data.Client
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
 
+        private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
+
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
@@ -118,7 +120,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemistructuredType(rowType.type) && rowType.length == 0 ? -1 : (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemistructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
