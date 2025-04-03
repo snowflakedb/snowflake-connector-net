@@ -62,6 +62,10 @@ namespace Snowflake.Data.Core
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "key pair with private key in a file");
             }
+            else if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator))
+            {
+                DisablePoolingIfNotExplicitlyEnabled(properties, "oauth authorization code");
+            }
         }
 
         private void DisablePoolingIfNotExplicitlyEnabled(SFSessionProperties properties, string authenticationDescription)

@@ -235,5 +235,55 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // assert
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because of token mismatch"));
         }
+
+        [Test]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;", false)]
+        public void TestConnectionPoolPoolingForOAuthAuthorizationCode(string connectionString, bool expectedPoolingEnabled)
+        {
+            // arrange
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            var session = CreateSessionWithCurrentStartTime(connectionString);
+
+            // assert
+            Assert.AreEqual(expectedPoolingEnabled, pool.GetPooling());
+
+            // act
+            var isSessionReturnedToPool = pool.AddSession(session, false);
+
+            // assert
+            Assert.AreEqual(expectedPoolingEnabled, isSessionReturnedToPool);
+        }
+
+        [Test]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
+        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
+        public void TestConnectionCachePoolingDisabledOAuthAuthorizationCode(string connectionString)
+        {
+            // arrange
+            var session = CreateSessionWithCurrentStartTime(connectionString);
+            var pool = SessionPool.CreateSessionCache();
+
+            // assert
+            Assert.AreEqual(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
+
+            // act
+            var isSessionReturnedToPool = pool.AddSession(session, false);
+
+            // assert
+            Assert.IsFalse(isSessionReturnedToPool);
+        }
+
+        private SFSession CreateSessionWithCurrentStartTime(string connectionString)
+        {
+            var session = new SFSession(connectionString, new SessionPropertiesContext());
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            session.SetStartTime(now);
+            return session;
+        }
     }
 }

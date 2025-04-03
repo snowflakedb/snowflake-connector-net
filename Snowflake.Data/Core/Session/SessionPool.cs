@@ -501,11 +501,18 @@ namespace Snowflake.Data.Core.Session
             if (!GetPooling() || _underDestruction)
                 return false;
 
-            if (IsMultiplePoolsVersion() &&
+            var isMultiplePoolsVersion = IsMultiplePoolsVersion();
+            if (isMultiplePoolsVersion &&
                 session.SessionPropertiesChanged &&
                 _poolConfig.ChangedSession == ChangedSessionBehavior.Destroy)
             {
                 s_logger.Debug($"Session returning to pool was changed. Destroying the session: {session.sessionId}.");
+                session.SetPooling(false);
+            }
+
+            if (!isMultiplePoolsVersion && !session.IsPoolingEnabledForConnectionCache())
+            {
+                s_logger.Debug($"Session not allowed to be used in connection cache. Destroying the session: {session.sessionId}.");
                 session.SetPooling(false);
             }
 

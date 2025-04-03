@@ -239,6 +239,12 @@ namespace Snowflake.Data.Core
             this.restRequester = restRequester;
         }
 
+        internal bool IsPoolingEnabledForConnectionCache()
+        {
+            var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
+            return !OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator);
+        }
+
         private void ValidateApplicationName(SFSessionProperties properties)
         {
             // If there is an "application" setting, verify that it matches the expect pattern
@@ -684,6 +690,11 @@ namespace Snowflake.Data.Core
         }
 
         internal long GetStartTime() => _startTime;
+
+        internal void SetStartTime(long startTime)
+        {
+            _startTime = startTime;
+        }
 
         internal void ReplaceAuthenticator(IAuthenticator authenticator)
         {

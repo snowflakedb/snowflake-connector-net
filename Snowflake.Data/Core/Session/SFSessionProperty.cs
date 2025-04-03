@@ -332,6 +332,7 @@ namespace Snowflake.Data.Core
                 CheckRequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET, properties);
                 ValidateEitherScopeOrRoleDefined(properties);
                 ValidateOAuthUrls(properties, allowHttpForIdp);
+                ValidatePoolingEnabledOnlyWithUser(properties);
             }
             else if (OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator(authenticator))
             {
@@ -344,6 +345,23 @@ namespace Snowflake.Data.Core
             else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(authenticator))
             {
                 CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
+            }
+        }
+
+        private static void ValidatePoolingEnabledOnlyWithUser(SFSessionProperties properties)
+        {
+            var isUserProvided = properties.TryGetValue(SFSessionProperty.USER, out var user) && !string.IsNullOrEmpty(user);
+            if (isUserProvided)
+                return;
+            var isPoolingEnabledExplicitly = properties.IsPoolingEnabledValueProvided &&
+                                             properties.TryGetValue(SFSessionProperty.POOLINGENABLED, out var poolingEnabledString) &&
+                                             bool.TryParse(poolingEnabledString, out var poolingEnabled) && poolingEnabled;
+            if (isPoolingEnabledExplicitly)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
+                    "You cannot enable pooling for oauth authorization code authentication without specifying a user in the connection string.");
+                logger.Error("Invalid connection string", exception);
+                throw exception;
             }
         }
 
