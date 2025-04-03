@@ -67,5 +67,18 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 _lock.ExitWriteLock();
             }
         }
+
+        internal int GetCount()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return s_credentials.Count;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
     }
 }

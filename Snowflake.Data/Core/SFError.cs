@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -92,6 +92,12 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270062)]
         STRUCTURED_TYPE_READ_DETAILED_ERROR,
 
+        [SFErrorAttr(errorCode = 270063)]
+        BROWSER_RESPONSE_ERROR,
+
+        [SFErrorAttr(errorCode = 270064)]
+        OAUTH_TOKEN_REQUEST_ERROR,
+
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,
 
@@ -106,6 +112,21 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 390129)]
         EXT_AUTHN_EXCEPTION,
+
+        [SFErrorAttr(errorCode = 390318)]
+        EXT_OAUTH_ACCESS_TOKEN_EXPIRED,
+
+        [SFErrorAttr(errorCode = 390303)]
+        EXT_OAUTH_ACCESS_TOKEN_INVALID
+    }
+
+    class OAuthTokenErrors
+    {
+        public static bool IsAccessTokenExpired(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_EXPIRED.GetAttribute<SFErrorAttr>().errorCode == error;
+
+        public static bool IsAccessTokenInvalid(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
     }
 
     class SFMFATokenErrors

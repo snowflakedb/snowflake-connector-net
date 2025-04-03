@@ -87,8 +87,8 @@ namespace Snowflake.Data.Log
         private const string PrivateKeyPropertyPrefixPattern = @"(private_key\s*=)";
         private const string ConnectionTokenPattern = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
         private const string TokenPropertyPattern = @"(token)(\s*=)(.*)";
-        private const string PasswordPattern = @"(password|passcode|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
-        private const string PasswordPropertyPattern = @"(password|passcode|proxypassword|private_key_pwd)(\s*=)(.*)";
+        private const string PasswordPattern = @"(password|passcode|client_?secret|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
+        private const string PasswordPropertyPattern = @"(password|passcode|oauthclientsecret|proxypassword|private_key_pwd)(\s*=)(.*)";
 
         private static readonly Func<string, string>[] s_maskFunctions = {
             MaskAWSServerSide,

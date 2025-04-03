@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
@@ -13,7 +14,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [Test]
         public void TestConvertToMapOnly2Properties(
             [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive)
+            [Values(true, false)] bool clientSessionKeepAlive,
+            [Values(true, false)] bool clientStoreTemporaryCredential)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -34,16 +36,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 forceRetryOn404 = false,
                 retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 maxHttpRetries = 7,
-                proxyProperties = proxyProperties
+                proxyProperties = proxyProperties,
+                _clientStoreTemporaryCredential = clientStoreTemporaryCredential
             };
 
             // act
             var parameterMap = properties.ToParameterMap();
 
             // assert
-            Assert.AreEqual(2, parameterMap.Count);
+            Assert.AreEqual(3, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
         [Test]
@@ -109,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, new SessionPropertiesContext());
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // act
