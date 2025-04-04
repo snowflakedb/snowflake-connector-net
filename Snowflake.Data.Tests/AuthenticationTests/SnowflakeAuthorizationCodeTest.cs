@@ -1,6 +1,7 @@
 using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests
@@ -97,17 +98,25 @@ namespace Snowflake.Data.AuthenticationTests
             parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
             parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "true";
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-
+            var host = parameters[SFSessionProperty.HOST];
             Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
-            authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsNotThrown();
+            try
+            {
+                authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
+                authTestHelper.VerifyExceptionIsNotThrown();
 
-            authTestHelper.CleanBrowserProcess();
+                authTestHelper.CleanBrowserProcess();
 
-            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-            authTestHelper.VerifyExceptionIsNotThrown();
+                authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+                authTestHelper.VerifyExceptionIsNotThrown();
+            }
+            finally
+            {
+                authTestHelper.RemoveTokenCache(host, _login, TokenType.OAuthAccessToken);
+                authTestHelper.RemoveTokenCache(host, _login, TokenType.OAuthRefreshToken);
+            }
         }
 
         [Test, IgnoreOnCI]
