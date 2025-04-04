@@ -349,15 +349,15 @@ namespace Snowflake.Data.Core
 
         private static void ValidatePatProperties(SFSessionProperties properties)
         {
-            properties.TryGetValue(SFSessionProperty.PASSWORD, out var user);
+            properties.TryGetValue(SFSessionProperty.PASSWORD, out var password);
             properties.TryGetValue(SFSessionProperty.TOKEN, out var token);
-            if (string.IsNullOrEmpty(user) && string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(password) && string.IsNullOrEmpty(token))
             {
                 SnowflakeDbException exception = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN}");
                 logger.Error("Missing connection property", exception);
                 throw exception;
             }
-            if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(token) && user != token)
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(token) && password != token)
             {
                 var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN} have different values for programmatic access token authentication");
                 logger.Error("Inconsistent connection properties", exception);
@@ -692,7 +692,8 @@ namespace Snowflake.Data.Core
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
                 };
                 return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }
