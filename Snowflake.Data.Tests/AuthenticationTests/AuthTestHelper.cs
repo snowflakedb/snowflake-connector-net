@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.AuthenticationTests
@@ -124,11 +125,17 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
+        internal void RemoveTokenCache(string tokenHost, string user, TokenType tokenType)
+        {
+            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(tokenHost, user, tokenType);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
+        }
+
         private void ProvideCredentials(string scenario, string login, string password)
         {
             try
             {
-                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
+                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(25));
             }
             catch (Exception e)
             {
@@ -137,4 +144,3 @@ namespace Snowflake.Data.AuthenticationTests
         }
     }
 }
-
