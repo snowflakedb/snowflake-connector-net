@@ -27,21 +27,8 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            data.Token = GetPatToken();
+            data.Token = session.properties[SFSessionProperty.TOKEN];
             SetSecondaryAuthenticationData(ref data);
-        }
-
-        private string GetPatToken()
-        {
-            if (session.properties.TryGetValue(SFSessionProperty.TOKEN, out var token) && !string.IsNullOrEmpty(token))
-            {
-                return token;
-            }
-            if (session.properties.TryGetValue(SFSessionProperty.PASSWORD, out var password) && !string.IsNullOrEmpty(password))
-            {
-                return password;
-            }
-            return null;
         }
     }
 }

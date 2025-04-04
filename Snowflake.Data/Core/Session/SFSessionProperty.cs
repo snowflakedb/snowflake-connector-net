@@ -343,25 +343,7 @@ namespace Snowflake.Data.Core
             }
             else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(authenticator))
             {
-                ValidatePatProperties(properties);
-            }
-        }
-
-        private static void ValidatePatProperties(SFSessionProperties properties)
-        {
-            properties.TryGetValue(SFSessionProperty.PASSWORD, out var password);
-            properties.TryGetValue(SFSessionProperty.TOKEN, out var token);
-            if (string.IsNullOrEmpty(password) && string.IsNullOrEmpty(token))
-            {
-                SnowflakeDbException exception = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN}");
-                logger.Error("Missing connection property", exception);
-                throw exception;
-            }
-            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(token) && password != token)
-            {
-                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"{SFSessionProperty.PASSWORD} or {SFSessionProperty.TOKEN} have different values for programmatic access token authentication");
-                logger.Error("Inconsistent connection properties", exception);
-                throw exception;
+                CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
             }
         }
 

@@ -474,7 +474,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestProgrammaticAccessTokenProvidedExternallyByToken()
+        public void TestProgrammaticAccessTokenProvidedExternally()
         {
             // arrange
             var token = "testToken";
@@ -489,23 +489,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestProgrammaticAccessTokenProvidedExternallyByPassword()
-        {
-            // arrange
-            var password = "testPassword";
-            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;";
-            var securePassword = SecureStringHelper.Encode(password);
-
-            // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { Password = securePassword });
-
-            // assert
-            Assert.AreEqual(password, properties[SFSessionProperty.PASSWORD]);
-        }
-
-        [Test]
-        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property PASSWORD or TOKEN is not provided.")]
-        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;PASSWORD=testPassword;TOKEN=testToken", "Connection string is invalid: PASSWORD or TOKEN have different values for programmatic access token authentication")]
+        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property TOKEN is not provided.")]
         public void TestInvalidProgrammaticAccessTokenParameters(string connectionString, string expectedErrorMessage)
         {
             // act

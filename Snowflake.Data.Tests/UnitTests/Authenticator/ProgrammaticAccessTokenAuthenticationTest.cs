@@ -46,11 +46,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
-        public void TestSuccessfulPatAuthentication([Values] bool provideTokenByPassword)
+        public void TestSuccessfulPatAuthentication()
         {
             // arrange
             _runner.AddMappings(s_successfulPatFlowMappingPath);
-            var session = PrepareSession(provideTokenByPassword);
+            var session = PrepareSession();
 
             // act
             session.Open();
@@ -60,11 +60,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
-        public async Task TestSuccessfulPatAuthenticationAsync([Values] bool provideTokenByPassword)
+        public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
             _runner.AddMappings(s_successfulPatFlowMappingPath);
-            var session = PrepareSession(provideTokenByPassword);
+            var session = PrepareSession();
 
             // act
             await session.OpenAsync(CancellationToken.None);
@@ -101,14 +101,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
         }
 
-        private SFSession PrepareSession(bool provideTokenByPassword = false)
+        private SFSession PrepareSession()
         {
-            var connectionString = GetPatConnectionString(provideTokenByPassword);
+            var connectionString = GetPatConnectionString();
             var sessionContext = new SessionPropertiesContext();
             return new SFSession(connectionString, sessionContext);
         }
 
-        private string GetPatConnectionString(bool provideTokenByPassword)
+        private string GetPatConnectionString()
         {
             var authenticator = ProgrammaticAccessTokenAuthenticator.AuthName;
             var db = "testDb";
@@ -118,18 +118,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var port = WiremockRunner.DefaultHttpPort;
             var scheme = "http";
 
-            var connectionStringBuilder = new StringBuilder()
+            return new StringBuilder()
                 .Append($"authenticator={authenticator};account={Account};user={User};")
-                .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};");
-            if (provideTokenByPassword)
-            {
-                connectionStringBuilder.Append($"password={Token}");
-            }
-            else
-            {
-                connectionStringBuilder.Append($"token={Token}");
-            }
-            return connectionStringBuilder.ToString();
+                .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
+                .Append($"token={Token}")
+                .ToString();
         }
 
         private void AssertSessionSuccessfullyCreated(SFSession session)
