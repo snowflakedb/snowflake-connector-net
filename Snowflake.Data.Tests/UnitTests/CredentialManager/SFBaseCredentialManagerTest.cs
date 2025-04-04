@@ -85,5 +85,39 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             Assert.AreEqual(token, result);
         }
+
+        [Test]
+        public void TestGetCredentialsForTokenWithManyCharacters()
+        {
+            // arrange
+            var key = "mockKey";
+            var expectedToken = "access-token-123";
+
+            // act
+            _credentialManager.SaveCredentials(key, expectedToken);
+
+            // assert
+            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
+
+            // act
+            _credentialManager.RemoveCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+        }
+
+        [Test]
+        public void TestGetCredentialsForCredentialsThatDoesNotExist()
+        {
+            // arrange
+            var key = "fakeKey";
+
+            // act
+            _credentialManager.RemoveCredentials(key);
+            var token = _credentialManager.GetCredentials(key);
+
+            // assert
+            Assert.IsTrue(string.IsNullOrEmpty(token));
+        }
     }
 }
