@@ -29,7 +29,8 @@ namespace Snowflake.Data.AuthenticationTests
                 {SFSessionProperty.DB, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_DATABASE") },
                 {SFSessionProperty.SCHEMA, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SCHEMA") },
                 {SFSessionProperty.WAREHOUSE, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_WAREHOUSE") },
-                { SFSessionProperty.MINPOOLSIZE, "0"}
+                {SFSessionProperty.MINPOOLSIZE, "0"},
+                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"}
             };
             return properties;
         }

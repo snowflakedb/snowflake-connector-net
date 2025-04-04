@@ -93,8 +93,9 @@ namespace Snowflake.Data.AuthenticationTests
 
              var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
              parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
-             parameters.Add(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "true");
              parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
+             parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "true";
+
              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
              Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
