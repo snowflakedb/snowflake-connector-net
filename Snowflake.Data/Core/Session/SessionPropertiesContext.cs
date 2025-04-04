@@ -11,6 +11,8 @@ namespace Snowflake.Data.Core.Session
 
         public SecureString OAuthClientSecret { get; set; } = null;
 
+        public SecureString Token { get; set; } = null;
+
         public bool AllowHttpForIdp { get; set; } = false;
 
         public void FillSecrets(SFSessionProperties properties)
@@ -18,6 +20,7 @@ namespace Snowflake.Data.Core.Session
             FillSecret(properties, SFSessionProperty.PASSWORD, Password);
             FillSecret(properties, SFSessionProperty.OAUTHCLIENTSECRET, OAuthClientSecret);
             FillSecret(properties, SFSessionProperty.PASSCODE, Passcode);
+            FillSecret(properties, SFSessionProperty.TOKEN, Token);
         }
 
         private void FillSecret(SFSessionProperties properties, SFSessionProperty property, SecureString secret)

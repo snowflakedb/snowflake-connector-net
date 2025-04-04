@@ -39,13 +39,14 @@ namespace Snowflake.Data.Client
             return ConnectionManager.GetSessionAsync(connectionString, sessionContext, cancellationToken);
         }
 
-        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password, SecureString oauthClientSecret = null)
+        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password, SecureString oauthClientSecret = null, SecureString token = null)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
             var sessionContext = new SessionPropertiesContext
             {
                 Password = password,
-                OAuthClientSecret = oauthClientSecret
+                OAuthClientSecret = oauthClientSecret,
+                Token = token
             };
             return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, sessionContext));
         }

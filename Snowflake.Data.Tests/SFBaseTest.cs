@@ -426,6 +426,9 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
         internal string oauthTokenRequestUrl { get; set; }
 
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string programmaticAccessToken { get; set; }
+
         public TestConfig()
         {
             protocol = "https";

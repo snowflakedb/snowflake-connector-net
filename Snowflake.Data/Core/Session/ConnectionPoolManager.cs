@@ -121,12 +121,14 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string and secure password");
             var password = sessionContext.Password;
             var oauthClientSecret = sessionContext.OAuthClientSecret;
-            var poolKey = GetPoolKey(connectionString, password, oauthClientSecret);
+            var token = sessionContext.Token;
+            var poolKey = GetPoolKey(connectionString, password, oauthClientSecret, token);
 
             if (_pools.TryGetValue(poolKey, out var item))
             {
                 item.ValidateSecurePassword(password);
                 item.ValidateSecureOAuthClientSecret(oauthClientSecret);
+                item.ValidateSecureToken(token);
                 return item;
             }
 
@@ -136,10 +138,11 @@ namespace Snowflake.Data.Core.Session
                 {
                     poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
                     poolCreatedWhileWaitingOnLock.ValidateSecureOAuthClientSecret(oauthClientSecret);
+                    poolCreatedWhileWaitingOnLock.ValidateSecureToken(token);
                     return poolCreatedWhileWaitingOnLock;
                 }
                 s_logger.Info($"Creating new pool");
-                var pool = SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret);
+                var pool = SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret, token);
                 _pools.Add(poolKey, pool);
                 return pool;
             }
@@ -151,7 +154,7 @@ namespace Snowflake.Data.Core.Session
             return GetPool(connectionString, new SessionPropertiesContext());
         }
 
-        private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret)
+        private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret, SecureString token)
         {
             var passwordPart = password != null && password.Length > 0
                 ? ";password=" + SecureStringHelper.Decode(password) + ";"
@@ -159,8 +162,10 @@ namespace Snowflake.Data.Core.Session
             var clientSecretPart = clientSecret != null && clientSecret.Length > 0
                 ? ";client_secret=" + SecureStringHelper.Decode(clientSecret) + ";"
                 : ";client_secret=;";
-            return connectionString + passwordPart + clientSecretPart;
+            var tokenPart = token != null && token.Length > 0
+                ? ";token=" + SecureStringHelper.Decode(token) + ";"
+                : ";token=;";
+            return connectionString + passwordPart + clientSecretPart + tokenPart;
         }
-
     }
 }

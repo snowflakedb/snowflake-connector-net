@@ -275,7 +275,7 @@ namespace Snowflake.Data.Core
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
-            ValidateOAuthFlowProperties(properties, propertiesContext.AllowHttpForIdp);
+            ValidateAuthenticatorFlowsProperties(properties, propertiesContext.AllowHttpForIdp);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -322,7 +322,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void ValidateOAuthFlowProperties(SFSessionProperties properties, bool allowHttpForIdp)
+        private static void ValidateAuthenticatorFlowsProperties(SFSessionProperties properties, bool allowHttpForIdp)
         {
             if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
                 return;
@@ -340,6 +340,10 @@ namespace Snowflake.Data.Core
                 CheckRequiredProperty(SFSessionProperty.OAUTHTOKENREQUESTURL, properties);
                 ValidateEitherScopeOrRoleDefined(properties);
                 ValidateOAuthExternalTokenUrl(properties, allowHttpForIdp);
+            }
+            else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(authenticator))
+            {
+                CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
             }
         }
 
@@ -434,7 +438,8 @@ namespace Snowflake.Data.Core
                 ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                 MFACacheAuthenticator.IsMfaCacheAuthenticator,
                 OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -653,7 +658,8 @@ namespace Snowflake.Data.Core
                     KeyPairAuthenticator.IsKeyPairAuthenticator,
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
                 return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));
@@ -668,7 +674,8 @@ namespace Snowflake.Data.Core
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator
+                    OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
                 };
                 return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }
