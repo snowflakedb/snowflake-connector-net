@@ -5,6 +5,7 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -232,6 +233,34 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedMessage, message);
         }
 
+        [Test]
+        [TestCase("true")]
+        [TestCase("false")]
+        public void TestValidateClientStoreTemporaryCredentialProperty(string expectedClientStoreTemporaryCredential)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CLIENT_STORE_TEMPORARY_CREDENTIAL={expectedClientStoreTemporaryCredential}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+
+            // assert
+            Assert.AreEqual(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+        }
+
+        [Test]
+        public void TestFailWhenClientStoreTemporaryCredentialContainsInvalidValue()
+        {
+            // arrange
+            var invalidValue = "invalidValue";
+            var invalidConnectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;CLIENT_STORE_TEMPORARY_CREDENTIAL={invalidValue}";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
+
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
@@ -289,6 +318,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -326,6 +356,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -365,6 +396,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 },
                 ConnectionString =
@@ -406,6 +438,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 },
                 ConnectionString =
@@ -446,6 +479,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -483,6 +517,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -519,6 +554,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 },
                 ConnectionString =
@@ -557,6 +593,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 },
                 ConnectionString =
@@ -597,6 +634,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -634,6 +672,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -671,6 +710,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -711,6 +751,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
                     { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
                 }
             };
@@ -732,8 +773,14 @@ namespace Snowflake.Data.Tests.UnitTests
             };
         }
 
-        private static string DefaultValue(SFSessionProperty property) =>
-            property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+        private static string DefaultValue(SFSessionProperty property)
+        {
+            var defaultValue = property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+            var defaultNonWindowsValue = property.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return defaultValue;
+            return defaultNonWindowsValue ?? defaultValue;
+        }
 
         internal class TestCase
         {
