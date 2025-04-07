@@ -211,11 +211,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 return;
             var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
             _directoryOperations.CreateDirectory(fileStorage.JsonCacheDirectory);
-            SetSecureDirectory(fileStorage.JsonCacheDirectory);
+            CheckIfDirectoryIsSecure(fileStorage.JsonCacheDirectory);
             _fileStorage = fileStorage;
         }
 
-        private void SetSecureDirectory(string directory)
+        private void CheckIfDirectoryIsSecure(string directory)
         {
             var unixDirectoryInfo = _unixOperations.GetDirectoryInfo(directory);
             if (!unixDirectoryInfo.Exists) return;
@@ -224,21 +224,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             if (!unixDirectoryInfo.IsSafeExactly(userId))
             {
                 s_logger.Warn($"Cache directory {directory} permissions or ownership is set to insecure values");
-            }
-        }
-
-        private void SetSecureOwnershipAndPermissions(string directory, long userId)
-        {
-            var groupId = _unixOperations.GetCurrentGroupId();
-            var chownResult = _unixOperations.ChangeOwner(directory, (int) userId, (int) groupId);
-            if (chownResult == -1)
-            {
-                throw new SecurityException($"Could not set proper directory ownership for directory: {directory}");
-            }
-            var chmodResult = _unixOperations.ChangePermissions(directory, FileAccessPermissions.UserReadWriteExecute);
-            if (chmodResult == -1)
-            {
-                throw new SecurityException($"Could not set proper directory permissions for directory: {directory}");
             }
         }
 
