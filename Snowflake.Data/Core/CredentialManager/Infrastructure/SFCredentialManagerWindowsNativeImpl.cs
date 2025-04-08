@@ -39,7 +39,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
             if (!success)
             {
-                s_logger.Error($"Unable to get credentials for key: {key}");
+                s_logger.Debug($"Unable to get credentials for key: {key}");
                 return "";
             }
 
