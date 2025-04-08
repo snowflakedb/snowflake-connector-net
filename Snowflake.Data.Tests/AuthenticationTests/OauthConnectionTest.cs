@@ -49,6 +49,7 @@ namespace Snowflake.Data.AuthenticationTests
               var parameters = AuthConnectionString.GetOauthConnectionString(token);
               parameters[SFSessionProperty.USER] = "fakeAccount";
               parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
+              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
               authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
               authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
