@@ -1645,12 +1645,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = CreateAndOpenConnection())
             {
                 var colName = "c1";
-                var expectedVal = "{\"id\":1}"; // "{\n  \"id\": 1\n}"
+                var expectedVal = "id:1";
                 CreateOrReplaceTable(conn, TableName, new[] { $"{colName} {type}" });
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} select parse_json('{expectedVal}')";
+                    string insertCommand = $"insert into {TableName} select parse_json('{{{expectedVal}}}')";
                     cmd.CommandText = insertCommand;
 
                     var count = cmd.ExecuteNonQuery();
