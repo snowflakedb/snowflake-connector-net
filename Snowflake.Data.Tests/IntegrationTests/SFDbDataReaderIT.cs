@@ -1662,11 +1662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ValidateResultFormat(reader);
                         var dt = new DataTable();
                         dt.Load(reader);
-                        Assert.AreEqual(expectedVal, dt.Rows[0][colName].ToString()
-                            .Replace(" ", String.Empty)
-                            .Replace("[", String.Empty)
-                            .Replace("]", String.Empty)
-                            .Replace("\n", String.Empty));
+                        Assert.AreEqual(expectedVal, DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }

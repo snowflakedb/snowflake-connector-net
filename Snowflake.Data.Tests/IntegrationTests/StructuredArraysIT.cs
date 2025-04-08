@@ -37,12 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         dt.Load(reader);
 
                         // assert
-                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", dt.Rows[0][colName].ToString()
-                            .Replace("\"", String.Empty)
-                            .Replace(" ", String.Empty)
-                            .Replace("[", String.Empty)
-                            .Replace("]", String.Empty)
-                            .Replace("\n", String.Empty));
+                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
