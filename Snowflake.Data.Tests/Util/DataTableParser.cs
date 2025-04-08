@@ -1,5 +1,7 @@
-using System;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -7,14 +9,20 @@ namespace Snowflake.Data.Tests.Util
     {
         internal static string GetFirstRowValue(DataTable dt, string colName)
         {
-            return dt.Rows[0][colName].ToString()
-            .Replace("\"", String.Empty)
-            .Replace(" ", String.Empty)
-            .Replace("{", String.Empty)
-            .Replace("}", String.Empty)
-            .Replace("\n", String.Empty)
-            .Replace("[", String.Empty)
-            .Replace("]", String.Empty);
+            var jsonString = dt.Rows[0][colName].ToString();
+            if (jsonString.Contains(':'))
+            {
+                var keyValue = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString.Replace("[", "").Replace("]", ""));
+                var key = keyValue.Keys.First();
+                var Value = keyValue[key];
+                return $"{key}:{Value}";
+            }
+            else if (jsonString.Contains(','))
+            {
+                var array = JsonConvert.DeserializeObject<List<string>>(jsonString);
+                return string.Join(",", array);
+            }
+            return jsonString;
         }
     }
 }
