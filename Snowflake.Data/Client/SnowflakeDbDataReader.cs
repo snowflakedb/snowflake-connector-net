@@ -120,7 +120,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemistructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemiStructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
@@ -368,7 +368,7 @@ namespace Snowflake.Data.Client
             isClosed = true;
         }
 
-        private bool IsStructuredOrSemistructuredType(string type)
+        private bool IsStructuredOrSemiStructuredType(string type)
         {
             type = type.ToLower();
             return type == "array" || type == "object" || type == "variant"|| type == "map";
