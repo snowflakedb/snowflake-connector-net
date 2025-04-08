@@ -18,10 +18,10 @@ namespace Snowflake.Data.Tests.Util
             }
             else if (token.Type == JTokenType.Array)
             {
-                var array = token.ToObject<List<JToken>>();
-                if (array[0].Type == JTokenType.Object)
+                var element = token.First();
+                if (element.Type == JTokenType.Object)
                 {
-                    return ParseKeyValue(array[0]);
+                    return ParseKeyValue(element);
                 }
                 else
                 {
