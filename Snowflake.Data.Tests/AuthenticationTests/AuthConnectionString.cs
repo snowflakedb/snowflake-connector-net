@@ -17,6 +17,9 @@ namespace Snowflake.Data.AuthenticationTests
         public static readonly string SsoUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_BROWSER_USER");
         public static readonly string Host = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_HOST");
         public static readonly string SsoPassword = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_OKTA_PASS");
+        public static readonly string SnowflakeUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SNOWFLAKE_USER");
+        public static readonly string SnowflakeRole = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
+
 
         private static SFSessionProperties GetBaseConnectionParameters()
         {
@@ -135,6 +138,13 @@ namespace Snowflake.Data.AuthenticationTests
             return properties;
         }
 
+        public static SFSessionProperties GetPatConnectionParameters()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "PROGRAMMATIC_ACCESS_TOKEN");
+            properties.Add(SFSessionProperty.USER, SsoUser);
+            return properties;
+        }
 
         public static SFSessionProperties GetKeyPairFromFilePathConnectionString(string privateKeyPath)
         {

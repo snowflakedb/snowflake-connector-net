@@ -62,6 +62,36 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
+        public string ConnectUsingOktaConnectionAndExecuteCustomCommand(string command, bool returnToken = false)
+        {
+            try
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    var parameters = AuthConnectionString.GetOktaConnectionString();
+                    conn.ConnectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    using (IDbCommand dbCommand = conn.CreateCommand())
+                    {
+                        dbCommand.CommandText = command;
+                        using (var reader = dbCommand.ExecuteReader())
+                        {
+                            if (returnToken && reader.Read())
+                            {
+                                return reader["token_secret"].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                _exception = e;
+            }
+            return null;
+        }
+
         public Thread GetConnectAndExecuteSimpleQueryThread(string parameters)
         {
             return new Thread(() => ConnectAndExecuteSimpleQuery(parameters));
