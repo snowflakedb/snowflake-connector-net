@@ -242,7 +242,13 @@ namespace Snowflake.Data.Core
         internal bool IsPoolingEnabledForConnectionCache()
         {
             var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
-            return !OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator);
+            var forbiddenAuthenticators = new Func<string, bool>[]
+            {
+                OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
+                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+            };
+            return !forbiddenAuthenticators.Any(f => f.Invoke(authenticator));
         }
 
         private void ValidateApplicationName(SFSessionProperties properties)

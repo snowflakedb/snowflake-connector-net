@@ -262,7 +262,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
         [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
         [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
-        public void TestConnectionCachePoolingDisabledOAuthAuthorizationCode(string connectionString)
+        [TestCase("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;")]
+        [TestCase("authenticator=programmatic_access_token;account=test;token=patToken")]
+        public void TestConnectionCachePoolingDisabledForNewAuthenticators(string connectionString)
         {
             // arrange
             var session = CreateSessionWithCurrentStartTime(connectionString);
