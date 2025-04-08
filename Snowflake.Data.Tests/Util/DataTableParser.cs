@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -10,19 +10,35 @@ namespace Snowflake.Data.Tests.Util
         internal static string GetFirstRowValue(DataTable dt, string colName)
         {
             var jsonString = dt.Rows[0][colName].ToString();
-            if (jsonString.Contains(':'))
+            var token = JToken.Parse(jsonString);
+
+            if (token.Type == JTokenType.Object)
             {
-                var keyValue = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString.Replace("[", "").Replace("]", ""));
-                var key = keyValue.Keys.First();
-                var Value = keyValue[key];
-                return $"{key}:{Value}";
+                return ParseKeyValue(token);
             }
-            else if (jsonString.Contains(','))
+            else if (token.Type == JTokenType.Array)
             {
-                var array = JsonConvert.DeserializeObject<List<string>>(jsonString);
-                return string.Join(",", array);
+                var array = token.ToObject<List<JToken>>();
+                if (array[0].Type == JTokenType.Object)
+                {
+                    return ParseKeyValue(array[0]);
+                }
+                else
+                {
+                    var list = token.ToObject<List<string>>();
+                    return string.Join(",", list);
+                }
             }
+
             return jsonString;
+        }
+
+        private static string ParseKeyValue(JToken token)
+        {
+            var keyValue = token.ToObject<Dictionary<string, string>>();
+            var key = keyValue.Keys.First();
+            var value = keyValue[key];
+            return $"{key}:{value}";
         }
     }
 }
