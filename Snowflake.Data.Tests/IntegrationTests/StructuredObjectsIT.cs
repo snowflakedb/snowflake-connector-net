@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     var key = "city";
-                    var value = "SanMateo";
+                    var value = "San Mateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::OBJECT(city VARCHAR)";
                     var colName = "colA";
                     command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
