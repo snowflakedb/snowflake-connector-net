@@ -92,6 +92,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270062)]
         STRUCTURED_TYPE_READ_DETAILED_ERROR,
 
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID,
+
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,
 
