@@ -76,7 +76,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                     ReleaseLock();
                 }
             }
-            s_logger.Info("Unable to get credentials for the specified key");
+            s_logger.Debug("Unable to get credentials for the specified key");
             return string.Empty;
         }
 
@@ -211,11 +211,11 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 return;
             var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
             _directoryOperations.CreateDirectory(fileStorage.JsonCacheDirectory);
-            SetSecureDirectory(fileStorage.JsonCacheDirectory);
+            CheckIfDirectoryIsSecure(fileStorage.JsonCacheDirectory);
             _fileStorage = fileStorage;
         }
 
-        private void SetSecureDirectory(string directory)
+        private void CheckIfDirectoryIsSecure(string directory)
         {
             var unixDirectoryInfo = _unixOperations.GetDirectoryInfo(directory);
             if (!unixDirectoryInfo.Exists) return;
@@ -223,22 +223,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             var userId = _unixOperations.GetCurrentUserId();
             if (!unixDirectoryInfo.IsSafeExactly(userId))
             {
-                SetSecureOwnershipAndPermissions(directory, userId);
-            }
-        }
-
-        private void SetSecureOwnershipAndPermissions(string directory, long userId)
-        {
-            var groupId = _unixOperations.GetCurrentGroupId();
-            var chownResult = _unixOperations.ChangeOwner(directory, (int) userId, (int) groupId);
-            if (chownResult == -1)
-            {
-                throw new SecurityException($"Could not set proper directory ownership for directory: {directory}");
-            }
-            var chmodResult = _unixOperations.ChangePermissions(directory, FileAccessPermissions.UserReadWriteExecute);
-            if (chmodResult == -1)
-            {
-                throw new SecurityException($"Could not set proper directory permissions for directory: {directory}");
+                s_logger.Warn($"Cache directory {directory} permissions or ownership is set to insecure values");
             }
         }
 
@@ -289,11 +274,17 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
             };
             if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
-                throw new SecurityException("Attempting to read or write a file not owned by the effective user of the current process");
+                ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
             if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
-                throw new SecurityException("Attempting to read or write a file not owned by the effective group of the current process");
+                ThrowSecurityException("Attempting to read or write a file not owned by the effective group of the current process");
             if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                throw new SecurityException("Attempting to read or write a file with too broad permissions assigned");
+                ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
+        }
+
+        private void ThrowSecurityException(string errorMessage)
+        {
+            s_logger.Error(errorMessage);
+            throw new SecurityException(errorMessage);
         }
     }
 }
