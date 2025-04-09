@@ -6,12 +6,10 @@ namespace Snowflake.Data.Core.Rest
     internal class RestRequestWrapper: BaseRestRequest, IRestRequest
     {
         private readonly HttpRequestMessage _httpRequestMessage;
-        private readonly TimeSpan _restTimeout;
 
-        public RestRequestWrapper(HttpRequestMessage httpRequestMessage, TimeSpan restTimeout)
+        public RestRequestWrapper(HttpRequestMessage httpRequestMessage)
         {
             _httpRequestMessage = httpRequestMessage;
-            _restTimeout = restTimeout;
         }
 
         public HttpRequestMessage ToRequestMessage(HttpMethod method)
@@ -19,9 +17,7 @@ namespace Snowflake.Data.Core.Rest
             return _httpRequestMessage;
         }
 
-        public TimeSpan GetRestTimeout()
-        {
-            return _restTimeout;
-        }
+        public TimeSpan GetRestTimeout() =>
+            (TimeSpan) _httpRequestMessage.Properties[REST_REQUEST_TIMEOUT_KEY];
     }
 }
