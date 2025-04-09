@@ -120,6 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
@@ -269,6 +270,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
