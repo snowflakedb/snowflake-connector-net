@@ -12,7 +12,6 @@ namespace Snowflake.Data.Core.Authenticator
     internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthFlowAuthenticator>();
-        private static readonly TimeSpan s_idpRestTimeout = TimeSpan.FromSeconds(120);
 
         internal SecureString AccessToken { get; private set; } = null;
 
@@ -121,7 +120,7 @@ namespace Snowflake.Data.Core.Authenticator
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
+                var restRequest = new RestRequestWrapper(accessTokenHttpRequest);
                 OAuthAccessTokenResponse accessTokenResponse = null;
                 try
                 {
@@ -147,7 +146,7 @@ namespace Snowflake.Data.Core.Authenticator
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
-                var restRequest = new RestRequestWrapper(accessTokenHttpRequest, s_idpRestTimeout);
+                var restRequest = new RestRequestWrapper(accessTokenHttpRequest);
                 OAuthAccessTokenResponse accessTokenResponse = null;
                 try
                 {

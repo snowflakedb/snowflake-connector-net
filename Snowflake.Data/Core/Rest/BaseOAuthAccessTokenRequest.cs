@@ -8,6 +8,8 @@ namespace Snowflake.Data.Core.Rest
 {
     internal abstract class BaseOAuthAccessTokenRequest
     {
+        public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+
         public string TokenEndpoint { get; set; }
 
         public string ClientId { get; set; }
@@ -16,9 +18,9 @@ namespace Snowflake.Data.Core.Rest
 
         public string AuthorizationScope { get; set; }
 
-        public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromSeconds(60);
+        public TimeSpan HttpTimeout { get; set; } = DefaultTimeout;
 
-        public TimeSpan RestTimeout { get; set; } = TimeSpan.FromSeconds(60);
+        public TimeSpan RestTimeout { get; set; } = DefaultTimeout;
 
         protected abstract Dictionary<string, string> GetRequestValues();
 
@@ -29,8 +31,8 @@ namespace Snowflake.Data.Core.Rest
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", authorizationHeader);
             requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             requestMessage.Content = GetContent();
-            requestMessage.Properties.Add("TIMEOUT_PER_HTTP_REQUEST", HttpTimeout);
-            requestMessage.Properties.Add("TIMEOUT_PER_REST_REQUEST", RestTimeout);
+            requestMessage.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            requestMessage.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return requestMessage;
         }
 
