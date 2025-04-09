@@ -394,7 +394,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var connectionString = GetClientCredentialsConnectionString(clientSecretInConnectionString, userInConnectionString) + connectionStringSuffix;
             var sessionContext = new SessionPropertiesContext
             {
-                AllowHttpForIdp = true,
                 OAuthClientSecret = clientSecretInConnectionString ? null : SecureStringHelper.Encode(ClientSecret)
             };
             return new SFSession(connectionString, sessionContext);

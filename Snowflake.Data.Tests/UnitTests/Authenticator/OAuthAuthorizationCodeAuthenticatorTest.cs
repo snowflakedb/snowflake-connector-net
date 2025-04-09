@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     [TestFixture]
     public class OAuthAuthorizationCodeAuthenticatorTest
     {
-        private const string Account = "testAccount";
+        private const string Account = "testaccount";
         private const string Host = Account + ".snowflakecomputing.com";
         private const int Port = 1080;
         private const string Scheme = "https";
