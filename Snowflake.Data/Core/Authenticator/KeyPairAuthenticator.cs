@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -49,6 +45,9 @@ namespace Snowflake.Data.Core.Authenticator
             this.session = session;
             this.rsaProvider = new RSACryptoServiceProvider();
         }
+
+        public static bool IsKeyPairAuthenticator(string authenticator) =>
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async public Task AuthenticateAsync(CancellationToken cancellationToken)

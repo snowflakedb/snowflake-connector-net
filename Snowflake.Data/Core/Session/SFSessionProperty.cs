@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -308,20 +304,21 @@ namespace Snowflake.Data.Core
 
         private static void ValidateAuthenticator(SFSessionProperties properties)
         {
-            var knownAuthenticators = new[] {
-                BasicAuthenticator.AUTH_NAME,
-                OktaAuthenticator.AUTH_NAME,
-                OAuthAuthenticator.AUTH_NAME,
-                KeyPairAuthenticator.AUTH_NAME,
-                ExternalBrowserAuthenticator.AUTH_NAME,
-                MFACacheAuthenticator.AuthName
+            var knownAuthenticators = new Func<string, bool>[]
+            {
+                BasicAuthenticator.IsBasicAuthenticator,
+                OktaAuthenticator.IsOktaAuthenticator,
+                OAuthAuthenticator.IsOAuthAuthenticator,
+                KeyPairAuthenticator.IsKeyPairAuthenticator,
+                ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
+                MFACacheAuthenticator.IsMfaCacheAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
             {
-                authenticator = authenticator.ToLower();
-                if (!knownAuthenticators.Contains(authenticator) && !(authenticator.Contains(OktaAuthenticator.AUTH_NAME) && authenticator.StartsWith("https://")))
+                if (!knownAuthenticators.Any(func => func(authenticator)))
                 {
+                    authenticator = authenticator.ToLower();
                     var error = $"Unknown authenticator: {authenticator}";
                     logger.Error(error);
                     throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
@@ -511,34 +508,32 @@ namespace Snowflake.Data.Core
                 var authenticatorDefined =
                     properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                var authenticatorsWithoutPassword = new List<string>()
+                var authenticatorsWithoutPassword = new Func<string, bool>[]
                 {
-                    ExternalBrowserAuthenticator.AUTH_NAME,
-                    KeyPairAuthenticator.AUTH_NAME,
-                    OAuthAuthenticator.AUTH_NAME
+                    ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
+                    KeyPairAuthenticator.IsKeyPairAuthenticator,
+                    OAuthAuthenticator.IsOAuthAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
-                return !authenticatorDefined || !authenticatorsWithoutPassword
-                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
+                return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));
             }
             else if (sessionProperty.Equals(SFSessionProperty.USER))
             {
                 var authenticatorDefined =
                    properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                var authenticatorsWithoutUsername = new List<string>()
+                var authenticatorsWithoutUsername = new Func<string, bool>[]
                 {
-                    OAuthAuthenticator.AUTH_NAME,
-                    ExternalBrowserAuthenticator.AUTH_NAME
+                    OAuthAuthenticator.IsOAuthAuthenticator,
+                    ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator
                 };
-                return !authenticatorDefined || !authenticatorsWithoutUsername
-                    .Any(auth => auth.Equals(authenticator, StringComparison.OrdinalIgnoreCase));
+                return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }
             else if (sessionProperty.Equals(SFSessionProperty.TOKEN))
             {
                 var authenticatorDefined = properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
 
-                return !authenticatorDefined || authenticator.Equals(OAuthAuthenticator.AUTH_NAME);
+                return !authenticatorDefined || OAuthAuthenticator.IsOAuthAuthenticator(authenticator);
             }
             else
             {

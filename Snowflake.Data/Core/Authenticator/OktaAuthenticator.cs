@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using Newtonsoft.Json;
 using System.Net.Http;
@@ -45,6 +41,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             _oktaUrl = new Uri(oktaUriString);
         }
+
+        public static bool IsOktaAuthenticator(string authenticator) =>
+            authenticator.Contains("okta") && authenticator.StartsWith("https://");
 
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)

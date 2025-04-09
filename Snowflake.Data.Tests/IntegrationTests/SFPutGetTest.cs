@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -798,7 +794,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var bytes = new byte[stream.Length];
             stream.Position = 0;
-            stream.Read(bytes, 0, (int) stream.Length);
+            var readBytes = stream.Read(bytes, 0, (int) stream.Length);
+            Assert.AreEqual(stream.Length, readBytes);
             return Encoding.UTF8.GetString(bytes).Split('\n');
         }
 

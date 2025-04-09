@@ -1,7 +1,4 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
+﻿using System;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +13,9 @@ namespace Snowflake.Data.Core.Authenticator
         internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
         {
         }
+
+        public static bool IsBasicAuthenticator(string authenticator) =>
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)

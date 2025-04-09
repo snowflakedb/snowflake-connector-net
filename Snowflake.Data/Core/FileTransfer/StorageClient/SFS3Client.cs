@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;

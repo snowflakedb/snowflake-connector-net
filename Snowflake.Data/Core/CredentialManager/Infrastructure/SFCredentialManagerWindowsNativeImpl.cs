@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Runtime.InteropServices;
@@ -50,6 +46,10 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             using (var critCred = new CriticalCredentialHandle(nCredPtr))
             {
                 var cred = critCred.GetCredential();
+                if (cred.CredentialBlob.Length > (int)cred.CredentialBlobSize / 2)
+                {
+                    return cred.CredentialBlob.Substring(0, (int)(cred.CredentialBlobSize / 2));
+                }
                 return cred.CredentialBlob;
             }
         }
