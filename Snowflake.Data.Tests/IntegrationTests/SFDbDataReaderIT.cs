@@ -1636,6 +1636,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        [TestCase("array")]
+        [TestCase("object")]
+        [TestCase("variant")]
+        public void TestDataTableLoadOnSemiStructuredColumn(string type)
+        {
+            using (var conn = CreateAndOpenConnection())
+            {
+                var colName = "c1";
+                var expectedVal = "id:1";
+                CreateOrReplaceTable(conn, TableName, new[] { $"{colName} {type}" });
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    string insertCommand = $"insert into {TableName} select parse_json('{{{expectedVal}}}')";
+                    cmd.CommandText = insertCommand;
+
+                    var count = cmd.ExecuteNonQuery();
+                    Assert.AreEqual(1, count);
+
+                    cmd.CommandText = $"select {colName} from {TableName}";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        ValidateResultFormat(reader);
+                        var dt = new DataTable();
+                        dt.Load(reader);
+                        Assert.AreEqual(expectedVal, DataTableParser.GetFirstRowValue(dt, colName));
+                    }
+                }
+            }
+        }
+
         private DbConnection CreateAndOpenConnection()
         {
             var conn = new SnowflakeDbConnection(ConnectionString);
