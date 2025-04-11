@@ -1,3 +1,4 @@
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
@@ -25,17 +26,9 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            using (FileStream fs = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-            {
-                using (var writer = new StreamWriter(fs))
-                {
-                    writer.Write(formattedMessage);
-                    if (ex != null)
-                    {
-                        writer.WriteLine(ex.Message);
-                    }
-                }
-            }
+            FileOperations.Instance.Write(_logFilePath, formattedMessage);
+            if (ex != null)
+                FileOperations.Instance.Write(_logFilePath, ex.Message);
         }
         catch
         {
@@ -46,13 +39,13 @@ internal class SFRollingFileAppender : SFAppender
     public void ActivateOptions()
     {
         var logDir = Path.GetDirectoryName(_logFilePath);
-        if (!Directory.Exists(logDir))
+        if (!DirectoryOperations.Instance.Exists(logDir))
         {
-            Directory.CreateDirectory(logDir);
+            DirectoryOperations.Instance.CreateDirectory(logDir);
         }
-        if (!File.Exists(_logFilePath))
+        if (!FileOperations.Instance.Exists(_logFilePath))
         {
-            File.Create(_logFilePath).Dispose();
+            FileOperations.Instance.Create(_logFilePath);
         }
     }
 
@@ -76,5 +69,8 @@ internal class SFRollingFileAppender : SFAppender
         {
             File.Delete(oldRollFile);
         }
+
+        if (!FileOperations.Instance.Exists(_logFilePath))
+            FileOperations.Instance.Create(_logFilePath);
     }
 }
