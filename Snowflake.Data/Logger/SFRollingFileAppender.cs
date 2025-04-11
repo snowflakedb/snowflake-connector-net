@@ -3,7 +3,6 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 internal class SFRollingFileAppender : SFAppender
 {
@@ -31,9 +30,9 @@ internal class SFRollingFileAppender : SFAppender
             if (ex != null)
                 FileOperations.Instance.Write(_logFilePath, ex.Message, null, true);
         }
-        catch
+        catch (Exception e)
         {
-            Console.Error.WriteLine("Encountered an error while writing log to file");
+            Console.Error.WriteLine("Encountered an error while writing log to file: " + e.Message);
         }
     }
 
@@ -46,10 +45,7 @@ internal class SFRollingFileAppender : SFAppender
         }
         if (!FileOperations.Instance.Exists(_logFilePath))
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                FileOperations.Instance.Create(_logFilePath).Dispose();
-            else
-                FileOperations.Instance.Create(_logFilePath);
+            FileOperations.Instance.Create(_logFilePath).Dispose();
         }
     }
 
@@ -74,9 +70,7 @@ internal class SFRollingFileAppender : SFAppender
             File.Delete(oldRollFile);
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (!FileOperations.Instance.Exists(_logFilePath))
             FileOperations.Instance.Create(_logFilePath).Dispose();
-        else
-            FileOperations.Instance.Create(_logFilePath);
     }
 }
