@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

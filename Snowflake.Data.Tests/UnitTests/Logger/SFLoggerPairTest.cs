@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
