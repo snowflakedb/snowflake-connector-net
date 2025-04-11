@@ -37,10 +37,9 @@ internal class SFRollingFileAppender : SFAppender
                 }
             }
         }
-        catch (Exception logEx)
+        catch
         {
-            Console.WriteLine($"Unable to log the following message:\n{formattedMessage}" +
-                $"Due to the error: {logEx.Message}\n");
+            Console.Error.WriteLine("Encountered an error while writing log to file");
         }
     }
 
