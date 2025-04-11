@@ -26,9 +26,9 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            FileOperations.Instance.Write(_logFilePath, formattedMessage);
+            FileOperations.Instance.Write(_logFilePath, formattedMessage, null, true);
             if (ex != null)
-                FileOperations.Instance.Write(_logFilePath, ex.Message);
+                FileOperations.Instance.Write(_logFilePath, ex.Message, null, true);
         }
         catch
         {
@@ -45,7 +45,7 @@ internal class SFRollingFileAppender : SFAppender
         }
         if (!FileOperations.Instance.Exists(_logFilePath))
         {
-            FileOperations.Instance.Create(_logFilePath);
+            FileOperations.Instance.Create(_logFilePath).Dispose();
         }
     }
 
@@ -71,6 +71,6 @@ internal class SFRollingFileAppender : SFAppender
         }
 
         if (!FileOperations.Instance.Exists(_logFilePath))
-            FileOperations.Instance.Create(_logFilePath);
+            FileOperations.Instance.Create(_logFilePath).Dispose();
     }
 }
