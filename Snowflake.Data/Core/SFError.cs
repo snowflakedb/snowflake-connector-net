@@ -98,6 +98,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270064)]
         OAUTH_TOKEN_REQUEST_ERROR,
 
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID,
+
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,
 

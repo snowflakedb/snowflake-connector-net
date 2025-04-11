@@ -30,14 +30,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
+                _clientStoreTemporaryCredential = clientStoreTemporaryCredential,
                 connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 insecureMode = false,
                 disableRetry = false,
                 forceRetryOn404 = false,
                 retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 maxHttpRetries = 7,
-                proxyProperties = proxyProperties,
-                _clientStoreTemporaryCredential = clientStoreTemporaryCredential
+                proxyProperties = proxyProperties
             };
 
             // act

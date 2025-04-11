@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -10,6 +11,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class StructuredObjectIT: StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnStructuredObject()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var key = "city";
+                    var value = "San Mateo";
+                    var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::OBJECT(city VARCHAR)";
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
+
+                    // act
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+
+                        // assert
+                        Assert.AreEqual($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectStructuredTypeObject()
         {

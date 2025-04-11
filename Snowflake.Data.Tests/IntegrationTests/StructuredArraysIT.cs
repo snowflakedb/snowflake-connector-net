@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -12,6 +13,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class StructuredArraysIT: StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnStructuredArray()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var expectedValueA = 'a';
+                    var expectedValueB = 'b';
+                    var expectedValueC = 'c';
+                    var arraySFString = $"ARRAY_CONSTRUCT('{expectedValueA}','{expectedValueB}','{expectedValueC}')::ARRAY(TEXT)";
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {arraySFString} AS {colName}";
+
+                    // act
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+
+                        // assert
+                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", DataTableParser.GetFirstRowValue(dt, colName));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectArray()
         {
