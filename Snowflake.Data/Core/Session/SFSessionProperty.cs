@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.Tools;
+using System.Runtime.InteropServices;
 
 namespace Snowflake.Data.Core
 {
@@ -109,6 +110,8 @@ namespace Snowflake.Data.Core
         POOLINGENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         DISABLE_SAML_URL_CHECK,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
+        CLIENT_STORE_TEMPORARY_CREDENTIAL,
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         PASSCODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
@@ -120,6 +123,8 @@ namespace Snowflake.Data.Core
         public bool required { get; set; }
 
         public string defaultValue { get; set; }
+
+        public string defaultNonWindowsValue { get; set; }
 
         public bool IsSecret { get; set; } = false;
     }
@@ -264,6 +269,7 @@ namespace Snowflake.Data.Core
 
             ValidateAuthenticator(properties);
             ValidatePasscodeInPassword(properties);
+            ValidateClientStoreTemporaryCredential(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
@@ -339,6 +345,23 @@ namespace Snowflake.Data.Core
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
                         "",
                         SFSessionProperty.PASSCODEINPASSWORD.ToString());
+                }
+            }
+        }
+
+        private static void ValidateClientStoreTemporaryCredential(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, out var clientStoreTemporaryCredential))
+            {
+                if (!bool.TryParse(clientStoreTemporaryCredential, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        "",
+                        SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL.ToString());
                 }
             }
         }
@@ -445,6 +468,7 @@ namespace Snowflake.Data.Core
 
         private static void CheckSessionProperties(SFSessionProperties properties)
         {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 // if required property, check if exists in the dictionary
@@ -465,10 +489,19 @@ namespace Snowflake.Data.Core
 
                 // add default value to the map
                 string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
-                if (defaultVal != null && !properties.ContainsKey(sessionProperty))
+                string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
+                if (!properties.ContainsKey(sessionProperty))
                 {
-                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
-                    properties.Add(sessionProperty, defaultVal);
+                    if (defaultNonWindowsVal != null && !isWindows)
+                    {
+                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultNonWindowsVal}");
+                        properties.Add(sessionProperty, defaultNonWindowsVal);
+                    }
+                    else if (defaultVal != null)
+                    {
+                        logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
+                        properties.Add(sessionProperty, defaultVal);
+                    }
                 }
             }
         }
