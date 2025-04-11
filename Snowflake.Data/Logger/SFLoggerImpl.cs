@@ -9,10 +9,10 @@ namespace Snowflake.Data.Log
         internal static List<SFAppender> s_appenders = new List<SFAppender>();
         internal static LoggingEvent s_level = LoggingEvent.OFF;
 
-        private static bool _isDebugEnabled = false;
-        private static bool _isInfoEnabled = false;
-        private static bool _isWarnEnabled = false;
-        private static bool _isErrorEnabled = false;
+        private static bool s_isDebugEnabled = false;
+        private static bool s_isInfoEnabled = false;
+        private static bool s_isWarnEnabled = false;
+        private static bool s_isErrorEnabled = false;
 
         internal SFLoggerImpl(Type type)
         {
@@ -28,10 +28,10 @@ namespace Snowflake.Data.Log
         private static void SetEnableValues()
         {
             var enabled = s_level != LoggingEvent.OFF;
-            _isDebugEnabled = enabled;
-            _isInfoEnabled = enabled;
-            _isWarnEnabled = enabled;
-            _isErrorEnabled = enabled;
+            s_isDebugEnabled = enabled;
+            s_isInfoEnabled = enabled;
+            s_isWarnEnabled = enabled;
+            s_isErrorEnabled = enabled;
 
             if (enabled)
             {
@@ -41,16 +41,16 @@ namespace Snowflake.Data.Log
                     case LoggingEvent.DEBUG:
                         break;
                     case LoggingEvent.ERROR:
-                        _isWarnEnabled = false;
-                        _isInfoEnabled = false;
-                        _isDebugEnabled = false;
+                        s_isWarnEnabled = false;
+                        s_isInfoEnabled = false;
+                        s_isDebugEnabled = false;
                         break;
                     case LoggingEvent.WARN:
-                        _isInfoEnabled = false;
-                        _isDebugEnabled = false;
+                        s_isInfoEnabled = false;
+                        s_isDebugEnabled = false;
                         break;
                     case LoggingEvent.INFO:
-                        _isDebugEnabled = false;
+                        s_isDebugEnabled = false;
                         break;
                 }
             }
@@ -58,22 +58,22 @@ namespace Snowflake.Data.Log
 
         public bool IsDebugEnabled()
         {
-            return _isDebugEnabled;
+            return s_isDebugEnabled;
         }
 
         public bool IsInfoEnabled()
         {
-            return _isInfoEnabled;
+            return s_isInfoEnabled;
         }
 
         public bool IsWarnEnabled()
         {
-            return _isWarnEnabled;
+            return s_isWarnEnabled;
         }
 
         public bool IsErrorEnabled()
         {
-            return _isErrorEnabled;
+            return s_isErrorEnabled;
         }
 
         public void Debug(string msg, Exception ex = null)
