@@ -26,11 +26,6 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            var logDir = Path.GetDirectoryName(_logFilePath);
-            if (!DirectoryOperations.Instance.Exists(logDir))
-            {
-                Console.Error.WriteLine("Directory does not exist: " + logDir);
-            }
             if (!FileOperations.Instance.Exists(_logFilePath))
             {
                 Console.Error.WriteLine("File does not exist: " + _logFilePath);
@@ -42,6 +37,7 @@ internal class SFRollingFileAppender : SFAppender
         catch (Exception e)
         {
             Console.Error.WriteLine("Encountered an error while writing log to file: " + e.Message);
+            Console.Error.WriteLine("Log: " + message);
         }
     }
 
