@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials("key", "token");
 
             // assert
-            t_fileOperations.Verify(f => f.Write(s_customJsonPath, It.IsAny<string>(), It.IsAny<Action<UnixStream>>()), Times.Never);
+            t_fileOperations.Verify(f => f.Write(s_customJsonPath, It.IsAny<string>(), It.IsAny<Action<UnixStream>>(), It.IsAny<bool>()), Times.Never);
         }
 
         [Test]
