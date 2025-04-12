@@ -16,6 +16,7 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions)
         {
+            Console.WriteLine("Create directory: " + path);
             var fullPath = Path.GetFullPath(path);
             var splitDirectories = fullPath.Split(Path.DirectorySeparatorChar);
 
@@ -23,6 +24,7 @@ namespace Snowflake.Data.Core.Tools
             foreach (var dir in splitDirectories)
             {
                 dirPath = Path.Combine(dirPath, dir);
+                Console.WriteLine("Create single directory: " + dirPath);
 
                 if (Directory.Exists(dirPath) || dirPath == Path.PathSeparator.ToString())
                 {
@@ -44,6 +46,8 @@ namespace Snowflake.Data.Core.Tools
             try
             {
                 new UnixDirectoryInfo(path).Create(permissions);
+                if (Directory.Exists(path))
+                    Console.WriteLine("Successfully created single directory: " + path);
             }
             catch (Exception e)
             {
@@ -53,14 +57,20 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions)
         {
+            Console.WriteLine("Create file for Unix: " + path);
             var dirPath = Path.GetDirectoryName(path);
             if (dirPath != null)
             {
+                Console.WriteLine("Directory for file does not exist: " + dirPath);
                 CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
             }
 
             s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
-            return new UnixFileInfo(path).Create(permissions);
+            var stream = new UnixFileInfo(path).Create(permissions);
+            if (!File.Exists(path))
+                Console.WriteLine("File was not successfully created: " + dirPath);
+            return stream;
+            //return new UnixFileInfo(path).Create(permissions);
         }
 
         public virtual FileAccessPermissions GetFilePermissions(string path)
