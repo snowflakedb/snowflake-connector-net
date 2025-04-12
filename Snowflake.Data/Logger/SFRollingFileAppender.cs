@@ -33,8 +33,9 @@ internal class SFRollingFileAppender : SFAppender
         catch (Exception e)
         {
             Console.Error.WriteLine("Encountered an error while writing log to file");
-            Console.Error.WriteLine(e.Message);
-            Console.Error.WriteLine(message);
+            Console.Error.WriteLine("Error message: " + e.Message);
+            Console.Error.WriteLine("Log message: " + message);
+            Console.Error.WriteLine("Log file path: " + _logFilePath);
         }
     }
 
