@@ -127,14 +127,16 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             appenders.Remove(appenders[0]);
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
-            appenders.Add(new SFRollingFileAppender()
+            var appender = new SFRollingFileAppender()
             {
                 _name = "RollingFileAppender",
                 _logFilePath = Path.Combine(t_directoryLogPath, logFileName),
                 _maximumFileSizeInBytes = 1,
                 _maxSizeRollBackups = expecetedBackupLogCount,
                 _patternLayout = EasyLoggerManager.PatternLayout()
-            });
+            };
+            appender.ActivateOptions();
+            appenders.Add(appender);
 
             // act
             for (int i = 0; i < 5; i++)
