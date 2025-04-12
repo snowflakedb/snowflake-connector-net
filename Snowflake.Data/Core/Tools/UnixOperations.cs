@@ -53,7 +53,6 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions)
         {
-            Console.WriteLine("Create file for Unix: " + path);
             var dirPath = Path.GetDirectoryName(path);
             if (dirPath != null)
             {

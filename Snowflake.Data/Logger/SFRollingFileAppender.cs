@@ -26,18 +26,13 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            if (!FileOperations.Instance.Exists(_logFilePath))
-            {
-                Console.Error.WriteLine("File does not exist: " + _logFilePath);
-            }
             FileOperations.Instance.Write(_logFilePath, formattedMessage, null, true);
             if (ex != null)
                 FileOperations.Instance.Write(_logFilePath, ex.Message, null, true);
         }
-        catch (Exception e)
+        catch
         {
-            Console.Error.WriteLine("Encountered an error while writing log to file: " + e.Message);
-            Console.Error.WriteLine("Log: " + message);
+            Console.Error.WriteLine("Encountered an error while writing log to file");
         }
     }
 
