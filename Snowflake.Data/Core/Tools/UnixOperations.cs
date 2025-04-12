@@ -59,7 +59,8 @@ namespace Snowflake.Data.Core.Tools
                 CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
             }
 
-            s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
+            if (!path.Contains(".log"))
+                s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }
 
