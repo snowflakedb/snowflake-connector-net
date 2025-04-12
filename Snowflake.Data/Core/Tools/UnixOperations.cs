@@ -58,8 +58,9 @@ namespace Snowflake.Data.Core.Tools
             {
                 CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
             }
-
+            Console.WriteLine($"Creating a file {path}");
             if (!path.Contains(".log"))
+                Console.WriteLine($"Does not contain .log {path}");
                 s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }

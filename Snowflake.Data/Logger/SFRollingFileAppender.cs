@@ -30,9 +30,11 @@ internal class SFRollingFileAppender : SFAppender
             if (ex != null)
                 FileOperations.Instance.Write(_logFilePath, ex.Message, null, true);
         }
-        catch
+        catch (Exception e)
         {
             Console.Error.WriteLine("Encountered an error while writing log to file");
+            Console.Error.WriteLine(e.Message);
+            Console.Error.WriteLine(message);
         }
     }
 
@@ -40,13 +42,9 @@ internal class SFRollingFileAppender : SFAppender
     {
         var logDir = Path.GetDirectoryName(_logFilePath);
         if (!DirectoryOperations.Instance.Exists(logDir))
-        {
             DirectoryOperations.Instance.CreateDirectory(logDir);
-        }
         if (!FileOperations.Instance.Exists(_logFilePath))
-        {
             FileOperations.Instance.Create(_logFilePath).Dispose();
-        }
     }
 
     private bool LogFileIsTooLarge()
