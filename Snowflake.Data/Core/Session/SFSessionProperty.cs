@@ -432,8 +432,8 @@ namespace Snowflake.Data.Core
 
         private static void WarnIfHttpUsed(SFSessionProperties properties)
         {
-            var schema = properties[SFSessionProperty.SCHEME];
-            if (schema != "https")
+            var scheme = properties[SFSessionProperty.SCHEME];
+            if (scheme != "https")
             {
                 var message = $"Insecure {SFSessionProperty.SCHEME} property value. Http protocol is not secure.";
                 logger.Warn(message);
