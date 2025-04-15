@@ -6,15 +6,12 @@ using System.Linq;
 
 internal class SFRollingFileAppender : SFAppender
 {
-    internal string _name;
     internal string _logFilePath;
     internal long _maximumFileSizeInBytes;
     internal int _maxSizeRollBackups;
     internal PatternLayout _patternLayout;
 
     public SFRollingFileAppender() { }
-
-    public string Name => _name;
 
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
