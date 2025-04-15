@@ -13,8 +13,6 @@ namespace Snowflake.Data.Core.Session
 
         public SecureString Token { get; set; } = null;
 
-        public bool AllowHttpForIdp { get; set; } = false;
-
         public void FillSecrets(SFSessionProperties properties)
         {
             FillSecret(properties, SFSessionProperty.PASSWORD, Password);

@@ -233,15 +233,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected string DefaultSnowflakeEndpoint(string relativeUrl)
         {
-            var host = RequiredProperty(SFSessionProperty.HOST);
-            var scheme = RequiredProperty(SFSessionProperty.SCHEME);
-            if (!scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.SCHEME.ToString()} was expected to be https");
-            }
-            var hostWithProtocol = host.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? host : "https://" + host;
-            var port = RequiredProperty(SFSessionProperty.PORT);
-            return $"{hostWithProtocol}:{port}{relativeUrl}";
+            return session.BuildUri(relativeUrl).ToString();
         }
 
         protected string RequiredProperty(SFSessionProperty property)
