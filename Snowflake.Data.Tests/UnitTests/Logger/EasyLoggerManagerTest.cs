@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 _logFilePath = Path.Combine(t_directoryLogPath, logFileName),
                 _maximumFileSizeInBytes = 1,
                 _maxSizeRollBackups = expecetedBackupLogCount,
-                _patternLayout = EasyLoggerManager.PatternLayout()
+                PatternLayout = EasyLoggerManager.PatternLayout()
             };
             appender.ActivateOptions();
             appenders.Add(appender);

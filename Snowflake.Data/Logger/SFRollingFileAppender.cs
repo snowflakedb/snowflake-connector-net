@@ -9,13 +9,14 @@ internal class SFRollingFileAppender : SFAppender
     internal string _logFilePath;
     internal long _maximumFileSizeInBytes;
     internal int _maxSizeRollBackups;
-    internal PatternLayout _patternLayout;
+
+    internal PatternLayout PatternLayout { get; set; }
 
     public SFRollingFileAppender() { }
 
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
-        var formattedMessage = _patternLayout.Format(logLevel, message, type);
+        var formattedMessage = PatternLayout.Format(logLevel, message, type);
         try
         {
             if (LogFileIsTooLarge())
