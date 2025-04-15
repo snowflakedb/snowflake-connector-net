@@ -5,10 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Snowflake.Data.Core.CredentialManager;
 using System.Security;
+using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SecureString _idToken;
 
-        internal BrowserOperations _browserOperations = BrowserOperations.Instance;
+        private WebBrowserStarter _browserStarter = WebBrowserStarter.Instance;
 
         /// <summary>
         /// Constructor of the External authenticator
@@ -65,9 +65,9 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        internal ExternalBrowserAuthenticator(SFSession session, BrowserOperations browserOperations) : this(session)
+        internal ExternalBrowserAuthenticator(SFSession session, IWebBrowserRunner browserRunner) : this(session)
         {
-            _browserOperations = browserOperations;
+            _browserStarter = new WebBrowserStarter(browserRunner);
         }
 
         public static bool IsExternalBrowserAuthenticator(string authenticator) =>
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core.Authenticator
                     logger.Debug("Get IdpUrl and ProofKey");
                     var loginUrl = await GetIdpUrlAndProofKeyAsync(localPort, cancellationToken).ConfigureAwait(false);
                     logger.Debug("Open browser");
-                    StartBrowser(loginUrl);
+                    _browserStarter.StartBrowser(loginUrl);
                     logger.Debug("Get the redirect SAML request");
                     GetRedirectSamlRequest(httpListener);
                     httpListener.Stop();
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Core.Authenticator
                     logger.Debug("Get IdpUrl and ProofKey");
                     var loginUrl = GetIdpUrlAndProofKey(localPort);
                     logger.Debug("Open browser");
-                    StartBrowser(loginUrl);
+                    _browserStarter.StartBrowser(loginUrl);
                     logger.Debug("Get the redirect SAML request");
                     GetRedirectSamlRequest(httpListener);
                     httpListener.Stop();
@@ -283,24 +283,6 @@ namespace Snowflake.Data.Core.Authenticator
             listener.Prefixes.Add($"http://{IPAddress.Loopback}:{port}/");
             listener.Prefixes.Add($"http://localhost:{port}/");
             return listener;
-        }
-
-        private void StartBrowser(string url)
-        {
-            string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
-            Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                logger.Error("Failed to start browser. Invalid url.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
-            }
-            var uri = new Uri(url);
-            if (url != uri.ToString())
-            {
-                logger.Error("Failed to start browser. Invalid uri.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
-            }
-            _browserOperations.OpenUrl(uri);
         }
 
         private string ValidateAndExtractToken(HttpListenerRequest request)

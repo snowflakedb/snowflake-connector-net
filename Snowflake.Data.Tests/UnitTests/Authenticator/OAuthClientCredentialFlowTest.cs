@@ -81,7 +81,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
-        [Ignore("temporarily ignored until the feature branch is updated with reading tokens fix from master branch")]
         public void TestSuccessfulClientCredentialFlowWithDefaultCache()
         {
             // arrange

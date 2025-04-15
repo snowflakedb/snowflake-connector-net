@@ -22,22 +22,22 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
             string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
             Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success)
+            if (!m.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 ThrowInvalidBrowserUrlException();
             }
-            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            var uri = new Uri(url);
+            if (url != uri.ToString())
             {
                 ThrowInvalidBrowserUrlException();
             }
-            _runner.Run(url);
+            _runner.Run(uri);
         }
 
         private void ThrowInvalidBrowserUrlException()
         {
-            var errorMessage = "Failed to start browser. Invalid url.";
-            s_logger.Error(errorMessage);
-            throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, errorMessage);
+            s_logger.Error("Failed to start browser. Invalid url.");
+            throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, "****");
         }
     }
 }
