@@ -10,10 +10,18 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public virtual HttpListener StartHttpListener(string url)
         {
+            return StartHttpListener(new [] { url });
+        }
+
+        public virtual HttpListener StartHttpListener(string[] urls)
+        {
             var listener = new HttpListener();
             try
             {
-                listener.Prefixes.Add(url);
+                foreach (var url in urls)
+                {
+                    listener.Prefixes.Add(url);
+                }
                 listener.Start();
             }
             catch (Exception)

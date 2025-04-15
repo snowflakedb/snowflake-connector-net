@@ -3,7 +3,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core.Authenticator.Browser
 {
-    internal class AuthorizationCodeError : IBrowserError
+    internal class BrowserError : IBrowserError
     {
         public string BrowserMessage { get; set; }
 
