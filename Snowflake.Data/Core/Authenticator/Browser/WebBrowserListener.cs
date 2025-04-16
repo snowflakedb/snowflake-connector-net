@@ -63,9 +63,19 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             HttpListener httpListener = (HttpListener) result.AsyncState;
             if (httpListener.IsListening)
             {
-                HttpListenerContext context = httpListener.EndGetContext(result);
-                HttpListenerRequest request = context.Request;
+                HttpListenerContext context = null;
+                try
+                {
+                    context = httpListener.EndGetContext(result);
+                }
+                catch (HttpListenerException ex)
+                {
+                    s_logger.Error("Error while trying to get context from HttpListener", ex);
+                    _successEvent.Set();
+                    return;
+                }
 
+                HttpListenerRequest request = context.Request;
                 bool success;
                 try
                 {
