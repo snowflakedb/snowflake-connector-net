@@ -29,6 +29,11 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             var uri = new Uri(url);
             if (url != uri.ToString())
             {
+                if (url.StartsWith("http://localhost:1080/oauth/authorize?client_id=123"))
+                {
+                    s_logger.Warn($"!!!!!! url: {url}");
+                    s_logger.Warn($"!!!!!! uri.ToString(): {uri}");
+                }
                 ThrowInvalidBrowserUrlException();
             }
             _runner.Run(uri);
