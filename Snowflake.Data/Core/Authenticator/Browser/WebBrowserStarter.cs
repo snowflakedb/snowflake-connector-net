@@ -21,19 +21,15 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         public void StartBrowser(string url)
         {
             string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
-            Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            Match urlMatch = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
+            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 ThrowInvalidBrowserUrlException();
             }
             var uri = new Uri(url);
-            if (url != uri.ToString())
+            var uriMatch = Regex.Match(uri.ToString(), regexStr, RegexOptions.IgnoreCase);
+            if (!uriMatch.Success || !Uri.IsWellFormedUriString(uri.ToString(), UriKind.Absolute))
             {
-                if (url.StartsWith("http://localhost:1080/oauth/authorize?client_id=123"))
-                {
-                    s_logger.Warn($"!!!!!! url: {url}");
-                    s_logger.Warn($"!!!!!! uri.ToString(): {uri}");
-                }
                 ThrowInvalidBrowserUrlException();
             }
             _runner.Run(uri);
