@@ -71,7 +71,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
                 catch (HttpListenerException ex)
                 {
                     s_logger.Error("Error while trying to get context from HttpListener", ex);
-                    _successEvent.Set();
+                    WakeUpAwaitingThread();
                     return;
                 }
 
@@ -104,7 +104,23 @@ namespace Snowflake.Data.Core.Authenticator.Browser
                     RespondToBrowserWithError(context);
                 }
             }
-            _successEvent.Set();
+            WakeUpAwaitingThread();
+        }
+
+        private void WakeUpAwaitingThread()
+        {
+            try
+            {
+                _successEvent.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                s_logger.Warn("Could not wake up the thread waiting for the browser response because the resource was already disposed");
+            }
+            catch (Exception exception)
+            {
+                s_logger.Warn("Could not wake up the thread waiting for the browser response because of error", exception);
+            }
         }
 
         private void RespondToBrowser(HttpListenerContext context)
