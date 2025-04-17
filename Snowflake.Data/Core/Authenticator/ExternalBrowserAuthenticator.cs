@@ -205,7 +205,7 @@ namespace Snowflake.Data.Core.Authenticator
             using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(httpListener, extractor, SuccessResponse, ErrorResponse))
             {
                 logger.Debug("Open browser");
-                _browserStarter.StartBrowser(loginUrl);
+                _browserStarter.StartBrowser(new Url(loginUrl));
                 return browserListener.WaitAndGetResult(timeout).Token;
             }
         }

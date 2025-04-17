@@ -16,8 +16,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
             // arrange
             var runner = new Mock<WebBrowserRunner>();
             var webBrowserStarter = new WebBrowserStarter(runner.Object);
-            var validUrl = "http://localhost:8001/endpoint1";
-            var uri = new Uri(validUrl);
+            var validUrl = new Url("http://localhost:8001/endpoint1");
+            var uri = new Uri(validUrl.Value);
 
             // act
             webBrowserStarter.StartBrowser(validUrl);
@@ -34,9 +34,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
             // arrange
             var runner = new Mock<WebBrowserRunner>();
             var webBrowserStarter = new WebBrowserStarter(runner.Object);
+            var url = new Url(invalidUrl);
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => webBrowserStarter.StartBrowser(invalidUrl));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => webBrowserStarter.StartBrowser(url));
 
             // assert
             Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);

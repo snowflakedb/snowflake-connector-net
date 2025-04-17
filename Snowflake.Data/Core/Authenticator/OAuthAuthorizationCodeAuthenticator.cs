@@ -121,8 +121,8 @@ You can close this window now and go back where you started from.
             using (var httpListener = StartListenerUpdatingRedirectUri(request))
             using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
             {
-                var authorizationCodeUrlString = request.GetUrl();
-                _browserStarter.StartBrowser(authorizationCodeUrlString);
+                var authorizationCodeUrl = request.GetUrl();
+                _browserStarter.StartBrowser(authorizationCodeUrl);
                 return browserListener.WaitAndGetResult(timeout);
             }
         }

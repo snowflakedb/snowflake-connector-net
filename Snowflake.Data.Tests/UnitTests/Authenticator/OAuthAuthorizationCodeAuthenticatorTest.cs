@@ -6,6 +6,7 @@ using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Session;
 using Moq;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
@@ -29,6 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_defaultAuthorizationEndpoint = $"https://{Host}:{Port}/oauth/authorize";
         private const int RandomPort = 1234;
         private static readonly string s_defaultRedirectUri = $"http://127.0.0.1:{RandomPort}/";
+        private const string CodeVerifier = "codeVerifierForAuthorizationCodeFlowMustBeALongString";
 
         [Test]
         public void TestUseDefaultValues()
@@ -109,6 +111,29 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             listenerStarter.Verify(s => s.GetRandomUnusedPort(), Times.Never);
         }
 
+        [Test]
+        public void TestBrowserShouldFailWithExceptionWithMaskedUrl()
+        {
+            // arrange
+            var customizedProperties = $"oauthScope={AuthorizationScope};oauthAuthorizationUrl={ExternalAuthorizationUrl};oauthTokenRequestUrl={ExternalTokenUrl};oauthRedirectUri={CustomRedirectUri};";
+            var browserRunner = new Mock<IWebBrowserRunner>();
+            var listenerStarter = new Mock<WebListenerStarter>();
+            var authenticator = PrepareAuthenticator(browserRunner.Object, listenerStarter.Object, customizedProperties);
+            var authorizationData = authenticator.PrepareAuthorizationData();
+            var url = authorizationData.Request.GetUrl();
+            var invalidUrl = new Url(url.Value.Replace("https://", "ftp://"), url.ValueWithoutSecrets.Replace("https://", "ftp://"));
+            var browserStarter = new WebBrowserStarter(browserRunner.Object);
+            var expectedUrlInException = "ftp://localhost:8888/oauth/authorize?client_id=****&response_type=code&redirect_uri=http%3a%2f%2flocalhost%3a8001%2foauth%2fredirect&scope=session%3arole%3aANALYST&code_challenge=xqXLsNRtro84G9aBLgX4c7djUqmrzbJCrW39HerS5Hk&code_challenge_method=S256&state=****";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => browserStarter.StartBrowser(invalidUrl));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Invalid browser url"));
+            var urlInException = thrown.Message.Split("\"")[1];
+            Assert.AreEqual(expectedUrlInException, urlInException);
+        }
+
         private OAuthAuthorizationCodeAuthenticator PrepareAuthenticator(
             IWebBrowserRunner browserRunner,
             WebListenerStarter listenerStarter,
@@ -120,6 +145,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var challengeProvider = new Mock<ChallengeProvider>();
             challengeProvider.Setup(c => c.GenerateState())
                 .Returns(State);
+            challengeProvider.Setup(c => c.GenerateCodeVerifier())
+                .Returns(new CodeVerifier(CodeVerifier));
             var webBrowserMock = new WebBrowserStarter(browserRunner);
             var authenticator = new OAuthAuthorizationCodeAuthenticator(session, challengeProvider.Object, webBrowserMock, listenerStarter);
             session.ReplaceAuthenticator(authenticator);

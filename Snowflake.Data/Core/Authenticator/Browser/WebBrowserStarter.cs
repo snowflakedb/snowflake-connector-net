@@ -20,20 +20,20 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             _runner = runner;
         }
 
-        public void StartBrowser(string url)
+        public void StartBrowser(Url url)
         {
             ValidateUrl(url);
-            var uri = new Uri(url);
+            var uri = new Uri(url.Value);
             _runner.Run(uri);
         }
 
-        private void ValidateUrl(string url)
+        private void ValidateUrl(Url url)
         {
-            Match urlMatch = Regex.Match(url, UrlRegexString, RegexOptions.IgnoreCase);
-            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            Match urlMatch = Regex.Match(url.Value, UrlRegexString, RegexOptions.IgnoreCase);
+            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url.Value, UriKind.Absolute))
             {
                 s_logger.Error("Failed to start browser. Invalid url.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, "****");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url.ValueWithoutSecrets);
             }
         }
     }
