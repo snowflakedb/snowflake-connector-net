@@ -201,7 +201,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            var extractor = new Func<HttpListenerRequest, Result<ExternalBrowserToken, IBrowserError>>(httpRequest => ValidateAndExtractToken(httpRequest));
+            var extractor = new Func<HttpListenerRequest, Result<ExternalBrowserToken, IBrowserError>>(ValidateAndExtractToken);
             using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(httpListener, extractor, SuccessResponse, ErrorResponse))
             {
                 logger.Debug("Open browser");
