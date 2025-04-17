@@ -27,8 +27,9 @@ namespace Snowflake.Data.Core.Authenticator.Browser
                 ThrowInvalidBrowserUrlException();
             }
             var uri = new Uri(url);
-            var uriMatch = Regex.Match(uri.ToString(), regexStr, RegexOptions.IgnoreCase);
-            if (!uriMatch.Success || !Uri.IsWellFormedUriString(uri.ToString(), UriKind.Absolute))
+            var absolutUri = uri.AbsoluteUri;
+            var uriMatch = Regex.Match(absolutUri, regexStr, RegexOptions.IgnoreCase);
+            if (!uriMatch.Success || !Uri.IsWellFormedUriString(absolutUri, UriKind.Absolute))
             {
                 ThrowInvalidBrowserUrlException();
             }

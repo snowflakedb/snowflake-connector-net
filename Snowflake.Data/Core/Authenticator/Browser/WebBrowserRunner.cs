@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public virtual void Run(Uri uri)
         {
-            var url = uri.ToString();
+            var url = uri.AbsoluteUri;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo();
