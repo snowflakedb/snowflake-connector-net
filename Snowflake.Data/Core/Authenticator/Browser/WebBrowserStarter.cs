@@ -22,8 +22,8 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public void StartBrowser(string url)
         {
+            ValidateUrl(url);
             var uri = new Uri(url);
-            ValidateUrl(uri.AbsoluteUri);
             _runner.Run(uri);
         }
 
