@@ -7,6 +7,8 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 {
     internal class WebBrowserStarter
     {
+        private const string UrlRegexString = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WebBrowserStarter>();
 
         private readonly IWebBrowserRunner _runner;
@@ -20,26 +22,20 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public void StartBrowser(string url)
         {
-            string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
-            Match urlMatch = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                ThrowInvalidBrowserUrlException();
-            }
+            ValidateUrl(url);
             var uri = new Uri(url);
-            var absolutUri = uri.AbsoluteUri;
-            var uriMatch = Regex.Match(absolutUri, regexStr, RegexOptions.IgnoreCase);
-            if (!uriMatch.Success || !Uri.IsWellFormedUriString(absolutUri, UriKind.Absolute))
-            {
-                ThrowInvalidBrowserUrlException();
-            }
+            ValidateUrl(uri.AbsoluteUri);
             _runner.Run(uri);
         }
 
-        private void ThrowInvalidBrowserUrlException()
+        private void ValidateUrl(string url)
         {
-            s_logger.Error("Failed to start browser. Invalid url.");
-            throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, "****");
+            Match urlMatch = Regex.Match(url, UrlRegexString, RegexOptions.IgnoreCase);
+            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            {
+                s_logger.Error("Failed to start browser. Invalid url.");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, "****");
+            }
         }
     }
 }
