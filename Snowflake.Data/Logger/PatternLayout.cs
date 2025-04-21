@@ -3,13 +3,13 @@ using System.Threading;
 
 internal class PatternLayout
 {
-    internal string _conversionPattern;
+    internal string ConversionPattern { get; set; }
 
     public PatternLayout() { }
 
     public string Format(string logLevel, string message, Type type)
     {
-        var formattedMessage = _conversionPattern
+        var formattedMessage = ConversionPattern
             .Replace("%date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
             .Replace("%t", Thread.CurrentThread.ManagedThreadId.ToString())
             .Replace("%-5level", logLevel)

@@ -91,7 +91,7 @@ namespace Snowflake.Data.Log
         {
             var patternLayout = new PatternLayout
             {
-                _conversionPattern = "[%date] [%t] [%-5level] [%logger] %message%newline"
+                ConversionPattern = "[%date] [%t] [%-5level] [%logger] %message%newline"
             };
             return patternLayout;
         }
