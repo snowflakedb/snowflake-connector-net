@@ -5,8 +5,6 @@ internal class PatternLayout
 {
     internal string ConversionPattern { get; set; }
 
-    public PatternLayout() { }
-
     public string Format(string logLevel, string message, Type type)
     {
         var formattedMessage = ConversionPattern
