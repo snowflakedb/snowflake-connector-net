@@ -6,9 +6,11 @@ using System.Linq;
 
 internal class SFRollingFileAppender : SFAppender
 {
-    internal string _logFilePath;
-    internal long _maximumFileSizeInBytes;
-    internal int _maxSizeRollBackups;
+    internal string LogFilePath { get; set; }
+
+    internal long MaximumFileSizeInBytes { get; set; }
+
+    internal int MaxSizeRollBackups { get; set; }
 
     internal PatternLayout PatternLayout { get; set; }
 
@@ -24,9 +26,9 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            FileOperations.Instance.Write(_logFilePath, formattedMessage, null, true);
+            FileOperations.Instance.Write(LogFilePath, formattedMessage, null, true);
             if (ex != null)
-                FileOperations.Instance.Write(_logFilePath, ex.Message, null, true);
+                FileOperations.Instance.Write(LogFilePath, ex.Message, null, true);
         }
         catch
         {
@@ -36,35 +38,35 @@ internal class SFRollingFileAppender : SFAppender
 
     public void ActivateOptions()
     {
-        var logDir = Path.GetDirectoryName(_logFilePath);
+        var logDir = Path.GetDirectoryName(LogFilePath);
         if (!DirectoryOperations.Instance.Exists(logDir))
             DirectoryOperations.Instance.CreateDirectory(logDir);
-        if (!FileOperations.Instance.Exists(_logFilePath))
-            FileOperations.Instance.Create(_logFilePath).Dispose();
+        if (!FileOperations.Instance.Exists(LogFilePath))
+            FileOperations.Instance.Create(LogFilePath).Dispose();
     }
 
     private bool LogFileIsTooLarge()
     {
-        FileInfo fileInfo = new FileInfo(_logFilePath);
-        return fileInfo.Exists && fileInfo.Length > _maximumFileSizeInBytes;
+        FileInfo fileInfo = new FileInfo(LogFilePath);
+        return fileInfo.Exists && fileInfo.Length > MaximumFileSizeInBytes;
     }
 
     private void RollLogFile()
     {
-        string rollFilePath = $"{_logFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
-        File.Move(_logFilePath, rollFilePath);
+        string rollFilePath = $"{LogFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
+        File.Move(LogFilePath, rollFilePath);
 
-        var logDirectory = Path.GetDirectoryName(_logFilePath);
-        var logFileName = Path.GetFileName(_logFilePath);
+        var logDirectory = Path.GetDirectoryName(LogFilePath);
+        var logFileName = Path.GetFileName(LogFilePath);
         var rollFiles = Directory.GetFiles(logDirectory, $"{logFileName}.*.bak")
             .OrderByDescending(f => f)
-            .Skip(_maxSizeRollBackups);
+            .Skip(MaxSizeRollBackups);
         foreach (var oldRollFile in rollFiles)
         {
             File.Delete(oldRollFile);
         }
 
-        if (!FileOperations.Instance.Exists(_logFilePath))
-            FileOperations.Instance.Create(_logFilePath).Dispose();
+        if (!FileOperations.Instance.Exists(LogFilePath))
+            FileOperations.Instance.Create(LogFilePath).Dispose();
     }
 }

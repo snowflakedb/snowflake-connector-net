@@ -67,9 +67,9 @@ namespace Snowflake.Data.Log
             var appender = new SFRollingFileAppender
             {
                 PatternLayout = patternLayout,
-                _logFilePath = Path.Combine(directoryPath, logFileName),
-                _maximumFileSizeInBytes = 1000000000, // "1GB"
-                _maxSizeRollBackups = 2,
+                LogFilePath = Path.Combine(directoryPath, logFileName),
+                MaximumFileSizeInBytes = 1000000000, // "1GB"
+                MaxSizeRollBackups = 2,
             };
             appender.ActivateOptions();
             SFLoggerImpl.s_appenders.Add(appender);

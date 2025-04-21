@@ -129,9 +129,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
             var appender = new SFRollingFileAppender()
             {
-                _logFilePath = Path.Combine(t_directoryLogPath, logFileName),
-                _maximumFileSizeInBytes = 1,
-                _maxSizeRollBackups = expecetedBackupLogCount,
+                LogFilePath = Path.Combine(t_directoryLogPath, logFileName),
+                MaximumFileSizeInBytes = 1,
+                MaxSizeRollBackups = expecetedBackupLogCount,
                 PatternLayout = EasyLoggerManager.PatternLayout()
             };
             appender.ActivateOptions();
