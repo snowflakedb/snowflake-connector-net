@@ -387,6 +387,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize", "Required property OAUTHTOKENREQUESTURL is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=https://okta.com/token-request", "Required property OAUTHAUTHORIZATIONURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Missing or invalid protocol in the OAUTHAUTHORIZATIONURL url")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=okta.com/token-request", "Missing or invalid protocol in the OAUTHTOKENREQUESTURL url")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthClientSecret=def;poolingEnabled=true;", "You cannot enable pooling for oauth authorization code authentication without specifying a user in the connection string.")]
         public void TestOAuthAuthorizationCodeMissingOrInvalidParameters(string connectionString, string errorMessage)
         {
