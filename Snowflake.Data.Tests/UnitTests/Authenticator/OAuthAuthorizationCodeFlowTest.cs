@@ -90,7 +90,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
-        [Ignore("temporarily ignored until the feature branch is updated with reading tokens fix from master branch")]
         public void TestSuccessfulAuthorizationCodeFlowWithDefaultCache()
         {
             // arrange
@@ -454,6 +453,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var challengeProvider = new Mock<ChallengeProvider>();
             challengeProvider.Setup(c => c.GenerateState())
                 .Returns("abc123");
+            challengeProvider.Setup(c => c.GenerateCodeVerifier())
+                .CallBase();
             var webBrowserMock = new WebBrowserStarter(new MockBrowser());
             var authenticator = new OAuthAuthorizationCodeAuthenticator(session, challengeProvider.Object, webBrowserMock, WebListenerStarter.Instance);
             session.ReplaceAuthenticator(authenticator);

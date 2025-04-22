@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using Snowflake.Data.Core.Authenticator.Browser;
 
@@ -12,9 +13,9 @@ namespace Snowflake.Data.Tests.Mock
             _httpClient = new HttpClient();
         }
 
-        public void Run(string url)
+        public void Run(Uri uri)
         {
-            _httpClient.GetAsync(url); // we should not wait for the response because in case of 302 Redirect it will be sent to a different endpoint so we won't get a response here
+            _httpClient.GetAsync(uri.ToString()); // we should not wait for the response because in case of 302 Redirect it will be sent to a different endpoint so we won't get a response here
         }
     }
 }

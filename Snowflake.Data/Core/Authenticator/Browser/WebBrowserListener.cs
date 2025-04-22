@@ -19,6 +19,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         private T _result;
         private string _browserError;
         private Exception _exception;
+        private bool _isDisposed;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WebBrowserListener<T>>();
 
@@ -32,6 +33,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             _result = null;
             _browserError = null;
             _exception = null;
+            _isDisposed = false;
         }
 
         public T WaitAndGetResult(TimeSpan timeout)
@@ -60,12 +62,24 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         private void GetContextCallback(IAsyncResult result)
         {
+            if (_isDisposed)
+                return;
             HttpListener httpListener = (HttpListener) result.AsyncState;
             if (httpListener.IsListening)
             {
-                HttpListenerContext context = httpListener.EndGetContext(result);
-                HttpListenerRequest request = context.Request;
+                HttpListenerContext context = null;
+                try
+                {
+                    context = httpListener.EndGetContext(result);
+                }
+                catch (HttpListenerException ex)
+                {
+                    s_logger.Error("Error while trying to get context from HttpListener", ex);
+                    WakeUpAwaitingThread();
+                    return;
+                }
 
+                HttpListenerRequest request = context.Request;
                 bool success;
                 try
                 {
@@ -94,7 +108,23 @@ namespace Snowflake.Data.Core.Authenticator.Browser
                     RespondToBrowserWithError(context);
                 }
             }
-            _successEvent.Set();
+            WakeUpAwaitingThread();
+        }
+
+        private void WakeUpAwaitingThread()
+        {
+            try
+            {
+                _successEvent.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                s_logger.Warn("Could not wake up the thread waiting for the browser response because the resource was already disposed");
+            }
+            catch (Exception exception)
+            {
+                s_logger.Warn("Could not wake up the thread waiting for the browser response because of error", exception);
+            }
         }
 
         private void RespondToBrowser(HttpListenerContext context)
@@ -136,8 +166,12 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public void Dispose()
         {
-            ((IDisposable)_httpListener)?.Dispose();
-            _successEvent?.Dispose();
+            if (!_isDisposed)
+            {
+                _isDisposed = true;
+                ((IDisposable)_httpListener)?.Dispose();
+                _successEvent?.Dispose();
+            }
         }
     }
 }

@@ -7,6 +7,8 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 {
     internal class WebBrowserStarter
     {
+        private const string UrlRegexString = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WebBrowserStarter>();
 
         private readonly IWebBrowserRunner _runner;
@@ -18,26 +20,21 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             _runner = runner;
         }
 
-        public void StartBrowser(string url)
+        public void StartBrowser(Url url)
         {
-            string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
-            Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success)
-            {
-                ThrowInvalidBrowserUrlException();
-            }
-            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                ThrowInvalidBrowserUrlException();
-            }
-            _runner.Run(url);
+            ValidateUrl(url);
+            var uri = new Uri(url.Value);
+            _runner.Run(uri);
         }
 
-        private void ThrowInvalidBrowserUrlException()
+        private void ValidateUrl(Url url)
         {
-            var errorMessage = "Failed to start browser. Invalid url.";
-            s_logger.Error(errorMessage);
-            throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, errorMessage);
+            Match urlMatch = Regex.Match(url.Value, UrlRegexString, RegexOptions.IgnoreCase);
+            if (!urlMatch.Success || !Uri.IsWellFormedUriString(url.Value, UriKind.Absolute))
+            {
+                s_logger.Error("Failed to start browser. Invalid url.");
+                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url.ValueWithoutSecrets);
+            }
         }
     }
 }

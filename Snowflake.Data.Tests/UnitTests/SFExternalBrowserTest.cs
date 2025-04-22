@@ -5,13 +5,13 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
-using Snowflake.Data.Core.Tools;
 using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -20,21 +20,21 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFExternalBrowserTest
     {
         [ThreadStatic]
-        private static Mock<BrowserOperations> t_browserOperations;
+        private static Mock<IWebBrowserRunner> t_browserRunner;
 
         private static HttpClient s_httpClient = new HttpClient();
 
         [SetUp]
         public void BeforeEach()
         {
-            t_browserOperations = new Mock<BrowserOperations>();
+            t_browserRunner = new Mock<IWebBrowserRunner>();
         }
 
         [Test]
         public void TestDefaultAuthentication()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -44,19 +44,19 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
-            t_browserOperations.VerifyNoOtherCalls();
+            t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
+            t_browserRunner.VerifyNoOtherCalls();
         }
 
         [Test]
         public void TestConsoleLogin()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
@@ -68,11 +68,11 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
-            t_browserOperations.VerifyNoOtherCalls();
+            t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
+            t_browserRunner.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -93,14 +93,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
 
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<Uri>()), Times.Never);
+            t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Never);
         }
 
         [Test]
         public void TestThatTokenIsStoredWhenCacheIsEnabled()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 IdToken = expectedIdToken
             };
             var sfSession = new SFSession($"client_store_temporary_credential=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
@@ -128,8 +128,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatTokenIsNotStoredWhenCacheIsDisabled()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -145,7 +145,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 IdToken = expectedIdToken
             };
             var sfSession = new SFSession($"client_store_temporary_credential=false;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
@@ -157,8 +157,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatRetriesAuthenticationForInvalidIdToken()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -179,13 +179,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 ThrowInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SFExternalBrowserTest.SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(invalidIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
             sfSession.Open();
 
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<Uri>()), Times.Once);
+            t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Once);
             Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
@@ -214,8 +214,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback(async (Uri uri) => {
                     await Task.Delay(1000).ContinueWith(_ =>
                     {
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=false;browser_response_timeout=0;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
             Assert.AreEqual(SFError.BROWSER_RESPONSE_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
@@ -262,8 +262,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatThrowsErrorWhenBrowserRequestMethodIsNotGet()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.PostAsync(uri.ToString(), new StringContent(""));
                 });
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
             Assert.AreEqual(SFError.BROWSER_RESPONSE_WRONG_METHOD.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
@@ -281,8 +281,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatThrowsErrorWhenBrowserRequestHasInvalidQuery()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     var urlWithoutQuery = uri.ToString().Substring(0, uri.ToString().IndexOf("?token="));
                     s_httpClient.GetAsync(urlWithoutQuery);
@@ -293,7 +293,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("CLIENT_STORE_TEMPORARY_CREDENTIAL=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             var thrown = Assert.Throws<SnowflakeDbException>(() => sfSession.Open());
             Assert.AreEqual(SFError.BROWSER_RESPONSE_INVALID_PREFIX.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
@@ -301,8 +301,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestDefaultAuthenticationAsync()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -312,20 +312,20 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
             Assert.IsTrue(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
-            t_browserOperations.VerifyNoOtherCalls();
+            t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
+            t_browserRunner.VerifyNoOtherCalls();
         }
 
         [Test]
         public void TestConsoleLoginAsync()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
@@ -337,13 +337,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 ProofKey = "mockProofKey",
             };
             var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
             Assert.IsFalse(sfSession._disableConsoleLogin);
-            t_browserOperations.Verify(b => b.OpenUrl(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
-            t_browserOperations.VerifyNoOtherCalls();
+            t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
+            t_browserRunner.VerifyNoOtherCalls();
         }
 
         [Test]
@@ -365,14 +365,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<Uri>()), Times.Never());
+            t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Never());
         }
 
         [Test]
         public void TestThatTokenIsStoredWhenCacheIsEnabledAsync()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 IdToken = expectedIdToken
             };
             var sfSession = new SFSession($"client_store_temporary_credential=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
@@ -401,8 +401,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatTokenIsNotStoredWhenCacheIsDisabledAsync()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -418,7 +418,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 IdToken = expectedIdToken
             };
             var sfSession = new SFSession($"client_store_temporary_credential=false;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
@@ -431,8 +431,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestThatRetriesAuthenticationForInvalidIdTokenAsync()
         {
-            t_browserOperations
-                .Setup(b => b.OpenUrl(It.IsAny<Uri>()))
+            t_browserRunner
+                .Setup(b => b.Run(It.IsAny<Uri>()))
                 .Callback((Uri uri) => {
                     s_httpClient.GetAsync(uri.ToString());
                 });
@@ -453,14 +453,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 ThrowInvalidIdToken = true
             };
             var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-            SFExternalBrowserTest.SetAuthenticatorWithMockBrowser(sfSession, t_browserOperations.Object);
+            SFExternalBrowserTest.SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
             Assert.AreEqual(invalidIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
-            t_browserOperations.Verify(b => b.OpenUrl(It.IsAny<Uri>()), Times.Once);
+            t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Once);
             Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
@@ -487,9 +487,9 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        private static void SetAuthenticatorWithMockBrowser(SFSession session, BrowserOperations browserOperations)
+        private static void SetAuthenticatorWithMockBrowser(SFSession session, IWebBrowserRunner browserRunner)
         {
-            var authenticator = new ExternalBrowserAuthenticator(session, browserOperations);
+            var authenticator = new ExternalBrowserAuthenticator(session, browserRunner);
             session.authenticator = authenticator;
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Client;
@@ -12,14 +13,16 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
         }
 
-        public virtual void Run(string url)
+        public virtual void Run(Uri uri)
         {
-            // The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
-            // hack because of this: https://github.com/dotnet/corefx/issues/10361
+            var url = uri.AbsoluteUri;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                url = url.Replace("&", "^&");
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { UseShellExecute = true });
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.FileName = System.IO.Path.Combine(Environment.SystemDirectory, "rundll32.exe");
+                startInfo.Arguments = $"url.dll,FileProtocolHandler {url}";
+                startInfo.UseShellExecute = false;
+                Process.Start(startInfo);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {

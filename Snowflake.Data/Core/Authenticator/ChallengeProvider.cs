@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core.Authenticator
             return Guid.NewGuid().ToString().Replace("-", "");
         }
 
-        public CodeVerifier GenerateCodeVerifier()
+        public virtual CodeVerifier GenerateCodeVerifier()
         {
             Random random = new Random();
             byte[] randomness = new byte[48];
