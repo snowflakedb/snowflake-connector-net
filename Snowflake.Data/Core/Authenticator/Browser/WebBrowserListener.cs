@@ -19,6 +19,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         private T _result;
         private string _browserError;
         private Exception _exception;
+        private bool _isDisposed;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WebBrowserListener<T>>();
 
@@ -32,6 +33,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             _result = null;
             _browserError = null;
             _exception = null;
+            _isDisposed = false;
         }
 
         public T WaitAndGetResult(TimeSpan timeout)
@@ -60,6 +62,8 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         private void GetContextCallback(IAsyncResult result)
         {
+            if (_isDisposed)
+                return;
             HttpListener httpListener = (HttpListener) result.AsyncState;
             if (httpListener.IsListening)
             {
@@ -162,8 +166,12 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public void Dispose()
         {
-            ((IDisposable)_httpListener)?.Dispose();
-            _successEvent?.Dispose();
+            if (!_isDisposed)
+            {
+                _isDisposed = true;
+                ((IDisposable)_httpListener)?.Dispose();
+                _successEvent?.Dispose();
+            }
         }
     }
 }

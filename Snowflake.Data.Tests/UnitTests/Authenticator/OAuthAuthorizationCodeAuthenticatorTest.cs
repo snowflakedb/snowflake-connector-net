@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.That(thrown.Message, Does.Contain("Invalid browser url"));
-            var urlInException = thrown.Message.Split("\"")[1];
+            var urlInException = thrown.Message.Split('\"')[1];
             Assert.AreEqual(expectedUrlInException, urlInException);
         }
 
