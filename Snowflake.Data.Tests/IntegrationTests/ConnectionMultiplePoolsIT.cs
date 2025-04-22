@@ -440,5 +440,71 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.OpenAsync().ConfigureAwait(false);
             return connection;
         }
+
+        [Test]
+        public void TestReturningCancelledSessionsToThePool()
+        {
+            var _connectionString = ConnectionString + "maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
+
+            async Task RunQueryAsync(int threadId, CancellationToken cancellationToken)
+            {
+                await using var connection = new SnowflakeDbConnection(_connectionString);
+                await connection.OpenAsync(cancellationToken);
+
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT SYSTEM$WAIT(4)";
+
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            int ThreadCount = 5;
+            int ThreadsToCancel = 2;
+
+            var tasks = new Task[ThreadCount];
+            var ctsList = new CancellationTokenSource[ThreadCount];
+
+            // start 2 threads to cancel
+            for (int i = 0; i < ThreadsToCancel; i++)
+            {
+                int threadId = i;
+                ctsList[i] = new CancellationTokenSource();
+                tasks[i] = Task.Run(() => RunQueryAsync(threadId, ctsList[threadId].Token));
+            }
+
+            // let them start
+            Thread.Sleep(2000);
+
+            // start 3 additional threads
+            for (int i = ThreadsToCancel; i < ThreadCount; i++)
+            {
+                int threadId = i;
+                ctsList[i] = new CancellationTokenSource();
+                tasks[i] = Task.Run(() => RunQueryAsync(threadId, ctsList[threadId].Token));
+            }
+
+            Thread.Sleep(1000);
+
+            // cancel 2 first threads
+            for (int i = 0; i < ThreadsToCancel; i++)
+            {
+                ctsList[i].CancelAsync(); // don't await
+            }
+
+            // check if 2 first threads was cancelled
+            for (int i = 0; i < ThreadsToCancel; i++)
+            {
+                var thrown = Assert.Throws<AggregateException>(() => tasks[i].Wait());
+                Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
+            }
+
+            // check if 3 additional threads finished without an exception
+            for (int i = ThreadsToCancel; i < ThreadCount; i++)
+            {
+                Assert.DoesNotThrow(() => tasks[i].Wait());
+            }
+
+            // checkif pool size is 2
+            Assert.AreEqual(2, SnowflakeDbConnectionPool.GetPool(_connectionString).GetCurrentPoolSize());
+        }
     }
 }

@@ -314,7 +314,6 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
-            registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
             FillConnectionStringFromTomlConfigIfNotSet();
             return SnowflakeDbConnectionPool
@@ -421,20 +420,6 @@ namespace Snowflake.Data.Client
             }
 
             base.Dispose(disposing);
-        }
-
-
-        /// <summary>
-        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
-        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
-        /// </summary>
-        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-        internal void registerConnectionCancellationCallback(CancellationToken externalCancellationToken)
-        {
-            if (!externalCancellationToken.IsCancellationRequested)
-            {
-                externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
-            }
         }
 
         public bool IsStillRunning(QueryStatus status)
