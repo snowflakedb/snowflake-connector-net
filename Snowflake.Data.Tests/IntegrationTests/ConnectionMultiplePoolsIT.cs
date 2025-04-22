@@ -446,7 +446,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var _connectionString = ConnectionString + "maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
 
-            async Task RunQueryAsync(int threadId, CancellationToken cancellationToken)
+            async Task RunQueryAsync(int threadId, int sleepTime, CancellationToken cancellationToken)
             {
                 using (var connection = new SnowflakeDbConnection(_connectionString))
                 {
@@ -454,7 +454,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     using (var command = connection.CreateCommand())
                     {
-                        command.CommandText = "SELECT SYSTEM$WAIT(4)";
+                        command.CommandText = $"SELECT SYSTEM$WAIT({sleepTime})";
 
                         await command.ExecuteNonQueryAsync(cancellationToken);
                     }
@@ -472,7 +472,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 int threadId = i;
                 ctsList[i] = new CancellationTokenSource();
-                tasks[i] = Task.Run(() => RunQueryAsync(threadId, ctsList[threadId].Token));
+                tasks[i] = Task.Run(() => RunQueryAsync(threadId, 20, ctsList[threadId].Token));
             }
 
             // let them start
@@ -483,7 +483,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 int threadId = i;
                 ctsList[i] = new CancellationTokenSource();
-                tasks[i] = Task.Run(() => RunQueryAsync(threadId, ctsList[threadId].Token));
+                tasks[i] = Task.Run(() => RunQueryAsync(threadId, 2, ctsList[threadId].Token));
             }
 
             Thread.Sleep(1000);

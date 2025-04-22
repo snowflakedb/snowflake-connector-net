@@ -432,9 +432,14 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch
+            catch (OperationCanceledException ex)
             {
-                logger.Error("Query execution failed.");
+                logger.Warn($"Query execution canceled. {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Query execution failed.", ex);
                 throw;
             }
             finally
