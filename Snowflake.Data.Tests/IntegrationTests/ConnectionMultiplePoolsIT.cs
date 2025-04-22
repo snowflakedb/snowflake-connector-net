@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestReturningCancelledSessionsToThePool()
+        public void TestReturningCancelledSessionsToThePool([Values]bool bCancelAsync)
         {
             var _connectionString = ConnectionString + "maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
 
@@ -487,7 +487,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // cancel 2 first threads
             for (int i = 0; i < ThreadsToCancel; i++)
             {
-                ctsList[i].CancelAsync(); // don't await
+                if (bCancelAsync)
+#if NET8_0_OR_GREATER
+                    ctsList[i].CancelAsync(); // don't await
+#else
+                    ctsList[i].Cancel();
+#endif
+                else
+                    ctsList[i].Cancel();
             }
 
             // check if 2 first threads was cancelled
