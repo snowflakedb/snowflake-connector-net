@@ -448,13 +448,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             async Task RunQueryAsync(int threadId, CancellationToken cancellationToken)
             {
-                await using var connection = new SnowflakeDbConnection(_connectionString);
-                await connection.OpenAsync(cancellationToken);
+                using (var connection = new SnowflakeDbConnection(_connectionString))
+                {
+                    await connection.OpenAsync(cancellationToken);
 
-                await using var command = connection.CreateCommand();
-                command.CommandText = "SELECT SYSTEM$WAIT(4)";
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "SELECT SYSTEM$WAIT(4)";
 
-                await command.ExecuteNonQueryAsync(cancellationToken);
+                        await command.ExecuteNonQueryAsync(cancellationToken);
+                    }
+                }
             }
 
             int ThreadCount = 5;
