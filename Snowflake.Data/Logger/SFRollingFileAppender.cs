@@ -14,8 +14,6 @@ internal class SFRollingFileAppender : SFAppender
 
     internal PatternLayout PatternLayout { get; set; }
 
-    public SFRollingFileAppender() { }
-
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
         var formattedMessage = PatternLayout.Format(logLevel, message, type);
