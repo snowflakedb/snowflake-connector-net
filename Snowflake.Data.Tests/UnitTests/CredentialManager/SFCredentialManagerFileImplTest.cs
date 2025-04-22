@@ -258,9 +258,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Test]
-        public void TestChangeCacheDirPermissionsWhenInsecure()
+        public void TestThatDoesNotChangeCacheDirPermissionsWhenInsecure()
         {
             // arrange
+            var insecurePermissions = FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead;
             var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CredentialCacheDirectoryEnvironmentName))
@@ -269,7 +270,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             try
             {
                 DirectoryOperations.Instance.CreateDirectory(tempDirectory);
-                UnixOperations.Instance.ChangePermissions(tempDirectory, FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead);
+                UnixOperations.Instance.ChangePermissions(tempDirectory, insecurePermissions);
 
                 // act
                 _credentialManager.SaveCredentials("key", "token");
@@ -277,7 +278,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
                 // assert
                 Assert.AreEqual("token", result);
-                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+                Assert.AreEqual(insecurePermissions, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
             }
             finally
             {

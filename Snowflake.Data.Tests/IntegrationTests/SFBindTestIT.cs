@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System;
 using System.Data;
@@ -63,7 +63,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestBindNullValue()
+        [TestCaseSource(nameof(NullTestCases))]
+        public void TestBindNullValue(object nullValue)
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -119,6 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
@@ -154,7 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         if (isTypeSupported)
                         {
                             command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
-                            param.Value = DBNull.Value;
+                            param.Value = nullValue;
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
                             Assert.AreEqual(1, rowsInserted);
@@ -164,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             try
                             {
                                 command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
-                                param.Value = DBNull.Value;
+                                param.Value = nullValue;
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
                             }
@@ -198,6 +200,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+
+        private static IEnumerable<object?> NullTestCases() =>
+            new object?[] { DBNull.Value, null };
 
         [Test]
         public void TestBindValue()
@@ -265,6 +270,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
