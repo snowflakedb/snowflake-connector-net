@@ -15,6 +15,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
                 //command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON";
                 //command.ExecuteNonQuery();
+                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = ARROW";
+                command.ExecuteNonQuery();
 
                 //command.CommandText = "alter session set ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = true;";
                 //command.ExecuteNonQuery();
