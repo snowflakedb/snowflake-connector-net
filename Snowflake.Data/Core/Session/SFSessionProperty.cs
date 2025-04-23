@@ -449,6 +449,12 @@ namespace Snowflake.Data.Core
         private static string ValidateOAuthUrl(SFSessionProperties properties, SFSessionProperty oauthUrlProperty)
         {
             var url = properties.ExtractPropertyOrEmptyString(oauthUrlProperty);
+            if (!string.IsNullOrEmpty(url) && !url.StartsWith("https://") && !url.StartsWith("http://"))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Missing or invalid protocol in the {oauthUrlProperty} url.");
+                logger.Error("Invalid connection string", exception);
+                throw exception;
+            }
             if (!string.IsNullOrEmpty(url) && !url.StartsWith("https://"))
             {
                 var message = $"Insecure {oauthUrlProperty.ToString()} property value. It does not start with 'https://'";
