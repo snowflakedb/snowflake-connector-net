@@ -66,6 +66,8 @@ namespace Snowflake.Data.Core
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             DriverName = ".NET";
+            //DriverVersion = "3.12.3";
+            //DriverName = "JDBC";
         }
 
         //temporary change for pretend as ODBC

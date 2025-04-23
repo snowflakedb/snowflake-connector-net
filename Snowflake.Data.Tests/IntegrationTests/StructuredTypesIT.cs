@@ -13,8 +13,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
                 command.CommandText = "alter session set IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true";
                 command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON";
-                command.ExecuteNonQuery();
+                //command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON";
+                //command.ExecuteNonQuery();
+
+                //command.CommandText = "alter session set ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = true;";
+                //command.ExecuteNonQuery();
+                //command.CommandText = "alter session set FORCE_ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = true;";
+                //command.ExecuteNonQuery();
+                //command.CommandText = $"alter session set JDBC_QUERY_RESULT_FORMAT = JSON";
+                //command.ExecuteNonQuery();
+
+                //command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = ARROW";
+                //command.ExecuteNonQuery();
             }
         }
 
