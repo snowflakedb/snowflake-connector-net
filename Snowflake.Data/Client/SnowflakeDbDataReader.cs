@@ -311,7 +311,9 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
+                Console.WriteLine($"stringValue: {stringValue}");
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
+                Console.WriteLine($"json: {json}");
                 return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
             }
             catch (Exception e)

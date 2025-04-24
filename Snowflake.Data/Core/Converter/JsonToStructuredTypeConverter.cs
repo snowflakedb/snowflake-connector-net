@@ -31,6 +31,9 @@ namespace Snowflake.Data.Core.Converter
             var type = typeof(Dictionary<TKey, TValue>);
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
+            Console.WriteLine($"type: {type}");
+            Console.WriteLine($"keyType: {keyType}");
+            Console.WriteLine($"valueType: {valueType}");
             return (Dictionary<TKey, TValue>) ConvertToMap(type, keyType, valueType, fields, new StructurePath(), value);
         }
 

@@ -10,6 +10,7 @@ namespace Snowflake.Data.Core.Converter
 
         public static SnowflakeDbException ToSnowflakeDbException(Exception exception, string context)
         {
+            Console.WriteLine($"ToSnowflakeDbException exception: {exception.Message}");
             if (exception is StructuredTypesReadingException)
             {
                 s_logger.Debug("Exception caught when reading structured types", exception);
