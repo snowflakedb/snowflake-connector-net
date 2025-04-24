@@ -155,7 +155,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        internal void RemoveTokenCache(string tokenHost, string user, TokenType tokenType)
+        internal void RemoveTokenFromCache(string tokenHost, string user, TokenType tokenType)
         {
             var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(tokenHost, user, tokenType);
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);

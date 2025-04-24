@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Host = Account + ".snowflakecomputing.com";
         private const int Port = 1080;
         private const string Scheme = "https";
-        private const string Role = "ACOUNTADMIN";
+        private const string Role = "ACCOUNTADMIN";
         private const string ClientId = "123";
         private const string ClientSecret = "1234";
         private const string AuthorizationScope = "session:role:ANALYST";

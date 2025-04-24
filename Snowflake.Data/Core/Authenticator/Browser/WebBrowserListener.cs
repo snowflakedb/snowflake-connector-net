@@ -131,18 +131,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
             byte[] okResponseBytes = Encoding.UTF8.GetBytes(_successResponse);
             HttpListenerResponse response = context.Response;
-            try
-            {
-                using (var output = response.OutputStream)
-                {
-                    output.Write(okResponseBytes, 0, okResponseBytes.Length);
-                }
-            }
-            catch
-            {
-                // Ignore the exception as it does not affect the overall authentication flow
-                s_logger.Warn("Browser response not sent out");
-            }
+            WriteMessageToBrowser(response, okResponseBytes);
         }
 
         private void RespondToBrowserWithError(HttpListenerContext context)
@@ -150,11 +139,16 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             byte[] errorResponseBytes = Encoding.UTF8.GetBytes(_browserError);
             HttpListenerResponse response = context.Response;
             response.StatusCode = (int) HttpStatusCode.BadRequest;
+            WriteMessageToBrowser(response, errorResponseBytes);
+        }
+
+        private void WriteMessageToBrowser(HttpListenerResponse response, byte[] responseBytes)
+        {
             try
             {
                 using (var output = response.OutputStream)
                 {
-                    output.Write(errorResponseBytes, 0, errorResponseBytes.Length);
+                    output.Write(responseBytes, 0, responseBytes.Length);
                 }
             }
             catch

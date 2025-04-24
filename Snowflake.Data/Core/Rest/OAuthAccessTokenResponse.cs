@@ -1,7 +1,5 @@
 using System;
 using Newtonsoft.Json;
-using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Rest
@@ -27,8 +25,8 @@ namespace Snowflake.Data.Core.Rest
         public string Scope { get; set; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthAccessTokenResponse>();
-        private const int MaxAccessTokenExpirationInSeconds = 60 * 24; // 1 day
-        private const int MaxRefreshTokenExpirationInSeconds = 60 * 24 * 30; // 1 month
+        private const int MaxRecommendedAccessTokenExpirationInSeconds = 60 * 24; // 1 day
+        private const int MaxRecommendedRefreshTokenExpirationInSeconds = 60 * 24 * 30; // 1 month
 
         public void Validate()
         {
@@ -37,10 +35,10 @@ namespace Snowflake.Data.Core.Rest
                 s_logger.Error("Access token was not returned by Identity Provider");
                 throw new Exception("Expected access token");
             }
-            ValidateExpirationTime(ExpiresIn, "access token", MaxAccessTokenExpirationInSeconds);
+            ValidateExpirationTime(ExpiresIn, "access token", MaxRecommendedAccessTokenExpirationInSeconds);
             if (!string.IsNullOrEmpty(RefreshToken))
             {
-                ValidateExpirationTime(RefreshTokenExpiresIn, "refresh token", MaxRefreshTokenExpirationInSeconds);
+                ValidateExpirationTime(RefreshTokenExpiresIn, "refresh token", MaxRecommendedRefreshTokenExpirationInSeconds);
             }
         }
 

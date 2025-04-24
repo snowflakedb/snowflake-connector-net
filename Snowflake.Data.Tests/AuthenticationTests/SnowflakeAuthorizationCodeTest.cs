@@ -114,8 +114,8 @@ namespace Snowflake.Data.AuthenticationTests
             }
             finally
             {
-                authTestHelper.RemoveTokenCache(host, _login, TokenType.OAuthAccessToken);
-                authTestHelper.RemoveTokenCache(host, _login, TokenType.OAuthRefreshToken);
+                authTestHelper.RemoveTokenFromCache(host, _login, TokenType.OAuthAccessToken);
+                authTestHelper.RemoveTokenFromCache(host, _login, TokenType.OAuthRefreshToken);
             }
         }
 
