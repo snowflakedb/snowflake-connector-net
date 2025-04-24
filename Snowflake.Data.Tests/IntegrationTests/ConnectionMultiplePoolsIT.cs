@@ -473,11 +473,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
             Assert.AreEqual(1, pool.GetCurrentState().BusySessionsCount);
 
+            if (cancelAsync)
 #if NET8_0_OR_GREATER
-            cts.CancelAsync();
+                cts.CancelAsync();
 #else
-            cts.Cancel();
+                cts.Cancel();
 #endif
+            else
+                cts.Cancel();
 
             // operation cancelled properly
             var thrown = Assert.Throws<AggregateException>(() => task.Wait());
