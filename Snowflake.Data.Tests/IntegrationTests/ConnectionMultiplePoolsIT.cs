@@ -442,80 +442,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestReturningCancelledSessionsToThePool([Values]bool bCancelAsync)
+        public void TestReturningCancelledSessionsToThePool([Values]bool cancelAsync)
         {
-            var _connectionString = ConnectionString + "maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
+            var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
 
-            async Task RunQueryAsync(int threadId, int sleepTime, CancellationToken cancellationToken)
+            var pool = SnowflakeDbConnectionPool.ConnectionManager.GetPool(connectionString);
+            pool.ClearSessions();
+
+            // pool is empty
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+
+            var cts = new CancellationTokenSource();
+            var task = Task.Run(async () =>
             {
-                using (var connection = new SnowflakeDbConnection(_connectionString))
+                using (var connection = new SnowflakeDbConnection(connectionString))
                 {
-                    await connection.OpenAsync(cancellationToken);
-
+                    await connection.OpenAsync(cts.Token);
                     using (var command = connection.CreateCommand())
                     {
-                        command.CommandText = $"SELECT SYSTEM$WAIT({sleepTime})";
-
-                        await command.ExecuteNonQueryAsync(cancellationToken);
+                        command.CommandText = $"SELECT SYSTEM$WAIT(20)";
+                        await command.ExecuteNonQueryAsync(cts.Token);
                     }
                 }
-            }
+            }, CancellationToken.None);
 
-            int ThreadCount = 5;
-            int ThreadsToCancel = 2;
-
-            var tasks = new Task[ThreadCount];
-            var ctsList = new CancellationTokenSource[ThreadCount];
-
-            // start 2 threads to cancel
-            for (int i = 0; i < ThreadsToCancel; i++)
-            {
-                int threadId = i;
-                ctsList[i] = new CancellationTokenSource();
-                tasks[i] = Task.Run(() => RunQueryAsync(threadId, 20, ctsList[threadId].Token));
-            }
-
-            // let them start
             Thread.Sleep(2000);
 
-            // start 3 additional threads
-            for (int i = ThreadsToCancel; i < ThreadCount; i++)
-            {
-                int threadId = i;
-                ctsList[i] = new CancellationTokenSource();
-                tasks[i] = Task.Run(() => RunQueryAsync(threadId, 2, ctsList[threadId].Token));
-            }
+            // one busy session
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(1, pool.GetCurrentState().BusySessionsCount);
 
-            Thread.Sleep(1000);
-
-            // cancel 2 first threads
-            for (int i = 0; i < ThreadsToCancel; i++)
-            {
-                if (bCancelAsync)
 #if NET8_0_OR_GREATER
-                    ctsList[i].CancelAsync(); // don't await
+            cts.CancelAsync();
 #else
-                    ctsList[i].Cancel();
+            cts.Cancel();
 #endif
-                else
-                    ctsList[i].Cancel();
-            }
 
-            // check if 2 first threads was cancelled
-            for (int i = 0; i < ThreadsToCancel; i++)
-            {
-                var thrown = Assert.Throws<AggregateException>(() => tasks[i].Wait());
-                Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
-            }
+            // operation cancelled properly
+            var thrown = Assert.Throws<AggregateException>(() => task.Wait());
+            Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
 
-            // check if 3 additional threads finished without an exception
-            for (int i = ThreadsToCancel; i < ThreadCount; i++)
-            {
-                Assert.DoesNotThrow(() => tasks[i].Wait());
-            }
-
-            // checkif pool size is 2
-            Assert.AreEqual(2, SnowflakeDbConnectionPool.GetPool(_connectionString).GetCurrentPoolSize());
+            // one idle session
+            Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
         }
     }
 }
