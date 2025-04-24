@@ -116,7 +116,7 @@ namespace Snowflake.Data.Core.Authenticator
             OAuthCacheKeys cacheKeys)
         {
             var authName = GetAuthenticatorName();
-            s_logger.Debug($"Getting access token for {authName} authentication");
+            s_logger.Debug($"Getting access token for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Core.Authenticator
                     s_logger.Error($"Failed to get access token for {authName} authentication: {realException.Message}");
                     throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
                 }
-                HandleAccessTokenResponse(accessTokenResponse, cacheKeys);
+                HandleAccessTokenResponse(accessTokenRequest, accessTokenResponse, cacheKeys);
             }
         }
 
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Core.Authenticator
             CancellationToken cancellationToken)
         {
             var authName = GetAuthenticatorName();
-            s_logger.Debug($"Getting access token (async) for {authName} authentication");
+            s_logger.Debug($"Getting access token (async) for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
             var restRequester = (RestRequester) session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Core.Authenticator
                     s_logger.Error($"Failed to get access token (async) for {authName} authentication: {realException.Message}");
                     throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
                 }
-                HandleAccessTokenResponse(accessTokenResponse, cacheKeys);
+                HandleAccessTokenResponse(accessTokenRequest, accessTokenResponse, cacheKeys);
             }
         }
 
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Core.Authenticator
         private Exception UnpackAggregateException(Exception exception) =>
             exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
 
-        private void HandleAccessTokenResponse(OAuthAccessTokenResponse accessTokenResponse, OAuthCacheKeys cacheKeys)
+        private void HandleAccessTokenResponse(BaseOAuthAccessTokenRequest accessTokenRequest, OAuthAccessTokenResponse accessTokenResponse, OAuthCacheKeys cacheKeys)
         {
             accessTokenResponse.Validate();
             var accessToken = accessTokenResponse.AccessToken;
@@ -176,12 +176,12 @@ namespace Snowflake.Data.Core.Authenticator
             cacheKeys.SaveAccessToken(accessToken);
             if (string.IsNullOrEmpty(refreshToken))
             {
-                s_logger.Debug("Access token without refresh token received from Identity Provider");
+                s_logger.Debug($"Access token without refresh token received from {accessTokenRequest.TokenEndpoint}");
                 cacheKeys.RemoveRefreshToken();
             }
             else
             {
-                s_logger.Debug("Access token and refresh token received from Identity Provider");
+                s_logger.Debug($"Access token and refresh token received from {accessTokenRequest.TokenEndpoint}");
                 cacheKeys.SaveRefreshToken(refreshToken);
             }
             AccessToken = SecureStringHelper.Encode(accessToken);

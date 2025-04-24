@@ -59,6 +59,7 @@ You can close this window now and go back where you started from.
             var authorizationData = PrepareAuthorizationData();
             var authorizationCodeRequest = authorizationData.Request;
             var authorizationCodeResult = ExecuteAuthorizationCodeRequest(authorizationCodeRequest);
+            s_logger.Debug($"Received authorization code from {authorizationCodeRequest.AuthorizationEndpoint}");
             return new OAuthAccessTokenRequest
             {
                 TokenEndpoint = GetTokenEndpoint(),
