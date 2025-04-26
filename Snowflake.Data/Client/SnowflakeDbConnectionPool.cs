@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Security;
 using System.Threading;
@@ -20,7 +16,7 @@ namespace Snowflake.Data.Client
         private static IConnectionManager s_connectionManager;
         internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
 
-        private static IConnectionManager ConnectionManager
+        internal static IConnectionManager ConnectionManager
         {
             get
             {
@@ -31,16 +27,16 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal static SFSession GetSession(string connectionString, SecureString password)
+        internal static SFSession GetSession(string connectionString, SecureString password, SecureString passcode)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSession");
-            return ConnectionManager.GetSession(connectionString, password);
+            return ConnectionManager.GetSession(connectionString, password, passcode);
         }
 
-        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
-            return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
+            return ConnectionManager.GetSessionAsync(connectionString, password, passcode, cancellationToken);
         }
 
         public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)

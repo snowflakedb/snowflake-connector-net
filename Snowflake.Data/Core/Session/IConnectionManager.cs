@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,8 +6,8 @@ namespace Snowflake.Data.Core.Session
 {
     internal interface IConnectionManager
     {
-        SFSession GetSession(string connectionString, SecureString password);
-        Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken);
+        SFSession GetSession(string connectionString, SecureString password, SecureString passcode = null);
+        Task<SFSession> GetSessionAsync(string connectionString, SecureString password, SecureString passcode, CancellationToken cancellationToken);
         bool AddSession(SFSession session);
         void ReleaseBusySession(SFSession session);
         void ClearAllPools();

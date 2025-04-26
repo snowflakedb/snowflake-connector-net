@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -270,6 +266,7 @@ namespace Snowflake.Data.Core
                     break;
 
                 case DbType.Guid:
+                case DbType.AnsiString:
                 case DbType.String:
                 case DbType.StringFixedLength:
                     destType = SFDataType.TEXT;

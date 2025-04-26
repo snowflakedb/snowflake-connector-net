@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using NUnit.Framework;
 using Snowflake.Data.Core;
@@ -9,6 +5,7 @@ using Snowflake.Data.Core;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
+    [SetCulture("en-US")]
     class SFBindUploaderTest
     {
         private readonly SFBindUploader _bindUploader = new SFBindUploader(null, "test");

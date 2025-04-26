@@ -6,16 +6,17 @@ using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
-namespace Snowflake.Data.Tests.Tools
+namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture, NonParallelizable]
     public class UnixOperationsTest
     {
         private static UnixOperations s_unixOperations;
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         [OneTimeSetUp]
         public static void BeforeAll()
@@ -38,21 +39,17 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersWritablePermissions(
-            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FilePermissions groupOrOthersWritablePermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FilePermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FilePermissions otherNotWritablePermissions)
+            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
+            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
+            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
-            var readWriteUserPermissions = FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
+            var readWriteUserPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
-            Syscall.chmod(filePath, filePermissions);
+            Syscall.chmod(filePath, (FilePermissions) filePermissions);
 
             // act
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
@@ -62,19 +59,15 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersNotWritablePermissions(
-            [ValueSource(nameof(UserPermissions))] FilePermissions userPermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FilePermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FilePermissions otherNotWritablePermissions)
+            [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
+            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
+            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
-            Syscall.chmod(filePath, filePermissions);
+            Syscall.chmod(filePath, (FilePermissions) filePermissions);
 
             // act
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
@@ -84,16 +77,13 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
-            [ValueSource(nameof(UserAllowedPermissions))] FilePermissions userAllowedPermissions)
+            [ValueSource(nameof(UserAllowedPermissions))] FileAccessPermissions userAllowedPermissions)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            Syscall.chmod(filePath, userAllowedPermissions);
+            Syscall.chmod(filePath, (FilePermissions) userAllowedPermissions);
 
             // act
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -103,95 +93,176 @@ namespace Snowflake.Data.Tests.Tools
         }
 
         [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FilePermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FilePermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FilePermissions othersPermissions)
+        [Platform(Exclude = "Win")]
+        public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
+            [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
+        {
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            Syscall.chmod(filePath, (FilePermissions) userAllowedPermissions);
+
+            // act and assert
+            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
+            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
+            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
         {
             if(groupPermissions == 0 && othersPermissions == 0)
             {
                 Assert.Ignore("Skip test when group and others have no permissions");
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
-            Syscall.chmod(filePath, filePermissions);
+            Syscall.chmod(filePath, (FilePermissions) filePermissions);
 
             // act and assert
             Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
-        public static IEnumerable<FilePermissions> UserPermissions()
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
+            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
+            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
         {
-            yield return FilePermissions.S_IRUSR;
-            yield return FilePermissions.S_IWUSR;
-            yield return FilePermissions.S_IXUSR;
-            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR;
+            if(groupPermissions == 0 && othersPermissions == 0)
+            {
+                Assert.Ignore("Skip test when group and others have no permissions");
+            }
+
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+
+            var filePermissions = userPermissions | groupPermissions | othersPermissions;
+            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+
+            // act and assert
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
         }
 
-        public static IEnumerable<FilePermissions> GroupPermissions()
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestCreateFileWithUserRwPermissions()
+        {
+            // arrange
+            var filePath = Path.Combine(s_workingDirectory, "testfile");
+
+            // act
+            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+
+            // assert
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestCreateDirectoryWithUserRwxPermissions()
+        {
+            // arrange
+            var dirPath = Path.Combine(s_workingDirectory, "testdir");
+
+            // act
+            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+
+            // assert
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirPath, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestNestedDir()
+        {
+            // arrange
+            var dirPath = Path.Combine(s_workingDirectory, "testdir", "a", "b", "c");
+            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+
+            // act
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirPath, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+
+            // assert
+            Assert.IsFalse(result);
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserPermissions()
+        {
+            yield return FileAccessPermissions.UserRead;
+            yield return FileAccessPermissions.UserWrite;
+            yield return FileAccessPermissions.UserExecute;
+            yield return FileAccessPermissions.UserReadWriteExecute;
+        }
+
+        public static IEnumerable<FileAccessPermissions> GroupPermissions()
         {
             yield return 0;
-            yield return FilePermissions.S_IRGRP;
-            yield return FilePermissions.S_IWGRP;
-            yield return FilePermissions.S_IXGRP;
-            yield return FilePermissions.S_IRGRP | FilePermissions.S_IWGRP | FilePermissions.S_IXGRP;
+            yield return FileAccessPermissions.GroupRead;
+            yield return FileAccessPermissions.GroupWrite;
+            yield return FileAccessPermissions.GroupExecute;
+            yield return FileAccessPermissions.GroupReadWriteExecute;
         }
 
-        public static IEnumerable<FilePermissions> OthersPermissions()
+        public static IEnumerable<FileAccessPermissions> OthersPermissions()
         {
             yield return 0;
-            yield return FilePermissions.S_IROTH;
-            yield return FilePermissions.S_IWOTH;
-            yield return FilePermissions.S_IXOTH;
-            yield return FilePermissions.S_IROTH | FilePermissions.S_IWOTH | FilePermissions.S_IXOTH;
+            yield return FileAccessPermissions.GroupRead;
+            yield return FileAccessPermissions.GroupWrite;
+            yield return FileAccessPermissions.GroupExecute;
+            yield return FileAccessPermissions.GroupReadWriteExecute;
         }
 
-        public static IEnumerable<FilePermissions> GroupOrOthersWritablePermissions()
+        public static IEnumerable<FileAccessPermissions> GroupOrOthersWritablePermissions()
         {
-            yield return FilePermissions.S_IWGRP;
-            yield return FilePermissions.S_IWOTH;
-            yield return FilePermissions.S_IWGRP | FilePermissions.S_IWOTH;
+            yield return FileAccessPermissions.GroupWrite;
+            yield return FileAccessPermissions.OtherWrite;
+            yield return FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
         }
 
-        public static IEnumerable<FilePermissions> GroupNotWritablePermissions()
-        {
-            yield return 0;
-            yield return FilePermissions.S_IRGRP;
-            yield return FilePermissions.S_IXGRP;
-            yield return FilePermissions.S_IRGRP | FilePermissions.S_IXGRP;
-        }
-
-        public static IEnumerable<FilePermissions> OtherNotWritablePermissions()
+        public static IEnumerable<FileAccessPermissions> GroupNotWritablePermissions()
         {
             yield return 0;
-            yield return FilePermissions.S_IROTH;
-            yield return FilePermissions.S_IXOTH;
-            yield return FilePermissions.S_IROTH | FilePermissions.S_IXOTH;
+            yield return FileAccessPermissions.GroupRead;
+            yield return FileAccessPermissions.GroupExecute;
+            yield return FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute;
         }
 
-        public static IEnumerable<FilePermissions> UserReadWritePermissions()
-        {
-            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
-        }
-
-        public static IEnumerable<FilePermissions> UserAllowedPermissions()
-        {
-            yield return FilePermissions.S_IRUSR;
-            yield return FilePermissions.S_IRUSR | FilePermissions.S_IWUSR;
-        }
-
-        public static IEnumerable<FilePermissions> GroupOrOthersReadablePermissions()
+        public static IEnumerable<FileAccessPermissions> OtherNotWritablePermissions()
         {
             yield return 0;
-            yield return FilePermissions.S_IRGRP;
-            yield return FilePermissions.S_IROTH;
-            yield return FilePermissions.S_IRGRP | FilePermissions.S_IROTH;
+            yield return FileAccessPermissions.OtherRead;
+            yield return FileAccessPermissions.OtherExecute;
+            yield return FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute;
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserReadWritePermissions()
+        {
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserAllowedPermissions()
+        {
+            yield return FileAccessPermissions.UserRead;
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserAllowedWritePermissions()
+        {
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+        }
+
+        public static IEnumerable<FileAccessPermissions> GroupOrOthersReadablePermissions()
+        {
+            yield return 0;
+            yield return FileAccessPermissions.GroupRead;
+            yield return FileAccessPermissions.OtherRead;
+            yield return FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
         }
     }
 }

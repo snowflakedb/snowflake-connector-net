@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +5,13 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session
 {
+
     sealed class SessionPool : IDisposable
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
@@ -133,34 +131,73 @@ namespace Snowflake.Data.Core.Session
         private string ExtractPassword(SecureString password) =>
             password == null ? string.Empty : SecureStringHelper.Decode(password);
 
-        internal SFSession GetSession(string connStr, SecureString password)
+        internal SFSession GetSession(string connStr, SecureString password, SecureString passcode)
         {
             s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
-                return NewNonPoolingSession(connStr, password);
-            var sessionOrCreateTokens = GetIdleSession(connStr);
+                return NewNonPoolingSession(connStr, password, passcode);
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                      MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
             ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            return sessionOrCreateTokens.Session ?? NewSession(connStr, password, sessionOrCreateTokens.SessionCreationToken());
+            var session = sessionOrCreateTokens.Session ?? NewSession(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken());
+            if (isMfaAuthentication)
+            {
+                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+            }
+            return session;
         }
 
-        internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, CancellationToken cancellationToken)
+        private void ValidateMinPoolSizeWithPasscode(SFSessionProperties sessionProperties, SecureString passcode)
+        {
+            if (!GetPooling() || !IsMultiplePoolsVersion() || _poolConfig.MinPoolSize == 0) return;
+            var isUsingPasscode = (passcode != null && passcode.Length > 0) || (sessionProperties.IsNonEmptyValueProvided(SFSessionProperty.PASSCODE) ||
+                                                                                (sessionProperties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordValue) &&
+                                                                                 bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
+            var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                     MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
+            if(isUsingPasscode && !isMfaAuthenticator)
+            {
+                const string ErrorMessage = "Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication";
+                s_logger.Error(ErrorMessage + PoolIdentification());
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, ErrorMessage);
+            }
+        }
+
+        internal async Task<SFSession> GetSessionAsync(string connStr, SecureString password, SecureString passcode, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
+            var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, password);
+            ValidateMinPoolSizeWithPasscode(sessionProperties, passcode);
             if (!GetPooling())
-                return await NewNonPoolingSessionAsync(connStr, password, cancellationToken).ConfigureAwait(false);
-            var sessionOrCreateTokens = GetIdleSession(connStr);
+                return await NewNonPoolingSessionAsync(connStr, password, passcode, cancellationToken).ConfigureAwait(false);
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                      MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
+            WarnAboutOverridenConfig();
+
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
             }
             ScheduleNewIdleSessions(connStr, password, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
-            return sessionOrCreateTokens.Session ?? await NewSessionAsync(connStr, password, sessionOrCreateTokens.SessionCreationToken(), cancellationToken).ConfigureAwait(false);
+            var session = sessionOrCreateTokens.Session ??
+                          await NewSessionAsync(connStr, password, passcode, sessionOrCreateTokens.SessionCreationToken(), cancellationToken)
+                              .ConfigureAwait(false);
+            if (isMfaAuthentication)
+            {
+                ScheduleNewIdleSessions(connStr, password, RegisterSessionCreationsToEnsureMinPoolSize());
+            }
+            return session;
+
         }
 
         private void ScheduleNewIdleSessions(string connStr, SecureString password, List<SessionCreationToken> tokens)
@@ -172,7 +209,7 @@ namespace Snowflake.Data.Core.Session
         {
             Task.Run(() =>
             {
-                var session = NewSession(connStr, password, token);
+                var session = NewSession(connStr, password, null, token);
                 AddSession(session, false); // we don't want to ensure min pool size here because we could get into infinite recursion if expirationTimeout would be very low
             });
         }
@@ -187,17 +224,17 @@ namespace Snowflake.Data.Core.Session
 
         internal bool IsConfigOverridden() => _configOverriden;
 
-        internal SFSession GetSession() => GetSession(ConnectionString, Password);
+        internal SFSession GetSession(SecureString passcode) => GetSession(ConnectionString, Password, passcode);
 
-        internal Task<SFSession> GetSessionAsync(CancellationToken cancellationToken) =>
-            GetSessionAsync(ConnectionString, Password, cancellationToken);
+        internal Task<SFSession> GetSessionAsync(SecureString passcode, CancellationToken cancellationToken) =>
+            GetSessionAsync(ConnectionString, Password, passcode, cancellationToken);
 
         internal void SetSessionPoolEventHandler(ISessionPoolEventHandler sessionPoolEventHandler)
         {
             _sessionPoolEventHandler = sessionPoolEventHandler;
         }
 
-        private SessionOrCreationTokens GetIdleSession(string connStr)
+        private SessionOrCreationTokens GetIdleSession(string connStr, int maxSessions)
         {
             s_logger.Debug("SessionPool::GetIdleSession" + PoolIdentification());
             lock (_sessionPoolLock)
@@ -215,7 +252,7 @@ namespace Snowflake.Data.Core.Session
                         return new SessionOrCreationTokens(session);
                     }
                     s_logger.Debug("SessionPool::GetIdleSession - no thread was waiting for a session, but could not find any idle session available in the pool" + PoolIdentification());
-                    var sessionsCount = AllowedNumberOfNewSessionCreations(1);
+                    var sessionsCount = AllowedNumberOfNewSessionCreations(1, maxSessions);
                     if (sessionsCount > 0)
                     {
                         // there is no need to wait for a session since we can create new ones
@@ -226,7 +263,7 @@ namespace Snowflake.Data.Core.Session
             return new SessionOrCreationTokens(WaitForSession(connStr));
         }
 
-        private List<SessionCreationToken> RegisterSessionCreationsWhenReturningSessionToPool()
+        private List<SessionCreationToken> RegisterSessionCreationsToEnsureMinPoolSize()
         {
             var count = AllowedNumberOfNewSessionCreations(0);
             return RegisterSessionCreations(count);
@@ -237,7 +274,7 @@ namespace Snowflake.Data.Core.Session
                 .Select(_ => _sessionCreationTokenCounter.NewToken())
                 .ToList();
 
-        private int AllowedNumberOfNewSessionCreations(int atLeastCount)
+        private int AllowedNumberOfNewSessionCreations(int atLeastCount, int maxSessionsLimit = int.MaxValue)
         {
             // we are expecting to create atLeast 1 session in case of opening a connection (atLeastCount = 1)
             // but we have no expectations when closing a connection (atLeastCount = 0)
@@ -252,7 +289,7 @@ namespace Snowflake.Data.Core.Session
             {
                 var maxSessionsToCreate = _poolConfig.MaxPoolSize - currentSize;
                 var sessionsNeeded = Math.Max(_poolConfig.MinPoolSize - currentSize, atLeastCount);
-                var sessionsToCreate = Math.Min(sessionsNeeded, maxSessionsToCreate);
+                var sessionsToCreate = Math.Min(maxSessionsLimit, Math.Min(sessionsNeeded, maxSessionsToCreate));
                 s_logger.Debug($"SessionPool - allowed to create {sessionsToCreate} sessions, current pool size is {currentSize} out of {_poolConfig.MaxPoolSize}" + PoolIdentification());
                 return sessionsToCreate;
             }
@@ -326,15 +363,15 @@ namespace Snowflake.Data.Core.Session
             return null;
         }
 
-        private SFSession NewNonPoolingSession(String connectionString, SecureString password) =>
-            NewSession(connectionString, password, _noPoolingSessionCreationTokenCounter.NewToken());
+        private SFSession NewNonPoolingSession(String connectionString, SecureString password, SecureString passcode) =>
+            NewSession(connectionString, password, passcode, _noPoolingSessionCreationTokenCounter.NewToken());
 
-        private SFSession NewSession(String connectionString, SecureString password, SessionCreationToken sessionCreationToken)
+        private SFSession NewSession(String connectionString, SecureString password, SecureString passcode, SessionCreationToken sessionCreationToken)
         {
             s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
             try
             {
-                var session = s_sessionFactory.NewSession(connectionString, password);
+                var session = s_sessionFactory.NewSession(connectionString, password, passcode);
                 session.Open();
                 s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
                 if (GetPooling() && !_underDestruction)
@@ -374,13 +411,14 @@ namespace Snowflake.Data.Core.Session
         private Task<SFSession> NewNonPoolingSessionAsync(
             String connectionString,
             SecureString password,
+            SecureString passcode,
             CancellationToken cancellationToken) =>
-            NewSessionAsync(connectionString, password, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
+            NewSessionAsync(connectionString, password, passcode, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
 
-        private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
+        private Task<SFSession> NewSessionAsync(String connectionString, SecureString password, SecureString passcode, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
-            var session = s_sessionFactory.NewSession(connectionString, password);
+            var session = s_sessionFactory.NewSession(connectionString, password, passcode);
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
@@ -457,7 +495,7 @@ namespace Snowflake.Data.Core.Session
                 ReleaseBusySession(session);
                 if (ensureMinPoolSize)
                 {
-                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsWhenReturningSessionToPool());
+                    ScheduleNewIdleSessions(ConnectionString, Password, RegisterSessionCreationsToEnsureMinPoolSize());
                 }
                 return false;
             }
@@ -478,7 +516,7 @@ namespace Snowflake.Data.Core.Session
                 {
                     _busySessionsCounter.Decrease();
                     var sessionCreationTokens = ensureMinPoolSize
-                        ? RegisterSessionCreationsWhenReturningSessionToPool()
+                        ? RegisterSessionCreationsToEnsureMinPoolSize()
                         : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                     var poolState = GetCurrentState();
                     s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
@@ -493,7 +531,7 @@ namespace Snowflake.Data.Core.Session
                 if (session.IsExpired(_poolConfig.ExpirationTimeout, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())) // checking again because we could have spent some time waiting for a lock
                 {
                     var sessionCreationTokens = ensureMinPoolSize
-                        ? RegisterSessionCreationsWhenReturningSessionToPool()
+                        ? RegisterSessionCreationsToEnsureMinPoolSize()
                         : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                     var poolState = GetCurrentState();
                     s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
@@ -508,7 +546,7 @@ namespace Snowflake.Data.Core.Session
                 _idleSessions.Add(session);
                 _waitingForIdleSessionQueue.OnResourceIncrease();
                 var sessionCreationTokensAfterReturningToPool = ensureMinPoolSize
-                    ? RegisterSessionCreationsWhenReturningSessionToPool()
+                    ? RegisterSessionCreationsToEnsureMinPoolSize()
                     : SessionOrCreationTokens.s_emptySessionCreationTokenList;
                 var poolStateAfterReturningToPool = GetCurrentState();
                 s_logger.Debug($"returned session with sid {session.sessionId} to pool {poolStateAfterReturningToPool}" + PoolIdentification());

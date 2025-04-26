@@ -4,9 +4,9 @@ namespace Snowflake.Data.Core.Session
 {
     internal class SessionFactory : ISessionFactory
     {
-        public SFSession NewSession(string connectionString, SecureString password)
+        public SFSession NewSession(string connectionString, SecureString password, SecureString passcode)
         {
-            return new SFSession(connectionString, password);
+            return new SFSession(connectionString, password, passcode, EasyLoggingStarter.Instance);
         }
     }
 }

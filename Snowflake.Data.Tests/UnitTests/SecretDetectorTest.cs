@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using NUnit.Framework;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
@@ -273,6 +269,14 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"somethingBefore=cccc;private_key_pwd=", @"somethingBefore=cccc;private_key_pwd=****");
             BasicMasking(@"somethingBefore=cccc;private_key_pwd     =aa;somethingNext=bbbb", @"somethingBefore=cccc;private_key_pwd     =****");
             BasicMasking(@"somethingBefore=cccc;private_key_pwd="" 'aa", @"somethingBefore=cccc;private_key_pwd=****");
+
+            BasicMasking(@"somethingBefore=cccc;passcode=aa", @"somethingBefore=cccc;passcode=****");
+            BasicMasking(@"somethingBefore=cccc;passcode=aa;somethingNext=bbbb", @"somethingBefore=cccc;passcode=****");
+            BasicMasking(@"somethingBefore=cccc;passcode=""aa"";somethingNext=bbbb", @"somethingBefore=cccc;passcode=****");
+            BasicMasking(@"somethingBefore=cccc;passcode=;somethingNext=bbbb", @"somethingBefore=cccc;passcode=****");
+            BasicMasking(@"somethingBefore=cccc;passcode=", @"somethingBefore=cccc;passcode=****");
+            BasicMasking(@"somethingBefore=cccc;passcode     =aa;somethingNext=bbbb", @"somethingBefore=cccc;passcode     =****");
+            BasicMasking(@"somethingBefore=cccc;passcode="" 'aa", @"somethingBefore=cccc;passcode=****");
         }
 
         [Test]

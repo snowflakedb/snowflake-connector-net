@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Mono.Unix;
 using NUnit.Framework;
 using Snowflake.Data.Log;

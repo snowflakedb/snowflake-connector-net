@@ -1,11 +1,8 @@
-﻿/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -203,7 +200,7 @@ namespace Snowflake.Data.Core.FileTransfer
                        ivBytes,
                        transferConfiguration))
             {
-                using (var decryptedFileStream = File.Create(tempFileName))
+                using (var decryptedFileStream = FileOperations.Instance.CreateTempFile(tempFileName))
                 {
                     var decryptedBytesStream = decryptedBytesStreamPair.MainStream;
                     decryptedBytesStream.Position = 0;

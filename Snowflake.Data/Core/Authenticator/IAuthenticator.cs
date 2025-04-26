@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -101,6 +97,24 @@ namespace Snowflake.Data.Core.Authenticator
         /// <param name="data">The login request data to update.</param>
         protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
 
+        protected void SetSecondaryAuthenticationData(ref LoginRequestData data)
+        {
+            if (session.properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordString)
+                && bool.TryParse(passcodeInPasswordString, out var passcodeInPassword)
+                && passcodeInPassword)
+            {
+                data.extAuthnDuoMethod = "passcode";
+            } else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            {
+                data.extAuthnDuoMethod = "passcode";
+                data.passcode = passcode;
+            }
+            else
+            {
+                data.extAuthnDuoMethod = "push";
+            }
+        }
+
         /// <summary>
         /// Builds a simple login request. Each authenticator will fill the Data part with their
         /// specialized information. The common Data attributes are already filled (clientAppId,
@@ -122,10 +136,11 @@ namespace Snowflake.Data.Core.Authenticator
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
-
             SetSpecializedAuthenticatorData(ref data);
 
-            return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
         }
     }
 
@@ -144,15 +159,15 @@ namespace Snowflake.Data.Core.Authenticator
         internal static IAuthenticator GetAuthenticator(SFSession session)
         {
             string type = session.properties[SFSessionProperty.AUTHENTICATOR];
-            if (type.Equals(BasicAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            if (BasicAuthenticator.IsBasicAuthenticator(type))
             {
                 return new BasicAuthenticator(session);
             }
-            else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator(type))
             {
                 return new ExternalBrowserAuthenticator(session);
             }
-            else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (KeyPairAuthenticator.IsKeyPairAuthenticator(type))
             {
                 // Get private key path or private key from connection settings
                 if ((!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) || string.IsNullOrEmpty(pkPath)) &&
@@ -170,7 +185,7 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new KeyPairAuthenticator(session);
             }
-            else if (type.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.InvariantCultureIgnoreCase))
+            else if (OAuthAuthenticator.IsOAuthAuthenticator(type))
             {
                 // Get private key path or private key from connection settings
                 if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
@@ -187,8 +202,12 @@ namespace Snowflake.Data.Core.Authenticator
 
                 return new OAuthAuthenticator(session);
             }
+            else if (MFACacheAuthenticator.IsMfaCacheAuthenticator(type))
+            {
+                return new MFACacheAuthenticator(session);
+            }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
-            else if (type.Contains("okta") && type.StartsWith("https://"))
+            else if (OktaAuthenticator.IsOktaAuthenticator(type))
             {
                 return new OktaAuthenticator(session, type);
             }

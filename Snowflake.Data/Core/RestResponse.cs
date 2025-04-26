@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -17,8 +13,10 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
 
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
+
 
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
@@ -92,6 +90,12 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
         internal int masterValidityInSeconds { get; set; }
+
+        [JsonProperty(PropertyName = "idToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string idToken { get; set; }
+
+        [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string mfaToken { get; set; }
     }
 
     internal class AuthenticatorResponseData

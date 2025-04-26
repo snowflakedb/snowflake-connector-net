@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using Snowflake.Data.Core;
 using System.Data.Common;
@@ -378,6 +374,11 @@ namespace Snowflake.Data.Client
                 {
                     string bindingType = "";
                     object bindingVal;
+
+                    if (parameter.Value == null)
+                    {
+                        parameter.Value = DBNull.Value;
+                    }
 
                     if (parameter.Value.GetType().IsArray &&
                         // byte array and char array will not be treated as array binding

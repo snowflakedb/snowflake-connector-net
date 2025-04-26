@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;

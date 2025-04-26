@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Threading;
@@ -12,6 +8,7 @@ using Snowflake.Data.Log;
 using System.Net;
 using Google.Apis.Storage.v1;
 using Google.Cloud.Storage.V1;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -91,7 +88,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
             if (!string.IsNullOrEmpty(gcsCustomEndpoint))
-                builder.BaseUri = gcsCustomEndpoint;
+                builder.BaseUri = gcsCustomEndpoint.StartsWith("https://") ? gcsCustomEndpoint : "https://" + gcsCustomEndpoint;
             return builder.Build();
         }
 
@@ -168,16 +165,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                    var contentLength = response.Headers.GetValues("content-length");
-
-                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                    return new FileHeader
-                    {
-                        digest = digest[0],
-                        contentLength = Convert.ToInt64(contentLength[0])
-                    };
+                    return handleGetFileHeaderResponse(response, fileMetadata);
                 }
             }
             catch (WebException ex)
@@ -217,16 +205,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                 using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
-                    var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                    var contentLength = response.Headers.GetValues("content-length");
-
-                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
-                    return new FileHeader
-                    {
-                        digest = digest[0],
-                        contentLength = Convert.ToInt64(contentLength[0])
-                    };
+                    return handleGetFileHeaderResponse(response, fileMetadata);
                 }
             }
             catch (WebException ex)
@@ -238,6 +217,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             return null;
+        }
+
+        internal FileHeader handleGetFileHeaderResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
+        {
+            var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
+            var contentLength = response.Headers.GetValues("content-length");
+
+            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+
+            return new FileHeader
+            {
+                digest = digest?[0],
+                contentLength = Convert.ToInt64(contentLength[0])
+            };
         }
 
         internal string generateFileURL(PutGetStageInfo stageInfo, string fileName)
@@ -382,7 +375,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
                     // Write to file
-                    using (var fileStream = File.Create(fullDstPath))
+                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                     {
                         using (var responseStream = response.GetResponseStream())
                         {
@@ -416,7 +409,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
                 {
                     // Write to file
-                    using (var fileStream = File.Create(fullDstPath))
+                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
                     {
                         using (var responseStream = response.GetResponseStream())
                         {

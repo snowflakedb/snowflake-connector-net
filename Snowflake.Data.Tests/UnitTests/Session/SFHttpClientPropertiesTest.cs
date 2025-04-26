@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -17,7 +13,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [Test]
         public void TestConvertToMapOnly2Properties(
             [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive)
+            [Values(true, false)] bool clientSessionKeepAlive,
+            [Values(true, false)] bool clientStoreTemporaryCredential)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -32,6 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
+                _clientStoreTemporaryCredential = clientStoreTemporaryCredential,
                 connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                 insecureMode = false,
                 disableRetry = false,
@@ -45,9 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var parameterMap = properties.ToParameterMap();
 
             // assert
-            Assert.AreEqual(2, parameterMap.Count);
+            Assert.AreEqual(3, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
         [Test]

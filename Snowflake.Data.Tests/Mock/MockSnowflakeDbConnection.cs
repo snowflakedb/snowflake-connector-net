@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Log;
@@ -49,7 +45,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            registerConnectionCancellationCallback(cancellationToken);
+            cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
 
             SetMockSession();
 
@@ -78,10 +74,10 @@ namespace Snowflake.Data.Tests.Mock
                 cancellationToken);
 
         }
-        
+
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, _restRequester);
+            SfSession = new SFSession(ConnectionString, Password, Passcode, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
@@ -92,7 +88,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             _connectionState = ConnectionState.Open;
         }
-        
+
         protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
             return false;

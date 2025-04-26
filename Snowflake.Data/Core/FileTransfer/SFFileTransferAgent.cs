@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
@@ -14,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -527,13 +524,19 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="query">The query containing the file path</param>
         /// <returns>The file path contained by the query</returns>
-        private string getFilePathFromPutCommand(string query)
+        internal static string getFilePathFromPutCommand(string query)
         {
             // Extract file path from PUT command:
             // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
             int startIndex = query.IndexOf("file://") + "file://".Length;
             int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
-            string filePath = query.Substring(startIndex, endIndex);
+            string filePath = query.Substring(startIndex, endIndex).TrimEnd();
+
+            // Check if file path contains an enclosing (') char
+            if (filePath[filePath.Length - 1] == '\'')
+            {
+                filePath = filePath.Substring(0, filePath.Length - 1);
+            }
             return filePath;
         }
 
@@ -892,7 +895,7 @@ namespace Snowflake.Data.Core
                 if ((File.GetAttributes(fileToCompress.FullName) &
                    FileAttributes.Hidden) != FileAttributes.Hidden)
                 {
-                    using (FileStream compressedFileStream = File.Create(fileMetadata.realSrcFilePath))
+                    using (var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath))
                     {
                         using (GZipStream compressionStream =
                             new GZipStream(compressedFileStream, CompressionMode.Compress))

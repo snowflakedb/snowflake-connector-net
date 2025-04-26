@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +7,7 @@ using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Tomlyn;
@@ -61,7 +58,7 @@ namespace Snowflake.Data.Core
         {
             var connectionStringBuilder = new StringBuilder();
             var tokenFilePathValue = string.Empty;
-            var isOauth = connectionToml.TryGetValue("authenticator", out var authenticator) && authenticator.ToString().Equals("oauth");
+            var isOauth = connectionToml.TryGetValue("authenticator", out var authenticator) && OAuthAuthenticator.IsOAuthAuthenticator(authenticator.ToString());
             foreach (var property in connectionToml.Keys)
             {
                 var propertyValue = (string)connectionToml[property];
@@ -153,9 +150,10 @@ namespace Snowflake.Data.Core
             return tomlPath;
         }
 
+
         internal static void ValidateFilePermissions(UnixStream stream)
         {
-            var allowedPermissions = new FileAccessPermissions[]
+            var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
                 FileAccessPermissions.UserRead

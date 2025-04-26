@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using NUnit.Framework;
 using Snowflake.Data.Core;
@@ -408,6 +404,27 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotNull(header);
             Assert.AreEqual(1, header.Count());
             Assert.AreEqual(HeaderValue, header.First());
+        }
+
+        [Test]
+        public void TestHandleGetFileHeaderResponseWithoutSfcDigest()
+        {
+            // arrange
+            var headers = new WebHeaderCollection();
+            headers.Add("content-length", "123");
+            var stageInfo = new PutGetStageInfo() { stageCredentials = new Dictionary<string, string>() };
+            var client = new SFGCSClient(stageInfo);
+            var response = new Mock<HttpWebResponse>();
+            response.Setup(r => r.Headers).Returns(headers);
+            var fileMetadata = new SFFileMetadata();
+
+            // act
+            var fileHeader = client.handleGetFileHeaderResponse(response.Object, fileMetadata);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual(123, fileHeader.contentLength);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)

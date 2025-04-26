@@ -317,3 +317,4 @@ Snowflake.Data.Tests/unix_*_performance.csv
 parameters*.json
 Snowflake.Data.Tests/toml_config_folder
 *.toml
+*.p8

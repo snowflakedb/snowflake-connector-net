@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Azure.Storage.Blobs;
 using Snowflake.Data.Log;
 using System;
@@ -14,6 +10,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
 {
@@ -173,7 +170,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             return new FileHeader
             {
-                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest"),
+                digest = GetMetadataValueCaseInsensitive(response, "sfcdigest", false),
                 contentLength = response.ContentLength,
                 encryptionMetadata = encryptionMetadata
             };
@@ -190,11 +187,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return keysCaseInsensitive.Any() ? properties.Metadata.TryGetValue(keysCaseInsensitive.First(), out metadataValue) : false;
         }
 
-        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey)
+        private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, bool failIfNotFound = true)
         {
             if (TryGetMetadataValueCaseInsensitive(properties, metadataKey, out var metadataValue))
                 return metadataValue;
-            throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
+            if (failIfNotFound)
+            {
+                throw new KeyNotFoundException($"The given key '{metadataKey}' was not present in the dictionary.");
+            }
+            return null;
         }
 
         /// <summary>
@@ -321,11 +322,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                // Issue the GET request
-                blobClient.DownloadTo(fullDstPath);
+                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
+                {
+                    // Issue the GET request
+                    blobClient.DownloadTo(fileStream);
+                }
             }
             catch (RequestFailedException ex)
             {
+                File.Delete(fullDstPath);
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
@@ -350,11 +355,15 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
             try
             {
-                // Issue the GET request
-                await blobClient.DownloadToAsync(fullDstPath, cancellationToken).ConfigureAwait(false);
+                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
+                {
+                    // Issue the GET request
+                    await blobClient.DownloadToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (RequestFailedException ex)
             {
+                File.Delete(fullDstPath);
                 fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
