@@ -236,7 +236,9 @@ After a human submits a request in a browser the driver gets authorization code 
 which then is used to authorize in Snowflake.
 
 
-The access tokens (and refresh tokens) are cached and reused for other authentications if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
+The access tokens and refresh tokens are cached if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
+Caching the tokens means that once the token is cached it can be reused for subsequent authentications for which the cache is also enabled.
+Thanks to that you can reduce the number of interactions with the Identity Provider and also reduce the human effort in submitting authentication data in the browser.
 
 
 Example:
@@ -270,7 +272,9 @@ but requires no human interaction.
 It gets an access token from the Identity Provider and then use it to authenticate in Snowflake.
 
 
-The access tokens (and refresh tokens) are cached and reused for other authentications if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
+The access tokens and refresh tokens are cached if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
+Caching the tokens means that once the token is cached it can be reused for subsequent authentications for which the cache is also enabled.
+Thanks to that you can reduce the number of interactions with the Identity Provider.
 
 
 Example:
