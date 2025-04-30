@@ -268,8 +268,8 @@ Note: On Mac/Linux OS the browser is started by open/xdg-open command. Make sure
 - **OAuth Client Credentials Flow**
 
 It is a similar authentication to OAuth Authorization Code Flow because the driver gets an access token from the Identity Provider instead of getting a token in the connection parameters,
-but requires no human interaction.
-It gets an access token from the Identity Provider and then use it to authenticate in Snowflake.
+but does not require any human interaction.
+The driver gets an access token from the Identity Provider and then use it to authenticate in Snowflake.
 
 
 The access tokens and refresh tokens are cached if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
