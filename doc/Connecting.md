@@ -261,6 +261,8 @@ Alternatively you can provide `oauthClientSecret` property as a secure string of
   }
 ```
 
+Note: On Mac/Linux OS the browser is started by open/xdg-open command. Make sure that the command is properly configured on your PATH environmental variable.
+
 - **OAuth Client Credentials Flow**
 
 It is a similar authentication to OAuth Authorization Code Flow because the driver gets an access token from the Identity Provider instead of getting a token in the connection parameters,
