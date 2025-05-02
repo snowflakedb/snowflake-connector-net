@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            registerConnectionCancellationCallback(cancellationToken);
+            cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
 
             SetMockSession();
 

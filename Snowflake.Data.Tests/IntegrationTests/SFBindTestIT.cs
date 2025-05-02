@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System;
 using System.Data;
@@ -120,6 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
@@ -200,8 +201,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private static IEnumerable<object> NullTestCases() =>
-            new object[] { DBNull.Value, null };
+        private static IEnumerable<object?> NullTestCases() =>
+            new object?[] { DBNull.Value, null };
 
         [Test]
         public void TestBindValue()
@@ -269,6 +270,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";

@@ -28,6 +28,8 @@ namespace Snowflake.Data.Client
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
 
+        private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
+
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
             this.dbCommand = command;
@@ -118,7 +120,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemiStructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
@@ -364,6 +366,12 @@ namespace Snowflake.Data.Client
             base.Close();
             resultSet.close();
             isClosed = true;
+        }
+
+        private bool IsStructuredOrSemiStructuredType(string type)
+        {
+            type = type.ToLower();
+            return type == "array" || type == "object" || type == "variant"|| type == "map";
         }
     }
 }

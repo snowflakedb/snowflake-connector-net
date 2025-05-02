@@ -11,7 +11,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>4.3.0</Version>
+    <Version>4.4.1</Version>
     <DebugType>Full</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
