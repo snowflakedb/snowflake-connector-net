@@ -25,8 +25,8 @@ namespace Snowflake.Data.Core.Rest
         public string Scope { get; set; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthAccessTokenResponse>();
-        private const int MaxRecommendedAccessTokenExpirationInSeconds = 60 * 24; // 1 day
-        private const int MaxRecommendedRefreshTokenExpirationInSeconds = 60 * 24 * 30; // 1 month
+        private const int MaxRecommendedAccessTokenExpirationInSeconds = 60 * 60 * 24; // 1 day
+        private const int MaxRecommendedRefreshTokenExpirationInSeconds = 60 * 60 * 24 * 30; // 1 month
 
         public void Validate()
         {

@@ -77,7 +77,7 @@ You can close this window now and go back where you started from.
         {
             if (!IsAccessTokenExpiredOrInvalid(exception))
             {
-                s_logger.Debug($"Exception code returned for {AuthName} authentication does not indicate expired or invalid token so the the authentication flow is failing");
+                s_logger.Debug($"Exception code returned for {AuthName} authentication does not indicate expired or invalid token so the authentication flow is failing");
                 return null;
             }
             if (!cacheKeys.IsAvailable())

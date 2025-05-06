@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Authenticator
         public CodeVerifier(string value)
         {
             var valueWithValidChars = SkipIllegalCharacters(value);
-            Validate(valueWithValidChars);
+            ValidateLength(valueWithValidChars);
             Value = valueWithValidChars;
         }
 
@@ -27,14 +27,12 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        private void Validate(string value)
+        private void ValidateLength(string value)
         {
-            if (value?.Length < 43)
+            if ((value?.Length ?? 0) < 43)
                 throw new ArgumentException("The code verifier must be at least 43 characters");
             if (value.Length > 128)
                 throw new ArgumentException("The code verifier must not be longer than 128 characters");
-            if (!HasOnlyLegalCharacters(value))
-                throw new ArgumentException("Illegal char(s) in code verifier, see RFC 7636, section 4.1");
         }
 
         private string SkipIllegalCharacters(string value)
@@ -45,13 +43,6 @@ namespace Snowflake.Data.Core.Authenticator
                 .Where(IsLegalCharacter)
                 .ToArray();
             return new StringBuilder().Append(validChars).ToString();
-        }
-
-        private static bool HasOnlyLegalCharacters(string code)
-        {
-            if (string.IsNullOrEmpty(code))
-                return true;
-            return code.ToCharArray().All(IsLegalCharacter);
         }
 
         private static bool IsLegalCharacter(char value)
