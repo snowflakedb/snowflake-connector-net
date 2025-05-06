@@ -155,11 +155,19 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, FileOwnerId = 2 };
-            var fileOps = new FileOperations(mockUnixOperations);
+            File.Create(absolutePath);
+            try
+            {
+                var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 2 };
+                var fileOps = new FileOperations(mockUnixOperations);
 
-            // act and assert
-            Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+                // act and assert
+                Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+            }
+            finally
+            {
+                File.Delete(absolutePath);
+            }
         }
 
         [Test]

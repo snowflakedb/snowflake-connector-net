@@ -50,9 +50,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var readWriteUserPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
             Assert.IsTrue(result);
@@ -68,9 +69,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
             Assert.IsFalse(result);
@@ -158,7 +160,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 
             // assert
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(filePath, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            var fileInfo = new UnixFileInfo(filePath);
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
             Assert.IsFalse(result);
         }
 
@@ -173,7 +176,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // assert
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirPath, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            var dirInfo = new UnixDirectoryInfo(dirPath);
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
             Assert.IsFalse(result);
         }
 
@@ -186,7 +190,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirPath, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            var dirInfo = new UnixDirectoryInfo(dirPath);
+            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
 
             // assert
             Assert.IsFalse(result);

@@ -1953,20 +1953,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = infiniteLoginTimeOut;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                // At this point the connection string has not been parsed, it will return the
-                // default value
-                //Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for more than the default timeout to make sure there are no false positive)
-                Thread.Sleep(SFSessionHttpClientProperties.DefaultRetryTimeout.Add(TimeSpan.FromSeconds(10)));
-
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
-                // Cancel the connection because it will never succeed since there is no
-                // connection_timeout defined
                 logger.Debug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
 

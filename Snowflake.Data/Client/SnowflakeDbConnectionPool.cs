@@ -16,7 +16,7 @@ namespace Snowflake.Data.Client
         private static IConnectionManager s_connectionManager;
         internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
 
-        private static IConnectionManager ConnectionManager
+        internal static IConnectionManager ConnectionManager
         {
             get
             {

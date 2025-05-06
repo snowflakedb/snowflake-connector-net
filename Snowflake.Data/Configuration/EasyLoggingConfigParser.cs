@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using Mono.Unix;
+using System.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Configuration
@@ -13,7 +15,16 @@ namespace Snowflake.Data.Configuration
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
 
-        public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser();
+        private readonly UnixOperations _unixOperations;
+
+        public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser(UnixOperations.Instance);
+
+        internal EasyLoggingConfigParser(UnixOperations unixOperations)
+        {
+            _unixOperations = unixOperations;
+        }
+
+        internal EasyLoggingConfigParser() : this(UnixOperations.Instance) { }
 
         public virtual ClientConfig Parse(string filePath)
         {
@@ -29,11 +40,11 @@ namespace Snowflake.Data.Configuration
             }
             try
             {
-                return File.ReadAllText(filePath);
+                return FileOperations.Instance.ReadAllText(filePath, CheckIfValidPermissions);
             }
             catch (Exception e)
             {
-                var errorMessage = "Finding easy logging configuration failed";
+                var errorMessage = $"Finding easy logging configuration failed: {e.Message}";
                 s_logger.Error(errorMessage, e);
                 throw new Exception(errorMessage);
             }
@@ -75,6 +86,33 @@ namespace Snowflake.Data.Configuration
                 .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
                 .ToList()
                 .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
+        }
+
+        private void CheckIfValidPermissions(UnixStream stream)
+        {
+            // Check user ownership of file
+            if (stream.OwnerUserId != _unixOperations.GetCurrentUserId())
+            {
+                var errorMessage = $"Error due to user not having ownership of the config file";
+                s_logger.Error(errorMessage);
+                throw new SecurityException(errorMessage);
+            }
+
+            // Check group ownership of file
+            if (stream.OwnerGroupId != _unixOperations.GetCurrentGroupId())
+            {
+                var errorMessage = $"Error due to group not having ownership of the config file";
+                s_logger.Error(errorMessage);
+                throw new SecurityException(errorMessage);
+            }
+
+            // Check if others have permissions to modify the file and fail if so
+            if (_unixOperations.CheckFileHasAnyOfPermissions(stream.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
+            {
+                var errorMessage = $"Error due to other users having permission to modify the config file";
+                s_logger.Error(errorMessage);
+                throw new SecurityException(errorMessage);
+            }
         }
     }
 }
