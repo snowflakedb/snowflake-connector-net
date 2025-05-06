@@ -1,3 +1,5 @@
+using Snowflake.Data.Core.CredentialManager;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
@@ -23,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests
             s_poolConfig = new PoolConfig();
             s_restRequester = new MockLoginMFATokenCacheRestRequester();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactoryMFA(s_restRequester);
+            SessionPool.SessionFactory = new MockSessionFactoryForRequester(s_restRequester);
         }
 
         [OneTimeTearDown]
@@ -38,6 +40,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             _connectionPoolManager.ClearAllPools();
             s_restRequester.Reset();
+            var mfaCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey("A1.snowflakecomputing.com", "U1", TokenType.MFAToken);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(mfaCacheKey);
         }
 
         [Test]
@@ -110,21 +114,6 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=0;passcode=12345;POOLINGENABLED=true";
             // Act and assert
             Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
-        }
-    }
-
-    class MockSessionFactoryMFA : ISessionFactory
-    {
-        private readonly IMockRestRequester restRequester;
-
-        public MockSessionFactoryMFA(IMockRestRequester restRequester)
-        {
-            this.restRequester = restRequester;
-        }
-
-        public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
-        {
-            return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester);
         }
     }
 }
