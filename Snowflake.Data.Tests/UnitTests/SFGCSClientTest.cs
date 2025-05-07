@@ -369,6 +369,36 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase(null, false, true, "https://mock-customer-stage.storage.googleapis.com/mock-id/tables/mock-key/")]
+        [TestCase(null, true, true, "https://mock-customer-stage.storage.googleapis.com/mock-id/tables/mock-key/")]
+        [TestCase("https://example.com", true, true, "https://example.com/mock-id/tables/mock-key/")]
+        public void TestUsesVirtualUrlWhenExpected(string endPoint, bool useRegionalUrl, bool useVirtualUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = Location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = null,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl,
+                    useVirtualUrl = useVirtualUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
         [TestCase("some-header-name", "SOME-HEADER-NAME")]
         [TestCase("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
