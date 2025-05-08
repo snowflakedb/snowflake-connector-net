@@ -10,7 +10,7 @@ The following table lists all valid connection properties:
 <br />
 
 | Connection Property            | Required | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-|--------------------------------| -------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|--------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ACCOUNT                           | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | APPLICATION                       | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern: ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | DB                                | No       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -31,7 +31,7 @@ The following table lists all valid connection properties:
 | PRIVATE_KEY_FILE                  | Depends  | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | PRIVATE_KEY_PWD                   | No       | The passphrase to use for decrypting the private key, if the key is encrypted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | PRIVATE_KEY                       | Depends  | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly.                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| TOKEN                             | Depends  | The OAuth token to use for OAuth authentication. Must be used in combination with AUTHENTICATOR=oauth.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| TOKEN                             | Depends  | The OAuth token to use for OAuth authentication or Programmatic Access Token authentication. Must be used in combination with AUTHENTICATOR=oauth or AUTHENTICATOR=programmatic_access_token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | INSECUREMODE                      | No       | Set to true to disable the certificate revocation list check. Default is false.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | USEPROXY                          | No       | Set to true if you need to use a proxy server. The default value is false. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | PROXYHOST                         | Depends  | The hostname of the proxy server. <br/> <br/> If USEPROXY is set to `true`, you must set this parameter. <br/> <br/> This parameter was introduced in v2.0.4.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -50,10 +50,15 @@ The following table lists all valid connection properties:
 | EXPIRATIONTIMEOUT                 | No       | Timeout for using each connection. Connections which last more than specified timeout are considered to be expired and are being removed from the pool. The default is 1 hour. Usage of units possible and allowed are: e. g. `360000ms` (milliseconds), `3600s` (seconds), `60m` (minutes) where seconds are default for a skipped postfix. Special values: `0` - immediate expiration of the connection just after its creation. Expiration timeout cannot be set to infinity.                                                                                                                                                                                                                                          |
 | POOLINGENABLED                    | No       | Boolean flag indicating if the connection should be a part of a pool. The default value is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | DISABLE_SAML_URL_CHECK            | No       | Specifies whether to check if the saml postback url matches the host url from the connection string. The default value is `false`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| CLIENT_STORE_TEMPORARY_CREDENTIAL | No       | Specifies whether to cache tokens and use them for SSO authentication. The default value is `true` for Windows and `false` on non-Windows platforms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| CLIENT_STORE_TEMPORARY_CREDENTIAL | No       | Specifies whether to cache tokens and use them for external bowser or oauth autorization code flow. The default value is `true` for Windows and `false` on non-Windows platforms.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | PASSCODE                          | No       | Passcode from your 2FA application to be used in Multi Factor Authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | PASSCODEINPASSWORD                | No       | Boolean flag indicating if MFA passcode is added to the password.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-
+| OAUTHCLIENTID                     | Depends  | ClientId used for OAuth flows. It is required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. For OAuth Authorization Code Flow and Snowflake used as the Identity provider it will be automatically filled with a default `LOCAL_APPLICATION` value if neither of `OAUTHCLIENTID` and `OAUTHCLIENTSECRET` properties are provided.                                                                                                                                                                                                                                                                                                                                                                  |
+| OAUTHCLIENTSECRET                 | Depends  | ClientSecret used for OAuth flows. It is required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. For OAuth Authorization Code Flow and Snowflake used as the Identity provider it will be automatically filled with a default `LOCAL_APPLICATION` value if neither of `OAUTHCLIENTID` and `OAUTHCLIENTSECRET` properties are provided.                                                                                                                                                                                                                                                                                                                                                              |
+| OAUTHSCOPE                        | Depends  | The requested scope in OAuth flows. If not provided the default value is built based on `role`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| OAUTHAUTHORIZATIONURL             | Depends  | The url of the authorization endpoint (the one to get authorization code) for OAuth Authorization Code Flow. Required for non-Snowflake Identity Providers. Optional for Snowflake-provided OAuth service. See more: [Snowflake OAuth](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview)                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| OAUTHTOKENREQUESTURL              | Depends  | The url of the token endpoint (the one to get access token/refresh token) for OAuth Authorization Code Flow or OAuth Client Credential Flow. Required for OAuth Client Credentials Flow. For OAuth Authorization Code Flow, required in case of non-Snowflake Identity Providers, but optional for Snowflake-provided OAuth service. See more: [Snowflake OAuth](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview)                                                                                                                                                                                                                                                                                       |
+| OAUTHREDIRECTURI                  | Depends  | The url of the local endpoint the driver will listen to in OAuth Authorization Code Flow to get an authorization code from the Identity Provider. Required for non-Snowflake Identity providers. Optional for Snowflake-provided OAuth service. See more: [Snowflake OAuth](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview)                                                                                                                                                                                                                                                                                                                                                                            |
 <br />
 
 **Note**: Connections should not be shared across multiple threads.
@@ -222,6 +227,95 @@ If you are using a different method for authentication, see the examples below:
 
     - `{oauthTokenValue}` is the oauth token to use for authentication.
 
+- **OAuth Authorization Code Flow**
+
+The difference from simple OAuth authentication is that the driver doesn't get the token from the connection parameters but instead communicates with
+the Identity Provider to get the token by itself. The Identity Provider can be Snowflake or any other provider e.g. Okta, etc.
+For this kind of authentication a browser is started for the Identity Provider authorization endpoint.
+After a human submits a request in a browser the driver gets authorization code from the Identity Provider and then use it to get an access token
+which then is used to authorize in Snowflake.
+
+
+The access tokens and refresh tokens are cached if `CLIENT_STORE_TEMPORARY_CREDENTIAL` property is set to true (the default value for that is `true` on Windows and `false` on Mac/Linux).
+Caching the tokens means that once the token is cached it can be reused for subsequent authentications for which the cache is also enabled.
+Thanks to that you can reduce the number of interactions with the Identity Provider and also reduce the human effort in submitting authentication data in the browser.
+
+
+Example:
+```csharp
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;user=testuser;db=testdb;schema=testschema;authenticator=oauth_authorization_code;oauthScope=testScope;oauthClientId=testClientId;oauthClientSecret=testClientSecret;oauthAuthorizationUrl=https://testauthorize.okta.com;oauthTokenRequestUrl=https://testtoken.okta.com;oauthRedirectUri=http://localhost:8001/snowflake/oauth-redirect";
+
+      conn.Open();
+
+      conn.Close();
+  }
+```
+
+Alternatively you can provide `oauthClientSecret` property as a secure string of the connection instead of specifying it in the connection string:
+
+```csharp
+  using (SnowflakeDbConnection conn = new SnowflakeDbConnection("connection-string-without-client-secret"))
+  {
+      conn.OAuthClientSecret = ...; // configure client secret here
+      conn.Open();
+  }
+```
+
+Note: On Mac/Linux OS the browser is started by open/xdg-open command. Make sure that the command is properly configured on your PATH environmental variable.
+
+- **OAuth Client Credentials Flow**
+
+It is a similar authentication to OAuth Authorization Code Flow because the driver gets an access token from the Identity Provider instead of getting a token in the connection parameters,
+but does not require any human interaction and does not use a token cache.
+The driver gets an access token from the Identity Provider and then use it to authenticate in Snowflake.
+
+
+Example:
+```csharp
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;user=testuser;db=testdb;schema=testschema;authenticator=oauth_client_credentials;oauthScope=testScope;oauthClientId=testClientId;oauthClientSecret=testClientSecret;oauthTokenRequestUrl=https://testtoken.okta.com;";
+
+      conn.Open();
+
+      conn.Close();
+  }
+```
+
+Alternatively you can provide `oauthClientSecret` property as a secure string of the connection instead of specifying it in the connection string:
+
+```csharp
+  using (SnowflakeDbConnection conn = new SnowflakeDbConnection("connection-string-without-client-secret"))
+  {
+      conn.OAuthClientSecret = ...; // configure client secret here
+      conn.Open();
+  }
+```
+
+- **Programmatic Access Token**
+
+In Snowflake, you can generate a programmatic access token for your user and role restrictions and use this token to authenticate.
+
+```csharp
+  using (IDbConnection conn = new SnowflakeDbConnection())
+  {
+      conn.ConnectionString = "account=testaccount;user=testuser;db=testdb;schema=testschema;authenticator=programmatic_access_token;token=testtoken";
+      conn.Open();
+  }
+```
+
+Alternatively you can provide `token` property as a secure string of the connection instead of specifying it in the connection string:
+
+```csharp
+  using (SnowflakeDbConnection conn = new SnowflakeDbConnection("connection-string-without-token"))
+  {
+      conn.Token = ...; // configure client secret here
+      conn.Open();
+  }
+```
+
 - **Browser-based SSO**
 
   In the connection string, set `AUTHENTICATOR=externalbrowser`.
@@ -245,6 +339,8 @@ If you are using a different method for authentication, see the examples below:
   You can override the default timeout after which external browser authentication is marked as failed.
   The timeout prevents the infinite hang when the user does not provide the login details, e.g. when closing the browser tab.
   To override, you can provide `BROWSER_RESPONSE_TIMEOUT` parameter (in seconds).
+
+Note: On Mac/Linux OS the browser is started by `open`/`xdg-open` command. Make sure that the command is properly configured on your `PATH` environmental variable.
 
 - **Native SSO through Okta**
 
