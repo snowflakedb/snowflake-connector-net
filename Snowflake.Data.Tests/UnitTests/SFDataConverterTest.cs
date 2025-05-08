@@ -154,15 +154,32 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("9223372036854775807")]
-        [TestCase("-9223372036854775808")]
-        [TestCase("-1")]
-        [TestCase("999999999999999999")]
-        public void TestConvertToInt64(string s)
+        [TestCase("0", false)]
+        [TestCase("-1", false)]
+        [TestCase("1", false)]
+        [TestCase("999999999999999999", false)]
+        [TestCase("-9223372036854775808", false)] //C# `Int64.MinValue`
+        [TestCase("9223372036854775807", false)] //C# `Int64.MaxValue`
+        [TestCase("-9223372036854775809", true)] //C# Just below `Int64.MinValue`
+        [TestCase("9223372036854775809", true)] //C# Just above `Int64.MaxValue`
+        [TestCase("100000000000000000000", true)] //Significantly larger than C# `Int64.MinValue`
+        [TestCase("-100000000000000000000", true)] //Significantly smaller than C# `Int64.MinValue`
+        [TestCase("-4611686018427387904", false)] //OCaml 63-bit Integer min
+        [TestCase("4611686018427387903", false)]  //OCaml 63-bit Integer max
+        public void TestConvertToInt64(string s, bool willOverflow)
         {
-            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
-            Int64 expected = Convert.ToInt64(s);
-            Assert.AreEqual(expected, actual);
+            if (willOverflow)
+            {
+                string actual = (string)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
+                string expected = s;
+                Assert.AreEqual(expected, actual);
+            }
+            else
+            {
+                Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
+                Int64 expected = Convert.ToInt64(s);
+                Assert.AreEqual(expected, actual);
+            }
         }
 
         [Test]
