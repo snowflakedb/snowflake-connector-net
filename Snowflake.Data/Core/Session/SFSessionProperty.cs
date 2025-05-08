@@ -289,7 +289,7 @@ namespace Snowflake.Data.Core
                     compliantAccountName = compliantAccountName.Replace('_', '-');
                     logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
                 }
-                var hostName = $"{compliantAccountName}.snowflakecomputing.com";
+                var hostName = $"{compliantAccountName}.{SnowflakeHost.DefaultHost}";
                 // Remove in case it's here but empty
                 properties.Remove(SFSessionProperty.HOST);
                 properties.Add(SFSessionProperty.HOST, hostName);
@@ -441,12 +441,8 @@ namespace Snowflake.Data.Core
             {
                 logger.Warn($"Properties {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} and {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} are configured for a different host");
             }
-            return IsSnowflakeHost(externalAuthorizationUrlHost) && IsSnowflakeHost(externalTokenRequestUrlHost);
+            return SnowflakeHost.IsSnowflakeHost(externalAuthorizationUrlHost) && SnowflakeHost.IsSnowflakeHost(externalTokenRequestUrlHost);
         }
-
-        private static bool IsSnowflakeHost(string host) =>
-            host.EndsWith(".snowflakecomputing.com", StringComparison.OrdinalIgnoreCase) ||
-            host.EndsWith(".snowflakecomputing.cn", StringComparison.OrdinalIgnoreCase);
 
         private static void WarnIfHttpUsed(SFSessionProperties properties)
         {
