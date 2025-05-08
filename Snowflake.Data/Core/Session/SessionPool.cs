@@ -163,8 +163,9 @@ namespace Snowflake.Data.Core.Session
             ValidateMinPoolSizeWithPasscode(sessionProperties, sessionContext.Passcode);
             if (!GetPooling())
                 return NewNonPoolingSession(connStr, sessionContext);
-            var shouldPostponeMinPoolSize = ShouldPostponeMinPoolSize(sessionProperties);
-            var sessionOrCreateTokens = GetIdleSession(connStr, shouldPostponeMinPoolSize ? 1 : int.MaxValue);
+            var isMfaAuthentication = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
+                                      MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
+            var sessionOrCreateTokens = GetIdleSession(connStr, isMfaAuthentication ? 1 : int.MaxValue);
             if (sessionOrCreateTokens.Session != null)
             {
                 _sessionPoolEventHandler.OnSessionProvided(this);
@@ -172,25 +173,11 @@ namespace Snowflake.Data.Core.Session
             ScheduleNewIdleSessions(connStr, sessionContext, sessionOrCreateTokens.BackgroundSessionCreationTokens());
             WarnAboutOverridenConfig();
             var session = sessionOrCreateTokens.Session ?? NewSession(connStr, sessionContext, sessionOrCreateTokens.SessionCreationToken());
-            if (shouldPostponeMinPoolSize)
+            if (isMfaAuthentication)
             {
                 ScheduleNewIdleSessions(connStr, sessionContext, RegisterSessionCreationsToEnsureMinPoolSize());
             }
             return session;
-        }
-
-        internal bool ShouldPostponeMinPoolSize(SFSessionProperties properties)
-        {
-            if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
-                return false;
-            if (MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator))
-                return true;
-            if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator))
-                return OAuthCacheKeys.IsCacheAvailableForAuthorizationCodeFlow(
-                    properties[SFSessionProperty.USER],
-                    bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
-                    false);
-            return false;
         }
 
         private void ValidateMinPoolSizeWithPasscode(SFSessionProperties sessionProperties, SecureString passcode)

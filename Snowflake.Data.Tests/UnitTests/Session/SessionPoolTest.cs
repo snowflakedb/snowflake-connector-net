@@ -280,25 +280,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.IsFalse(isSessionReturnedToPool);
         }
 
-        [Test]
-        [TestCase("db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa", true)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;client_store_temporary_credential=true;", true)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;client_store_temporary_credential=false;", false)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;client_store_temporary_credential=true;", false)]
-        [TestCase("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;", false)]
-        public void TestShouldPostponeMinPoolSize(string connectionString, bool expectedShouldPostponeMinPoolSize)
-        {
-            // arrange
-            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
-
-            // act
-            var shouldPostponeMinPoolSize = pool.ShouldPostponeMinPoolSize(properties);
-
-            // assert
-            Assert.AreEqual(expectedShouldPostponeMinPoolSize, shouldPostponeMinPoolSize);
-        }
-
         private SFSession CreateSessionWithCurrentStartTime(string connectionString)
         {
             var session = new SFSession(connectionString, new SessionPropertiesContext());
