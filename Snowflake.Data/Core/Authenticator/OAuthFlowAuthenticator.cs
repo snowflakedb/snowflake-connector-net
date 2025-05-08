@@ -117,7 +117,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var authName = GetAuthenticatorName();
             s_logger.Debug($"Getting access token for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
-            var restRequester = (RestRequester) session.restRequester;
+            var restRequester = session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
                 var restRequest = new RestRequestWrapper(accessTokenHttpRequest);
@@ -187,13 +187,7 @@ namespace Snowflake.Data.Core.Authenticator
             AccessToken = SecureStringHelper.Encode(accessToken);
         }
 
-        private OAuthCacheKeys GetOAuthCacheKeys()
-        {
-            var host = new Uri(GetTokenEndpoint()).Host;
-            var user = session.properties[SFSessionProperty.USER];
-            var clientStoreTemporaryCredentials = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
-            return new OAuthCacheKeys(host, user, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
-        }
+        protected abstract OAuthCacheKeys GetOAuthCacheKeys();
 
         protected OAuthRefreshAccessTokenRequest BuildRefreshTokenRequest(OAuthCacheKeys cacheKeys)
         {

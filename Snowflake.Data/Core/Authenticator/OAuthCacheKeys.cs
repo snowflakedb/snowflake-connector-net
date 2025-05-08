@@ -13,26 +13,46 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthCacheKeys>();
 
-        public OAuthCacheKeys(string host, string user, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
+        public static OAuthCacheKeys CreateForAuthorizationCodeFlow(string host, string user, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
-            _credentialManagerProvider = credentialManagerProvider;
+            string accessTokenKey = string.Empty;
+            string refreshTokenKey = string.Empty;
+            if (IsCacheAvailableForAuthorizationCodeFlow(user, clientStoreTemporaryCredentials, true))
+            {
+                accessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
+                refreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
+            }
+            return new OAuthCacheKeys(accessTokenKey, refreshTokenKey, credentialManagerProvider);
+        }
+
+        public static OAuthCacheKeys CreateForDisabledCache()
+        {
+            return new OAuthCacheKeys(string.Empty, string.Empty, null);
+        }
+
+        public static bool IsCacheAvailableForAuthorizationCodeFlow(string user, bool clientStoreTemporaryCredentials, bool logReasons)
+        {
             if (string.IsNullOrEmpty(user))
             {
-                s_logger.Debug("Cache in OAuth flow is not used because user is not defined");
-                _accessTokenKey = string.Empty;
-                _refreshTokenKey = string.Empty;
-                return;
+                if (logReasons)
+                    s_logger.Debug("Cache in OAuth flow is not used because user is not defined");
+                return false;
             }
 
             if (!clientStoreTemporaryCredentials)
             {
-                s_logger.Debug("Cache in OAuth flow is not used because clientStoreTemporaryCredentials is false");
-                _accessTokenKey = string.Empty;
-                _refreshTokenKey = string.Empty;
-                return;
+                if (logReasons)
+                    s_logger.Debug("Cache in OAuth flow is not used because clientStoreTemporaryCredentials is false");
+                return false;
             }
-            _accessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
-            _refreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
+            return true;
+        }
+
+        private OAuthCacheKeys(string accessTokenKey, string refreshTokenKey, Func<ISnowflakeCredentialManager> credentialManagerProvider)
+        {
+            _accessTokenKey = accessTokenKey;
+            _refreshTokenKey = refreshTokenKey;
+            _credentialManagerProvider = credentialManagerProvider;
         }
 
         public bool IsAvailable() => !string.IsNullOrEmpty(_accessTokenKey);
