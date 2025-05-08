@@ -40,6 +40,7 @@ namespace Snowflake.Data.Core
         QueuedReparingWarehouse,
         [StringAttr(value = "RESTARTED")]
         Restarted,
+        // The state when a statement is waiting on a lock on resource held by another statement.
         [StringAttr(value = "BLOCKED")]
         Blocked,
     }
@@ -68,6 +69,7 @@ namespace Snowflake.Data.Core
                 case QueryStatus.Queued:
                 case QueryStatus.QueuedReparingWarehouse:
                 case QueryStatus.NoData:
+                case QueryStatus.Blocked:
                     return true;
                 default:
                     return false;
@@ -83,7 +85,6 @@ namespace Snowflake.Data.Core
                 case QueryStatus.Aborted:
                 case QueryStatus.FailedWithIncident:
                 case QueryStatus.Disconnected:
-                case QueryStatus.Blocked:
                     return true;
                 default:
                     return false;
