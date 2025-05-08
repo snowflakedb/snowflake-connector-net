@@ -448,6 +448,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "useRegionalUrl", NullValueHandling = NullValueHandling.Ignore)]
         internal bool useRegionalUrl { get; set; }
 
+        [JsonProperty(PropertyName = "useVirtualUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool useVirtualUrl { get; set; }
+
         private const string GcsRegionMeCentral2 = "me-central2";
 
         internal string GcsCustomEndpoint()
@@ -456,6 +459,11 @@ namespace Snowflake.Data.Core
                 return null;
             if (!string.IsNullOrWhiteSpace(endPoint) && endPoint != "null")
                 return endPoint;
+            if (useVirtualUrl)
+            {
+                var bucketName = location.Contains("/") ? location.Substring(0, location.IndexOf('/')) : location;
+                return $"{bucketName}.storage.googleapis.com";
+            }
             if (GcsRegionMeCentral2.Equals(region, StringComparison.OrdinalIgnoreCase) || useRegionalUrl)
                 return $"storage.{region.ToLower()}.rep.googleapis.com";
             return null;
