@@ -40,16 +40,16 @@ namespace Snowflake.Data.AuthenticationTests
              authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
          }
 
-          [Test, Ignore("Skipped, waits for SNOW-1893041")]
+         [Test, Ignore("Skipped, waits for SNOW-1893041")]
           public void TestAuthenticateUsingOauthMismatchedUser()
           {
               AuthTestHelper authTestHelper = new AuthTestHelper();
 
               string token = AuthConnectionString.GetOauthToken();
               var parameters = AuthConnectionString.GetOauthConnectionString(token);
-              parameters.Add(SFSessionProperty.USER, "fakeAccount");
+              parameters[SFSessionProperty.USER] = "fakeAccount";
               parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
-              parameters.Add(SFSessionProperty.MINPOOLSIZE, "0");
+              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
               authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
               authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
