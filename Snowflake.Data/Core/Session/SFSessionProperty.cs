@@ -346,14 +346,24 @@ namespace Snowflake.Data.Core
 
         private static void ValidateAuthenticatorFlowsProperties(SFSessionProperties properties)
         {
+            const string DefaultOAuthClientIdAndSecret = "LOCAL_APPLICATION";
             if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
                 return;
             if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator))
             {
-                CheckRequiredProperty(SFSessionProperty.OAUTHCLIENTID, properties);
-                CheckRequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET, properties);
+                var isSnowflakeHost = ValidateOAuthUrlsReturningIfTheyAreSnowflake(properties);
+                if (isSnowflakeHost && !IsPropertyProvided(SFSessionProperty.OAUTHCLIENTID, properties) && !IsPropertyProvided(SFSessionProperty.OAUTHCLIENTSECRET, properties))
+                {
+                    logger.Debug($"Using default values for OAUTHCLIENTID and OAUTHCLIENTSECRET");
+                    properties[SFSessionProperty.OAUTHCLIENTID] = DefaultOAuthClientIdAndSecret;
+                    properties[SFSessionProperty.OAUTHCLIENTSECRET] = DefaultOAuthClientIdAndSecret;
+                }
+                else
+                {
+                    CheckRequiredProperty(SFSessionProperty.OAUTHCLIENTID, properties);
+                    CheckRequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET, properties);
+                }
                 ValidateEitherScopeOrRoleDefined(properties);
-                ValidateOAuthUrls(properties);
                 ValidatePoolingEnabledOnlyWithUser(properties);
             }
             else if (OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator(authenticator))
@@ -401,7 +411,7 @@ namespace Snowflake.Data.Core
                 $"{SFSessionProperty.OAUTHSCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()}");
         }
 
-        private static void ValidateOAuthUrls(SFSessionProperties properties)
+        private static bool ValidateOAuthUrlsReturningIfTheyAreSnowflake(SFSessionProperties properties)
         {
             var externalAuthorizationUrl = ValidateOAuthExternalAuthorizeUrl(properties);
             var externalTokenRequestUrl = ValidateOAuthExternalTokenUrl(properties);
@@ -420,15 +430,23 @@ namespace Snowflake.Data.Core
                     SFError.MISSING_CONNECTION_PROPERTY,
                     missingParameter);
             }
-            if (bothSet && !GetHost(externalAuthorizationUrl).Equals(GetHost(externalTokenRequestUrl)))
-            {
-                logger.Warn($"Properties {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} and {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} are configured for a different host");
-            }
             if (bothEmpty)
             {
                 WarnIfHttpUsed(properties);
+                return true;
             }
+            var externalAuthorizationUrlHost = GetHost(externalAuthorizationUrl);
+            var externalTokenRequestUrlHost = GetHost(externalTokenRequestUrl);
+            if (!externalAuthorizationUrlHost.Equals(externalTokenRequestUrlHost))
+            {
+                logger.Warn($"Properties {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} and {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} are configured for a different host");
+            }
+            return IsSnowflakeHost(externalAuthorizationUrlHost) && IsSnowflakeHost(externalTokenRequestUrlHost);
         }
+
+        private static bool IsSnowflakeHost(string host) =>
+            host.EndsWith(".snowflakecomputing.com", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".snowflakecomputing.cn", StringComparison.OrdinalIgnoreCase);
 
         private static void WarnIfHttpUsed(SFSessionProperties properties)
         {
@@ -654,6 +672,11 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        private static bool IsPropertyProvided(SFSessionProperty sessionProperty, SFSessionProperties properties)
+        {
+            return properties.TryGetValue(sessionProperty, out var value) && !string.IsNullOrEmpty(value);
         }
 
         private static void CheckRequiredProperty(SFSessionProperty sessionProperty, SFSessionProperties properties)
