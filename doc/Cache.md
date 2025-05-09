@@ -4,7 +4,7 @@ The Snowflake .NET driver provides the ability to cache tokens using different i
 
 ### Enabling the Cache
 
-The SSO token cache is enabled by setting the parameter **client_store_temporary_credential** to true. The default value is based on OS:
+The SSO token cache and the token cache for OAuth authorization code flow and OAuth client credentials flow is enabled by setting the parameter **client_store_temporary_credential** to true. The default value is based on OS:
 - **Windows**: true
 - **Linux**: false
 - **Mac**: false

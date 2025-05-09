@@ -1,0 +1,32 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Invalid token Snowflake login for OAuth Access Token",
+            "request": {
+                "urlPathPattern": "/session/v1/login-request",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    }
+                },
+                "bodyPatterns": [
+                    { "matchesJsonPath": "$.data[?(@.AUTHENTICATOR == 'oauth')]" },
+                    { "matchesJsonPath": "$.data[?(@.TOKEN == 'access-token-123')]" }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {
+                    "data": {},
+                    "code": 390303,
+                    "message": "Access token is invalid",
+                    "success": false
+                }
+            }
+        }
+    ]
+}
