@@ -238,7 +238,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             var storageHostPath = ExtractStorageHostPath(stageInfo);
             var gcsLocation = ExtractBucketNameAndPath(stageInfo.location);
             var fullFilePath = gcsLocation.key + fileName;
-            var path = stageInfo.useVirtualUrl == true ? fullFilePath : gcsLocation.bucket + "/" + fullFilePath;
+            var path = stageInfo.useVirtualUrl ? fullFilePath : gcsLocation.bucket + "/" + fullFilePath;
             var link = storageHostPath + path;
             return link;
         }
