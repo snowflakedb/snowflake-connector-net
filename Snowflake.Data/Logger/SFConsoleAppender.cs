@@ -11,7 +11,7 @@ internal class SFConsoleAppender : SFAppender
         Console.Write(formattedMessage);
         if (ex != null)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.ToString());
         }
     }
 }
