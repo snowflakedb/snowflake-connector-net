@@ -29,18 +29,15 @@ namespace Snowflake.Data.Core.Tools
             return File.Exists(path);
         }
 
-        public virtual void Write(string path, string content, Action<UnixStream> validator = null, bool append = false)
+        public virtual void Write(string path, string content, Action<UnixStream> validator = null)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                if (append)
-                    File.AppendAllText(path, content);
-                else
-                    File.WriteAllText(path, content);
+                File.WriteAllText(path, content);
             }
             else
             {
-                _unixOperations.WriteAllText(path, content, validator, append);
+                _unixOperations.WriteAllText(path, content, validator);
             }
         }
 

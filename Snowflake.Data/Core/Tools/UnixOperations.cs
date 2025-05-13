@@ -58,6 +58,7 @@ namespace Snowflake.Data.Core.Tools
             {
                 CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
             }
+
             s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }
@@ -110,11 +111,11 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public void WriteAllText(string path, string content, Action<UnixStream> validator, bool append = false)
+        public void WriteAllText(string path, string content, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
 
-            using (var handle = fileInfo.Open(append ? FileMode.Append : FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
             {
                 WriteAllText(handle, content, validator);
             }
