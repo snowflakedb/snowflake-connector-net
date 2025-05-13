@@ -26,7 +26,7 @@ internal class SFRollingFileAppender : SFAppender
 
             FileOperations.Instance.Write(LogFilePath, formattedMessage, null, true);
             if (ex != null)
-                FileOperations.Instance.Write(LogFilePath, ex.Message, null, true);
+                FileOperations.Instance.Write(LogFilePath, ex.ToString(), null, true);
         }
         catch
         {
