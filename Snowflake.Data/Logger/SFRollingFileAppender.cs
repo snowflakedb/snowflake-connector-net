@@ -1,8 +1,13 @@
+using Mono.Unix;
+using Mono.Unix.Native;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
 
 internal class SFRollingFileAppender : SFAppender
 {
@@ -24,9 +29,23 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            FileOperations.Instance.Write(LogFilePath, formattedMessage, null, true);
-            if (ex != null)
-                FileOperations.Instance.Write(LogFilePath, ex.ToString(), null, true);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.AppendAllText(LogFilePath, formattedMessage);
+                if (ex != null)
+                    File.AppendAllText(ex.ToString(), formattedMessage);
+            }
+            else
+            {
+                var fileInfo = new UnixFileInfo(path: LogFilePath);
+                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+                {
+                    SFCredentialManagerFileImpl.Instance.ValidateFilePermissions(handle);
+                    UnixOperations.Instance.WriteAllText(handle, formattedMessage, null);
+                    if (ex != null)
+                        UnixOperations.Instance.WriteAllText(handle, ex.ToString(), null);
+                }
+            }
         }
         catch
         {

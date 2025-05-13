@@ -116,11 +116,16 @@ namespace Snowflake.Data.Core.Tools
 
             using (var handle = fileInfo.Open(append ? FileMode.Append : FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
             {
-                validator?.Invoke(handle);
-                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
-                {
-                    streamWriter.Write(content);
-                }
+                WriteAllText(handle, content, validator);
+            }
+        }
+
+        public void WriteAllText(UnixStream handle, string content, Action<UnixStream> validator)
+        {
+            validator?.Invoke(handle);
+            using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+            {
+                streamWriter.Write(content);
             }
         }
 
