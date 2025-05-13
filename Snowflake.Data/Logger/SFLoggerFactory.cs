@@ -49,30 +49,5 @@ namespace Snowflake.Data.Log
                 return new SFLoggerEmptyImpl();
             }
         }
-
-        internal static ILogger GetCustomLogger<T>()
-        {
-            // If true, return the default/specified logger
-            if (s_isCustomLoggerEnabled)
-            {
-                // If no logger specified, use the default logger: Microsoft's console logger
-                if (s_customLogger == null)
-                {
-                    ILoggerFactory factory = LoggerFactory.Create(
-                        builder => builder
-                        .AddConsole()
-                        .SetMinimumLevel(LogLevel.Trace)
-                    );
-
-                    return factory.CreateLogger<T>();
-                }
-                return s_customLogger;
-            }
-            // Else, return the empty logger implementation which outputs nothing
-            else
-            {
-                return new LoggerEmptyImpl();
-            }
-        }
     }
 }

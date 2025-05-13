@@ -51,9 +51,9 @@ namespace Snowflake.Data.Tests.UnitTests
             [Test]
             public void TestUsingDefaultLogger()
             {
-                var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                var originalLogger = GetCustomLogger<ILoggerTest>();
                 SnowflakeDbLoggerFactory.ResetCustomLogger();
-                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                _logger = GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<ILogger>(_logger);
                 SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
             }
@@ -61,9 +61,9 @@ namespace Snowflake.Data.Tests.UnitTests
             [Test]
             public void TestSettingCustomLogger()
             {
-                var originalLogger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                var originalLogger = GetCustomLogger<ILoggerTest>();
                 SnowflakeDbLoggerFactory.SetCustomLogger(new LoggerEmptyImpl());
-                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                _logger = GetCustomLogger<ILoggerTest>();
                 Assert.IsInstanceOf<LoggerEmptyImpl>(_logger);
                 SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
             }
@@ -131,13 +131,13 @@ namespace Snowflake.Data.Tests.UnitTests
                     SnowflakeDbLoggerFactory.DisableCustomLogger();
                 }
 
-                return SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                return GetCustomLogger<ILoggerTest>();
             }
 
             [Test]
             public void TestThatLogsToProperFileWithProperLogLevelOnly()
             {
-                _logger = SFLoggerFactory.GetCustomLogger<ILoggerTest>();
+                _logger = GetCustomLogger<ILoggerTest>();
 
                 // act
                 _logger.LogDebug(DebugMessage);
@@ -158,6 +158,31 @@ namespace Snowflake.Data.Tests.UnitTests
                         Assert.IsTrue(logLines.Contains(ErrorMessage));
                         Assert.IsTrue(logLines.Contains(CriticalMessage));
                     }
+                }
+            }
+
+            internal static ILogger GetCustomLogger<T>()
+            {
+                // If true, return the default/specified logger
+                if (SFLoggerFactory.s_isCustomLoggerEnabled)
+                {
+                    // If no logger specified, use the default logger: Microsoft's console logger
+                    if (SFLoggerFactory.s_customLogger == null)
+                    {
+                        ILoggerFactory factory = LoggerFactory.Create(
+                            builder => builder
+                            .AddConsole()
+                            .SetMinimumLevel(LogLevel.Trace)
+                        );
+
+                        return factory.CreateLogger<T>();
+                    }
+                    return SFLoggerFactory.s_customLogger;
+                }
+                // Else, return the empty logger implementation which outputs nothing
+                else
+                {
+                    return new LoggerEmptyImpl();
                 }
             }
         }
