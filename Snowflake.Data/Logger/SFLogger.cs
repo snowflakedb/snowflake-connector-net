@@ -21,7 +21,7 @@ namespace Snowflake.Data.Log
         void Error(string msg, Exception ex = null);
     }
 
-    public enum LoggingEvent
+    internal enum LoggingEvent
     {
         OFF, TRACE, DEBUG, INFO, WARN, ERROR
     }
