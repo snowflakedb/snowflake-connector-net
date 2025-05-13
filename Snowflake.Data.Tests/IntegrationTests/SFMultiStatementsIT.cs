@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test]
         public async Task TestSelectAsync()
         {
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test]
         public void TestSelectWithBinding()
         {
@@ -526,6 +526,62 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     cmd.CommandText = "select 1; select 2; select 3";
                     cmd.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+        }
+
+        [Test]
+        public void TestResultSetReturnedForAllQueryTypes()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                using (DbCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "set query_tag = (select 'dummy_tag');" +
+                                      "alter session set query_tag='dummy_tag';" +
+                                      "select 1;" +
+                                      $"create or replace temporary table {TableName}(c1 varchar);" +
+                                      $"explain using text select * from {TableName};" +
+                                      "show parameters;" +
+                                      $"insert into {TableName} values ('str1');" +
+                                      $"update {TableName} set c1 = 'str2';" +
+                                      $"select * from {TableName};" +
+                                      $"desc table {TableName};" +
+                                      $"copy into @%{TableName} from {TableName};" +
+                                      $"list @%{TableName};" +
+                                      $"remove @%{TableName};" +
+                                      "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
+                                      "call p1();" +
+                                      $"use role {testConfig.role}";
+
+                    var stmtCount = 16;
+
+                    // Set statement count
+                    var stmtCountParam = cmd.CreateParameter();
+                    stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
+                    stmtCountParam.DbType = DbType.Int16;
+                    stmtCountParam.Value = stmtCount;
+                    cmd.Parameters.Add(stmtCountParam);
+
+                    DbDataReader reader = cmd.ExecuteReader();
+
+                    // at least one row in the first result set
+                    Assert.IsTrue(reader.Read());
+
+                    for (int i = 1; i < stmtCount; i++)
+                    {
+                        Assert.IsTrue(reader.NextResult());
+
+                        // at least one row in subsequent result sets
+                        Assert.IsTrue(reader.Read());
+                    }
+                    Assert.IsFalse(reader.NextResult());
+                    reader.Close();
                 }
 
                 conn.Close();

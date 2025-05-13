@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core
                     {
                         updateCount += resultSet.GetInt64(i);
                     }
-
+                    resultSet.Rewind();
                     break;
                 case SFStatementType.COPY:
                     var index = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_loaded");
