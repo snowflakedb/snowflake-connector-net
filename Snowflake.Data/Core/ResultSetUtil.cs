@@ -49,6 +49,7 @@ namespace Snowflake.Data.Core
                     }
                     break;
                 case SFStatementType.SELECT:
+                    // DbDataReader.RecordsAffected returns -1 for SELECT statement
                     updateCount = -1;
                     break;
                 default:
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Core
             return (int)updateCount;
         }
 
-        internal static bool HasResultSet(this SFBaseResultSet resultSet)
+        internal static bool IsDQL(this SFBaseResultSet resultSet)
         {
             if (resultSet.isClosed) return false;
 

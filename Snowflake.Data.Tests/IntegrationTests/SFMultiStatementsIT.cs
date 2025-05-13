@@ -236,17 +236,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DbDataReader reader = cmd.ExecuteReader();
 
                     // result of create
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     // result of insert #1
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(1, reader.RecordsAffected);
 
                     // result of insert #2
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(2, reader.RecordsAffected);
 
                     // result of select
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of drop
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     Assert.IsFalse(reader.NextResult());
@@ -382,7 +382,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of create
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     // result of explain
@@ -400,7 +400,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of insert
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(1, reader.RecordsAffected);
 
                     // result of describe
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of create
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     // result of call
@@ -434,7 +434,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of use
                     Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
                     Assert.AreEqual(0, reader.RecordsAffected);
 
                     Assert.IsFalse(reader.NextResult());
@@ -571,6 +571,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DbDataReader reader = cmd.ExecuteReader();
 
                     // at least one row in the first result set
+                    Assert.IsTrue(reader.HasRows);
                     Assert.IsTrue(reader.Read());
 
                     for (int i = 1; i < stmtCount; i++)
@@ -578,6 +579,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.IsTrue(reader.NextResult());
 
                         // at least one row in subsequent result sets
+                        Assert.IsTrue(reader.HasRows);
                         Assert.IsTrue(reader.Read());
                     }
                     Assert.IsFalse(reader.NextResult());
