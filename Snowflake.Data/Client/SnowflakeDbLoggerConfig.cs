@@ -3,7 +3,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
 {
-    public class SnowflakeDbLoggerFactory
+    public class SnowflakeDbLoggerConfig
     {
         public static void ResetCustomLogger()
         {
