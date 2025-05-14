@@ -4,8 +4,6 @@ namespace Snowflake.Data.Log
 {
     internal class SFLoggerFactory
     {
-        internal static bool s_isCustomLoggerEnabled = false;
-
         internal static bool s_isSFLoggerEnabled = false;
 
         internal static bool s_useDefaultSFLogger = true;

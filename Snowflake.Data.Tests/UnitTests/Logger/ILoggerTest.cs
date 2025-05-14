@@ -26,21 +26,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
         public abstract class ILoggerBaseTest
         {
+            protected ILogger _customLogger;
             protected ILogger _logger;
             protected string _logFile;
-
-            [OneTimeSetUp]
-            public void BeforeTest()
-            {
-                SnowflakeDbLoggerFactory.EnableCustomLogger();
-            }
 
             [OneTimeTearDown]
             public void AfterTest()
             {
                 // Return to default setting
                 SnowflakeDbLoggerFactory.ResetCustomLogger();
-                SnowflakeDbLoggerFactory.DisableCustomLogger();
                 if (_logFile != null)
                 {
                     File.Delete(_logFile);
@@ -49,23 +43,17 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             [Test]
-            public void TestUsingDefaultLogger()
+            public void TestResetCustomLogger()
             {
-                var originalLogger = GetCustomLogger<ILoggerTest>();
                 SnowflakeDbLoggerFactory.ResetCustomLogger();
-                _logger = GetCustomLogger<ILoggerTest>();
-                Assert.IsInstanceOf<ILogger>(_logger);
-                SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
+                Assert.IsInstanceOf<ILogger>(SFLoggerFactory.s_customLogger);
             }
 
             [Test]
             public void TestSettingCustomLogger()
             {
-                var originalLogger = GetCustomLogger<ILoggerTest>();
                 SnowflakeDbLoggerFactory.SetCustomLogger(new LoggerEmptyImpl());
-                _logger = GetCustomLogger<ILoggerTest>();
-                Assert.IsInstanceOf<LoggerEmptyImpl>(_logger);
-                SnowflakeDbLoggerFactory.SetCustomLogger(originalLogger);
+                Assert.IsInstanceOf<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
             }
 
             [Test]
@@ -124,20 +112,20 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 if (isEnabled)
                 {
-                    SnowflakeDbLoggerFactory.EnableCustomLogger();
+                    SnowflakeDbLoggerFactory.SetCustomLogger(_customLogger);
                 }
                 else
                 {
-                    SnowflakeDbLoggerFactory.DisableCustomLogger();
+                    SnowflakeDbLoggerFactory.ResetCustomLogger();
                 }
 
-                return GetCustomLogger<ILoggerTest>();
+                return SFLoggerFactory.s_customLogger;
             }
 
             [Test]
             public void TestThatLogsToProperFileWithProperLogLevelOnly()
             {
-                _logger = GetCustomLogger<ILoggerTest>();
+                _logger = GetLogger(true);
 
                 // act
                 _logger.LogDebug(DebugMessage);
@@ -160,31 +148,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     }
                 }
             }
-
-            internal static ILogger GetCustomLogger<T>()
-            {
-                // If true, return the default/specified logger
-                if (SFLoggerFactory.s_isCustomLoggerEnabled)
-                {
-                    // If no logger specified, use the default logger: Microsoft's console logger
-                    if (SFLoggerFactory.s_customLogger == null)
-                    {
-                        ILoggerFactory factory = LoggerFactory.Create(
-                            builder => builder
-                            .AddConsole()
-                            .SetMinimumLevel(LogLevel.Trace)
-                        );
-
-                        return factory.CreateLogger<T>();
-                    }
-                    return SFLoggerFactory.s_customLogger;
-                }
-                // Else, return the empty logger implementation which outputs nothing
-                else
-                {
-                    return new LoggerEmptyImpl();
-                }
-            }
         }
 
         [TestFixture]
@@ -199,8 +162,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     .AddLog4Net("TestLog4Net.config")
                     .SetMinimumLevel(LogLevel.Trace));
 
-                var log4netLogger = factory.CreateLogger("Log4NetTest");
-                SnowflakeDbLoggerFactory.SetCustomLogger(log4netLogger);
+                _customLogger = factory.CreateLogger("Log4NetTest");
+                SnowflakeDbLoggerFactory.SetCustomLogger(_customLogger);
                 _logFile = Log4NetFileName;
             }
         }
@@ -217,8 +180,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     .WriteTo.File(SerilogFileName)
                     .CreateLogger();
 
-                var serilogLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
-                SnowflakeDbLoggerFactory.SetCustomLogger(serilogLogger);
+                _customLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
+                SnowflakeDbLoggerFactory.SetCustomLogger(_customLogger);
                 _logFile = SerilogFileName;
             }
         }
@@ -229,15 +192,14 @@ namespace Snowflake.Data.Tests.UnitTests
             [OneTimeSetUp]
             public void SetUp()
             {
-                var l = SFLoggerFactory.GetLogger<ILoggerTest>();
                 Environment.SetEnvironmentVariable("TEST_NLOG_FILE_NAME", NlogFileName);
                 var factory = LoggerFactory.Create(
                     builder => builder
                     .AddNLog("TestNLog.config")
                     .SetMinimumLevel(LogLevel.Trace));
 
-                var nlogLogger = factory.CreateLogger("NlogTest");
-                SnowflakeDbLoggerFactory.SetCustomLogger(nlogLogger);
+                _customLogger = factory.CreateLogger("NlogTest");
+                SnowflakeDbLoggerFactory.SetCustomLogger(_customLogger);
                 _logFile = NlogFileName;
             }
         }
