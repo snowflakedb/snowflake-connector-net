@@ -1,47 +1,43 @@
-using log4net;
+using Microsoft.Extensions.Logging;
 
 namespace Snowflake.Data.Log
 {
-    class SFLoggerFactory
+    internal class SFLoggerFactory
     {
-        private static bool isLoggerEnabled = true;
+        internal static bool s_isSFLoggerEnabled = false;
 
-        private static SFLogger logger = null;
+        internal static bool s_useDefaultSFLogger = true;
 
-        private SFLoggerFactory()
+        internal static ILogger s_customLogger = new LoggerEmptyImpl();
+
+        internal static void UseEmptySFLogger()
         {
+            s_useDefaultSFLogger = false;
         }
 
-        public static void disableLogger()
+        internal static void UseDefaultSFLogger()
         {
-            isLoggerEnabled = false;
+            s_useDefaultSFLogger = true;
         }
 
-        public static void enableLogger()
+        internal static SFLogger GetLogger<T>()
         {
-            isLoggerEnabled = true;
+            return new SFLoggerPair(GetSFLogger<T>());
         }
 
-        public static void useDefaultLogger()
-        {
-            logger = null;
-        }
-
-        public static void Instance(SFLogger customLogger)
-        {            
-            logger = customLogger;
-        }
-
-        public static SFLogger GetLogger<T>()
+        internal static SFLogger GetSFLogger<T>(bool useConsoleAppender = false)
         {
             // If true, return the default/specified logger
-            if (isLoggerEnabled)
+            if (s_useDefaultSFLogger)
             {
-                // If no logger specified, use the default logger: log4net
-                if (logger == null)
+                var logger = new SFLoggerImpl(typeof(T));
+                if (!s_isSFLoggerEnabled)
                 {
-                    ILog loggerL = LogManager.GetLogger(typeof(T));
-                    return new Log4NetImpl(loggerL);
+                    SFLoggerImpl.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
+                }
+                if(useConsoleAppender)
+                {
+                    EasyLoggerManager.AddConsoleAppender();
                 }
                 return logger;
             }
@@ -52,5 +48,4 @@ namespace Snowflake.Data.Log
             }
         }
     }
-
 }

@@ -1,10 +1,10 @@
+using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Log;
+using System;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Log;
-    
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {
@@ -23,27 +23,27 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
         }
-        
-        [TearDown] public void AfterTest()
+
+        [TearDown]
+        public void AfterTest()
         {
             // Return to default setting
-            SFLoggerFactory.useDefaultLogger();
-            SFLoggerFactory.enableLogger();
+            SFLoggerFactory.UseDefaultSFLogger();
         }
 
         [Test]
-        public void TestUsingDefaultLogger()
+        public void TestUsingSFLogger()
         {
-            SFLoggerFactory.useDefaultLogger();
-            _logger = SFLoggerFactory.GetLogger<SFLoggerTest>();
-            Assert.IsInstanceOf<Log4NetImpl>(_logger);
+            SFLoggerFactory.UseDefaultSFLogger();
+            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
+            Assert.IsInstanceOf<SFLoggerImpl>(_logger);
         }
 
         [Test]
-        public void TestSettingCustomLogger()
+        public void TestUsingEmptyLogger()
         {
-            SFLoggerFactory.Instance(new SFLoggerEmptyImpl());
-            _logger = SFLoggerFactory.GetLogger<SFLoggerTest>();
+            SFLoggerFactory.UseEmptySFLogger();
+            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
             Assert.IsInstanceOf<SFLoggerEmptyImpl>(_logger);
         }
 
@@ -52,8 +52,10 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
+            _logger.Debug("debug log message", new Exception("test exception"));
         }
 
         [Test]
@@ -61,8 +63,10 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.INFO);
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
+            _logger.Info("info log message", new Exception("test exception"));
         }
 
         [Test]
@@ -70,8 +74,10 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.WARN);
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
+            _logger.Warn("warn log message", new Exception("test exception"));
         }
 
         [Test]
@@ -79,31 +85,80 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
+            SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
+            _logger.Error("error log message", new Exception("test exception"));
         }
 
         [Test]
-        public void TestIsFatalEnabled(
-            [Values(false, true)] bool isEnabled)
+        public void TestSetLevel(
+            [Values(false, true)] bool isEnabled,
+            [Values] LoggingEvent logLevel)
         {
             _logger = GetLogger(isEnabled);
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(logLevel);
+                Assert.AreEqual(logLevel, SFLoggerImpl.s_level);
 
-            Assert.AreEqual(isEnabled, _logger.IsFatalEnabled());
+                if (logLevel == LoggingEvent.OFF)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsFalse(_logger.IsWarnEnabled());
+                    Assert.IsFalse(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.TRACE)
+                {
+                    Assert.IsTrue(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.DEBUG)
+                {
+                    Assert.IsTrue(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.INFO)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsTrue(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.WARN)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsTrue(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+                else if (logLevel == LoggingEvent.ERROR)
+                {
+                    Assert.IsFalse(_logger.IsDebugEnabled());
+                    Assert.IsFalse(_logger.IsInfoEnabled());
+                    Assert.IsFalse(_logger.IsWarnEnabled());
+                    Assert.IsTrue(_logger.IsErrorEnabled());
+                }
+            }
         }
 
         private SFLogger GetLogger(bool isEnabled)
         {
             if (isEnabled)
             {
-                SFLoggerFactory.enableLogger();
+                SFLoggerFactory.UseDefaultSFLogger();
             }
             else
             {
-                SFLoggerFactory.disableLogger();
+                SFLoggerFactory.UseEmptySFLogger();
             }
 
-            return SFLoggerFactory.GetLogger<SFLoggerTest>();
+            return SFLoggerFactory.GetSFLogger<SFLoggerTest>(true);
         }
     }
 }

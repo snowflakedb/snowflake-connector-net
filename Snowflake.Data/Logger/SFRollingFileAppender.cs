@@ -1,0 +1,89 @@
+using Mono.Unix;
+using Mono.Unix.Native;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
+using System;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
+
+internal class SFRollingFileAppender : SFAppender
+{
+    internal string LogFilePath { get; set; }
+
+    internal long MaximumFileSizeInBytes { get; set; }
+
+    internal int MaxSizeRollBackups { get; set; }
+
+    internal PatternLayout PatternLayout { get; set; }
+
+    public void Append(string logLevel, string message, Type type, Exception ex = null)
+    {
+        var formattedMessage = PatternLayout.Format(logLevel, message, type);
+        try
+        {
+            if (LogFileIsTooLarge())
+            {
+                RollLogFile();
+            }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.AppendAllText(LogFilePath, formattedMessage);
+                if (ex != null)
+                    File.AppendAllText(ex.ToString(), formattedMessage);
+            }
+            else
+            {
+                var fileInfo = new UnixFileInfo(path: LogFilePath);
+                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+                {
+                    SFCredentialManagerFileImpl.Instance.ValidateFilePermissions(handle);
+                    UnixOperations.Instance.WriteAllText(handle, formattedMessage, null);
+                    if (ex != null)
+                        UnixOperations.Instance.WriteAllText(handle, ex.ToString(), null);
+                }
+            }
+        }
+        catch
+        {
+            Console.Error.WriteLine("Encountered an error while writing log to file");
+        }
+    }
+
+    public void ActivateOptions()
+    {
+        var logDir = Path.GetDirectoryName(LogFilePath);
+        if (!DirectoryOperations.Instance.Exists(logDir))
+            DirectoryOperations.Instance.CreateDirectory(logDir);
+        if (!FileOperations.Instance.Exists(LogFilePath))
+            FileOperations.Instance.Create(LogFilePath).Dispose();
+    }
+
+    private bool LogFileIsTooLarge()
+    {
+        FileInfo fileInfo = new FileInfo(LogFilePath);
+        return fileInfo.Exists && fileInfo.Length > MaximumFileSizeInBytes;
+    }
+
+    private void RollLogFile()
+    {
+        string rollFilePath = $"{LogFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
+        File.Move(LogFilePath, rollFilePath);
+
+        var logDirectory = Path.GetDirectoryName(LogFilePath);
+        var logFileName = Path.GetFileName(LogFilePath);
+        var rollFiles = Directory.GetFiles(logDirectory, $"{logFileName}.*.bak")
+            .OrderByDescending(f => f)
+            .Skip(MaxSizeRollBackups);
+        foreach (var oldRollFile in rollFiles)
+        {
+            File.Delete(oldRollFile);
+        }
+
+        if (!FileOperations.Instance.Exists(LogFilePath))
+            FileOperations.Instance.Create(LogFilePath).Dispose();
+    }
+}
