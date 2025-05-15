@@ -72,7 +72,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger 'junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_test_result.xml'" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger \"junit;LogFilePath=TestResults/results_${{ matrix.dotnet }}_${{ matrix.cloud_env }}.xml\"" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -144,7 +144,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger 'junit;LogFilePath=linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_test_result.xml'" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger \"junit;LogFilePath=TestResults/results_${{ matrix.dotnet }}_${{ matrix.cloud_env }}.xml\"" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -216,7 +216,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger 'junit;LogFilePath=mac_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_test_result.xml'" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal --logger \"junit;LogFilePath=TestResults/results_${{ matrix.dotnet }}_${{ matrix.cloud_env }}.xml\"" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
