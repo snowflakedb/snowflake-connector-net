@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString) =>
-            SessionPool.ExtractConfig(connectionString, null).Item1;
+            SessionPool.ExtractConfig(connectionString, new SessionPropertiesContext()).Item1;
 
         public class TimeoutTestCase
         {

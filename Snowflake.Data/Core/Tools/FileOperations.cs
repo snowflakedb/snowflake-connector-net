@@ -96,7 +96,8 @@ namespace Snowflake.Data.Core.Tools
                 return true;
             }
 
-            if (_unixOperations.CheckFileHasAnyOfPermissions(path, NotSafePermissions))
+            var fileInfo = new UnixFileInfo(path);
+            if (_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, NotSafePermissions))
             {
                 s_logger.Warn($"File '{path}' permissions are too broad. It could be potentially accessed by group or others.");
                 return false;

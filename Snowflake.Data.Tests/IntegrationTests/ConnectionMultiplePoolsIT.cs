@@ -440,5 +440,55 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.OpenAsync().ConfigureAwait(false);
             return connection;
         }
+
+        [Test]
+        public void TestReturningCancelledSessionsToThePool([Values]bool cancelAsync)
+        {
+            var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
+
+            var pool = SnowflakeDbConnectionPool.ConnectionManager.GetPool(connectionString);
+            pool.ClearSessions();
+
+            // pool is empty
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+
+            var cts = new CancellationTokenSource();
+            var task = Task.Run(async () =>
+            {
+                using (var connection = new SnowflakeDbConnection(connectionString))
+                {
+                    await connection.OpenAsync(cts.Token);
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = $"SELECT SYSTEM$WAIT(20)";
+                        await command.ExecuteNonQueryAsync(cts.Token);
+                    }
+                }
+            }, CancellationToken.None);
+
+            Thread.Sleep(2000);
+
+            // one busy session
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(1, pool.GetCurrentState().BusySessionsCount);
+
+            if (cancelAsync)
+#if NET8_0_OR_GREATER
+                cts.CancelAsync();
+#else
+                cts.Cancel();
+#endif
+            else
+                cts.Cancel();
+
+            // operation cancelled properly
+            var thrown = Assert.Throws<AggregateException>(() => task.Wait());
+            Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
+
+            // one idle session
+            Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+        }
     }
 }

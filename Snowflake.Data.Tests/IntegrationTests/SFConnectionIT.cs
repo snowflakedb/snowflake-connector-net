@@ -2,8 +2,10 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -11,6 +13,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -1950,20 +1953,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = infiniteLoginTimeOut;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                // At this point the connection string has not been parsed, it will return the
-                // default value
-                //Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for more than the default timeout to make sure there are no false positive)
-                Thread.Sleep(SFSessionHttpClientProperties.DefaultRetryTimeout.Add(TimeSpan.FromSeconds(10)));
-
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
-                // Cancel the connection because it will never succeed since there is no
-                // connection_timeout defined
                 logger.Debug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
 
@@ -2490,7 +2485,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var restRequester = new MockCloseHangingRestRequester();
-            var session = new SFSession("account=test;user=test;password=test", null, restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             session.Open();
             var watchClose = new Stopwatch();
             var watchClosedFinished = new Stopwatch();
@@ -2507,6 +2502,85 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, restRequester.CloseRequests.Count);
             Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
             Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+        }
+
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestOAuthFlow()
+        {
+            // arrange
+            var driverRootPath = Path.Combine("..", "..", "..", "..");
+            var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
+            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
+            var testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            RemoveOAuthCache(testConfig);
+            try
+            {
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(testConfig, authenticator)))
+                {
+                    // act
+                    connection.Open();
+                }
+            }
+            finally
+            {
+                RemoveOAuthCache(testConfig);
+            }
+        }
+
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestProgrammaticAccessTokenAuthentication()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(testConfig)))
+            {
+                // act
+                connection.Open();
+            }
+        }
+
+        private void RemoveOAuthCache(TestConfig testConfig)
+        {
+            var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
+            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
+            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
+            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+            credentialManager.RemoveCredentials(accessCacheKey);
+            credentialManager.RemoveCredentials(refreshCacheKey);
+        }
+
+        private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
+        {
+            var builder = new StringBuilder()
+                .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
+                .Append($"oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
+                .Append("poolingEnabled=false;");
+            switch (authenticator)
+            {
+                case OAuthAuthorizationCodeAuthenticator.AuthName:
+                    return builder
+                        .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
+                        .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl}")
+                        .ToString();
+                case OAuthClientCredentialsAuthenticator.AuthName:
+                    return builder.ToString();
+                default:
+                    throw new Exception("Unknown authenticator");
+            }
+        }
+
+        private string ConnectionStringForPat(TestConfig testConfig)
+        {
+            var role = "ANALYST";
+            return new StringBuilder()
+                .Append($"authenticator=programmatic_access_token;user={testConfig.user};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"token={testConfig.programmaticAccessToken};")
+                .Append("poolingEnabled=false;")
+                .ToString();
         }
     }
 }

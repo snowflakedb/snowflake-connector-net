@@ -191,5 +191,4 @@ Note that the driver is now targeting .NET Standard 2.0. When upgrading, you mig
 
 See more:
 * [Security Policy](SECURITY.md)
-* [Security Advisories](/security/advisories)
-
+* [Security Advisories](../../security/advisories)

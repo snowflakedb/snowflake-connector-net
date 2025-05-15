@@ -206,6 +206,18 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return new MFACacheAuthenticator(session);
             }
+            else if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(type))
+            {
+                return new OAuthAuthorizationCodeAuthenticator(session);
+            }
+            else if (OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator(type))
+            {
+                return new OAuthClientCredentialsAuthenticator(session);
+            }
+            else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(type))
+            {
+                return new ProgrammaticAccessTokenAuthenticator(session);
+            }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (OktaAuthenticator.IsOktaAuthenticator(type))
             {

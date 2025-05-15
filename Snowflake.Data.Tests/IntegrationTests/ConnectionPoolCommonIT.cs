@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-                [Test]
+        [Test]
         public void TestRollbackTransactionOnPooledWhenConnectionClose()
         {
             var connectionString = SetPoolWithOneElement();
@@ -215,7 +215,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize(), "Connection should be returned to the pool");
         }
 
-
         private string SetPoolWithOneElement()
         {
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
@@ -230,6 +229,5 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             return _connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache ? 0 : 1;
         }
-
     }
 }

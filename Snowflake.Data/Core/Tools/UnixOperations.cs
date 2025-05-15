@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-
 using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -85,10 +84,9 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual long ChangePermissions(string path, FileAccessPermissions permissions) => Syscall.chmod(path, (FilePermissions) permissions);
 
-        public virtual bool CheckFileHasAnyOfPermissions(string path, FileAccessPermissions permissions)
+        public virtual bool CheckFileHasAnyOfPermissions(FileAccessPermissions actualPermissions , FileAccessPermissions expectedPermissions)
         {
-            var fileInfo = new UnixFileInfo(path);
-            return (permissions & fileInfo.FileAccessPermissions) != 0;
+            return (expectedPermissions & actualPermissions ) != 0;
         }
 
         public virtual bool CheckDirectoryHasAnyOfPermissions(string path, FileAccessPermissions permissions)
