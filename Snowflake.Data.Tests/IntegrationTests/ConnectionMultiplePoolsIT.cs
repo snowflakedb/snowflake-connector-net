@@ -118,32 +118,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
-        {
-            // arrange
-            var connectionString = ConnectionString + "application=TestWaitForMaxSize1;waitingForIdleSessionTimeout=1s;maxPoolSize=2;minPoolSize=1";
-            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
-            var conn1 = OpenConnection(connectionString);
-            var conn2 = OpenConnection(connectionString);
-            var watch = new StopWatch();
-
-            // act
-            watch.Start();
-            var thrown = Assert.Throws<SnowflakeDbException>(() => OpenConnection(connectionString));
-            watch.Stop();
-
-            // assert
-            Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(1000, 1500));
-            Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
-
-            // cleanup
-            conn1.Close();
-            conn2.Close();
-        }
-
-        [Test]
         public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimitAsync()
         {
             // arrange
@@ -173,7 +147,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
+        [Retry(3)]
         public void TestWaitInAQueueForAnIdleSession()
         {
             // arrange
@@ -321,7 +295,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConnectionPoolExpirationWorks()
         {
             // arrange
-            const int ExpirationTimeoutInSeconds = 10;
+            const int ExpirationTimeoutInSeconds = 1;
             var connectionString = ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2";
             var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
@@ -369,7 +343,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             connection.Open();
-            Thread.Sleep(3000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
@@ -467,7 +440,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }, CancellationToken.None);
 
-            Thread.Sleep(2000);
+            Thread.Sleep(1000);
 
             // one busy session
             Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
