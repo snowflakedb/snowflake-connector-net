@@ -343,6 +343,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             connection.Open();
+            Thread.Sleep(1000);
+
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
