@@ -68,9 +68,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
             conn1.Open();
-            Thread.Sleep(1000);
             conn1.Close();
-            Thread.Sleep(4000);
+            Thread.Sleep(1000);
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
         }
 
@@ -80,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn1.ConnectionString = connstr;
             conn1.Open();
 
-            Thread.Sleep(5000);
+            Thread.Sleep(1000);
             SFStatement statement = new SFStatement(conn1.SfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
