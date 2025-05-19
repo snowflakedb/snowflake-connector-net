@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.Util
         {
             get => _stopMillis - _startMillis;
         }
-        
+
         public void Start()
         {
             _startMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

@@ -189,13 +189,13 @@ namespace Snowflake.Data.AuthenticationTests
             try
             {
                 using (var client = new HttpClient(new HttpClientHandler
-                       {
-                           CheckCertificateRevocationList = true,
-                           SslProtocols = SslProtocols.Tls12,
-                           AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                           UseProxy = false,
-                           UseCookies = false
-                       }))
+                {
+                    CheckCertificateRevocationList = true,
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseProxy = false,
+                    UseCookies = false
+                }))
                 {
                     var authUrl = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_URL");
                     var clientId = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_CLIENT_ID");

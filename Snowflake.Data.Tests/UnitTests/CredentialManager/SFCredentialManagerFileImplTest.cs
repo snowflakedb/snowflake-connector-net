@@ -312,6 +312,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         private SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
-            new (FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
+            new(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
     }
 }

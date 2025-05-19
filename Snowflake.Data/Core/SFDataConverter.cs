@@ -304,7 +304,7 @@ namespace Snowflake.Data.Core
         private static string BytesToHex(byte[] bytes)
         {
             StringBuilder hexBuilder = new StringBuilder(bytes.Length * 2);
-            foreach(byte b in bytes)
+            foreach (byte b in bytes)
             {
                 hexBuilder.AppendFormat("{0:x2}", b);
             }

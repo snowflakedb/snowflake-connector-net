@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionSinglePoolCacheAsyncIT: SFBaseTestAsync
+    public class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
                     Assert.Fail("OpenAsync should throw exception");
                 }
-                catch {}
+                catch { }
 
                 // act
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);

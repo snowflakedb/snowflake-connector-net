@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test]
         public async Task TestSelectAsync()
         {
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Close();
             }
         }
-        
+
         [Test]
         public void TestSelectWithBinding()
         {
@@ -206,7 +206,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var p2 = cmd.CreateParameter();
                     p2.ParameterName = "2";
                     p2.DbType = DbType.String;
-                    p2.Value ="str1";
+                    p2.Value = "str1";
                     cmd.Parameters.Add(p2);
 
                     var p3 = cmd.CreateParameter();
@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var p2 = cmd.CreateParameter();
                     p2.ParameterName = "2";
                     p2.DbType = DbType.String;
-                    p2.Value ="str1";
+                    p2.Value = "str1";
                     cmd.Parameters.Add(p2);
 
                     var p3 = cmd.CreateParameter();

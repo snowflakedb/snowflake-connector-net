@@ -11,7 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-[assembly:LevelOfParallelism(10)]
+[assembly: LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {
@@ -48,9 +48,9 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
-    #if !SEQUENTIAL_TEST_RUN
+#if !SEQUENTIAL_TEST_RUN
     [Parallelizable(ParallelScope.All)]
-    #endif
+#endif
     public class SFBaseTestAsync
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Tests
         {
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
-                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
 
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
