@@ -58,7 +58,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;

@@ -165,7 +165,7 @@ namespace Snowflake.Data.Core
             switch (srcType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length); ;
+                    int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length);
                     if (spaceIndex == -1)
                     {
                         throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
