@@ -1011,7 +1011,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
+        [Ignore("Ignore flaky unstable test case for now.")]
         public void testPutArrayBindAsync()
         {
             ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 15000);
