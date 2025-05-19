@@ -75,7 +75,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.HasResultSet() && resultSet.HasRows();
+                return !resultSet.isClosed && resultSet.HasRows();
             }
         }
 

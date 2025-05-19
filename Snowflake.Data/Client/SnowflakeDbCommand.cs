@@ -166,7 +166,7 @@ namespace Snowflake.Data.Client
             long total = 0;
             do
             {
-                if (resultSet.HasResultSet()) continue;
+                if (resultSet.IsDQL()) continue;
                 int count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Client
             long total = 0;
             do
             {
-                if (resultSet.HasResultSet()) continue;
+                if (resultSet.IsDQL()) continue;
                 int count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
