@@ -380,8 +380,8 @@ namespace Snowflake.Data.Client
                         parameter.Value = DBNull.Value;
                     }
 
+                    // byte array and char array will not be treated as array binding
                     if (parameter.Value.GetType().IsArray &&
-                        // byte array and char array will not be treated as array binding
                         parameter.Value.GetType().GetElementType() != typeof(char) &&
                         parameter.Value.GetType().GetElementType() != typeof(byte))
                     {
