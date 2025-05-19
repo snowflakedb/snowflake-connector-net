@@ -3,10 +3,12 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
-    <PackageLicenseUrl>https://github.com/snowflakedb/snowflake-connector-net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
+    <RepositoryUrl>https://github.com/snowflakedb/snowflake-connector-net</RepositoryUrl> 
+    <RepositoryType>git</RepositoryType>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
