@@ -25,7 +25,7 @@ namespace Snowflake.Data.Log
             return new SFLoggerPair(GetSFLogger<T>());
         }
 
-        internal static SFLogger GetSFLogger<T>(bool useConsoleAppender = false)
+        internal static SFLogger GetSFLogger<T>()
         {
             // If true, return the default/specified logger
             if (s_useDefaultSFLogger)
@@ -34,10 +34,6 @@ namespace Snowflake.Data.Log
                 if (!s_isSFLoggerEnabled)
                 {
                     SFLoggerImpl.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
-                }
-                if(useConsoleAppender)
-                {
-                    EasyLoggerManager.AddConsoleAppender();
                 }
                 return logger;
             }

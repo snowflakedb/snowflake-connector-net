@@ -158,7 +158,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerFactory.UseEmptySFLogger();
             }
 
-            return SFLoggerFactory.GetSFLogger<SFLoggerTest>(true);
+            var logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
+            EasyLoggerManager.AddConsoleAppender();
+            return logger;
         }
     }
 }

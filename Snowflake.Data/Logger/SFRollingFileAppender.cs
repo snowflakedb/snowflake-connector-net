@@ -7,7 +7,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security;
 
 internal class SFRollingFileAppender : SFAppender
 {
