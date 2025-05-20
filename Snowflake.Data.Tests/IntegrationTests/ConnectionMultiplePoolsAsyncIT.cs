@@ -125,6 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             await connection.OpenAsync().ConfigureAwait(false);
+            Thread.Sleep(1000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
