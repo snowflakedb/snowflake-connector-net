@@ -17,7 +17,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, null, false)]
         [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "not a bool value", false)]
         [TestCase("OTHER_VARIABLE_NAME", "true", false)]
-        public void TestEnabledExperimentalAuthentication(string variableName, string variableValue, bool expectedValue) {
+        public void TestEnabledExperimentalAuthentication(string variableName, string variableValue, bool expectedValue)
+        {
             // arrange
             var environmentOperations = new Mock<EnvironmentOperations>();
             environmentOperations
