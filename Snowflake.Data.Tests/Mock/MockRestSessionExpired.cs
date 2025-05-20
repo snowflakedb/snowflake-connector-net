@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.Mock
 
     class MockRestSessionExpired : IMockRestRequester
     {
-        static private readonly String EXPIRED_SESSION_TOKEN="session_expired_token";
+        static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             return null;
         }
-        
+
         private string ExtractRequestID(string queries)
         {
             int start = queries.IndexOf("requestId=");

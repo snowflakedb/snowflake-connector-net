@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
+    public class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await connection.OpenAsync().ConfigureAwait(false);
                 Assert.Fail("OpenAsync should fail for invalid connection string");
             }
-            catch {}
+            catch { }
             var thrown = Assert.Throws<SnowflakeDbException>(() => SnowflakeDbConnectionPool.GetPool(connection.ConnectionString));
 
             // assert

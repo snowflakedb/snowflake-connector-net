@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void CreateAndPopulateTestTable(DbConnection conn)
         {
-            CreateOrReplaceTable(conn, TableName, new []{"cola NUMBER"});
+            CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
 
             var cmd = conn.CreateCommand();
 

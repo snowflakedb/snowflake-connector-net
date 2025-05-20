@@ -5,7 +5,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    internal class OAuthClientCredentialsAuthenticator: OAuthFlowAuthenticator, IAuthenticator
+    internal class OAuthClientCredentialsAuthenticator : OAuthFlowAuthenticator, IAuthenticator
     {
         public const string AuthName = "oauth_client_credentials";
         private const string TokenRequestGrantType = "client_credentials";

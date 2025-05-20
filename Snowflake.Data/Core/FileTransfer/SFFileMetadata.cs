@@ -121,7 +121,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public bool sourceFromStream { get; set; }
 
-        public MemoryStream memoryStream {get; set; }
+        public MemoryStream memoryStream { get; set; }
 
         // Proxy credentials of the remote storage client.
         public ProxyCredentials proxyCredentials { get; set; }

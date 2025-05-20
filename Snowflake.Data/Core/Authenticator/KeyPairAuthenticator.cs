@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core.Authenticator
             String publicKeyFingerPrint = null;
             AsymmetricCipherKeyPair keypair = null;
             using (TextReader tr =
-                hasPkPath ? (TextReader) new StreamReader(pkPath) : new StringReader(pkContent))
+                hasPkPath ? (TextReader)new StreamReader(pkPath) : new StringReader(pkContent))
             {
                 try
                 {

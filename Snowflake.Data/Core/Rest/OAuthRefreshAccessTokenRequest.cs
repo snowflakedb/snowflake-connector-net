@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Core.Rest
 {
-    internal class OAuthRefreshAccessTokenRequest: BaseOAuthAccessTokenRequest
+    internal class OAuthRefreshAccessTokenRequest : BaseOAuthAccessTokenRequest
     {
         public string RefreshToken { get; set; }
 

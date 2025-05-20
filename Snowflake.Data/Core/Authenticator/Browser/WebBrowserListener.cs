@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
             if (_isDisposed)
                 return;
-            HttpListener httpListener = (HttpListener) result.AsyncState;
+            HttpListener httpListener = (HttpListener)result.AsyncState;
             if (httpListener.IsListening)
             {
                 HttpListenerContext context = null;
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
             byte[] errorResponseBytes = Encoding.UTF8.GetBytes(_browserError);
             HttpListenerResponse response = context.Response;
-            response.StatusCode = (int) HttpStatusCode.BadRequest;
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
             WriteMessageToBrowser(response, errorResponseBytes);
         }
 

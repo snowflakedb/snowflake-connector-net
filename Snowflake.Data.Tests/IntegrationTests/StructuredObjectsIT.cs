@@ -9,7 +9,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredObjectIT: StructuredTypesIT
+    public class StructuredObjectIT : StructuredTypesIT
     {
         [Test]
         public void TestDataTableLoadOnStructuredObject()
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -278,9 +278,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.NotNull(objectWithStructuredTypes);
                     Assert.AreEqual(new Identity("John"), objectWithStructuredTypes.ObjectValue);
-                    CollectionAssert.AreEqual(new [] {"a", "b"}, objectWithStructuredTypes.ListValue);
-                    CollectionAssert.AreEqual(new [] {"c"}, objectWithStructuredTypes.ArrayValue);
-                    CollectionAssert.AreEqual(new [] {"d", "e"}, objectWithStructuredTypes.IListValue);
+                    CollectionAssert.AreEqual(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
+                    CollectionAssert.AreEqual(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
+                    CollectionAssert.AreEqual(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
                     Assert.AreEqual(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
                     Assert.AreEqual(1, objectWithStructuredTypes.MapValue.Count);
                     Assert.AreEqual(5, objectWithStructuredTypes.MapValue[3]);

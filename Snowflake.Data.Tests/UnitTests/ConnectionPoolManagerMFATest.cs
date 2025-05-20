@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sessionContext = new SessionPropertiesContext { Passcode = SecureStringHelper.Encode("12345") };
 
             // Act and assert
-            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, sessionContext));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetSession(connectionString, sessionContext));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=false";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
+            Assert.DoesNotThrow(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=0;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
+            Assert.DoesNotThrow(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
         }
     }
 

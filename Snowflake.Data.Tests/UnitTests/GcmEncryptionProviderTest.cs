@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 // act
                 var thrown = Assert.Throws<InvalidCipherTextException>(() =>
-                    GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata,s_fileTransferConfiguration));
+                    GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration));
 
                 // assert
                 Assert.AreEqual("mac check in GCM failed", thrown.Message);
