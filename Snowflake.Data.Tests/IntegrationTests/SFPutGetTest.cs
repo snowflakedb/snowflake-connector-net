@@ -21,8 +21,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFPutGetTest : SFBaseTest
     {
         private const int NumberOfRows = 4;
-        private static readonly string[] s_colName = {"C1", "C2", "C3"};
-        private static readonly string[] s_colData = {"FIRST", "SECOND", "THIRD"};
+        private static readonly string[] s_colName = { "C1", "C2", "C3" };
+        private static readonly string[] s_colData = { "FIRST", "SECOND", "THIRD" };
         private static string s_outputDirectory;
 
         [ThreadStatic] private static string t_schemaName;
@@ -279,12 +279,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(()=>PutFile(conn));
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
                 Assert.IsNotEmpty(queryId);
-                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
@@ -301,12 +301,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(()=>PutFile(conn));
+                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
                 Assert.IsNotEmpty(queryId);
-                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 Assert.That(snowflakeDbException.ErrorCode, Is.EqualTo(1003));
                 Assert.That(snowflakeDbException.InnerException, Is.Null);
             }
@@ -329,7 +329,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Assert
                 Assert.IsNotNull(queryId);
-                Assert.DoesNotThrow(()=>Guid.Parse(queryId));
+                Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         // presigned url is enabled on CI so we need to disable the test
         // it should be enabled when downscoped credential is the default option
-        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "GCP" })]
+        [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "GCP" })]
         public void TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
         {
             // Set the PUT query variables
@@ -540,7 +540,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
         [Test]
-        [IgnoreOnEnvIs("snowflake_cloud_env", new [] { "AWS", "AZURE" })]
+        [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "AWS", "AZURE" })]
         public void TestPutGetGcsDownscopedCredential(
             [Values] StageType stageType,
             [Values("", "/TEST_PATH")] string stagePath)
@@ -794,7 +794,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var bytes = new byte[stream.Length];
             stream.Position = 0;
-            var readBytes = stream.Read(bytes, 0, (int) stream.Length);
+            var readBytes = stream.Read(bytes, 0, (int)stream.Length);
             Assert.AreEqual(stream.Length, readBytes);
             return Encoding.UTF8.GetString(bytes).Split('\n');
         }

@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
                         {
                             updateCount += resultSet.GetInt64(index);
                         }
-                        while (resultSet.Rewind()) {}
+                        while (resultSet.Rewind()) { }
                     }
                     break;
                 case SFStatementType.COPY_UNLOAD:

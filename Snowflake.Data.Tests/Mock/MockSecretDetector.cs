@@ -4,7 +4,7 @@ using Snowflake.Data.Log;
 namespace Snowflake.Data.Tests.Mock
 {
     class MockSecretDetector
-    {        
+    {
         public static SecretDetector.Mask MaskSecrets(string text)
         {
             SecretDetector.Mask result = new SecretDetector.Mask();

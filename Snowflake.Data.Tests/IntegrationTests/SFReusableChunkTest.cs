@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
+                CreateOrReplaceTable(conn, TableName, new[] { "src VARIANT" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -132,7 +132,7 @@ select parse_json('{{
                 conn.Open();
 
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
@@ -181,7 +181,7 @@ select parse_json('{{
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;

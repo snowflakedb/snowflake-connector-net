@@ -9,7 +9,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    internal class OAuthAuthorizationCodeAuthenticator: OAuthFlowAuthenticator, IAuthenticator
+    internal class OAuthAuthorizationCodeAuthenticator : OAuthFlowAuthenticator, IAuthenticator
     {
         public const string AuthName = "oauth_authorization_code";
         private const string TokenRequestGrantType = "authorization_code";

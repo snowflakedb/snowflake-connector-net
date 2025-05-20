@@ -273,7 +273,8 @@ namespace Snowflake.Data.Core.Authenticator
             try
             {
                 postBackUrl = new Uri(HttpUtility.HtmlDecode(_rawSamlTokenHtmlString.Substring(startIndex, length)));
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 s_logger.Error("Fail to extract SAML from html", e);
                 throw new SnowflakeDbException(e, SFError.IDP_SAML_POSTBACK_NOTFOUND);

@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Threading;
@@ -31,7 +31,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.AreEqual(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
@@ -54,7 +55,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     $"host=test;MAXHTTPRETRIES={MaxRetryCount};RETRY_TIMEOUT={MaxRetryTimeout};", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
@@ -76,7 +78,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
                 Assert.Fail("Should not pass");
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
@@ -97,7 +100,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 };
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.Fail("Should pass without exception", e);
             }
@@ -119,7 +123,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-            } catch (SnowflakeDbException e)
+            }
+            catch (SnowflakeDbException e)
             {
                 Assert.Fail("Should pass without exception", e);
             }

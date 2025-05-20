@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core
         private string LoadTokenFromFile(string tokenFilePathValue)
         {
             string tokenFile;
-            if(string.IsNullOrEmpty(tokenFilePathValue))
+            if (string.IsNullOrEmpty(tokenFilePathValue))
             {
                 tokenFile = DefaultTokenPath;
             }

@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestHasRowsReturnsFalseIfNoRows()
         {
-            PrepareTestCase(SFDataType.FIXED, 0, new sbyte[]{});
+            PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
 
             Assert.IsFalse(_arrowResultSet.HasRows());
         }

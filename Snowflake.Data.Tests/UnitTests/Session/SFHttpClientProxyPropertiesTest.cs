@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     proxyUser = "Chris"
                 }
             };
-            return new []
+            return new[]
             {
                 noProxyPropertiesCase,
                 proxyPropertiesConfiguredButDisabledCase,
