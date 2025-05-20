@@ -11,7 +11,7 @@ namespace Snowflake.Data.Log
 
         private readonly object _lockForExclusiveConfigure = new object();
 
-        internal const string AppenderPrefix = "SFEasyLogging";
+        internal string AppenderPrefix = "SFEasyLogging";
 
         private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
 
