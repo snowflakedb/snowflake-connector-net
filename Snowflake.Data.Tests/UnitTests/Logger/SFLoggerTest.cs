@@ -24,35 +24,22 @@ namespace Snowflake.Data.Tests.UnitTests
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
         }
 
-        [TearDown]
-        public void AfterTest()
-        {
-            // Return to default setting
-            SFLoggerFactory.UseDefaultSFLogger();
-        }
-
         [Test]
         public void TestUsingSFLogger()
         {
-            SFLoggerFactory.UseDefaultSFLogger();
             _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
             Assert.IsInstanceOf<SFLoggerImpl>(_logger);
-        }
-
-        [Test]
-        public void TestUsingEmptyLogger()
-        {
-            SFLoggerFactory.UseEmptySFLogger();
-            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
-            Assert.IsInstanceOf<SFLoggerEmptyImpl>(_logger);
         }
 
         [Test]
         public void TestIsDebugEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            _logger = GetLogger(isEnabled);
-            SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
+            _logger = GetLogger();
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
             _logger.Debug("debug log message", new Exception("test exception"));
@@ -62,8 +49,11 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestIsInfoEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            _logger = GetLogger(isEnabled);
-            SFLoggerImpl.SetLevel(LoggingEvent.INFO);
+            _logger = GetLogger();
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.INFO);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
             _logger.Info("info log message", new Exception("test exception"));
@@ -73,8 +63,11 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestIsWarnEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            _logger = GetLogger(isEnabled);
-            SFLoggerImpl.SetLevel(LoggingEvent.WARN);
+            _logger = GetLogger();
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.WARN);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
             _logger.Warn("warn log message", new Exception("test exception"));
@@ -84,8 +77,11 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestIsErrorEnabled(
             [Values(false, true)] bool isEnabled)
         {
-            _logger = GetLogger(isEnabled);
-            SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
+            _logger = GetLogger();
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
             _logger.Error("error log message", new Exception("test exception"));
@@ -96,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests
             [Values(false, true)] bool isEnabled,
             [Values] LoggingEvent logLevel)
         {
-            _logger = GetLogger(isEnabled);
+            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(logLevel);
@@ -147,17 +143,8 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        private SFLogger GetLogger(bool isEnabled)
+        private SFLogger GetLogger()
         {
-            if (isEnabled)
-            {
-                SFLoggerFactory.UseDefaultSFLogger();
-            }
-            else
-            {
-                SFLoggerFactory.UseEmptySFLogger();
-            }
-
             var logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
             EasyLoggerManager.AddConsoleAppender();
             return logger;
