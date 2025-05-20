@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Core
          */
         public void Update(ResponseQueryContext queryContext)
         {
-            lock(_qccLock)
+            lock (_qccLock)
             {
                 // Log existing cache entries
                 LogCacheEntries();
@@ -261,7 +261,7 @@ namespace Snowflake.Data.Core
         {
             RequestQueryContext reqQCC = new RequestQueryContext();
             reqQCC.Entries = new List<RequestQueryContextElement>();
-            lock(_qccLock)
+            lock (_qccLock)
             {
                 foreach (QueryContextElement elem in _cacheSet)
                 {

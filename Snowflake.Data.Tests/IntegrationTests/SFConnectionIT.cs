@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestApplicationName()
         {
-            string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234"};
+            string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
             string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
 
             // Valid names
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-			}
+            }
         }
 
         [Test]
@@ -763,7 +763,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
+                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
                 var t1 = conn.BeginTransaction();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
@@ -1522,7 +1522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
 
             // Another authenticated proxy connection, same proxy but insecure mode is true
-			// Will use a different httpclient
+            // Will use a different httpclient
             using (var conn5 = new SnowflakeDbConnection())
             {
                 conn5.ConnectionString = ConnectionString
@@ -1536,7 +1536,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
 
             // No proxy again, but insecure mode is true
-			// Will use a different httpclient
+            // Will use a different httpclient
             using (var conn6 = new SnowflakeDbConnection())
             {
 
@@ -1607,7 +1607,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Should use same httpclient than conn6
             using (var conn11 = new SnowflakeDbConnection())
             {
-                conn11.ConnectionString = ConnectionString+";INSECUREMODE=true";
+                conn11.ConnectionString = ConnectionString + ";INSECUREMODE=true";
                 conn11.Open();
             }
         }
@@ -1743,7 +1743,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             bool failed = false;
 
-           Task[] tasks = new Task[450];
+            Task[] tasks = new Task[450];
             for (int i = 0; i < 450; i++)
             {
                 string connString = connectionStrings[i % (connectionStrings.Length)];
@@ -1864,7 +1864,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-                Assert.AreEqual(command.ExecuteScalar(), 46 );
+                Assert.AreEqual(command.ExecuteScalar(), 46);
             }
 
             conn.Close();
@@ -2151,43 +2151,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
-		}
+        }
 
 #if NETCOREAPP3_0_OR_GREATER
-		[Test]
-		public void TestCloseAsync()
-		{
-			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
-			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
-			// An application can call Close or CloseAsync more than one time.
-			// No exception is generated.
-			using (var conn = new SnowflakeDbConnection())
-			{
-				conn.ConnectionString = ConnectionString;
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
-				Task task = null;
+        [Test]
+        public void TestCloseAsync()
+        {
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+            // An application can call Close or CloseAsync more than one time.
+            // No exception is generated.
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Task task = null;
 
-				// Close the connection. It's not opened yet, but it should not have any issue
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
+                // Close the connection. It's not opened yet, but it should not have any issue
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-				// Open the connection
-				task = conn.OpenAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Open);
+                // Open the connection
+                task = conn.OpenAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
 
-				// Close the opened connection
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
+                // Close the opened connection
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-				// Close the connection again.
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
-			}
-		}
+                // Close the connection again.
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+            }
+        }
 #endif
 
         [Test]
@@ -2205,7 +2205,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync(CancellationToken.None);
+                task = conn.CloseAsync(CancellationToken.None);
                 try
                 {
                     task.Wait();

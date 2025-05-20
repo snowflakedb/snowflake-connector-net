@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core.Converter
 
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
-                    return (DateTimeOffset) DateTime.SpecifyKind(dateTimeNoTz, DateTimeKind.Utc);
+                    return (DateTimeOffset)DateTime.SpecifyKind(dateTimeNoTz, DateTimeKind.Utc);
                 }
 
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_NTZ into {fieldType} type");
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
-                    return (DateTimeOffset) DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+                    return (DateTimeOffset)DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
                 }
                 throw new StructuredTypesReadingException($"Cannot not read DATE into {fieldType} type");
             }

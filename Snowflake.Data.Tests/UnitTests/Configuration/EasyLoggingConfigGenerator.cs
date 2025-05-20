@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             return Path.Combine(workingDirectory, Path.GetRandomFileName());
         }
-        
+
         public static string Config(string logLevel, string logPath)
         {
             return @"{

@@ -188,7 +188,7 @@ namespace Snowflake.Data.Core.Session
                                                                                  bool.TryParse(passcodeInPasswordValue, out var isPasscodeinPassword) && isPasscodeinPassword));
             var isMfaAuthenticator = sessionProperties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator) &&
                                      MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
-            if(isUsingPasscode && !isMfaAuthenticator)
+            if (isUsingPasscode && !isMfaAuthenticator)
             {
                 const string ErrorMessage = "Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication";
                 s_logger.Error(ErrorMessage + PoolIdentification());
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Core.Session
         {
             if (TimeoutHelper.IsInfinite(_poolConfig.WaitingForIdleSessionTimeout))
                 throw new Exception("WaitingForIdleSessionTimeout cannot be infinite");
-            s_logger.Info($"SessionPool::WaitForSession for {(long) _poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout" + PoolIdentification());
+            s_logger.Info($"SessionPool::WaitForSession for {(long)_poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout" + PoolIdentification());
             _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
             var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long nowTimeMillis = beforeWaitingTimeMillis;
@@ -331,7 +331,7 @@ namespace Snowflake.Data.Core.Session
             {
                 var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout);
                 _sessionPoolEventHandler.OnWaitingForSessionStarted(this, timeoutLeftMillis);
-                var successful = _waitingForIdleSessionQueue.Wait((int) timeoutLeftMillis, CancellationToken.None);
+                var successful = _waitingForIdleSessionQueue.Wait((int)timeoutLeftMillis, CancellationToken.None);
                 if (successful)
                 {
                     s_logger.Debug($"SessionPool::WaitForSession - woken with a session granted" + PoolIdentification());

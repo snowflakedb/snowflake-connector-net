@@ -13,7 +13,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     [TestFixture, NonParallelizable]
-    public class OAuthClientCredentialFlowTest: BaseOAuthFlowTest
+    public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(s_oauthMappingPath, "ClientCredentials");
         private static readonly string s_clientCredentialSuccessfulMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_flow.json");
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private void AssertAccessTokenSetInAuthenticator(SFSession session, string expectedAccessToken = AccessToken)
         {
-            var authenticator = (OAuthClientCredentialsAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthClientCredentialsAuthenticator)session.GetAuthenticator();
             Assert.NotNull(authenticator.AccessToken);
             Assert.AreEqual(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
         }

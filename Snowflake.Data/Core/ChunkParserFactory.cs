@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core
         {
             if (resultFormat == ResultFormat.ARROW)
                 return new ArrowChunkParser(stream);
-            
+
             switch (SFConfiguration.Instance().GetChunkParserVersion())
             {
                 case 1:

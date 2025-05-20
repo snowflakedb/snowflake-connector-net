@@ -143,7 +143,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var authName = GetAuthenticatorName();
             s_logger.Debug($"Getting access token (async) for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
-            var restRequester = (RestRequester) session.restRequester;
+            var restRequester = (RestRequester)session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
                 var restRequest = new RestRequestWrapper(accessTokenHttpRequest);

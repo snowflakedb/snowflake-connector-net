@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
-    internal class WaitingQueue: IWaitingQueue
+    internal class WaitingQueue : IWaitingQueue
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly List<SemaphoreSlim> _queue = new List<SemaphoreSlim>();

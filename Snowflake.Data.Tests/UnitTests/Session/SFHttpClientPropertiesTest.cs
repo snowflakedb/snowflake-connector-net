@@ -328,7 +328,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     maxHttpRetries = 0
                 }
             };
-            return new []
+            return new[]
             {
                 defaultProperties,
                 propertiesWithValidateDefaultParametersChanged,

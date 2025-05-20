@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool2.SetTimeout(3600);
 
             // Act/Assert
-            Assert.AreEqual(3600,_connectionPoolManager.GetTimeout());
+            Assert.AreEqual(3600, _connectionPoolManager.GetTimeout());
         }
 
         [Test]
@@ -277,14 +277,14 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool2.SetMaxPoolSize(33);
 
             // Act/Assert
-            Assert.AreEqual(33,_connectionPoolManager.GetMaxPoolSize());
+            Assert.AreEqual(33, _connectionPoolManager.GetMaxPoolSize());
         }
 
         [Test]
         public void TestGetCurrentPoolSizeReturnsSumOfPoolSizes()
         {
             // Arrange
-            EnsurePoolSize(ConnectionString1, new SessionPropertiesContext(),2);
+            EnsurePoolSize(ConnectionString1, new SessionPropertiesContext(), 2);
             EnsurePoolSize(ConnectionString2, new SessionPropertiesContext(), 3);
 
             // act
