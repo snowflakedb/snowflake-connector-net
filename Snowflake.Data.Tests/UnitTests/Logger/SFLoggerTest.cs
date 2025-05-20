@@ -4,7 +4,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
     using Snowflake.Data.Log;
-    
+
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {
@@ -23,8 +23,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
         }
-        
-        [TearDown] public void AfterTest()
+
+        [TearDown]
+        public void AfterTest()
         {
             // Return to default setting
             SFLoggerFactory.useDefaultLogger();

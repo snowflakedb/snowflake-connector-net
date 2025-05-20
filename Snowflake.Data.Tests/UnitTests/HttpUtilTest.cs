@@ -149,15 +149,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 "123",
                 "testUser",
                 "proxyPassword",
-                "localhost", 
+                "localhost",
                 false,
                 false,
                 7
             );
-            
+
             // when
-            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
             // then
             Assert.IsTrue(handler.UseProxy);
             Assert.IsNotNull(handler.Proxy);
@@ -173,15 +173,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 null,
                 null,
                 null,
-                null, 
+                null,
                 false,
                 false,
                 0
             );
-            
+
             // when
-            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
             // then
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);

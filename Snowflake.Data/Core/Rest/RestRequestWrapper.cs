@@ -3,7 +3,7 @@ using System.Net.Http;
 
 namespace Snowflake.Data.Core.Rest
 {
-    internal class RestRequestWrapper: BaseRestRequest, IRestRequest
+    internal class RestRequestWrapper : BaseRestRequest, IRestRequest
     {
         private readonly HttpRequestMessage _httpRequestMessage;
 
@@ -18,6 +18,6 @@ namespace Snowflake.Data.Core.Rest
         }
 
         public TimeSpan GetRestTimeout() =>
-            (TimeSpan) _httpRequestMessage.Properties[REST_REQUEST_TIMEOUT_KEY];
+            (TimeSpan)_httpRequestMessage.Properties[REST_REQUEST_TIMEOUT_KEY];
     }
 }

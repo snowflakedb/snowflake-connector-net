@@ -5,7 +5,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core.Authenticator.Browser
 {
-    internal class WebBrowserRunner: IWebBrowserRunner
+    internal class WebBrowserRunner : IWebBrowserRunner
     {
         public static readonly WebBrowserRunner Instance = new WebBrowserRunner();
 

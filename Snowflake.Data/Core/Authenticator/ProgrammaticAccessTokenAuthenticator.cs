@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    internal class ProgrammaticAccessTokenAuthenticator: BaseAuthenticator, IAuthenticator
+    internal class ProgrammaticAccessTokenAuthenticator : BaseAuthenticator, IAuthenticator
     {
         public const string AuthName = "programmatic_access_token";
 

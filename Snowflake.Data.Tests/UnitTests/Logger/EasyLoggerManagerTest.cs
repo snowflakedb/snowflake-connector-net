@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
     [TestFixture, NonParallelizable]
     public class EasyLoggerManagerTest
     {
-        
+
         private const string InfoMessage = "Easy logging Info message";
         private const string DebugMessage = "Easy logging Debug message";
         private const string WarnMessage = "Easy logging Warn message";
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
         [ThreadStatic]
         private static string t_directoryLogPath;
-        
+
         [OneTimeTearDown]
         public static void CleanUp()
         {
@@ -40,14 +40,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
         }
-        
+
         [Test]
         public void TestThatChangesLogLevel()
         {
             // arrange
             var logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
-            
+
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
             Assert.IsFalse(logger.IsInfoEnabled());
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             // arrange
             var logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath);
-            
+
             // act
             logger.Debug(DebugMessage);
             logger.Info(InfoMessage);
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(ErrorMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(FatalMessage)));
         }
-        
+
         [Test]
         public void TestThatOnlyUnknownFieldsAreLogged()
         {
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.AreEqual(1, files.Length);
             return files.First();
         }
-        
+
         private static void RemoveEasyLoggingLogFiles()
         {
             Directory.GetFiles(s_logsDirectory)

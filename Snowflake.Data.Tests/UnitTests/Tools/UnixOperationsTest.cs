@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var readWriteUserPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
-            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
-            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            Syscall.chmod(filePath, (FilePermissions) userAllowedPermissions);
+            Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -101,10 +101,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
-            Syscall.chmod(filePath, (FilePermissions) userAllowedPermissions);
+            Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act and assert
-            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath,"test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
         {
-            if(groupPermissions == 0 && othersPermissions == 0)
+            if (groupPermissions == 0 && othersPermissions == 0)
             {
                 Assert.Ignore("Skip test when group and others have no permissions");
             }
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
-            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
             Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
         {
-            if(groupPermissions == 0 && othersPermissions == 0)
+            if (groupPermissions == 0 && othersPermissions == 0)
             {
                 Assert.Ignore("Skip test when group and others have no permissions");
             }
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
-            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");

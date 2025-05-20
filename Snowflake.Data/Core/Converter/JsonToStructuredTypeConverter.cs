@@ -16,14 +16,14 @@ namespace Snowflake.Data.Core.Converter
         public static T ConvertObject<T>(List<FieldMetadata> fields, JObject value)
         {
             var type = typeof(T);
-            return (T) ConvertToObject(type, fields, new StructurePath(), value);
+            return (T)ConvertToObject(type, fields, new StructurePath(), value);
         }
 
         public static T[] ConvertArray<T>(List<FieldMetadata> fields, JArray value)
         {
             var type = typeof(T[]);
             var elementType = typeof(T);
-            return (T[]) ConvertToArray(type, elementType, fields, new StructurePath(), value);
+            return (T[])ConvertToArray(type, elementType, fields, new StructurePath(), value);
         }
 
         public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(List<FieldMetadata> fields, JObject value)
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Core.Converter
             var type = typeof(Dictionary<TKey, TValue>);
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
-            return (Dictionary<TKey, TValue>) ConvertToMap(type, keyType, valueType, fields, new StructurePath(), value);
+            return (Dictionary<TKey, TValue>)ConvertToMap(type, keyType, valueType, fields, new StructurePath(), value);
         }
 
 
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Core.Converter
             }
             var jsonArray = (JArray)json;
             var arrayType = GetArrayType(type, elementType);
-            var result = (IList) Activator.CreateInstance(arrayType, jsonArray.Count);
+            var result = (IList)Activator.CreateInstance(arrayType, jsonArray.Count);
             var elementMetadata = fields[0];
             for (var i = 0; i < jsonArray.Count; i++)
             {
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Core.Converter
             if (type != arrayType)
             {
                 var listType = type.IsAbstract ? typeof(List<>).MakeGenericType(elementType) : type;
-                var list = (IList) Activator.CreateInstance(listType);
+                var list = (IList)Activator.CreateInstance(listType);
                 for (int i = 0; i < result.Count; i++)
                 {
                     list.Add(result[i]);
@@ -288,7 +288,7 @@ namespace Snowflake.Data.Core.Converter
             var fieldMetadata = fields[1];
             var jsonObject = (JObject)json;
             var dictionaryType = type.IsAbstract ? typeof(Dictionary<,>).MakeGenericType(keyType, valueType) : type;
-            var result = (IDictionary) Activator.CreateInstance(dictionaryType);
+            var result = (IDictionary)Activator.CreateInstance(dictionaryType);
             using (var jsonEnumerator = jsonObject.GetEnumerator())
             {
                 var elementIndex = -1;

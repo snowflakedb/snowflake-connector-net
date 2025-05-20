@@ -8,13 +8,13 @@ namespace Snowflake.Data.Configuration
     internal class EasyLoggingConfigFinder
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigFinder>();
-        
+
         internal const string ClientConfigFileName = "sf_client_config.json";
         internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
-        
+
         public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentOperations.Instance);
 
         internal EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Configuration
                               ?? GetFilePathFromHomeDirectory();
             return configFilePath;
         }
-        
+
         private string GetFilePathEnvironmentVariable()
         {
             var filePath = _environmentOperations.GetEnvironmentVariable(ClientConfigEnvironmentName);
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Configuration
         private string GetHomeDirectory() => HomeDirectoryProvider.HomeDirectory(_environmentOperations);
 
         private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => _environmentOperations.GetExecutionDirectory(), "driver");
-        
+
         private string SearchForConfigInDirectory(Func<string> directoryProvider, string directoryDescription)
         {
             try

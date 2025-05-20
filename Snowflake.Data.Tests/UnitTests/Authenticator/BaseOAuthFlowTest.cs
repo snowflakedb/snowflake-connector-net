@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         protected int InMemoryCacheCount()
         {
-            var credentialManager = (SFCredentialManagerInMemoryImpl) SnowflakeCredentialManagerFactory.GetCredentialManager();
+            var credentialManager = (SFCredentialManagerInMemoryImpl)SnowflakeCredentialManagerFactory.GetCredentialManager();
             return credentialManager.GetCount();
         }
 

@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.Util
         private static readonly string s_wiremockUrl =
             $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
         private static readonly HttpClient s_httpClient = new();
-        private static readonly object s_lock = new ();
+        private static readonly object s_lock = new();
 
         internal const string Host = "127.0.0.1";
         private int HttpsPort { get; }

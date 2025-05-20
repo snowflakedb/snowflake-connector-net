@@ -35,7 +35,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
             var localhostRegex = new Regex("http:\\/\\/localhost:(.*)\\/?token=mockToken");
@@ -57,7 +58,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
                     s_httpClient.GetAsync(browserUrl);
@@ -101,7 +103,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 
@@ -130,7 +133,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 
@@ -159,7 +163,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 
@@ -216,7 +221,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback(async (Uri uri) => {
+                .Callback(async (Uri uri) =>
+                {
                     await Task.Delay(1000).ContinueWith(_ =>
                     {
                         s_httpClient.GetAsync(uri.ToString());
@@ -264,7 +270,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.PostAsync(uri.ToString(), new StringContent(""));
                 });
 
@@ -283,7 +290,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     var urlWithoutQuery = uri.ToString().Substring(0, uri.ToString().IndexOf("?token="));
                     s_httpClient.GetAsync(urlWithoutQuery);
                 });
@@ -303,7 +311,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
             var localhostRegex = new Regex("http:\\/\\/localhost:(.*)\\/?token=mockToken");
@@ -326,7 +335,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     var port = HttpUtility.ParseQueryString(uri.Query).Get("browser_mode_redirect_port");
                     var browserUrl = $"http://localhost:{port}/?token=mockToken";
                     s_httpClient.GetAsync(browserUrl);
@@ -373,7 +383,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 
@@ -403,7 +414,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 
@@ -433,7 +445,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             t_browserRunner
                 .Setup(b => b.Run(It.IsAny<Uri>()))
-                .Callback((Uri uri) => {
+                .Callback((Uri uri) =>
+                {
                     s_httpClient.GetAsync(uri.ToString());
                 });
 

@@ -5,7 +5,7 @@ namespace Snowflake.Data.Tests.Util
         private readonly string _oldValue;
         private readonly string _newValue;
 
-        public static readonly StringTransformation NoTransformationInstance = new (null, null);
+        public static readonly StringTransformation NoTransformationInstance = new(null, null);
 
         public StringTransformation(string oldValue, string newValue)
         {
