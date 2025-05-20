@@ -69,6 +69,7 @@ namespace Snowflake.Data.Core
                 case QueryStatus.Queued:
                 case QueryStatus.QueuedReparingWarehouse:
                 case QueryStatus.NoData:
+                case QueryStatus.Blocked:
                     return true;
                 default:
                     return false;
@@ -84,7 +85,6 @@ namespace Snowflake.Data.Core
                 case QueryStatus.Aborted:
                 case QueryStatus.FailedWithIncident:
                 case QueryStatus.Disconnected:
-                case QueryStatus.Blocked:
                     return true;
                 default:
                     return false;
