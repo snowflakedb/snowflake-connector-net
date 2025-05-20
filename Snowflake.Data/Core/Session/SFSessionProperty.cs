@@ -216,11 +216,11 @@ namespace Snowflake.Data.Core
             var keys = new string[builder.Keys.Count];
             var values = new string[builder.Values.Count];
             builder.Keys.CopyTo(keys, 0);
-            builder.Values.CopyTo(values,0);
+            builder.Values.CopyTo(values, 0);
 
             properties.ConnectionStringWithoutSecrets = BuildConnectionStringWithoutSecrets(ref keys, ref values);
 
-            for(var i=0; i<keys.Length; i++)
+            for (var i = 0; i < keys.Length; i++)
             {
                 try
                 {
@@ -547,7 +547,7 @@ namespace Snowflake.Data.Core
         {
             var count = keys.Length;
             var result = new StringBuilder();
-            for (var i = 0; i < count; i++ )
+            for (var i = 0; i < count; i++)
             {
                 if (!IsSecretProperty(keys[i]))
                 {
@@ -568,9 +568,9 @@ namespace Snowflake.Data.Core
         private static void UpdatePropertiesForSpecialCases(SFSessionProperties properties, string connectionString)
         {
             var propertyEntry = connectionString.Split(';');
-            foreach(var keyVal in propertyEntry)
+            foreach (var keyVal in propertyEntry)
             {
-                if(keyVal.Length > 0)
+                if (keyVal.Length > 0)
                 {
                     var tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
                     var propertyName = tokens[0].ToUpper();
@@ -580,29 +580,29 @@ namespace Snowflake.Data.Core
                         case "SCHEMA":
                         case "WAREHOUSE":
                         case "ROLE":
-                        {
-                            if (tokens.Length == 2)
                             {
-                                var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                    typeof(SFSessionProperty), propertyName);
-                                properties[sessionProperty]= ProcessObjectEscapedCharacters(tokens[1]);
-                            }
+                                if (tokens.Length == 2)
+                                {
+                                    var sessionProperty = (SFSessionProperty)Enum.Parse(
+                                        typeof(SFSessionProperty), propertyName);
+                                    properties[sessionProperty] = ProcessObjectEscapedCharacters(tokens[1]);
+                                }
 
-                            break;
-                        }
+                                break;
+                            }
                         case "USER":
                         case "PASSWORD":
-                        {
-
-                            var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), propertyName);
-                            if (!properties.ContainsKey(sessionProperty))
                             {
-                                properties.Add(sessionProperty, "");
-                            }
 
-                            break;
-                        }
+                                var sessionProperty = (SFSessionProperty)Enum.Parse(
+                                    typeof(SFSessionProperty), propertyName);
+                                if (!properties.ContainsKey(sessionProperty))
+                                {
+                                    properties.Add(sessionProperty, "");
+                                }
+
+                                break;
+                            }
                     }
                 }
             }
@@ -611,7 +611,7 @@ namespace Snowflake.Data.Core
         private static string ProcessObjectEscapedCharacters(string objectValue)
         {
             var match = Regex.Match(objectValue, "^\"(.*)\"$");
-            if(match.Success)
+            if (match.Success)
             {
                 var replaceEscapedQuotes = match.Groups[1].Value.Replace("\"\"", "\"");
                 return $"\"{replaceEscapedQuotes}\"";

@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockWebRequest.Setup(client => client.GetResponseAsync())
                 .Returns(() => Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode)));
             mockWebRequest.Setup(client => client.GetRequestStreamAsync())
-                .Returns(() => Task.FromResult((Stream) new MemoryStream()));
+                .Returns(() => Task.FromResult((Stream)new MemoryStream()));
             _client.SetCustomWebRequest(mockWebRequest.Object);
             _fileMetadata.uploadSize = UploadFileSize;
 
@@ -406,7 +406,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             const string HeaderValue = "someValue";
-            var responseMessage = new HttpResponseMessage( HttpStatusCode.OK ) {Content =  new StringContent( "Response content" ) };
+            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Response content") };
             responseMessage.Headers.Add(headerNameToAdd, HeaderValue);
 
             // act

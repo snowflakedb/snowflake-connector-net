@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Core.Session
 {
-    internal class FixedZeroCounter: ICounter
+    internal class FixedZeroCounter : ICounter
     {
         public int Count() => 0;
 

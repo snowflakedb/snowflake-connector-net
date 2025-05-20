@@ -510,7 +510,7 @@ namespace Snowflake.Data.Core
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
             {
                 bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
-                if(keepAlive)
+                if (keepAlive)
                 {
                     startHeartBeatForThisSession();
                 }

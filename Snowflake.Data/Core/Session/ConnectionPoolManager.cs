@@ -91,7 +91,7 @@ namespace Snowflake.Data.Core.Session
             switch (values.Count)
             {
                 case 0:
-                    return (long) SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
+                    return (long)SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
                 case 1:
                     return values.First();
                 default:

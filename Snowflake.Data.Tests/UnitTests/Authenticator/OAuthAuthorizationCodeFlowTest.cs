@@ -18,7 +18,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     [TestFixture, NonParallelizable]
-    public class OAuthAuthorizationCodeFlowTest: BaseOAuthFlowTest
+    public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow.json");
         private static readonly string s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_without_refresh_token.json");
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
                 _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
                 var session = PrepareSession();
-                var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+                var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
                 // act
                 session.Open();
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None);
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(false);
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(userInConnectionString: false);
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -206,7 +206,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(userInConnectionString: false);
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None);
@@ -225,7 +225,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None);
@@ -263,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -283,7 +283,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_refreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             session.Open();
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_refreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
             var session = PrepareSession();
-            var authenticator = (OAuthAuthorizationCodeAuthenticator) session.GetAuthenticator();
+            var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);

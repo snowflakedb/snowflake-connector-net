@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestOwnerIsCurrentUser()
         {
             // arrange
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, DirectoryOwnerId = 1};
+            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, DirectoryOwnerId = 1 };
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, DirectoryOwnerId = 2};
+            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, DirectoryOwnerId = 2 };
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, DirectoryOwnerId = 2};
+            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, DirectoryOwnerId = 2 };
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert

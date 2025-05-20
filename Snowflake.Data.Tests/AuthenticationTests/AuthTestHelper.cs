@@ -102,11 +102,13 @@ namespace Snowflake.Data.AuthenticationTests
             return new Thread(() => ProvideCredentials(scenario, login, password));
         }
 
-        public void VerifyExceptionIsNotThrown() {
+        public void VerifyExceptionIsNotThrown()
+        {
             Assert.That(_exception, Is.Null, "Unexpected exception thrown");
         }
 
-        public void VerifyExceptionIsThrown(string error) {
+        public void VerifyExceptionIsThrown(string error)
+        {
             Assert.That(_exception, Is.Not.Null, "Expected exception was not thrown");
             Assert.That(_exception.Message, Does.Contain(error), "Unexpected exception message.");
 
@@ -142,7 +144,7 @@ namespace Snowflake.Data.AuthenticationTests
             using (var process = new Process { StartInfo = startInfo })
             {
                 process.Start();
-                if (!process.WaitForExit((int) timeout.TotalMilliseconds))
+                if (!process.WaitForExit((int)timeout.TotalMilliseconds))
                 {
                     process.Kill();
                     throw new TimeoutException("The process did not complete in the allotted time.");

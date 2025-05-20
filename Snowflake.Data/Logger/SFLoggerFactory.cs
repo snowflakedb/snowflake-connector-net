@@ -28,7 +28,7 @@ namespace Snowflake.Data.Log
         }
 
         public static void Instance(SFLogger customLogger)
-        {            
+        {
             logger = customLogger;
         }
 

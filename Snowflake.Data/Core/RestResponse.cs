@@ -25,7 +25,7 @@ namespace Snowflake.Data.Core
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
                 throw e;
             }
 
@@ -63,10 +63,11 @@ namespace Snowflake.Data.Core
         internal LoginResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
@@ -111,23 +112,24 @@ namespace Snowflake.Data.Core
     }
 
 
-	internal class RenewSessionResponseData {
+    internal class RenewSessionResponseData
+    {
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
+        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {

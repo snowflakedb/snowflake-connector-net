@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public virtual HttpListener StartHttpListener(string url)
         {
-            return StartHttpListener(new [] { url });
+            return StartHttpListener(new[] { url });
         }
 
         public virtual HttpListener StartHttpListener(string[] urls)
@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             }
             catch (Exception)
             {
-                ((IDisposable) listener).Dispose();
+                ((IDisposable)listener).Dispose();
                 throw;
             }
             return listener;

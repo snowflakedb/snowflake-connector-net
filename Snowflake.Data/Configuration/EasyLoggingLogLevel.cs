@@ -16,7 +16,7 @@ namespace Snowflake.Data.Configuration
     {
         public static EasyLoggingLogLevel From(string logLevel)
         {
-            return (EasyLoggingLogLevel) Enum.Parse(typeof(EasyLoggingLogLevel), logLevel, true);
+            return (EasyLoggingLogLevel)Enum.Parse(typeof(EasyLoggingLogLevel), logLevel, true);
         }
     }
 }
