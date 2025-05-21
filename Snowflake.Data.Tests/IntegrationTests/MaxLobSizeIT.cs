@@ -293,6 +293,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             MediumSize,
             MaxLobSize
         };
+
         static IEnumerable<ResultFormat> ResultFormats => new[]
             { ResultFormat.ARROW, ResultFormat.JSON };
 
