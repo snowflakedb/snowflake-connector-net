@@ -18,8 +18,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly ResultFormat _resultFormat;
 
-        //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
-        private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
+        private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
+        // private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
         private const int LargeSize = (MaxLobSize / 2);
         private const int MediumSize = (LargeSize / 2);
         private const int OriginSize = (MediumSize / 2);
