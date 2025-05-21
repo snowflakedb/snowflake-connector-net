@@ -32,8 +32,8 @@ namespace Snowflake.Data.Tests.IcebergTests
               ntz timestamp_ntz(6),
               ltz timestamp_ltz(6),
               bi binary(5),
-              ar array(number(10,0)), 
-              ob object(a number(10,0), b varchar), 
+              ar array(number(10,0)),
+              ob object(a number(10,0), b varchar),
               ma map(varchar, varchar)";
         private const string SqlCreateHybridTableColumns = @"id number(10,0) not null primary key,
               nu number(10,0),
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestInsertPlainText()
         {
             // Arrange
@@ -83,12 +83,12 @@ namespace Snowflake.Data.Tests.IcebergTests
                 SetResultFormat(conn);
 
                 // Act
-                conn.ExecuteNonQuery(@$"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes}) 
-                                                    values ({I32}, {I64}, {Dec}, {Dbl}, {Flt}, '{Txt}', {B1}, {B0}, 
-                                                            '{_dt.ToString(FormatYmd)}', 
-                                                            '{_tm.ToString(FormatHms)}', 
-                                                            '{_ntz.ToString(FormatYmdHms)}', 
-                                                            '{_ltz.ToString(FormatYmdHmsfZ)}', 
+                conn.ExecuteNonQuery(@$"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes})
+                                                    values ({I32}, {I64}, {Dec}, {Dbl}, {Flt}, '{Txt}', {B1}, {B0},
+                                                            '{_dt.ToString(FormatYmd)}',
+                                                            '{_tm.ToString(FormatHms)}',
+                                                            '{_ntz.ToString(FormatYmdHms)}',
+                                                            '{_ltz.ToString(FormatYmdHmsfZ)}',
                                                             '{ByteArrayToHexString(_bi)}')");
 
                 // Assert
@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.IcebergTests
 
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()
         {
             // Arrange
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestUpdateWithValueBinding()
         {
             // Arrange
@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestJoin()
         {
             using (var conn = OpenConnection())
@@ -201,9 +201,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                 SetResultFormat(conn);
 
                 // Act
-                var sql = @$"select i.nu1,i.nu2,i.nu3,i.nu4,i.f,i.tx,i.bt,i.bf,i.dt,i.tm,i.ntz,i.ltz,i.bi, h.id,h.nu,h.tx2 
-                             from {TableNameIceberg} i 
-                             join {TableNameHybrid} h 
+                var sql = @$"select i.nu1,i.nu2,i.nu3,i.nu4,i.f,i.tx,i.bt,i.bf,i.dt,i.tm,i.ntz,i.ltz,i.bi, h.id,h.nu,h.tx2
+                             from {TableNameIceberg} i
+                             join {TableNameHybrid} h
                                on i.nu1 = h.nu order by i.nu1";
 
                 // Assert
@@ -233,7 +233,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestDelete()
         {
             using (var conn = OpenConnection())
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestDeleteAll()
         {
             using (var conn = OpenConnection())
@@ -280,7 +280,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestMultiStatement()
         {
             using (var conn = OpenConnection())
@@ -307,7 +307,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestBatchInsertForLargeData()
         {
             using (var conn = OpenConnection())
@@ -336,16 +336,16 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestStructuredTypesAsJsonString()
         {
             using (var conn = OpenConnection())
             {
                 SetResultFormat(conn);
                 CreateIcebergTable(conn);
-                var sql = @$"insert into {TableNameIceberg} ({SqlColumnsStructureTypes}) 
-                            select 
-                                [1,2,3]::ARRAY(number), 
+                var sql = @$"insert into {TableNameIceberg} ({SqlColumnsStructureTypes})
+                            select
+                                [1,2,3]::ARRAY(number),
                                 {{'a' : 1, 'b': 'two'}}::OBJECT(a number, b varchar),
                                 {{'4':'one', '5': 'two', '6': 'three'}}::MAP(varchar, varchar)
                             ";
