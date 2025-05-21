@@ -467,7 +467,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }, CancellationToken.None);
 
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentState().BusySessionsCount == 1, TimeSpan.FromMilliseconds(1000));
+            Awaiter.WaitUntilConditionOrTimeout(() =>
+            {
+                var state = pool.GetCurrentState();
+                return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
+            }, TimeSpan.FromMilliseconds(1000));
 
             // one busy session
             Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
