@@ -118,6 +118,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
+        {
+            // arrange
+            var connectionString = ConnectionString + "application=TestWaitForMaxSize1;waitingForIdleSessionTimeout=1s;maxPoolSize=2;minPoolSize=1";
+            var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
+            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
+            var conn1 = OpenConnection(connectionString);
+            var conn2 = OpenConnection(connectionString);
+            var watch = new StopWatch();
+
+            // act
+            watch.Start();
+            var thrown = Assert.Throws<SnowflakeDbException>(() => OpenConnection(connectionString));
+            watch.Stop();
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
+            Assert.That(watch.ElapsedMilliseconds, Is.InRange(1000, 1500));
+            Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
+
+            // cleanup
+            conn1.Close();
+            conn2.Close();
+        }
+
+        [Test]
         public void TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimitAsync()
         {
             // arrange
