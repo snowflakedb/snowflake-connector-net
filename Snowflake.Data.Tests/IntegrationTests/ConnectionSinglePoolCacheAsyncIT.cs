@@ -128,9 +128,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.SetTimeout(3); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, true, 12, 100, 100);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(3);
+            SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
+            ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
@@ -139,9 +139,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.SetTimeout(3); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, false, 12, 100, 100);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(3);
+            SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
+            ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
